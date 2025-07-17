@@ -43,7 +43,7 @@ namespace PLang.Runtime.Tests
 			prParser.ForceLoadAllGoals();
 
 
-			pseudoRuntime = new PseudoRuntime(fileSystem);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
 
 		}
 
@@ -88,7 +88,7 @@ namespace PLang.Runtime.Tests
 			var parameters = new Dictionary<string, object?>();
 			parameters.AddOrReplace("Name", "Jim");
 
-			pseudoRuntime = new PseudoRuntime(fileSystem);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 
@@ -102,7 +102,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{	
 
-			(var e, var vars, var err, var output) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal");
+			(var e, var vars, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal");
 			Assert.AreEqual("No goals available", err.Message);
 		}
 
@@ -175,7 +175,7 @@ namespace PLang.Runtime.Tests
 		{"Age", 30}
 	};
 
-			pseudoRuntime = new PseudoRuntime(fileSystem);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 

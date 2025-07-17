@@ -1,4 +1,5 @@
 ﻿using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
@@ -46,16 +47,17 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(Stack<CallbackInfo> CallbackInfos, Signature Signature);
-		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex);
-		public static async Task<Callback?> GetCallback(GoalStep? step, Modules.ProgramFactory programFactory)
+		public record Callback(string Path, Dictionary<string, object?>? CallbackData, Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
+		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
+		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, 
+			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false)
 		{
 			if (step == null) return null;
 
 			
 			var callbackInfos = new Stack<CallbackInfo>();
 			var goal = step.Goal;
-			string method = goal.GoalName ?? "Request";
+			string method = goal.GoalName;
 
 			callbackInfos.Push(new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex));
 
@@ -68,9 +70,22 @@ namespace PLang.Utils
 					parentGoal = parentGoal.ParentGoal;
 				}
 			}
+			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(step);
 
-			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callbackInfos);
-			return new Callback(callbackInfos, signed);
+			if (callbackData != null)
+			{
+				foreach (var item in callbackData)
+				{
+					var obj = memoryStack.Get(item.Key);
+					if (obj != null)
+					{
+						var encryptedValue = await encryption.Encrypt(obj);
+						callbackData.AddOrReplace(item.Key, encryptedValue);
+					}
+				}
+			}
+			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callbackInfos, skipNonce : skipNonce);
+			return new Callback(path, callbackData, callbackInfos, signed);
 		}
 	}
 }

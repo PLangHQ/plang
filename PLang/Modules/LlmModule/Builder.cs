@@ -186,7 +186,6 @@ or url
 					var validateResult = await JsonHelper.ValidateSchemaAsync(validScheme);
 					if (validateResult.Error != null) return (instruction, new BuilderError(validateResult.Error));
 
-					var schemeIdx = genericFunction.Parameters.FindIndex(p => p.Name == "scheme");
 					instruction.Properties.AddOrReplace("ReturnScheme", JObject.Parse(validScheme));
 				}
 

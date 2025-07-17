@@ -1,0 +1,27 @@
+AskUserLlm
+- validate %developerInstructionForResult%, %text%, %options% is not empty
+- read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%
+- [llm] system: %askSystem%
+    continue from last: false
+    model: "gpt-4o"
+    response type: %!plang.output%
+    write to %content%
+- ask user %content%, write to %answer%
+- read file %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%
+- set default value %scheme% = "{result:object|null}"
+- [llm]  system: %answerSystem%
+    user: %answer%
+    continue from last: true
+    scheme:%scheme% 
+    write to %result%
+- return %result%
+    
+/*
+it would be great to validate the result, e.g.
+- validate that %result% is in %variables% 
+
+and if it doesnt work, ask llm again with error message
+this should work great for simple lists and when it should return an object from the lsit
+it could be simple jsonList.Any(obj => JToken.DeepEquals(obj, jsonToCheck));
+but gets more complex with complex list or changes to %developerInstructionForResult%
+*/

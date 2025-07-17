@@ -57,7 +57,7 @@ namespace PLang.Building.Model
 			var function = (IGenericFunction)Convert.ChangeType(obj, type);
 
 			// llm may return null on a parameter/return values, instead of doing new request to llm, just remove them.
-			function.Parameters?.RemoveAll(p => p == null);
+			function.Parameters?.FirstOrDefault(p => p == null);
 			function.ReturnValues?.RemoveAll(p => p == null || string.IsNullOrEmpty(p.VariableName));
 
 			function.Instruction = instruction;
@@ -89,6 +89,13 @@ namespace PLang.Building.Model
 			get; set;
 		}
 
+		[LlmIgnore]
+		public string Hash { get; set; }
+
+		[LlmIgnore]
+		public SignedMessage SignedMessage { get; set; }
+
+
 		IGenericFunction function;
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
@@ -98,6 +105,8 @@ namespace PLang.Building.Model
 		{
 			get
 			{
+				if (function.Instruction == null) function.Instruction = this;
+
 				return function;
 			}
 			set { 

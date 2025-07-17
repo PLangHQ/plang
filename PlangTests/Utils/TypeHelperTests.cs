@@ -42,5 +42,21 @@ namespace PLang.Utils.Tests
 			Assert.AreEqual(obj1.GetType(), obj2.GetType());
 
 		}
-    }
+
+
+		[TestMethod()]
+		public void TryConvertToMatchingTypeTestToInt()
+		{
+			string int1 = "123";
+			int int2 = 123;
+
+
+			(var obj1, var obj2) = TypeHelper.TryConvertToMatchingType(int1, int2);
+
+
+			Assert.AreEqual(typeof(int), obj1.GetType());
+				Assert.AreEqual(typeof(int), obj2.GetType());
+
+		}
+	}
 }

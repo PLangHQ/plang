@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using PLang.Services.OutputStream;
 
 namespace PLang.Runtime
 {
@@ -37,29 +38,44 @@ namespace PLang.Runtime
 			for (int i = 0; i < initialSize; i++)
 			{
 				var engine = _factory();
-				
+				SetProperties(engine, engine.ParentEngine, null, engine.Name, engine.OutputStreamFactory.CreateHandler());
+
 				_pool.Add(engine);
 				//Interlocked.Increment(ref _currentCount);
 			}
 		}
 
-		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null)
 		{
 			if (_pool.TryTake(out var engine))
 			{
-				return SetProperties(engine, parentEngine, callingStep, name);
+				return SetProperties(engine, parentEngine, callingStep, name, outputStream);
 			}
 
 			var newEngine = _factory();
-			return SetProperties(newEngine, parentEngine, callingStep, name);
+			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream);
 		}
 
-		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name)
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream)
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
-			if (callingStep != null) 
+			engine.CallbackInfos = parentEngine.CallbackInfos;
+			
+			engine.FileSystem.AddFileAccess(new SafeFileSystem.FileAccessControl(parentEngine.Path, engine.FileSystem.SystemDirectory, ProcessId: engine.FileSystem.Id));
+			if (outputStream != null)
+			{
+				engine.SetOutputStream(outputStream);
+			} else
+			{
+				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
+				engine.SetOutputStream(outputStream);
+			}
+
+			if (callingStep != null)
+			{
 				engine.SetCallingStep(callingStep);
+			}
 
 			//engine.GetContext().Clear();
 			foreach (var item in parentEngine.GetContext())

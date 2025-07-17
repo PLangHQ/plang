@@ -47,6 +47,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
+using static PLang.Modules.WebserverModule.Program;
 
 
 namespace PLang.Container
@@ -74,14 +75,16 @@ namespace PLang.Container
 			RegisterEventRuntime(container);
 			RegisterBaseVariables(container, parentEngine);
 		}
-
-		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext, string contentType)
+		
+		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, 
+			HttpContext httpContext, string contentType, LiveConnection? liveResponse)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext, container.GetInstance<IPLangFileSystem>(), contentType));
+			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, 
+				new HttpOutputStream(httpContext.Response, container.GetInstance<IEngine>(), contentType, 4096, httpContext.Request.Path, liveResponse));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
@@ -202,7 +205,7 @@ namespace PLang.Container
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 				
 				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();				
-				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.OsDirectory);				
+				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.SystemDirectory);				
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>(); 
 				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
@@ -229,12 +232,12 @@ namespace PLang.Container
 
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			context.AddOrReplace("!plang.osPath", fileSystem.OsDirectory);
+			context.AddOrReplace("!plang.osPath", fileSystem.SystemDirectory);
 			context.AddOrReplace("!plang.rootPath", parentEngine?.Path ?? fileSystem.RootDirectory);
 
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.OsDirectory);
+			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.SystemDirectory);
 		}
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath, IEngine? parentEngine = null)
@@ -243,22 +246,22 @@ namespace PLang.Container
 			
 
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
-			
+
 			container.RegisterSingleton<IEngine, Engine>();
-			
+
 			/*
 			container.RegisterSingleton<EnginePool>(factory =>
 			{
 				return new EnginePool(10, () => container.GetInstance<IEngine>(), container);
 			});*/
-			
+
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
 			container.RegisterSingleton<IPseudoRuntime, PseudoRuntime>();
 			container.RegisterSingleton<IBuilderFactory>(factory =>
 			{
-				return new BuilderFactory(container, container.GetInstance<ITypeHelper>());
+				return new BuilderFactory(container, container.GetInstance<ITypeHelper>(), container.GetInstance<ILogger>());
 			});
 
 
@@ -274,7 +277,7 @@ namespace PLang.Container
 
 
 
-			container.Register<IGoalParser>(factory =>
+			container.RegisterSingleton<IGoalParser>(factory =>
 			{
 				return new GoalParser(container, container.GetInstance<IPLangFileSystem>(), container.GetInstance<ISettings>());
 			});
@@ -283,8 +286,9 @@ namespace PLang.Container
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();
-			container.Register<VariableHelper, VariableHelper>();
+			container.RegisterSingleton<VariableHelper, VariableHelper>();
 
+			container.RegisterSingleton<MethodHelper>();
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();
 			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
 
@@ -623,7 +627,7 @@ namespace PLang.Container
 			// Register these types with the DI container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
-				container.Register(type);
+				container.RegisterSingleton(type);
 				//container.Register(type, type, serviceName: type.FullName); 
 				/*container.Register(type, factory =>
 				{
@@ -699,7 +703,7 @@ namespace PLang.Container
 			var prParser = container.GetInstance<PrParser>();
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			var goals = prParser.LoadAllGoalsByPath(fileSystem.GoalsPath, true);
+			var goals = prParser.GetGoals();
 			var goalsWithInjections = goals.Where(p => p.Injections.FirstOrDefault(x => x.IsGlobal) != null);
 
 			foreach (var goal in goalsWithInjections)

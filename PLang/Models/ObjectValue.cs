@@ -1,9 +1,12 @@
 ﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
+using PLang.Errors;
 using PLang.Models;
 using PLang.Models.ObjectValueConverters;
 using PLang.Models.ObjectValueExtractors;
 using PLang.Utils;
+using System.Diagnostics;
+using System.Xml.Linq;
 using Websocket.Client.Logging;
 
 namespace PLang.Runtime;
@@ -65,12 +68,16 @@ public class HtmlObjectValue : ObjectValue
 public class ObjectValue
 {
 	private object? value;
+	private ObjectValue? parent;
 	public static ObjectValue Null { get { return Nullable(""); } }
 	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false)
 	{
 		name = VariableHelper.Clean(name);
-
-		Name = name.ToLower();
+		if (name.Contains("!") && !name.StartsWith("!"))
+		{
+			int i = 0;
+		}
+		Name = name;
 		if (isProperty)
 		{
 			if (parent == null) throw new Exception("parent cannot be empty on property");
@@ -92,17 +99,23 @@ public class ObjectValue
 		}
 		Type = type ?? value?.GetType();
 		this.Initiated = Initiated;
-		Parent = parent;
+		this.parent = parent;
 		Created = DateTime.Now;
 		Updated = DateTime.Now;
 		Properties = properties ?? new();
+		
+		foreach (var prop in Properties)
+		{
+			prop.Parent = this;
+		}
+
 		IsProperty = isProperty;
 		IsSystemVariable = isSystemVariable;
 	}
 
 	public List<VariableEvent> Events = new List<VariableEvent>();
-	public string Name { get; set; }
-
+	public string Name { get; }
+	[JsonIgnore]
 	public ObjectValue Root
 	{
 		get
@@ -147,7 +160,17 @@ public class ObjectValue
 	}
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
-	public ObjectValue? Parent { get; set; }
+	[JsonIgnore]
+	public ObjectValue? Parent { 
+		get { return parent; }
+		set {
+			if (value == null) throw new NullReferenceException($"setting null parent in ObjectValue is not allowed. {ErrorReporting.CreateIssueShouldNotHappen}");
+
+			parent = value;
+			
+			this.Path = $"{parent.Path}!{Name}";
+		}
+	}
 	public Properties Properties { get; set; }
 	public bool IsProperty { get; }
 	public DateTime Created { get; private set; }
@@ -165,11 +188,10 @@ public class ObjectValue
 	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
 	{
 		var segments = PathSegmentParser.ParsePath(path);
-
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
-		
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
 		if (objectValue == null) return ObjectValue.Nullable(path);
+
 		return objectValue;
 	}
 	public object? Get(string path, Type? convertToType = null, MemoryStack? memoryStack = null)

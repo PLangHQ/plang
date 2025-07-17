@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Reflection;
@@ -42,8 +43,11 @@ namespace PLang.Runtime
 	public record VariableEvent(string EventType, GoalToCallInfo GoalToCall, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50, string hash = null)
 	{
 
-		public bool waitForResponse { get; set; } = waitForResponse;
-		public int delayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
+		public bool WaitForResponse { get; set; } = waitForResponse;
+		public int DelayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
+
+		public Goal Goal { get; set; }
+		public GoalStep Step { get; set; }
 	};
 
 
@@ -79,27 +83,15 @@ namespace PLang.Runtime
 			{
 				var ms = GetMemoryStack();
 
-				List<string> varsInList = new();
+				List<string> varsInStep = new();
 				var eventBinding = Goal.GetVariable<EventBinding>(ReservedKeywords.Event);
 				if (eventBinding != null && eventBinding.GoalStep != null)
 				{
-					varsInList = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
+					varsInStep = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
 				}
 
-				for (int i = 0; i < ms.Count; i++)
-				{
-					if (ms[i].Value is IList list && list.Count > 50)
-					{
-						ms[i].Value = list.Cast<object>().Take(50).ToList();
-					}
-					else if (ms[i].Value is IDictionary dict && dict.Count > 50)
-					{
-						ms[i].Value = dict.Cast<object>().Take(50).ToList();
-					}
-					ms[i].Order += varsInList.Count;
-				}
 
-				
+
 				var customSettings = new JsonSerializerSettings
 				{
 					ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
@@ -113,7 +105,6 @@ namespace PLang.Runtime
 				// javascript cannot handle long variables, so we convert it to string
 				customSettings.Converters.Add(new LongAsStringConverter());
 
-				if (varsInList.Count == 0) return JsonConvert.SerializeObject(ms, customSettings);
 
 				// when there is variable in step, lets reorder the memorystack to put 
 				// used variable at the top and notify use if variable is empty.
@@ -122,12 +113,27 @@ namespace PLang.Runtime
 				var json = JsonConvert.SerializeObject(ms, customSettings);
 				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json);
 
-				for (int i = 0; i < varsInList.Count; i++)
+				for (int i = 0; i < newMs.Count; i++)
 				{
-					var ov = this.GetObjectValue(varsInList[i]);
+					if (newMs[i].Value is IList list && list.Count > 50)
+					{
+						newMs[i].Value = list.Cast<object>().Take(50).ToList();
+					}
+					else if (newMs[i].Value is IDictionary dict && dict.Count > 50)
+					{
+						newMs[i].Value = dict.Cast<object>().Take(50).ToList();
+					}
+					newMs[i].Order += varsInStep.Count;
+					ms[i].Order += varsInStep.Count;
+				}				
+
+				for (int i = 0; i < varsInStep.Count; i++)
+				{
+					var ov = this.GetObjectValue(varsInStep[i]);
+					
 					if (!ov.Initiated)
 					{
-						ov = new ObjectValue(varsInList[i], $"{varsInList[i]} is empty");
+						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is empty");
 					}
 					ov.Order = i;
 					var index = ms.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
@@ -137,8 +143,8 @@ namespace PLang.Runtime
 					}
 					else
 					{
-						ov.Name = ov.PathAsVariable.Replace("%", "");
-						newMs.Add(ov);
+						var newObjectValue = new ObjectValue(ov.PathAsVariable.Replace("%", ""), ov.Value, properties: ov.Properties);
+						newMs.Add(newObjectValue);
 					}
 
 				}
@@ -148,7 +154,11 @@ namespace PLang.Runtime
 			} catch (Exception ex)
 			{
 				int i = 0;
-				return "";
+				List<ObjectValue> ovs = new();
+				var ov = new ObjectValue("Error", "Could not serialize memory stack: " + ex.Message);
+				ovs.Add(ov);
+
+				return JsonConvert.SerializeObject(ovs);
 			}
 		}
 
@@ -247,7 +257,9 @@ namespace PLang.Runtime
 
 		public T? Get<T>(string key, bool staticVariable = false)
 		{
-			return (T?)Get(key, staticVariable);
+			var obj = Get(key, staticVariable);
+			if (obj == null) return default(T);
+			return (T?)obj;
 		}
 
 		public object? Get(string key, Type type, bool staticVariable = false)
@@ -261,6 +273,8 @@ namespace PLang.Runtime
 
 			object? obj = ov.Value;
 			if (defaultValue != null && !ov.Initiated || obj == null) return defaultValue;
+			if (obj is JValue jValue) return jValue.Value;
+
 			return obj;
 		}
 
@@ -320,7 +334,7 @@ namespace PLang.Runtime
 			string type = ".";
 
 			int i = 0;
-			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == '!' || variableName[i] == ' '))
+			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || (i == 0 && variableName[i] == '!') || variableName[i] == ' '))
 				i++;
 
 			if (i >= 0 && i != variableName.Length)
@@ -361,7 +375,6 @@ namespace PLang.Runtime
 		}
 		private ObjectValue? GetFromVariables(KeyPath keyPath)
 		{
-
 			KeyValuePair<string, ObjectValue> variable = variables.FirstOrDefault(p => p.Value.IsName(keyPath.VariableName));
 			if (variable.Key == null) return null;
 
@@ -375,11 +388,26 @@ namespace PLang.Runtime
 				{
 					return new ObjectValue(keyPath.Path, variable.Value.Properties, parent: variable.Value, isProperty: true);
 				}
-				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath.Path)) ?? ObjectValue.Nullable(keyPath.FullPath);
+
+				if (!keyPath.Path.Contains("."))
+				{
+					var objectValue2 = variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath.Path.TrimStart('!'))) ?? ObjectValue.Nullable(keyPath.FullPath);
+
+					return objectValue2;
+				}
+
+				var keyPath2 = GetKeyPath(keyPath.Path);
+				if (keyPath2 == null) return ObjectValue.Nullable(keyPath.FullPath);
+
+				var objectValue = variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath2.VariableName.TrimStart('!'))) ?? ObjectValue.Nullable(keyPath.FullPath);
+				var value = objectValue.GetObjectValue(keyPath2.Path);
+				return value;
 			}
 
 			//sub variable, e.g. %user.name%, %now+5days%
-			return variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
+			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
+			
+			return ov;
 
 
 
@@ -1178,23 +1206,29 @@ namespace PLang.Runtime
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
+				eve.Goal = step.Goal;
+				eve.Step = step;
+
+
 				eve.GoalToCall.Parameters.AddOrReplace(objectValue.Name, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 
 				var goal = step.Goal;
 				if (eve.GoalToCall.Name == goal.GoalName) return;
 
 				var task = Task.Run(async () =>
 				{
-					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall);
+					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, goal);
 					if (result.error != null)
 					{
+						// todo: should call event binding for step 
 						throw new ExceptionWrapper(result.error);
 					}
 				});
-				task.Wait();
+				//task.Wait();
 			}
 		}
 
@@ -1815,8 +1849,8 @@ namespace PLang.Runtime
 			if (existingEvent != null)
 			{
 				existingEvent.GoalToCall.Parameters = goalName.Parameters;
-				existingEvent.waitForResponse = waitForResponse;
-				existingEvent.delayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
+				existingEvent.WaitForResponse = waitForResponse;
+				existingEvent.DelayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
 			}
 			else
 			{

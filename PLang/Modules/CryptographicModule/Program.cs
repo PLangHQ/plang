@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
 using Nethereum.Util;
+using NSec.Cryptography;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
@@ -123,7 +124,7 @@ namespace PLang.Modules.CryptographicModule
 		{
 			return await Hash(variable, returnAsString, useSalt, salt, type);
 		}
-		
+
 		[Description("Hash input. Salt is provided by language when user does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
 		public async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
 		{
@@ -132,29 +133,47 @@ namespace PLang.Modules.CryptographicModule
 				return await HashInput(variable, useSalt ?? false, salt, type);
 			}
 
-			if (type == "keccak256")
-			{
-				throw new NotImplementedException($"{type} is not implemented.");
-			}
-
-			var keccak = new Sha3Keccack();
 			byte[]? bytes = variable as byte[];
 			if (bytes == null)
 			{
 				bytes = Encoding.UTF8.GetBytes(variable.ToString());
 			}
 
-
-			byte[] hashBytes = keccak.CalculateHash(bytes);
-			if (!returnAsString) return (hashBytes, null);
-
-			StringBuilder hashStringBuilder = new StringBuilder();
-			foreach (byte b in hashBytes)
+			type = type.Replace("-", "");
+			if (type.Equals("sha256"))
 			{
-				hashStringBuilder.Append(b.ToString("x2"));
+				var sha256 = new Sha256();
+				byte[] hashBytes = sha256.Hash(bytes);
+				if (!returnAsString) return (hashBytes, null);
+
+				StringBuilder hashStringBuilder = new StringBuilder();
+				foreach (byte b in hashBytes)
+				{
+					hashStringBuilder.Append(b.ToString("x2"));
+				}
+
+				return (hashStringBuilder.ToString(), null);
+
+			}
+			if (type.Equals("keccak256", StringComparison.OrdinalIgnoreCase))
+			{
+				var keccak = new Sha3Keccack();
+				
+
+				byte[] hashBytes = keccak.CalculateHash(bytes);
+				if (!returnAsString) return (hashBytes, null);
+
+				StringBuilder hashStringBuilder = new StringBuilder();
+				foreach (byte b in hashBytes)
+				{
+					hashStringBuilder.Append(b.ToString("x2"));
+				}
+
+				return (hashStringBuilder.ToString(), null);
+
 			}
 
-			return (hashStringBuilder.ToString(), null);
+			throw new NotImplementedException($"{type} is not implemented.");
 		}
 
 		[Description("Hash input with salt, such as password. hashAlgorithm: keccak256 | sha256 | bcrypt")]
@@ -219,7 +238,8 @@ namespace PLang.Modules.CryptographicModule
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				return (false, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+				return (false, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404,
+					FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
@@ -250,13 +270,14 @@ namespace PLang.Modules.CryptographicModule
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404, 
+					FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
 			using var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm);
 			var fileHashBytes = hashAlgo.ComputeHash(fileBytes);
-			
+
 			string fileHash = "";
 			if (encoding == "hex")
 			{
@@ -273,12 +294,12 @@ namespace PLang.Modules.CryptographicModule
 
 		public void Dispose()
 		{
-			context.Remove(CurrentBearerToken);
+			context?.Remove(CurrentBearerToken);
 		}
 
 		public async Task SetCurrentBearerToken(string name)
 		{
-			context.AddOrReplace(CurrentBearerToken, name);
+			context?.AddOrReplace(CurrentBearerToken, name);
 		}
 
 		public async Task<string> GetBearerSecret()
@@ -319,7 +340,7 @@ namespace PLang.Modules.CryptographicModule
 			}
 		}
 
-		
+
 
 
 

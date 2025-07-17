@@ -19,7 +19,7 @@ namespace PLang.Modules.InstallModule
 		}
 
 		[Description("Install external app(python, bash, go, etc.) from a url, such as github. It uses the README to install and creates examples at build time.")]
-		public async Task<IError?> InstallFromUrl(HttpRequest request)
+		public async Task<IError?> InstallFromUrl(HttpModule.Program.HttpRequest request)
 		{
 			return null;
 

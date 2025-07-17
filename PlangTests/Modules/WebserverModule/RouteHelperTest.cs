@@ -39,7 +39,8 @@ namespace PLangTests.Modules.WebserverModule
 			//string Path, GoalToCall GoalToCall, string? Method = null, string ContentType = "text/html", 
 			// Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null
 			List<Routing> routings = new();
-			routings.Add(new Routing("/category/%name%", "/category/default"));
+			//routings.Add(new Routing("/category/%name%", "/category/default"));
+			throw new Exception("testing removed");
 
 			string folderPath = Path.Join(fileSystem.BuildPath, "/category/default".AdjustPathToOs());
 			fileSystem.AddDirectory(folderPath);

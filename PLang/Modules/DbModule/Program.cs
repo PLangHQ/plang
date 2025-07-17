@@ -1,14 +1,18 @@
 ﻿using Dapper;
 using IdGen;
 using Markdig.Extensions.TaskLists;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Pqc.Crypto.Hqc;
 using PLang.Attributes;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Errors.Types;
 using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
@@ -27,6 +31,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static Dapper.SqlMapper;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Utils.VariableHelper;
@@ -96,18 +101,18 @@ namespace PLang.Modules.DbModule
 
 
 		[Description("Create a datasource to a database")]
-		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite",
+		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string dataSourceName = "data", string databaseType = "sqlite",
 			bool? setAsDefaultForApp = null, bool? keepHistoryEventSourcing = null)
 		{
 			if (!goal.IsSetup) return (null, new ProgramError("Create data source can only be in a setup file",
 				FixSuggestion: $"Create setup.goal file or a goal file in a setup folder. Only one create data source can be in each setup file"));
 
-			var (datasource, error) = await dbSettings.CreateDataSource(name, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
+			var (datasource, error) = await dbSettings.CreateDataSource(dataSourceName, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
 			if (datasource == null) return (datasource, error);
 
 			if (datasource.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(name);
+				var variables = variableHelper.GetVariables(dataSourceName);
 				var emptyVariables = variables.Where(p => p.IsEmpty);
 				if (emptyVariables.Any())
 				{
@@ -136,9 +141,9 @@ namespace PLang.Modules.DbModule
 			return goal.GetVariable<DataSource>();
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? name = null)
+		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? dataSourceName = null)
 		{
-			return await SetInternalDataSourceName(name, true);
+			return await SetInternalDataSourceName(dataSourceName, true);
 		}
 		private async Task<(DataSource? DataSource, IError? Error)> SetInternalDataSourceName([HandlesVariable] string? name = null, bool setForGoal = false)
 		{
@@ -167,7 +172,7 @@ namespace PLang.Modules.DbModule
 
 			if (!IsBuilder && dataSource!.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(dataSource.Name);
+				var variables = variableHelper.GetVariables(name);
 				(dataSource, var error) = await GetRuntimeDataSource(dataSource, variables);
 				if (error != null) return (dataSource, error);
 			}
@@ -192,6 +197,8 @@ namespace PLang.Modules.DbModule
 			return (dataSource, null);
 		}
 
+		private string transactionKey = "transaction_{0}";
+		private string connectionKey = "con_{0}";
 
 		public async Task<IError?> BeginTransaction(string? name = null)
 		{
@@ -206,13 +213,13 @@ namespace PLang.Modules.DbModule
 			{
 				transaction.Dispose();
 				return Task.CompletedTask;
-			}, variableName: name);
+			}, variableName: string.Format(transactionKey, name));
 
 			goal.AddVariable(dbConnection, () =>
 			{
 				dbConnection.Dispose();
 				return Task.CompletedTask;
-			}, variableName: name);
+			}, variableName: string.Format(connectionKey, name));
 
 			return null;
 		}
@@ -241,53 +248,33 @@ namespace PLang.Modules.DbModule
 			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(name);
-			var transaction = goal.GetVariable<IDbTransaction>(name);
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
 
 			if (transaction != null) transaction.Commit();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(name);
-			goal.RemoveVariable<IDbConnection>(name);
+			goal.RemoveVariable<IDbTransaction>(string.Format(connectionKey, name));
+			goal.RemoveVariable<IDbConnection>(string.Format(transactionKey, name));
 
 			return null;
 		}
 
-		public async Task<IError?> Rollback(string? name = null, bool rollbackAllTranscations = true)
+		public async Task<IError?> Rollback(string? name = null)
 		{
-			if (rollbackAllTranscations)
-			{
 
-				var connections = goal.GetVariables<IDbConnection>();
-				var transactions = goal.GetVariables<IDbTransaction>();
-
-				foreach (var trans in transactions)
-				{
-					if (trans != null) trans.Rollback();
-				}
-
-				foreach (var connection in connections)
-				{
-					if (connection != null) connection.Close();
-				}
-
-				goal.RemoveVariables<IDbTransaction>();
-				goal.RemoveVariables<IDbConnection>();
-
-				return null;
-			}
 
 			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(name);
-			var transaction = goal.GetVariable<IDbTransaction>(name);
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
 
 			if (transaction != null) transaction.Rollback();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(name);
-			goal.RemoveVariable<IDbConnection>(name);
+			goal.RemoveVariable<IDbTransaction>(string.Format(transactionKey, name));
+			goal.RemoveVariable<IDbConnection>(string.Format(connectionKey, name));
 
 			return null;
 		}
@@ -303,7 +290,7 @@ namespace PLang.Modules.DbModule
 			fileName = GetPath(fileName);
 			if (!fileSystem.File.Exists(fileName))
 			{
-				return new Error("File could not be found.", "FileNotFound");
+				return new Error("File could not be found.", "FileNotFound", StatusCode: 404);
 			}
 
 			((SqliteConnection)dbConnection).LoadExtension(fileName, procName);
@@ -388,13 +375,16 @@ namespace PLang.Modules.DbModule
 
 
 
-		private (IDbConnection? connection, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
+		private (IDbConnection? connection, IDbTransaction? transaction, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
-			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name) ?? dbFactory.CreateHandler(goalStep);
 
-			var paramResult = GetDynamicParameters(sql, isInsert, Parameters);
-			if (paramResult.Error != null) return (null, null, sql, paramResult.Error);
+			var connection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSource.Name)) ?? dbFactory.CreateHandler(goalStep);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
+			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
+
+			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite);
+			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
 
 			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
 			if (connection is SqliteConnection sqliteConnection)
@@ -415,7 +405,7 @@ namespace PLang.Modules.DbModule
 				}
 			}
 
-			return (connection, paramResult.DynamicParameters, sql, paramResult.Error);
+			return (connection, transaction, paramResult.DynamicParameters, sql, paramResult.Error);
 
 		}
 
@@ -424,8 +414,8 @@ namespace PLang.Modules.DbModule
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
 
-			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
-			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
+			IDbConnection? connection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSource.Name));
 
 			if (connection == null) connection = dbFactory.CreateHandler(goalStep);
 
@@ -459,7 +449,8 @@ namespace PLang.Modules.DbModule
 			return await ExecuteRaw(sql, dataSourceName);
 		}
 
-		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null) { 
+		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null)
+		{
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
 			if (error != null) return (0, error);
 
@@ -481,14 +472,13 @@ namespace PLang.Modules.DbModule
 					return (0, prepare.error);
 				}
 
-				var transaction = goal.GetVariable<IDbTransaction>();
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, transaction);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 
 				Done(prepare.connection);
@@ -503,9 +493,12 @@ namespace PLang.Modules.DbModule
 						ShowWarning(ex);
 						return (1, null);
 					}
+
+
 				}
 
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+
+				return (0, new SqlError(ex.Message, sql, null, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -540,7 +533,7 @@ namespace PLang.Modules.DbModule
 			}
 			if (result.Table == null || result.Table.Count == 0) return (null, null);
 
-			if (function.ReturnValues != null && function.ReturnValues.Count == 1)
+			if (function.ReturnValues != null && function.ReturnValues.Count == 1 && result.Table.ColumnNames.Count != 1)
 			{
 				return (result.Table[0], null);
 			}
@@ -588,7 +581,7 @@ namespace PLang.Modules.DbModule
 						var param = cmd.CreateParameter();
 						param.ParameterName = prop.ParameterName;
 						param.Value = ConvertToType(prop.VariableNameOrValue, prop.TypeFullName) ?? DBNull.Value;
-						
+
 						cmd.Parameters.Add(param);
 					}
 				}
@@ -605,7 +598,18 @@ namespace PLang.Modules.DbModule
 				{
 					var row = new Row(table);
 					foreach (var col in cols)
-						row[col] = reader[col];
+					{
+						var type = MapType(reader.GetDataTypeName(col));
+						if (type == null)
+						{
+							row[col] = reader[col];
+						}
+						else
+						{
+							row[col] = TypeHelper.ConvertToType(reader[col], type);
+						}
+					}
+
 					table.Add(row);
 				}
 
@@ -618,7 +622,7 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (null, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (null, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -660,20 +664,21 @@ namespace PLang.Modules.DbModule
 				{
 					return (0, prepare.error);
 				}
+
 				long result;
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 				return (result, null);
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -696,20 +701,22 @@ namespace PLang.Modules.DbModule
 				{
 					return (0, prepare.error);
 				}
+
+
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 
 				return (rowsAffected, null);
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -749,11 +756,11 @@ namespace PLang.Modules.DbModule
 
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 			}
 			catch (Exception ex)
@@ -763,7 +770,7 @@ namespace PLang.Modules.DbModule
 					ShowWarning(ex);
 					return (rowsAffected, null);
 				}
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -790,14 +797,14 @@ namespace PLang.Modules.DbModule
 
 				if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 				{
-					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
+					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param, prepare.transaction) as IDictionary<string, object>;
 					Done(prepare.connection);
 
 					return (value.FirstOrDefault().Value, null);
 				}
 				else
 				{
-					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, returnId: true);
+					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction, returnId: true);
 					Done(prepare.connection);
 					if (id != 0)
 					{
@@ -814,7 +821,7 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -909,7 +916,7 @@ namespace PLang.Modules.DbModule
 			long affectedRows = 0;
 			var generator = new IdGenerator(1);
 			var id = generator.ElementAt(0);
-			IDbTransaction? transaction = goal.GetVariable<IDbTransaction>();
+			IDbTransaction? transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
 			if (transaction == null)
 			{
 				await BeginTransaction();
@@ -965,26 +972,51 @@ namespace PLang.Modules.DbModule
 			}
 			if (transaction == null)
 			{
-				await EndTransaction();
+				await EndTransaction(dataSource.Name);
 			}
 
 			return (affectedRows, null);
 
 		}
 
-		private string ConvertFromColumnTypeToCSharpType(string type)
-		{
-			if (type == "TEXT" || type.Equals("string", StringComparison.OrdinalIgnoreCase)) return typeof(String).FullName;
-			if (type == "INTEGER" || type.Equals("int", StringComparison.OrdinalIgnoreCase)) return typeof(long).FullName;
-			if (type == "REAL") return typeof(double).FullName;
-			if (type == "BLOB") return typeof(byte[]).FullName;
-			if (type == "NUMERIC") return typeof(double).FullName;
-			if (type == "BOOLEAN" || type.Equals("bool", StringComparison.OrdinalIgnoreCase)) return typeof(bool).FullName;
-			if (type == "NULL") return typeof(DBNull).FullName;
-			if (type == "BIGINT" || type.Equals("int64", StringComparison.OrdinalIgnoreCase)) return typeof(Int64).FullName;
 
-			throw new Exception($"Could not map type: {type} to C# object");
+		static readonly Dictionary<string, Type> SqliteToClr = new(StringComparer.OrdinalIgnoreCase)
+		{
+			["NULL"] = typeof(DBNull),
+			["INTEGER"] = typeof(long),
+			["INT"] = typeof(long),
+			["REAL"] = typeof(double),
+			["NUMERIC"] = typeof(decimal),
+			["TEXT"] = typeof(string),
+			["STRING"] = typeof(string),
+			["CHAR"] = typeof(string),
+			["CLOB"] = typeof(string),
+			["BLOB"] = typeof(byte[]),
+			["BOOLEAN"] = typeof(bool),
+			["DATE"] = typeof(DateTime),
+			["DATETIME"] = typeof(DateTime),
+			["TIMESTAMP"] = typeof(DateTime),
+			["GUID"] = typeof(Guid)
+		};
+
+		//this is only sqlite support, each database should have it's own implementation
+		static Type? MapType(string declared) =>
+				SqliteToClr.TryGetValue(declared, out var t) ? t
+				: declared.IndexOf("INT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(long)
+				: declared.IndexOf("CHAR", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("CLOB", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("TEXT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(string)
+				: declared.IndexOf("BLOB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(byte[])
+				: declared.IndexOf("REAL", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("FLOA", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("DOUB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(double)
+				: null;
+
+		private string? ConvertFromColumnTypeToCSharpTypeFullName(string type)
+		{
+			return MapType(type)?.FullName;
 		}
+
 
 		private string? GetBulkSql(string tableName, Dictionary<string, object> mapping, List<object> items, bool ignoreContraintOnInsert, ModuleSettings.DataSource dataSource)
 		{
@@ -1054,12 +1086,12 @@ namespace PLang.Modules.DbModule
 			List<ParameterInfo> parameters = new();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
-			(var connection, var par, _, error) = Prepare("", parameters);
+			(var connection, var transaction, var par, _, error) = Prepare("", parameters);
 			if (error != null)
 			{
 				return (string.Empty, error);
 			}
-			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par);
+			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par, transaction);
 
 
 			return (@$"## tables in database ##
@@ -1069,7 +1101,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters)
+		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters, bool isSqlite)
 		{
 			DynamicParameters param = new();
 			if (Parameters == null) return (param, null);
@@ -1125,29 +1157,16 @@ namespace PLang.Modules.DbModule
 						postfix = "%";
 					}
 					var variableValue = variableName; // variableHelper.LoadVariables(variableName);
-					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null) multipleErrors.Add(error);
 
 					param.Add("@" + parameterName, prefix + value + postfix);
 				}
 				else
 				{
-					string prefix = "";
-					string postfix = "";
-					var variableName = p.VariableNameOrValue;
-					if (variableName.ToString().StartsWith("\\%"))
-					{
-						variableName = variableName.ToString().Substring(2);
-						prefix = "%";
-					}
-					if (variableName.ToString().EndsWith("\\%"))
-					{
-						variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\');
-						postfix = "%";
-					}
+					var variableName = WrapForLike(p.VariableNameOrValue);
 
-
-					(object? value, IError? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					(object? value, IError? error) = ConvertObjectToType(variableName, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null)
 					{
 						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
@@ -1166,17 +1185,49 @@ namespace PLang.Modules.DbModule
 
 		}
 
+		private object WrapForLike(object variableName)
+		{
+			if (variableName is not string str) return variableName;
 
-		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
+			if (str.StartsWith("\\%") == true)
+			{
+				variableName = "%" + str.Substring(2);
+			}
+			if (str.EndsWith("\\%") == true)
+			{
+				variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\') + "%";
+
+			}
+			return variableName;
+		}
+
+		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue, bool isSqlite)
 		{
 			// TODO: because of bad structure in building, can be removed when fix
 			if (typeFullName == "String") typeFullName = "System.String";
+			
+
+			if (obj is ObjectValue ov)
+			{
+				obj = ov.Value;
+			}
+			else if (obj is List<ObjectValue> ovList)
+			{
+				List<object?> list = new();
+				ovList.ForEach(p => list.Add(p.Value));
+				obj = list;
+			}
+
+			if (obj is System.DBNull || obj == null) return (null, null);
 
 			Type? targetType = Type.GetType(typeFullName);
 			if (targetType == null)
 			{
-				typeFullName = ConvertFromColumnTypeToCSharpType(typeFullName);
-				targetType = Type.GetType(typeFullName);
+				typeFullName = ConvertFromColumnTypeToCSharpTypeFullName(typeFullName);
+				if (typeFullName != null)
+				{
+					targetType = Type.GetType(typeFullName);
+				}
 			}
 			try
 			{
@@ -1211,8 +1262,10 @@ namespace PLang.Modules.DbModule
 					}
 					return (array, null);
 				}
-
-
+				if (isSqlite && obj is DateTime dt && targetType == typeof(string))
+				{
+					return (dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), null);
+				}
 				return (TypeHelper.ConvertToType(obj, targetType), null);
 			}
 			catch (Exception ex)
@@ -1287,7 +1340,7 @@ namespace PLang.Modules.DbModule
 		private void Done(IDbConnection connection)
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
-			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
 			if (transaction == null && connection != null)
 			{
 				//connection.Close();

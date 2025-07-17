@@ -137,7 +137,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			eventRuntime.Load();
 				
-			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, Goal.NotFound);
 				
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", new Models.GoalToCallInfo("Process"));
@@ -166,7 +166,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp, Goal.NotFound);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process");
@@ -194,7 +194,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.AppError);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.AppError, Goal.NotFound);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process");
@@ -222,9 +222,9 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.EndOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.EndOfApp, Goal.NotFound);
 			// test that both Before and After type works. When app ends there is no difference between Before and After
-			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, Goal.NotFound);
 
 			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process");
@@ -252,7 +252,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.AppError);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.AppError, Goal.NotFound);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process");

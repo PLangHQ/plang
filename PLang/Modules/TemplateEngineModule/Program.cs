@@ -23,16 +23,44 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.TemplateEngineModule
 {
-	[Description("Render html (files) using template engine")]
+	[Description(@"Render template html, files, elements using template engine. plang examples: 
+```
+- render file.html
+- render %content% to #main / will render the variable into the element #main
+- render products.html, %products%, write to %result%
+```")]
 	public class Program : BaseProgram
 	{
-		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
 
-		public Program(IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
+		public Program(IPLangFileSystem fileSystem, MemoryStack memoryStack, IOutputStreamFactory outputStreamFactory)
 		{
-			this.fileSystem = fileSystem;
+			base.memoryStack = memoryStack;
+			base.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
+		}
+
+		static IReadOnlyDictionary<string, HashSet<string>> GetMembers(Template template)
+		{
+			var collector = new MemberCollector();
+			collector.Visit(template.Page);
+			return collector.Members;
+		}
+
+		sealed class MemberCollector : ScriptVisitor
+		{
+			public Dictionary<string, HashSet<string>> Members { get; } =
+				new(StringComparer.OrdinalIgnoreCase);
+
+			public override void Visit(ScriptMemberExpression n)
+			{
+				if (n.Target is ScriptVariableGlobal g && n.Member is ScriptVariableGlobal m)
+				{
+					Members.TryAdd(g.Name, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+					Members[g.Name].Add(m.Name);
+				}
+				base.Visit(n);
+			}
 		}
 
 		[Description("Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into")]
@@ -41,16 +69,16 @@ namespace PLang.Modules.TemplateEngineModule
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
 			{
-				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function));
+				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function, StatusCode: 404));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
-			var result = await RenderContent(content, fullPath);
+			var result = await RenderContent(content, fullPath, variables);
 
 			if (result.Error != null) return (result.Result, result.Error);
 
 			if (!writeToOutputStream) return result;
 
-			if (outputStreamFactory != null && (function.ReturnValues == null || function.ReturnValues.Count == 0))
+			if (outputStreamFactory != null && (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
 				await outputStreamFactory.CreateHandler().Write(result.Result);
 			}
@@ -58,7 +86,7 @@ namespace PLang.Modules.TemplateEngineModule
 			return result;
 		}
 
-		public async Task<(string? Result, IError? Error)> RenderContent(string content, string fullPath, Dictionary<string, object?>? variables = null)
+		public async Task<(string? Result, IError? Error)> RenderContent(string content, string? fullPath = null, Dictionary<string, object?>? variables = null)
 		{
 
 			var templateContext = new TemplateContext();
@@ -66,20 +94,26 @@ namespace PLang.Modules.TemplateEngineModule
 
 
 
-			if (memoryStack != null)
-			{
-				foreach (var kvp in memoryStack.GetMemoryStack())
-				{
-					var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
-					templateContext.SetValue(sv, kvp.Value);
-				}
-			}
+			
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
 				{
 					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
 					templateContext.SetValue(sv, kvp.Value);
+				}
+			}
+
+			if (memoryStack != null)
+			{
+				foreach (var kvp in memoryStack.GetMemoryStack())
+				{					
+					if (!ContainsVariable(kvp.Name, templateContext))
+					{
+						var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
+						templateContext.SetValue(sv, kvp.Value);
+					}
+					
 				}
 			}
 
@@ -91,13 +125,16 @@ namespace PLang.Modules.TemplateEngineModule
 			try
 			{
 				var parsed = Template.Parse(content);
+				//var members = GetMembers(parsed);
+
 				var result = await parsed.RenderAsync(templateContext);
 
 				return (result, null);
 			}
 			catch (ScriptRuntimeException ex)
 			{
-				var relativeFilePath = fullPath.AdjustPathToOs().Replace(fileSystem.RootDirectory, "");
+
+				var relativeFilePath = (string.IsNullOrEmpty(fullPath)) ? "" : fullPath.AdjustPathToOs().Replace(fileSystem.RootDirectory, "");
 				var innerException = ex.InnerException as ScriptRuntimeException ?? ex;
 				string message;
 				string pattern = @"\((\d+),(\d+)\)";

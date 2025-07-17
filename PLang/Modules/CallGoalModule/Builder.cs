@@ -9,6 +9,7 @@ using PLang.Errors.Builder;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Utils;
+using System.Diagnostics;
 
 namespace PLang.Modules.CallGoalModule
 {
@@ -21,10 +22,13 @@ namespace PLang.Modules.CallGoalModule
 
 		public Builder(IGoalParser goalParser, PrParser prParser, MemoryStack memoryStack, ILogger logger)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"        - Start constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");
 			this.goalParser = goalParser;
 			this.prParser = prParser;
 			this.memoryStack = memoryStack;
 			this.logger = logger;
+			logger.LogDebug($"        - End constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
@@ -94,37 +98,33 @@ The parameters provided in <function> might not be correct, these are the legal 
 		}
 		public async Task<(Instruction?, IBuilderError?)> BuilderRunGoal(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"      - run BuilderRunGoal on {step.Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
 			if (gf.Parameters == null || gf.Parameters.Count == 0)
 			{
 				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
 			}
 
-			var goalName = gf.GetParameter<GoalToCallInfo>("goalInfo");
-			if (goalName == null)
+			var goalToCall = gf.GetParameter<GoalToCallInfo>("goalInfo");
+			if (goalToCall == null)
 			{
 				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
 			}
 
-			if (goalName.Name.Contains("%"))
+			if (goalToCall.Name.Contains("%"))
 			{
 				return (instruction, null);
 			}
-			
+			logger.LogDebug($"      - getting goals - {stopwatch.ElapsedMilliseconds}");
+			var disableSystemGoals = gf.GetParameter<bool>("disableSystemGoals");
+			var goals = goalParser.GetGoals();
+			var systemGoals = (disableSystemGoals) ? new() : prParser.GetSystemGoals();
 
-			if (allGoals == null)
-			{
-				allGoals = goalParser.GetAllGoals();
-			}
-			var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Name.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
-			if (goalsFound.Count == 0)
-			{
-				return (null, new StepBuilderError($"Could not find {goalName}", step, "GoalNotFound"));
-			} else if (goalsFound.Count > 1)
-			{
-				//todo: we should only find one goal, otherwise use should define it better
-				//logger.LogWarning($"Found {goalsFound.Count} goals containing {goalName}, must be improved");
-			}
+			(var goal, var error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, goalToCall, goals, systemGoals);
+			if (error != null) return (instruction, new BuilderError(error));
 
+			logger.LogDebug($"      - found goal - {stopwatch.ElapsedMilliseconds}");
+			goalToCall.Path = goal.RelativePrPath;
 
 			var parameters = gf.Parameters;
 			if (parameters == null) return (instruction, null);
@@ -133,7 +133,10 @@ The parameters provided in <function> might not be correct, these are the legal 
 			{
 				memoryStack.PutForBuilder(parameter.Name, parameter.Type);
 			}
+			gf = gf.SetParameter("goalInfo", goalToCall);
+			instruction = instruction with { Function = gf };
 
+			logger.LogDebug($"      - done with BuilderRunGoal - {stopwatch.ElapsedMilliseconds}");
 			return (instruction, null);
 		}
 

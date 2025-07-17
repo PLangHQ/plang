@@ -1,0 +1,11 @@
+Ask
+- ask user "Say hi", write to %answer%
+- write out %answer%
+- ask user "Give me number between 1-5"
+    validation: number must be between 1-5
+    write to %answer%
+- write out %answer%
+- ask user "What option would you like", 
+    options: "Yes", "No"
+    write to %answer%
+- write out %answer%

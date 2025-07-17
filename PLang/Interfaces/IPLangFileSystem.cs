@@ -13,6 +13,7 @@ namespace PLang.Interfaces
 		public string GoalsPath { get; }
 		public string BuildPath { get; }
 		public string DbPath { get; }
+		string SystemDirectory { get; }
 		string OsDirectory { get; }
 		string Id { get; init; }
 

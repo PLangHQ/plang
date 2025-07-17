@@ -1,5 +1,7 @@
-﻿using PLang.Errors;
+﻿using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System;
@@ -25,18 +27,25 @@ namespace PLang.Services.OutputStream
 
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
+		public GoalStep Step { get; set; }
 
 		public string Output => "text";
 		public bool IsStateful => false;
 
-		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public bool IsFlushed { get; set; }
+		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
+			throw new NotImplementedException("WebsocketOutputStream.Ask");
+
 			using var ms = new MemoryStream();
 			var jsonOutputStream = new JsonOutputStream(ms, Encoding.UTF8, IsStateful);
-			(_, var error) = await jsonOutputStream.Ask(text, type, statusCode, parameters, callback, options);
+			(_, error) = await jsonOutputStream.Ask(askOptions, callback, error);
 			if (error != null) return (null, error);
 
 			await webSocket.SendAsync(ms.ToArray(), WebSocketMessageType.Text, true, CancellationToken.None);
+			IsFlushed = true;
 			return (null, null);
 		}
 
@@ -51,7 +60,7 @@ namespace PLang.Services.OutputStream
 
 			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString()!);
 			await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-
+			IsFlushed = true;
 		}
 
 		public virtual void Dispose()

@@ -1,0 +1,4 @@
+SendEmail
+- write out "Sending email %emailMessage%"
+/- post "https://email.plang.io", %emailMessage%, write to %result%
+- return %result%

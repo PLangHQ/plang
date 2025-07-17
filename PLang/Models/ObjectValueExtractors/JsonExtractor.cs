@@ -5,6 +5,7 @@ using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PLang.Models.ObjectValueExtractors
 {
@@ -29,8 +30,9 @@ namespace PLang.Models.ObjectValueExtractors
 					   .FirstOrDefault(p => string.Equals(p.Name, segment.Value, StringComparison.OrdinalIgnoreCase))
 					   ?.Value;
 				if (token == null) return null;
-
-				return new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
+			
+				var ov = new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
+				return ov;
 			}
 			else if (jToken is JArray jArray)
 			{
@@ -62,7 +64,15 @@ namespace PLang.Models.ObjectValueExtractors
 						tokens.Add(token);
 					}
 				}
-
+				object? obj = null;
+				if (segment.Value.Equals("first", StringComparison.OrdinalIgnoreCase)) obj = jArray.FirstOrDefault();
+				if (segment.Value.Equals("random", StringComparison.OrdinalIgnoreCase)) obj = jArray.OrderBy(x => Guid.NewGuid()).ToList();
+				if (segment.Value.Equals("last", StringComparison.OrdinalIgnoreCase)) obj = jArray.LastOrDefault();
+				if (segment.Value.Equals("count", StringComparison.OrdinalIgnoreCase)) obj = jArray.Count();
+				if (obj != null)
+				{
+					return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
+				}
 				if (tokens.Count == 0)
 				{
 					var objectExtractor = new ObjectExtractor(jArray, parent);

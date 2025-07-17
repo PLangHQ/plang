@@ -1,2 +1,0 @@
-BuildEvents
-- before builder ends, call goal !/events/external/plang/Builder/CheckGoals

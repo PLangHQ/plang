@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Attributes;
 using Newtonsoft.Json.Linq;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Utils;
 using System;
@@ -108,6 +109,9 @@ namespace PLang.Models
 			this.name = name.Replace("!", "");
 			this.parameters = parameters ?? new();
 		}
+
+		[LlmIgnore]
+		public string Path { get; set; }
 
 		public string Name
 		{

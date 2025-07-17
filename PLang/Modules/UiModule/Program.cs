@@ -1,24 +1,26 @@
 ﻿using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Utilities.Zlib;
+using PLang.Attributes;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
-using Scriban.Syntax;
 using Scriban;
+using Scriban.Syntax;
+using Sprache;
+using System;
 using System.ComponentModel;
 using System.Dynamic;
 using System.IO.Compression;
-using static System.Net.Mime.MediaTypeNames;
-using System;
-using PLang.Models;
-using Org.BouncyCastle.Asn1;
-using PLang.Errors.Runtime;
-using PLang.Errors;
-using Sprache;
 using System.Threading;
+using static PLang.Modules.UiModule.Program;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PLang.Modules.UiModule
 {
@@ -26,21 +28,188 @@ namespace PLang.Modules.UiModule
 	{
 		Task Flush();
 	}
-	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector")]
+	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI")]
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
-
+		private string? clientTarget;
 		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
 		{
 			this.outputStreamFactory = outputStream;
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
+
+			clientTarget = memoryStack.Get("!target") as string;
+		}
+		public enum Type { css, js };
+		[Description("Type=css|js")]
+		public record UiFrameworkFile(Type Type, string Path);
+		public record UiFramework(string Name = "default", List<string>? TargetDevices = null, List<UiFrameworkFile>? Types = null);
+		public async Task SetFrameworks(UiFramework framework)
+		{
+			var variable = GetProgramModule<VariableModule.Program>();
+			var storedFrameworks = await variable.GetSettings<List<UiFramework>>("UiFrameworks");
+
+			if (storedFrameworks == null)
+			{
+				storedFrameworks = new List<UiFramework>();
+				storedFrameworks.Add(framework);
+			}
+			else
+			{
+				var idx = storedFrameworks.FindIndex(p => p.Name.Equals(framework.Name, StringComparison.OrdinalIgnoreCase));
+				if (idx != -1)
+				{
+					storedFrameworks[idx] = framework;
+				}
+				else
+				{
+					storedFrameworks.Add(framework);
+				}
+			}
+			
+			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
+			goal.AddVariable(framework);
+		}
+
+		[Description("Device=web|desktop|mobile|tablet|console|tv|watch|other")]
+		public record LayoutOptions(string Name = "default", string DefaultRenderVariable = "main",
+			[IsBuiltParameter("File")]
+			string OutputFile = "/ui/{name}/layout.html", string Device = "desktop");
+		[Description("set the layout for the gui")]
+		public async Task<(List<LayoutOptions>, IError?)> SetLayout(LayoutOptions options)
+		{
+			// read readme.md in /ui/template/{default}/readme.md, allowReadFromSystem = true
+			// read /outputfile, "" if empty
+			// ask llm, creata layout for me, %readme%
+			// write to output file
+
+			
+
+
+			context.TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			if (layouts == null)
+			{
+				layouts = new List<LayoutOptions>();
+			}
+
+			var idx = layouts.FindIndex(p => p.Name == options.Name);
+			if (idx == -1)
+			{
+				layouts.Add(options);
+			}
+			else
+			{
+				layouts[idx] = options;
+			}
+			context.AddOrReplace("Layouts", layouts);
+			return (layouts, null);
 		}
 
 
+		public enum DomMemberKind
+		{
+			Property,      // innerHTML, className, etc.
+			Attribute,     // data-id, src, …
+			Style,         // backgroundColor, width, …
+			Event,          // click, change, …
+		}
+
+		[Description("Member should match case sensitive the javascript member attribute, e.g. innerHTML")]
+		public record DomInstruction(string Selector, string Member, object? Value, DomMemberKind Kind = DomMemberKind.Property);
+		public async Task<IError?> SetElement(List<DomInstruction> domInstructions)
+		{
+			var outputStream = outputStreamFactory.CreateHandler();
+			await outputStream.Write(domInstructions);
+			return null;
+
+		}
+
+		public record DomRemove(string Selector);
+		[Description("Remove/delete an element by a css selector")]
+		public async Task<IError?> RemoveElement(List<DomRemove> domRemoves)
+		{
+			var outputStream = outputStreamFactory.CreateHandler();
+			await outputStream.Write(domRemoves);
+			return null;
+
+		}
+
+		public record JavascriptFunction(string MethodName, Dictionary<string, object> Parameters);
+		public async Task<IError?> ExecuteJavascript(JavascriptFunction javascriptFunction)
+		{
+			var outputStream = outputStreamFactory.CreateHandler();
+			await outputStream.Write(javascriptFunction);
+			return null;
+		}
+
+		private LayoutOptions? GetLayoutOptions(string? name = null)
+		{
+			context.TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			if (layouts == null)
+			{
+				return null;
+			}
+			if (string.IsNullOrEmpty(name))
+			{
+				name = "default";
+			}
+
+			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+		}
+
+
+		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
+		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null, string? Target = null, string LayoutName = "default", bool RenderToOutputstream = false);
+		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
+```plang
+- render product.html => renderToOutputstream = true
+- render frontpage.html, write to %html% => renderToOutputstream = false
+```")]
+		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
+		{
+			var filePath = GetPath(options.FileName);
+			if (!fileSystem.File.Exists(filePath))
+			{
+				return (null, new ProgramError($"Template file {options.FileName} not found", goalStep, StatusCode: 404));
+			}
+
+			var html = await fileSystem.File.ReadAllTextAsync(filePath);
+
+			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
+			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
+			if (error != null) return (content, error);
+
+			var outputStream = outputStreamFactory.CreateHandler();
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax"))
+			{
+				var layoutOptions = GetLayoutOptions();
+
+				if (layoutOptions != null)
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add(layoutOptions.DefaultRenderVariable, content);
+
+					(content, error) = await templateEngine.RenderFile(layoutOptions.OutputFile, parameters, options.RenderToOutputstream);
+
+					if (error != null) return (content, error);
+
+					return (content, null);
+				}
+			}
+
+			if (options.RenderToOutputstream)
+			{
+
+				await outputStreamFactory.CreateHandler().Write(content);
+			}
+
+			return (options, null);
+		}
+		public record Html(string Value, string? TargetElement = null);
 		public async Task<(string?, IError?)> RenderImageToHtml(string path)
 		{
 			var param = new Dictionary<string, object?>();
@@ -52,242 +221,9 @@ namespace PLang.Modules.UiModule
 			return (html, null);
 		}
 
-		private string EscapeTextForJavascript(string content)
+		public Task Flush()
 		{
-			return string.IsNullOrEmpty(content) ? "''" : JsonConvert.ToString(content); ;
-		}
-
-		public async Task SetInputValue(string cssSelector, string value = "")
-		{
-			string escapedHtmlContent = EscapeTextForJavascript(value);
-			await ExecuteJavascript($"updateContent({escapedHtmlContent}, '{cssSelector}')");
-		}
-
-
-		[Description("Executes javascript code. The javascript code should be structure in following way: (function() { function nameOfFunction() { // System;your job is to create the code here } nameOfFunction(); }")]
-		public async Task ExecuteJavascript(string javascript)
-		{
-			if (string.IsNullOrEmpty(javascript)) return;
-
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is not UIOutputStream)
-			{
-				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
-			}
-
-			var os = (UIOutputStream)outputStream;
-			os.MemoryStack = memoryStack;
-			os.Goal = goal;
-			os.GoalStep = goalStep;
-			await os.IForm.ExecuteCode(javascript);
-
-
-		}
-
-		[Description("Set the target request in the whole app. User input is on the lines of `- set default target...`")]
-		public async Task SetAsDefaultTargetElement(string cssSelector)
-		{
-			context.AddOrReplace(ReservedKeywords.DefaultTargetElement, cssSelector);
-		}
-
-		public record OutputTarget(string[] cssSelectors,
-			[Description("replace|replaceOuter|appendTo|afterElement|beforeElement|prependTo|insertAfter|insertBefore")]
-			string elementPosition = "replace",
-			bool overwriteIfExists = true, string? overwriteElement = null);
-
-		[Description("Tells the output where to write the content in the UI.")]
-		public async Task<IError?> SetTargetElement(
-			[Description("where to place content")]
-			string[] cssSelectors,
-			[Description("replace|replaceOuter|appendTo|afterElement|beforeElement|prependTo|insertAfter|insertBefore")]
-			string elementPosition = "replace",
-			bool overwriteIfExists = true, string? overwriteElement = null)
-		{
-
-			if (cssSelectors == null || cssSelectors.Length == 0)
-			{
-				return new ProgramError("You haven't defined any target element. Either remove the step to use the default target or define a target"
-					, goalStep, function,
-					FixSuggestion: $@"Here are examples of how to write step to target an element:
-	- append content to #chatWindow
-	- replace everyting in #main
-	- set as outerText of #text
-	- put content before #mydata starts
-				");
-			}
-			var outputTarget = new OutputTarget(cssSelectors, elementPosition, overwriteIfExists, overwriteElement);
-
-			memoryStack.Put(ReservedKeywords.OutputTarget, outputTarget, goalStep: goalStep);
-			return null;
-		}
-		/*
-		public async Task AppendToElement(string cssSelector, string? html = null, string? css = null, string? javascript = null)
-		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is ConsoleOutputStream)
-			{
-				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
-			}
-			if (css != null && !css.Contains("<style")) css = $"<style>{css}</style>";
-			if (javascript != null && !javascript.Contains("<script")) javascript = $"<script>{javascript}</script>";
-			string content = css + "\n" + html + "\n" + javascript;
-			content = variableHelper.LoadVariables(content).ToString();
-
-			if (string.IsNullOrEmpty(content)) return;
-
-			var os = (UIOutputStream)outputStream;
-			os.MemoryStack = memoryStack;
-			os.Goal = goal;
-			os.GoalStep = goalStep;
-			await os.IForm.ModifyContent(cssSelector, content, "beforeend");
-
-			var nextStep = goalStep.NextStep;
-			while (nextStep != null && nextStep.Indent > 0)
-			{
-				nextStep.Execute = true;
-				nextStep = nextStep.NextStep;
-			}
-		}*/
-
-
-		[Description("Will generate html from user input. It might start with an element name")]
-		public async Task RenderHtml(string? html = null, string? css = null, string? javascript = null, List<string>? variables = null)
-		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is not UIOutputStream os)
-			{
-				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
-			}
-
-			string content = css + "\n" + html + "\n" + javascript;
-			if (string.IsNullOrEmpty(content)) return;
-
-			os.MemoryStack = memoryStack;
-			os.Goal = goal;
-			os.GoalStep = goalStep;
-
-			var nextStep = goalStep.NextStep;
-			while (nextStep != null && nextStep.Indent > 0)
-			{
-				nextStep.Execute = true;
-				nextStep = nextStep.NextStep;
-			}
-			SetupCssAndJsFiles();
-
-			var indent = goal.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
-			indent += goalStep.Indent;
-			AddToTree(content, indent);
-		}
-
-		[Description("status(primary|success|warning|danger), position(top-left|top-center|top-right|bottom-left|bottom-center|bottom-right), icon(UIkit icon e.g. icon: check|uri)")]
-		public async Task ShowNotification(string message, string status = "primary", string position = "top-center",
-				int timeout = 5000, string? id = null, string? icon = null, string? group = null)
-		{
-			if (icon != null)
-			{
-				if (icon.Contains("."))
-				{
-					message = @$"<span><img class=""notification_icon"" src=""{icon}""></span>" + message;
-				}
-				else
-				{
-					message = @$"<span uk-icon='{icon}'></span>" + message;
-				}
-			}
-			message = EscapeTextForJavascript(message);
-			await ExecuteJavascript(@$"plangUi.showNotification(""{message}"", {{status: '{status}', position: '{position}', timeout: {timeout}, group: '{group}', id:'{id}' }})");
-		}
-
-		public async Task CloseNotification(string? id = null, string? group = null)
-		{
-			await ExecuteJavascript(@$"plangUi.hideNoticiation('{id}', '{group}');");
-		}
-
-		private void AddToTree(object? obj, int indent)
-		{
-			if (obj == null) return;
-
-			var root = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
-			if (root == null)
-			{
-				root = new GoalTree<string>("", -1);
-				root.StepHash = goalStep.Hash;
-				root.GoalHash = goal.Hash;
-				context.AddOrReplace(ReservedKeywords.GoalTree, root);
-			}
-
-			var nodeToAddTo = GetNodeToAddByIndent(root.Current, indent);
-			var newNode = new GoalTree<string>(obj.ToString(), indent);
-			newNode.StepHash = goalStep.Hash; // goalStep.Hash;
-			newNode.GoalHash = goal.Hash; //goal.Hash;
-			nodeToAddTo.AddChild(newNode);
-			root.Current = newNode;
-
-		}
-
-		private GoalTree<string> GetNodeToAddByIndent(GoalTree<string> node, int indent)
-		{
-			if (node.Indent < indent) return node;
-			if (indent == 0) return context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
-			if (node.Indent == indent) return node.Parent;
-
-			return GetNodeToAddByIndent(node.Parent, indent);
-		}
-
-		private GoalTree<string>? GetNodeToAdd(GoalTree<string>? node)
-		{
-			if (node == null) return null;
-			if (node.Value.Contains("{{ ChildElement")) return node;
-			return GetNodeToAdd(node.Parent);
-		}
-
-
-		public async Task Flush()
-		{
-			var root = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
-			if (root == null) return;
-
-			var os = outputStreamFactory.CreateHandler();
-			if (os is UIOutputStream)
-			{
-				var stringContent = root.PrintTree();
-				var html = await CompileAndRun(stringContent);
-				await os.Write(html);
-				//((UIOutputStream)os).Flush();
-			}
-		}
-
-		private async Task<string> CompileAndRun(object? obj)
-		{
-			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
-			var templateContext = new TemplateContext();
-			foreach (var kvp in memoryStack.GetMemoryStack())
-			{
-				expandoObject.Add(kvp.Name, kvp.Value);
-
-				var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
-				templateContext.SetValue(sv, kvp.Value);
-			}
-
-			var parsed = Template.Parse(obj.ToString());
-			var result = await parsed.RenderAsync(templateContext);
-
-			return result;
-		}
-
-
-		private void SetupCssAndJsFiles()
-		{
-
-			if (!fileSystem.File.Exists("ui/assets/htmx.min.js"))
-			{
-
-				using (MemoryStream ms = new MemoryStream(InternalApps.js_css))
-				using (ZipArchive archive = new ZipArchive(ms))
-				{
-					archive.ExtractToDirectory(Path.Join(fileSystem.GoalsPath, "ui", "assets"), true);
-				}
-			}
+			throw new NotImplementedException();
 		}
 	}
 

@@ -15,10 +15,16 @@ namespace PLang.Errors.Builder
 			{
 				this.ContinueBuild = be.ContinueBuild;
 			}
+			if (error is not IBuilderError)
+			{
+				this.ErrorChain.Add(error);
+			}
+
 			if (error.ErrorChain != null && error.ErrorChain.Count > 0)
 			{
 				this.ErrorChain.AddRange(error.ErrorChain);
 			}
+			
 		}
 
 		public BuilderError(string Message, string Key = "Builder", int StatusCode = 400, bool ContinueBuild = true,

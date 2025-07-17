@@ -38,7 +38,7 @@ namespace PLang.Modules.DbModule
 		}
 	}
 
-	public class Row : Dictionary<string, object>
+	public class Row : Dictionary<string, object?>
 	{
 		private readonly Table table;
 
@@ -52,7 +52,7 @@ namespace PLang.Modules.DbModule
 			get { return this.Keys.Select(p => p); }
 		}
 
-		public new object this[string key]
+		public new object? this[string key]
 		{
 			get
 			{
@@ -66,9 +66,9 @@ namespace PLang.Modules.DbModule
 			set => base[key] = value;
 		}
 
-		internal T Get<T>(string v)
+		internal T? Get<T>(string v)
 		{
-			return (T)this[v];
+			return (T?)this[v];
 		}
 		/*
 DynamicMetaObject IDynamicMetaObjectProvider.GetMetaObject(System.Linq.Expressions.Expression parameter)

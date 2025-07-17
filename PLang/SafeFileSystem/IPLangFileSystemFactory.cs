@@ -28,7 +28,7 @@ namespace PLang.SafeFileSystem
 		public IPLangFileSystem CreateHandler()
 		{
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			if (!fileSystem.RootDirectory.Equals(fileSystem.OsDirectory)) return fileSystem;
+			if (!fileSystem.RootDirectory.Equals(fileSystem.SystemDirectory)) return fileSystem;
 
 			var parentEngine = container.GetInstance<IEngine>("ParentEngine");
 			if (parentEngine == null) throw new Exception($"Did not expect ParentEngine to be null.{ErrorReporting.CreateIssueShouldNotHappen}");

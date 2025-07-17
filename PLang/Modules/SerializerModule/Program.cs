@@ -49,9 +49,12 @@ namespace PLang.Modules.SerializerModule
 
 					return null;
 				}
+			} else if (serializer == "raw")
+			{
+
 			}
 
-			var writer = new ArrayBufferWriter<byte>();
+				var writer = new ArrayBufferWriter<byte>();
 			MessagePackSerializer.Serialize(writer, data);
 			return writer.WrittenSpan.ToArray(); //I should be return ReadOnlySpan<byte>
 		}

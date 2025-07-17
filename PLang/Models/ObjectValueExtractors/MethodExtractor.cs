@@ -1,10 +1,11 @@
-﻿using NCalc.Helpers;
+﻿
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using Org.BouncyCastle.Crypto;
 using PLang.Exceptions;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
+using PLang.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			IList? list = null;
 			if (obj is JValue) obj = obj.ToString();
-			if (obj is IList tmp && tmp.Count > 0)
+			if (obj is not JToken && obj is IList tmp && tmp.Count > 0)
 			{
 				list = tmp;
 				obj = list[0];
@@ -88,11 +89,20 @@ namespace PLang.Models.ObjectValueExtractors
 				}
 				catch (Exception ex)
 				{
-					throw;
+
+
+					continue;
 				}
 			}
 
+
+			if (isBuilder)
+			{
+				return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
+			}
+			
 			throw new NotImplementedException($"Could not find method '{methodDescription}' on %{parent.Name}.{methodDescription}%");
+			
 		}
 
 		private (IEnumerable<MethodInfo>, object? obj) GetMethodsOnDifferentType(object obj, string methodName, List<object> paramValues)
@@ -209,65 +219,73 @@ namespace PLang.Models.ObjectValueExtractors
 
 		}
 
-		private static object[]? GetParameters(MemoryStack? memoryStack, List<object> paramValues, MethodInfo method)
+		private static object?[]? GetParameters(MemoryStack? memoryStack, List<object> paramValues, MethodInfo method)
 		{
 			var parameters = method.GetParameters();
-			object[] convertedParams = new object[parameters.Length];
-
-			for (int i = 0; i < parameters.Length; i++)
+			object?[] convertedParams = new object[parameters.Length];
+			try
 			{
-				var paramType = parameters[i].ParameterType;
-				if (paramType == typeof(string))
+				for (int i = 0; i < parameters.Length; i++)
 				{
-					var paramValue = paramValues[i].ToString().Trim()
-							.Replace("\\\\", "\\").Replace("\\\"", "\"");
-					if (paramValue.StartsWith("\"") && paramValue.EndsWith("\""))
+					var paramType = parameters[i].ParameterType;
+					if (paramType == typeof(string))
 					{
-						paramValue = paramValue.Substring(1, paramValue.Length - 2);
-					}
-					convertedParams[i] = paramValue;
-				}
-				else if (paramValues[i].GetType() == paramType)
-				{
-					convertedParams[i] = paramValues[i];
-				}
-				else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[i] is IEnumerable)
-				{
-					convertedParams[i] = paramValues[i];
-					method = method.MakeGenericMethod(paramValues[i].GetType().GetGenericArguments()[0]);
-				}
-				else
-				{
-					string strValue = paramValues[i].ToString() ?? "";
-					if (strValue.StartsWith("\"") && strValue.EndsWith("\""))
-					{
-						if (paramType.Name == "Char" && strValue.Length == 3)
+						var paramValue = paramValues[i].ToString().Trim()
+								.Replace("\\\\", "\\").Replace("\\\"", "\"");
+						if (paramValue.StartsWith("\"") && paramValue.EndsWith("\""))
 						{
-							strValue = strValue.Replace("\"", "");
+							paramValue = paramValue.Substring(1, paramValue.Length - 2);
 						}
-						if (paramType.Name == "Char" && strValue.Length > 1)
-						{
-							return null;
-						}
-						convertedParams[i] = Convert.ChangeType(strValue, paramType);
+						convertedParams[i] = paramValue;
 					}
-					else if (memoryStack != null)
+					else if (paramValues[i].GetType() == paramType)
 					{
-						var value = memoryStack.Get(paramValues[i].ToString());
-						if (value != null)
+						convertedParams[i] = paramValues[i];
+					}
+					else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[i] is IEnumerable)
+					{
+						convertedParams[i] = paramValues[i];
+						method = method.MakeGenericMethod(paramValues[i].GetType().GetGenericArguments()[0]);
+					}
+					else
+					{
+						string strValue = paramValues[i].ToString() ?? "";
+						if (strValue.StartsWith("\"") && strValue.EndsWith("\""))
 						{
-							convertedParams[i] = Convert.ChangeType(value, paramType);
+							if (paramType.Name == "Char" && strValue.Length == 3)
+							{
+								strValue = strValue.Replace("\"", "");
+							}
+							if (paramType.Name == "Char" && strValue.Length > 1)
+							{
+								return null;
+							}
+							convertedParams[i] = TypeHelper.ConvertToType(strValue, paramType);
+						}
+						else if (memoryStack != null)
+						{
+							var value = memoryStack.Get(paramValues[i].ToString());
+							if (value != null)
+							{
+								convertedParams[i] = TypeHelper.ConvertToType(value, paramType);
+							}
+							else
+							{
+								convertedParams[i] = TypeHelper.ConvertToType(paramValues[i], paramType);
+							}
 						}
 						else
 						{
-							convertedParams[i] = Convert.ChangeType(paramValues[i], paramType);
+							convertedParams[i] = TypeHelper.ConvertToType(paramValues[i], paramType);
 						}
-					} else
-					{
-						convertedParams[i] = Convert.ChangeType(paramValues[i], paramType);
 					}
+
 				}
-				
+			}
+			catch (Exception ex)
+			{
+				int i = 0;
+				return null;
 			}
 			return convertedParams;
 		}

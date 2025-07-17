@@ -63,7 +63,7 @@ namespace PLangTests.Modules.LlmModule
 				{
 					new ReturnValue("string", "markup")
 				};
-				var gf = new GenericFunction("", "AskLlm", new(), rf);
+				var gf = new GenericFunction("", "AskLlm", [], rf);
 				propertyInfo.SetValue(p, gf); // Replace 'valueToSet' with the actual value you want to set
 			}
 

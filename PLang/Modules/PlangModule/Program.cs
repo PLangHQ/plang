@@ -78,7 +78,7 @@ namespace PLang.Modules.PlangModule
 				return (null, new ProgramError($"No goals found at {fileOrFolderPath}, the absolute path is: {path}"));
 			}*/
 
-			if (propertiesToExtract?.Count == 0) return (goals, null);
+			if (propertiesToExtract == null || propertiesToExtract.Count == 0) return (goals, null);
 
 			JArray array = new JArray();
 			foreach (var goal in goals)
@@ -166,7 +166,7 @@ namespace PLang.Modules.PlangModule
 			return scheme;
 		}
 		/*
-		 * TODO: Dictionary<string, object?> Parameters should be Parameters class, or just parameter, that is better 
+		 * TODO: Dictionary<string, object?> Parameters should be Parameters class 
 		 * */
 		public async Task<(object obj, IError?)> RunModule(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
 		{
@@ -341,7 +341,7 @@ namespace PLang.Modules.PlangModule
 
 			//engine.GetContext().Remove(ReservedKeywords.IsEvent);
 
-			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
+			fileAccessHandler.GiveAccess(fileSystem.SystemDirectory, fileSystem.GoalsPath);
 			if (parameters != null)
 			{
 				var ms = engine.GetMemoryStack();
@@ -364,11 +364,14 @@ namespace PLang.Modules.PlangModule
 					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly."));
 			}
 			var absoluteFilePath = GetPath(prFileName);
-			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
+			fileAccessHandler.GiveAccess(fileSystem.SystemDirectory, fileSystem.GoalsPath);
 			if (!fileSystem.File.Exists(absoluteFilePath))
 			{
 				return (null, new ProgramError($"The file {prFileName} could not be found. I searched for it at {absoluteFilePath}", goalStep, function));
 			}
+			// todo: attaching debugger and running from step does not work for http requests
+			// Run from step should also be a callback, like is done on websites (stateless)
+			// this validates that the user sending calls RunFromStep is valid
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 
@@ -402,7 +405,7 @@ namespace PLang.Modules.PlangModule
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step, StatusCode: 404));
 			}
 			
 			newStep.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);

@@ -12,8 +12,7 @@ using System.ComponentModel;
 namespace PLang.Modules.CallGoalModule
 {
 	[Description("Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangAppsRepository appsRepository, PrParser prParser,
-		IPLangFileSystem fileSystem, IFileAccessHandler fileAccessHandler, VariableHelper variableHelper) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser) : BaseProgram()
 	{
 
 		[Description("Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \"Start\" when it cannot be mapped")]
@@ -30,7 +29,7 @@ namespace PLang.Modules.CallGoalModule
 			{
 				return (null, new ProgramError($"Could not find goal {appToCall.Name} in {appToCall.AppName}", goalStep, function));
 			}
-
+			
 			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appToCall.AppName + "_" + appToCall.Name);
 
 			try
@@ -70,7 +69,8 @@ namespace PLang.Modules.CallGoalModule
 
 		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
 		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
-			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
+			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, 
+			bool isolated = false, bool disableSystemGoals = false, bool isEvent = false)
 		{
 			try
 			{
@@ -79,12 +79,17 @@ namespace PLang.Modules.CallGoalModule
 				var context = engine.GetContext();
 
 				var result = await pseudoRuntime.RunGoal(engine, context, path, goalInfo, goal,
-						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
+						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated, disableSystemGoals, isEvent);
 
 				if (result.error is Return ret)
 				{
 					return (ret.ReturnVariables, null);
 				}
+				if (result.error is EndGoal endGoal && (goal == null || GoalHelper.IsPartOfCallStack(goal, endGoal)) && endGoal.Levels == 0)
+				{
+					return (result.Variables, null);
+				}
+
 				return (result.Variables, result.error);
 			} catch (Exception ex)
 			{
@@ -94,7 +99,7 @@ namespace PLang.Modules.CallGoalModule
 
 		}
 
-
+		/*
 		private void ValidateAppInstall(string goalToRun)
 		{
 			if (string.IsNullOrEmpty(goalToRun)) return;
@@ -112,7 +117,7 @@ namespace PLang.Modules.CallGoalModule
 			appsRepository.InstallApp(appName);
 
 
-		}
+		}*/
 
 
 	}

@@ -1,4 +1,5 @@
-﻿using IdGen;
+﻿using Epiforge.Extensions.Components;
+using IdGen;
 using LightInject;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -33,7 +34,7 @@ namespace PLang.Modules
 {
 	public abstract class BaseProgram
 	{
-		private HttpListenerContext? _listenerContext = null;
+		private HttpContext? _listenerContext = null;
 
 		protected MemoryStack memoryStack;
 		protected Goal goal;
@@ -43,18 +44,18 @@ namespace PLang.Modules
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
 		protected IGenericFunction function;
-		private ILlmServiceFactory llmServiceFactory;
-		private ILogger logger;
-		private IServiceContainer container;
-		private IAppCache appCache;
-		private IOutputStreamFactory outputStreamFactory;
-		private IPLangFileSystem fileSystem;
-		private MethodHelper methodHelper;
-		private IFileAccessHandler fileAccessHandler;
-		private IAskUserHandlerFactory askUserHandlerFactory;
-		private ISettings settings;
+		protected ILlmServiceFactory llmServiceFactory;
+		protected ILogger logger;
+		protected IServiceContainer container;
+		protected IAppCache appCache;
+		protected IOutputStreamFactory outputStreamFactory;
+		protected IPLangFileSystem fileSystem;
+		protected MethodHelper methodHelper;
+		protected IFileAccessHandler fileAccessHandler;
+		protected IAskUserHandlerFactory askUserHandlerFactory;
+		protected ISettings settings;
 		protected bool IsBuilder { get; } = false;
-		public HttpListenerContext? HttpListenerContext
+		public HttpContext? HttpContext
 		{
 			get
 			{
@@ -73,11 +74,13 @@ namespace PLang.Modules
 			IsBuilder = isBuilder;
 		}
 
-		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpListenerContext? httpListenerContext)
+		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpContext? httpContext)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
+			logger.LogDebug($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
 			this.memoryStack = container.GetInstance<MemoryStack>();
 			this.context = container.GetInstance<PLangAppContext>();
 			this.appCache = container.GetInstance<IAppCache>();
@@ -85,18 +88,20 @@ namespace PLang.Modules
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 			this.settings = container.GetInstance<ISettings>();
-			_listenerContext = httpListenerContext;
+			_listenerContext = httpContext;
 
 			this.goal = goal;
 			this.goalStep = step;
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
-
+			logger.LogDebug($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
 			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, logger);
+			methodHelper = container.GetInstance<MethodHelper>();
+
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+			logger.LogDebug($"        - Done init - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -126,18 +131,19 @@ namespace PLang.Modules
 		}
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(IGenericFunction function)
 		{
-
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
+				logger.LogDebug($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
+				logger.LogDebug($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -146,17 +152,20 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
+				logger.LogDebug($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
 
-				parameterValues = methodHelper.GetParameterValues(method, function);
+				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
+				if (error != null) return (null, error);
+
 				logger.LogTrace("Parameters:{0}", parameterValues);
-
+				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				Task? task = null;
 				try
 				{
-					task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
+					task = method.FastInvoke(this, parameterValues.Values.ToArray()) as Task;
 				}
 				catch (System.ArgumentException ex)
 				{
@@ -188,8 +197,13 @@ namespace PLang.Modules
 					{
 						await task;
 					}
-					catch { }
+					catch (Exception ex) {
+						int i = 0;
+					}
 				}
+
+				logger.LogDebug($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+
 				if (task.Status == TaskStatus.Canceled)
 				{
 					return (null, new CancelledError(goal, goalStep, function));
@@ -232,7 +246,7 @@ namespace PLang.Modules
 					return (null, null);
 				}
 
-				(object? result, var error, var properties) = GetValuesFromTask(task);
+				(object? result, error, var properties) = GetValuesFromTask(task);
 				(result, error) = await HandleError(result, error);
 
 				SetReturnValue(function, result, properties);
@@ -419,7 +433,7 @@ namespace PLang.Modules
 		private void SetReturnValue(IGenericFunction function, object? result, Properties? properties)
 		{
 			//if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
-			var returnValues = function.ReturnValues ?? new();
+			var returnValues = function.ReturnValues ?? [];
 
 			if (result == null)
 			{
@@ -443,8 +457,8 @@ namespace PLang.Modules
 					if (returnValues.Count == 1 && objectValues.Count == 1)
 					{
 						var objectValue = objectValues[0];
-						if (properties != null) objectValue.Properties = properties;
-						memoryStack.Put(objectValue, goalStep);
+						
+						memoryStack.Put(new ObjectValue(returnValues[0].VariableName, objectValue.Value, properties: properties), goalStep);
 					}
 					else if (returnValues.Count == 1 && objectValues.Count > 1)
 					{
@@ -487,8 +501,9 @@ namespace PLang.Modules
 				{
 					foreach (var returnValue in returnValues)
 					{
-						objectValue.Name = returnValue.VariableName;
-						memoryStack.Put(objectValue, goalStep);
+						var ov = new ObjectValue(returnValue.VariableName, objectValue.Value, properties:  objectValue.Properties);
+						
+						memoryStack.Put(ov, goalStep);
 					}
 
 				}
@@ -662,20 +677,29 @@ namespace PLang.Modules
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
 			if (aliveType == null)
 			{
-				aliveType = new Alive(instance.GetType(), key);
-				alives.Add(aliveType);
-
-				AppContext.SetData("KeepAlive", alives);
+				aliveType = new Alive(instance.GetType(), key, [instance]);
+				alives.Add(aliveType);				
+			} else
+			{
+				aliveType.Instances.Add(instance);
 			}
+			AppContext.SetData("KeepAlive", alives);
 		}
 
 		public void RemoveKeepAlive(object instance, string key)
 		{
 			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			if (alives == null) return;	
+
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
 			if (aliveType != null)
 			{
-				alives.Remove(aliveType);
+				if (instance is IDisposable disposable) disposable.Dispose();
+				aliveType.Instances.Remove(instance);
+				if (aliveType.Instances.Count == 0)
+				{
+					alives.Remove(aliveType);
+				}
 
 				AppContext.SetData("KeepAlive", alives);
 			}
@@ -700,9 +724,12 @@ namespace PLang.Modules
 		{
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
+protected string GetSystemPath(string? path)
+		{
+			return PathHelper.GetSystemPath(path, fileSystem, this.Goal);
+		}
 
-
-		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error, IOutput output)> task)
+		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error)> task)
 		{
 
 			if (task.Exception != null)
@@ -717,7 +744,7 @@ namespace PLang.Modules
 		public T GetProgramModule<T>() where T : BaseProgram
 		{
 			var program = container.GetInstance<T>();
-			program.Init(container, goal, goalStep, instruction, HttpListenerContext);
+			program.Init(container, goal, goalStep, instruction, this.HttpContext);
 			return program;
 		}
 		/*

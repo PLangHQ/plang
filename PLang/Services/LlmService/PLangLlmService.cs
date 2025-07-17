@@ -12,6 +12,7 @@ using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Reflection;
 using System.Text;
+using HttpResponse = PLang.Models.HttpResponse;
 
 namespace PLang.Services.LlmService
 {
@@ -174,7 +175,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			{
 				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
 			}
-			HttpResponse? hr = null;
+			Models.HttpResponse? hr = null;
 			if (result.Properties is IDictionary<string, object?> properties && properties.TryGetValue("Response", out object? resp)) 
 			{
 				hr = resp as HttpResponse;
@@ -220,7 +221,7 @@ What is name of payer?", GetCountry));
 		}
 
 
-		private void ShowCosts(HttpResponse response)
+		private void ShowCosts(Models.HttpResponse response)
 		{
 			string? costWarning = "";
 			if (response.Headers.ContainsKey("X-User-Balance"))

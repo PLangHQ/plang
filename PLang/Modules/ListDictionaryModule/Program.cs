@@ -280,6 +280,26 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 		[Description("Merges two objects or lists according to primary key")]
 		public async Task<(object?, IError?)> MergeLists(object? list1, object? list2, string key)
 		{
+			if (list1.GetType() == list2.GetType() && list1 is IList iList1 && list2 is IList iList2)
+			{
+				if (iList1.Count > iList2.Count)
+				{
+					foreach (var item in iList2)
+					{
+						iList1.Add(item);
+					}
+					return (iList1, null);
+				} else
+				{
+					for (int i= iList1.Count-1;i>=0;i--)
+					{
+						iList2.Insert(0, iList1[i]);
+					}
+
+					return (iList2, null);
+				}
+			}
+
 			if (list1 != null && list1 is not JArray)
 			{
 				var result = ToJArray(list1);

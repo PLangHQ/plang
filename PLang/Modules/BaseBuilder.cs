@@ -17,6 +17,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Instruction = PLang.Building.Model.Instruction;
 
@@ -54,6 +55,8 @@ namespace PLang.Modules
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 			this.GoalStep = goalStep;
 			this.module = goalStep.ModuleType;
 			this.fileSystem = fileSystem;
@@ -67,6 +70,8 @@ namespace PLang.Modules
 
 			appendedSystemCommand = new List<string>();
 			appendedAssistantCommand = new List<string>();
+
+			logger.LogDebug($"        - End InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public void SetStep(GoalStep step)
@@ -167,6 +172,15 @@ Make sure to use the information in <error> to return valid JSON response"
 				if (parameter == null) return default;
 
 				return (T?) TypeHelper.ConvertToType(parameter.Value, typeof(T));
+			}
+			public GenericFunction SetParameter(string name, object value)
+			{
+				var parameter = Parameters?.FirstOrDefault(p => p.Name == name);
+				if (parameter == null) return default;
+
+				parameter = parameter with { Value = value };
+
+				return this;
 			}
 		}
 
@@ -308,8 +322,9 @@ Error handling is process by another step, if you see 'on error...' you can igno
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
 Dictionary<T1, T2> value is {{key: value, ... }}
+ONLY when string is prefixed with # is for translation, modify the string to be ""#:..."", e.g. #""Hello"" => ""#:Hello"".
 
-<Example>
+< Example >
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
 <Example>
@@ -346,7 +361,7 @@ ReturnValue rules
 			{
 				var json = JsonConvert.SerializeObject(classDescription, new JsonSerializerSettings
 				{
-					NullValueHandling = NullValueHandling.Ignore
+					NullValueHandling = NullValueHandling.Include
 				});
 				assistant = $@"
 ## functions available starts ##
@@ -369,6 +384,10 @@ ReturnValue rules
 		{
 			var variables = variableHelper.GetVariables(step.Text);
 			string vars = "";
+
+			// todo: hack, why is Goal null?
+			memoryStack.Goal = step.Goal;
+
 			foreach (var variable in variables)
 			{
 				if (variable.Initiated)

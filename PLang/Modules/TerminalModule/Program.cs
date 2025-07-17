@@ -55,7 +55,7 @@ namespace PLang.Modules.TerminalModule
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
-				if (Goal != null && Goal.IsOS && engine.CallingStep != null)
+				if (Goal != null && Goal.IsSystem && engine.CallingStep != null)
 				{
 					pathToWorkingDirInTerminal = engine.CallingStep.Goal.AbsoluteGoalFolderPath;
 				}

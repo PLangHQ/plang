@@ -1,0 +1,27 @@
+Build
+- write out "build db module"
+/*Build
+- call goal GetDataSourceForStep, write to %dataSourceResult%
+- get all methods in %step.ModuleType%, write to %methods%
+- read llm/BuildSystem.txt, load vars, write to %system%
+- [llm] system: %system%
+    user: %step.Text%
+    scheme: %genericFunction%
+    write to %result%
+- [plang] validate %genericFunction%
+    on error FixError, retry 2 times
+- set %instruction% = {
+    Action = %genericFunction%
+    LlmRequests : [%dataSourceResult!Llm%, %result!Llm%]
+    Step: %step.Text%,
+    ModuleType: %step.ModuleType%
+    Properties: {
+        DataSources: %dataSourceResult.dataSourceNames%
+    }
+ }
+- write %instruction% to %step.AbsolutePrPath%
+
+FixError
+- [llm] assistant: %!error.Message%, %!error.FixSuggestion%
+    scheme: %genericFunction%
+    write to %result%*/

@@ -52,35 +52,15 @@ namespace PLang.Utils
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
-			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);			
-			if (error.ErrorChain != null && error.ErrorChain.Count > 0)
-			{
-				var errorChain = error.ErrorChain ?? new();
+			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 
-				List<object> errors = new List<object>();	
-				foreach (var e in errorChain)
-				{
-					errors.Add(e.ToFormat(contentType));
-				}
-
-				if (contentType == "text")
-				{
-					string str = "";
-					foreach (var e in errors)
-					{
-						str += e;
-					}
-					return str;
-				}
-				return errors;
-			}
 			if (error is RuntimeEventError rve && rve.InitialError != null)
 			{
 				//error = rve.InitialError;
 			}
 
 
-			if (error is IUserDefinedError && contentType == "json")
+			if (error is IUserInputError && contentType == "json")
 			{
 				JsonRpcError jsonRpcError = new()
 				{
@@ -121,7 +101,7 @@ namespace PLang.Utils
 					}
 				}
 			}
-			
+
 
 			var property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
 			if (property != null) goal = (Goal?)property.GetValue(error);
@@ -195,7 +175,8 @@ namespace PLang.Utils
 				variables = @" Variables:";
 				foreach (var variable in error.Variables)
 				{
-					variables += $"\n\t - {variable.PathAsVariable} => {JsonConvert.SerializeObject(variable.Value)}";
+					var value = JsonConvert.SerializeObject(variable.Value).MaxLength(5000);
+					variables += $"\n\t - {variable.PathAsVariable} => {value}";
 				}
 			}
 			string? callStack = null;
@@ -219,7 +200,7 @@ namespace PLang.Utils
 				string paramsStr = $"";
 				if (parameterValues == null)
 				{
-					paramsStr = JsonConvert.SerializeObject(genericFunction.Parameters);
+					paramsStr = JsonConvert.SerializeObject(genericFunction.Parameters).MaxLength(5000);
 				}
 				else
 				{
@@ -227,7 +208,8 @@ namespace PLang.Utils
 					{
 						if (parameterValues.ContainsKey(param.Name))
 						{
-							paramsStr += $"\t{param.Name} : {parameterValues[param.Name] ?? "[empty]"}\n";
+							var value = parameterValues[param.Name]?.ToString().MaxLength(5000) ?? "[empty]";
+							paramsStr += $"\t{param.Name} : {value}\n";
 						}
 						else
 						{

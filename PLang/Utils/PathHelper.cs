@@ -5,6 +5,13 @@ namespace PLang.Utils
 {
 	public class PathHelper
 	{
+
+
+		public static string GetSystemPath(string? path, IPLangFileSystem fileSystem, Goal goal)
+		{
+			return string.Join(fileSystem.SystemDirectory, path);
+		}
+
 		public static string GetPath(string? path, IPLangFileSystem fileSystem, Goal? goal)
 		{
 			if (string.IsNullOrEmpty(path))
@@ -53,5 +60,6 @@ namespace PLang.Utils
 			}
 			return pathWithDirSep;
 		}
+
 	}
 }

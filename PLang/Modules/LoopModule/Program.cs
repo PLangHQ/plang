@@ -149,7 +149,7 @@ namespace PLang.Modules.LoopModule
 							goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 							goalToCall.Parameters.AddOrReplace(listCountName, -1);
 							
-							Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> task;
+							Task<(IEngine engine, object? Variables, IError? error)> task;
 							if (goalToCallBeforeItemIsProcessed != null)
 							{
 								goalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);

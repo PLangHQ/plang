@@ -14,7 +14,9 @@ using PLang.Models.ObjectValueConverters;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
+using PLang.Utils.JsonConverters;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
@@ -26,21 +28,25 @@ namespace PLang.Utils
 {
 	public class MethodHelper
 	{
-		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
 		private readonly ITypeHelper typeHelper;
 		private readonly ILogger logger;
-
-		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger)
+		private ConcurrentDictionary<string, MethodInfo> cachedMethodInfo;
+		public MethodHelper(VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger)
 		{
-			this.goalStep = goalStep;
+			//this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
 			this.typeHelper = typeHelper;
 			this.logger = logger;
+			cachedMethodInfo= new();
 		}
 
 		public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
 		{
+			if (cachedMethodInfo.TryGetValue(function.Name, out var methodInfo)) {
+				return methodInfo;
+			}
+
 			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
 			GroupedBuildErrors? error = null;
@@ -49,13 +55,17 @@ namespace PLang.Utils
 				if (p.Name == function.Name)
 				{
 					//todo: lot of work done here at runtime
-					(var _, error) = IsParameterMatch(p, function.Parameters, goalStep);
+					(var _, error) = IsParameterMatch(p, function.Parameters, function.Instruction.Step);
 					if (error.Count == 0) return true;
 				}
 
 				return false;
 			});
-			if (method != null) return method;
+			if (method != null)
+			{
+				cachedMethodInfo.TryAdd(function.Name, method);
+				return method;
+			}
 
 			throw new MethodNotFoundException($"Method {function.Name} could not be found that matches with your statement. " + error);
 		}
@@ -101,7 +111,7 @@ namespace PLang.Utils
 
 					foreach (var instanceFunction in instanceFunctions)
 					{
-						(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, goalStep);
+						(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, function.Instruction.Step);
 						ParameterProperties.AddOrReplace(parameterProperties);
 
 						if (parameterErrors.Count == 0)
@@ -140,7 +150,7 @@ namespace PLang.Utils
 			return (methodParamType == buildParamType);
 		}
 
-		public (Dictionary<string, List<ParameterType>>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo p, List<Parameter> parameters, GoalStep goalStep)
+		public (Dictionary<string, List<ParameterType>>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo p, IReadOnlyList<Parameter> parameters, GoalStep goalStep)
 		{
 			GroupedBuildErrors buildErrors = new();
 
@@ -273,13 +283,15 @@ namespace PLang.Utils
 			var newParamType = parameterTypeName.Substring(0, parameterTypeName.IndexOf(','));
 			return newParamType.Replace("[[", "[") + "]";
 		}
-
-		public Dictionary<string, object?> GetParameterValues(MethodInfo method, IGenericFunction function)
+	
+		public (Dictionary<string, object?> Parameters, IError? Error) GetParameterValues(MethodInfo method, IGenericFunction function)
 		{
 			var parameterValues = new Dictionary<string, object?>();
 			var parameters = method.GetParameters();
-			if (parameters.Length == 0) return parameterValues;
+			if (parameters.Length == 0) return (parameterValues, null);
 
+			var step = function.Instruction.Step;
+			var goal = function.Instruction.Step.Goal;
 
 			foreach (var parameter in parameters)
 			{
@@ -289,8 +301,10 @@ namespace PLang.Utils
 
 				if (inputParameter == null && !parameter.IsOptional && !parameter.ParameterType.Name.StartsWith("Nullable"))
 				{
-					throw new ParameterException($"Could not find parameter {parameter.Name}", goalStep);
+					throw new ParameterException($"Could not find parameter {parameter.Name}", step);
 				}
+
+
 
 				var variableValue = inputParameter?.Value;
 				try
@@ -305,7 +319,7 @@ namespace PLang.Utils
 					var handlesAttribute = parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(HandlesVariableAttribute));
 					if (handlesAttribute == null && VariableHelper.IsVariable(variableValue))
 					{
-						var ov = variableHelper.GetObjectValue(variableValue.ToString(), goal: goalStep.Goal);
+						var ov = variableHelper.GetObjectValue(variableValue.ToString(), goal: goal);
 						if (ov != null && ov.Value != null && parameter.ParameterType.IsInstanceOfType(ov.Value))
 						{
 							//parameterValues.Add(inputParameter.Name, ov.Value);
@@ -317,7 +331,7 @@ namespace PLang.Utils
 							continue;
 						} else if (!ov.Initiated && function.Instruction.Step.ModuleType != "PLang.Modules.ConditionalModule")
 						{
-							logger.LogWarning($"{variableValue} does not exist - {goalStep.LineNumber}:{goalStep.Text}");
+							logger.LogWarning($"{variableValue} does not exist - {step.LineNumber}:{step.Text}");
 						}
 
 					}
@@ -355,11 +369,11 @@ namespace PLang.Utils
 				{
 					if (ex is AskUserError) throw;
 
-					throw new ParameterException($"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", goalStep, ex);
+					return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", step, ex));
 				}
 
 			}
-			return parameterValues;
+			return (parameterValues, null);
 		}
 
 
@@ -483,7 +497,8 @@ namespace PLang.Utils
 			object? variableValue = null;
 			if (obj is JArray jArray)
 			{
-				list = jArray.ToObject(parameter.ParameterType) as System.Collections.IList;
+				list = jArray.ToObject(parameter.ParameterType) as IList;
+			
 			} else if (obj is JObject jObject)
 			{
 				list = JArray.FromObject(jObject) as System.Collections.IList;
@@ -762,7 +777,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					parameterValues.Add(parameter.Name, Type.Missing);
+					parameterValues.Add(parameter.Name, null);
 				}
 			}
 		}

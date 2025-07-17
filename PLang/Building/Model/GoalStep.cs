@@ -6,6 +6,7 @@ using PLang.Models;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Building.Model
 {
@@ -36,6 +37,14 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
+
+		[LlmIgnore]
+		public string InstructionHash { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool HasChanged { get; set; } = true;
 
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
@@ -79,7 +88,14 @@ namespace PLang.Building.Model
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
-		public bool Reload { get; set; }
+		public bool Reload { 
+			get; 
+			set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public CallbackInfo? Callback { get; set; }
 
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
@@ -194,6 +210,14 @@ namespace PLang.Building.Model
 			result.Instruction!.Function.Instruction = Instruction;
 
 			return (result.Instruction!.Function, null);
+		}
+
+		protected override void SetVariableOnEvent(Variable goalVariable)
+		{
+			if (Goal.IsEvent && Goal.ParentGoal != null)
+			{
+				Goal.ParentGoal.AddVariable(goalVariable);
+			}
 		}
 	}
 }

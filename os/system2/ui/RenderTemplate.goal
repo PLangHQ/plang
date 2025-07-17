@@ -1,0 +1,5 @@
+RenderTemplate
+- get all files in "%cssFramework%/template", write to %templates%
+- [llm] system: choose a template %templates%
+        user: %!step.Text%
+        

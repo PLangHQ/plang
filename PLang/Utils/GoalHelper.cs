@@ -1,8 +1,11 @@
-﻿using MiniExcelLibs.Utils;
+﻿using Markdig.Helpers;
+using MiniExcelLibs.Utils;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 
 namespace PLang.Utils
 {
@@ -17,45 +20,39 @@ namespace PLang.Utils
 		public static bool IsSetup(string rootDirectory, string fileName)
 		{
 
-			if (fileName.ToLower() == Path.Join(rootDirectory, "setup.goal").ToLower()) return true;
-			if (fileName.ToLower().StartsWith(Path.Join(rootDirectory, "setup"))) return true;
-			if (fileName.ToLower().StartsWith(Path.Join(".build", "setup"))) return true;
+			if (fileName.ToLower() == System.IO.Path.Join(rootDirectory, "setup.goal").ToLower()) return true;
+			if (fileName.ToLower().StartsWith(System.IO.Path.Join(rootDirectory, "setup"))) return true;
+			if (fileName.ToLower().StartsWith(System.IO.Path.Join(".build", "setup"))) return true;
 
 			return false;
 		}
 
+		public static bool IsSetup(Goal goal)
+		{
+			var result = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) ||
+				(goal.RelativeGoalFolderPath.Equals(System.IO.Path.Join(System.IO.Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
+			return result;
+		}
+
+		internal static bool IsEvent(Goal goal)
+		{
+			return (goal.RelativeGoalPath.Equals("/events/events.goal".AdjustPathToOs(), StringComparison.OrdinalIgnoreCase) ||
+				goal.RelativeGoalPath.Equals("/events/builderevents.goal".AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+		}
 
 		public static string GetAppName(string goalToRun)
 		{
 			// apps/MyApp/Start.goal => MyApp
-			goalToRun = goalToRun.AdjustPathToOs().TrimStart(Path.DirectorySeparatorChar);
+			goalToRun = goalToRun.AdjustPathToOs().TrimStart(System.IO.Path.DirectorySeparatorChar);
 
-			string appName = goalToRun.Substring(goalToRun.IndexOf(Path.DirectorySeparatorChar) + 1);
-			if (appName.Contains(Path.DirectorySeparatorChar))
+			string appName = goalToRun.Substring(goalToRun.IndexOf(System.IO.	Path.DirectorySeparatorChar) + 1);
+			if (appName.Contains(System.IO.Path.DirectorySeparatorChar))
 			{
-				appName = appName.Substring(0, appName.IndexOf(Path.DirectorySeparatorChar));
+				appName = appName.Substring(0, appName.IndexOf(System.IO.Path.DirectorySeparatorChar));
 			}
 			return appName;
 		}
 
-		public static string GetGoalPath(string goalToRun)
-		{
-			// apps/MyApp/ => Start
-			// apps/MyApp/Start => Start
-			// apps/MyApp/Process => Process
-			// apps/MyApp/Process/MoreStuff => Process/MoreStuff
-
-			goalToRun = goalToRun.AdjustPathToOs().TrimStart(Path.DirectorySeparatorChar);
-			var appName = GetAppName(goalToRun);
-
-			string goalPath = goalToRun.Substring(goalToRun.IndexOf(appName) + appName.Length).TrimStart(Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
-			if (string.IsNullOrEmpty(goalPath))
-			{
-				return "Start";
-			}
-
-			return goalPath;
-		}
 
 
 		public static string GetSpaceByParent(Goal goal)
@@ -71,12 +68,7 @@ namespace PLang.Utils
 		}
 
 
-		public static bool IsSetup(Goal goal)
-		{
-			var result = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || 
-				(goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
-			return result;
-		}
+		
 
 		public static bool RunOnce(Goal goal)
 		{
@@ -100,5 +92,123 @@ namespace PLang.Utils
 			return false;
 
 		}
+
+		public static (Goal?, IError?) GetGoalPath(string callingGoalRelativeFolderPath, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
+		{
+			Goal? goal;
+
+			if (!string.IsNullOrEmpty(goalToCall.Path) && !goalToCall.Path.Contains(".goal"))
+			{				
+				goal = appGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+
+				goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+
+				return (null, new Error($"{goalToCall.Name} coult not be found. Searched for {goalToCall.Path}"));
+			}
+
+			string goalToCallName = goalToCall.Name;
+			string goalToCallPath = "";
+
+			if (goalToCallName.Contains(".."))
+			{
+				//adjust for ../
+				goalToCallName = goalToCallName.Substring(goalToCallName.LastIndexOf("/") + 1);
+				goalToCallPath = goalToCall.Name.Substring(0, goalToCall.Name.LastIndexOf("/") + 1).AdjustPathToOs();
+
+				goalToCallPath = MergePath(callingGoalRelativeFolderPath, goalToCallPath).AdjustPathToOs();
+
+			}
+			 else if (goalToCallName.Contains("/"))
+			{
+				goalToCallName = goalToCallName.Substring(goalToCallName.LastIndexOf("/") + 1);
+				goalToCallPath = goalToCall.Name.Substring(0, goalToCall.Name.LastIndexOf("/")).AdjustPathToOs();
+
+				if (!goalToCall.Name.StartsWith("/"))
+				{
+					goalToCallPath = Path.Join(callingGoalRelativeFolderPath, goalToCallPath.TrimEnd(Path.DirectorySeparatorChar));
+				}
+
+			} else 
+			{
+				goalToCallPath = callingGoalRelativeFolderPath.AdjustPathToOs();
+			}
+			
+			goalToCallName = goalToCallName.Replace(".goal", "");
+			if (goalToCallPath != Path.DirectorySeparatorChar.ToString())
+			{
+				goalToCallPath = goalToCallPath.TrimEnd(Path.DirectorySeparatorChar);
+			}
+
+			goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(goalToCallPath, StringComparison.OrdinalIgnoreCase)
+					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
+			if (goal != null) return (goal, null);
+
+			goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)
+					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
+			if (goal != null) return (goal, null);
+
+			return (null, new Error($"{goalToCall.Name} coult not be found. Searched for {goalToCall.Path}"));
+		}
+
+		static string MergePath(string currentRelativePath, string newPath) =>
+					new Uri(new Uri($"file://{currentRelativePath}/"), newPath).AbsolutePath;
+
+		internal static (Goal?, IError?) GetGoal(string relativeGoalPath, string absoluteAppPath, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
+		{
+			Goal? goal;
+			if (!string.IsNullOrEmpty(goalToCall.Path))
+			{
+				goal = appGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+
+				goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+			}
+
+			var dirName = Path.GetDirectoryName(relativeGoalPath);
+			var goalName = goalToCall.Name.AdjustPathToOs();
+
+			var goalPath = (goalName.StartsWith(Path.DirectorySeparatorChar)) ? Path.DirectorySeparatorChar.ToString() : "";
+			if (goalName.Contains(Path.DirectorySeparatorChar))
+			{
+				goalName = goalName.Substring(goalName.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+				goalPath = goalToCall.Name.Replace(goalName, "").AdjustPathToOs();
+			}
+
+			string relativePath;
+			// check if path starts with /, e.g. call goal /Start
+			if (goalPath.StartsWith(Path.DirectorySeparatorChar))
+			{
+				relativePath = goalPath.TrimEnd(Path.DirectorySeparatorChar);
+				if (string.IsNullOrEmpty(relativePath)) relativePath = Path.DirectorySeparatorChar.ToString();
+			}
+			else
+			{
+				var pathToGoal = Path.Join(dirName, goalPath);
+				var absolutePath = Path.GetFullPath(Path.Join(absoluteAppPath, pathToGoal));
+				relativePath = absolutePath.Replace(absoluteAppPath, "").TrimEnd(Path.DirectorySeparatorChar);
+				if (string.IsNullOrEmpty(relativePath)) relativePath = Path.DirectorySeparatorChar.ToString();
+
+				var extension = Path.GetExtension(absolutePath);
+				if (!string.IsNullOrEmpty(extension))
+				{
+					relativePath = relativePath.Replace(extension, "");
+				}
+			} 
+
+			goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
+										&& p.GoalName.Equals(goalName));
+			if (goal != null) return (goal, null);
+
+			goal = systemGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
+										&& p.GoalName.Equals(goalName));
+			if (goal != null) return (goal, null);
+
+			return (null, new BuilderError($"Could not find {goalToCall.Name}", Retry: false));
+
+		}
+
 	}
 }

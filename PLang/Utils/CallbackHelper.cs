@@ -21,14 +21,17 @@ namespace PLang.Utils
 		{
 			if (string.IsNullOrEmpty(callbackInfos)) return (null, null);
 
-			var obj = JObject.Parse(callbackInfos);
+			byte[] bytes = Convert.FromBase64String(callbackInfos);
+			string decoded = Encoding.UTF8.GetString(bytes);
+
+			var obj = JObject.Parse(decoded);
 			if (obj == null || obj["CallbackInfos"] == null || obj["Signature"] == null) return (null, null);
 
 
 			List<CallbackInfo>? callbacks = obj["CallbackInfos"]?.ToObject<List<CallbackInfo>>();
 			if (callbacks == null) return (null, new Error("Callback info not valid format", Data: obj["CallbackInfos"]));
 
-			Signature? signature = obj["Signature"]?.ToObject<Signature>();
+			SignedMessage? signature = obj["Signature"]?.ToObject<SignedMessage>();
 			if (signature == null) return (null, new Error("Signature not validate format", Data: obj["Signature"]));
 
 			

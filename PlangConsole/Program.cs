@@ -1,14 +1,30 @@
 ﻿
 using LightInject;
+using Microsoft.Extensions.Logging;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Utils;
+using System.Collections;
 using System.ComponentModel;
 using static PLang.Executor;
 
 
 (var builder, var runtime) = RegisterStartupParameters.Register(args);
+
+Console.CancelKeyPress += (_, e) =>
+{
+	e.Cancel = true;
+
+	var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+	foreach (var alive in alives ?? [])
+	{
+		alive.Dispose();		
+	}
+	Environment.Exit(0);
+};
+
 
 if (builder)
 {
@@ -17,7 +33,12 @@ if (builder)
 
 
 	var pLanguage = new Executor(container);
-	pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
+	var result = pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
+	if (result.Error != null)
+	{
+		var logger = container.GetInstance<ILogger>();
+		logger.LogError(result.Error.ToString());
+	}
 
 	container.Dispose();
 }
@@ -35,8 +56,12 @@ if (runtime)
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 
 	var pLanguage = new Executor(container);
-	pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
-
+	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
+	if (result.Error != null)
+	{
+		var logger = container.GetInstance<ILogger>();
+		logger.LogError(result.Error.ToFormat("text").ToString());
+	}
 	container.Dispose();
 }
 

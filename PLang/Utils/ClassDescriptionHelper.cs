@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Castle.Components.DictionaryAdapter;
+using Nethereum.Model;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Container;
@@ -251,7 +253,8 @@ namespace PLang.Utils
 				return null;
 			}
 
-			if (item.Name.StartsWith("Dictionary`") || item.Name.StartsWith("List`") || item.Name.StartsWith("Tuple`"))
+			bool isDictOrList = IsDictOrList(item);
+			if (isDictOrList)
 			{
 				foreach (var genericType in item.GenericTypeArguments)
 				{
@@ -346,12 +349,7 @@ namespace PLang.Utils
 						}
 					}
 
-					string? complexObjectDescription = null;
-					descriptionAttribute = item.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
-					if (descriptionAttribute != null)
-					{
-						complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));
-					}
+					string? complexObjectDescription = GetDescriptionAttribute(item);				
 
 					if (item == propertyType)
 					{
@@ -420,7 +418,28 @@ namespace PLang.Utils
 			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
 		}
 
+		private string? GetDescriptionAttribute(Type item)
+		{
+			string? complexObjectDescription = null;
+			var descriptionAttribute = item.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+			if (descriptionAttribute != null)
+			{
+				complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));
+			}
+			return complexObjectDescription;
+		}
 
+		private bool IsDictOrList(Type type)
+		{
+			var result = (type.Name.StartsWith("Dictionary`") || type.Name.StartsWith("List`") || type.Name.StartsWith("Tuple`"));
+			if (result) return true;
+
+			var baseType = type.BaseType;
+			if (baseType == null) return false;
+
+			result = (baseType.Name.StartsWith("Dictionary`") || baseType.Name.StartsWith("List`") || baseType.Name.StartsWith("Tuple`"));
+			return result;
+		}
 
 		public object? GetParameterInfoDefaultValue(System.Reflection.ParameterInfo parameterInfo)
 		{

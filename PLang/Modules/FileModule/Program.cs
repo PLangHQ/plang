@@ -16,10 +16,12 @@ using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -53,30 +55,6 @@ namespace PLang.Modules.FileModule
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
-		/*
-		 * Enable setting the root directory, this will allow for flexiblity in each identity has access to it's own path
-		[Description("Returns previous root path")]
-		public async Task<string> SetRootPath(string path)
-		{
-			var aboslutePath = GetPath(path);
-			var oldRootDir = fileSystem.RootDirectory;
-			context.AddOrReplace("!RootDirectory", aboslutePath);
-			return oldRootDir;
-		}
-
-		[Description("Returns path being removed")]
-		public async Task<string> ResetRootPath()
-		{
-			if (context.ContainsKey("!RootDirectory"))
-			{
-				string? path = context["!RootDirectory"] as string;
-				context.Remove("!RootDirectory");
-				return path ?? fileSystem.RootDirectory;
-			}
-			return fileSystem.RootDirectory;
-		}
-		*/
-
 		public async Task GiveAccess(string path)
 		{
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
@@ -90,7 +68,7 @@ namespace PLang.Modules.FileModule
 			{
 				if ((DateTime.UtcNow - startTime).TotalMilliseconds > timeoutInMilliseconds)
 				{
-					return new Error($"File not found within the timeout period: {absolutePath}");
+					return new Error($"File not found within the timeout period: {absolutePath}", StatusCode: 404);
 				}
 
 				await Task.Delay(50);
@@ -103,7 +81,7 @@ namespace PLang.Modules.FileModule
 			{
 				try
 				{
-					using (var stream = File.Open(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+					using (var stream = fileSystem.File.Open(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 					{
 						break;
 					}
@@ -170,15 +148,15 @@ namespace PLang.Modules.FileModule
 			return base64;
 		}
 		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", bool allowReadingFromSystem = false)
 		{
-			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding);
+			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, null, allowReadingFromSystem);
 		}
 		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null, bool allowReadingFromSystem = false)
 		{
 			newLineSymbol ??= Environment.NewLine;
-			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol);
+			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol, allowReadingFromSystem);
 			var lines = result.Item1 as string[];
 
 			if (lines == null && !throwErrorOnNotFound) return (null, null);
@@ -187,7 +165,7 @@ namespace PLang.Modules.FileModule
 				return (null, new ProgramError($"Could not split file on {newLineSymbol}", goalStep, function));
 			}
 			var parsedObjects = new List<dynamic>();
-			
+
 			foreach (var line in lines)
 			{
 				if (string.IsNullOrEmpty(line)) continue;
@@ -202,17 +180,25 @@ namespace PLang.Modules.FileModule
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
 		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null, bool allowReadingFromSystem = false)
 		{
 			var absolutePath = GetPath(path);
 
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				if (throwErrorOnNotFound)
+				if (allowReadingFromSystem || goal.IsSystem)
 				{
-					return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound"));
+					absolutePath = GetSystemPath(path);
 				}
-				return (returnValueIfFileNotExisting, null);
+
+				if (!fileSystem.File.Exists(absolutePath))
+				{
+					if (throwErrorOnNotFound)
+					{
+						return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound", StatusCode: 404));
+					}
+					return (returnValueIfFileNotExisting, null);
+				}
 			}
 
 			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -258,7 +244,7 @@ namespace PLang.Modules.FileModule
 
 		public record Sheet(string Name, string StartRow = "A1", string? VariableName = null, bool UseHeaderRow = true);
 
-		[Description("sheetsToExtract is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1")]
+		[Description("sheetsToExtract is name of sheet that should load into variable, default is null and will read all sheets, When user defines a sheet property but know name, set Name of sheet to *. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1")]
 		public async Task<object?> ReadExcelFile(string path,
 			[HandlesVariable] List<Sheet>? sheetsToExtract = null)
 		{
@@ -269,7 +255,7 @@ namespace PLang.Modules.FileModule
 				return null;
 			}
 
-			
+
 			if (sheetsToExtract == null || sheetsToExtract.Count == 0)
 			{
 				sheetsToExtract = new();
@@ -279,11 +265,23 @@ namespace PLang.Modules.FileModule
 					sheetsToExtract.Add(new Sheet(sheetName, "A1", MakeFitForVariable(sheetName)));
 				}
 			}
+			else if (string.IsNullOrEmpty(sheetsToExtract[0].Name) || sheetsToExtract[0].Name == "*")
+			{
+				List<Sheet> sheets = new();
 
-				List<ObjectValue?> returnValues = new();
+				List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
+				foreach (var sheetName in sheetNames)
+				{
+					sheets.Add(new Sheet(sheetName, sheetsToExtract[0].StartRow, MakeFitForVariable(sheetName), sheetsToExtract[0].UseHeaderRow));
+				}
+				sheetsToExtract = sheets;
+			}
+
+
+			List<ObjectValue?> returnValues = new();
 			foreach (var sheet in sheetsToExtract)
 			{
-				var newSheet = sheet; 
+				var newSheet = sheet;
 				if (string.IsNullOrEmpty(sheet.VariableName))
 				{
 					newSheet = newSheet with { VariableName = MakeFitForVariable(sheet.Name) };
@@ -352,9 +350,9 @@ namespace PLang.Modules.FileModule
 			if (createDirectoryAutomatically)
 			{
 				var dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
-				if (dirPath != null && !Directory.Exists(dirPath))
+				if (dirPath != null && !fileSystem.Directory.Exists(dirPath))
 				{
-					Directory.CreateDirectory(dirPath);
+					fileSystem.Directory.CreateDirectory(dirPath);
 				}
 			}
 			if (variableToWriteToCsv is string str)
@@ -554,44 +552,131 @@ namespace PLang.Modules.FileModule
 			return result;
 		}
 
-		public async Task<List<string>> GetDirectoryPathsInDirectory(string directoryPath = "./", string? regexSearchPattern = null,
-			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		public record Directory(string Name, string Path, string AbsolutePath, Properties? DirectoryInfo = null);
+		public async Task<List<Directory>> GetDirectoryPathsInDirectory(string directoryPath = "./", string? regexSearchPattern = null,
+			string[]? excludePatterns = null, bool includeSubfolders = false, bool includeSystemFolder = false, bool includeDirectoryInfo = false)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
-			
-			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
 
+			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
+			
 			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption);
+			if (includeSystemFolder)
+			{
+				var systemPath = fileSystem.Path.Join(fileSystem.SystemDirectory, directoryPath);
+				allDirs = allDirs.Concat(fileSystem.Directory.GetDirectories(systemPath, "*", searchOption)).ToArray();
+			}
 			if (!string.IsNullOrWhiteSpace(regexSearchPattern))
 			{
 				allDirs = allDirs.Where(dir => Regex.IsMatch(dir, regexSearchPattern)).ToArray();
 			}
 
-			var paths = allDirs.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
+			var paths = allDirs.Select(path => path.Replace(fileSystem.RootDirectory, ""));
 			if (excludePatterns != null)
 			{
 				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
 			}
 
-			return paths.ToList();
+			List<Directory> dirs = new();
+			foreach (var path in paths)
+			{
+				var absolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, path);
+				var name = path;
+				if (path.Contains(fileSystem.Path.DirectorySeparatorChar))
+				{
+					name = name.Substring(path.LastIndexOf(fileSystem.Path.DirectorySeparatorChar)+1);
+				}
+				DirectoryInfo? di = null;
+				if (includeDirectoryInfo)
+				{
+					di = new DirectoryInfo(absolutePath);
+				}
+				dirs.Add(new Directory(name, path, absolutePath, GetProperties(di)));
+			}
+
+			return dirs;
 		}
 
-		public async Task<List<string>> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
-		string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		private Properties? GetProperties(object? obj)
+		{
+			if (obj == null) return null;
+			var properties = new Properties();
+			foreach (var prop in obj.GetType().GetProperties())
+			{
+				if (TypeHelper.IsConsideredPrimitive(prop.PropertyType))
+				{
+					properties.Add(new ObjectValue(prop.Name, prop.GetValue(obj)));
+				}
+			}
+			return properties;
+		}
+
+
+		public record File(string Name, string Extension, string Type, string Path, string AbsolutePath, Properties? FileInfo = null);
+
+		public async Task<List<File>> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		string[]? excludePatterns = null, bool includeSubfolders = false, bool includeFileInfo = false, string? filterOnType = null)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
 
 			var files = fileSystem.Directory.GetFiles(absoluteDirectoryPath, searchPattern, searchOption);
 
-			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
+			var paths = files.Select(path => path.Replace(fileSystem.RootDirectory, ""));
 			if (excludePatterns != null)
 			{
 				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
 			}
 
-			return paths.ToList();
+			List<File> filesToReturn = new();
+			foreach (var path in paths)
+			{
+				string extension = fileSystem.Path.GetExtension(path);
+				string type = await GetFileType(extension);
+				if (filterOnType != null && !type.Equals(filterOnType, StringComparison.OrdinalIgnoreCase))
+				{
+					continue;
+				}
+
+				var absolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, path);
+				var name = path;
+				if (path.Contains(fileSystem.Path.DirectorySeparatorChar))
+				{
+					name = name.Substring(path.IndexOf(fileSystem.Path.DirectorySeparatorChar) + 1);
+				}
+				
+				System.IO.FileInfo? fi = null;
+				if (includeFileInfo)
+				{
+					fi = new System.IO.FileInfo(absolutePath);
+				}
+				
+				filesToReturn.Add(new File(name, extension, type, path, absolutePath, GetProperties(fi)));
+			}
+
+			return filesToReturn;
+		}
+		public async Task SetFileType(string extension, string type)
+		{
+			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
+			if (fileTypes == null) fileTypes = new();
+			
+			if (!extension.StartsWith(".")) extension = "." + extension;
+
+			fileTypes.AddOrReplace(extension, type);
+
+			goal.AddVariable(fileTypes, variableName: "FileTypes");
+		}
+		public async Task<string> GetFileType(string extension)
+		{
+			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
+
+			if (!extension.StartsWith(".")) extension = "." + extension;
+			if (typeMapping.TryGetValue(extension, out var type)) return type;
+
+			return "unknown";
+
 		}
 
 		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)
@@ -696,20 +781,14 @@ namespace PLang.Modules.FileModule
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
 			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
-			directoryPath = directoryPath.AdjustPathToOs();
-			destinationPath = destinationPath.AdjustPathToOs();
-
-			bool isAppFolder = false;
-			if (directoryPath.StartsWith("."))
-			{
-				isAppFolder = true;
-			}
+			directoryPath = GetPath(directoryPath);
+			destinationPath = GetPath(destinationPath);
 
 			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				var copyDestinationFilePath = (isAppFolder) ? fileSystem.Path.Join(destinationPath, file) : file.Replace(directoryPath, destinationPath);
-				await CopyFile(file, copyDestinationFilePath, true, overwriteFiles);
+				var copyDestinationFilePath = fileSystem.Path.Join(destinationPath, file.Name);
+				await CopyFile(file.AbsolutePath, copyDestinationFilePath, true, overwriteFiles);
 			}
 
 		}
@@ -915,7 +994,8 @@ namespace PLang.Modules.FileModule
 				watcher.EnableRaisingEvents = true;
 
 				int counter = 0;
-				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; };
+				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; }
+				;
 
 				context.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
 				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
@@ -967,7 +1047,7 @@ namespace PLang.Modules.FileModule
 					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 					task.Wait();
 
-					var (engine2, vars, error, output) = task.Result;
+					var (engine2, vars, error) = task.Result;
 					if (error != null)
 					{
 						var errorTask = errorSystemHandlerFactory.CreateHandler().Handle(error);
@@ -1008,7 +1088,7 @@ namespace PLang.Modules.FileModule
 			foreach (var key in fileWatchers)
 			{
 				var watcher = (IFileSystemWatcher)context[key];
-				
+
 				watcher?.Dispose();
 			}
 
@@ -1017,5 +1097,205 @@ namespace PLang.Modules.FileModule
 				key.Value.Dispose();
 			}
 		}
+
+
+
+
+		private static readonly Dictionary<string, string> typeMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		{
+			// video
+			[".mp4"] = "video",
+			[".webm"] = "video",
+			[".mkv"] = "video",
+			[".mov"] = "video",
+			[".avi"] = "video",
+			[".flv"] = "video",
+
+			// audio
+			[".mp3"] = "audio",
+			[".wav"] = "audio",
+			[".flac"] = "audio",
+			[".aac"] = "audio",
+			[".ogg"] = "audio",
+			[".m4a"] = "audio",
+
+			// text
+			[".txt"] = "text",
+			[".json"] = "text",
+			[".xml"] = "text",
+			[".csv"] = "text",
+			[".md"] = "text",
+			[".yaml"] = "text",
+			[".yml"] = "text",
+			[".ini"] = "text",
+
+			// image
+			[".jpg"] = "image",
+			[".jpeg"] = "image",
+			[".png"] = "image",
+			[".gif"] = "image",
+			[".bmp"] = "image",
+			[".tif"] = "image",
+			[".tiff"] = "image",
+			[".svg"] = "image",
+			[".webp"] = "image",
+			[".heic"] = "image",
+
+			// pdf
+			[".pdf"] = "pdf",
+
+			// archive
+			[".zip"] = "archive",
+			[".rar"] = "archive",
+			[".7z"] = "archive",
+			[".tar"] = "archive",
+			[".gz"] = "archive",
+			[".bz2"] = "archive",
+
+			// spreadsheet
+			[".xls"] = "spreadsheet",
+			[".xlsx"] = "spreadsheet",
+			[".ods"] = "spreadsheet",
+			[".numbers"] = "spreadsheet",          // Apple Numbers
+			[".gsheet"] = "spreadsheet",      // Google Sheet (Drive link)
+
+			// document
+			[".doc"] = "document",
+			[".docx"] = "document",
+			[".odt"] = "document",
+			[".pages"] = "document",               // Apple Pages
+			[".gdoc"] = "document",           // Google Doc (Drive link)
+
+			// presentation
+			[".ppt"] = "presentation",
+			[".pptx"] = "presentation",
+			[".odp"] = "presentation",
+			[".key"] = "presentation",             // Apple Keynote
+			[".gslides"] = "presentation",    // Google Slides (Drive link)
+
+			// code / script
+			[".cs"] = "code",
+			[".js"] = "code",
+			[".ts"] = "code",
+			[".py"] = "code",
+			[".java"] = "code",
+			[".cpp"] = "code",
+			[".h"] = "code",
+			[".html"] = "code",
+			[".css"] = "code",
+			[".go"] = "code",
+			[".rb"] = "code",
+			[".sh"] = "code",
+			[".bat"] = "code",
+			[".ps1"] = "code",
+
+			// vector graphics
+			[".ai"] = "vector",
+			[".eps"] = "vector",
+
+			// 3-D model
+			[".obj"] = "3d-model",
+			[".fbx"] = "3d-model",
+			[".stl"] = "3d-model",
+			[".gltf"] = "3d-model",
+			[".glb"] = "3d-model",
+
+			// database
+			[".db"] = "database",
+			[".sqlite"] = "database",
+			[".mdb"] = "database",
+			[".sql"] = "database",
+			[".parquet"] = "database",
+			[".orc"] = "database",
+			[".avro"] = "database",
+			[".h5"] = "database",   // HDF5
+			[".feather"] = "database",
+			[".arrow"] = "database",
+
+			// subtitle / captions
+			[".srt"] = "subtitle",
+			[".vtt"] = "subtitle",
+			[".sub"] = "subtitle",
+
+			// ebook
+			[".epub"] = "ebook",
+			[".mobi"] = "ebook",
+			[".azw3"] = "ebook",
+
+			// font
+			[".ttf"] = "font",
+			[".otf"] = "font",
+			[".woff"] = "font",
+			[".woff2"] = "font",
+
+			// installers / packages
+			[".msi"] = "package",
+			[".deb"] = "package",
+			[".rpm"] = "package",
+			[".pkg"] = "package",
+			[".dmg"] = "package",
+			[".nupkg"] = "package",
+
+			// disk-images / VM images
+			[".iso"] = "disk-image",
+			[".img"] = "disk-image",
+			[".vhd"] = "disk-image",
+			[".vmdk"] = "disk-image",
+			[".qcow2"] = "disk-image",
+			[".ova"] = "disk-image",
+
+			// mobile apps
+			[".apk"] = "mobile-app",
+			[".aab"] = "mobile-app",
+			[".ipa"] = "mobile-app",
+			[".xapk"] = "mobile-app",
+
+			// certificates / keys
+			[".crt"] = "certificate",
+			[".cer"] = "certificate",
+			[".pem"] = "certificate",
+			[".der"] = "certificate",
+			[".p12"] = "certificate",
+			[".pfx"] = "certificate",
+			[".key"] = "certificate",
+
+			// configs & logs
+			[".conf"] = "config",
+			[".cfg"] = "config",
+			[".toml"] = "config",
+			[".properties"] = "config",
+			[".env"] = "config",
+			[".log"] = "log",
+
+			// machine-learning / model files
+			[".pt"] = "machine-learning",
+			[".pth"] = "machine-learning",
+			[".pb"] = "machine-learning",
+			[".onnx"] = "machine-learning",
+			[".joblib"] = "machine-learning",
+
+			// email
+			[".eml"] = "email",
+			[".msg"] = "email",
+
+			// calendar
+			[".ics"] = "calendar",
+
+			// GIS data
+			[".shp"] = "gis-data",
+			[".geojson"] = "gis-data",
+			[".kml"] = "gis-data",
+			[".gpx"] = "gis-data",
+
+			// checksum
+			[".sha256"] = "checksum",
+			[".md5"] = "checksum",
+			[".sfv"] = "checksum",
+
+			// executable / generic binary fallback
+			[".exe"] = "executable",
+			[".dll"] = "executable",
+			[".bin"] = "binary"
+		};
 	}
 }

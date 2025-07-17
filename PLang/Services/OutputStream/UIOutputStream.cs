@@ -26,8 +26,12 @@ namespace PLang.Services.OutputStream
 		public Action<string>? onFlush { get; set; }
 		public IForm IForm { get; set; }
 		public bool IsStateful => true;
+		public GoalStep Step { get; set; }
 
 		public string Output => "html";
+
+		public bool IsFlushed { get; set; }
+		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
 		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{
@@ -39,10 +43,9 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			
-			throw new NotImplementedException();
+			return await IForm.Ask(askOptions, callback, error);
 		}
 
 		public async Task Execute(string javascriptToCall)
@@ -70,6 +73,7 @@ namespace PLang.Services.OutputStream
 				try
 				{
 					IForm.Flush(str);
+					IsFlushed = true;
 				} catch (Exception e)
 				{
 					int i = 0;
@@ -103,7 +107,8 @@ namespace PLang.Services.OutputStream
 				}
 
 				Stream.Write(bytes, 0, bytes.Length);
-				
+
+				IsFlushed = true;
 			}
 			if (statusCode >= 300)
 			{

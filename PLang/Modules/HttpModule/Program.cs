@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Nostr.Client.Client;
 using Org.BouncyCastle.Asn1.Cmp;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -35,6 +36,7 @@ namespace PLang.Modules.HttpModule
 			{
 				return (absoluteSaveTo, null, null);
 			}
+			
 
 			using (var client = httpClientFactory.CreateClient())
 			{
@@ -50,6 +52,14 @@ namespace PLang.Modules.HttpModule
 					}
 				}
 				client.DefaultRequestHeaders.UserAgent.ParseAdd("plang v0.1");
+
+				Dictionary<string, object?> requestValue = new();
+				requestValue.Add("Headers", client.DefaultRequestHeaders);
+				requestValue.Add("Url", url);
+				Properties properties = new();
+				var requestPropertyOv = new Runtime.ObjectValue("Request", requestValue);
+				properties.Add(requestPropertyOv);
+
 				using (HttpResponseMessage response = await client.GetAsync(url))
 				{
 					response.EnsureSuccessStatusCode();
@@ -62,7 +72,7 @@ namespace PLang.Modules.HttpModule
 						}
 						else
 						{
-							var responseObj = GetHttpResponse(response);
+							var responseObj = GetHttpResponse(properties, response);
 							return (absoluteSaveTo, new ProgramError($"File already exists at that location", goalStep, function), responseObj);
 						}
 					}
@@ -81,7 +91,7 @@ namespace PLang.Modules.HttpModule
 						await contentStream.CopyToAsync(fileStream);
 					}
 
-					var resObj = GetHttpResponse(response);
+					var resObj = GetHttpResponse(properties, response);
 					return (absoluteSaveTo, null, resObj);
 				}
 			}
@@ -159,6 +169,12 @@ namespace PLang.Modules.HttpModule
 							content.Headers.TryAddWithoutValidation(header.Key, value);
 						}
 					}
+					Dictionary<string, object?> requestValue = new();
+					requestValue.Add("Headers", content.Headers);
+					requestValue.Add("Url", url);
+					Properties properties = new();
+					var requestPropertyOv = new Runtime.ObjectValue("Request", requestValue);
+					properties.Add(requestPropertyOv);
 
 					request.Content = content;
 					using (var response = await httpClient.SendAsync(request))
@@ -168,14 +184,14 @@ namespace PLang.Modules.HttpModule
 						{
 
 							string responseBody = await response.Content.ReadAsStringAsync();
-							var responseObj = GetHttpResponse(response);
+							var responseObj = GetHttpResponse(properties, response);
 							return (responseBody, null, responseObj);
 						}
 						else
 						{
 
 							var errorDetails = await response.Content.ReadAsStringAsync();
-							var responseObj = GetHttpResponse(response);
+							var responseObj = GetHttpResponse(properties, response);
 							return (null, new ProgramError(errorDetails, goalStep, function), responseObj);
 						}
 					}
@@ -232,7 +248,7 @@ namespace PLang.Modules.HttpModule
 									}
 									else
 									{
-										return (null, new ProgramError($"{fileName} could not be found", goalStep, function), null);
+										return (null, new ProgramError($"{fileName} could not be found", goalStep, function, StatusCode: 404), null);
 									}
 								}
 								else
@@ -276,13 +292,20 @@ namespace PLang.Modules.HttpModule
 						request.Content = content;
 						try
 						{
+							Dictionary<string, object?> requestValue = new();
+							requestValue.Add("Headers", content.Headers);
+							requestValue.Add("Url", url);
+							Properties returnProperties = new();
+							var requestPropertyOv = new Runtime.ObjectValue("Request", requestValue);
+							returnProperties.Add(requestPropertyOv);
+
 							using (var response = await httpClient.SendAsync(request))
 							{
 								string responseBody = await response.Content.ReadAsStringAsync();
 
 								if (response.Content.Headers.ContentType != null && response.Content.Headers.ContentType.MediaType == "application/json")
 								{
-									var responseObj = GetHttpResponse(response);
+									var responseObj = GetHttpResponse(returnProperties, response);
 									return (JsonConvert.DeserializeObject(responseBody), null, responseObj);
 								}
 								else if (response.Content.Headers.ContentType != null && IsXml(response.Content.Headers.ContentType.MediaType))
@@ -293,12 +316,12 @@ namespace PLang.Modules.HttpModule
 									xmlDoc.LoadXml(responseBody);
 
 									string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-									var responseObj = GetHttpResponse(response);
+									var responseObj = GetHttpResponse(returnProperties, response);
 									return (JsonConvert.DeserializeObject(jsonString), null, responseObj);
 
 								}
 
-								var resObj = GetHttpResponse(response);
+								var resObj = GetHttpResponse(returnProperties, response);
 								return (responseBody, null, resObj);
 							}
 						}
@@ -388,12 +411,15 @@ namespace PLang.Modules.HttpModule
 			{
 				request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 			}
-
+			Dictionary<string, object?> requestValue = new();
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			if (data != null)
 			{
 				string body = StringHelper.ConvertToString(data);
 
+				requestValue.Add("Body", body);
+				requestValue.Add("Encoding", encoding);
+				requestValue.Add("Content-Type", contentType);
 				request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
 			}
 
@@ -403,7 +429,12 @@ namespace PLang.Modules.HttpModule
 			}
 
 			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-			Properties? properties = null;
+			
+			requestValue.Add("Headers", request.Headers);
+			requestValue.Add("Url", url);
+			Properties properties = new();
+			var requestPropertyOv = new Runtime.ObjectValue("Request", requestValue);
+			properties.Add(requestPropertyOv);
 
 			var task = httpClient.SendAsync(request);
 			try
@@ -416,10 +447,11 @@ namespace PLang.Modules.HttpModule
 				{
 					
 					var result = await programFactory.GetProgram<SerializerModule.Program>(goalStep).Deserialize(response.Content.ReadAsStream(), mediaType);
-					if (result.Error != null && result.Error.Key != "SerializerNotDefined") return (null, result.Error, GetHttpResponse(response));
+					if (result.Error != null && result.Error.Key != "SerializerNotDefined") return (null, result.Error, GetHttpResponse(properties, response));
 
 
 					string responseStr = await response.Content.ReadAsStringAsync();
+					
 					var obj = result.Object as Dictionary<string, object?>;
 					if (obj == null)
 					{						
@@ -427,7 +459,7 @@ namespace PLang.Modules.HttpModule
 						{
 							responseStr = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
 						}
-						properties = GetHttpResponse(response);
+						properties = GetHttpResponse(properties, response);
 						return (result.Object, new ProgramError(responseStr, goalStep, function, StatusCode: (int)response.StatusCode), properties);
 					}
 
@@ -435,7 +467,7 @@ namespace PLang.Modules.HttpModule
 					if (signatureJson.Key != null)
 					{
 						var signature = await programFactory.GetProgram<IdentityModule.Program>(goalStep).VerifySignature(signatureJson.Value.ToString());
-						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(response));
+						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(properties, response));
 
 						if (signature.Signature != null)
 						{
@@ -449,7 +481,7 @@ namespace PLang.Modules.HttpModule
 						var jsonRpc = JsonConvert.DeserializeObject<JsonRpcErrorResponse>(responseJson.Value.ToString());
 						if (jsonRpc != null && jsonRpc.Error != null)
 						{
-							return (obj.ToString(), await GetError(jsonRpc.Error), GetHttpResponse(response));
+							return (obj.ToString(), await GetError(jsonRpc.Error), GetHttpResponse(properties, response));
 						}
 					}
 
@@ -457,21 +489,21 @@ namespace PLang.Modules.HttpModule
 					{
 						responseStr = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
 					}
-					properties = GetHttpResponse(response);
+					properties = GetHttpResponse(properties, response);
 					return (null, new ProgramError(responseStr, goalStep, function, StatusCode: (int)response.StatusCode), properties);
 				}
 
 				if (!IsTextResponse(mediaType))
 				{
 					var bytes = await response.Content.ReadAsByteArrayAsync();
-					properties = GetHttpResponse(response);
+					properties = GetHttpResponse(properties, response);
 					return (bytes, null, properties);
 				}
 
 				string responseBody = await response.Content.ReadAsStringAsync();
 				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
 				{
-					properties = GetHttpResponse(response);
+					properties = GetHttpResponse(properties, response);
 					try
 					{
 						return (JsonConvert.DeserializeObject(responseBody), null, properties);
@@ -489,11 +521,11 @@ namespace PLang.Modules.HttpModule
 					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
 
 					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-					properties = GetHttpResponse(response);
+					properties = GetHttpResponse(properties, response);
 					return (JsonConvert.DeserializeObject(jsonString), null, properties);
 
 				}
-				properties = GetHttpResponse(response);
+				properties = GetHttpResponse(properties, response);
 
 				return (responseBody, null, properties);
 
@@ -552,9 +584,9 @@ namespace PLang.Modules.HttpModule
 			}
 			return headerDict;
 		}
-		private static Properties GetHttpResponse(HttpResponseMessage response)
+		private static Properties GetHttpResponse(Properties properties, HttpResponseMessage response)
 		{
-			var httpResponse = new HttpResponse()
+			var httpResponse = new Models.HttpResponse()
 			{
 				IsSuccess = response.IsSuccessStatusCode,
 				ReasonPhrase = response.ReasonPhrase,
@@ -564,7 +596,6 @@ namespace PLang.Modules.HttpModule
 			httpResponse.Headers = GetHeadersObject(response.Headers);
 			httpResponse.ContentHeaders = GetHeadersObject(response.Content.Headers);
 
-			Properties properties = new();
 			properties.Add(new Runtime.ObjectValue("Response", httpResponse));
 			return properties;
 		}

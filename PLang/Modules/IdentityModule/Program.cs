@@ -104,28 +104,28 @@ namespace PLang.Modules.IdentityModule
 		}
 
 		[Description("Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature")]
-		public async Task<Signature> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null)
+		public async Task<SignedMessage> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null, bool skipNonce = false)
 		{
-			return await signingService.Sign(body, contracts, expiresInSeconds, headers);
+			return await signingService.Sign(body, contracts, expiresInSeconds, headers, skipNonce: skipNonce);
 		}
 
 		[Description("Validate a signature on specific properties")]
-		public async Task<(Signature? Signature, IError? Error)> VerifySignatureOnProperties(object? signatureFromUser, List<string> properties)
+		public async Task<(SignedMessage? Signature, IError? Error)> VerifySignatureOnProperties(object? signatureFromUser, List<string> properties)
 		{
 			return (null, new ProgramError("Not supported"));
 		}
 
 		[Description("Validate a signature. Return the signature when valid, gives error when invalid")]
-		public async Task<(Signature? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
+		public async Task<(SignedMessage? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
 			if (signatureFromUser == null)
 			{
 				return (null, new ProgramError("Signature is missing"));
 			}
-			Signature? signature = signatureFromUser as Signature;
+			SignedMessage? signature = signatureFromUser as SignedMessage;
 			if (signature == null && signatureFromUser is string str)
 			{
-				signature = JsonConvert.DeserializeObject<Signature>(str);
+				signature = SignatureCreator.Parse(str);
 			} else if (signature == null && signatureFromUser is IDictionary)
 			{
 				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);

@@ -55,20 +55,30 @@ namespace PLang.Utils
 			return txt.Substring(0, maxLength) + trailing;
 		}
 
-		public static (string Hash, IError? Error) ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
+		public static (string? Hash, IError? Error) ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
 		{
 			if (input == null) {
-				return (string.Empty, new Error("input to compute hash cannog be empty"));
+				return (string.Empty, new Error("input to compute hash cannot be empty"));
 			}
+			mode = mode.Replace("-", "");
 
 			if (!string.IsNullOrWhiteSpace(salt))
 			{
 				input = salt + ";" + input;
 			}
-			if (mode.ToLower() == "sha256") return (ComputeSha256(input), null);
-			return (ComputeKeccack(input), null);
+			if (mode.Equals("sha256", StringComparison.OrdinalIgnoreCase)) return (ComputeSha256(input), null);
+			if (mode.Equals("keccak256", StringComparison.OrdinalIgnoreCase)) return (ComputeKeccack(input), null);
+
+			return (null, new Error($"{mode} is not supported. {ErrorReporting.CreateIssueNotImplemented}"));
 		}
 
+
+		public static string ComputeKeccack(object input)
+		{
+			var str = JsonConvert.SerializeObject(input);
+
+			return str.ComputeKeccack();
+		}
 
 		public static string ComputeSha256(this string input)
 		{
@@ -217,7 +227,10 @@ namespace PLang.Utils
 			text = Regex.Replace(text, @"\s{2,}", " ").Trim();
 			return text;
 		}
-
+		public static string FromBase64(this string base64)
+		{
+			return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+		}
 		public static string ToBase64(this string text)
 		{
 			byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);

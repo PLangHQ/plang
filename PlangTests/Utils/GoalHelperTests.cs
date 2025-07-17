@@ -38,23 +38,5 @@ namespace PLang.Utils.Tests
 			Assert.AreEqual("MyApp4", myApp4);
 		}
 
-		[TestMethod()]
-		public void GetGoalNameTest()
-		{
-			var goalName = GoalHelper.GetGoalPath("apps/MyApp/");
-			Assert.AreEqual("Start", goalName);
-
-			var goalName1 = GoalHelper.GetGoalPath("apps/MyApp");
-			Assert.AreEqual("Start", goalName1);
-
-			var goalName2 = GoalHelper.GetGoalPath("apps/MyApp/DoStuff");
-			Assert.AreEqual("DoStuff", goalName2);
-
-			var goalName3 = GoalHelper.GetGoalPath("apps/MyApp/DoStuff/EvenMoreStuff");
-			Assert.AreEqual("DoStuff" + Path.DirectorySeparatorChar + "EvenMoreStuff", goalName3);
-
-			var goalName4 = GoalHelper.GetGoalPath("apps/MyApp/DoStuff/");
-			Assert.AreEqual("DoStuff", goalName4);
-		}
 	}
 }

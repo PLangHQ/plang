@@ -167,7 +167,7 @@ namespace PLangTests.Modules.FileModule
 			string path = "Test5x2.csv";
 			string fullPath = Path.Join(fileSystem.RootDirectory, path);
 
-			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(File.ReadAllText(fullPath)));
+			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(System.IO.File.ReadAllText(fullPath)));
 
 			var data = await p.ReadCsvFile(path) as IEnumerable<object>;
 			int nr = 2;
@@ -309,7 +309,7 @@ namespace PLangTests.Modules.FileModule
 
 			var paths = await p.GetFilePathsInDirectory(fileSystem.RootDirectory, "*.goal", new string[] { "test/test.goal" }, true);
 
-			Assert.IsFalse(paths.Contains("test.goal"));
+			Assert.IsTrue(paths.FirstOrDefault(p => p.Name == "test.goal") != null);
 			Assert.IsTrue(paths.Count > 5);
 			int i = 0;
 		}

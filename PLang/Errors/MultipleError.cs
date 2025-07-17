@@ -1,12 +1,23 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Builder;
+using PLang.Errors.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 
 namespace PLang.Errors
 {
+	public record GroupedUserInputErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) :
+		GroupedErrors(Key, StatusCode, FixSuggestion, HelpfulLinks), IUserInputError
+	{
+		public override string ToString()
+		{
+			return Message;
+		}
 
-	public record GroupedErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
+	}
+
+
+		public record GroupedErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
 	{
 		
 		public string Message

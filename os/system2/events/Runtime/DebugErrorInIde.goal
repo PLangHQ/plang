@@ -1,0 +1,3 @@
+DebugErrorInIde
+- write out %!error.ToString()%
+- call goal SendDebug

@@ -33,7 +33,7 @@ namespace PLang.Modules.ThrowErrorModule
 		{
 			if (message is IError) return message as IError;
 			//await outputStreamFactory.CreateHandler().Write(message, type, statusCode);
-			return new UserDefinedError(message.ToString(), goalStep, type, statusCode);
+			return new UserInputError(message.ToString(), goalStep, type, statusCode);
 		}
 
 		[Description("Retries a step that caused an error")]
@@ -73,8 +73,12 @@ namespace PLang.Modules.ThrowErrorModule
 					return (paymentContract, null);
 				}
 			}
-
-			var callback = await StepHelper.GetCallback(goalStep, programFactory);
+			string path = "/";
+			if (HttpContext != null)
+			{
+				path = HttpContext.Request.Path;
+			}
+			var callback = await StepHelper.GetCallback(path, new(), memoryStack, goalStep, programFactory);
 
 			var obj = new PaymentContract(name, description, error, services);
 			

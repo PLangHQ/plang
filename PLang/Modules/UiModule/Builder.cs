@@ -3,7 +3,16 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
+using PLang.Interfaces;
+using PLang.Models;
+using PLang.SafeFileSystem;
+using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Collections.Generic;
+using System.IO.Abstractions;
+using static PLang.Modules.DbModule.Builder;
+using static PLang.Modules.UiModule.Program;
 
 namespace PLang.Modules.UiModule
 
@@ -12,19 +21,25 @@ namespace PLang.Modules.UiModule
 	{
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
+		private readonly ILlmServiceFactory llmServiceFactory;
+		private readonly IPLangFileSystem fileSystem;
+		private readonly ProgramFactory programFactory;
+		private readonly VariableHelper variableHelper;
 
-		public Builder(ILogger logger, ITypeHelper typeHelper) : base()
+		public Builder(ILogger logger, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem, ProgramFactory programFactory, VariableHelper variableHelper) : base()
 		{
 			this.logger = logger;
 			this.typeHelper = typeHelper;
+			this.llmServiceFactory = llmServiceFactory;
+			this.fileSystem = fileSystem;
+			this.programFactory = programFactory;
+			this.variableHelper = variableHelper;
 		}
 
 
-
-		public record FunctionName(string Name);
 		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-
+			/*
 			SetSystem(@"Your job is: 
 1. Parse user intent
 2. Map the intent to one of C# function available provided to you
@@ -50,9 +65,9 @@ Response with only the function name you would choose");
 
 			SetAssistant($"### function available ###\n{JsonConvert.SerializeObject(result.ClassDescription)}\n### function available ###");
 
-			var buildFunctionName = await base.Build<FunctionName>(step);
+			var buildFunctionName = await base.Build<GenericFunction>(step);
 
-			var functionName = buildFunctionName.Instruction.Function as FunctionName;
+			var functionName = buildFunctionName.Instruction.Function;
 
 
 			if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);
@@ -64,10 +79,82 @@ Response with only the function name you would choose");
 				if (buildFunction.BuilderError != null) return (null, buildFunction.BuilderError);
 				return buildFunction;
 			}
+			*/
+			var result = await base.Build<GenericFunction>(step);
+			if (result.BuilderError != null) return (null, result.BuilderError);
+
+			var function = result.Instruction.Function;
+			if (function.Name == "RenderHtml")
+			{
+				return await BuildRenderHtml(step);
+			}
+			return result;
+		}
+
+		public async Task<(Instruction?, IBuilderError?)> BuilderRenderTemplate(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			var events = gf.GetParameter<List<Event>?>("events");
+			if (events == null || events.Count == 0) return (instruction, null);
+
+
+			var renderOption = gf.GetParameter<RenderTemplateOptions>("options");
+			
+			if (renderOption.FileName.Contains("%"))
+			{
+				return (instruction, new StepBuilderError($"Events cannot be added to dynamic file path {renderOption.FileName}", step));
+			}
+
+			List<LlmMessage> messages = new();
+			messages.Add(new LlmMessage("system", @$"
+I have this scriban template, I want you to modify ONLY what I request.
+
+I want to add js event on css selector or scriban {{ variable }} from the list of <events>
+
+%variables% should match with the scriban variables, e.g. {{ item.productId }} => %productId%
+call XXX calls the javascript function plang.post(name, parameters), this function is already defined
+parameters is a key:value object, e.g. {{ productId: {{{{ item.productId }}}} }}
+you need to understand the structure of html and variables, as they might be referenced, e.g. user might say %productId% when the variable in scriban is {{{{ item.productId }}}} 
+
+<events>
+{JsonConvert.SerializeObject(events)}
+</events>
+
+
+EventType: event type bind to an object
+CssSelectorOrVariable: is either a scriban {{{{ variable }}}} or a css selector
+GoalToCall: defines the path and parameters to call
+
+Examples:
+{{""EventType"":""onchange"",""CssSelectorOrVariable"":""{{{{ item.quantity }}}}"",""GoalToCall"":{{""Name"":""UpdateQuantity"",""Parameters"":{{""variantId"":""%variantId%"",""quantity"":""%quantity%""}}}}
+
+<input type=""number"" name=""qty"" value=""{{{{ item.quantity }}}}""> becomes <input type=""number"" name=""qty"" value=""{{{{ item.quantity }}}}"" onchange=""plang.post('UpdateQuantity', {{variantId: {{{{ item.variantId }}}}, quantity: this.value}});"">
+
+"));
+
+			var templatePath = PathHelper.GetPath(renderOption.FileName, fileSystem, step.Goal);
+			var html = fileSystem.File.ReadAllText(templatePath);
+			messages.Add(new LlmMessage("user", html));
+
+			var llmRequest = new LlmRequest("BuilderRenderTemplate", messages);
+			llmRequest.llmResponseType = "html";
+
+
+			var llm = llmServiceFactory.CreateHandler();
+
+			var result = await llm.Query<string>(llmRequest);
+			if (result.Error != null) return (null, new BuilderError(result.Error));
+
+			fileSystem.File.WriteAllText(templatePath + "2", html);
+			fileSystem.File.WriteAllText(templatePath, result.Response);
+
+			return (instruction, null);
+
+		}
 
 
 
-			var nextStep = step.NextStep;
+		public async Task<(Instruction?, IBuilderError?)> BuildRenderHtml(GoalStep step) { 
+				var nextStep = step.NextStep;
 
 			List<string> subElements = new();
 			while (nextStep != null && nextStep.Indent == step.Indent + 4)
@@ -223,7 +310,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 			
 			
 
-			var build = await base.Build<UiResponse>(step, previousBuildError);
+			var build = await base.Build<UiResponse>(step);
 			if (build.BuilderError != null || build.Instruction == null)
 			{
 				return (null, build.BuilderError ?? new StepBuilderError("Could not build step", step));
@@ -278,7 +365,44 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 			return (instruction, null);
 		}
 
+		public async Task<(Instruction, IBuilderError?)> BuilderSetFrameworks(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
 
+			var framework = gf.GetParameter<UiFramework>("framework");
+			var dict = new Dictionary<string, object?>();
+			dict.Add("framework", variableHelper.LoadVariables(framework));
+
+			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetFrameworks", dict);
+
+			var result = await caller.RunGoal(goalToCall);
+			if (result.Error != null) return (instruction, new BuilderError(result.Error));
+
+			framework = result.Return as UiFramework;
+
+			var variable = programFactory.GetProgram<VariableModule.Program>(step); 
+			var storedFrameworks = await variable.GetSettings<UiFramework>("UiFrameworks");
+
+			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
+
+			return (instruction, null);
+		}
+		public async Task<(Instruction, IBuilderError?)> BuilderSetLayout(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			/*
+			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
+
+			var options = gf.GetParameter<LayoutOptions>("options");
+			var dict = new Dictionary<string, object?>();
+			dict.Add("options", variableHelper.LoadVariables(options));
+
+			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetLayout", dict);
+
+			var result = await caller.RunGoal(goalToCall);
+			if (result.Error != null) return (instruction, new BuilderError(result.Error));
+			*/
+			return (instruction, null);
+		}
 	}
 
 	public record UiResponse(string? html = null, string? javascript = null, string? css = null);

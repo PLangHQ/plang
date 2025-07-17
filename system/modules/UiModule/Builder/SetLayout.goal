@@ -1,0 +1,28 @@
+SetLayout
+- if %options.Name% is empty then call AskWhichTemplate
+- read /ui/template/%options.Name%/readme.md, allowReadFromSystem = true
+    write to %readme%
+- read /ui/template/%options.Name%/layout.html, "" if empty, write to %layoutExample%    
+- read %options.OutputFile%, "" if empty, write to %currentDesign%
+- read llm/SetLayoutSystem.llm, load vars, allow system, write to %system%
+- [llm] system: %system%
+        user: "Make me a layout file for %option.Device%"
+        scheme: {reasoning:string, html:string, styles:string[] javascripts:string[]}
+        write to %result%
+- write %result.html% to %option.OutputFile%
+- return %result%
+
+AskWhichTemplate
+- get all folder names from "/ui/template/", include system, write to %folders%
+- ask user "Which template do you want?", %folders%, write to %answer%
+- if dir "/ui/template/%answer%" exists then 
+    - set %options.Name% = %answer%
+    - end goal
+- [llm] system: "User was provided with <folders>, return folder name from his answer. If non matches, return null"
+        user: %answer%
+        scheme: {folder:string|null}
+        write to %result%
+- if %result.folder% is empty, then AskWhichTemplate
+- if %result.folder% is not empty, then 
+    - set %options.Name% = %answer%
+    - end goal

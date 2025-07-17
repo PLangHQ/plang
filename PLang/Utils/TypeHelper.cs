@@ -1,4 +1,5 @@
-﻿using Nethereum.ABI.CompilationMetadata;
+﻿using Epiforge.Extensions.Components;
+using Nethereum.ABI.CompilationMetadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
@@ -7,6 +8,7 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -16,6 +18,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
+using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
@@ -30,7 +33,7 @@ public interface ITypeHelper
 	Type? GetBuilderType(string module);
 	Type? GetRuntimeType(string? module);
 	List<Type> GetTypesByType(Type type);
-	Task Run(string @namespace, string @class, string method, Dictionary<string, object?> parameters);
+	Task<object?> Run(string @namespace, string @class, string method, Dictionary<string, object?>? parameters);
 }
 
 public class TypeHelper : ITypeHelper
@@ -335,8 +338,30 @@ public class TypeHelper : ITypeHelper
 		if (!module.EndsWith(".Builder")) module += ".Builder";
 		return builderModules.FirstOrDefault(p => p.FullName == module);
 	}
-	public async Task Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+
+
+	public async Task<object?> Run(string ns, string cls, string method,
+		Dictionary<string, object?>? named = null)
 	{
+		var type = Type.GetType($"{ns}.{cls}", throwOnError: true)!;
+		var mi = type.GetMethod(method, BindingFlags.Public |
+											BindingFlags.Instance |
+											BindingFlags.Static)
+					?? throw new MissingMethodException(type.FullName, method);
+
+		// build positional array once
+		var pars = mi.GetParameters();
+		var args = pars.Length == 0
+			? Array.Empty<object?>()
+			: pars.Select(p =>
+				  named != null && named.TryGetValue(p.Name!, out var v)
+					  ? v
+					  : p.HasDefaultValue ? p.DefaultValue
+					  : throw new ArgumentException($"Missing '{p.Name}'."))
+				  .ToArray();
+
+		var target = mi.IsStatic ? null : Activator.CreateInstance(type);
+		return mi.FastInvoke(target, args);   
 
 		//InvokeMethoed(GetProgramInstance(), @namespace, @class, method, Parameters);
 	}
@@ -426,6 +451,10 @@ public class TypeHelper : ITypeHelper
 		{
 			return jobj.ToObject(targetType);
 		}
+		if (value is JValue jValue)
+		{
+			return jValue.Value;
+		}
 
 		if (value is JArray jArray)
 		{
@@ -434,6 +463,17 @@ public class TypeHelper : ITypeHelper
 		if (value is JToken jToken)
 		{
 			return jToken.ToObject(targetType);
+		}
+
+		if (IsListOfJToken(value) && targetType == typeof(string))
+		{
+			var jArray2 = new JArray((IEnumerable<JToken>)value);
+			return jArray2.ToString();
+		}
+
+		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
+		{
+			return JsonConvert.SerializeObject(value);
 		}
 
 
@@ -505,7 +545,20 @@ public class TypeHelper : ITypeHelper
 
 		}
 	}
+	static bool IsListOfJToken(object obj)
+	{
+		if (obj == null) return false;
 
+		var type = obj.GetType();
+
+		if (!type.IsGenericType) return false;
+
+		var genericTypeDef = type.GetGenericTypeDefinition();
+		if (genericTypeDef != typeof(List<>)) return false;
+
+		var argType = type.GetGenericArguments()[0];
+		return typeof(Newtonsoft.Json.Linq.JToken).IsAssignableFrom(argType);
+	}
 	public static bool IsBoolValue(string strValue, out bool? boolValue)
 	{
 		if (strValue == "1" || strValue.Equals("true", StringComparison.OrdinalIgnoreCase))
@@ -546,11 +599,20 @@ public class TypeHelper : ITypeHelper
 			typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
 		};
 
+
+
 		if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
 		{
+			if (numericTypes.Contains(type1) || numericTypes.Contains(type2))
+			{
+				(item1, item2) = TryConvertToNumeric(item1, item2, numericTypes, out bool success);
+				if (success) return (item1, item2);
+			}
+
 			return ToMatchingJTokens(item1, item2);
+
 		}
-			
+
 
 		Type widerType = GetWiderType(type1, type2);
 
@@ -558,6 +620,38 @@ public class TypeHelper : ITypeHelper
 		var converted2 = Convert.ChangeType(item2, widerType);
 
 		return (converted1, converted2);
+	}
+
+	private static (object item1, object item2) TryConvertToNumeric(object item1, object item2, Type[] numericTypes, out bool success)
+	{
+		Type theNumericType;
+		object toConvert;
+		object sameObjToReturn;
+		if (numericTypes.Contains(item1.GetType()))
+		{
+			theNumericType = item1.GetType();
+			var obj = TypeHelper.ConvertToType(item2, item1.GetType());
+			if (obj != null)
+			{
+				success = true;
+				return (item1, obj);
+			}
+
+		}
+		else if (numericTypes.Contains(item2.GetType()))
+		{
+			var obj = TypeHelper.ConvertToType(item1, item2.GetType());
+			if (obj != null)
+			{
+				success = true;
+				return (obj, item2);
+			}
+		}
+
+
+		success = false;
+		return (item1, item2);
+
 	}
 
 	private static Type GetWiderType(Type t1, Type t2)
@@ -804,5 +898,6 @@ public class TypeHelper : ITypeHelper
 			return content;
 		}
 	}
+
 }
 

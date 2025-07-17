@@ -1,9 +1,13 @@
 ﻿using LightInject;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
+using PLang.Events;
+using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
@@ -18,94 +22,81 @@ namespace PLang.Runtime
 {
 	public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCallInfo goalToCall,
+		Task<(IEngine engine, object? Variables, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCallInfo goalToCall,
 			Goal? callingGoal = null, bool waitForExecution = true,
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-			bool keepMemoryStackOnAsync = false, bool isolated = false);
+			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, bool isEvent = false);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
 	{
 		private readonly IPLangFileSystem fileSystem;
+		private readonly PrParser prParser;
 
-		public PseudoRuntime(IPLangFileSystem fileSystem)
+		public PseudoRuntime(IPLangFileSystem fileSystem, PrParser prParser)
 		{
 			this.fileSystem = fileSystem;
+			this.prParser = prParser;
 		}
 
-		public async Task<(IEngine engine, object? Variables, IError? error, IOutput? output)>
+		public async Task<(IEngine engine, object? Variables, IError? error)>
 			RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCallInfo goalToCall, Goal? callingGoal = null,
 						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
 						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-						bool keepMemoryStackOnAsync = false, bool isolated = false)
+						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, bool isEvent = false)
 		{
+
+			if (callingGoal == null) return (engine, null, new Error($"Calling goal is null. {ErrorReporting.CreateIssueShouldNotHappen}"));
 
 			var goalName = goalToCall.Name;
 			var parameters = goalToCall.Parameters;
+			var isRented = false;
 
-			Goal? goalToRun = null;
+			var goals = prParser.GetGoals();
+			var systemGoals = (disableOsGoals) ? new() : prParser.GetSystemGoals();
+
+			var callingStep = (callingGoal.CurrentStepIndex != -1) ? callingGoal.GoalSteps[callingGoal.CurrentStepIndex] : null;
+			var relativeGoalPath = callingGoal.RelativeGoalPath;
+			var appStartFolderPath = callingGoal.AbsoluteAppStartupFolderPath;
+			
+			// todo: hack, should not be modifying like this
+			if (isEvent)
+			{
+				var eventBinding = goalToCall.Parameters[ReservedKeywords.Event] as EventBinding;
+				if (eventBinding != null)
+				{
+					relativeGoalPath = eventBinding.Goal!.RelativeGoalPath;
+				}
+			}
+			(var goalToRun, var error) = GoalHelper.GetGoal(relativeGoalPath, fileSystem.RootDirectory, goalToCall, goals, systemGoals);
+			
+			if (error != null) return (engine, null, error);
+			if (goalToRun == null) return (engine, null, new Error($"{goalToCall.Name} could not be found"));
+
 			try
 			{
-				IError? error;
-
-				if (goalName.StartsWith("/"))
-				{
-					relativeAppPath = "/";
-				}
-				else
-				{
-					relativeAppPath = callingGoal?.RelativeGoalFolderPath ?? relativeAppPath;
-				}
-
-				string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath).AdjustPathToOs();
-				string goalToRunPath = fileSystem.Path.Join(relativeAppPath, goalName);
-				if (goalToRunPath.StartsWith("//")) goalToRunPath = goalToRunPath.Substring(1);
-
 				// todo: (Decision) The idea behind isolation is when you call a external app, that app should not have access
 				// to the memory of the calling app, and only get the parameters that are sent
 				// this is not working now, when I rent engine it gets the memory.
 				// this might not be an issues since all goals are open source and can be easily validated
 				// decision: leave it in to give memory stack to isolated goals
-				if (isolated || !waitForExecution || CreateNewContainer(absolutePathToGoal))
+				if (isolated || !waitForExecution || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
 				{
-
-					goalToRun = engine.GetGoal(goalToRunPath);
-					if (goalToRun == null) return GoalToRunIsNull(engine, relativeAppPath, goalName, callingGoal, goalToRunPath);
-
-					var engineRootPath = (relativeAppPath.Contains("/apps/")) ? absolutePathToGoal : fileSystem.RootDirectory;
-					if (goalToRun.IsOS)
-					{
-						engineRootPath = fileSystem.OsDirectory;
-					}
-
-					GoalStep? callingStep = null;
-					if (callingGoal != null)
-					{
-						callingStep = callingGoal.GoalSteps[callingGoal.CurrentStepIndex];
-						//return (engine, null, new Error($"calling goal cannot be empty.{ErrorReporting.CreateIssueShouldNotHappen}"), null);
-					}
-
-					engine = await engine.GetEnginePool(engineRootPath).RentAsync(engine, callingStep, engineRootPath);
-				}
-				else
-				{
-					goalToRun = engine.GetGoal(goalToRunPath, callingGoal);
+					isRented = true;
+					
+					engine = await engine.GetEnginePool(fileSystem.RootDirectory).RentAsync(engine, callingStep, fileSystem.RootDirectory);
 				}
 
 
-				if (goalToRun == null)
-				{
-					return GoalToRunIsNull(engine, relativeAppPath, goalName, callingGoal, goalToRunPath);
-				}
+				goalToRun.IsEvent = isEvent;
 
-				if (waitForExecution)
+				// prevent loop reference
+				if (callingGoal.ParentGoal == null || !callingGoal.ParentGoal.RelativePrPath.Equals(goalToRun.RelativePrPath))
 				{
 					goalToRun.ParentGoal = callingGoal;
-
 				}
 
 				var memoryStack = engine.GetMemoryStack();
-				GoalStep? goalStep = (callingGoal != null) ? callingGoal.GoalSteps[callingGoal.CurrentStepIndex] : null;
 
 				if (parameters != null)
 				{
@@ -117,7 +108,7 @@ namespace PLang.Runtime
 						}
 						else
 						{
-							memoryStack.Put(param.Key, param.Value, goalStep: goalStep);
+							memoryStack.Put(param.Key, param.Value, goalStep: callingStep);
 						}
 					}
 				}
@@ -136,14 +127,14 @@ namespace PLang.Runtime
 
 					if (task.IsFaulted && task.Exception != null)
 					{
-						error = new ExceptionError(task.Exception, task.Exception.Message, callingGoal, goalStep);
+						error = new ExceptionError(task.Exception, task.Exception.Message, callingGoal, callingStep);
 					}
 					else
 					{
 						error = task.Result.Error;
 					}
 
-					return (engine, task.Result.Variables, error, new TextOutput("", "text/html", false, null, "desktop"));
+					return (engine, task.Result.Variables, error);
 				}
 				else
 				{
@@ -165,14 +156,32 @@ namespace PLang.Runtime
 					
 					KeepAlive(engine, task);
 
-					return (engine, null, null, new TextOutput("", "text/html", false, null, "desktop"));
+					return (engine, task, null);
 				}
 
 
 			}
+			/*
+			catch (FileAccessException ex)
+			{
+				return (engine, null, new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, async (appName, path, answer) =>
+				{
+					
+					
+					fileSystem.AddFileAccess(new FileAccessControl(appName, path, ProcessId: engine.Id));
+
+					var result = await RunGoal(engine, context, relativeAppPath, goalToCall, callingGoal,
+						waitForExecution, delayWhenNotWaitingInMilliseconds,
+						waitForXMillisecondsBeforeRunningGoal, indent,
+						keepMemoryStackOnAsync, isolated);
+					if (result.error != null) return (false, result.error);
+
+					return (true, null);
+				}), null);
+			}*/
 			catch (Exception ex)
 			{
-				return (engine, null, new ExceptionError(ex), null);
+				return (engine, null, new ExceptionError(ex));
 			}
 			finally
 			{
@@ -180,9 +189,9 @@ namespace PLang.Runtime
 				{
 					await goalToRun.DisposeVariables(engine.GetMemoryStack());
 				}
-				if (waitForExecution && engine.ParentEngine != null)
+				if (isRented && waitForExecution)
 				{
-					engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
+					engine.ParentEngine?.GetEnginePool(engine.Path).Return(engine);
 				}
 			}
 		}
@@ -206,29 +215,6 @@ namespace PLang.Runtime
 			}
 		}
 
-		private (IEngine engine, object? Variables, IError? error, IOutput? output) GoalToRunIsNull(IEngine engine, string relativeAppPath,
-				GoalToCallInfo goalName, Goal? callingGoal, string goalToRunPath)
-		{
-			var goalsAvailable = engine.GetGoalsAvailable(relativeAppPath, goalToRunPath);
-			if (goalsAvailable == null || goalsAvailable.Count == 0)
-			{
-				var error2 = new Error($"No goals available at {relativeAppPath} trying to run {goalToRunPath}");
-				var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
-				return (engine, null, error2, output2);
-			}
-
-			var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
-			string strGoalsAvailable = "";
-			if (!string.IsNullOrWhiteSpace(goals))
-			{
-				strGoalsAvailable = $" These goals are available: \n{goals}";
-
-			}
-
-			var error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
-			var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
-			return (engine, null, error, output3);
-		}
 
 		public record EngineWait(Task task, IEngine engine);
 		public (string absolutePath, GoalToCallInfo goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCallInfo? goalName = null)
