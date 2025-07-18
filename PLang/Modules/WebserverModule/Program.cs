@@ -496,7 +496,7 @@ public class Program : BaseProgram, IDisposable
 		{
 			foreach (var item in slugVariables)
 			{
-				engine.GetMemoryStack().Put(item, goalStep);
+				engine.GetMemoryStack().Put(item, goalStep, disableEvent: true);
 			}
 		}
 		logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
@@ -504,8 +504,8 @@ public class Program : BaseProgram, IDisposable
 		(var vars, error) = await engine.RunGoal(goal, 0);
 		if (error != null && error is not IErrorHandled)
 		{
-			await outputStream.Write(error);
-
+			(var returnVars, error) = await eventRuntime.AppErrorEvents(error);
+			
 			pool.Return(engine);
 			return error;
 		}

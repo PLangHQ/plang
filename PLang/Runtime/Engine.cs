@@ -110,7 +110,7 @@ namespace PLang.Runtime
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;
-		public IEngine? ParentEngine { get {return _parentEngine; } }
+		public IEngine? ParentEngine { get { return _parentEngine; } }
 		public void SetParentEngine(IEngine parentEngine)
 		{
 			this._parentEngine = parentEngine;
@@ -119,7 +119,7 @@ namespace PLang.Runtime
 				fileSystem.AddFileAccess(new FileAccessControl(fileSystem.RootDirectory, parentEngine.Path, ProcessId: this.fileSystem.Id));
 			}
 
-			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents(); 
+			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents();
 			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
@@ -153,7 +153,7 @@ namespace PLang.Runtime
 			callingStep = null;
 			fileSystem.ClearFileAccess();
 			//this.eventRuntime.GetActiveEvents().Clear();
-			
+
 			Name = string.Empty;
 		}
 
@@ -282,34 +282,53 @@ namespace PLang.Runtime
 				{
 					return (ov, error);
 				}
-				
+
 				goal = GetStartGoal(goalToRun);
-				if (goal == null) return (ov, new Error($"Goal '{goalToRun}' not found"));
+				if (goal == null)
+				{
+					(returnVars, error) = await eventRuntime.AppErrorEvents(new Error($"Goal '{goalToRun}' not found"));
+					if (returnVars != null) vars.Add(returnVars);
+					if (error != null) return (ov, error);
+				}
 
 				(returnVars, error) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, goal);
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
-				{					
-					return (ov, error);
+				{
+					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					if (returnVars != null) vars.Add(returnVars);
+					if (error != null) return (ov, error);
 				}
 
 				(returnVars, error) = await RunSetup(goal);
 				if (returnVars != null) vars.Add(returnVars);
 				if (error != null)
 				{
-					return (ov, error);
+					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					if (returnVars != null) vars.Add(returnVars);
+					if (error != null) return (ov, error);
 				}
 				if (goalToRun.RemoveExtension().Equals("setup", StringComparison.OrdinalIgnoreCase)) return (ov, null);
 
 
 				(returnVars, error) = await RunGoal(goal);
 				if (returnVars != null) vars.Add(returnVars);
-				if (error != null) return (ov, error);
+				if (error != null)
+				{
+					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					if (returnVars != null) vars.Add(returnVars);
+					if (error != null) return (ov, error);
+				}
 
 
 				(returnVars, error) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp, goal);
 				if (returnVars != null) vars.Add(returnVars);
-				if (error != null) return (ov, error);
+				if (error != null)
+				{
+					(returnVars, error) = await eventRuntime.AppErrorEvents(error);
+					if (returnVars != null) vars.Add(returnVars);
+					if (error != null) return (ov, error);
+				}
 
 				WatchForRebuild();
 			}
@@ -416,7 +435,7 @@ namespace PLang.Runtime
 
 		private void WatchForRebuild()
 		{
-			string path = fileSystem.Path.Join(fileSystem.RootDirectory, ".build");
+			string path = fileSystem.Path.Join(fileSystem.BuildPath);
 			if (fileWatcher != null) fileWatcher.Dispose();
 
 			fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
@@ -430,12 +449,18 @@ namespace PLang.Runtime
 					debounceTokenSource = new CancellationTokenSource();
 
 					// Call the debounced method with a delay
-					Task.Delay(200, debounceTokenSource.Token)
+					Task.Delay(1 * 1000, debounceTokenSource.Token)
 						.ContinueWith(t =>
 						{
 							if (!t.IsCanceled)
 							{
+								Console.WriteLine("Reload goals after .build change");
 								prParser.ForceLoadAllGoals();
+								var error = eventRuntime.Reload();
+								if (error != null)
+								{
+									Console.WriteLine(error);
+								}
 							}
 						}, TaskScheduler.Default);
 				}
@@ -483,7 +508,7 @@ namespace PLang.Runtime
 
 			List<object?> vars = new();
 			var ov = new ObjectValue("Setup", vars);
-			
+
 			foreach (var goal in setupGoals)
 			{
 				goal.AddVariables(startGoal.GetVariables());
@@ -532,7 +557,7 @@ namespace PLang.Runtime
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 			goal.Stopwatch = Stopwatch.StartNew();
 			goal.UniqueId = Guid.NewGuid().ToString();
-			
+
 			logger.LogDebug($"Goal {goal.GoalName}");
 
 			AppContext.SetSwitch("Runtime", true);
@@ -611,7 +636,8 @@ namespace PLang.Runtime
 					if (callbackInfo != null && stepIndex < callbackInfo.StepIndex)
 					{
 						continue;
-					} else if (callbackInfo != null && stepIndex == callbackInfo.StepIndex)
+					}
+					else if (callbackInfo != null && stepIndex == callbackInfo.StepIndex)
 					{
 						goal.GoalSteps[stepIndex].Callback = callbackInfo;
 					}
@@ -632,7 +658,7 @@ namespace PLang.Runtime
 						if (endGoal.Levels >= 0) stepIndex = goal.GoalSteps.Count;
 
 						if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels > 0)
-						{							
+						{
 							endGoal.Levels--;
 							logger.LogDebug($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 							return (returnValues, stepIndex, endGoal);
@@ -650,7 +676,7 @@ namespace PLang.Runtime
 			return (returnValues, stepIndex, error);
 		}
 
-		
+
 
 		private IError? FindEndGoalError(MultipleError me)
 		{
@@ -758,11 +784,11 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<(object? ReturnValue, IError? Error)> RunStep(Goal goal, int goalStepIndex, int retryCount = 0)
 		{
-			
+
 			var step = goal.GoalSteps[goalStepIndex];
 			goal.CurrentStepIndex = goalStepIndex;
 			step.Stopwatch = Stopwatch.StartNew();
-			
+
 			SetStepLogLevel(step);
 			try
 			{
@@ -784,11 +810,11 @@ private async Task CacheGoal(Goal goal)
 					var stepEventResult = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 					if (stepEventResult.Error != null) return (null, stepEventResult.Error);
 				}
-				
+
 				logger.LogDebug($"     - ProcessPrFile {step.PrFileName} - {step.Stopwatch.ElapsedMilliseconds}");
 
 				var result = await ProcessPrFile(goal, step, goalStepIndex);
-				
+
 				if (result.Error != null)
 				{
 					result = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount);
@@ -940,7 +966,7 @@ private async Task CacheGoal(Goal goal)
 				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
 				return (null, null);
 			}
-			
+
 			logger.LogDebug($"     - Get runtime type {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 
 			Type? classType = typeHelper.GetRuntimeType(step.ModuleType);
@@ -1162,6 +1188,6 @@ private async Task CacheGoal(Goal goal)
 			return prParser.GetAllGoals();
 		}
 
-		
+
 	}
 }

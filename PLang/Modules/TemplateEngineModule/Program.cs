@@ -20,6 +20,7 @@ using System.Text.RegularExpressions;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.TemplateEngineModule
 {
@@ -91,36 +92,43 @@ namespace PLang.Modules.TemplateEngineModule
 
 			var templateContext = new TemplateContext();
 			templateContext.MemberRenamer = member => member.Name;
-
-
-
-			
+						
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
 				{
-					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-					templateContext.SetValue(sv, kvp.Value);
+					AddVariable(kvp.Key, kvp.Value, templateContext);
 				}
 			}
 
 			if (memoryStack != null)
 			{
 				foreach (var kvp in memoryStack.GetMemoryStack())
-				{					
-					if (!ContainsVariable(kvp.Name, templateContext))
-					{
-						var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
-						templateContext.SetValue(sv, kvp.Value);
-					}
-					
+				{
+					AddVariable(kvp.Name, kvp.Value, templateContext);					
 				}
 			}
+			if (goalStep != null)
+			{
+				var vars = goalStep.GetVariables();
+				foreach (var variable in vars)
+				{
+					AddVariable(variable.VariableName, variable.Value, templateContext);
+				}
+			}
+			if (goal != null)
+			{
+				var vars = goal.GetVariables();
+				foreach (var variable in vars)
+				{
+					AddVariable(variable.VariableName, variable.Value, templateContext);
+				}
+			}
+						
 
 			SetFunctionsOnTemplate(templateContext);
 
-
-
+			templateContext.PushGlobal(globals);
 
 			try
 			{
@@ -174,20 +182,43 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 			}
 		}
+		ScriptObject globals = new ScriptObject(StringComparer.OrdinalIgnoreCase);
+		private void AddVariable(string key, object value, TemplateContext templateContext)
+		{
+			
+			{
+				if (key.StartsWith("!"))
+				{	
+					if (!globals.ContainsKey(key))
+					{
+						globals[key] = value;
+					}
+					
+				}
+				else
+				{
+					(var sv, var exists) = ContainsVariable(key, templateContext);
+					if (exists) return;
 
-		private bool ContainsVariable(string key, TemplateContext templateContext)
+					templateContext.SetValue(sv, value);
+				}
+				
+			}
+		}
+
+		private (ScriptVariable?, bool) ContainsVariable(string key, TemplateContext templateContext)
 		{
 			var sv = ScriptVariable.Create(key, ScriptVariableScope.Global);
-			return (templateContext.GetValue(sv) != null);
+			return (sv, templateContext.GetValue(sv) != null);
 		}
 
 		private void SetFunctionsOnTemplate(TemplateContext templateContext)
 		{
-			var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase);
 
-			if (!ContainsVariable("date_format", templateContext))
+			(_, var exists) = ContainsVariable("date_format", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
+				globals.Import("date_format", new Func<object, string, string>((input, format) =>
 				{
 					if (input is DateTime dateTime)
 					{
@@ -200,16 +231,20 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					return input?.ToString() ?? string.Empty;
 				}));
 			}
-			if (!ContainsVariable("json", templateContext))
+
+			(_, exists) = ContainsVariable("json", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("json", new Func<object, bool, string>((input, indent) =>
+				globals.Import("json", new Func<object, bool, string>((input, indent) =>
 				{
 					return JsonConvert.SerializeObject(input, (indent) ? Formatting.Indented : Formatting.None);
 				}));
 			}
-			if (!ContainsVariable("md", templateContext))
+
+			(_, exists) = ContainsVariable("md", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("md", new Func<string, Task<string?>>(async (input) =>
+				globals.Import("md", new Func<string, Task<string?>>(async (input) =>
 				{
 					var convert = GetProgramModule<ConvertModule.Program>();
 					var md = await convert.ConvertToMd(input);
@@ -218,9 +253,10 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				}));
 			}
 
-			if (!ContainsVariable("goalToCall", templateContext))
+			(_, exists) = ContainsVariable("goalToCall", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("goalToCall", new Func<object, string, Task<object?>>(async (data, goalName) =>
+				globals.Import("goalToCall", new Func<object, string, Task<object?>>(async (data, goalName) =>
 				{
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add("data", data);
@@ -249,9 +285,11 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				}));
 			}
 
-			if (!ContainsVariable("appToCall", templateContext))
+
+			(_, exists) = ContainsVariable("appToCall", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("appToCall", new Func<object, string, Task<object?>>(async (data, appName) =>
+				globals.Import("appToCall", new Func<object, string, Task<object?>>(async (data, appName) =>
 				{
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add("data", data);
@@ -287,9 +325,10 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				}));
 			}
 
-			if (!ContainsVariable("render", templateContext))
+			(_, exists) = ContainsVariable("render", templateContext);
+			if (!exists)
 			{
-				scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
+				globals.Import("render", new Func<string, Task<string>>(async (path) =>
 				{
 					var result = await RenderFile(path, writeToOutputStream: false);
 					if (result.Item2 != null)
@@ -299,9 +338,6 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					return result.Item1;
 				}));
 			}
-
-			// Push the custom function into the template context
-			templateContext.PushGlobal(scriptObject);
 		}
 
 		private ScriptObject? GetScriptObject(IList<ObjectValue> list)

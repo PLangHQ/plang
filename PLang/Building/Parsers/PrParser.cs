@@ -19,6 +19,9 @@ namespace PLang.Building.Parsers
 		private List<Goal> goals = null!;
 		private List<Goal> publicGoals = null!;
 		private List<Goal> systemGoals = null!;
+		private List<Goal> runtimeEventsGoals = null!;
+		private List<Goal> builderEventsGoals = null!;
+
 		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
@@ -31,6 +34,9 @@ namespace PLang.Building.Parsers
 
 			goals = GetGoals();
 			systemGoals = GetSystemGoals();
+
+			builderEventsGoals = GetEventsFiles(true);
+			runtimeEventsGoals = GetEventsFiles(false);
 		}
 
 
@@ -452,6 +458,47 @@ namespace PLang.Building.Parsers
 			}
 
 			return (instructions, null);
+
+		}
+
+		public List<Goal> GetEventsFiles(bool builder = false)
+		{
+			if (builderEventsGoals != null && builder) return builderEventsGoals;
+			if (runtimeEventsGoals != null && !builder) return runtimeEventsGoals;
+
+			if (!fileSystem.Directory.Exists(fileSystem.BuildPath))
+			{
+				return [];
+			}
+
+			List<Goal> eventFiles = new();
+			string eventsFolderName = (!builder) ? "Events" : "BuilderEvents";
+
+			var eventsFolderPath = fileSystem.Path.Join(fileSystem.BuildPath, "events", eventsFolderName);
+			var rootEventFilePath = fileSystem.Path.Join(eventsFolderPath, "00. Goal.pr");
+			if (fileSystem.File.Exists(rootEventFilePath))
+			{
+				var goal = this.ParsePrFile(rootEventFilePath);
+				if (goal != null)
+				{
+					eventFiles.Add(goal);
+				}
+			}
+			//todo: hack, otherwise it will load events twice when building /system/
+			if (fileSystem.BuildPath.EndsWith("/plang/system/.build".AdjustPathToOs())) return eventFiles;
+
+			var osEventsPath = fileSystem.Path.Join(fileSystem.SystemDirectory, ".build", "events", eventsFolderName);
+			var osEventFilePath = fileSystem.Path.Join(osEventsPath, "00. Goal.pr");
+			if (fileSystem.File.Exists(osEventFilePath))
+			{
+				var goal = this.ParsePrFile(osEventFilePath);
+				if (goal != null)
+				{
+					eventFiles.Add(goal);
+				}
+			}
+
+			return eventFiles;
 
 		}
 	}

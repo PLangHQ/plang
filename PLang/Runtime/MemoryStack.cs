@@ -911,11 +911,11 @@ namespace PLang.Runtime
 			Put(key, value, true);
 		}
 
-		public void Put(ObjectValue? value, GoalStep? goalStep = null)
+		public void Put(ObjectValue? value, GoalStep? goalStep = null, bool disableEvent = false)
 		{
 			if (value == null) return;
 
-			AddOrReplace(this.variables, value.Name, value, goalStep);
+			AddOrReplace(this.variables, value.Name, value, goalStep, disableEvent);
 
 		}
 

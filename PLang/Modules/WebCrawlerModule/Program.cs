@@ -791,7 +791,7 @@ return result;");
 				var element = await page.QuerySelectorAsync(cssSelector);
 				if (element == null)
 				{
-					return new ProgramError($"The element {cssSelector} coult not be found on page.", goalStep, function);
+					return new ProgramError($"The element {cssSelector} could not be found on page.", goalStep, function);
 				}
 				await element.ScreenshotAsync(new ElementHandleScreenshotOptions() { Path = absolutePath });
 			}

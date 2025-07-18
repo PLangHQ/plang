@@ -44,6 +44,7 @@ namespace PLang.Events
 		void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents);
 		ConcurrentDictionary<string, string> GetActiveEvents();
 		Task<(object? Variables, IError? Error)> RunOnModuleError(MethodInfo method, IError error, Exception ex);
+		IError? Reload();
 	}
 	public class EventRuntime : IEventRuntime
 	{
@@ -102,6 +103,16 @@ namespace PLang.Events
 			return runtimeEvents!;
 		}
 
+		public IError? Reload()
+		{
+			var error = Load(true);
+			if (error != null) return error;
+
+			error = Load(false);
+			if (error != null) return error;
+
+			return null;
+		}
 
 		public IError? Load(bool isBuilder = false)
 		{
@@ -110,20 +121,15 @@ namespace PLang.Events
 			var events = new List<EventBinding>();
 
 			logger.LogDebug($" - Load events files - {stopwatch.ElapsedMilliseconds}");
-			(var eventsFiles, var error) = GetEventsFiles(fileSystem.BuildPath, isBuilder);
+			var eventsFiles = prParser.GetEventsFiles(isBuilder);
 			logger.LogDebug($" - Done loading events files({eventsFiles.Count}) - {stopwatch.ElapsedMilliseconds}");
 
-			if (error != null) return error;
 			if (eventsFiles == null) return null;
 
-			foreach (var eventFile in eventsFiles)
+			foreach (var goal in eventsFiles)
 			{
-				logger.LogDebug($" - Load file {eventFile} - {stopwatch.ElapsedMilliseconds}");
-				var goal = prParser.GetGoal(eventFile);
-				if (goal == null)
-				{
-					continue;
-				}
+				logger.LogDebug($" - Load file {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+				
 				foreach (var step in goal.GoalSteps)
 				{
 					if (step.EventBinding == null) continue;
@@ -137,7 +143,7 @@ namespace PLang.Events
 					var eventBinding = events.FirstOrDefault(p => p == step.EventBinding);
 					if (eventBinding != null) continue;
 
-					bool isLocal = eventFile.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));					
+					bool isLocal = goal.AbsolutePrFolderPath.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));					
 					var binding = step.EventBinding with { Goal = goal, GoalStep = step, IsOnStep = false, IsLocal = isLocal };
 					events.Add(binding);
 				}
@@ -161,12 +167,7 @@ namespace PLang.Events
 			{
 				runtimeEvents = events;
 			}
-			/* nothing should chnage on runtime, no need to reload goals
-			 * 
-			logger.LogDebug($" - Force reload - {stopwatch.ElapsedMilliseconds}");
-			prParser.ForceLoadAllGoals();
-			logger.LogDebug($" - Done Force reload - {stopwatch.ElapsedMilliseconds}");
-			*/
+		
 			return null;
 		}
 
@@ -271,7 +272,10 @@ namespace PLang.Events
 				foreach (var eve in eventsToRun)
 				{
 					if (!HasAppBinding(eve, error)) continue;
-					var result = await Run(eve, null, null, error);
+
+					var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
+
+					var result = await Run(eve, error.Goal, step, error);
 					if (result.Error != null) return (null, new MultipleError(error).Add(result.Error));
 				}
 			}
@@ -290,7 +294,7 @@ namespace PLang.Events
 			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;
 			if (eve.StatusCode != null && eve.StatusCode != error.StatusCode) return false;
 			if (eve.ExceptionType != null && !eve.ExceptionType.Equals(error.Exception?.GetType().FullName)) return false;
-			if (eve.GoalToBindTo.Name == "*") return true;
+			if (eve.GoalToBindTo.Name == ".*") return true;
 
 			return false;
 		}
