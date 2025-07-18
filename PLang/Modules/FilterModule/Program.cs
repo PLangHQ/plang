@@ -666,9 +666,12 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 			{
 				if (token is JValue jValue)
 				{
-					if (valueToFilterBy == null && valueToFilterBy == jValue.Value) return true;
+					if (valueToFilterBy == jValue.Value) return true;
+					
+					var val = TypeHelper.ConvertToType(jValue.Value, valueToFilterBy.GetType());
+					if (valueToFilterBy.Equals(val)) return true;
 
-					return jValue.Value == valueToFilterBy;
+					return (valueToFilterBy == val);
 				}
 				return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
 			}

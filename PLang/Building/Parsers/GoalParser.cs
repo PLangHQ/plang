@@ -326,18 +326,20 @@ namespace PLang.Building.Parsers
 				goal.IsEvent = GoalHelper.IsEvent(goal);
 
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
-				if (prevBuildGoal == null) continue;
-
-				goal.Description = prevBuildGoal.Description;
-				goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
-				goal.DataSourceName = prevBuildGoal.DataSourceName;
-				goal.IsSystem = isSystem;
-				goal.HasChanged = prevBuildGoal.FileHash != goal.FileHash;
-				foreach (var injection in prevBuildGoal.Injections)
+				if (prevBuildGoal != null)
 				{
-					if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)
+
+					goal.Description = prevBuildGoal.Description;
+					goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
+					goal.DataSourceName = prevBuildGoal.DataSourceName;
+					goal.IsSystem = isSystem;
+					goal.HasChanged = prevBuildGoal.FileHash != goal.FileHash;
+					foreach (var injection in prevBuildGoal.Injections)
 					{
-						goal.Injections.Add(injection);
+						if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)
+						{
+							goal.Injections.Add(injection);
+						}
 					}
 				}
 
