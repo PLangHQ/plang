@@ -26,14 +26,14 @@ namespace PLang.Modules.ValidateModule
 		}
 
 		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
-		public async Task<IError?> IsNotEmpty([HandlesVariable] string[] variables, string errorMessage, int statusCode = 400)
+		public async Task<IError?> IsNotEmpty([HandlesVariable] List<ObjectValue> variables, string errorMessage, int statusCode = 400)
 		{
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";
 			if (variables == null)
 			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
-			if (variables.Length == 0)
+			if (variables.Count == 0)
 			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
@@ -42,22 +42,9 @@ namespace PLang.Modules.ValidateModule
 
 			foreach (var variable in variables)
 			{
-				bool isEmpty = true;
-				string varName;
-				if (VariableHelper.IsVariable(variable))
+				if (variable.IsEmpty)
 				{
-					var ov = memoryStack.GetObjectValue(variable);
-					isEmpty = ov.IsEmpty;
-					varName = ov.Name;
-				} else
-				{
-					varName = variable;
-					isEmpty = VariableHelper.IsEmpty(variable);
-				}
-
-				if (isEmpty)
-				{
-					multiError.Add(new ProgramError($"%{varName}% is empty", goalStep, function, StatusCode: statusCode));
+					multiError.Add(new ProgramError($"{variable.PathAsVariable} is empty", goalStep, function, StatusCode: statusCode));
 					continue;
 				}
 			}

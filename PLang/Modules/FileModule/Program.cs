@@ -27,6 +27,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using static PLang.Modules.FileModule.CsvHelper;
 
 
 namespace PLang.Modules.FileModule
@@ -203,7 +204,7 @@ namespace PLang.Modules.FileModule
 
 			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
-				using (var reader = new StreamReader(stream, encoding: GetEncoding(encoding)))
+				using (var reader = new StreamReader(stream, encoding: FileHelper.GetEncoding(encoding)))
 				{
 					var content = await reader.ReadToEndAsync();
 					if (loadVariables && !string.IsNullOrEmpty(content))
@@ -341,11 +342,14 @@ namespace PLang.Modules.FileModule
 
 			return list;
 		}
-		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
-			string delimiter = ",",
-			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
-				bool allowComments = false, char comment = '#', GoalToCallInfo? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
+		
+
+
+		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool appendToFile = false, 
+			CsvOptions? csvOptions = null, bool createDirectoryAutomatically = true)
 		{
+			if (csvOptions == null) csvOptions = new();
+
 			var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
 			{
@@ -357,93 +361,23 @@ namespace PLang.Modules.FileModule
 			}
 			if (variableToWriteToCsv is string str)
 			{
-				if (str.Contains(delimiter) && (str.Contains("\r") || str.Contains("\n")))
+				if (str.Contains(csvOptions.Delimiter) && (str.Contains("\r") || str.Contains("\n")))
 				{
-					await WriteToFile(absolutePath, str.Trim(), encoding: encoding);
+					await WriteToFile(absolutePath, str.Trim(), encoding: csvOptions.Encoding);
 					return;
 				}
 			}
 
-			IWriterConfiguration writeConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture)
-			{
-				Delimiter = delimiter,
-				BadDataFound = data =>
-				{
-					if (goalToCallOnBadData == null) return;
+			using var writer = new StreamWriter(absolutePath, appendToFile);
+			await CsvHelper.WriteToStream(writer, variableToWriteToCsv, csvOptions);
 
-					goalToCallOnBadData.Parameters.Add("data", data);
-
-					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
-				},
-				NewLine = newLine,
-				Encoding = GetEncoding(encoding),
-				AllowComments = allowComments,
-				Comment = comment,
-				IgnoreBlankLines = ignoreBlankLines,
-				HasHeaderRecord = hasHeaderRecord,
-				DetectColumnCountChanges = true,
-				IgnoreReferences = false
-			};
-
-			if (variableToWriteToCsv is JArray jArray)
-			{
-				variableToWriteToCsv = jArray.ToList();
-			}
-			if (variableToWriteToCsv is JObject jObject)
-			{
-				variableToWriteToCsv = jObject.ToDictionary();
-			}
-
-
-			using (var writer = new StreamWriter(absolutePath, append))
-			using (var csv = new CsvWriter(writer, writeConfig))
-			{
-				if (variableToWriteToCsv is IEnumerable enumer)
-				{
-					var ble = variableToWriteToCsv as List<Dictionary<string, object?>>;
-					if (ble != null)
-					{
-						foreach (var record in ble)
-						{
-							foreach (var key in record.Keys)
-							{
-								csv.WriteField(key);
-							}
-							csv.NextRecord();
-							break;
-						}
-
-						foreach (var record in ble)
-						{
-							foreach (var value in record.Values)
-							{
-								csv.WriteField(value);
-							}
-							csv.NextRecord();
-						}
-					}
-					else
-					{
-						await csv.WriteRecordsAsync(enumer);
-
-
-					}
-
-
-				}
-				else
-				{
-					csv.WriteRecord(variableToWriteToCsv);
-				}
-
-			}
 		}
 		public async Task<object> ReadCsvFile(string path, bool hasHeaderRecord = true, string delimiter = ",",
 				string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
 				bool allowComments = false, char comment = '#', GoalToCallInfo? goalToCallOnBadData = null)
 		{
 			var absolutePath = GetPath(path);
-			var readConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture)
+			var readConfig = new CsvConfiguration(CultureInfo.CurrentCulture)
 			{
 				Delimiter = delimiter,
 				BadDataFound = data =>
@@ -455,7 +389,7 @@ namespace PLang.Modules.FileModule
 					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
 				},
 				NewLine = newLine,
-				Encoding = GetEncoding(encoding),
+				Encoding = FileHelper.GetEncoding(encoding),
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
@@ -514,7 +448,7 @@ namespace PLang.Modules.FileModule
 				{
 					content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 				}
-				fileSystem.File.WriteAllText(file.Path, content, encoding: GetEncoding(encoding));
+				fileSystem.File.WriteAllText(file.Path, content, encoding: FileHelper.GetEncoding(encoding));
 			}
 		}
 		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
@@ -560,7 +494,7 @@ namespace PLang.Modules.FileModule
 			var absoluteDirectoryPath = GetPath(directoryPath);
 
 			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
-			
+
 			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption);
 			if (includeSystemFolder)
 			{
@@ -585,7 +519,7 @@ namespace PLang.Modules.FileModule
 				var name = path;
 				if (path.Contains(fileSystem.Path.DirectorySeparatorChar))
 				{
-					name = name.Substring(path.LastIndexOf(fileSystem.Path.DirectorySeparatorChar)+1);
+					name = name.Substring(path.LastIndexOf(fileSystem.Path.DirectorySeparatorChar) + 1);
 				}
 				DirectoryInfo? di = null;
 				if (includeDirectoryInfo)
@@ -640,18 +574,14 @@ namespace PLang.Modules.FileModule
 				}
 
 				var absolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, path);
-				var name = path;
-				if (path.Contains(fileSystem.Path.DirectorySeparatorChar))
-				{
-					name = name.Substring(path.IndexOf(fileSystem.Path.DirectorySeparatorChar) + 1);
-				}
-				
+				var name = fileSystem.Path.GetFileName(path);
+
 				System.IO.FileInfo? fi = null;
 				if (includeFileInfo)
 				{
 					fi = new System.IO.FileInfo(absolutePath);
 				}
-				
+
 				filesToReturn.Add(new File(name, extension, type, path, absolutePath, GetProperties(fi)));
 			}
 
@@ -661,7 +591,7 @@ namespace PLang.Modules.FileModule
 		{
 			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
 			if (fileTypes == null) fileTypes = new();
-			
+
 			if (!extension.StartsWith(".")) extension = "." + extension;
 
 			fileTypes.AddOrReplace(extension, type);
@@ -739,28 +669,10 @@ namespace PLang.Modules.FileModule
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
 
-			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: GetEncoding(encoding));
+			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: FileHelper.GetEncoding(encoding));
 		}
 
-		private Encoding GetEncoding(string encoding)
-		{
-			switch (encoding)
-			{
-				case "utf-8":
-				case "utf-16":
-				case "utf-16BE":
-				case "utf-32LE":
-				case "us-ascii":
-					return Encoding.GetEncoding(encoding);
-			}
-
-			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-			if (int.TryParse(encoding, out int code))
-			{
-				return Encoding.GetEncoding(code);
-			}
-			return Encoding.GetEncoding(encoding);
-		}
+		
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
@@ -775,7 +687,7 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: GetEncoding(encoding));
+			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: FileHelper.GetEncoding(encoding));
 		}
 
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,

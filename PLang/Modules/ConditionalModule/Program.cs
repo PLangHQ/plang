@@ -1,23 +1,24 @@
-﻿using Newtonsoft.Json;
-using PLang.Exceptions;
-using PLang.Interfaces;
-using PLang.Runtime;
-using System.ComponentModel;
-using System.Reflection;
-using static PLang.Services.CompilerService.CSharpCompiler;
-using static PLang.Modules.ConditionalModule.Builder;
-using PLang.Services.CompilerService;
-using static PLang.Runtime.Startup.ModuleLoader;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
-using Newtonsoft.Json.Linq;
+using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Models;
-using System.Collections;
-using PLang.Utils;
-using Microsoft.Extensions.Logging;
-using PLang.Services.OutputStream;
 using PLang.Modules.ThrowErrorModule;
+using PLang.Runtime;
+using PLang.Services.CompilerService;
+using PLang.Services.OutputStream;
+using PLang.Utils;
+using System.Collections;
+using System.ComponentModel;
+using System.Reflection;
+using static PLang.Modules.ConditionalModule.Builder;
 using static PLang.Modules.ConditionalModule.ConditionEvaluator;
+using static PLang.Runtime.Startup.ModuleLoader;
+using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -37,58 +38,72 @@ namespace PLang.Modules.ConditionalModule
 			this.logger = logger;
 		}
 
-		public async Task<(bool, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+		public async Task<(object?, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			string path = GetPath(filePathOrVariableName);
 			var result = fileSystem.File.Exists(path);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		public async Task<(bool, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+		public async Task<(object?, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var path = GetPath(dirPathOrVariableName);
 			var result = fileSystem.Directory.Exists(path);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
-		public async Task<(bool, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+		public async Task<(object?, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var path = GetPath(dirOrFilePathOrVariableName);
 			var result = fileSystem.ValidatePath(path) != null;
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
 		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
-		public async Task<(bool, IError?)> SimpleCondition(SimpleCondition condition, 
+		public async Task<(object?, IError?)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = ConditionEngine.Evaluate(condition);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
 		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
-		public async Task<(bool, IError?)> CompoundCondition(CompoundCondition condition, 
+		public async Task<(object?, IError?)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = ConditionEngine.Evaluate(condition);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+
+
+		public async Task SetVariableWithCondition([HandlesVariableAttribute] string variableName, bool boolValue, object valueIfTrue, object valueIfFalse)
+		{
+			var program = GetProgramModule<Modules.VariableModule.Program>();
+			if (boolValue)
+			{
+				await program.SetVariable(variableName, valueIfTrue);
+			}
+			else
+			{
+				await program.SetVariable(variableName, valueIfFalse);
+			}
 		}
 		
-		public async Task<(bool, IError?)> IsFalse(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object?, IError?)> IsFalse(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			if (item == null) { item = false; }
 			item = !item;
 
-			return (item.Value, await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		public async Task<(bool, IError?)> IsSystemPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object?, IError?)> IsSystemPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -97,10 +112,10 @@ namespace PLang.Modules.ConditionalModule
 			{
 				result = path.StartsWith(fileSystem.SystemDirectory);
 			}
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		public async Task<(bool, IError?)> IsOsPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object?, IError?)> IsOsPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -109,36 +124,45 @@ namespace PLang.Modules.ConditionalModule
 			{
 				result = path.StartsWith(fileSystem.OsDirectory);
 			}
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
 
-		public async Task<(bool, IError?)> IsTrue(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object?, IError?)> IsTrue(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			if (item == null) { item = false; }
 
-			return (item.Value, await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
-		public async Task<(bool, IError?)> IsNotEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
+
+		public async Task<(object?, IError?)> IsMod(double leftValue, double modValue, double equalsValue, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool result = (leftValue % modValue == equalsValue);
+
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+		public async Task<(object?, IError?)> IsNotEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = !IsEmptyCheck(item);
 
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
 		 
-		public async Task<(bool, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object?, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 						GoalToCallInfo? goalToCallIfFalse = null,
 						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = IsEmptyCheck(item);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
-		public async Task<(bool?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCallInfo? goalToCallIfTrue = null,  GoalToCallInfo? goalToCallIfFalse = null, 
+		public async Task<(object?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCallInfo? goalToCallIfTrue = null,  GoalToCallInfo? goalToCallIfFalse = null, 
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -158,10 +182,10 @@ namespace PLang.Modules.ConditionalModule
 				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it."));
 			}
 
-			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 
 		}
-		public async Task<(bool?, IError?)> ContainsString(object? item, string contains, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+		public async Task<(object?, IError?)> ContainsString(object? item, string contains, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -172,9 +196,14 @@ namespace PLang.Modules.ConditionalModule
 				result = str.Contains(contains.ToString());
 			}
 
+			if (item is IList list)
+			{
+				result = list.Contains(contains);
+			}
+
 			if (result != null)
 			{
-				return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+				return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 			}
 
 			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
@@ -211,7 +240,7 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		public async Task<(bool? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(object? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -257,7 +286,7 @@ namespace PLang.Modules.ConditionalModule
 				}
 			}
 
-			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 
 		}
 
@@ -331,7 +360,7 @@ namespace PLang.Modules.ConditionalModule
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool?)method.Invoke(null, parametersObject.ToArray()) ?? false;
 
-				return (result, await ExecuteResult(result, implementation.GoalToCallOnTrue, implementation.GoalToCallOnFalse));
+				return await ExecuteResult(result, implementation.GoalToCallOnTrue, implementation.GoalToCallOnFalse);
 
 			}
 			catch (Exception ex)
@@ -342,7 +371,7 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		private async Task<IError?> ExecuteResult(bool result, GoalToCallInfo? goalToCallOnTrue,
+		private async Task<(object?, IError?)> ExecuteResult(bool result, GoalToCallInfo? goalToCallOnTrue,
 			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 
@@ -367,6 +396,8 @@ namespace PLang.Modules.ConditionalModule
 				goalToCall = goalToCallOnFalse;
 			}
 
+			object? returnVars = result;
+			IError? error = null;
 			if (goalToCall != null)
 			{
 				goalToCall.Parameters = variableHelper.LoadVariables(goalToCall.Parameters);
@@ -377,30 +408,36 @@ namespace PLang.Modules.ConditionalModule
 					try
 					{
 						var taskExecuted = await task;
+
+						returnVars = taskExecuted.Variables;
+						error = taskExecuted.error;
+
 						if (taskExecuted.error != null && taskExecuted.error is not Return)
 						{
 							if (taskExecuted.error is EndGoal eg)
 							{
-								if (--eg.Levels > 0) return taskExecuted.error;
+								if (--eg.Levels > 0) return (returnVars, taskExecuted.error);
 							}
 							else
 							{
-								return taskExecuted.error;
+								return (returnVars, taskExecuted.error);
 							}
 						}
 						else if (taskExecuted.error is Return r)
 						{
+							return (r.ReturnVariables, null);
+							/*
 							foreach (var variable in r.ReturnVariables)
 							{
 								memoryStack.Put(variable);
-							}
+							}*/
 						}
 					}
 					catch { }
 
 					if (task.IsFaulted)
 					{
-						return new ExceptionError(task.Exception, $"Error running {goalToCall} - {task.Exception.Message}", goal, goalStep, Key: task.Exception.GetType().FullName ?? "UnhandledError");
+						return (null, new ExceptionError(task.Exception, $"Error running {goalToCall} - {task.Exception.Message}", goal, goalStep, Key: task.Exception.GetType().FullName ?? "UnhandledError"));
 					}
 				}
 			}
@@ -408,12 +445,12 @@ namespace PLang.Modules.ConditionalModule
 			if (result && throwErrorOnTrue != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return await module.Throw(throwErrorOnTrue.errorMessage ?? "Is empty", throwErrorOnTrue.type, throwErrorOnTrue.statusCode);
+				return (returnVars, await module.Throw(throwErrorOnTrue.errorMessage ?? "Is empty", throwErrorOnTrue.type, throwErrorOnTrue.statusCode));
 			}
 			if (!result && throwErrorOnFalse != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return await module.Throw(throwErrorOnFalse.errorMessage ?? "Is not empty", throwErrorOnFalse.type, throwErrorOnFalse.statusCode);
+				return (returnVars, await module.Throw(throwErrorOnFalse.errorMessage ?? "Is not empty", throwErrorOnFalse.type, throwErrorOnFalse.statusCode));
 			}
 
 			var nextStep = goalStep.NextStep;
@@ -431,7 +468,7 @@ namespace PLang.Modules.ConditionalModule
 				}
 			}
 
-			return null;
+			return (returnVars,null);
 		}
 	}
 }

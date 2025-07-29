@@ -76,7 +76,7 @@ namespace PLang.Modules.UiModule
 		[Description("Device=web|desktop|mobile|tablet|console|tv|watch|other")]
 		public record LayoutOptions(string Name = "default", string DefaultRenderVariable = "main",
 			[IsBuiltParameter("File")]
-			string OutputFile = "/ui/{name}/layout.html", string Device = "desktop");
+			string TemplateFile = "/ui/{name}/layout.html", string Device = "desktop");
 		[Description("set the layout for the gui")]
 		public async Task<(List<LayoutOptions>, IError?)> SetLayout(LayoutOptions options)
 		{
@@ -193,7 +193,7 @@ namespace PLang.Modules.UiModule
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add(layoutOptions.DefaultRenderVariable, content);
 
-					(content, error) = await templateEngine.RenderFile(layoutOptions.OutputFile, parameters, options.RenderToOutputstream);
+					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, options.RenderToOutputstream);
 
 					if (error != null) return (content, error);
 

@@ -11,16 +11,18 @@
       "Description": "Output the content of the system error variable %!error% as a system error message to the user or designated output channel.",
       "PrFileName": "01. write_out_system_error.pr",
       "RelativePrPath": ".build\\events\\Runtime\\OnStepError\\01. write_out_system_error.pr",
+      "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-07-13T21:14:28.1436084+00:00",
+      "Generated": "2025-07-29T11:29:26.2789339+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
       "Retry": false,
+      "RetryCount": 1,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
@@ -73,10 +75,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b6f1afaf26491be94276051c0755827f3be12f5c2112a8b66698fa69c9fe3101",
+      "Hash": "f1c4e13c763829a8be43ac208ed2af340ac026957424a8d829f94b84f37b7d01",
       "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal",
-      "UserIntent": "Display the current system error message to the user or output stream"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -91,8 +93,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "ff07ece5c835c3630e8b6e799d50b08a360ad8f860e0802431e7c1aa0c576453",
-  "Hash": "582afd8c5f4239a38eccd367666bb1c4790726932f9e4b78823fed1b1787b55f",
+  "Hash": "550e7d2a9f01a476b5e7520ac814fe9825382d6a7065333ac9b9871846038616",
   "IncomingVariablesRequired": {
     "error": "The specific error message that needs to be logged."
   },

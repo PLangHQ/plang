@@ -28,7 +28,7 @@ namespace PLang.Errors.Builder
 		}
 
 		public BuilderError(string Message, string Key = "Builder", int StatusCode = 400, bool ContinueBuild = true,
-			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = false) :
+			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = true) :
 				base(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks)
 		{
 			this.ContinueBuild = ContinueBuild;

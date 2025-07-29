@@ -1,4 +1,5 @@
 ﻿
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Runtime;
 using PLang.Utils;
@@ -41,6 +42,9 @@ namespace PLang.Errors.Events
 			}
 
 		}
+
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public object ToFormat(string contentType = "text")
 		{
 			return InitialError.ToFormat(contentType);

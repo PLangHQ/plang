@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCall",
         "Value": {
+          "Path": ".build\\events\\Builder\\CheckGoals\\CheckGoal\\00. Goal.pr",
           "Name": "CheckGoal",
           "Parameters": {
             "item": "%parameter%"

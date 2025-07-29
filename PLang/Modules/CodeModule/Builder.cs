@@ -63,7 +63,7 @@ Use a Prepared File: Utilize a <prepared> .cs file. The user will define the fil
 Note: Prioritize generating new code unless the task explicitly requires using a prepared file.
 
 <prepared>
-{JsonConvert.SerializeObject(files)}
+{string.Join("\n", files.Select(p => p.Path))}
 <prepared>
 
 return file name with path or null");

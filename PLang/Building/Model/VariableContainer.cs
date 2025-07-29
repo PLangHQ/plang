@@ -13,6 +13,11 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public Func<Task>? DisposeFunc { get; init; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public GoalStep? Step { get; set; }
 	};
 
 	public abstract class VariableContainer
@@ -33,7 +38,7 @@ namespace PLang.Building.Model
 			if (variableName == null) variableName = typeof(T).FullName;
 
 			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			var variable = new Variable(variableName, value) { DisposeFunc = func };
+			var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
 
 			if (variableIdx == -1)
 			{
@@ -100,6 +105,7 @@ namespace PLang.Building.Model
 		}
 
 		protected abstract Goal? GetParent();
+		protected abstract GoalStep? GetStep();
 		protected abstract void SetVariableOnEvent(Variable goalVariable);
 
 		public T? GetVariable<T>(string? variableName = null, int level = 0)

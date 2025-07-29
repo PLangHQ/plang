@@ -267,24 +267,44 @@ namespace PLang.Events
 			if (runtimeEvents == null) return (null, error);
 
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
-			if (eventsToRun.Count > 0)
+			if (eventsToRun.Count == 0) return (null, error);
+
+			List<object?> variables = new();
+			var me = new MultipleError(error);
+
+			foreach (var eve in eventsToRun)
 			{
-				foreach (var eve in eventsToRun)
+				if (!HasAppBinding(eve, error)) continue;
+
+				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
+				
+				var result = await Run(eve, error.Goal, step, error);
+				if (result.Variables != null) variables.AddRange(result.Variables);
+
+				if (result.Error != null)
 				{
-					if (!HasAppBinding(eve, error)) continue;
-
-					var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
-
-					var result = await Run(eve, error.Goal, step, error);
-					if (result.Error != null) return (null, new MultipleError(error).Add(result.Error));
+					if (result.Error is IErrorHandled)
+					{
+						error.Handled = true;
+						me = null;
+						continue;
+					}
+					if (me == null)
+					{
+						me = new MultipleError(result.Error);
+					}
+					else
+					{
+						me.Add(result.Error);
+					}
 				}
 			}
-			else
+
+			if (me != null && me.ErrorChain.Count == 0)
 			{
-				return (null, error);
-				//await ShowDefaultError(error, null);
+				return (variables, me.InitialError);
 			}
-			return (null, null);
+			return (variables, me);
 
 		}
 
@@ -294,7 +314,7 @@ namespace PLang.Events
 			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;
 			if (eve.StatusCode != null && eve.StatusCode != error.StatusCode) return false;
 			if (eve.ExceptionType != null && !eve.ExceptionType.Equals(error.Exception?.GetType().FullName)) return false;
-			if (eve.GoalToBindTo.Name == ".*") return true;
+			if (eve.GoalToBindTo.Name == ".*" || eve.GoalToBindTo.Name == "*") return true;
 
 			return false;
 		}
@@ -305,7 +325,8 @@ namespace PLang.Events
 
 			bool hasHandled = false;
 
-			List<ObjectValue?>? Variables = new();
+			var me = new MultipleError(error);
+			List<object?>? Variables = new();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
@@ -313,12 +334,35 @@ namespace PLang.Events
 				if (!GoalHasBinding(goal, eve) || !HasAppBinding(eve, error)) continue;
 
 				var result = await Run(eve, goal, step, error);
-				if (result.Error != null) return (result.Variables, new MultipleError(error).Add(result.Error));
-				hasHandled = true;
-				if (result.Variables != null) return (result.Variables, null);
+				if (result.Variables != null)
+				{
+					Variables.AddRange(result.Variables);
+				}
+
+				if (result.Error != null)
+				{
+					if (result.Error is IErrorHandled)
+					{
+						error.Handled = true;
+						me = null;
+						continue;
+					}
+					if (me == null)
+					{
+						me = new MultipleError(result.Error);
+					}
+					else
+					{
+						me.Add(result.Error);
+					}
+				}
 			}
 
-			return (hasHandled) ? (Variables, new ErrorHandled(error)) : (Variables, error);
+			if (me != null && me.ErrorChain.Count == 0)
+			{
+				return (Variables, me.InitialError);
+			}
+			return (Variables, me);
 		}
 
 		private void ShowLogError(Goal? goal, GoalStep? step, IError error)
@@ -334,7 +378,7 @@ namespace PLang.Events
 			{
 				goalText = $"Goal {goal.GoalFileName} had error";
 			}
-			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message.ReplaceLineEndings("")}");
+			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message?.ReplaceLineEndings("")}");
 		}
 
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal)
@@ -470,29 +514,47 @@ namespace PLang.Events
 
 			if (eventsToRun.Count == 0)
 			{
-				// todo: strange
-				if (goal.ParentGoal != null) return (null, error);
 				return (null, error);
 			}
-			else
+
+			List<object> variablesToReturn = new();
+			var me = new MultipleError(error);
+			foreach (var eve in eventsToRun)
 			{
-				foreach (var eve in eventsToRun)
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
+				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 				{
-					if (ActiveEvents.ContainsKey(eve.Id)) continue;
-					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
+					var eventError = await Run(eve, goal, step, error);
+					if (eventError.Variables != null) variablesToReturn.AddRange(eventError.Variables);
+
+					if (eventError.Error != null)
 					{
-						var eventError = await Run(eve, goal, step, error);
-						if (eventError.Error != null) return (eventError.Variables, new MultipleError(error).Add(eventError.Error));
-
-						if (eve.OnErrorContinueNextStep) return (eventError.Variables, null);
-
-						return (eventError.Variables, new ErrorHandled(error));
+						if (eventError.Error is IErrorHandled)
+						{
+							error.Handled = true;
+							me = null;
+							continue;
+						}
+						if (me == null)
+						{
+							me = new MultipleError(eventError.Error);
+						}
+						else
+						{
+							me.Add(eventError.Error);
+						}
 					}
 
+					if (eve.OnErrorContinueNextStep) return (eventError.Variables, null);
 				}
+
 			}
 
-			return (null, error);
+			if (me != null && me.ErrorChain.Count == 0)
+			{
+				return (variablesToReturn, me.InitialError);
+			}
+			return (variablesToReturn, me);
 		}
 
 
@@ -626,17 +688,17 @@ namespace PLang.Events
 				//if (result.Error is IUserInputError) return (Variables, result.Error);
 				if (result.Error is EndGoal endGoal)
 				{
-					if (GoalHelper.IsPartOfCallStack(eve.Goal, endGoal) && endGoal.Levels > 0)
+					if (GoalHelper.IsPartOfCallStack(eve.Goal, endGoal))
 					{
-						endGoal.Levels--; 
-						return (result.Variables, endGoal);
+						return (Variables, endGoal);
 					}
 					return (result.Variables, null);
 				}
-				if (result.Error == null || result.Error is IErrorHandled eh) return (result.Variables, null);
+				if (result.Error == null) return (Variables, null);
+				if (result.Error is IErrorHandled eh) return (Variables, eh);
 				if (result.Error is IUserInputError ude)
 				{
-					return (null, (IEventError)ude);
+					return (Variables, (IEventError)ude);
 				}
 
 				if (isBuilder)

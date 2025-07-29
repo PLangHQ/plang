@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "foreach %result.plang_lines%, call WritePlangLines %plangCode%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCall",
         "Value": {
+          "Path": ".build\\modules\\InstallModule\\InstallUrl\\WritePlangLines\\00. Goal.pr",
           "Name": "WritePlangLines",
           "Parameters": {
             "plangCode": "%plangCode%"

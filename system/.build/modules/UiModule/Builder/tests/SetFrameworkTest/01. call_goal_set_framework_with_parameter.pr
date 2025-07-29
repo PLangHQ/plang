@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "call goal ../SetFramework framework={Name:\"uikit\"}",
   "ModuleType": "PLang.Modules.CallGoalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -10,6 +12,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalInfo",
         "Value": {
+          "Path": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\00. Goal.pr",
           "Name": "../SetFramework",
           "Parameters": {
             "framework": {

@@ -83,35 +83,72 @@ namespace PLang.Modules
 		{
 			this.contentExtractor = contentExtractor;
 		}
-	
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step, IBuilderError? previousBuildError = null)
+
+
+		public async Task<(T?, IBuilderError? Error)> LlmRequest<T>(string system, GoalStep step)
+		{
+			List<LlmMessage> messages = new();
+
+			messages.Add(new LlmMessage("system", system));
+			messages.Add(new LlmMessage("user", step.Text));
+			if (step.ValidationErrors.Count > 0)
+			{
+				var builderError = new BuilderError("");
+				builderError.ErrorChain.AddRange(step.ValidationErrors);
+
+				messages.Add(new LlmMessage("assistant", ErrorHelper.MakeForLlm(builderError)));
+			}
+			LlmRequest llmRequest = new LlmRequest(typeof(T).FullName, messages);
+
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, typeof(T));
+			if (queryError != null)
+			{
+				return ((T?)result, new BuilderError(queryError));
+			}
+			return ((T?)result, null);
+		}
+
+
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step,
+			IBuilderError? previousBuildError = null)
 		{
 			return await Build(step, typeof(T), previousBuildError);
 		}
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildWithClassDescription<T>(GoalStep step, ClassDescription classDescription,
+					IBuilderError? previousBuildError = null)
+		{
+			return await BuildInternal(step, typeof(T), previousBuildError, classDescription);
+		}
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildWithClassDescription(GoalStep step, ClassDescription classDescription,
+			IBuilderError? previousBuildError = null)
+		{
+			return await BuildInternal(step, typeof(GenericFunction), previousBuildError, classDescription);
+		}
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step,
+			IBuilderError? previousBuildError = null)
 		{
 			return await Build(step, typeof(GenericFunction), previousBuildError);
 		}
 
 		[Method]
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type responseType, IBuilderError? previousBuildError = null)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type responseType,
+			IBuilderError? previousBuildError = null)
 		{
-			var result = await BuildInternal(step, responseType, previousBuildError);
+			var result = await BuildInternal(step, responseType, previousBuildError, null);
 			return result;
 		}
 
-
-
-		private async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildInternal(GoalStep step, Type? responseType = null, IBuilderError? previousBuildError = null)
+		private async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildInternal(GoalStep step, Type? responseType = null,
+			IBuilderError? previousBuildError = null, ClassDescription? classDescription = null)
 		{
-			
+
 			if (responseType == null) responseType = typeof(GenericFunction);
 
-			var question = GetLlmRequest(step, responseType, previousBuildError);			
+			var question = GetLlmRequest(step, responseType, previousBuildError, classDescription);
 
 			try
 			{
-				
+
 
 				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
 				if (queryError != null) return (null, new BuilderError(queryError));
@@ -132,15 +169,16 @@ namespace PLang.Modules
 
 
 				return (instruction, null);
-			} catch (ParsingException ex)
+			}
+			catch (ParsingException ex)
 			{
 				string? innerMessage = ex.InnerException?.Message;
 				if (ex.InnerException?.InnerException != null)
 				{
 					innerMessage = ex.InnerException?.InnerException.Message;
 				}
-				
-				return (null, new StepBuilderError( 
+
+				return (null, new StepBuilderError(
 					$@"
 <error>
 {innerMessage}
@@ -171,7 +209,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				var parameter = Parameters?.FirstOrDefault(p => p.Name == name);
 				if (parameter == null) return default;
 
-				return (T?) TypeHelper.ConvertToType(parameter.Value, typeof(T));
+				return (T?)TypeHelper.ConvertToType(parameter.Value, typeof(T));
 			}
 			public GenericFunction SetParameter(string name, object value)
 			{
@@ -222,8 +260,8 @@ Make sure to use the information in <error> to return valid JSON response"
 			this.model = model;
 		}
 		[Method]
-		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null)
-		{			
+		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null, ClassDescription? classDescription = null)
+		{
 			var promptMessage = new List<LlmMessage>();
 
 			if (string.IsNullOrEmpty(system))
@@ -232,19 +270,22 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			var systemContent = new List<LlmContent>();
 			systemContent.Add(new LlmContent(system));
-			foreach (var append in appendedSystemCommand) 
+			foreach (var append in appendedSystemCommand)
 			{
 				systemContent.Add(new LlmContent(append));
 			}
 
 			promptMessage.Add(new LlmMessage("system", string.Join("\n", systemContent.Select(p => p.Text))));
-			
+
 			var assistantContent = new List<LlmContent>();
-			assistantContent.Add(new LlmContent($"## Canonical User Intent (already disambiguated by LLM)\r\n{step.UserIntent}"));
+			if (!string.IsNullOrEmpty(step.UserIntent))
+			{
+				assistantContent.Add(new LlmContent($"## Canonical User Intent (already disambiguated by LLM)\r\n{step.UserIntent}"));
+			}
 
 			if (string.IsNullOrEmpty(assistant))
 			{
-				(assistant, var error) = GetDefaultAssistantText(step, previousBuildError);
+				(assistant, var error) = GetDefaultAssistantText(step, previousBuildError, classDescription);
 				if (error != null) throw new ExceptionWrapper(error);
 			}
 
@@ -264,11 +305,17 @@ Make sure to use the information in <error> to return valid JSON response"
 			userContent.Add(new LlmContent(user));
 			promptMessage.Add(new LlmMessage("user", userContent));
 
-			if (previousBuildError != null)
+			if (previousBuildError != null || step.ValidationErrors.Count > 0)
 			{
+				if (step.ValidationErrors.Count > 0)
+				{
+					if (previousBuildError == null) previousBuildError = new BuilderError("");
+					previousBuildError.ErrorChain.AddRange(step.ValidationErrors);
+				}
+
 				string errorInfoForLlm = ErrorHelper.MakeForLlm(previousBuildError);
 				promptMessage.Add(new LlmMessage("assistant", errorInfoForLlm));
-				step.Reload = true;
+				//step.Reload = true;
 
 				// upgrade the model since there was error
 				model = "gpt-4o";
@@ -323,8 +370,9 @@ If there is some api key, settings, config replace it with %Settings.NameOfApiKe
 - NameOfApiKey should named in relation to what is happening if change is needed
 Dictionary<T1, T2> value is {{key: value, ... }}
 ONLY when string is prefixed with # is for translation, modify the string to be ""#:..."", e.g. #""Hello"" => ""#:Hello"".
-
-< Example >
+Variable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(""yyyy-MM-dd"")% then type of %updated% is System.DateTime 
+ 
+<Example>
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
 <Example>
@@ -345,23 +393,26 @@ ReturnValue rules
 		/*
 		 * TODO: SignatureInfo should be append to each return, roslyn? who can do it? #good-first-issue
 		 * */
-		public (string?, IBuilderError?) GetDefaultAssistantText(GoalStep step, IBuilderError? previousBuildError = null)
+		public (string?, IBuilderError?) GetDefaultAssistantText(GoalStep step, IBuilderError? previousBuildError = null, ClassDescription? classDescription = null)
 		{
 			var programType = typeHelper.GetRuntimeType(module);
 			if (programType == null) return (null, new StepBuilderError($"Could not load type {module}", step));
 
 			var variables = GetVariablesInStep(step).Replace("%", "");
 
-			var classDescriptionHelper = new ClassDescriptionHelper();
-			var (classDescription, error) = classDescriptionHelper.GetClassDescription(programType);
-			if (error != null) return (null, error);
+			if (classDescription == null)
+			{
+				var classDescriptionHelper = new ClassDescriptionHelper();
+				(classDescription, var error) = classDescriptionHelper.GetClassDescription(programType);
+				if (error != null) return (null, error);
+			}
 
 			string assistant = "";
 			if (classDescription != null)
 			{
 				var json = JsonConvert.SerializeObject(classDescription, new JsonSerializerSettings
 				{
-					NullValueHandling = NullValueHandling.Include
+					NullValueHandling = NullValueHandling.Ignore
 				});
 				assistant = $@"
 ## functions available starts ##
@@ -382,7 +433,7 @@ ReturnValue rules
 		[Method]
 		public string GetVariablesInStep(GoalStep step)
 		{
-			var variables = variableHelper.GetVariables(step.Text);
+			var variables = variableHelper.GetVariables(step.Text).DistinctBy(p => p.PathAsVariable);
 			string vars = "";
 
 			// todo: hack, why is Goal null?
@@ -390,13 +441,13 @@ ReturnValue rules
 
 			foreach (var variable in variables)
 			{
-				if (variable.Initiated)
+				if (variable.Initiated && !variable.Name.StartsWith("Settings"))
 				{
-					vars += variable.Name + " (" + variable.Value + "), ";
+					vars += variable.PathAsVariable + " (" + variable.Value + "), ";
 				}
 				else
 				{
-					vars += variable.Name + " (type:" + (variable.Value?.GetType().FullName ?? "object") + "), ";
+					vars += variable.PathAsVariable + " (type:" + (variable.Value?.GetType().FullName ?? "object") + "), ";
 
 				}
 			}

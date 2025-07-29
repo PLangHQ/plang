@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
@@ -56,6 +57,8 @@ namespace PLang.Modules.DbModule
 		{
 			public bool IsDefault { get; set; } = IsDefault;
 			public bool KeepHistory { get; set; } = KeepHistory;
+			[LlmIgnore]
+			public string NameInStep { get; set; }
 		}
 
 		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -228,7 +231,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 		}
 		private SqlStatement GetSqliteDbInfoStatement()
 		{
-			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey, dflt_value as default_value FROM pragma_table_info(@TableName);");
+			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey, dflt_value as default_value FROM pragma_table_xinfo(@TableName);");
 			return statement;
 		}
 
@@ -300,7 +303,7 @@ Connection string:",
 			SqlStatement? statement = null;
 			if (dbType.Name == "SqliteConnection")
 			{
-				statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+				statement = GetSqliteDbInfoStatement();
 			}
 			else
 			{
@@ -390,7 +393,7 @@ Be concise"));
 
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
-			var dataSources = settings.GetValues<DataSource>(this.GetType()).ToList();
+			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
 			return dataSources;
 		}
 

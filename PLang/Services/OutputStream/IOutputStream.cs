@@ -18,7 +18,7 @@ namespace PLang.Services.OutputStream
 		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null);
         public string Read();
         public Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null);
-
+		
     }
 
     

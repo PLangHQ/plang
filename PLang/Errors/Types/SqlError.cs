@@ -17,8 +17,20 @@ namespace PLang.Errors.Types
 			this.ParameterValues.Add("Sql", Sql);
 			this.ParameterValues.Add("Parameters", Parameters);
 
-			this.FixSuggestion += $"\nFollowing are the sql and parameters used for this sql statement:\n\tSql:{Sql}\n\tParameters:{JsonConvert.SerializeObject(Parameters)}";
+			this.FixSuggestion += $"\nFollowing are the sql and parameters used for this sql statement:\n\tSql:{Sql}";
+			if (Parameters != null)
+			{
+				foreach (var parameter in Parameters)
+				{
+					this.FixSuggestion += $"\n\t - ({parameter.TypeFullName}) {parameter.ParameterName} = {parameter.VariableNameOrValue}";
+				}
+			}
 
+		}
+
+		public override string ToString()
+		{
+			return base.ToString();
 		}
 
 	}

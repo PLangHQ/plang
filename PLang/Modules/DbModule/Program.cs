@@ -59,7 +59,7 @@ namespace PLang.Modules.DbModule
 		private readonly ITypeHelper typeHelper;
 
 		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%")]
-		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
+		public record ParameterInfo(string TypeFullName, string ParameterName, object? VariableNameOrValue);
 		public record TableInfo(string Name, List<ColumnInfo> Columns);
 		public record ColumnInfo(string Information);
 
@@ -101,18 +101,18 @@ namespace PLang.Modules.DbModule
 
 
 		[Description("Create a datasource to a database")]
-		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string dataSourceName = "data", string databaseType = "sqlite",
+		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite",
 			bool? setAsDefaultForApp = null, bool? keepHistoryEventSourcing = null)
 		{
 			if (!goal.IsSetup) return (null, new ProgramError("Create data source can only be in a setup file",
 				FixSuggestion: $"Create setup.goal file or a goal file in a setup folder. Only one create data source can be in each setup file"));
 
-			var (datasource, error) = await dbSettings.CreateDataSource(dataSourceName, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
+			var (datasource, error) = await dbSettings.CreateDataSource(name, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
 			if (datasource == null) return (datasource, error);
 
 			if (datasource.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(dataSourceName);
+				var variables = variableHelper.GetVariables(name);
 				var emptyVariables = variables.Where(p => p.IsEmpty);
 				if (emptyVariables.Any())
 				{
@@ -141,21 +141,12 @@ namespace PLang.Modules.DbModule
 			return goal.GetVariable<DataSource>();
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? dataSourceName = null)
+		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string name)
 		{
-			return await SetInternalDataSourceName(dataSourceName, true);
+			return await SetInternalDataSourceName(name, true);
 		}
-		private async Task<(DataSource? DataSource, IError? Error)> SetInternalDataSourceName([HandlesVariable] string? name = null, bool setForGoal = false)
+		private async Task<(DataSource? DataSource, IError? Error)> SetInternalDataSourceName([HandlesVariable] string name, bool setForGoal = false)
 		{
-			if (string.IsNullOrWhiteSpace(name) && goalStep.Instruction != null)
-			{
-				if (goalStep.Instruction.Properties.TryGetValue("DataSource", out object? value) && value != null)
-				{
-					name = value.ToString();
-				}
-
-			}
-
 			DataSource? dataSource = null;
 			if (string.IsNullOrEmpty(name))
 			{
@@ -170,7 +161,7 @@ namespace PLang.Modules.DbModule
 				if (error != null) return (dataSource, error);
 			}
 
-			if (!IsBuilder && dataSource!.Name.Contains("%"))
+			if (!IsBuilder && dataSource!.Name.Contains("%") && !string.IsNullOrEmpty(name))
 			{
 				var variables = variableHelper.GetVariables(name);
 				(dataSource, var error) = await GetRuntimeDataSource(dataSource, variables);
@@ -200,9 +191,11 @@ namespace PLang.Modules.DbModule
 		private string transactionKey = "transaction_{0}";
 		private string connectionKey = "con_{0}";
 
-		public async Task<IError?> BeginTransaction(string? name = null)
+		public async Task<IError?> BeginTransaction(List<string>? dataSourceNames = null, GoalToCallInfo? onRollback = null)
 		{
-			(name, var error) = await GetNameForConnection(name);
+			string? dataSourceName = (dataSourceNames != null) ? dataSourceNames[0] : null;
+
+			(dataSourceName, var error) = await GetNameForConnection(dataSourceName);
 			if (error != null) return error;
 
 			var dbConnection = dbFactory.CreateHandler(goalStep);
@@ -213,13 +206,13 @@ namespace PLang.Modules.DbModule
 			{
 				transaction.Dispose();
 				return Task.CompletedTask;
-			}, variableName: string.Format(transactionKey, name));
+			}, variableName: string.Format(transactionKey, dataSourceName));
 
 			goal.AddVariable(dbConnection, () =>
 			{
 				dbConnection.Dispose();
 				return Task.CompletedTask;
-			}, variableName: string.Format(connectionKey, name));
+			}, variableName: string.Format(connectionKey, dataSourceName));
 
 			return null;
 		}
@@ -243,38 +236,39 @@ namespace PLang.Modules.DbModule
 			return (dataSource.Name, null);
 		}
 
-		public async Task<IError?> EndTransaction(string? name = null)
+		public async Task<IError?> EndTransaction()
 		{
-			(name, var error) = await GetNameForConnection(name);
+			string? dataSourceName = null;
+			(dataSourceName, var error) = await GetNameForConnection(dataSourceName);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
-			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSourceName));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSourceName));
 
 			if (transaction != null) transaction.Commit();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(string.Format(connectionKey, name));
-			goal.RemoveVariable<IDbConnection>(string.Format(transactionKey, name));
+			goal.RemoveVariable<IDbTransaction>(string.Format(connectionKey, dataSourceName));
+			goal.RemoveVariable<IDbConnection>(string.Format(transactionKey, dataSourceName));
 
 			return null;
 		}
 
-		public async Task<IError?> Rollback(string? name = null)
+		public async Task<IError?> Rollback()
 		{
 
-
-			(name, var error) = await GetNameForConnection(name);
+			string? dataSourceName = null;
+			(dataSourceName, var error) = await GetNameForConnection(dataSourceName);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
-			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSourceName));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSourceName));
 
 			if (transaction != null) transaction.Rollback();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(string.Format(transactionKey, name));
-			goal.RemoveVariable<IDbConnection>(string.Format(connectionKey, name));
+			goal.RemoveVariable<IDbTransaction>(string.Format(transactionKey, dataSourceName));
+			goal.RemoveVariable<IDbConnection>(string.Format(connectionKey, dataSourceName));
 
 			return null;
 		}
@@ -299,12 +293,12 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Return list of tables and views in a datasource")]
-		public async Task<(List<string>? Scheme, IError? Error)> GetDbScheme([HandlesVariable] string? dataSourceName = null)
+		public async Task<(List<string>? Scheme, IError? Error)> GetDbScheme([HandlesVariable] string dataSourceName)
 		{
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (null, error);
 
-			var result = await Select(dataSource.SelectTablesAndViews);
+			var result = await Select(dataSourceName, dataSource.SelectTablesAndViews);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
@@ -324,12 +318,12 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Returns tables and views in database with the columns description")]
-		public async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(List<string>? tables = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure([HandlesVariable] string dataSourceName, List<string>? tables = null)
 		{
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (null, error);
 
-			var result = await Select(dataSource.SelectTablesAndViews, dataSourceName: dataSource.Name);
+			var result = await Select(dataSourceName, dataSource.SelectTablesAndViews);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
@@ -337,7 +331,7 @@ namespace PLang.Modules.DbModule
 
 			if (result.Table.Count == 0)
 			{
-				return (null, new ProgramError($"No tables exists in {dataSource.Name}", Key: "NoTables"));
+				return (null, new ProgramError($"No tables exists in {dataSource.Name}", Key: "NoTables", StatusCode: 404));
 			}
 
 			List<TableInfo> tableInfos = new();
@@ -354,7 +348,7 @@ namespace PLang.Modules.DbModule
 				}
 				var sql = await dbSettings.FormatSelectColumnsStatement(dataSource, row.Get<string>("name"));
 
-				var selectResult = await Select(sql, dataSourceName: dataSourceName);
+				var selectResult = await Select(dataSourceName, sql);
 				if (selectResult.Error != null) return (null, selectResult.Error);
 
 				List<ColumnInfo> columns = new();
@@ -391,7 +385,7 @@ namespace PLang.Modules.DbModule
 			{
 				if (sqliteConnection.ConnectionString.Contains("Memory;"))
 				{
-					var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new()) ?? new();
+					var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 					if (!anchors.ContainsKey(dataSource.Name))
 					{
 						var anchorConnection = dbFactory.CreateHandler(goalStep);
@@ -421,16 +415,26 @@ namespace PLang.Modules.DbModule
 
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}
-
-		[Description("Executes a sql statement that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
-		public async Task<(long, IError?)> ExecuteDynamicSql(string sql, List<string> tableAllowList, [HandlesVariable] string? dataSourceName = null)
+		
+		[Description("Executes a sql file")]
+		public async Task<(long, IError?)> ExecuteSqlFile([HandlesVariable] string dataSourceName, string fileName, List<string> tableAllowList)
 		{
-			return await Execute(sql, tableAllowList, dataSourceName);
+			var file = GetProgramModule<Modules.FileModule.Program>();
+			var readResult = await file.ReadTextFile(fileName);
+			if (readResult.Error != null) return (0, readResult.Error);
+
+			return await Execute(dataSourceName, readResult.Content.ToString(), tableAllowList);
+
+		}
+		[Description("Executes a sql statement that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		public async Task<(long, IError?)> ExecuteDynamicSql([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList)
+		{
+			return await Execute(dataSourceName, sql, tableAllowList);
 
 		}
 
 		[Description("Executes a sql statement that defined by user. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
-		public async Task<(long RowsAffected, IError? Error)> Execute(string sql, List<string> tableAllowList, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList)
 		{
 			if (tableAllowList.Count == 0)
 			{
@@ -446,10 +450,10 @@ namespace PLang.Modules.DbModule
 					return (0, new ProgramError($"Table {table} was not in sql: {sql}"));
 				}
 			}
-			return await ExecuteRaw(sql, dataSourceName);
+			return await ExecuteRaw(dataSourceName, sql);
 		}
 
-		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null)
+		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw([HandlesVariable] string dataSourceName, string sql)
 		{
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
 			if (error != null) return (0, error);
@@ -461,7 +465,7 @@ namespace PLang.Modules.DbModule
 			if (sql.Contains("@id"))
 			{
 				parameters = new List<ParameterInfo>();
-				parameters.Add(new ParameterInfo("@id", "auto", "System.Int64"));
+				parameters.Add(new ParameterInfo("System.Int64", "@id", "auto"));
 			}
 
 			var prepare = Prepare(sql, parameters);
@@ -514,19 +518,19 @@ namespace PLang.Modules.DbModule
 		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment")]
 		public async Task<(long, IError?)> CreateTable(string sql)
 		{
-			return await ExecuteRaw(sql, goal.DataSourceName);
+			return await ExecuteRaw(goal.DataSourceName, sql);
 
 		}
 
 		[Description("When select should return 1 row (limit 1)")]
-		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(object?, IError? errors)> SelectOneRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (0, error);
 
 
-			var result = await Select(sql, sqlParameters);
+			var result = await Select(dataSourceName,sql, sqlParameters);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
@@ -540,6 +544,11 @@ namespace PLang.Modules.DbModule
 
 
 			var returnValues = new List<ObjectValue>();
+			if (result.Table.ColumnNames.Count == 1)
+			{
+				var columnName = result.Table.ColumnNames[0];
+				return (new ObjectValue(columnName, result.Table[columnName]), null);
+			}
 			foreach (var columnName in result.Table.ColumnNames)
 			{
 				returnValues.Add(new ObjectValue(columnName, result.Table[columnName]));
@@ -552,7 +561,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public async Task<(Table? Table, IError? Error)> Select(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(Table? Table, IError? Error)> Select([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
@@ -651,7 +660,7 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(long, IError?)> Update(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long, IError?)> Update([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
@@ -687,7 +696,7 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		public async Task<(long, IError?)> Delete(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long, IError?)> Delete([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
@@ -724,22 +733,22 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		[Description("Insert or update table(Upsert). Will return affected row count. ")]
-		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		[Description("Insert or update table(Upsert). Will return affected row count. Choose when user doesn't write result into %variable%")]
+		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			return await Insert(sql, sqlParameters, dataSourceName);
+			return await Insert(dataSourceName, sql, sqlParameters);
 		}
 
-		[Description("Insert or update table(Upsert). Will return the primary key of the affected row")]
-		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		[Description("Insert or update table(Upsert). Will return the id/primary key of the affected row. Used when user intends to write into a %id%")]
+		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			return await InsertAndSelectIdOfInsertedRow(sql, sqlParameters, dataSourceName);
+			return await InsertAndSelectIdOfInsertedRow(dataSourceName, sql, sqlParameters);
 		}
 
 
 
-		[Description("Insert into table. Will return affected row count")]
-		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		[Description("Insert into table. Will return affected row count. Choose when user doesn't write result into %variable%")]
+		public async Task<(long rowsAffected, IError? error)> Insert([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
@@ -779,8 +788,8 @@ namespace PLang.Modules.DbModule
 			return (rowsAffected, null);
 
 		}
-		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		[Description("Insert statement that will return the id of the inserted row.  Used when user intends to write into a %id%")]
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
@@ -878,7 +887,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("ONLY When inserting list of items(%variables% is plural). Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
-		public async Task<(long, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
+		public async Task<(long, IError?)> InsertBulk([HandlesVariable] string dataSourceName, string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);
 
@@ -889,7 +898,7 @@ namespace PLang.Modules.DbModule
 			if (columnMapping == null)
 			{
 				var sqlSelectColumns = await dbSettings.FormatSelectColumnsStatement(dataSource, tableName);
-				var result = await Select(sqlSelectColumns);
+				var result = await Select(dataSourceName, sqlSelectColumns);
 				if (result.Error != null)
 				{
 					return (0, result.Error);
@@ -933,7 +942,7 @@ namespace PLang.Modules.DbModule
 					bool isListItem = column.Value.ToString().Contains("item.");
 					if (column.Key == "id")
 					{
-						param.Add(new ParameterInfo("id", id + i, typeof(Int64).FullName));
+						param.Add(new ParameterInfo(typeof(Int64).FullName, "id", id + i));
 					}
 					else if (propertiesInItems.FirstOrDefault(p => p.Equals(cleanedColumnValue, StringComparison.OrdinalIgnoreCase)) != null
 						|| memoryStack.Contains(cleanedColumnValue))
@@ -941,20 +950,20 @@ namespace PLang.Modules.DbModule
 						var obj = (isListItem) ? GetValue(itemsToInsert[i], cleanedColumnValue) : memoryStack.Get(cleanedColumnValue);
 						if (obj == null)
 						{
-							param.Add(new ParameterInfo(column.Key, obj, typeof(DBNull).FullName));
+							param.Add(new ParameterInfo(typeof(DBNull).FullName, column.Key, obj));
 							continue;
 						}
 						else if (obj is ObjectValue ov)
 						{
-							param.Add(new ParameterInfo(column.Key, ov.Value, ov.Type.FullName));
+							param.Add(new ParameterInfo(ov.Type.FullName, column.Key, ov.Value));
 						}
 						else if (obj is JValue value)
 						{
-							param.Add(new ParameterInfo(column.Key, value.Value, value.Value.GetType().FullName));
+							param.Add(new ParameterInfo(value.Value.GetType().FullName, column.Key, value.Value));
 						}
 						else
 						{
-							param.Add(new ParameterInfo(column.Key, obj, obj.GetType().FullName));
+							param.Add(new ParameterInfo(obj.GetType().FullName, column.Key, obj));
 						}
 						rowHasAnyValue = true;
 					}
@@ -962,7 +971,7 @@ namespace PLang.Modules.DbModule
 				}
 				if (!rowHasAnyValue) { continue; }
 
-				var insertResult = await Insert(sql, param);
+				var insertResult = await Insert(dataSourceName, sql, param);
 				if (insertResult.error != null)
 				{
 					await Rollback();
@@ -972,7 +981,7 @@ namespace PLang.Modules.DbModule
 			}
 			if (transaction == null)
 			{
-				await EndTransaction(dataSource.Name);
+				await EndTransaction();
 			}
 
 			return (affectedRows, null);
@@ -1084,7 +1093,7 @@ namespace PLang.Modules.DbModule
 			if (error != null) return (string.Empty, error);
 
 			List<ParameterInfo> parameters = new();
-			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
+			parameters.Add(new ParameterInfo("System.String", "Database", dataSource.DbName));
 
 			(var connection, var transaction, var par, _, error) = Prepare("", parameters);
 			if (error != null)
@@ -1247,7 +1256,7 @@ namespace PLang.Modules.DbModule
 					catch { }
 				}
 
-				if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
+				if ((targetType == typeof(string) || targetType == typeof(object)) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
 				{
 					return (obj.ToString(), null);
 				}
@@ -1273,7 +1282,7 @@ namespace PLang.Modules.DbModule
 				if (string.IsNullOrWhiteSpace(obj.ToString()) && (targetType == typeof(long) || targetType == typeof(double)))
 				{
 					var filterModule = GetProgramModule<FilterModule.Program>();
-					var task = filterModule.FilterOnPropertyAndValue(function, "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
+					var task = filterModule.FilterOnPropertyAndValue(new ObjectValue("function", function), "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
 					task.Wait();
 					var result = task.Result;
 					if (result.Item1 != null)
@@ -1397,7 +1406,7 @@ namespace PLang.Modules.DbModule
 			{
 				var storedKey = "%__stepsExecuted__%";
 
-				goal.AddVariable(runtimeDataSource);
+				goalStep.AddVariable(runtimeDataSource);
 
 				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
 				var varsRuntime = programFactory.GetProgram<VariableModule.Program>(goalStep);
@@ -1430,6 +1439,7 @@ namespace PLang.Modules.DbModule
 				{
 					tmp = memoryStack.Get(storedKey);
 				}
+				goal.AddVariable(datasource);
 
 				memoryStack.Put(storedKey, stepExecuted);
 				error = await varsRuntime.Store([storedKey]);

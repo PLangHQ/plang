@@ -1,4 +1,5 @@
 ﻿using PLang.Modules;
+using System.Runtime.Serialization;
 
 namespace PLang.Building.Model;
 
@@ -47,6 +48,11 @@ public class ComplexDescription : IPropertyDescription
 	public object? DefaultValue { get; set; }
 	public List<IPropertyDescription>? TypeProperties { get; set; }
 	public bool IsRequired { get; set; }
+
+	[Newtonsoft.Json.JsonIgnore]
+	[IgnoreDataMemberAttribute]
+	[System.Text.Json.Serialization.JsonIgnore]
+	public List<string> MethodNames { get; set; } = new();
 }
 
 public class EnumDescription : IPropertyDescription

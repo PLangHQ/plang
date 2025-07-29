@@ -1,5 +1,6 @@
 ﻿using Epiforge.Extensions.Components;
 using Nethereum.ABI.CompilationMetadata;
+using Nethereum.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
@@ -11,6 +12,7 @@ using PLang.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Dynamic;
 using System.Globalization;
@@ -206,33 +208,75 @@ public class TypeHelper : ITypeHelper
 	public static string GetJsonSchemaForRecord(Type type)
 	{
 		ConstructorInfo constructor = type.GetConstructors().First();
+		Dictionary<string, string> extraInfo = new();
 		var json = "{";
 		foreach (var parameter in constructor.GetParameters())
 		{
+			if (parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") != null) continue;
+			if (parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
+
+
+			var descAttr = parameter.GetCustomAttribute<DescriptionAttribute>();
+			var defaultValue = parameter.GetCustomAttribute<DefaultValueAttribute>();
+			var hasDefault = type.GetConstructor(Type.EmptyTypes) != null;
+
 			string value = "";
+			string propertyTypeNormalized = parameter.ParameterType.FullNameNormalized();
+
+			value = parameter.ParameterType.Name;
+			if (parameter.ParameterType.GenericTypeArguments.Length > 0)
+			{
+				value = propertyTypeNormalized;
+				foreach (var gt in parameter.ParameterType.GenericTypeArguments)
+				{
+					if (!gt.FullName?.StartsWith("System.") == true && !extraInfo.ContainsKey(gt.FullNameNormalized()))
+					{
+						extraInfo.Add(gt.FullNameNormalized(), GetJsonSchema(gt));
+					}
+				}
+			}
+			else if (!parameter.ParameterType.FullName?.StartsWith("System.") == true)
+			{
+				extraInfo.Add(parameter.ParameterType.FullNameNormalized(), GetJsonSchema(parameter.ParameterType));
+				value = propertyTypeNormalized;
+			}
+			else
+			{
+				value = propertyTypeNormalized;
+			}
+
+			string nullPrefix = "";
 			if (parameter.HasDefaultValue)
 			{
 				if (parameter.DefaultValue == null)
 				{
-					value = "null";
+					nullPrefix = "";
+					value += " = null";
 				}
 				else
 				{
-					value = parameter.DefaultValue.ToString()!;
+					value += " = " + parameter.DefaultValue.ToString()!;
 				}
 			}
-			else
-			{
-				value = parameter.ParameterType.Name.ToLower().ToString();
-			}
-			json += "\"" + parameter.Name + "\" : " + value + ", ";
+			json += "\"" + parameter.Name + nullPrefix + "\" : " + value + ", ";
 		}
-		return json += "}";
+		json = json.Trim().TrimEnd(',').Replace("\n", "") + "}";
+
+		if (extraInfo.Count > 0)
+		{
+			json += "\n\nAdditional information about objects:\n" + string.Join("\n", extraInfo.Select(p => p.Key + " : " + p.Value));
+		}
+		return json;
 	}
 
 
 	public static string GetJsonSchema(Type type, bool ignoreInstructed = true)
 	{
+		if (IsRecordType(type))
+		{
+			return GetJsonSchemaForRecord(type);
+		}
+
 		var json = (type.IsArray || type == typeof(List<>)) ? "[\n" : "{\n";
 
 		var primaryConstructor = type.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
@@ -250,13 +294,14 @@ public class TypeHelper : ITypeHelper
 				propName += "?";
 			}
 			if (json.Length > 2) json += ",\n";
-			if (prop.PropertyType == typeof(List<string>))
+
+			/*if (prop.PropertyType == typeof(List<string>))
 			{
-				json += $@"{propName}: string[]";
+				json += $@"{propName}: List<string>";
 			}
-			else if (prop.PropertyType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
+			else if (prop.PropertyType.FullName.Contains("Dictionary"))
 			{
-				json += $@"{propName} : {{ {prop.PropertyType.GenericTypeArguments[0].Name} : {prop.PropertyType.GenericTypeArguments[1].Name}, ... }}";
+				json += $@"{propName} : Dictionary<{prop.PropertyType.GenericTypeArguments[0].Name} : {prop.PropertyType.GenericTypeArguments[1].Name}>";
 			}
 			else if (prop.PropertyType.Name == "Nullable`1")
 			{
@@ -267,14 +312,16 @@ public class TypeHelper : ITypeHelper
 				var args = prop.PropertyType.GetGenericArguments();
 				if (args.Length == 1)
 				{
-					json += $@"{propName}: [" + GetJsonSchema(args[0]) + "]";
+					json += $@"{propName}: List<" + GetJsonSchema(args[0]) + ">";
 				}
 				else if (args.Length == 2)
 				{
-					json += $@"{propName}: {{ ""key"": {args[0].Name}, ""value"": {args[1].Name} }}";
+					json += $@"{propName}: Dictionary<{args[0].Name}, {args[1].Name}>";
 				}
 			}
-			else if (prop.PropertyType.IsClass && prop.PropertyType.Namespace.StartsWith("PLang"))
+			else */
+
+			if (prop.PropertyType.IsClass && prop.PropertyType.Namespace.StartsWith("PLang"))
 			{
 				json += $@"{propName}: " + GetJsonSchema(prop.PropertyType);
 				/*
@@ -289,7 +336,7 @@ public class TypeHelper : ITypeHelper
 			}
 			else if (prop.PropertyType.IsEnum)
 			{
-				json += $@"{propName}: enum";
+				json += $@"{propName}: ""{prop.PropertyType.EnumOptions()}""";
 				//prop.PropertyType.GetFields();
 			}
 			else if (prop.PropertyType.Namespace == type.Namespace)
@@ -298,7 +345,7 @@ public class TypeHelper : ITypeHelper
 			}
 			else
 			{
-				json += $@"{propName}: {prop.PropertyType.Name.ToLower()}";
+				json += $@"{propName}: {prop.PropertyType.FullNameNormalized()}";
 			}
 			var attribute = prop.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
 			if (attribute != null)
@@ -361,7 +408,7 @@ public class TypeHelper : ITypeHelper
 				  .ToArray();
 
 		var target = mi.IsStatic ? null : Activator.CreateInstance(type);
-		return mi.FastInvoke(target, args);   
+		return mi.FastInvoke(target, args);
 
 		//InvokeMethoed(GetProgramInstance(), @namespace, @class, method, Parameters);
 	}
@@ -432,6 +479,7 @@ public class TypeHelper : ITypeHelper
 	public static object? ConvertToType(object? value, Type targetType)
 	{
 		if (value == null) return null;
+		if (value is System.DBNull) return null;
 
 		if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
 		{
@@ -453,7 +501,7 @@ public class TypeHelper : ITypeHelper
 		}
 		if (value is JValue jValue)
 		{
-			return jValue.Value;
+			return Convert.ChangeType(jValue.Value, targetType, CultureInfo.InvariantCulture);
 		}
 
 		if (value is JArray jArray)
@@ -473,7 +521,15 @@ public class TypeHelper : ITypeHelper
 
 		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
 		{
-			return JsonConvert.SerializeObject(value);
+			var customSettings = new JsonSerializerSettings
+			{
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+				MaxDepth = 5,
+				Converters = new List<JsonConverter>(),
+				NullValueHandling = NullValueHandling.Include,
+				Formatting = Newtonsoft.Json.Formatting.None
+			};
+			return JsonConvert.SerializeObject(value, customSettings);
 		}
 
 

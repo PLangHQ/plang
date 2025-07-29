@@ -25,6 +25,8 @@ namespace PLang.Building.Model
 		{
 			try
 			{
+				if (string.IsNullOrEmpty(absolutePath)) return (null, null);
+
 				string json = fileSystem.File.ReadAllText(absolutePath);
 				var instruction = JsonConvert.DeserializeObject<Instruction>(json);
 
@@ -57,7 +59,7 @@ namespace PLang.Building.Model
 			var function = (IGenericFunction)Convert.ChangeType(obj, type);
 
 			// llm may return null on a parameter/return values, instead of doing new request to llm, just remove them.
-			function.Parameters?.FirstOrDefault(p => p == null);
+			function.Parameters?.RemoveAll(p => p == null);
 			function.ReturnValues?.RemoveAll(p => p == null || string.IsNullOrEmpty(p.VariableName));
 
 			function.Instruction = instruction;

@@ -76,7 +76,10 @@ namespace PLang.Runtime
 				.Select(p => p.Value).OrderByDescending(p => p.Updated).ThenBy(p => p.Name).ToList();
 			return vars;
 		}
-
+		private void HandleSerializationError(object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
+		{
+			e.ErrorContext.Handled = true;
+		}
 		public string GetMemoryStackJson()
 		{
 			try
@@ -85,9 +88,9 @@ namespace PLang.Runtime
 
 				List<string> varsInStep = new();
 				var eventBinding = Goal.GetVariable<EventBinding>(ReservedKeywords.Event);
-				if (eventBinding != null && eventBinding.GoalStep != null)
+				if (eventBinding != null && eventBinding.SourceStep != null)
 				{
-					varsInStep = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
+					varsInStep = VariableHelper.GetVariablesInText(eventBinding.SourceStep.Text);
 				}
 
 
@@ -96,7 +99,7 @@ namespace PLang.Runtime
 				{
 					ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
 					MaxDepth = 5,
-
+					Error = HandleSerializationError,
 					Converters = new List<JsonConverter>(),
 					NullValueHandling = NullValueHandling.Include,
 					Formatting = Formatting.None
@@ -404,6 +407,8 @@ namespace PLang.Runtime
 				var value = objectValue.GetObjectValue(keyPath2.Path);
 				return value;
 			}
+
+			if (!variable.Value.Initiated) return ObjectValue.Nullable(keyPath.FullPath);
 
 			//sub variable, e.g. %user.name%, %now+5days%
 			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
@@ -988,10 +993,42 @@ namespace PLang.Runtime
 				var keyPlan = GetVariableExecutionPlan(originalKey, key, staticVariable);
 
 				ObjectValue objectValue = keyPlan.ObjectValue;
-				foreach (var call in keyPlan.Calls)
+				object? obj = keyPlan.Target ?? objectValue.Value;
+				if (obj == null)
 				{
-					object? obj = keyPlan.Target ?? objectValue.Value;
-					if (obj == null) obj = new { };
+					keyPlan.Calls.Reverse();
+
+					IDictionary? prev = null;
+					foreach (var call in keyPlan.Calls)
+					{
+						var dict = new Dictionary<string, object?>();
+						if (prev == null)
+						{
+							dict.AddOrReplace(call, value);
+						}
+						else
+						{
+							dict.AddOrReplace(call, prev);
+						}
+						prev = dict;
+					}
+
+					if (prev != null)
+					{
+
+						objectValue = new ObjectValue(objectValue.Name, prev, prev.GetType(), objectValue.Parent, initialize, properties);
+						AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep, disableEvent);
+						return;
+					}
+				}
+
+				if (obj == null) obj = new { };
+
+				object? itemOnStack = obj;
+				for (int i=0;i<keyPlan.Calls.Count;i++)
+				{
+					
+					var call = keyPlan.Calls[i];
 
 					if (obj.GetType().Name.StartsWith("<>f__Anonymous"))
 					{
@@ -1035,28 +1072,42 @@ namespace PLang.Runtime
 						row[column] = value;
 						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize, properties);
 					}
-					else if (obj is IDictionary dict)
+					else if (itemOnStack is IDictionary dict)
 					{
-						bool keyFound = false;
-						if (dict.Contains(call))
+						string? keyName = null;
+						foreach (object keyItem in dict.Keys)
 						{
-							dict[call] = value;
+							if (keyItem is string strKey && string.Equals(strKey, call, StringComparison.OrdinalIgnoreCase))
+							{
+								keyName = keyItem.ToString();
+								break;
+							}
+						}
+
+						if (keyName != null)
+						{
+							if (i == keyPlan.Calls.Count - 1)
+							{
+								dict[keyName] = value;
+							} else
+							{
+								itemOnStack = dict[keyName];
+							}
+							
 						}
 						else
 						{
-							foreach (object keyItem in dict.Keys)
-							{
-								if (keyItem is string strKey && string.Equals(strKey, call, StringComparison.OrdinalIgnoreCase))
-								{
-									dict[call] = value;
-									keyFound = true;
-									break;
-								}
-							}
-							if (!keyFound)
+
+							if (i == keyPlan.Calls.Count - 1)
 							{
 								dict.Add(call, value);
+							} else
+							{
+								var newItem = new Dictionary<string, object?>();
+								dict.Add(call, newItem);
+								itemOnStack = newItem;
 							}
+							
 						}
 					}
 					else
@@ -1076,6 +1127,7 @@ namespace PLang.Runtime
 						else
 						{
 							Type type = obj.GetType();
+
 							PropertyInfo? propInfo;
 							if (call.Contains("[") && call.Contains("]"))
 							{
@@ -1113,11 +1165,14 @@ namespace PLang.Runtime
 										throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
 									}
 								}
-								if (value != null && value.GetType() != propInfo.PropertyType)
+
+								if (value != null && value.GetType() != propInfo.PropertyType && propInfo.PropertyType != typeof(object))
 								{
 									value = Convert.ChangeType(value, propInfo.PropertyType);
 								}
+
 								propInfo.SetValue(obj, value);
+
 								//objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
 						}

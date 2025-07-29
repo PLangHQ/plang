@@ -89,7 +89,7 @@ namespace PLang.Models
 
 		}
 	}
-	[Description("Name of goal and parameters that is called, e.g. in condition, loops, run goal")]
+	[Description("Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path")]
 	public class GoalToCallInfo
 	{
 		private string name;

@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -22,6 +24,9 @@ namespace PLang.Errors
 		public Exception? Exception { get; }
 		public List<IError> ErrorChain { get; set; }
 		public string MessageOrDetail { get; }
+
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public List<ObjectValue> Variables { get; set; }
 		public object ToFormat(string contentType = "text");
 		public object AsData();
@@ -74,7 +79,8 @@ namespace PLang.Errors
 
 		[JsonPropertyName("exception")]
 		public ExceptionDto? ExceptionInfo => ExceptionDto.FromException(Exception);
-
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public string MessageOrDetail {
 			get
 			{
@@ -89,6 +95,8 @@ namespace PLang.Errors
 			}
 			
 		}
+		[IgnoreWhenInstructed]
+		public bool IsHandled { get; set; } = false;
 
 		public List<ObjectValue> Variables { get; set; } = new();
 
@@ -124,7 +132,7 @@ namespace PLang.Errors
 			};
 	}
 
-	public record EndGoal(GoalStep Step, string Message, int StatusCode  = 200, int Levels = 0) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled
+	public record EndGoal(Goal EndingGoal, GoalStep Step, string Message, int StatusCode  = 200, int Levels = 0) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled
 	{
 		public override GoalStep? Step { get; set; } = Step;
 		public override Goal? Goal { get; set; } = Step.Goal;

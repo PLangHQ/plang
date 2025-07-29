@@ -76,7 +76,21 @@ namespace PLang.Building.Model
 		public bool WaitForExecution { get; set; } = true;
 		public string? LoggerLevel { get; set; }
 		public List<ErrorHandler>? ErrorHandlers { get; set; }
+		[LlmIgnore] 
 		public bool Retry { get; set; }
+		[LlmIgnore]
+		public int RetryCount { get; set; } = 1;
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public string? BuildProcess { get; set; } = null;
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public List<IError> ValidationErrors { get; set; } = new();
+
 		public CachingHandler? CacheHandler { get; set; }
 		public CancellationHandler? CancellationHandler { get; set; }
 		
@@ -187,6 +201,10 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool IsValid { get; set; } = false;
+		protected override GoalStep? GetStep()
+		{
+			return this;
+		}
 		protected override Goal? GetParent()
 		{
 			return Goal;
@@ -203,7 +221,7 @@ namespace PLang.Building.Model
 		public (IGenericFunction? Function, IError? Error) GetFunction(IPLangFileSystem fileSystem)
 		{
 			var result = InstructionCreator.Create(AbsolutePrFilePath, fileSystem);
-			if (result.Error != null) return (null,  result.Error);
+			if (result.Error != null || result.Instruction == null) return (null,  result.Error);
 
 			Instruction = result.Instruction!;
 			Instruction.Step = this;

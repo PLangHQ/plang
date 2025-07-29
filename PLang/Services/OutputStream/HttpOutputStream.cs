@@ -11,6 +11,7 @@ using ReverseMarkdown.Converters;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Text;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.WebserverModule.Program;
@@ -135,7 +136,11 @@ namespace PLang.Services.OutputStream
 
 			(var response, var isFlushed, var error) = GetResponse();
 			if (error != null) throw new ExceptionWrapper(error);
-			if (response == null) throw new Exception("Response is null");
+			if (response == null)
+			{
+				Console.WriteLine("Response is null, so to console it goes: " + obj);
+				//throw new Exception("Response is null");
+			}
 
 			if (!isFlushed)
 			{
@@ -181,9 +186,17 @@ namespace PLang.Services.OutputStream
 
 		}
 
+		public bool SetContentType(string contentType)
+		{
+			
+			if (response.HasStarted) return false;
+			
+			response.Headers.ContentType = contentType;
+			return true;
+			
+		}
 
-
-		private (HttpResponse?, bool IsFlushed, IError? Error) GetResponse()
+		public (HttpResponse?, bool IsFlushed, IError? Error) GetResponse()
 		{
 			try
 			{

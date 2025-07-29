@@ -93,10 +93,10 @@ namespace PLang.Utils
 
 		}
 
-		public static (Goal?, IError?) GetGoalPath(string callingGoalRelativeFolderPath, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
+		public static (Goal?, IError?) GetGoalPath(GoalStep step, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
 		{
 			Goal? goal;
-
+			string callingGoalRelativeFolderPath = step.Goal.RelativeGoalFolderPath;
 			if (!string.IsNullOrEmpty(goalToCall.Path) && !goalToCall.Path.Contains(".goal"))
 			{				
 				goal = appGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
@@ -141,15 +141,24 @@ namespace PLang.Utils
 				goalToCallPath = goalToCallPath.TrimEnd(Path.DirectorySeparatorChar);
 			}
 
-			goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(goalToCallPath, StringComparison.OrdinalIgnoreCase)
-					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
+			goal = GetMatchingGoal(appGoals, step, goalToCallPath, goalToCallName);
 			if (goal != null) return (goal, null);
 
-			goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)
-					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
+			goal = GetMatchingGoal(systemGoals, step, goalToCallPath, goalToCallName);
 			if (goal != null) return (goal, null);
 
 			return (null, new Error($"{goalToCall.Name} could not be found. Searched for '{goalToCall.Path}'", Key: "GoalNotFound", StatusCode: 404));
+		}
+
+
+		private static Goal? GetMatchingGoal(List<Goal> goals, GoalStep step, string goalToCallPath, string goalToCallName)
+		{
+			var foundGoals = goals.Where(p => p.RelativeGoalFolderPath.Equals(goalToCallPath, StringComparison.OrdinalIgnoreCase)
+					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
+			if (foundGoals.Count() == 1) return foundGoals.First();
+			if (foundGoals.Count() == 0) return null;
+
+			return foundGoals.FirstOrDefault(p => p.RelativeGoalPath == step.Goal.RelativeGoalPath);
 		}
 
 		static string MergePath(string currentRelativePath, string newPath) =>

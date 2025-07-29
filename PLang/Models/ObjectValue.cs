@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Models;
 using PLang.Models.ObjectValueConverters;
@@ -85,7 +86,9 @@ public class ObjectValue
 		}
 		else
 		{
-			string prefix = (Char.IsLetterOrDigit(name[0])) ? "." : "";
+			//not happy with this check, a variable could be %product._id%, not sure if this is enough
+			//are there some other versions of variable? this one came about because of elastic search
+			string prefix = (Char.IsLetterOrDigit(name[0]) || name[0] == '_') ? "." : "";
 			this.Path = (parent != null) ? $"{parent.Path}{prefix}{name}" : name;
 		}
 
@@ -187,6 +190,8 @@ public class ObjectValue
 	}
 	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
 	{
+		if (string.IsNullOrEmpty(path)) return ObjectValue.Null;
+
 		var segments = PathSegmentParser.ParsePath(path);
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
@@ -255,6 +260,15 @@ public class ObjectValue
 		{
 			var str2 = obj as string;
 			return string.Equals(str, str2, stringComparison ?? StringComparison.OrdinalIgnoreCase);
+		}
+		if (Value is JValue jValue)
+		{
+			if (jValue.Value is string valueStr)
+			{
+				var str2 = obj.ToString();
+				return string.Equals(valueStr, str2, stringComparison ?? StringComparison.OrdinalIgnoreCase);
+			}
+			return jValue.Value?.Equals(obj) == true;
 		}
 		return Value.Equals(obj);
 	}

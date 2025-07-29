@@ -30,13 +30,13 @@ namespace PLang.Modules.MathModule
 		}
 
 		[Description("Solve a complex math expression given as a string. Please capitalize any functions called like sqrt() into Sqrt()")]
-		public async Task<(double?, IError?)> SolveExpression(string expression)
+		public async Task<(double?, IError?)> SolveExpression(string expression, int decimalRound = 3, MidpointRounding? midpointRounding = null)
 		{
 			if (string.IsNullOrEmpty(expression))
 				return (null, new ProgramError("Could not use empty variable", goalStep, function, FixSuggestion: $"The variable value is: '{expression}' (without quotes)"));
 
 			var solveFor = new NCalc.Expression(expression);
-			return EvaluateCustomExpressions(solveFor);
+			return EvaluateCustomExpressions(solveFor, decimalRound, midpointRounding);
 		}
 
 		//Number theory
@@ -103,14 +103,16 @@ namespace PLang.Modules.MathModule
 			return (primeList, null);
 		}
 
-		private (double?, IError?) EvaluateCustomExpressions(NCalc.Expression expression)
+		private (double?, IError?) EvaluateCustomExpressions(NCalc.Expression expression, int decimalRound = 3, MidpointRounding? midpointRounding = null)
 		{
 			double value = 0;
 
 			try
 			{
+				if (midpointRounding == null) midpointRounding = MidpointRounding.AwayFromZero;
+
 				value = Convert.ToDouble(expression.Evaluate());
-				value = Math.Round(value, 3, MidpointRounding.AwayFromZero);
+				value = Math.Round(value, decimalRound, midpointRounding.Value);
 			}
 			catch (EvaluateException e)
 			{

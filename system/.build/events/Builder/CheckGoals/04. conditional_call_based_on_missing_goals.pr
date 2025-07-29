@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCallIfTrue",
         "Value": {
+          "Path": ".build\\events\\Builder\\CheckGoals\\ShowMissingGoals\\00. Goal.pr",
           "Name": "ShowMissingGoals",
           "Parameters": {}
         }
@@ -23,6 +26,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCallIfFalse",
         "Value": {
+          "Path": ".build\\events\\Builder\\CheckGoals\\ShowAllValid\\00. Goal.pr",
           "Name": "ShowAllValid",
           "Parameters": {}
         }

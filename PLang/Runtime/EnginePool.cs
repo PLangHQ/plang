@@ -45,6 +45,14 @@ namespace PLang.Runtime
 			}
 		}
 
+		public void ReloadGoals()
+		{
+			foreach (var engine in _pool)
+			{
+				engine.PrParser.ForceLoadAllGoals();
+			}
+		}
+
 		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null)
 		{
 			if (_pool.TryTake(out var engine))
@@ -62,7 +70,6 @@ namespace PLang.Runtime
 			engine.SetParentEngine(parentEngine);
 			engine.CallbackInfos = parentEngine.CallbackInfos;
 			
-			engine.FileSystem.AddFileAccess(new SafeFileSystem.FileAccessControl(parentEngine.Path, engine.FileSystem.SystemDirectory, ProcessId: engine.FileSystem.Id));
 			if (outputStream != null)
 			{
 				engine.SetOutputStream(outputStream);

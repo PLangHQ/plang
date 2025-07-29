@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "foreach %stepFiles%, call InspectFileContent item=%file%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCall",
         "Value": {
+          "Path": ".build\\events\\Builder\\CheckGoals\\InspectFileContent\\00. Goal.pr",
           "Name": "InspectFileContent",
           "Parameters": {
             "item": "%file%"

@@ -22,6 +22,7 @@ using PLang.Modules;
 using PLang.Modules.IdentityModule;
 using PLang.Modules.MessageModule;
 using PLang.Modules.SerializerModule;
+using PLang.Modules.WebserverModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
@@ -265,6 +266,7 @@ namespace PLang.Container
 			});
 
 
+			container.RegisterSingleton<ICertHelper, CertHelper>();
 			//container.RegisterOutputStreamFactory(typeof(MemoryOutputStream), false, new MemoryOutputStream());
 			container.RegisterSingleton<IEventBuilder, EventBuilder>();
 			if (AppContext.TryGetSwitch("Builder", out bool isBuilder) && !isBuilder)
@@ -627,7 +629,7 @@ namespace PLang.Container
 			// Register these types with the DI container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
-				container.RegisterSingleton(type);
+				container.Register(type);
 				//container.Register(type, type, serviceName: type.FullName); 
 				/*container.Register(type, factory =>
 				{

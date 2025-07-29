@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NBitcoin.Protocol;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
@@ -149,9 +150,13 @@ namespace PLang.Utils
 				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 🧩 Key:  {error.Key}
+#️⃣ StatusCode:  {error.StatusCode}
 
-🔎 Error Details - Code snippet that the error occured:
-{FormatLine(step.Text.MaxLength(160), indent: true)}
+🔍   ================== Error Details ==================   🔍
+
+📜 Code snippet that the error occured:
+	- {step.Text.Replace("\r", "").Replace("\t", "").Replace("\n", "\n\t\t").MaxLength(160)}
+		at {step.RelativeGoalPath}:{step.LineNumber}
 ";
 				if (!string.IsNullOrWhiteSpace(step.ModuleType))
 				{
@@ -172,10 +177,18 @@ namespace PLang.Utils
 			string? variables = null;
 			if (error.Variables.Count > 0)
 			{
-				variables = @" Variables:";
+				variables = @"🏷️  Variables:";
 				foreach (var variable in error.Variables)
 				{
-					var value = JsonConvert.SerializeObject(variable.Value).MaxLength(5000);
+					string value;
+					if (variable.PathAsVariable.StartsWith("%Settings."))
+					{
+						value = "*****";
+					}
+					else
+					{
+						value = JsonConvert.SerializeObject(variable.Value).MaxLength(5000);
+					}
 					variables += $"\n\t - {variable.PathAsVariable} => {value}";
 				}
 			}
@@ -253,10 +266,11 @@ namespace PLang.Utils
 ".TrimEnd();
 
 			string message = $@"
-🔴 ======== {error.Key} ========
+🔴   ================== {error.Key}({error.StatusCode}) ==================   🔴
+
 {firstLine.TrimEnd()}
 
-🚫 Reason: {reasonAndFix}
+🧐 Reason: {reasonAndFix}
 
 {variables}
 
@@ -317,12 +331,108 @@ namespace PLang.Utils
 		internal static string MakeForLlm(IBuilderError error)
 		{
 			string errorMessage = $@"Previous LLM request caused following <error>, try to fix it.
-<error>{error.Message}<error>";
-			if (error.FixSuggestion != null)
-			{
-				errorMessage += error.FixSuggestion;
+<error>";
+
+			List<string> repeatMessage = new();
+			if (!string.IsNullOrEmpty(error.Message)) {
+				repeatMessage.Add(error.Message);
+				errorMessage += $"\nError Message: { error.Message}\n";
 			}
+			if (!string.IsNullOrEmpty(error.FixSuggestion))
+			{
+				errorMessage += "\n\t- FixSuggestion:" + error.FixSuggestion;
+			}
+			string? functionJson = null;
+			if (error.ErrorChain.Count > 0)
+			{
+				foreach (var errorChain in error.ErrorChain)
+				{
+
+					if (repeatMessage.Contains(errorChain.Message))
+					{
+						errorMessage += @$"ATTENTION: This is the {repeatMessage.Count+1} time you have made this error. Make SURE YOU FIX IT:
+Error Message: " + errorChain.Message;
+						if (error.Step != null) error.Step.Retry = false;
+					}
+					else
+					{
+						errorMessage += "\nError Message: " + errorChain.Message;
+					}
+					repeatMessage.Add(error.Message);
+					if (!string.IsNullOrWhiteSpace(errorChain.FixSuggestion)) errorMessage += "\n\t- FixSuggestion: " + errorChain.FixSuggestion;
+					if (errorChain.Step?.Instruction?.FunctionJson != null)
+					{
+						functionJson = errorChain.Step?.Instruction?.FunctionJson.ToString();
+					}
+				}
+			}
+
+			errorMessage += "\n</error>";
+			if (functionJson != null)
+			{
+
+				errorMessage += @$"
+
+This is the previous LLM response: 
+""Name"": is the name of the method selected
+
+```json
+{functionJson}
+```
+";
+			}		
+
 			return errorMessage;
 		}
+
+
+
+		public static string GetErrorMessageFromChain(IError errorWithChain)
+		{
+			string message = "";
+			List<IError> errors = new();
+			if (errorWithChain is GroupedErrors ge)
+			{
+				errors = ge.ErrorChain;
+				foreach (var error in errors)
+				{
+					message += $"\t- {error.Message}\n";				
+				}
+
+				if (ge.Step != null)
+				{
+					message += $"\t\t - at {ge.Step.RelativeGoalPath}:{ge.Step.LineNumber}";
+				}
+			}
+			else if (errorWithChain is MultipleError me)
+			{
+				errors = me.ErrorChain;
+				if (me.InitialError.Step != null)
+				{
+					message += $"\t- {me.InitialError.Message}\n\t\t - at {me.InitialError.Step.RelativeGoalPath}:{me.InitialError.Step.LineNumber}\n";
+				}
+				else
+				{
+					message += $"\t- {me.InitialError.Message}\n";
+				}
+
+
+				foreach (var error in errors)
+				{
+					if (error.Step != null)
+					{
+						message += $"\t- {error.Message}\n\t\t - at {error.Step.RelativeGoalPath}:{error.Step.LineNumber}\n";
+					}
+					else
+					{
+						message += $"\t- {error.Message}";
+					}
+				}
+			}
+			return message;
+		}
 	}
+
+
+
 }

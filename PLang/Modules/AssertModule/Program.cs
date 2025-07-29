@@ -41,7 +41,7 @@ namespace PLang.Modules.AssertModule
 				var condition = await conditionProgram.IsEqual(expectedValue, actualValue);
 				if (condition.Error != null) return condition.Error;
 
-				result = condition.Result ?? false;
+				result = condition.Result as bool? ?? false;
 			}
 			else
 			{

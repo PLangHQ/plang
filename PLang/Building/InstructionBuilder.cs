@@ -30,6 +30,7 @@ namespace PLang.Building
 	{
 		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null);
 		Task<(Instruction Instruction, IBuilderError? Error)> RunBuilderMethod(GoalStep goalStep, Model.Instruction? instruction, IGenericFunction? gf);
+		Task<(Instruction Instruction, IBuilderError? Error)> RunStepValidation(GoalStep step, Instruction instruction, IGenericFunction gf);
 		Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction);
 	}
 
@@ -88,7 +89,7 @@ namespace PLang.Building
 			if (!result.Error.ContinueBuild || !result.Error.Retry) return result;
 			if (result.Error.RetryCount < GetErrorCount(step, result.Error)) return (result.Instruction, FunctionCouldNotBeCreated(step));
 
-			logger.LogWarning($"- Error building step, will try again. Error: {result.Error.MessageOrDetail}");
+			logger.LogWarning($"- Error building step, will try again. Error: {result.Error.Message}");
 			return await BuildInstruction(stepBuilder, goal, step, result.Error);
 		}
 
@@ -115,7 +116,7 @@ namespace PLang.Building
 			step.Instruction = instruction;
 
 			logger.LogDebug($"Done with instruction - running Builder methods - {stopwatch.ElapsedMilliseconds} ");
-			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
+			(instruction, var builderError) = await RunStepValidation(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);
 
 			logger.LogDebug($"Done with builder method - running validate functions - {stopwatch.ElapsedMilliseconds} ");
@@ -162,7 +163,7 @@ namespace PLang.Building
 			string errorCount = "";
 			if (errors != null && errors.Count > 0)
 			{
-				errorCount = $"I tried {errorCount} times.";
+				errorCount = $"I tried {errors.Count} times.";
 			}
 			return new InstructionBuilderError($@"Could not create instruction for {step.Text}. {errorCount}", step, step.Instruction,
 				Retry: false,
@@ -189,6 +190,17 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			fileSystem.File.WriteAllText(step.AbsolutePrFilePath, JsonConvert.SerializeObject(instruction, GoalSerializer.Settings));
 		}
 
+
+		public async Task<(Instruction Instruction, IBuilderError? Error)> RunStepValidation(GoalStep step, Model.Instruction instruction, IGenericFunction gf)
+		{
+			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
+			if (builderError != null) return (instruction, builderError);
+
+			(instruction, var error) = await ValidateGoalToCall(step, instruction);
+			if (error != null) return (instruction, new BuilderError(error) { Retry = false });
+
+			return (instruction, null);
+		}
 
 		public async Task<(Instruction Instruction, IBuilderError? Error)> RunBuilderMethod(GoalStep goalStep, Model.Instruction instruction, IGenericFunction gf)
 		{
@@ -255,10 +267,9 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			if (!nodes.Any()) return (instruction, null);
 			foreach (var jsonNode in nodes)
 			{
-
-				if (jsonNode["Value"] == null)
+				if (jsonNode["Value"]?.Type == JTokenType.Null)
 				{
-					throw new Exception($"Expected value {ErrorReporting.CreateIssueShouldNotHappen}");
+					continue;
 				}
 
 				var goalToCall = jsonNode["Value"]!.ToObject<GoalToCallInfo>();
@@ -273,7 +284,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 					return (instruction, null);
 				}
 
-				(var goalFound, var error) = GoalHelper.GetGoalPath(goalStep.Goal.RelativeGoalFolderPath, goalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
+				(var goalFound, var error) = GoalHelper.GetGoalPath(goalStep, goalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
 				if (error != null) return (instruction, new BuilderError(error) { Retry = false });
 				if (goalFound != null)
 				{

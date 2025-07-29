@@ -273,7 +273,6 @@ namespace PLang.Building.Parsers
 
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
-				goal.FileHash = content.ComputeHash().Hash;
 				goal.AbsoluteGoalPath = goalFileAbsolutePath;
 				goal.AbsoluteGoalFolderPath = Path.GetDirectoryName(goalFileAbsolutePath);
 				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(rootPath, "");
@@ -287,6 +286,7 @@ namespace PLang.Building.Parsers
 				if (i > 0)
 				{
 					goals[0].SubGoals.Add(goal.RelativePrPath);
+					goal.ParentGoal = goals[0];
 				}
 
 				if (!goal.AbsolutePrFilePath.StartsWith("c:") && goal.AbsolutePrFilePath.Contains("c:"))
@@ -333,7 +333,7 @@ namespace PLang.Building.Parsers
 					goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
 					goal.DataSourceName = prevBuildGoal.DataSourceName;
 					goal.IsSystem = isSystem;
-					goal.HasChanged = prevBuildGoal.FileHash != goal.FileHash;
+					goal.HasChanged = prevBuildGoal.GetGoalAsString() != goal.GetGoalAsString();
 					foreach (var injection in prevBuildGoal.Injections)
 					{
 						if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)
@@ -372,7 +372,9 @@ namespace PLang.Building.Parsers
 					// todo: this HasChange is not good enough, function might have change
 					// should validate hash of file and the signature also.
 					// it should allow modifying of function just give warning.
-					goals[i].GoalSteps[b].HasChanged = !prevStep.Text.Equals(instruction.Text);
+					goals[i].GoalSteps[b].HasChanged = HasChanged(goals[i].GoalSteps[b], prevStep, instruction);
+					if (goals[i].GoalSteps[b].HasChanged) goals[i].HasChanged = true;
+
 					goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 					goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
 					goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
@@ -416,6 +418,14 @@ namespace PLang.Building.Parsers
 
 
 			return goals;
+		}
+
+		private bool HasChanged(GoalStep goalStep, GoalStep prevStep, Instruction instruction)
+		{
+			if (!goalStep.Text.Equals(instruction.Text)) return true;
+			if (goalStep.LineNumber != prevStep.LineNumber) return true;
+
+			return false;
 		}
 
 		private (string content, Dictionary<string, string> injections) HandleInjections(string content, bool isSetup)

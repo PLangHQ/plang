@@ -109,8 +109,7 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool HasChanged { get; set; }
-		[LlmIgnore]
-		public string FileHash { get; set; }
+
 		[LlmIgnore]
 		public string Hash { get; set; }
 
@@ -125,7 +124,7 @@ namespace PLang.Building.Model
 			}
 			set
 			{
-				if (value?.Hash == Hash) return;
+				if (value?.Hash != null && value?.Hash == Hash) return;
 				parentGoal = value;
 			}
 		}
@@ -150,7 +149,11 @@ namespace PLang.Building.Model
 			}
 			return goal;
 		}
-
+		protected override GoalStep? GetStep()
+		{
+			if (GoalSteps == null || GoalSteps.Count <= CurrentStepIndex) return null;	
+			return GoalSteps?[CurrentStepIndex];
+		}
 		protected override Goal? GetParent()
 		{
 			var parentGoal = ParentGoal;

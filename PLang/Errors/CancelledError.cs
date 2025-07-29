@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Runtime;
 using PLang.Utils;
 using System;
@@ -35,7 +36,8 @@ namespace PLang.Errors
 		public GoalStep? Step { get => step; set { step = value; } }
 		public Goal? Goal { get => goal; set { goal = value; } }
 		public IGenericFunction? Function { get => function; }
-
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public List<ObjectValue> Variables { get; set; } = new();
 		public Exception? Exception => null;
 		public string MessageOrDetail

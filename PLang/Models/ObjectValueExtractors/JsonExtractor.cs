@@ -53,16 +53,26 @@ namespace PLang.Models.ObjectValueExtractors
 					return null;
 				}
 
+				int counter = 0;
 				List<JToken> tokens = new();
 				foreach (var item in jArray)
 				{
 					var token = (item as JObject)?.Properties()
 					   .FirstOrDefault(p => string.Equals(p.Name, segment.Value, StringComparison.OrdinalIgnoreCase))
 					   ?.Value;
-					if (token != null)
+					if (token == null) continue;
+					
+					if (token is JArray || jArray.Count > 1)
 					{
 						tokens.Add(token);
+					} else
+					{					
+						var parentOfToken = new ObjectValue($"{parent.Name}[{counter}]", item, parent: parent, properties: parent.Properties);
+						return new ObjectValue(segment.Value, token, parent: parentOfToken, properties: parentOfToken.Properties);
 					}
+					counter++;
+
+
 				}
 				object? obj = null;
 				if (segment.Value.Equals("first", StringComparison.OrdinalIgnoreCase)) obj = jArray.FirstOrDefault();

@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Runtime;
 using PLang.Utils;
@@ -40,6 +41,8 @@ namespace PLang.Errors
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
 		public List<ObjectValue> Variables { get; set; } = new();
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public object AsData()
 		{
 			throw new NotImplementedException();

@@ -1,4 +1,5 @@
-﻿using PLang.Models.ObjectValueConverters;
+﻿using Newtonsoft.Json.Linq;
+using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using System;
 using System.Collections.Generic;
@@ -29,20 +30,30 @@ namespace PLang.Models.ObjectValueExtractors
 				return new ObjectValue(segment.Value, property.GetValue(list), parent: parent, properties: parent.Properties);
 			}
 
-			List<ObjectValue> newList = new();
+			int idx = 0;
+			List<object> newList = new();
 			foreach (var item in list)
 			{
-				if (item is ObjectValue objectValue && objectValue.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase))
+				ObjectValue? ov = item as ObjectValue;
+				
+				if (ov != null && ov.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase))
 				{
-					newList.Add(objectValue);
+					newList.Add(ov);
 				}
 				else
 				{
-					var extractor = ExtractorFactory.GetExtractor(new ObjectValue(parent.Name, item), segment);
+					var extractor = ExtractorFactory.GetExtractor(new ObjectValue($"[{idx++}]", item, parent: parent, properties: parent.Properties), segment);
 					var obj = extractor.Extract(segment, memoryStack);
 					if (obj == null) continue;
+					
 					newList.Add(obj);
+					
 				}
+			}
+
+			if (newList.Count == 1)
+			{
+				return new ObjectValue(segment.Value, newList[0], parent: parent, properties: parent?.Properties);
 			}
 			return new ObjectValue(segment.Value, newList, parent: parent, properties: parent?.Properties);
 		}

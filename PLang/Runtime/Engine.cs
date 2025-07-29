@@ -47,6 +47,8 @@ namespace PLang.Runtime
 		GoalStep? CallingStep { get; }
 		IPLangFileSystem FileSystem { get; }
 		List<CallbackInfo>? CallbackInfos { get; set; }
+		PrParser PrParser { get; }
+
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
 		MemoryStack GetMemoryStack();
@@ -107,6 +109,7 @@ namespace PLang.Runtime
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
 		public HttpContext? HttpContext { get; set; }
+		public PrParser PrParser { get { return prParser; } }
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;
@@ -461,6 +464,12 @@ namespace PLang.Runtime
 								{
 									Console.WriteLine(error);
 								}
+								foreach (var pool in enginePools)
+								{
+									if (pool.Value == null) continue;
+
+									pool.Value.ReloadGoals();
+								}
 							}
 						}, TaskScheduler.Default);
 				}
@@ -655,16 +664,15 @@ namespace PLang.Runtime
 					if (error is EndGoal endGoal)
 					{
 						logger.LogDebug($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-						if (endGoal.Levels >= 0) stepIndex = goal.GoalSteps.Count;
 
-						if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels > 0)
+						if (!endGoal.EndingGoal.RelativePrPath.Equals(goal.RelativePrPath))
 						{
-							endGoal.Levels--;
 							logger.LogDebug($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 							return (returnValues, stepIndex, endGoal);
 						}
+
 						logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-						continue;
+						return (returnValues, stepIndex, null);
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex);
 					if (errorInGoalErrorHandler.Error != null) return (returnValues, stepIndex, errorInGoalErrorHandler.Error);
@@ -902,6 +910,10 @@ private async Task CacheGoal(Goal goal)
 			if (stepErrorResult.Error != null && stepErrorResult.Error is not IErrorHandled)
 			{
 				if (error == stepErrorResult.Error) return (null, error);
+				if (stepErrorResult.Error is MultipleError me)
+				{
+					return (null, stepErrorResult.Error);
+				}
 
 				var multipleErrors = new MultipleError(error);
 				multipleErrors.Add(stepErrorResult.Error);
@@ -966,6 +978,7 @@ private async Task CacheGoal(Goal goal)
 				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
 				return (null, null);
 			}
+			if (step.Stopwatch == null) step.Stopwatch = Stopwatch.StartNew();
 
 			logger.LogDebug($"     - Get runtime type {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 

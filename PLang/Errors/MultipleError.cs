@@ -1,4 +1,6 @@
-﻿using PLang.Building.Model;
+﻿using NBitcoin.Protocol;
+using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Errors.Interfaces;
 using PLang.Runtime;
@@ -17,18 +19,33 @@ namespace PLang.Errors
 	}
 
 
-		public record GroupedErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
+	public record GroupedErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
 	{
-		
+
 		public string Message
 		{
 			get
 			{
-				string message = String.Empty;
+				return ErrorHelper.GetErrorMessageFromChain(this);
+
+			}
+		}
+
+		public string FixSuggestion
+		{
+			get
+			{
+				string message = "";
 				foreach (var error in ErrorChain)
 				{
-					message += error.Message + Environment.NewLine;
+					message += $"\t- {error.FixSuggestion}\n";
 				}
+
+				if (Step != null)
+				{
+					message += $"\t\t - at {Step.RelativeGoalPath}:{Step.LineNumber}";
+				}
+
 				return message;
 			}
 		}
@@ -37,6 +54,8 @@ namespace PLang.Errors
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
 
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public List<ObjectValue> Variables { get; set; } = new();
 		public void Add(IError error)
 		{
@@ -58,21 +77,6 @@ namespace PLang.Errors
 
 		public object ToFormat(string contentType = "text")
 		{
-			if (contentType == "text")
-			{
-
-				string str = "";
-				foreach (var error in ErrorChain)
-				{
-					str += $"\t- {error.Message}" + Environment.NewLine;
-				}
-				str += Environment.NewLine;
-				foreach (var error in ErrorChain)
-				{
-					str += error.ToFormat() + Environment.NewLine;
-				}
-			}
-
 			return ErrorHelper.ToFormat(contentType, this);
 		}
 		public override string ToString()
@@ -107,24 +111,53 @@ namespace PLang.Errors
 
 	public record MultipleError(IError InitialError, string Key = "MultipleError", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
 	{
-		
+
 		public string Message
 		{
 			get
 			{
-				string message = InitialError.Message + Environment.NewLine;
+				return ErrorHelper.GetErrorMessageFromChain(this);
+			}
+		}
+
+		public string FixSuggesion
+		{
+			get
+			{
+				string message = "";
+				if (InitialError.Step != null)
+				{
+					message += $"\t- {InitialError.FixSuggestion}\n\t\t - at {InitialError.Step.RelativeGoalPath}:{InitialError.Step.LineNumber}\n";
+				}
+				else
+				{
+					message += $"\t- {InitialError.FixSuggestion}\n";
+				}
+
+
 				foreach (var error in ErrorChain)
 				{
-					message += error.Message + Environment.NewLine;
+					if (error == InitialError) continue;
+					if (error.Step != null)
+					{
+						message += $"\t- {error.FixSuggestion}\n\t\t - at {error.Step.RelativeGoalPath}:{error.Step.LineNumber}\n";
+					}
+					else
+					{
+						message += $"\t- {error.FixSuggestion}";
+					}
 				}
 				return message;
 			}
 		}
+
 		public GoalStep? Step { get; set; } = InitialError.Step;
 		public Goal? Goal { get; set; } = InitialError.Step?.Goal;
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
 
+		[IgnoreWhenInstructed]
+		public bool Handled { get; set; }
 		public List<ObjectValue> Variables { get; set; } = new();
 		public MultipleError Add(IError error)
 		{
@@ -153,23 +186,6 @@ namespace PLang.Errors
 		}
 		public object ToFormat(string contentType = "text")
 		{
-			if (contentType == "text")
-			{
-				string str = $@"{ErrorChain.Count + 1} errors occured:
-	- {InitialError.Message}";
-				str += $"\t- {InitialError.Message}" + Environment.NewLine;
-				foreach (var error in ErrorChain)
-				{
-					str += $"\t- {error.Message}" + Environment.NewLine;
-				}
-				str += Environment.NewLine;
-				str += InitialError.ToFormat() + Environment.NewLine;
-				foreach (var error in ErrorChain)
-				{
-					str += error.ToFormat() + Environment.NewLine;
-				}
-			}
-
 			return ErrorHelper.ToFormat(contentType, this);
 		}
 		public override string ToString()

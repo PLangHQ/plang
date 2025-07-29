@@ -1,4 +1,5 @@
 ﻿using Castle.Components.DictionaryAdapter;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Nethereum.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -41,12 +42,12 @@ namespace PLang.Utils
 
 			foreach (var method in methods)
 			{
-				if (!method.ReturnType.Name.Contains("Task"))
+				if (!method.ReturnType.Name.Contains("Task") || method.Name.Equals("AsyncConstructor"))
 				{
 					continue;
 				}
 
-				var (desc, error) = GetMethodDescription(type, method.Name);
+				var (desc, error) = GetMethodDescription(type, method);
 				if (error != null) errors.Add(error);
 
 				if (desc != null)
@@ -60,23 +61,24 @@ namespace PLang.Utils
 			return (classDescription, (errors.Count > 0) ? errors : null);
 		}
 
-		private void AddSupportiveObject(ComplexDescription co)
+		private void AddSupportiveObject(MethodInfo method, ComplexDescription co)
 		{
 			if (co.Type.StartsWith("Dictionary<") || co.Type.StartsWith("List<") || co.Type.StartsWith("Tuple<")) return;
 
 			var found = classDescription.SupportingObjects.FirstOrDefault(p => p.Type == co.Type);
 			if (found == null)
 			{
+				co.MethodNames.Add(method.Name);
 				classDescription.SupportingObjects.Add(co);
+			} else
+			{
+				found.MethodNames.Add(method.Name);
 			}
 		}
 		
-		public (MethodDescription? MethodDescription, IBuilderError? Error) GetMethodDescription(Type type, string methodName)
+		public (MethodDescription? MethodDescription, IBuilderError? Error) GetMethodDescription(Type type, MethodInfo method)
 		{
-			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
-			if (method == null)
-				return (null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
-
+		
 			string? methodDescription = null;
 			var descAttribute =
 				method.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
@@ -87,7 +89,7 @@ namespace PLang.Utils
 
 			var parameters = method.GetParameters();
 
-			var paramsDesc = GetParameterDescriptions(parameters);
+			var paramsDesc = GetParameterDescriptions(method, parameters);
 			if (paramsDesc.Error != null) return (null, paramsDesc.Error);
 
 			var returnValueInfo = GetReturnValue(method);
@@ -102,7 +104,7 @@ namespace PLang.Utils
 			return (md, null);
 		}
 
-		private (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(System.Reflection.ParameterInfo[] parameters)
+		private (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(MethodInfo method, System.Reflection.ParameterInfo[] parameters)
 		{
 
 			List<ComplexDescription> supportiveObjects = new();
@@ -139,7 +141,7 @@ namespace PLang.Utils
 				{
 					pd = new PrimitiveDescription
 					{
-						Type = parameterInfo.ParameterType.ToString(),
+						Type = parameterInfo.ParameterType.FullNameNormalized(),
 						Name = parameterInfo.Name,
 						DefaultValue = defaultValue,
 						IsRequired = isRequired, 
@@ -152,7 +154,7 @@ namespace PLang.Utils
 					var defaultEnum = (defaultValue != null) ? Enum.Parse(parameterInfo.ParameterType, defaultValue.ToString()) : defaultValue;
 					pd = new EnumDescription()
 					{
-						Type = parameterInfo.ParameterType.ToString(),
+						Type = parameterInfo.ParameterType.FullNameNormalized(),
 						Name = parameterInfo.Name,
 						AvailableValues = string.Join("|", enums),
 						DefaultValue = defaultEnum,
@@ -188,18 +190,18 @@ namespace PLang.Utils
 
 					var cd = new ComplexDescription()
 					{
-						Type = parameterInfo.ParameterType.ToString(),
+						Type = parameterInfo.ParameterType.FullNameNormalized(),
 						Name = parameterInfo.Name,
-						TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
+						TypeProperties = GetPropertyInfos(method, item.GetProperties(), instance, item),
 						Description = complexObjectDescription
 					};
 					if (cd.TypeProperties != null)
 					{
-						AddSupportiveObject(cd);
+						AddSupportiveObject(method, cd);
 
 						pd = new ComplexDescription()
 						{
-							Type = parameterInfo.ParameterType.ToString(),
+							Type = parameterInfo.ParameterType.FullNameNormalized(),
 							Name = parameterInfo.Name,
 							Description = (parameterDescription + " (see Type information in SupportingObjects)").Trim(),
 							IsRequired = isRequired,
@@ -219,7 +221,7 @@ namespace PLang.Utils
 					//pd.Defa = false;
 				}
 
-
+				/*
 				if (parameterInfo.ParameterType == typeof(List<string>))
 				{
 					pd.Type = "List<string>";
@@ -233,7 +235,7 @@ namespace PLang.Utils
 				else if (parameterInfo.ParameterType.Name == "Nullable`1")
 				{
 					//pd.IsRequired = false;
-				}
+				}*/
 
 				parametersDescriptions.Add(pd);
 			}
@@ -241,7 +243,7 @@ namespace PLang.Utils
 			return (parametersDescriptions, null);
 		}
 
-		private List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance, Type item, int depth = 0)
+		private List<IPropertyDescription>? GetPropertyInfos(MethodInfo method, PropertyInfo[] properties, object? instance, Type item, int depth = 0)
 		{
 			if (depth == 10)
 			{
@@ -258,14 +260,14 @@ namespace PLang.Utils
 			{
 				foreach (var genericType in item.GenericTypeArguments)
 				{
-					var propInfos = GetPropertyInfos(genericType.GetProperties(), null, genericType);
+					var propInfos = GetPropertyInfos(method, genericType.GetProperties(), null, genericType);
 					if (propInfos == null) continue;
 
 					foreach (var propInfo in propInfos)
 					{
 						if (propInfo is ComplexDescription cd)
 						{
-							AddSupportiveObject(cd);
+							AddSupportiveObject(method, cd);
 						}
 					}
 				}
@@ -315,7 +317,7 @@ namespace PLang.Utils
 				{
 					pd = new PrimitiveDescription
 					{
-						Type = propertyInfo.PropertyType.ToString(),
+						Type = propertyInfo.PropertyType.FullNameNormalized(),
 						Name = propertyInfo.Name,
 						DefaultValue = defaultValue,
 						IsRequired = isRequired,
@@ -328,7 +330,7 @@ namespace PLang.Utils
 					var defaultEnum = (defaultValue != null) ? Enum.Parse(propertyType, defaultValue.ToString()) : defaultValue;
 					pd = new EnumDescription()
 					{
-						Type = propertyInfo.PropertyType.ToString(),
+						Type = propertyInfo.PropertyType.FullNameNormalized(),
 						Name = propertyInfo.Name,
 						AvailableValues = string.Join("|", enums),
 						DefaultValue = defaultEnum,
@@ -355,7 +357,7 @@ namespace PLang.Utils
 					{
 						pd = new ComplexDescription()
 						{
-							Type = propertyType.ToString(),
+							Type = propertyType.FullNameNormalized(),
 							Name = propertyInfo.Name,
 							TypeProperties = [],
 							IsRequired = isRequired,
@@ -367,18 +369,18 @@ namespace PLang.Utils
 
 						var cd = new ComplexDescription()
 						{
-							Type = propertyType.ToString(),
+							Type = propertyType.FullNameNormalized(),
 							Name = propertyInfo.Name,
-							TypeProperties = GetPropertyInfos(propertyType.GetProperties(), instance2, propertyType, ++depth),
+							TypeProperties = GetPropertyInfos(method, propertyType.GetProperties(), instance2, propertyType, ++depth),
 							IsRequired = isRequired,
 							Description = complexObjectDescription
 						};
 						if (cd.TypeProperties != null)
 						{
-							AddSupportiveObject(cd);
+							AddSupportiveObject(method, cd);
 							pd = new ComplexDescription()
 							{
-								Type = propertyType.ToString(),
+								Type = propertyType.FullNameNormalized(),
 								Name = propertyInfo.Name,
 								Description = (parameterDescriptions + " (see Type information in SupportingObjects)").Trim(),
 								IsRequired = isRequired
@@ -398,7 +400,7 @@ namespace PLang.Utils
 					//  pd.IsRequired = false;
 				}
 
-
+				/*
 				if (propertyType == typeof(List<string>))
 				{
 					pd.Type = "List<string>";
@@ -409,7 +411,7 @@ namespace PLang.Utils
 					pd.Type =
 						$"Dictionary<{propertyType.GenericTypeArguments[0].Name}, {propertyType.GenericTypeArguments[1].Name}>";
 				}
-
+				*/
 				
 
 				parameterDescriptions.Add(pd);

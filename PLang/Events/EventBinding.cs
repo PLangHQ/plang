@@ -46,9 +46,10 @@ namespace PLang.Events
 		[property: DefaultValue("true")] bool WaitForExecution = true,
         [property: DefaultValue(null)] string[]? RunOnlyOnStartParameter = null,
         bool OnErrorContinueNextStep = false,
-		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null, bool IsLocal = false, bool IncludeOsGoals = false, bool IsOnStep = false)
+		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null, 
+		bool IsLocal = false, bool IncludeOsGoals = false, bool IsOnStep = false)
 	{
-		[LlmIgnore]
+		[LlmIgnore] 
 		public string Id { get { return $"{EventType}_{EventScope}_{GoalToBindTo?.Name}_{GoalToCall?.Name}_{IncludePrivate}_{StepNumber}_{StepText}_{WaitForExecution}_{string.Join(',', RunOnlyOnStartParameter ?? [""])}_{OnErrorContinueNextStep}_{ErrorKey}_{ErrorMessage}_{StatusCode}_{ExceptionType}_{IsLocal}".ToString(); } }
 		[IgnoreWhenInstructed]
 		public string UniqueId { get { return Guid.NewGuid().ToString(); } }

@@ -92,7 +92,7 @@ namespace PLang.Modules.TemplateEngineModule
 
 			var templateContext = new TemplateContext();
 			templateContext.MemberRenamer = member => member.Name;
-						
+
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
@@ -105,7 +105,7 @@ namespace PLang.Modules.TemplateEngineModule
 			{
 				foreach (var kvp in memoryStack.GetMemoryStack())
 				{
-					AddVariable(kvp.Name, kvp.Value, templateContext);					
+					AddVariable(kvp.Name, kvp.Value, templateContext);
 				}
 			}
 			if (goalStep != null)
@@ -124,7 +124,7 @@ namespace PLang.Modules.TemplateEngineModule
 					AddVariable(variable.VariableName, variable.Value, templateContext);
 				}
 			}
-						
+
 
 			SetFunctionsOnTemplate(templateContext);
 
@@ -185,25 +185,29 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 		ScriptObject globals = new ScriptObject(StringComparer.OrdinalIgnoreCase);
 		private void AddVariable(string key, object value, TemplateContext templateContext)
 		{
-			
-			{
-				if (key.StartsWith("!"))
-				{	
-					if (!globals.ContainsKey(key))
-					{
-						globals[key] = value;
-					}
-					
-				}
-				else
-				{
-					(var sv, var exists) = ContainsVariable(key, templateContext);
-					if (exists) return;
 
-					templateContext.SetValue(sv, value);
-				}
-				
+			if (value is ObjectValue ov)
+			{
+				value = ov.Value;
 			}
+
+			if (key.StartsWith("!"))
+			{
+				if (!globals.ContainsKey(key))
+				{
+					globals[key] = value;
+				}
+
+			}
+			else
+			{
+				(var sv, var exists) = ContainsVariable(key, templateContext);
+				if (exists) return;
+
+				templateContext.SetValue(sv, value);
+			}
+
+
 		}
 
 		private (ScriptVariable?, bool) ContainsVariable(string key, TemplateContext templateContext)
@@ -214,7 +218,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 		private void SetFunctionsOnTemplate(TemplateContext templateContext)
 		{
-
+			templateContext.LoopLimit = 50000;
 			(_, var exists) = ContainsVariable("date_format", templateContext);
 			if (!exists)
 			{
@@ -275,7 +279,8 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 						return GetScriptObject(list);
 
-					} else if (result.Return is ObjectValue ov)
+					}
+					else if (result.Return is ObjectValue ov)
 					{
 						return ov.Value;
 					}
@@ -313,7 +318,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 						if (list.Count == 1) return list[0].Value;
 
 						return GetScriptObject(list);
-						
+
 					}
 					else if (result.Variables is ObjectValue ov)
 					{

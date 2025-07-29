@@ -36,15 +36,19 @@ namespace PLang.Modules.CallGoalModule
 			AppendToSystemCommand(@"
 Only choose RunApp if user specifically defines it as app
 
-Use <examples> to understand user input
+Goals/Apps can be dynamically called, e.g. call goal HandleType%type.Name%
+
+Use <examples> to understand user intent
 
 <examples>
 call goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.
 call ParseText => function name:RunGoal, goalName: ParseText, no parameters
+call goal HandleType%type.Name% doStuff=1 => function: RunGoal, goalName: ""HandleType%type.Name%"", parameters is doStuff=1
 run Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%
 execute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%
 set %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value
 %user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%
+call goal Action%Type% => function: RunGoal, goalName: ""Action%Type%"", parameters is null
 
 call app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters
 call app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%

@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "foreach %result.examples%, call WriteCodeFile %example%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCall",
         "Value": {
+          "Path": ".build\\modules\\InstallModule\\InstallUrl\\WriteCodeFile\\00. Goal.pr",
           "Name": "WriteCodeFile",
           "Parameters": {
             "example": "%example%"

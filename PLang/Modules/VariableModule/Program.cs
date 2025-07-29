@@ -17,11 +17,12 @@ using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Web;
+using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.VariableModule
 {
-	[Description("Set, Get & Return variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm")]
+	[Description("Set, Get & Return variable(s). Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -34,6 +35,7 @@ namespace PLang.Modules.VariableModule
 			this.programFactory = programFactory;
 			this.variableHelper = variableHelper;
 		}
+
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables)
 		{
 			Dictionary<string, object?> varsWithValue = new();
@@ -42,22 +44,29 @@ namespace PLang.Modules.VariableModule
 				varsWithValue.Add(variable, null);
 			}
 
-			return await LoadWithDefaultValue(varsWithValue);
+			return await LoadWithDefaultValueInternal(varsWithValue);
 		}
 
 		[Description(@"Loads a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
 		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
 		{
+			return await LoadWithDefaultValueInternal(variablesWithDefaultValue);
+		}
+
+		private async Task<(object?, IError?)> LoadWithDefaultValueInternal([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
+		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
+
+			var dataSource = goalStep.GetVariable<DataSource>();
 
 			List<object?> objects = new();
 			foreach (var variable in variablesWithDefaultValue)
 			{
 				List<ParameterInfo> parameters = new();
-				parameters.Add(new ParameterInfo("variable", variable.Key, "System.String"));
+				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key));
 				try
 				{
-					var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+					var result = await db.Select(dataSource.NameInStep, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
 					if (result.Error != null && result.Error.Message.Contains("no such table"))
 					{
 						var createTableResult = await CreateVariablesTable(db);
@@ -117,7 +126,8 @@ namespace PLang.Modules.VariableModule
 
 		private async Task<(long, IError? Error)> CreateVariablesTable(DbModule.Program db)
 		{
-			return await db.Execute(@"CREATE TABLE __Variables__ (
+			var dataSource = goalStep.GetVariable<DataSource>();
+			return await db.Execute(dataSource.NameInStep, @"CREATE TABLE __Variables__ (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     variable TEXT NOT NULL UNIQUE,
     value TEXT,
@@ -156,10 +166,10 @@ namespace PLang.Modules.VariableModule
 				if (value == null) continue;
 
 				List<ParameterInfo> parameters = new();
-				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
-				parameters.Add(new ParameterInfo("value", JsonConvert.SerializeObject(value), "System.String"));
+				parameters.Add(new ParameterInfo("System.String", "variable", variable));
+				parameters.Add(new ParameterInfo("System.String", "value", JsonConvert.SerializeObject(value)));
 
-				var result = await db.Select("INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
+				var result = await db.Select(datasource.NameInStep, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
 				if (result.Error != null)
 				{
 					if (result.Error.Message.Contains("no such table"))
@@ -214,9 +224,8 @@ namespace PLang.Modules.VariableModule
 						returnValues.Add(new ObjectValue(variable.Key, value, properties: properties));
 					}
 				}
-
-
 			}
+						
 
 			return new Return(returnValues);
 		}
@@ -359,20 +368,39 @@ namespace PLang.Modules.VariableModule
 		[Description(@"Set int/long variable.")]
 		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null, long? maxValue = null, long? minValue = null)
 		{
-			if (minValue != null && value < minValue) value = minValue;	
+			if (minValue != null && value < minValue) value = minValue;
 			if (maxValue != null && value > maxValue) value = maxValue;
 			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 		[Description(@"Set double variable.")]
-		public async Task SetDoubleVariable([HandlesVariable] string key, double? value = null, double? defaultValue = null)
+		public async Task SetDoubleVariable([HandlesVariable] string key, double value, double? maxValue = null, double? minValue = null)
 		{
-			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
+			if (minValue != null && value < minValue) value = minValue.Value;
+			if (maxValue != null && value > maxValue) value = maxValue.Value;
+			memoryStack.Put(key, value, goalStep: goalStep);
+		}
+		[Description(@"Set multiple double variables.")]
+		public async Task SetDoubleVariables([HandlesVariable] Dictionary<string, double> values)
+		{
+			foreach (var value in values)
+			{
+				memoryStack.Put(value.Key, value.Value, goalStep: goalStep);
+			}
 		}
 		[Description(@"Set float variable.")]
 		public async Task SetFloatVariable([HandlesVariable] string key, float? value = null, float? defaultValue = null)
 		{
 			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
+		[Description(@"Set multiple float variables.")]
+		public async Task SetFloatVariable([HandlesVariable] Dictionary<string, float> values)
+		{
+			foreach (var value in values)
+			{
+				memoryStack.Put(value.Key, value.Value, goalStep: goalStep);
+			}
+		}
+
 		[Description(@"Set bool variable.")]
 		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null, bool? defaultValue = null)
 		{
@@ -394,7 +422,7 @@ namespace PLang.Modules.VariableModule
 			if (key.Contains("%") && keyIsDynamic)
 			{
 				var newKey = variableHelper.LoadVariables(key);
-				if (!string.IsNullOrWhiteSpace(newKey.ToString()))
+				if (!string.IsNullOrWhiteSpace(newKey?.ToString()))
 				{
 					key = newKey.ToString();
 				}

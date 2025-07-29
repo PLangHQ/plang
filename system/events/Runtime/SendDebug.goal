@@ -41,3 +41,6 @@ WriteToConsole
 
 WriteOutError
 - logger error %!error%
+
+LoadCallStack
+- append to %callStack% = [{"GoalName":"%!goal.GoalName%", "AbsoluteGoalPath": "%!goal.AbsoluteGoalPath%"}]

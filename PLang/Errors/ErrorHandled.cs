@@ -43,6 +43,9 @@ namespace PLang.Errors
 			}
 
 		}
+
+		public bool Handled { get; set; }
+
 		public object AsData()
 		{
 			return this;

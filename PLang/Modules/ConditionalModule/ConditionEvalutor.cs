@@ -75,9 +75,13 @@ namespace PLang.Modules.ConditionalModule
 			};
 
 			/* helpers */
-			static int? Cmp(Condition n) => n.LeftValue is IComparable l &&
-											 n.RightValue is IComparable r ? l.CompareTo(r)
+			static int? Cmp(Condition n)
+			{
+				int? result = n.LeftValue != null && n.LeftValue is IComparable l &&
+											 n.RightValue != null && n.RightValue is IComparable r ? l.CompareTo(r)
 											 : null;
+				return result;
+			}
 			static bool Has(object? c, object? i) =>
 				c switch
 				{

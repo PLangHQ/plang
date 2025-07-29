@@ -125,7 +125,7 @@ namespace PLang.Utils.Extractors
 
 		public new string GetRequiredResponse(string scheme)
 		{
-			return $"You MUST respond in JSON, scheme:\r\n {scheme}";
+			return $"You MUST respond in JSON, scheme:\r\n {scheme.Replace("\n", " ")}";
 		}
 	}
 }

@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "if %debugResponse.continue%, call SendDebugInfo",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCallIfTrue",
         "Value": {
+          "Path": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo\\00. Goal.pr",
           "Name": "SendDebugInfo",
           "Parameters": {}
         }

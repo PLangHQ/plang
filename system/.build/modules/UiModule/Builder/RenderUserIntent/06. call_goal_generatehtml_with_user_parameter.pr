@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "call goal GenerateHtml user=%!step.Text%",
   "ModuleType": "PLang.Modules.CallGoalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -10,6 +12,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalInfo",
         "Value": {
+          "Path": ".build\\modules\\UiModule\\Builder\\RenderUserIntent\\GenerateHtml\\00. Goal.pr",
           "Name": "GenerateHtml",
           "Parameters": {
             "user": "%!step.Text%"

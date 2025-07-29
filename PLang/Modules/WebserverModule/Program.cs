@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Common;
 using AngleSharp.Io;
+using Jil;
 using LightInject;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -294,10 +295,12 @@ public class Program : BaseProgram, IDisposable
 						 goal);
 	}
 
+	public record CertInfo(string FileName, string Password);
+
 	public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
 		int port = 8080, long maxContentLengthInBytes = 4096 * 2,
 		string defaultResponseContentEncoding = "utf-8",
-		bool signedRequestRequired = false, List<Routing>? routings = null)
+		bool signedRequestRequired = false, List<Routing>? routings = null, CertInfo? certInfo = null)
 	{
 		if (listeners.FirstOrDefault(p => p.WebserverName == webserverName) != null)
 		{
@@ -319,15 +322,34 @@ public class Program : BaseProgram, IDisposable
 			.ConfigureLogging(l => l.ClearProviders())
 			.ConfigureWebHostDefaults(web =>
 			{
+
 				web.UseKestrel(k =>
 				{
+					var certHelper = container.GetInstance<ICertHelper>();
+					var certResult = certHelper.GetOrCreateCert(certInfo);
+					if (certResult.Error != null)
+					{
+						throw new ExceptionWrapper(certResult.Error);
+					}
+
 					if (IPAddress.TryParse(host, out var ip))
 					{
-						k.Listen(ip, port, l => l.Protocols = HttpProtocols.Http1AndHttp2);
+						k.Listen(ip, port, l =>
+						{
+							l.Protocols = HttpProtocols.Http1AndHttp2;
+							l.UseHttps(certResult.Certificate, (options) =>
+							{
+
+							});
+						});
 					}
 					else if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
 					{
-						k.ListenLocalhost(port, l => l.Protocols = HttpProtocols.Http1AndHttp2);
+						k.ListenLocalhost(port, l =>
+						{
+							l.Protocols = HttpProtocols.Http1AndHttp2;
+							l.UseHttps(certResult.Certificate);
+						});
 					}
 					else
 					{
@@ -351,6 +373,8 @@ public class Program : BaseProgram, IDisposable
 
 				web.Configure(app =>
 				{
+					app.UseForwardedHeaders();
+					app.UseHttpsRedirection();
 					app.UseResponseCompression();
 					app.Run(async ctx => await HandleRequestAsync(ctx, webserverInfo));
 				});
@@ -454,6 +478,13 @@ public class Program : BaseProgram, IDisposable
 
 		var resp = httpContext.Response;
 		var request = httpContext.Request;
+		resp.OnStarting(() =>
+		{
+			int i = 0;
+
+			return Task.CompletedTask;
+		});
+
 
 		if (request.QueryString.Value == "__signature__")
 		{
@@ -472,12 +503,11 @@ public class Program : BaseProgram, IDisposable
 		string strEncoding = routing.DefaultResponseContentEncoding ?? webserverInfo.DefaultResponseContentEncoding;
 		var encoding = Encoding.GetEncoding(strEncoding);
 
-		resp.ContentType = $"{routing.ContentType}; charset={encoding.BodyName}";
 		resp.Headers["Content-Type"] = $"{routing.ContentType}; charset={encoding.BodyName}";
 
 		resp.Headers.Add("X-Goal-Hash", goal.Hash);
 		resp.Headers.Add("X-Goal-Signature", goal.Signature);
-		
+
 		logger.LogDebug($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
 
 		(var requestObjectValue, var error) = await ParseRequest(httpContext, outputStream);
@@ -490,7 +520,10 @@ public class Program : BaseProgram, IDisposable
 		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream);
 
 		engine.HttpContext = httpContext;
-		engine.GetMemoryStack().Put(requestObjectValue, goalStep);
+		if (requestObjectValue != null)
+		{
+			engine.GetMemoryStack().Put(requestObjectValue, goalStep);
+		}
 		engine.CallbackInfos = callbackInfos;
 		if (slugVariables != null)
 		{
@@ -505,7 +538,7 @@ public class Program : BaseProgram, IDisposable
 		if (error != null && error is not IErrorHandled)
 		{
 			(var returnVars, error) = await eventRuntime.AppErrorEvents(error);
-			
+
 			pool.Return(engine);
 			return error;
 		}
@@ -530,14 +563,14 @@ public class Program : BaseProgram, IDisposable
 		}
 
 		if (string.IsNullOrEmpty(callbackValue)) return (null, null);
-		
+
 
 		var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
 		var callbackResult = await CallbackHelper.GetCallbackInfos(identity, callbackValue);
 		if (callbackResult.Error != null) return (null, callbackResult.Error);
 
 		var callbackInfos = callbackResult.CallbackInfos;
-		
+
 		/*
 		var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
 		foreach (var key in keys)
@@ -636,7 +669,7 @@ public class Program : BaseProgram, IDisposable
 					httpOutputStream.SetLiveResponse(liveResponse);
 				}
 			}
-			
+
 		}
 		else
 		{
@@ -651,7 +684,7 @@ public class Program : BaseProgram, IDisposable
 
 		using var ms = new MemoryStream();
 		await request.Body.CopyToAsync(ms);
-		request.Body.Position = 0;       
+		request.Body.Position = 0;
 		return ms.ToArray();
 	}
 
@@ -939,7 +972,7 @@ Frontpage
 	private void ParseHeaders(HttpContext ctx, IOutputStream outputStream)
 	{
 		var headers = ctx.Request.Headers;
-		
+
 
 		Dictionary<string, string?> responseProperties = new();
 		foreach (var supportedHeader in supportedHeaders)
@@ -951,7 +984,7 @@ Frontpage
 		}
 
 		if (responseProperties.Count > 0 && outputStream is IResponseProperties rp)
-		{	
+		{
 			rp.ResponseProperties = responseProperties;
 		}
 	}
@@ -961,7 +994,7 @@ Frontpage
 		if (ctx is null) return (null, new Error("context is empty"));
 
 		Stopwatch stopwatch = Stopwatch.StartNew();
-
+		var parameters = new Dictionary<string, object?>();
 		var req = ctx.Request;
 		var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 		ObjectValue objectValue;
@@ -976,51 +1009,51 @@ Frontpage
 			logger.LogDebug($"    - JsonHandler starts - {stopwatch.ElapsedMilliseconds}");
 
 			req.EnableBuffering();
-			var body = await System.Text.Json.JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(req.Body)
-					   ?? new();
 
-			var parameters = new Dictionary<string, object?>();
-			foreach (var key in body)
-			{
-				var jsonObj = (JsonElement?)key.Value;
-				if (jsonObj == null) continue;
+			using var reader = new StreamReader(req.Body);
+			var bodyString = await reader.ReadToEndAsync();
 
-				parameters.Add(key.Key, GetJsonElementValue(jsonObj.Value));
-			}
+			// Parse into JToken (can be JObject or JArray)
+			JToken json = JToken.Parse(bodyString);
+			parameters.Add("body", json);
 
-			foreach (var (k, v) in query)
-			{
-				parameters.Add(k, v);
-			}
-
-			objectValue = new ObjectValue("request", parameters, properties: properties);
-			
 			logger.LogDebug($" - JsonHandler done - {stopwatch.ElapsedMilliseconds}");
-
-			return (objectValue, null);
 		}
 
 		// ---------- Form / Multipart (fields + files) ---------------------------
 		if (req.HasFormContentType)
 		{
 			logger.LogDebug($"    - FormHandler starts - {stopwatch.ElapsedMilliseconds}");
-			var form = await req.ReadFormAsync();
-			var fields = form.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 
-			var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
-			if (form.Files.Count > 0)
+			if (!parameters.ContainsKey("body"))
 			{
-				payload.Add("_files", form.Files);
-			}
-			foreach (var (k, v) in query) payload.TryAdd(k, v);
+				var form = await req.ReadFormAsync();
+				var fields = form.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 
-			objectValue = new ObjectValue("request", payload, properties: properties);
+				var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
+				if (form.Files.Count > 0)
+				{
+					payload.Add("_files", form.Files);
+				}
+
+				parameters.Add("body", payload);
+			}
+
 			logger.LogDebug($"    - FormHandler done - {stopwatch.ElapsedMilliseconds}");
 
-			return (objectValue, null);
 		}
 
-		objectValue = new ObjectValue("request", query, properties: properties);
+		if (query.Count > 0)
+		{
+			var qs = new Dictionary<string, object?>();
+			foreach (var (k, v) in query)
+			{
+				qs.Add(k, v);
+			}
+			parameters.Add("query", query);
+		}
+
+		objectValue = new ObjectValue("request", parameters, properties: properties);
 
 		logger.LogDebug($"    - Return request object - {stopwatch.ElapsedMilliseconds}");
 		return (objectValue, null);
@@ -1263,7 +1296,7 @@ Frontpage
 			var clientInfo = parser.Parse(request.Headers.UserAgent, true);
 			properties.Add(new ObjectValue("ClientInfo", clientInfo));
 		}
-		
+
 		return properties;
 	}
 

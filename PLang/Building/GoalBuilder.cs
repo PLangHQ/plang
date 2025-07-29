@@ -79,18 +79,11 @@ namespace PLang.Building
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors groupedBuildErrors = new();
-			
-			if (!goal.HasChanged)
-			{
-				bool hasChanged = goal.GoalSteps.Any(p => p.HasChanged);
-				if (!hasChanged)
-				{
-					logger.LogDebug($" - Goal has not change - validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
-					var validationError = await ValidateSteps(goal);
-					logger.LogDebug($" - Done validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
-					if (validationError == null) return null;
-				}
-			}
+
+			logger.LogDebug($" - Goal has not change - validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+			var validationError = await ValidateSteps(goal);
+			logger.LogDebug($" - Done validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+			if (!goal.HasChanged && validationError == null) return null;
 
 			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath} - {goal.HasChanged}");
 
@@ -112,7 +105,7 @@ namespace PLang.Building
 
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				if (goal.GoalSteps[i].IsValid) continue;
+				if (!goal.GoalSteps[i].HasChanged && goal.GoalSteps[i].IsValid) continue;
 
 				logger.LogDebug($" - Building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
 				var buildStepError = await BuildStep(goal, i);
@@ -193,9 +186,9 @@ namespace PLang.Building
 				var result = await BuildStep(goal, stepIndex, excludeModules);
 				return result;
 			}
-			else
+			else if (excludeModules.Count > 0)
 			{
-				logger.LogError($"  - ❌ Error finding module for step. I tried {string.Join(",", excludeModules)} - Error message: {buildStepError.MessageOrDetail}");
+				logger.LogError($"  - ❌ Error finding module for step. I tried '{string.Join("', '", excludeModules)}' - Error message: {buildStepError.MessageOrDetail}");
 			}
 
 			BuildErrors.Add(buildStepError);
@@ -205,14 +198,29 @@ namespace PLang.Building
 
 		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal)
 		{
+			// Since step has not been build we disable build validation for all
+			// steps that come after as they can be affected by previous steps. 
+			// example of that, steps that creates table but is not build,
+			// step after that insert into table will fail
+			
+			
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors errors = new();
+			bool stepsNotBuilt = false;
 			foreach (var step in goal.GoalSteps)
 			{
 				logger.LogDebug($"   - Validating step {step.Text.MaxLength(10)} - {stopwatch.ElapsedMilliseconds}");
 				var functionResult = step.GetFunction(fileSystem);
+				if (functionResult.Function == null)
+				{
+					stepsNotBuilt = true;
+					step.IsValid = false;
+					continue;
+				}
+
 				if (functionResult.Error != null)
 				{
+					step.ValidationErrors.Add(functionResult.Error);
 					step.IsValid = false;
 					step.Reload = true;
 					errors.Add(functionResult.Error);
@@ -220,11 +228,14 @@ namespace PLang.Building
 					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
+
+
 				logger.LogDebug($"   - Found function, validating... - {stopwatch.ElapsedMilliseconds}");
-				
+
 				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step, null);
 				if (invalidFunctionError != null)
 				{
+					step.ValidationErrors.Add(invalidFunctionError);
 					step.Reload = true;
 					step.IsValid = false;
 					errors.Add(invalidFunctionError);
@@ -233,35 +244,35 @@ namespace PLang.Building
 					continue;
 				}
 
-				logger.LogDebug($"   - Validated function, run builder methods - {stopwatch.ElapsedMilliseconds}");
-
-				var builderRun = await instructionBuilder.RunBuilderMethod(step, step.Instruction, functionResult.Function);
-				if (builderRun.Error != null)
+				// all steps need to be build before running step validation
+				if (!stepsNotBuilt)
 				{
-					errors.Add(builderRun.Error);
-					step.Reload = true;
-					step.IsValid = false;
+					logger.LogDebug($"   - Validated function, run builder methods - {stopwatch.ElapsedMilliseconds}");
 
-					// skip rest of validation, we already know this step has invalid build
-					continue;
+					var builderRun = await instructionBuilder.RunStepValidation(step, step.Instruction, functionResult.Function);
+					if (builderRun.Error != null)
+					{
+						step.ValidationErrors.Add(builderRun.Error);
+						errors.Add(builderRun.Error);
+						step.Reload = true;
+						step.IsValid = false;
+
+						// skip rest of validation, we already know this step has invalid build
+						continue;
+					}
+
+					logger.LogDebug($"   - Done running builder methods - {stopwatch.ElapsedMilliseconds}");
 				}
 
-				var validateGoalToCallResult = await instructionBuilder.ValidateGoalToCall(step, step.Instruction);
-				if (validateGoalToCallResult.Error != null)
-				{
-					errors.Add(validateGoalToCallResult.Error);
-					step.Reload = true;
-					step.IsValid = false;
-
-					// skip rest of validation, we already know this step has invalid build
-					continue;
-				}
-
-
-				logger.LogDebug($"   - Done running builder methods - {stopwatch.ElapsedMilliseconds}");
 				step.IsValid = true;
 
 			}
+
+			if (goal.GoalSteps.Any(p => !p.IsValid))
+			{
+				goal.HasChanged = true;
+			}
+
 			return (errors.Count > 0) ? errors : null;
 		}
 
@@ -432,14 +443,13 @@ Be concise
 				}
 			}
 
-			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
-			foreach (var dir in dirs)
-			{
-				foreach (var subGoal in goal.SubGoals)
-				{
+			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath).Select(p =>
+					p.Replace(goal.AbsoluteAppStartupFolderPath, "")
+					.TrimStart(fileSystem.Path.DirectorySeparatorChar)).ToList();
 
-					dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
-				}
+			foreach (var subGoal in goal.SubGoals)
+			{
+				dirs.Remove(fileSystem.Path.GetDirectoryName(subGoal) ?? "");
 			}
 
 			foreach (var dir in dirs)

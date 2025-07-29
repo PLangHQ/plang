@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "foreach %cssFiles% call AppendToTypes Type=\"css\"",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -15,6 +17,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCall",
         "Value": {
+          "Path": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\AppendToTypes\\00. Goal.pr",
           "Name": "AppendToTypes",
           "Parameters": {
             "Type": "css"

@@ -3,25 +3,30 @@ using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
 using PLang.Errors.Types;
 using PLang.Exceptions;
 using PLang.Models;
+using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Pipelines;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
+using UAParser.Objects;
+using static PLang.Modules.FileModule.CsvHelper;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric")]
+	[Description("Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric and it can have different serialization, text, json, csv, binary, etc.")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -36,6 +41,9 @@ namespace PLang.Modules.OutputModule
 			this.variableHelper = variableHelper;
 			this.programFactory = programFactory;
 		}
+
+		[Description("channel=user|system|audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
+		public record OutputStreamInfo(string Channel = "user", string Serializer = "default", Dictionary<string, object?>? Options = null);
 
 		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
 		{
@@ -181,7 +189,7 @@ namespace PLang.Modules.OutputModule
 				string answerVariableName = askOptions.AnswerVariableName.Replace("%", "");
 				if (HttpContext.Request.HasFormContentType)
 				{
-					answer = memoryStack.Get("request." + answerVariableName);
+					answer = memoryStack.Get("request.body." + answerVariableName);
 				}
 				else
 				{
@@ -211,9 +219,9 @@ namespace PLang.Modules.OutputModule
 
 			var callback = await StepHelper.GetCallback(path, askOptions.CallbackData, memoryStack, goalStep, programFactory, !askOptions.IncludeNonce);
 			(answer, error) = await outputStream.Ask(askOptions, callback, error);
-			if (error != null) return (null, error);
+			if (error != null) return (null, error); 
 
-			if (!outputStream.IsStateful) return (null, new EndGoal(goalStep, "", Levels: 9999));
+			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "", Levels: 9999)); 
 
 			return await ProcessAnswer(answer, askOptions, outputStream.IsStateful);
 
@@ -241,13 +249,13 @@ namespace PLang.Modules.OutputModule
 
 			if (isStateful) return (answer, null);
 
-			var callbackBase64 = memoryStack.Get<string>("request.callback");
+			var callbackBase64 = memoryStack.Get<string>("request.body.callback");
 			if (string.IsNullOrEmpty(callbackBase64)) return (null, new ProgramError("callback was invalid", goalStep));
 			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
 			if ((callback?.CallbackData == null || callback?.CallbackData?.Count == 0) && function.ReturnValues?.Count > 0)
 			{
-				answer = memoryStack.Get("request");
+				answer = memoryStack.Get("request.body");
 			}
 			else
 			{
@@ -316,7 +324,7 @@ namespace PLang.Modules.OutputModule
 			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
 			ReferenceLoopHandling ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
-		[Description("Write out content. Do your best to make sure that content is valid json. Any %variable% should have double quotes around it. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
+		[Description("Write out json content. Only choose this method when it's clear user is defining a json output, e.g. `- write out '{name:John}'. Do your best to make sure that content is valid json. Any %variable% should have double quotes around it. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
 		public async Task<IError?> WriteJson(object? content, JsonOptions? jsonOptions = null, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
 		{
 
@@ -340,6 +348,50 @@ namespace PLang.Modules.OutputModule
 			}
 
 			return await Write(JsonConvert.SerializeObject(content, settings), type, statusCode, paramaters, channel);
+		}
+
+		public async Task<IError?> Write(object content, OutputStreamInfo outputStreamInfo)
+		{
+			IOutputStream os;
+			if (outputStreamInfo.Channel.Equals("system", StringComparison.OrdinalIgnoreCase))
+			{
+				os = outputSystemStreamFactory.CreateHandler();
+			}
+			else
+			{
+				os = outputStreamFactory.CreateHandler();
+			}
+
+
+			if (outputStreamInfo.Serializer.Equals("json", StringComparison.OrdinalIgnoreCase))
+			{
+				content = JsonConvert.SerializeObject(content);
+				await os.Write(content);
+			}
+			else if (outputStreamInfo.Serializer.Equals("csv", StringComparison.OrdinalIgnoreCase))
+			{
+				CsvOptions options = RecordInitializer.FromDictionary<CsvOptions>(new CsvOptions(), outputStreamInfo.Options);
+
+				using var memoryStream = new MemoryStream();
+				var writer = new StreamWriter(memoryStream, leaveOpen: true);
+				await Modules.FileModule.CsvHelper.WriteToStream(writer, content, options);
+				await writer.FlushAsync();
+
+				memoryStream.Position = 0;
+
+				if (os is HttpOutputStream httpOutputStream)
+				{
+					httpOutputStream.SetContentType("text/csv");
+				}				
+				await memoryStream.CopyToAsync(os.Stream);
+				
+			}
+			else
+			{
+				
+				await os.Write(content);
+			}
+			return null;
 		}
 
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]

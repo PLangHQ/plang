@@ -163,11 +163,9 @@ namespace PLang.Building.Parsers
 		}
 		public List<Goal> ForceLoadAllGoals()
 		{
-			return LoadAllGoals(true);
-		}
-		private static readonly object _lock = new object();
-
-	
+			var goals = LoadAllGoals(true);
+			return goals;
+		}	
 
 		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
@@ -384,6 +382,7 @@ namespace PLang.Building.Parsers
 
 			goals = LoadAllGoalsByPath(fileSystem.RootDirectory);
 			publicGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
+			
 
 			return goals;
 		}

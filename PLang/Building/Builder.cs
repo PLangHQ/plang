@@ -74,7 +74,7 @@ namespace PLang.Building
 
 				logger.LogDebug($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
 				
-				var setupGoals = goals.Where(p => p.IsSetup);
+				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
 				foreach (var setupGoal in setupGoals)
 				{
 					logger.LogDebug($"Start setup file build on '{setupGoal.GoalName}' - {stopwatch.ElapsedMilliseconds}");

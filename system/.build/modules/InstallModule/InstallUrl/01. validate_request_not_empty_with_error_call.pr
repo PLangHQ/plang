@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "validate %request% is not empty\n    on error call AskForUrl",
   "ModuleType": "PLang.Modules.ValidateModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -7,7 +9,7 @@
     "Name": "IsNotEmpty",
     "Parameters": [
       {
-        "Type": "System.String[]",
+        "Type": "System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]",
         "Name": "variables",
         "Value": [
           "%request%"
@@ -28,24 +30,18 @@
   },
   "Properties": {
     "Parameters": {
-      "variables": [
-        {
-          "Name": "variables",
-          "FullTypeName": "System.String[]"
-        }
-      ],
-      "errorMessage": [
-        {
-          "Name": "errorMessage",
-          "FullTypeName": "System.String"
-        }
-      ],
-      "statusCode": [
-        {
-          "Name": "statusCode",
-          "FullTypeName": "System.Int32"
-        }
-      ]
+      "variables": {
+        "Name": "variables",
+        "FullTypeName": "System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]"
+      },
+      "errorMessage": {
+        "Name": "errorMessage",
+        "FullTypeName": "System.String"
+      },
+      "statusCode": {
+        "Name": "statusCode",
+        "FullTypeName": "System.Int32"
+      }
     },
     "ReturnValues": {}
   },
@@ -57,19 +53,19 @@
       "presencePenalty": 0.0,
       "maxLength": 4000,
       "llmResponseType": "json",
-      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-      "model": "gpt-4.1-mini",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4o",
       "promptMessage": [
         {
           "role": "system",
           "content": [
             {
               "type": "text",
-              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\nONLY when string is prefixed with # is for translation, modify the string to be \"#:...\", e.g. #\"Hello\" => \"#:Hello\".\r\n\r\n< Example >\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\nONLY when string is prefixed with # is for translation, modify the string to be \"#:...\", e.g. #\"Hello\" => \"#:Hello\".\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\n \r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
             },
             {
               "type": "text",
-              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
             }
           ]
         },
@@ -78,7 +74,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nEnsure that the variable %request% contains a value and is not empty, and if it is empty, trigger a fallback action to ask the user for a URL\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error\",\"MethodName\":\"IsNotEmpty\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"variables\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":null},{\"Description\":\"Checks if variable contains a regex pattern. Create error message fitting the intent of the validation\",\"MethodName\":\"HasPattern\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"variables\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pattern\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":null},{\"Description\":\"Checks if variable is a valid 2 letter country code\",\"MethodName\":\"IsValid2LetterCountryCode\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"variables\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pattern\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":null},{\"Description\":null,\"MethodName\":\"ValidateItemIsInList\",\"Parameters\":[{\"Type\":\"System.Object[]\",\"Name\":\"itemsToCheckInList\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Collections.IList\",\"Name\":\"list\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"DefaultValue\":\"item is not in list\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"List<Object>\"}},{\"Description\":\"Validates if signed contract is valid. Uses properties on the contract from signatureProperties as signatures to validate against. propertiesToMatch specifies properties that should be used on the validation, when null all poperties are used except signatureProperties\",\"MethodName\":\"ValidateSignedContract\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"contract\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"signatureProperties\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"List<string>\",\"Name\":\"propertiesToMatch\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false}],\"ReturnValue\":null}],\"SupportingObjects\":[{\"Type\":\"System.Collections.IList\",\"Name\":\"list\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nrequest (type:object), \r\n## defined variables ##"
+              "text": "## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error\",\"MethodName\":\"IsNotEmpty\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\"Name\":\"variables\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false}]},{\"Description\":\"Checks if variable contains a regex pattern. Create error message fitting the intent of the validation\",\"MethodName\":\"HasPattern\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"variables\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pattern\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false}]},{\"Description\":\"Checks if variable is a valid 2 letter country code\",\"MethodName\":\"IsValid2LetterCountryCode\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"variables\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pattern\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false}]},{\"MethodName\":\"ValidateItemIsInList\",\"Parameters\":[{\"Type\":\"System.Object[]\",\"Name\":\"itemsToCheckInList\",\"IsRequired\":true},{\"Type\":\"System.Collections.IList\",\"Name\":\"list\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"DefaultValue\":\"item is not in list\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"List<Object>\"}},{\"Description\":\"Validates if signed contract is valid. Uses properties on the contract from signatureProperties as signatures to validate against. propertiesToMatch specifies properties that should be used on the validation, when null all poperties are used except signatureProperties\",\"MethodName\":\"ValidateSignedContract\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"contract\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"signatureProperties\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"propertiesToMatch\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\"Name\":\"variables\",\"TypeProperties\":[{\"Type\":\"System.Boolean\",\"Name\":\"IsSystemVariable\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Value\",\"IsRequired\":true},{\"Type\":\"System.Type\",\"Name\":\"Type\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"Initiated\",\"IsRequired\":true},{\"Type\":\"PLang.Models.Properties\",\"Name\":\"Properties\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Created\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Updated\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Collections.IList\",\"Name\":\"list\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nrequest (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -90,11 +86,20 @@
               "text": "validate %request% is not empty\n    on error call AskForUrl"
             }
           ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Previous LLM request caused following <error>, try to fix it.\r\n<error>\nError Message: \t- System.String[] variables is not of the correct type.\n\t\t - at \\modules\\InstallModule\\InstallUrl.goal:2\n\t- FixSuggestion: \t- Make sure to format the type correctly, e.g. System.String, System.Collections.Generic.List`1[System.String], System.Nullable`1[System.Int32]\n\t\t - at \\modules\\InstallModule\\InstallUrl.goal:2\n</error>\r\n\r\nThis is the previous LLM response: \r\n\"Name\": is the name of the method selected\r\n\r\n```json\r\n{\r\n  \"Reasoning\": \"The user wants to validate that the variable %request% is not empty. The IsNotEmpty function is designed to check if variables are empty and create an error message accordingly. The fallback action on error can be handled separately, so it is ignored here.\",\r\n  \"Name\": \"IsNotEmpty\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String[]\",\r\n      \"Name\": \"variables\",\r\n      \"Value\": [\r\n        \"%request%\"\r\n      ]\r\n    },\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"errorMessage\",\r\n      \"Value\": \"Request cannot be empty\"\r\n    },\r\n    {\r\n      \"Type\": \"System.Int32\",\r\n      \"Name\": \"statusCode\",\r\n      \"Value\": 400\r\n    }\r\n  ],\r\n  \"ReturnValues\": null\r\n}\r\n```\r\n"
+            }
+          ]
         }
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to validate that the variable %request% is not empty. The IsNotEmpty function is designed to check if variables are empty and create an error message accordingly. The fallback action on error can be handled separately, so it is ignored here.\",\n  \"Name\": \"IsNotEmpty\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String[]\",\n      \"Name\": \"variables\",\n      \"Value\": [\n        \"%request%\"\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"errorMessage\",\n      \"Value\": \"Request cannot be empty\"\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"statusCode\",\n      \"Value\": 400\n    }\n  ],\n  \"ReturnValues\": null\n}"
+      "RawResponse": "```json\n{\n  \"Reasoning\": \"The user wants to validate that the variable %request% is not empty. The IsNotEmpty function is designed to check if variables are empty and create an error message accordingly. The fallback action on error can be handled separately, so it is ignored here.\",\n  \"Name\": \"IsNotEmpty\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\n      \"Name\": \"variables\",\n      \"Value\": [\n        \"%request%\"\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"errorMessage\",\n      \"Value\": \"Request cannot be empty\"\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"statusCode\",\n      \"Value\": 400\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
     }
   ]
 }

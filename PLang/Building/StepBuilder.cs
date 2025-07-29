@@ -261,7 +261,7 @@ public class StepBuilder : IStepBuilder
 			await LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 		}
 
-		var builderRun = await this.instructionBuilder.RunBuilderMethod(step, instruction, gf);
+		var builderRun = await this.instructionBuilder.RunStepValidation(step, instruction, gf);
 		if (builderRun.Error != null) return (false, builderRun.Error);
 
 		logger.Value.LogInformation($"{step.LineNumber}: Step {step.Name} is already built");
@@ -271,6 +271,14 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<(GoalStep, IBuilderError?)> BuildStepInformationWithRetry(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, IBuilderError? prevError = null)
 	{
+		if (step.ValidationErrors.Count > 0 && !string.IsNullOrEmpty(step.ModuleType))
+		{
+			logger.Value.LogInformation($"{step.LineNumber}: Using module {step.ModuleType} for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
+			// since this is it contains validation error, no need to find out the module type
+			// just go straight into fixing the method of the module
+			return (step, null);
+		}
+
 		var result = await BuildStepInformation(goal, step, stepIndex, excludeModules, prevError);
 		if (result.Error == null) return result;
 

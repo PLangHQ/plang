@@ -87,7 +87,6 @@ namespace PLang.SafeFileSystem
 			this.fileAccesses = new List<FileAccessControl>();
 			fileAccesses.Add(new SafeFileSystem.FileAccessControl(appStartupPath, SystemDirectory, ProcessId: Id));
 
-
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
 			if (AppContext.GetData("sharedPath") != null)
 			{
@@ -143,7 +142,7 @@ namespace PLang.SafeFileSystem
 
 		public void ClearFileAccess()
 		{
-			this.fileAccesses.Clear();
+			this.fileAccesses.RemoveAll(p => p.path != this.SystemDirectory);
 		}
 
 		public bool IsPathRooted(string? path)

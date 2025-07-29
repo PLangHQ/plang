@@ -6,18 +6,18 @@ namespace PLang.Services.CompilerService
 	public record CodeImplementationResponse : ImplementationResponse
 	{
 		public CodeImplementationResponse() { }
-		public CodeImplementationResponse(string reasoning, string @namespace, string name, string? implementation = null,
-			List<Parameter>? parameters = null, List<ReturnValue>? returnValues = null, List<string>? @using = null, 
-			List<string>? assemblies = null)
+		public CodeImplementationResponse(string Reasoning, string @Namespace, string Name, string? Implementation = null,
+			List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null, List<string>? @Using = null, 
+			List<string>? Assemblies = null)
 		{
-			Reasoning = reasoning;
-			Name = name;
-			Implementation = implementation;
-			Namespace = @namespace;
-			Parameters = parameters;
-			ReturnValues = returnValues;
-			Using = @using;
-			Assemblies = assemblies;
+			this.Reasoning = Reasoning;
+			this.Name = Name;
+			this.Implementation = Implementation;
+			this.Namespace = @Namespace;
+			this.Parameters = Parameters;
+			this.ReturnValues = ReturnValues;
+			this.Using = @Using;
+			this.Assemblies = Assemblies;
 		}
 
 	}

@@ -1,4 +1,6 @@
 {
+  "Hash": null,
+  "SignedMessage": null,
   "Text": "if %parameter.Value% does not contains \"%\" then, call SearchFor",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -20,6 +22,7 @@
         "Type": "PLang.Models.GoalToCallInfo",
         "Name": "goalToCallIfFalse",
         "Value": {
+          "Path": ".build\\events\\Builder\\CheckGoals\\SearchFor\\00. Goal.pr",
           "Name": "SearchFor",
           "Parameters": {}
         }

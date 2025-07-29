@@ -17,6 +17,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
+using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 
 namespace PLang.Modules.LoopModule
 {
@@ -48,34 +49,52 @@ namespace PLang.Modules.LoopModule
 			return name;
 		}
 
-		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8")]
+
+		public IEnumerable<IReadOnlyList<T>> Split<T>(IEnumerable<T> source, int size)
+		{
+			if (source is null) throw new ArgumentNullException(nameof(source));
+			if (size <= 0)
+			{
+				foreach (var x in source) yield return new[] { x };
+				yield break;
+			}
+			foreach (var chunk in source.Chunk(size)) yield return chunk;
+		}
+
+		public IEnumerable<IReadOnlyList<object>> Split(IEnumerable source, int size) =>
+			Split(source.Cast<object>(), size);
+
+		public record MultiThreaded(int ThreadCount = 1, double CpuUsage = 0, bool FailFast = true, [HandlesVariable] GoalToCallInfo? GoalToCallBeforeItemIsProcessed = null, [HandlesVariable] GoalToCallInfo? GoalToCallAfterItemIsProcessed = null);
+		public record LinqOptions(int Split = 0);
+
+		[Description(@"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is ""item"" and value is ""%product%"". cpuUsage is percentage of cpu cores available, 80% => 0.8")]
 		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, [HandlesVariableAttribute] GoalToCallInfo goalToCall,
-			 int threadCount = 1, double cpuUsage = 0, bool failFast = true, [HandlesVariable] GoalToCallInfo? goalToCallBeforeItemIsProcessed = null, [HandlesVariable] GoalToCallInfo? goalToCallAfterItemIsProcessed = null)
+		 MultiThreaded? multiThreaded = null, LinqOptions? linqOptions = null)
 		{
 			var parameters = goalToCall.Parameters;
 			if (parameters == null) parameters = new();
 
 			string listName = GetParameterName(parameters, "list");
-			string listCountName = GetParameterName(parameters, "listCount");
 			string itemName = GetParameterName(parameters, "item");
 			string positionName = GetParameterName(parameters, "position");
 
 			var prevItem = memoryStack.Get("item");
 			var prevList = memoryStack.Get("list");
-			var prevListCount = memoryStack.Get("listCount");
 			var prevPosition = memoryStack.Get("position");
 
 			int effectiveThreads = 1;
 
+			if (multiThreaded == null) multiThreaded = new();
+
 			var groupedErrors = new GroupedErrors("LoopErrors");
-			if (cpuUsage > 0 || threadCount > 1)
+			if (multiThreaded.CpuUsage > 0 || multiThreaded.ThreadCount > 1)
 			{
 				int cores = Environment.ProcessorCount;
-				effectiveThreads = threadCount > 1 ? threadCount : (int)(cores * cpuUsage);
+				effectiveThreads = multiThreaded.ThreadCount > 1 ? multiThreaded.ThreadCount : (int)(cores * multiThreaded.CpuUsage);
 				effectiveThreads = Math.Max(effectiveThreads, 1);
 			}
 
-			
+
 
 			var obj = memoryStack.Get(variableToLoopThrough);
 			if (obj == null)
@@ -83,6 +102,11 @@ namespace PLang.Modules.LoopModule
 				logger.LogDebug($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
 				return null;
 			}
+			if (obj is ObjectValue ov2)
+			{
+				obj = ov2.Value;
+			}
+
 			if (obj is string || obj.GetType().IsPrimitive)
 			{
 				var l = new List<object>();
@@ -110,6 +134,11 @@ namespace PLang.Modules.LoopModule
 					hasEntry = true;
 				}
 
+				if (linqOptions != null && linqOptions.Split > 0)
+				{
+					enumerables = Split(enumerables, linqOptions.Split);
+				}
+
 				int idx = 1;
 				if (effectiveThreads == 1)
 				{
@@ -118,17 +147,23 @@ namespace PLang.Modules.LoopModule
 						goalToCall.Parameters.AddOrReplace(param.Key, variableHelper.LoadVariables(param.Value));
 					}
 
-
 					foreach (var item in enumerables)
 					{
 						goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
-						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+
+						if (item is ObjectValue ov)
+						{
+							goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
+						}
+						else
+						{
+							goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+						}
 						goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
-						goalToCall.Parameters.AddOrReplace(listCountName, -1);
 
 						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
 						if (result.error != null && result.error is not IErrorHandled) return result.error;
-						
+
 					}
 				}
 				else
@@ -145,15 +180,21 @@ namespace PLang.Modules.LoopModule
 						try
 						{
 							goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
-							goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
-							goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
-							goalToCall.Parameters.AddOrReplace(listCountName, -1);
-							
-							Task<(IEngine engine, object? Variables, IError? error)> task;
-							if (goalToCallBeforeItemIsProcessed != null)
+							if (item is ObjectValue ov)
 							{
-								goalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallBeforeItemIsProcessed, Goal, isolated: true);
+								goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
+							}
+							else
+							{
+								goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+							}
+							goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
+
+							Task<(IEngine engine, object? Variables, IError? error)> task;
+							if (multiThreaded.GoalToCallBeforeItemIsProcessed != null)
+							{
+								multiThreaded.GoalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallBeforeItemIsProcessed, Goal, isolated: true);
 								await task;
 							}
 
@@ -161,20 +202,21 @@ namespace PLang.Modules.LoopModule
 							var result = await task;
 							if (result.error != null)
 							{
-								if (failFast)
+								if (multiThreaded.FailFast)
 								{
 									cts?.Cancel();
 									return result.error;
-								} else
+								}
+								else
 								{
 									groupedErrors.Add(result.error);
 								}
 							}
 
-							if (goalToCallAfterItemIsProcessed != null)
+							if (multiThreaded.GoalToCallAfterItemIsProcessed != null)
 							{
-								goalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallAfterItemIsProcessed, Goal, isolated: true);
+								multiThreaded.GoalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallAfterItemIsProcessed, Goal, isolated: true);
 								await task;
 							}
 
@@ -199,11 +241,10 @@ namespace PLang.Modules.LoopModule
 					}
 				}
 			}
-			
+
 
 			memoryStack.Put("item", prevItem);
 			memoryStack.Put("list", prevList);
-			memoryStack.Put("listCount", prevListCount);
 			memoryStack.Put("position", prevPosition);
 
 			if (groupedErrors.Count > 0)

@@ -157,8 +157,9 @@ namespace PLang.Modules
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogTrace("Parameters:{0}", parameterValues);
 				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				//logger.LogTrace("Parameters:{0}", parameterValues);
+
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 

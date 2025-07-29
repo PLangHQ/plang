@@ -54,11 +54,21 @@ namespace PLang.Modules.PlangModule
 			if (path.EndsWith(".goal"))
 			{
 				goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalPath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
+			} else if (path.EndsWith(".pr"))
+			{
+				goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFilePath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
 			}
 			else if (fileSystem.Directory.Exists(fileOrFolderPath))
 			{
-				goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
-			}else
+				if (fileOrFolderPath.Contains(".build"))
+				{
+					goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+				}
+				else
+				{
+					goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+				}
+			} else
 			{
 				return (null, new ProgramError($"The path {fileOrFolderPath} could not be found, searched for it at {path}"));
 			}
@@ -141,17 +151,6 @@ namespace PLang.Modules.PlangModule
 			var classDescriptionHelper = new ClassDescriptionHelper();
 			return classDescriptionHelper.GetClassDescription(programType);
 			
-		}
-
-		[Description("Returns the method description in a module for specific method")]
-		public async Task<(MethodDescription?, IError?)> GetMethodDescription(string moduleName, string methodName)
-		{
-			var programType = typeHelper.GetRuntimeType(moduleName);
-
-			var classDescriptionHelper = new ClassDescriptionHelper();
-			var result = classDescriptionHelper.GetMethodDescription(programType, methodName);
-
-			return (result.MethodDescription, result.Error);
 		}
 
 		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)

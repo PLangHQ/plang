@@ -10,6 +10,7 @@ using PLang.Runtime;
 using PLang.Services.SettingsService;
 using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -36,7 +37,7 @@ namespace PLang.Utils
 			{
 				Converters = { new ObjectValueConverter() },
 				ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, //.Preserve,
-				//DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+																								 //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
 				IgnoreReadOnlyProperties = true
 			};
 
@@ -74,28 +75,36 @@ namespace PLang.Utils
 			return items;
 		}
 
-		
+
 
 		public object? LoadVariables(object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
 			if (obj == null) return null;
+			if (obj.GetType().IsPrimitive) return obj;
+
 			Stopwatch stopwatch = Stopwatch.StartNew();
-			if (obj is string variableName && IsVariable(variableName))
+			if (obj is string variableName)
 			{
-				logger.LogDebug($"           - Loading {variableName} - {stopwatch.ElapsedMilliseconds}");
-				if (variableName.StartsWith("%Settings."))
+				if (!variableName.Contains("%")) return obj;
+				if (IsVariable(variableName))
 				{
-					var vars = GetVariables(variableName, emptyIfNotFound);
-					if (vars.Count == 0) return null;
-					return vars[0].Value;
+
+					logger.LogDebug($"           - Loading {variableName} - {stopwatch.ElapsedMilliseconds}");
+					if (variableName.StartsWith("%Settings."))
+					{
+						var vars = GetVariables(variableName, emptyIfNotFound);
+						if (vars.Count == 0) return null;
+						return vars[0].Value;
+					}
+					else
+					{
+						var value = memoryStack.Get(variableName, false, defaultValue);
+						logger.LogDebug($"           - Have variable {variableName} - {stopwatch.ElapsedMilliseconds}");
+						return value;
+					}
 				}
-				else
-				{
-					var value = memoryStack.Get(variableName, false, defaultValue);
-					logger.LogDebug($"           - Have variable {variableName} - {stopwatch.ElapsedMilliseconds}");
-					return value;
-                }
 			}
+
 
 			string? content = obj.ToString();
 			if (content == null) return null;
@@ -114,13 +123,13 @@ namespace PLang.Utils
 			}
 			if (obj is JObject jobject)
 			{
-				return LoadVariablesToJObject(jobject, variables, defaultValue);				
+				return LoadVariablesToJObject(jobject, variables, defaultValue);
 			}
 
 			if (obj is JArray array)
 			{
 				return LoadVariablesToJArray(array, variables, defaultValue);
-				
+
 			}
 			if (variables.Count == 1 && IsVariable(content)) return variables[0].Value;
 
@@ -133,9 +142,10 @@ namespace PLang.Utils
 				}
 				else
 				{
-					strValue = variable.Value?.ToString() ?? null;
+					strValue = Convert.ToString(variable.Value, CultureInfo.InvariantCulture);
+					//strValue = variable.Value?.ToString() ?? null;
 				}
-				
+
 
 				content = content.Replace(variable.PathAsVariable, strValue, StringComparison.OrdinalIgnoreCase);
 			}
@@ -176,14 +186,10 @@ namespace PLang.Utils
 				if (jsonProperty.Contains("."))
 				{
 					var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
-					if (value != null)
-					{
-						SetNestedPropertyValue(jobject, jsonProperty, value);
-					}
-					else if (defaultValue != null && defaultValue is JToken jToken)
-					{
-						SetNestedPropertyValue(jobject, jsonProperty, jToken);
-					}
+					if (value == null && defaultValue is JToken jToken) value = jToken;
+
+					SetNestedPropertyValue(jobject, jsonProperty, value);
+
 				}
 				else if (jsonProperty.Contains("[") && jsonProperty.Contains("]"))
 				{
@@ -257,25 +263,42 @@ namespace PLang.Utils
 			var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 			var values = new object?[props.Length];
 
+			Type? convertValueTo = null;
 			for (int i = 0; i < props.Length; i++)
 			{
 				var value = props[i].GetValue(obj);
+
 				if (value is string str)
 				{
+					if (convertValueTo == null && str.Contains(".") && props[i].Name.Equals("TypeFullName") || props[i].Name.Equals("Type"))
+					{
+						convertValueTo = Type.GetType(str, false);
+					}
+
 					if (IsVariable(str))
 					{
 						var variable = variables.FirstOrDefault(p => p.PathAsVariable.Equals(str, StringComparison.OrdinalIgnoreCase));
-						values[i] = variable?.Value;
+						var valueToSet = (variable != null) ? variable.Value : LoadVariables(str);
+						if (convertValueTo != null)
+						{
+							values[i] = TypeHelper.ConvertToType(valueToSet, convertValueTo);
+						}
+						else
+						{
+							values[i] = valueToSet;
+						}
 					}
 					else if (str.Contains("%"))
 					{
 						var varValue = LoadVariables(str);
 						values[i] = varValue;
-					} else
+					}
+					else
 					{
 						values[i] = str;
 					}
-				} else
+				}
+				else
 				{
 					values[i] = value;
 				}
@@ -284,7 +307,7 @@ namespace PLang.Utils
 			var ctor = type.GetConstructors().First();
 			return ctor.Invoke(values);
 		}
-		
+
 		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, object? defaultValue = null)
 		{
 			var children = jobject.Children();
@@ -304,11 +327,13 @@ namespace PLang.Utils
 
 							JToken replacement = JToken.FromObject(obj, serializer);
 							jValue.Replace(replacement);
-						} catch (Exception ex)
+						}
+						catch (Exception ex)
 						{
 							int b = 0;
 						}
-					} else
+					}
+					else
 					{
 						jValue.Value = null;
 					}
@@ -329,7 +354,7 @@ namespace PLang.Utils
 				int i = 0;
 			}
 		}
-		
+
 
 		private bool ShouldSerializeToText(object value)
 		{
@@ -346,7 +371,7 @@ namespace PLang.Utils
 			return false;
 		}
 
-		
+
 
 
 		public JToken JsonSerialize(object? obj)
@@ -370,7 +395,7 @@ namespace PLang.Utils
 			try
 			{
 
-				
+
 				// TODO: Not sure how to solve this ugly code. 
 
 				// doing this bad code, because Newtonsoft give stackoverflow on objects
@@ -383,7 +408,7 @@ namespace PLang.Utils
 					return JsonConvert.SerializeObject(message, jsonSerializerSettings);
 				}
 				string json;
-				
+
 				if (obj is System.Collections.IList list)
 				{
 					if (list.Count > 0 && list[0] is JProperty)
@@ -420,7 +445,7 @@ namespace PLang.Utils
 					Error = HandleSerializationError,
 					Converters = { new JsonObjectValueConverter() }
 				};
-				
+
 				return JsonConvert.SerializeObject(obj, settings);
 
 
@@ -441,27 +466,28 @@ namespace PLang.Utils
 				// Implement deserialization if necessary
 				throw new NotImplementedException();
 			}
-		
+
 			public override void Write(Utf8JsonWriter writer, ObjectValue value, JsonSerializerOptions options)
 			{
 				writer.WriteStartObject();
 				writer.WriteString("Type", value.Type?.Name);
 				// Serialize other properties
 				writer.WriteBoolean("Initiated", value.Initiated);
-				
+
 
 				if (value.Value is JArray jarray || value.Value is JObject jobject || value.Value is JToken jtoken)
 				{
-					
+
 					writer.WritePropertyName("Value");
 					if (value.Value is JValue || value.Value is JProperty)
 					{
 						writer.WriteStringValue(value.Value.ToString());
-					} else
+					}
+					else
 					{
 						writer.WriteRawValue(value.Value.ToString());
 					}
-					
+
 
 				}
 				else
@@ -477,7 +503,8 @@ namespace PLang.Utils
 						try
 						{
 							System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
-						} catch (Exception ex2)
+						}
+						catch (Exception ex2)
 						{
 							var settings = new JsonSerializerSettings
 							{
@@ -577,7 +604,8 @@ namespace PLang.Utils
 					if (token.ToString().Equals(value, StringComparison.OrdinalIgnoreCase))
 					{
 						return parentPath;
-					} else if (token.ToString().Contains(value))
+					}
+					else if (token.ToString().Contains(value))
 					{
 						//return parentPath;
 					}
@@ -629,7 +657,7 @@ namespace PLang.Utils
 
 			foreach (string variable in varsList)
 			{
-				if (variables.FirstOrDefault(p => p.Name.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
+				if (variables.FirstOrDefault(p => p.PathAsVariable.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					continue;
 				}
@@ -655,9 +683,9 @@ namespace PLang.Utils
 			return variables;
 		}
 		private void LoadSetting(List<ObjectValue> variables, string variable, string content)
-		{			
+		{
 			var settingsObjects = GetSettingObjectsValue(content);
-			variables.AddRange(settingsObjects);			
+			variables.AddRange(settingsObjects);
 		}
 		public static bool ContainsVariable(object? variable)
 		{
@@ -670,7 +698,7 @@ namespace PLang.Utils
 			if (variable is not string str) return false;
 
 			if (str == null || string.IsNullOrEmpty(str)) return false;
-			return Regex.IsMatch(str, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$");
+			return Regex.IsMatch(str, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$", RegexOptions.Compiled);
 		}
 
 		public static bool IsSetting(string variableName)
@@ -699,7 +727,8 @@ namespace PLang.Utils
 					{
 						variableNames = JArray.Parse(variableName).ToObject<string[]>();
 					}
-				} catch (Exception ex)
+				}
+				catch (Exception ex)
 				{
 					throw;
 				}
@@ -708,7 +737,7 @@ namespace PLang.Utils
 			var list = new List<ObjectValue>();
 			foreach (var varName in variableNames)
 			{
-				
+
 				var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
 				var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 				var settingsMatch = settingsRegex.Match(varName);
@@ -733,7 +762,7 @@ namespace PLang.Utils
 		public ObjectValue? GetSettingObjectValue(string variableName)
 		{
 			var list = GetSettingObjectsValue(variableName);
-			return (list.Count > 0) ? list[0]  : null;
+			return (list.Count > 0) ? list[0] : null;
 
 		}
 

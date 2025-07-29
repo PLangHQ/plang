@@ -195,7 +195,7 @@ namespace PLangTests.Modules.FileModule
 
 
 			await p.WriteCsvFile(path, sheet1);
-			await p.WriteCsvFile(path, sheet2, append:true);
+			await p.WriteCsvFile(path, sheet2, appendToFile:true);
 
 		}
 

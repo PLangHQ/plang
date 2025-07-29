@@ -162,13 +162,18 @@ This function is suitable when the user specifies conditions like ""property sta
 
 operatorOnPropertyToFilterOn can be: =|!=|startswith|endswith|contains
 retrieveOneItem: null|first|last|number (retrieveOneItem can also be a number representing the index.)
+operatorToFilterOnValueComparer: insensitive|case-sensitive
 can return a list of elements or one element, depending on if retrieveOneItem is set.
+throwErrorOnEmptyResult: set to true when user defines retrieveOneItem and on error for key:NotFound og status code: 404 or when user defines so
+defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 <example>
+- filter %types% where property: %type.Name%, write to %item% => variableToExtractFrom=""%types%"", propertyToFilterOn=""%type.Name%"", operatorOnPropertyToFilterOn=""=""
 - filter %list% where property is 'Name' => variableToExtractFrom=""%list%"", propertyToFilterOn=""Name""
-- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=""%list%"", propertyToFilterOn=""Name"", operatorOnPropertyToFilterOn=""contains"", retrieveOneItem=""first""
+- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=""%list%"", propertyToFilterOn=""Name"", operatorOnPropertyToFilterOn=""contains"", retrieveOneItem=""first"", throwErrorOnEmptyResult=true
 </example>
 ")]
-		public async Task<(object? Data, IError? Error)> FilterOnProperty(object variableToExtractFrom, string propertyToFilterOn, string operatorOnPropertyToFilterOn = "=", string? retrieveOneItem = null)
+		public async Task<(object? Data, IError? Error)> FilterOnProperty(object variableToExtractFrom, string propertyToFilterOn, string operatorOnPropertyToFilterOn = "=", string? retrieveOneItem = null,
+			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false, object? defaultValue = null)
 		{
 			if (variableToExtractFrom == null)
 			{
@@ -200,7 +205,7 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 				{
 					return (null, null);
 				}
-				throw new Exception("Dont know what this code should do. So throw error");
+				throw new Exception("Dont know what this code should do. So throw error." + ErrorReporting.CreateIssueNotImplemented);
 				var filterObj2 = GetFilteredJObject(obj, propertyToFilterOn, operatorOnPropertyToFilterOn);
 			}
 
@@ -247,7 +252,8 @@ operatorOnPropertyToFilter: equals|startswith|endswith|contains
 propertyToExtract: by default it returns the element that matches the property, can be defined as 'parent' or when propertyToExtract is specified it will find that property and return the object from that property.
 operatorToFilterOnValue: =|!= 
 operatorToFilterOnValueComparer: insensitive|case-sensitive
-throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound og status code: 404 or when user defines so
+throwErrorOnEmptyResult: set to true when user defines retrieveOneItem and on error for key:NotFound og status code: 404 or when user defines so
+defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 <example>
 - filter %json% where property starts with ""%item%/"" and has ""John"" as value, get parent object, write to %libraries% => variableToExtractFrom=""%json%"", 
 	propertyToFilterOn=""%item%/"", valueToFilterBy=""John"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""startswith"", propertyToExtract=""parent""
@@ -256,11 +262,12 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 	propertyToFilterOn=""Quantity"", valueToFilterBy=""10"", operatorToFilterOnValue="">"", operatorOnPropertyToFilter=""=""
 	operatorToFilterOnValueComparer=""case-sensitive""
 	retrieveOneItem=""first""
+	throwErrorOnEmptyResult=true
 </example>
 ")]
-		public async Task<(object? Data, IError? Error)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, object valueToFilterBy, string? operatorToFilterOnValue = "=",
-			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
-			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false)
+		public async Task<(object? Data, IError? Error)> FilterOnPropertyAndValue(ObjectValue variableToExtractFrom, string propertyToFilterOn, object valueToFilterBy, string? operatorToFilterOnValue = "=",
+			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, string? retrieveOneItem = null,
+			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false, object? defaultValue = null)
 		{
 			IError? error = (throwErrorOnEmptyResult) ? new NotFoundError() : null;
 
@@ -273,7 +280,8 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 			if (variableToExtractFrom is not ObjectValue)
 			{
 				ov = new ObjectValue("object", variableToExtractFrom);
-			} else
+			}
+			else
 			{
 				ov = (ObjectValue)variableToExtractFrom;
 			}
@@ -283,13 +291,13 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 
 
 			List<object> filteredList = new();
-			var items = ov.GetObjectValue(propertyToFilterOn);
+			var items = (string.IsNullOrEmpty(propertyToFilterOn)) ? ov : ov.GetObjectValue(propertyToFilterOn);
 			if (items == null || !items.Initiated)
 			{
 				var variableModule = GetProgramModule<VariableModule.Program>();
 				var trimmedObject = await variableModule.TrimForLlm(ov.Value, 2, 3, null, 1, 2, 2000, true);
 
-				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'", 
+				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'",
 					FixSuggestion: $"The object that is being filtered on looks like this: {trimmedObject}"));
 			}
 
@@ -300,7 +308,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				{
 					if (filterPredicate(item))
 					{
-						
+
 						var extractedItem = GetExtractedItem(item, propertyToExtract);
 						if (extractedItem != null)
 						{
@@ -310,7 +318,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 								{
 									filteredList.Add(item2);
 								}
-								
+
 							}
 							else
 							{
@@ -320,156 +328,26 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 					}
 
 				}
-
-
 			}
-			/*
-			if (variableToExtractFrom is JObject jObject)
+			else if (items is ObjectValue ov2 && ov2.Value != null && filterPredicate(ov2.Value))
 			{
-				filteredList = GetFilteredJObject(jObject, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
-			}
-			else if (variableToExtractFrom is JArray jArray)
-			{
-				filteredList = GetFilteredJObject(jArray, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
-
-			}
-			else if (variableToExtractFrom is System.Collections.IList list)
-			{
-				var dynamicList = list.ToDynamicList();
-				if (dynamicList.Count > 0 && dynamicList[0] is JObject)
+				var item = GetExtractedItem(ov2, propertyToExtract);
+				if (item != null)
 				{
-					foreach (var item in dynamicList)
-					{
-						var value = (JValue) item[propertyToFilterOn];
-						var result = filterPredicate(value);
-						if (!result) continue;
-						
-						if (propertyToExtract == null)
-						{
-							filteredList.Add(value);
-						} else if (propertyToExtract == "parent")
-						{
-							filteredList.Add(item);
-						} else if (((JObject) item).ContainsKey(propertyToExtract))
-						{
-							filteredList.Add(item[propertyToExtract]);
-						} else
-						{
-							filteredList.Add(value);
-						}
-					}
-
+					filteredList.Add(item);
 				}
-				else if (dynamicList.Count > 0 && dynamicList[0] is JArray)
-				{
-					foreach (var itemInlist in dynamicList)
-					{
-						var array = (itemInlist as JArray).ToDynamicList();
-
-						filteredList.AddRange(array
-						.Where(item =>
-						{
-							var obj = item as JObject;
-							if (obj == null) { return false; }
-
-							var jValue = obj?[propertyToFilterOn] as JValue;
-
-							return filterPredicate(jValue?.Value);
-
-						})
-						.ToList());
-					}
-				}
-				else if (list.Count > 0 && TypeHelper.ImplementsDict(list[0], out IDictionary? dict2))
-				{
-					var keyName = dict2.Keys.Cast<string>().FirstOrDefault(p => p.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
-					if (keyName == null) return (null, new ProgramError($"Could not find {propertyToFilterOn} in object"));
-
-					foreach (var item in list)
-					{
-						if (!TypeHelper.ImplementsDict(item, out IDictionary? dict)) continue;
-
-						var obj = dict[keyName];
-						var result = filterPredicate(obj);
-						if (!result) continue;
-
-						if (string.IsNullOrWhiteSpace(propertyToExtract))
-						{
-							filteredList.Add(obj);
-						}
-						else if (propertyToExtract == "parent")
-						{
-							filteredList.Add(dict);
-						}
-						else
-						{
-
-							keyName = dict.Keys.Cast<string>().FirstOrDefault(p => p.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
-							if (string.IsNullOrEmpty(keyName))
-							{
-								filteredList.Add(obj);
-							}
-							else
-							{
-								filteredList.Add(dict[keyName]);
-							}
-						}
-					}
-				}
-				else
-				{
-
-					foreach (var item in list)
-					{
-
-						var property = item.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
-						if (property != null)
-						{
-							var result = filterPredicate(property.GetValue(item));
-							if (result)
-							{
-								filteredList.Add(item);
-							}
-						}
-
-					}
-
-				}
-
-
 			}
-			else if (variableToExtractFrom is IDictionary dictionary)
-			{
-				var filteredDictionary = dictionary.Cast<dynamic>()
-					.Where(entry => entry.Key.ToString().Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
-									filterPredicate(entry.Value.ToString()))
-					.ToDictionary(entry => entry.Key, entry => entry.Value);
 
-				if (filteredDictionary.Count == 0) return (null, error);
+			if (filteredList == null || filteredList.Count == 0) return (defaultValue, error);
 
-				if (retrieveOneItem == "first") return (filteredDictionary.FirstOrDefault(), null);
-				if (retrieveOneItem == "last") return (filteredDictionary.LastOrDefault(), null);
-
-				return (filteredDictionary, null);
-			}
-			else
-			{
-				var json = JsonConvert.SerializeObject(variableToExtractFrom);
-				var jsonObject = JsonConvert.DeserializeObject(json);
-				filteredList = GetFilteredJObject(jsonObject as JToken, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
-
-			}*/
-
-			if (filteredList == null || filteredList.Count == 0) return (null, error);
-
-			if (retrieveOneItem == "first") return (filteredList.FirstOrDefault(), null);
-			if (retrieveOneItem == "last") return (filteredList.LastOrDefault(), null);
+			if (retrieveOneItem == "first") return (filteredList.FirstOrDefault() ?? defaultValue, error);
+			if (retrieveOneItem == "last") return (filteredList.LastOrDefault() ?? defaultValue, error);
 			if (int.TryParse(retrieveOneItem, out int idx))
 			{
-				if (filteredList.Count > idx && idx >= 0) return (filteredList[idx], null);
-				return (null, new ProgramError($"List does not have {idx + 1} items"));
+				if (filteredList.Count > idx && idx >= 0) return (filteredList[idx], error);
+				return (defaultValue, error);
 			}
-			return (filteredList, null);
+			return (filteredList, error);
 
 		}
 
@@ -484,7 +362,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 			{
 				var parent = jValue.Parent?.Parent;
 				if (propertyToExtract == "parent") return parent;
-				
+
 				if (parent is JObject jObject)
 				{
 					if (jObject.ContainsKey(propertyToExtract)) return jObject[propertyToExtract];
@@ -494,13 +372,13 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 
 			}
 
-			if (item is ObjectValue ov) 
+			if (item is ObjectValue ov)
 			{
 				var parent = ov.Parent;
-				if (propertyToExtract == "parent") return parent;
+				if (propertyToExtract == "parent") return parent?.Value;
 
 				var ovExtracted = parent?.GetObjectValue(propertyToExtract);
-				if (ovExtracted?.Initiated == true) return ovExtracted;
+				if (ovExtracted?.Initiated == true) return ovExtracted.Value;
 
 				throw new Exception($"'{propertyToExtract}' could not be found in object.");
 
@@ -636,9 +514,10 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				{
 					bool equal = IsEqual(v, valueToFilterBy, comparer);
 					return equal;
-					
+
 				}),
-				"!=" => new Func<object, bool>(v => {
+				"!=" => new Func<object, bool>(v =>
+				{
 					bool equal = !IsEqual(v, valueToFilterBy, comparer);
 					return equal;
 				}),
@@ -667,11 +546,16 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				if (token is JValue jValue)
 				{
 					if (valueToFilterBy == jValue.Value) return true;
-					
+					if (valueToFilterBy == null)
+					{
+						return (valueToFilterBy == jValue.Value);
+					}
+
 					var val = TypeHelper.ConvertToType(jValue.Value, valueToFilterBy.GetType());
 					if (valueToFilterBy.Equals(val)) return true;
 
 					return (valueToFilterBy == val);
+
 				}
 				return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
 			}

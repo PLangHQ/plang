@@ -64,39 +64,39 @@ namespace PLangTests.Modules.DbModule
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
 
 			var dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("name", "Dwight Schrute", "System.String"));
-			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
-			dict.Add(new ParameterInfo("phone", "717 555 0177", "System.String"));
-			var id = await p.InsertAndSelectIdOfInsertedRow("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict);
+			dict.Add(new ParameterInfo("System.String", "name", "Dwight Schrute"));
+			dict.Add(new ParameterInfo("System.String", "address", "1725 Slough Avenue in Scranton, PA"));
+			dict.Add(new ParameterInfo("System.String", "phone", "717 555 0177"));
+			var id = await p.InsertAndSelectIdOfInsertedRow("data", "INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict);
 
-			var result = (dynamic) await p.Select("SELECT * FROM users");
+			var result = (dynamic) await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			dict.Add(new ParameterInfo("name", "Micheal Scott", "System.String"));
-			await p.Update("UPDATE users SET name=@name WHERE id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			dict.Add(new ParameterInfo("System.String", "name", "Micheal Scott"));
+			await p.Update("data", "UPDATE users SET name=@name WHERE id=@id", dict);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			var user = (dynamic)await p.Select("data", "SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
-			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
-			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
-			long rows = (await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
+			dict.Add(new ParameterInfo("System.String", "name", "Jim Harper"));
+			dict.Add(new ParameterInfo("System.String", "address", "1725 Slough Avenue in Scranton, PA"));
+			dict.Add(new ParameterInfo("System.String", "phone", "717 555 0178"));
+			long rows = (await p.Insert("data", "INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
 			Assert.AreEqual(1, rows);
 
-			result = await p.Select("SELECT * FROM users");
+			result = await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(2, result.Count);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			await p.Delete("DELETE FROM users where id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			await p.Delete("data", "DELETE FROM users where id=@id", dict);
 
-			result = await p.Select("SELECT * FROM users");
+			result = await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
 			await p.EndTransaction();
@@ -121,45 +121,45 @@ namespace PLangTests.Modules.DbModule
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
 
 			var dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", "12", "System.Int64"));
-			dict.Add(new ParameterInfo("name", "Dwight Schrute", "System.String"));
-			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
-			dict.Add(new ParameterInfo("phone", "717 555 0177", "System.String"));
-			var id = await p.InsertAndSelectIdOfInsertedRow("INSERT INTO users (id, name, address, phone) VALUES (@id, @name, @address, @phone);", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", "12"));
+			dict.Add(new ParameterInfo("System.String", "name", "Dwight Schrute"));
+			dict.Add(new ParameterInfo("System.String", "address", "1725 Slough Avenue in Scranton, PA"));
+			dict.Add(new ParameterInfo("System.String", "phone", "717 555 0177"));
+			var id = await p.InsertAndSelectIdOfInsertedRow("data", "INSERT INTO users (id, name, address, phone) VALUES (@id, @name, @address, @phone);", dict);
 
 
 
-			var result = (dynamic)await p.Select("SELECT * FROM users");
+			var result = (dynamic)await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			dict.Add(new ParameterInfo("name", "Micheal Scott", "System.String"));
-			await p.Update("UPDATE users SET name=@name WHERE id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			dict.Add(new ParameterInfo("System.String", "name", "Micheal Scott"));
+			await p.Update("data", "UPDATE users SET name=@name WHERE id=@id", dict);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			var user = (dynamic)await p.Select("data", "SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
-			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
-			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
-			long rows = (await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
+			dict.Add(new ParameterInfo("System.String", "name", "Jim Harper"));
+			dict.Add(new ParameterInfo("System.String", "address", "1725 Slough Avenue in Scranton, PA"));
+			dict.Add(new ParameterInfo("System.String", "phone", "717 555 0178"));
+			long rows = (await p.Insert("data", "INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
 			Assert.AreEqual(1, rows);
 
-			result = await p.Select("SELECT * FROM users");
+			result = await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(2, result.Count);
 
 			dict = new List<ParameterInfo>();
-			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			await p.Delete("DELETE FROM users where id=@id", dict);
+			dict.Add(new ParameterInfo("System.Int64", "id", id));
+			await p.Delete("data", "DELETE FROM users where id=@id", dict);
 
-			result = await p.Select("SELECT * FROM users");
+			result = await p.Select("data", "SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
-			var events = (dynamic)await p.Select("SELECT * from __Events__");
+			var events = (dynamic)await p.Select("data", "SELECT * from __Events__");
 			Assert.AreEqual(5, events.Count);
 
 			await p.EndTransaction();

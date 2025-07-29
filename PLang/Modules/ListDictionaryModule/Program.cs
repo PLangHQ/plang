@@ -249,6 +249,11 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 		[Description("Group a %variable% by key")]
 		public async Task<(object?, IError?)> GroupBy(object? obj, string key)
 		{
+			if (obj == null)
+			{
+				return (null, new ProgramError($"Object is empty, cannot group by on empty object"));
+			}
+
 			if (obj is IList list && list.Count > 0)
 			{
 				var dict = TypeHelper.AsDictionary(list[0]);
@@ -263,6 +268,7 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 					if (!dictItem.ContainsKey(key)) continue;
 
 					object keyValue = dictItem[key];
+					if (keyValue is null) continue;
 
 					groupedDict.TryGetValue(keyValue, out List<object>? groupedList);
 					if (groupedList == null) groupedList = new List<object>();

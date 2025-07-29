@@ -5,6 +5,7 @@ using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Errors.Types;
+using PLang.Events;
 using PLang.Models;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -29,21 +30,57 @@ namespace PLang.Modules.ThrowErrorModule
 
 		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
-		public async Task<IError?> Throw(object? message, string type = "error", int statusCode = 400)
+		public async Task<IError?> Throw(object? message, string key = "UserDefinedError", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
 			if (message is IError) return message as IError;
 			//await outputStreamFactory.CreateHandler().Write(message, type, statusCode);
-			return new UserInputError(message.ToString(), goalStep, type, statusCode);
+			return new UserInputError(message.ToString(), goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
 		}
 
-		[Description("Retries a step that caused an error")]
-		public async Task<IError?> Retry()
+		[Description("Mark the error as handled for the stack. Depth is how far up the stack it should end, previous goal is 1")]
+		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
+		public async Task<IError> MarkErrorAsHandled(int levels = 0)
+		{
+			var error = goal.GetVariable(ReservedKeywords.Error) as IError;
+			if (error == null) return new ProgramError("This can only be called in an event and when an error occured.", goalStep);
+
+			var @event = goal.GetVariable(ReservedKeywords.Event) as EventBinding;
+			if (@event == null) return new ProgramError("Event could not be retrieved." + ErrorReporting.CreateIssueShouldNotHappen, goalStep);
+
+			var endingGoal = @event.SourceGoal;
+			while (levels-- > 0)
+			{
+				if (endingGoal != null && endingGoal.ParentGoal != null)
+				{
+					endingGoal = endingGoal.ParentGoal;
+				}
+			}
+
+			return new ErrorHandled(error);
+		}
+
+		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]
+		public async Task<IError?> Retry(int maxRetries = 1, string? maxRetriesReachedMesage = null, string key = "MaxRetries", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
 			var error = goal.GetVariable<IError>(ReservedKeywords.Error);
 			if (error == null) return new ProgramError("No error available. Cannot retry a step when there is no error");
 			if (error.Step == null) return new ProgramError("No step available. Cannot retry a step when I dont know which step to retry");
 
+			if (error.Step.RetryCount >= maxRetries)
+			{
+				if (string.IsNullOrEmpty(maxRetriesReachedMesage))
+				{
+					maxRetriesReachedMesage = $"Max retries reached({error.Step.RetryCount})";
+				} else if (maxRetriesReachedMesage.Contains("{0}"))
+				{
+					maxRetriesReachedMesage = maxRetriesReachedMesage.Replace("{0}", error.Step.RetryCount.ToString());
+				}
+
+					return await Throw(maxRetriesReachedMesage, key, statusCode, fixSuggestion, helpfullLinks);
+			}
+
 			error.Step.Retry = true;
+			error.Step.RetryCount++;
 			return null;
 		}
 
@@ -51,7 +88,16 @@ namespace PLang.Modules.ThrowErrorModule
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> EndGoalExecution(string? message = null, int levels = 0)
 		{
-			return new EndGoal(goalStep, message ?? "", Levels: levels);
+			var endingGoal = goalStep.Goal;
+			while (levels-- > 0)
+			{
+				if (endingGoal != null && endingGoal.ParentGoal != null)
+				{
+					endingGoal = endingGoal.ParentGoal;
+				}
+			}
+
+			return new EndGoal(endingGoal, goalStep, message ?? "", Levels: levels);
 		}
 
 		[Description("Shutdown the application")]

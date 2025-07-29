@@ -490,7 +490,7 @@ namespace PLang.Modules.HttpModule
 						responseStr = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
 					}
 					properties = GetHttpResponse(properties, response);
-					return (null, new ProgramError(responseStr, goalStep, function, StatusCode: (int)response.StatusCode), properties);
+					return (null, new ProgramError(responseStr, goalStep, function, Key: response.ReasonPhrase ?? "HttpError", StatusCode: (int)response.StatusCode), properties);
 				}
 
 				if (!IsTextResponse(mediaType))

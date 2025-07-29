@@ -10,21 +10,7 @@ namespace PLang.Errors.Builder
 		public string? LlmBuilderHelp { get; set; }
 		public new object ToFormat(string contentType = "text")
 		{
-			if (contentType == "text")
-			{
-				string str = String.Empty;
-				foreach (var error in ErrorChain)
-				{
-					if (error.Step == null && Step != null) error.Step = Step;
-					if (error.Goal == null && Step != null) error.Goal = Step.Goal;
-					str += error.ToFormat() + Environment.NewLine;
-				}
-				return str;
-			}
-			else
-			{
-				return ErrorHelper.ToFormat(contentType, this);
-			}
+			return ErrorHelper.ToFormat(contentType, this);		
 		}
 		public override string ToString()
 		{
@@ -38,7 +24,13 @@ namespace PLang.Errors.Builder
 			}
 			return str;
 		}
-
+		public string Message
+		{
+			get
+			{
+				return ErrorHelper.GetErrorMessageFromChain(this);
+			}
+		}
 	}
 
 	public record MultipleBuildError(IBuilderError InitialError, string Key = "MultipleBuildError", bool ContinueBuild = true, int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : MultipleError(InitialError, Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
@@ -49,19 +41,17 @@ namespace PLang.Errors.Builder
 		public string? LlmBuilderHelp { get; set; }
 		public new object ToFormat(string contentType = "text")
 		{
-			if (contentType == "text")
-			{
-				string str = String.Empty;
-				foreach (var error in ErrorChain)
-				{
-					str += error.ToFormat() + Environment.NewLine;
-				}
-				return str;
-			} else
-			{
 				return ErrorHelper.ToFormat(contentType, this);
+			
+		}
+		public string Message
+		{
+			get
+			{
+				return ErrorHelper.GetErrorMessageFromChain(this);
 			}
 		}
+
 		public override string ToString()
 		{
 			string str = String.Empty;
