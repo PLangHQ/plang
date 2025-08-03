@@ -22,7 +22,7 @@ using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.VariableModule
 {
-	[Description("Set, Get & Return variable(s). Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm")]
+	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -47,7 +47,7 @@ namespace PLang.Modules.VariableModule
 			return await LoadWithDefaultValueInternal(varsWithValue);
 		}
 
-		[Description(@"Loads a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
+		[Description(@"Loads(not setting a variable) a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
 		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
 		{
 			return await LoadWithDefaultValueInternal(variablesWithDefaultValue);
@@ -58,6 +58,7 @@ namespace PLang.Modules.VariableModule
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 
 			var dataSource = goalStep.GetVariable<DataSource>();
+			if (dataSource == null) return (null, new ProgramError("No datasource has been set"));
 
 			List<object?> objects = new();
 			foreach (var variable in variablesWithDefaultValue)
@@ -66,7 +67,7 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key));
 				try
 				{
-					var result = await db.Select(dataSource.NameInStep, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+					var result = await db.Select(dataSource, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
 					if (result.Error != null && result.Error.Message.Contains("no such table"))
 					{
 						var createTableResult = await CreateVariablesTable(db);
@@ -98,6 +99,7 @@ namespace PLang.Modules.VariableModule
 
 					if (function?.ReturnValues == null || function?.ReturnValues?.Count == 0)
 					{
+						objects.Add(value);
 						memoryStack.Put(variable.Key, value, goalStep: goalStep);
 					}
 					else
@@ -154,8 +156,13 @@ namespace PLang.Modules.VariableModule
 		public async Task<IError?> Store([HandlesVariable] List<string> variables)
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
-			var datasource = await db.GetDataSource();
-			if (datasource.TypeFullName != typeof(SqliteConnection).FullName)
+			var datasource = goalStep.GetVariable<DataSource>();
+			if (datasource == null)
+			{
+				(datasource, var error) = await db.GetDataSource();
+				if (error != null) return error;
+			}
+			if (datasource!.TypeFullName != typeof(SqliteConnection).FullName)
 			{
 				return new ProgramError("Only sqlite is supported");
 			}

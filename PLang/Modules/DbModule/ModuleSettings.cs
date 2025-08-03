@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using Dapper;
+using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -15,14 +16,19 @@ using PLang.Exceptions.AskUser.Database;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.IO.Abstractions;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.DbModule
 {
@@ -36,11 +42,14 @@ namespace PLang.Modules.DbModule
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
 		private readonly MemoryStack memoryStack;
+		private readonly VariableHelper variableHelper;
+		private readonly IDbServiceFactory dbFactory;
+		private readonly IAppCache appCache;
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
 		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory,
-			ILogger logger, ITypeHelper typeHelper, PrParser prParser, MemoryStack memoryStack)
+			ILogger logger, ITypeHelper typeHelper, PrParser prParser, MemoryStack memoryStack, VariableHelper variableHelper, IDbServiceFactory dbFactory, IAppCache appCache)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -50,9 +59,14 @@ namespace PLang.Modules.DbModule
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
 			this.memoryStack = memoryStack;
+			this.variableHelper = variableHelper;
+			this.dbFactory = dbFactory;
+			this.appCache = appCache;
 		}
 
 		public bool UseInMemoryDataSource { get; set; } = false;
+		public bool IsBuilder { get; internal set; }
+
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
@@ -384,7 +398,7 @@ Be concise"));
 		public async Task<List<DataSource>> GetAllDataSourcesForBuilder()
 		{
 			var dataSources = settings.GetValues<DataSource>(this.GetType()).ToList();
-			for (int i=0;i< dataSources.Count;i++ )
+			for (int i = 0; i < dataSources.Count; i++)
 			{
 				(dataSources[i], _) = await ProcessDataSource(dataSources[i]);
 			}
@@ -434,10 +448,173 @@ Be concise"));
 
 			if (dataSource == null)
 			{
-				return await GetDataSourceNotFoundError(name, step);
+				return await GetDataSourceNotFoundError(dsNameAndPath.dataSourceName, step);
+			}
+
+			if (!IsBuilder && name.Contains("%"))
+			{
+				var dataSourceDynamicName = variableHelper.LoadVariables(name);
+				string cacheKey = "__plang_DataSource__" + dataSourceDynamicName;
+				var obj = await appCache.Get("__plang_DataSource__" + dataSourceDynamicName);
+				if (obj != null)
+				{
+					dataSource = (DataSource)obj;
+				}
+				else
+				{
+					(dataSource, var error) = await InitiateDatabase(dataSource, name, cacheKey);
+					if (error != null) return (dataSource, error);
+				}
 			}
 
 			return await ProcessDataSource(dataSource);
+
+		}
+
+		private async Task<(DataSource?, IError?)> InitiateDatabase(DataSource dataSource, string name, string cacheKey)
+		{
+			var dataSourceVariables = variableHelper.GetVariables(dataSource.Name);
+			string localPath = dataSource.LocalPath;
+			string connectionString = dataSource.ConnectionString;
+
+			var variables = variableHelper.GetVariables(name);
+			var emptyVariables = variables.Where(p => p.IsEmpty);
+			if (emptyVariables.Any())
+			{
+				string emptyVars = string.Join(", ", emptyVariables.Select(p => p.Name).ToArray());
+				return (null, new ProgramError($"Could not load all variables. {emptyVars} is empty."));
+			}
+
+
+			for (int i = 0; i < variables.Count; i++)
+			{
+				if (variables[i].Value == null || string.IsNullOrEmpty(variables[i].Value?.ToString()))
+				{
+					return (null, new Error($"Variable {variables[i].Name} has not been set.", "UndefinedVariable"));
+				}
+
+				localPath = localPath.Replace($"%variable{i}%", variables[i].Value.ToString());
+				connectionString = connectionString.Replace($"%variable{i}%", variables[i].Value.ToString());
+			}
+
+			string dirPath = fileSystem.Path.GetDirectoryName(localPath);
+			if (!fileSystem.Directory.Exists(dirPath))
+			{
+				fileSystem.Directory.CreateDirectory(dirPath);
+			}
+
+			if (!fileSystem.File.Exists(localPath))
+			{
+				var error = await CreateDatabase(localPath, connectionString, dataSource.Name);
+				if (error != null) return (null, error);
+			}
+			else
+			{
+				var connection = new SqliteConnection(connectionString);
+				await connection.OpenAsync();
+				var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable='SetupHash'");
+				if (result == null)
+				{
+					return (null, new Error("SetupHash is missing from __Variables__"));
+				}
+
+				var setupHashKey = "__plang_SetupHash_" + dataSource.Name;
+				var value = result.value;
+				var setupCache = await appCache.Get(setupHashKey);
+				if (value.ToString() != setupCache?.ToString())
+				{
+					var transaction = await connection.BeginTransactionAsync();
+					var error = await ExecuteSetup(transaction, dataSource.Name);
+					if (error != null)
+					{
+						await transaction.RollbackAsync();
+						await connection.CloseAsync();
+						return (null, error);
+					}
+					await transaction.CommitAsync();
+					await connection.CloseAsync();
+				}
+			}
+
+			dataSource = dataSource with { LocalPath = localPath, ConnectionString = connectionString, NameInStep = name };
+			await appCache.Set(cacheKey, dataSource, TimeSpan.FromMinutes(5));
+
+			return (dataSource, null);
+		}
+
+		private async Task<IError?> CreateDatabase(string localPath, string connectionString, string name)
+		{
+			using (var fs = fileSystem.File.Create(localPath))
+			{
+				fs.Close();
+			}
+
+			string sql = @"CREATE TABLE __Variables__ (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    variable TEXT NOT NULL UNIQUE,
+    value TEXT,
+    created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires DATETIME)";
+
+			var connection = new SqliteConnection(connectionString);
+			await connection.OpenAsync();
+			var transaction = await connection.BeginTransactionAsync();
+			await connection.ExecuteAsync(sql);
+
+			var error = await ExecuteSetup(transaction, name);
+			if (error != null)
+			{
+				await transaction.RollbackAsync();
+				await connection.CloseAsync();
+
+				fileSystem.File.Delete(localPath);
+
+				return error;
+			}
+			await transaction.CommitAsync();
+			await connection.CloseAsync();
+
+			return null;
+		}
+
+		private async Task<IError?> ExecuteSetup(DbTransaction transaction, string name)
+		{
+			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(name));
+			if (setupGoal == null) return new Error($"Could not find setup file matching datasource {name}"); ;
+
+
+			foreach (var step in setupGoal.GoalSteps)
+			{
+				if (step.Instruction == null)
+				{
+					step.Instruction = JsonHelper.ParseFilePath<Building.Model.Instruction>(fileSystem, step.AbsolutePrFilePath);
+					if (step.Instruction == null) return new Error("Could not load instruction file");
+				}
+
+				var gf = step.Instruction.Function as DbGenericFunction;
+				if (gf == null) return new Error($"Could not load generice function from instruction: {step.AbsolutePrFilePath}");
+
+				var sql = gf.GetParameter<string>("sql");
+				if (string.IsNullOrEmpty(sql)) continue;
+				try
+				{
+					await transaction.Connection!.ExecuteAsync(sql);
+				}
+				catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 1)
+				{
+					int i = 0;
+					// Error code 1 = "table already exists" in most cases
+					// Ignore and continue
+				}
+			}
+
+			var command = transaction.Connection.CreateCommand();
+			command.CommandText = @"INSERT INTO __Variables__ (variable, value) VALUES ('SetupHash', @value)
+									ON CONFLICT(variable) DO UPDATE SET value = excluded.value";
+			command.Parameters.Add(new SqliteParameter("@value", setupGoal.Hash));
+			command.ExecuteNonQuery();
+			return null;
 
 		}
 
@@ -476,6 +653,7 @@ Be concise"));
 
 		public async Task<(DataSource?, IError?)> GetDataSourceNotFoundError(string? name = null, GoalStep? step = null)
 		{
+			
 			var dataSources = await GetAllDataSources();
 			logger.LogDebug("Datasources: {0}", JsonConvert.SerializeObject(dataSources));
 

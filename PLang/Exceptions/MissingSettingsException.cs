@@ -14,6 +14,7 @@ namespace PLang.Exceptions
 		private readonly string type;
 		private readonly string key;
 		private readonly object defaultValue;
+		public string Key { get { return key; } }	
 
 		public object DefaultValue { get { return defaultValue; } }	
 		public MissingSettingsException(Type callingType, string type, string key, object defaultValue, string explain, Action<Type, string, string, object> callback) : base(explain, CreateAdapter(callback)) {

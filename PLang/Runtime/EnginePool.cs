@@ -1,18 +1,19 @@
 ﻿using LightInject;
+using Microsoft.AspNetCore.Http;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
+using PLang.Services.OutputStream;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using PLang.Services.OutputStream;
 
 namespace PLang.Runtime
 {
@@ -53,23 +54,24 @@ namespace PLang.Runtime
 			}
 		}
 
-		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null, HttpContext? httpContext = null)
 		{
 			if (_pool.TryTake(out var engine))
 			{
-				return SetProperties(engine, parentEngine, callingStep, name, outputStream);
+				return SetProperties(engine, parentEngine, callingStep, name, outputStream, httpContext);
 			}
 
 			var newEngine = _factory();
-			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream);
+			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream, httpContext);
 		}
 
-		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream)
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream, HttpContext? httpContext = null)
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
 			engine.CallbackInfos = parentEngine.CallbackInfos;
-			
+			engine.HttpContext = httpContext;
+
 			if (outputStream != null)
 			{
 				engine.SetOutputStream(outputStream);
@@ -99,9 +101,9 @@ namespace PLang.Runtime
 			return engine;
 		}
 
-		public void Return(IEngine engine)
+		public void Return(IEngine engine, bool reset = false)
 		{
-			engine.Return();
+			engine.Return(reset);
 
 			_pool.Add(engine);
 		}

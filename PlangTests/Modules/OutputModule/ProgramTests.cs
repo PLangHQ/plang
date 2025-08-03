@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using PLang.Building.Model;
 using PLang.Modules.OutputModule;
 using PLang.Services.OutputStream;
 using static PLang.Modules.OutputModule.Program;
@@ -32,7 +33,7 @@ namespace PLangTests.Modules.OutputModule
 			var p = new Program(outputStreamFactory, outputSystemStreamFactory, variableHelper, programFactory);
 			await p.Write("Hello, how are your?");
 
-			await outputStream.Received(1).Write(Arg.Any<object>());
+			await outputStream.Received(1).Write(Arg.Any<GoalStep>(), Arg.Any<object>());
 		}
 
 	}

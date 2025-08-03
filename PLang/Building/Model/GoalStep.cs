@@ -33,9 +33,7 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public string RelativePrPath { get; set; }
 
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+		[LlmIgnore]
 		public string AbsolutePrFilePath { get; set; }
 
 		[LlmIgnore]
@@ -170,6 +168,8 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public int LineNumber { get; set; }
 
+
+		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public LlmRequest LlmRequest { get; set; }
 
@@ -217,6 +217,7 @@ namespace PLang.Building.Model
 		public Stopwatch Stopwatch { get; set; }
 
 		public string UserIntent { get; internal set; }
+
 
 		public (IGenericFunction? Function, IError? Error) GetFunction(IPLangFileSystem fileSystem)
 		{

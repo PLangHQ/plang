@@ -52,7 +52,7 @@ namespace PLang.Building
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings, 
+			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings,
 			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
 		{
 			this.typeHelper = typeHelper;
@@ -73,24 +73,56 @@ namespace PLang.Building
 
 		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			var result = await BuildInstructionInternal(stepBuilder, goal, step, previousBuildError);
-			if (result.Error == null)
+			try
 			{
-				if (previousBuildError != null)
+				var result = await BuildInstructionInternal(stepBuilder, goal, step, previousBuildError);
+				if (result.Error == null)
 				{
-					logger.LogInformation("  - 👍 Error has been fixed");
+					if (previousBuildError != null)
+					{
+						logger.LogInformation("  - 👍 Error has been fixed");
+					}
+					return result;
 				}
-				return result;
+
+				if (previousBuildError != null) result.Error.ErrorChain.Add(previousBuildError);
+				if (result.Error is IInvalidModuleError ime) return result;
+
+				if (!result.Error.ContinueBuild || !result.Error.Retry) return result;
+				if (result.Error.RetryCount < GetErrorCount(step, result.Error)) return (result.Instruction, FunctionCouldNotBeCreated(step));
+
+				logger.LogWarning($"- Error building step, will try again. Error: {result.Error.Message}");
+				return await BuildInstruction(stepBuilder, goal, step, result.Error);
 			}
+			catch (Exception ex2)
+			{
+				string? innerMessage = ex2.InnerException?.Message;
+				if (ex2.InnerException?.InnerException != null)
+				{
+					innerMessage = ex2.InnerException?.InnerException.Message;
+				}
+				string error = $@"
+<error>
+{innerMessage}
+{ex2.Message}
+<error>
 
-			if (previousBuildError != null) result.Error.ErrorChain.Add(previousBuildError);
-			if (result.Error is IInvalidModuleError ime) return result;
+";
+				if (step.Instruction?.LlmRequest != null)
+				{
+					foreach (var llmRequest in step.Instruction.LlmRequest)
+					{
+						error += $@"<llm_response>
+{llmRequest.RawResponse}
+<llm_response>";
+					}
+				}
 
-			if (!result.Error.ContinueBuild || !result.Error.Retry) return result;
-			if (result.Error.RetryCount < GetErrorCount(step, result.Error)) return (result.Instruction, FunctionCouldNotBeCreated(step));
+				return (null, new StepBuilderError(error
 
-			logger.LogWarning($"- Error building step, will try again. Error: {result.Error.Message}");
-			return await BuildInstruction(stepBuilder, goal, step, result.Error);
+
+, step, ex: ex2, Retry: false, ContinueBuild: false));
+			}
 		}
 
 
@@ -254,7 +286,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			}
 
 			(instruction, var error) = await ValidateGoalToCall(goalStep, instruction);
-			if (error != null) return (instruction, new BuilderError(error) {  Retry = false });
+			if (error != null) return (instruction, new BuilderError(error) { Retry = false });
 
 			return (instruction, null);
 		}

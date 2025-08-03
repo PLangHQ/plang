@@ -16,6 +16,11 @@ namespace PLang.Utils
 				AppContext.SetSwitch(ReservedKeywords.Debug, true);
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}
+			if (args.FirstOrDefault(p => p == "--env") != null)
+			{
+				AppContext.SetSwitch(ReservedKeywords.Environment, true);
+			}
+
 			var csdebug = args.FirstOrDefault(p => p == "--csdebug") != null;
 			if (csdebug && !Debugger.IsAttached)
 			{

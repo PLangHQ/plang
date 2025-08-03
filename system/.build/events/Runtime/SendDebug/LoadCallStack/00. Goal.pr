@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-07-29T11:29:44.7897413+00:00",
       "WaitForExecution": true,
@@ -26,7 +26,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 46,
+      "LineNumber": 47,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -75,10 +75,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3891c78b1884356666a362d0fb879e9d5eebaaa212507cce53ee7acd9017227f",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "72c9309107b387e6dd83980bc810cf35937759cb42cc1ec4b760480d23a6434b",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
-      "UserIntent": "Add a new goal entry with its name and absolute path to the call stack variable"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -93,7 +93,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ccf010f407ffa2aadea2177d1d5d0a904336c14bad43a2cb4290635cd6685e88",
+  "Hash": "a3d6c0e22ba6335380524724beaf8bd0931f7c29b0e8ec675be865c51ebd82b3",
   "IncomingVariablesRequired": {
     "callStack": "An array that holds the current call stack entries."
   },

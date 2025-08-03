@@ -50,9 +50,7 @@ namespace PLang.Building.Model
 		public string AppName { get; set; }
 		public string GoalFileName { get; set; }
 
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+		[LlmIgnore]
 		public string PrFileName { get; set; }
 		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
@@ -64,34 +62,22 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public string RelativePrFolderPath { get; set; }
 		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+		[LlmIgnore]
 		public string AbsoluteGoalPath { get; set; }
-		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+
+		[IgnoreWhenInstructed]
 		public string AbsoluteGoalFolderPath { get; set; }
-		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+
+		[LlmIgnore]
 		public string AbsolutePrFilePath { get; set; }
-		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+
+		[LlmIgnore]
 		public string AbsolutePrFolderPath { get; set; }
-		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+
+		[LlmIgnore]
 		public string AbsoluteAppStartupFolderPath { get; set; }
-		
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
+
+		[LlmIgnore]
 		public string RelativeAppStartupFolderPath { get; set; }
 		[LlmIgnore]
 		public string BuilderVersion { get; set; }

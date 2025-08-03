@@ -18,7 +18,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.ValidateModule
 {
-	[Description("Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.")]
+	[Description("Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. This does NOT replace if statements")]
 	public class Program : BaseProgram
 	{
 		public Program()

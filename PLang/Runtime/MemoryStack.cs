@@ -411,8 +411,8 @@ namespace PLang.Runtime
 			if (!variable.Value.Initiated) return ObjectValue.Nullable(keyPath.FullPath);
 
 			//sub variable, e.g. %user.name%, %now+5days%
-			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
-
+			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath, variable.Value.Initiated);
+			
 			return ov;
 
 

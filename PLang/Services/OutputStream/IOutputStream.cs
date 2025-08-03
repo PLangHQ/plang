@@ -14,10 +14,9 @@ namespace PLang.Services.OutputStream
 		public string Output { get; }
 		public bool IsStateful { get; }
 		public bool IsFlushed { get; set; }
-		public GoalStep Step { get; set; }
-		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null);
+		public Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null);
         public string Read();
-        public Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null);
+        public Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null);
 		
     }
 

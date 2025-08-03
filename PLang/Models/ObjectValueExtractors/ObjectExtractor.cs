@@ -1,9 +1,12 @@
-﻿using Microsoft.Playwright;
+﻿using AngleSharp.Io.Dom;
+using Microsoft.Playwright;
 using Newtonsoft.Json.Linq;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
+using System.Collections;
+using System.Linq.Dynamic.Core;
 
 namespace PLang.Models.ObjectValueExtractors
 {
@@ -20,7 +23,40 @@ namespace PLang.Models.ObjectValueExtractors
 
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
-			if (segment.Type == SegmentType.Index) throw new NotImplementedException("Is Index on DictionaryExtractor");
+			if (segment.Type == SegmentType.Index)
+			{
+				int? position = segment.ValueOfPath as int?;
+				if (position == null) return null;
+
+				object? extractedObj = null;
+				if (obj is IList list)
+				{
+					if (list.Count > position)
+					{
+						extractedObj = list[position.Value];
+					}
+				} else if (obj is IDictionary dict)
+				{
+					int idx = 0;
+					foreach (var item in dict)
+					{
+						if (idx++ == position.Value) {
+							extractedObj = item;
+							break;
+						}
+					}
+				} else
+				{
+					extractedObj = obj;
+				}
+
+				if (extractedObj != null)
+				{
+					return new ObjectValue($"[{position.Value}]", extractedObj, parent: parent, properties: parent.Properties);
+				}
+				
+				throw new NotImplementedException("Is Index on DictionaryExtractor");
+			}
 
 			if (obj == null) return null;
 

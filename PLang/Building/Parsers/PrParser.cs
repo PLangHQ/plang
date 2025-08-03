@@ -7,6 +7,8 @@ using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.Export;
@@ -22,6 +24,7 @@ namespace PLang.Building.Parsers
 		private List<Goal> runtimeEventsGoals = null!;
 		private List<Goal> builderEventsGoals = null!;
 
+		ConcurrentDictionary<string, List<Goal>> Events = new();
 		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
@@ -39,6 +42,21 @@ namespace PLang.Building.Parsers
 			runtimeEventsGoals = GetEventsFiles(false);
 		}
 
+		public Goal? GetEvent(string name)
+		{
+			var events = GetEvents(name);
+			return events.FirstOrDefault();
+		}
+		public List<Goal> GetEvents(string name)
+		{
+			if (Events.TryGetValue(name, out var eventGoals)) return eventGoals;
+
+			eventGoals = new();
+			if (goals == null) return eventGoals;
+			eventGoals = goals.Where(p => p.GoalName.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+			Events.TryAdd(name, eventGoals);
+			return eventGoals;
+		}
 
 		public virtual Goal? ParsePrFile(string absolutePrFilePath)
 		{
@@ -499,6 +517,32 @@ namespace PLang.Building.Parsers
 
 			return eventFiles;
 
+		}
+
+		internal void ClearVariables()
+		{
+			foreach (var goal in goals)
+			{
+				foreach (var variable  in goal.Variables)
+				{
+					if (variable.DisposeFunc != null)
+					{
+						variable.DisposeFunc().Wait();
+					}
+				}
+				
+				foreach (var step in goal.GoalSteps)
+				{
+					step.Callback = null;
+					foreach (var variable in step.Variables)
+					{
+						if (variable.DisposeFunc != null)
+						{
+							variable.DisposeFunc().Wait();
+						}
+					}
+				}
+			}
 		}
 	}
 }

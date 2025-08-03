@@ -1,2 +1,2 @@
 DebugErrorInIde
-- call goal SendDebug
+- call goal SendDebugInfo

@@ -44,6 +44,9 @@ namespace PLang.Runtime
 		void SetParentEngine(IEngine engine);
 		IEngine? ParentEngine { get; }
 		string Path { get; }
+
+		public static readonly string DefaultEnvironment = "production";
+		public string Environment { get; set; }
 		GoalStep? CallingStep { get; }
 		IPLangFileSystem FileSystem { get; }
 		List<CallbackInfo>? CallbackInfos { get; set; }
@@ -65,7 +68,7 @@ namespace PLang.Runtime
 		void SetCallingStep(GoalStep callingStep);
 		void ReplaceContext(PLangAppContext pLangAppContext);
 		void ReplaceMemoryStack(MemoryStack memoryStack);
-		void Return();
+		void Return(bool reset = false);
 		void SetOutputStream(IOutputStream outputStream);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
@@ -90,6 +93,8 @@ namespace PLang.Runtime
 	{
 		public string Id { get; init; }
 		public string Name { get; set; }
+		public string Environment { get; set; } = IEngine.DefaultEnvironment;
+
 		public string Path { get { return fileSystem.RootDirectory; } }
 		private bool disposed;
 
@@ -143,7 +148,7 @@ namespace PLang.Runtime
 		{
 			this.memoryStack = memoryStack;
 		}
-		public void Return()
+		public void Return(bool reset = false)
 		{
 			if (ParentEngine == null)
 			{
@@ -155,8 +160,17 @@ namespace PLang.Runtime
 			_parentEngine = null;
 			callingStep = null;
 			fileSystem.ClearFileAccess();
-			//this.eventRuntime.GetActiveEvents().Clear();
-
+			this.eventRuntime.GetActiveEvents().Clear();
+			foreach (var item in listOfDisposables)
+			{
+				item.Dispose();
+			}
+			if (reset)
+			{
+				CallbackInfos = null;
+				var prParser = container.GetInstance<PrParser>();
+				prParser.ClearVariables();
+			}
 			Name = string.Empty;
 		}
 
@@ -457,7 +471,7 @@ namespace PLang.Runtime
 						{
 							if (!t.IsCanceled)
 							{
-								Console.WriteLine("Reload goals after .build change");
+								Console.Write(".");
 								prParser.ForceLoadAllGoals();
 								var error = eventRuntime.Reload();
 								if (error != null)
@@ -590,6 +604,9 @@ namespace PLang.Runtime
 
 				//if (await CachedGoal(goal)) return null;
 				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, 0);
+				
+				await DisposeGoal(goal);
+
 				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
 				//await CacheGoal(goal);
 				logger.LogDebug($" - Steps done, running After events - {goal.Stopwatch.ElapsedMilliseconds}");
@@ -629,6 +646,11 @@ namespace PLang.Runtime
 
 		}
 
+		private async Task DisposeGoal(Goal goal)
+		{
+			
+		}
+
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
@@ -656,9 +678,9 @@ namespace PLang.Runtime
 				if (error != null)
 				{
 					logger.LogDebug($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
-					if (error is MultipleError me)
+					if (error is MultipleError me && me.IsErrorHandled)
 					{
-						var hasEndGoal = FindEndGoalError(me);
+						var hasEndGoal = FindErrorHandled(me);
 						if (hasEndGoal != null) error = hasEndGoal;
 					}
 					if (error is EndGoal endGoal)
@@ -686,14 +708,14 @@ namespace PLang.Runtime
 
 
 
-		private IError? FindEndGoalError(MultipleError me)
+		private IError? FindErrorHandled(MultipleError me)
 		{
-			var hasEndGoal = me.ErrorChain.FirstOrDefault(p => p is EndGoal);
+			var hasEndGoal = me.ErrorChain.FirstOrDefault(p => p is IErrorHandled);
 			if (hasEndGoal != null) return hasEndGoal;
 			var handledEventError = me.ErrorChain.FirstOrDefault(p => p is HandledEventError) as HandledEventError;
 			if (handledEventError != null)
 			{
-				if (handledEventError.InitialError is EndGoal) return handledEventError.InitialError;
+				if (handledEventError.InitialError is IErrorHandled) return handledEventError.InitialError;
 			}
 			return null;
 		}
@@ -826,7 +848,7 @@ private async Task CacheGoal(Goal goal)
 				if (result.Error != null)
 				{
 					result = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount);
-					if (result.Error != null && result.Error is not IErrorHandled) return result;
+					if (result.Error != null && result.Error is MultipleError me && !me.IsErrorHandled) return result;
 				}
 				logger.LogDebug($"     - Done with ProcessPrFile, doing after events - {step.Stopwatch.ElapsedMilliseconds}");
 
@@ -907,19 +929,12 @@ private async Task CacheGoal(Goal goal)
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
 			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
-			if (stepErrorResult.Error != null && stepErrorResult.Error is not IErrorHandled)
+			if (!stepErrorResult.Error.IsErrorHandled)
 			{
-				if (error == stepErrorResult.Error) return (null, error);
-				if (stepErrorResult.Error is MultipleError me)
-				{
-					return (null, stepErrorResult.Error);
-				}
-
-				var multipleErrors = new MultipleError(error);
-				multipleErrors.Add(stepErrorResult.Error);
-				return (null, multipleErrors);
+				return stepErrorResult;
 			}
-			if (stepErrorResult.Error is IErrorHandled) error = null;
+
+			//if (stepErrorResult.Error is IErrorHandled) error = null;
 
 			// step.Retry can be step by a goal in RunOnErrorStepEvents
 			if (step.Retry || ShouldRunRetry(errorHandler, false))
@@ -935,7 +950,7 @@ private async Task CacheGoal(Goal goal)
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
-			return (null, error);
+			return (null, stepErrorResult.Error);
 		}
 
 		private bool HasRetriedToRetryLimit(ErrorHandler? errorHandler, int retryCount)
@@ -1094,7 +1109,7 @@ private async Task CacheGoal(Goal goal)
 		private List<IDisposable> listOfDisposables = new();
 		private async Task<(object?, IError?)> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
 		{
-			var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
+			var settingsError = new Errors.AskUser.AskUserError("[" + (mse.Key) + "] " + mse.Message, async (object[]? result) =>
 			{
 				var value = result?[0] ?? null;
 				if (value is Array) value = ((object[])value)[0];

@@ -44,13 +44,13 @@ namespace PLang.Services.OutputStream
 			}
 			set { engine = value; }
 		}
-		public GoalStep Step { get; set; }
+
 		public string Output => "html";
 		public bool IsStateful { get { return isStateful; } }
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			Dictionary<string, object?> parameters = new();
 			parameters.Add("askOptions", askOptions);
@@ -62,10 +62,11 @@ namespace PLang.Services.OutputStream
 			IError? renderError = null;
 
 			var templateEngine = new Modules.TemplateEngineModule.Program(engine.FileSystem, engine.GetMemoryStack(), null);
-			templateEngine.SetGoal(Step.Goal);
-			if (!string.IsNullOrEmpty(askOptions.TemplateFile))
+			templateEngine.SetGoal(step.Goal);
+
+			if (askOptions.IsTemplateFile)
 			{
-				(content, renderError) = await templateEngine.RenderFile(askOptions.TemplateFile, parameters);
+				(content, renderError) = await templateEngine.RenderFile(askOptions.QuestionOrTemplateFile, parameters);
 			}
 			else
 			{
@@ -87,8 +88,10 @@ namespace PLang.Services.OutputStream
 			return "";
 		}
 
-		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
+			if (!stream.CanWrite) return;
+
 			string? content = TypeHelper.GetAsString(obj, Output);
 			if (content == null) return;
 

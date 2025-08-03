@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Html.Dom;
 using LightInject;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -22,6 +23,7 @@ using PLang.Utils;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -64,6 +66,7 @@ namespace PLang.Modules.DbModule
 			this.programFactory = programFactory;
 
 			this.dbSettings.UseInMemoryDataSource = true;
+			this.dbSettings.IsBuilder = true;
 		}
 
 		public record DbGenericFunction(string Reasoning, string Name,
@@ -83,7 +86,16 @@ namespace PLang.Modules.DbModule
 			{
 				dataSource = (await dbSettings.GetAllDataSources()).FirstOrDefault(p => p.IsDefault);
 			}
+			var dataSources = goalStep.Goal.GetVariable<List<DataSource>>();
+			if (dataSource != null && dataSources != null)
+			{
+				var activeDs = dataSources.FirstOrDefault(p => p.Name == dataSource.Name);
+				if (activeDs != null)
+				{
+					dataSource = dataSource with { NameInStep = activeDs.NameInStep };
+				}
 
+			}
 
 			string sqlType = "sqlite";
 			string autoIncremental = "";
@@ -104,10 +116,12 @@ namespace PLang.Modules.DbModule
 {JsonConvert.SerializeObject(methodsAndTables.DataSourceWithTableInfos)}
 <dataSourceAndTableInfos>";
 			}
+			string dataSourceName = (dataSource != null) ? $"(\"{dataSource.NameInStep ?? dataSource.Name}\")" : "";
+
 			system += @$"
 
 Additional json Response explaination:
-- DataSource: Datasource to use
+- DataSource: Datasource to use {dataSourceName}
 - TableNames: List of tables defined in sql statement
 - AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'
 
@@ -121,9 +135,13 @@ Rules:
 				system += "\n- when user defines to write into come sort of %id%, then choose the method which select id of row back";
 				if (dataSource.KeepHistory)
 				{
-					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response, make sure to include @id in sql and sqlParameters. Missing @id will cause invalid result.";
+					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response";
+					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
+					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
+					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";
 				}
-			} else
+			}
+			else
 			{
 				if (!methodsAndTables.ContainsMethod("CreateTable"))
 				{
@@ -155,6 +173,7 @@ Rules:
 `select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
 `select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
 `select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
+
 <select_example>
 ";
 			}
@@ -168,10 +187,44 @@ Rules:
 			if (dataSource != null)
 			{
 				system += $@"
-- DataSource: {dataSource.NameInStep ?? dataSource.Name}
+- The dataSourceName for all database operations is: ""{dataSource.NameInStep ?? dataSource.Name}"". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.
 - Id columns: {autoIncremental}
+
+The dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.
 ";
 			}
+
+			if (dataSources != null && dataSources.Count > 1)
+			{
+				List<string> aliases = ["main"];
+				aliases.AddRange(dataSources.Skip(1).Select(p => {
+					if (p.Name.Contains("/"))
+					{
+						return p.Name.Substring(0, p.Name.IndexOf('/'));
+					}
+					return p.Name;
+				}));
+
+				string strDataSources = string.Join("\", \"", aliases);
+				system += $@"
+These databases use ATTACH in sqlite: ""{strDataSources}"". 
+That means sql statements MUST be prefixed, e.g. `select * from data.orders`, keep the prefix in sql statement.
+<prefix_examples>";
+				foreach (var alias in aliases) {
+					system += $@"
+`select * from {alias}.products` => sql = ""select * from {alias}.products""
+`update {alias}.variants set title=%title%` => sql = ""update {alias}.variants set title=@title""
+`delete {alias}.users where %id%` => sql = ""delete {alias}.users where id=@id""
+";
+
+				}
+				system += $@"
+<prefix_example>
+";
+
+			}
+
+
 
 			AppendToSystemCommand(system);
 			var buildResult = await base.BuildWithClassDescription<DbGenericFunction>(goalStep, methodsAndTables.ClassDescription, previousBuildError);
@@ -179,6 +232,9 @@ Rules:
 
 			var gf = buildResult.Instruction.Function as DbGenericFunction;
 
+			if (gf == null || gf.Name == "N/A") {
+				return (null, new StepBuilderError("Could not mappe step to a function", goalStep, Retry: false));
+			}
 
 			var dataSourceNameParam = gf.GetParameter<string>("dataSourceName");
 			if (dataSourceNameParam?.Contains("%") == true)
@@ -227,8 +283,8 @@ Rules:
 			return buildResult;
 		}
 
-		[Description("Methods is dictionary(key:value). Key is method name, Value is confidents level(low|medium|high)")]
-		public record MethodsAndTables(string Reasoning, Dictionary<string, string> Methods, List<string> TableNames)
+		[Description("Methods is dictionary(key:value). Key is method name, Value is confidents level(low|medium|high). DataSourceName can contain variables, e.g. /user/%user.id%")]
+		public record MethodsAndTables(string Reasoning, Dictionary<string, string> Methods, List<string> TableNames, string? DataSourceName = null)
 		{
 			[LlmIgnore]
 			public DataSource? DataSource { get; set; }
@@ -315,11 +371,30 @@ When a direct method is not provided for the user intentented sql statement, use
 				return (methodsAndTables, null);
 			}
 
+			
+
 			// tables names are only needed for select, update, delete, insert, etc.
 			if (methodsAndTables.TableNames == null || methodsAndTables.TableNames.Count == 0)
 			{
 				return (null, new StepBuilderError("You must provide TableNames", step));
 			}
+
+			var program = GetProgram(step);
+			if (!string.IsNullOrEmpty(methodsAndTables.DataSourceName))
+			{
+				(var dataSource, var dsError) = await dbSettings.GetDataSource(methodsAndTables.DataSourceName);
+				if (dsError != null) return (null, new BuilderError(dsError));
+
+				(var tableInfos, dsError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.TableNames);
+				if (dsError != null && dsError.StatusCode != 404) return (null, new BuilderError(dsError));
+
+
+				methodsAndTables.DataSource = dataSource;
+				methodsAndTables.DataSourceWithTableInfos.Add("", tableInfos);
+				return (methodsAndTables, null);
+			}
+
+
 			var dataSources = await dbSettings.GetAllDataSources();
 			if (dataSources == null || dataSources.Count == 0)
 			{
@@ -338,21 +413,54 @@ When a direct method is not provided for the user intentented sql statement, use
 
 			DataSource? selectedDataSource = null;
 
+			List<string> preferedNames = new();
+			var prefixedTables = methodsAndTables.TableNames.Where(p => p.Contains("."));
+			if (prefixedTables.Count() > 0)
+			{
+				foreach (var prefix in prefixedTables)
+				{
+					string prefixName = prefix.Substring(0, prefix.IndexOf("."));
+					if (prefixName == "main")
+					{
+						var goalDataSources = step.Goal.GetVariable<List<DataSource>>();
+						if (goalDataSources != null && goalDataSources.Count > 0)
+						{
+							preferedNames.Add(goalDataSources[0].Name);
+						}
+					}
+					else
+					{
+						preferedNames.Add(prefixName);
+					}
+				}
+			}
 			IError? rError;
-			var program = GetProgram(step);
+			
 			foreach (var dataSource in dataSources)
 			{
-				(var tableInfos, rError) = await program.GetDatabaseStructure(dataSource.Name, methodsAndTables.TableNames);
+
+				(var tableInfos, rError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.TableNames);
 				if (rError != null && rError.StatusCode != 404) return (null, new BuilderError(rError));
 
 				if (tableInfos == null || tableInfos.Count == 0) continue;
 
 				if (selectedDataSource != null)
 				{
-					if (stepDataSourcesNames == null || stepDataSourcesNames.Contains(dataSource.Name))
+					if (preferedNames.Count > 0 && preferedNames.Any(p => dataSource.Name.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
 					{
-						return (null, new StepBuilderError($"Multiple datasource detected with table(s) {string.Join(",", methodsAndTables.TableNames)}. You must defined datasource in statement", step));
+						selectedDataSource = dataSource;
+
 					}
+
+					if (preferedNames.Count == 0)
+					{
+
+						if (stepDataSourcesNames == null || stepDataSourcesNames.Contains(dataSource.Name))
+						{
+							return (null, new StepBuilderError($"Multiple datasource detected with table(s) {string.Join(",", methodsAndTables.TableNames)}. You must defined datasource in statement", step, Retry: false));
+						}
+					}
+
 				}
 				else
 				{
@@ -369,7 +477,7 @@ When a direct method is not provided for the user intentented sql statement, use
 
 			}
 
-			
+
 
 			if (selectedDataSource == null)
 			{
@@ -440,6 +548,9 @@ When a direct method is not provided for the user intentented sql statement, use
 			if (dataSourceResult.Error != null) return dataSourceResult.Error;
 
 
+			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceResult.DataSourceName);
+			if (error != null) return new BuilderError(error);
+
 			var fileName = GenericFunctionHelper.GetParameterValueAsString(gf, "fileName");
 
 			var file = programFactory.GetProgram<Modules.FileModule.Program>(step);
@@ -448,7 +559,7 @@ When a direct method is not provided for the user intentented sql statement, use
 
 			var tableAllowList = GenericFunctionHelper.GetParameterValueAsList(gf, "tableAllowList");
 			using var program = GetProgram(step);
-			var result = await program.Execute(dataSourceResult.DataSourceName, readResult.Content.ToString(), tableAllowList);
+			var result = await program.Execute(dataSource, readResult.Content.ToString(), tableAllowList);
 			if (result.Error != null)
 			{
 				logger.LogWarning("  - ❌ Sql statement got error - " + result.Error.Message);
@@ -462,7 +573,10 @@ When a direct method is not provided for the user intentented sql statement, use
 		{
 			var dataSourceResult = GetDataSourceName(step, gf);
 			if (dataSourceResult.Error != null) return dataSourceResult.Error;
-
+			
+			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceResult.DataSourceName);
+			if (error != null) return new BuilderError(error);
+			
 			var sql = GenericFunctionHelper.GetParameterValueAsString(gf, "sql");
 			if (VariableHelper.IsVariable(sql))
 			{
@@ -471,7 +585,7 @@ When a direct method is not provided for the user intentented sql statement, use
 
 			var tableAllowList = GenericFunctionHelper.GetParameterValueAsList(gf, "tableAllowList");
 			using var program = GetProgram(step);
-			var result = await program.Execute(dataSourceResult.DataSourceName, sql, tableAllowList);
+			var result = await program.Execute(dataSource, sql, tableAllowList);
 			if (result.Error != null)
 			{
 				return new BuilderError(result.Error) { Retry = false };
@@ -495,6 +609,8 @@ When a direct method is not provided for the user intentented sql statement, use
 
 			List<string> MethodsToValidate = ["Select", "SelectOneRow", "Update", "InsertOrUpdate", "InsertOrUpdateAndSelectIdOfRow", "Insert", "InsertAndSelectIdOfInsertedRow", "Delete"];
 
+			(var dataSource, var dataSourceError) = await dbSettings.GetDataSource(dataSourceName);
+			if (dataSourceError != null) return (instruction, new BuilderError(dataSourceError));
 
 			var sql = GenericFunctionHelper.GetParameterValueAsString(gf, "sql");
 			if (string.IsNullOrEmpty(sql)) return (instruction, null);
@@ -510,7 +626,22 @@ When a direct method is not provided for the user intentented sql statement, use
 				return (instruction, new StepBuilderError("Select statement MUST have ReturnValues", step));
 			}
 
-			(var validSql, dataSourceName, var error) = await IsValidSql(sql, dataSourceName, step);
+			if (gf.TableNames?.Any(p => p.Contains(".")) == true)
+			{
+				// when database is attached, the table name are prefixed. 
+				// to validate, we need remove the prefix.
+				foreach (var tableName in gf.TableNames)
+				{
+					if (tableName.Contains("."))
+					{
+						var newName = tableName.Substring(tableName.IndexOf(".") + 1);
+						sql = sql.Replace(tableName, newName);
+					}
+				}
+			}
+
+
+			(var validSql, dataSourceName, var error) = await IsValidSql(sql, dataSource, step);
 			if (error == null)
 			{
 				var updatedParams = gf.Parameters
@@ -527,7 +658,7 @@ When a direct method is not provided for the user intentented sql statement, use
 
 
 			using var program = GetProgram(step);
-			var tableStructure = await program.GetDatabaseStructure(dataSourceName, gf.TableNames);
+			var tableStructure = await program.GetDatabaseStructure(dataSource, gf.TableNames);
 
 			bool retry = error.Retry;
 			string info = "";
@@ -554,12 +685,17 @@ Reason:{error.Message}", step,
 			var dataSourceNames = gf.GetParameter<List<string>>("dataSourceNames");
 			if (dataSourceNames == null || dataSourceNames.Count == 0) return null;
 
-			var dataSourceName = dataSourceNames[0];
-			var convertedDataSourceName = ConvertVariableNamesInDataSourceName(variableHelper, dataSourceName);
-			(var dataSource, var error) = await dbSettings.GetDataSource(convertedDataSourceName);
-			if (error != null) return new StepBuilderError(error, step);
+			List<DataSource> dataSources = new();
+			foreach (var dataSourceName in dataSourceNames)
+			{
+				var convertedDataSourceName = ConvertVariableNamesInDataSourceName(variableHelper, dataSourceName);
+				(var dataSource, var error) = await dbSettings.GetDataSource(convertedDataSourceName);
+				if (error != null) return new StepBuilderError(error, step);
 
-			step.Goal.AddVariable(dataSource);
+				dataSource = dataSource with { NameInStep = dataSourceName };
+				dataSources.Add(dataSource);
+			}
+			step.Goal.AddVariable(dataSources);
 
 			return null;
 		}
@@ -653,19 +789,18 @@ Reason:{error.Message}", step,
 
 			if (dataSourceResult.DataSource!.KeepHistory == false) return (instruction, null);
 
-			var parameter = gf.Parameters?.FirstOrDefault(p => p.Name.Equals("sqlParameters"));
-			if (parameter == null) return (instruction, new StepBuilderError("No parameters included. It needs at least to have @id", step));
 
-			var parameterInfos = TypeHelper.ConvertToType<List<ParameterInfo>>(parameter.Value);
+			var parameterInfos = gf.GetParameter<List<ParameterInfo>>("sqlParameters");
 			if (parameterInfos == null)
 			{
-				return (instruction, new StepBuilderError("Instruction file is invalid. Could not deserialize ParameterInfo list", step));
+				return (instruction, new StepBuilderError("No parameters included. It needs at least to have @id", step));
 			}
+			var sql = gf.GetParameter<string>("sql"); 
 
-			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id");
-			if (hasId != null || parameterInfos.Count == 0) return (instruction, null);
-
-			return (instruction, new StepBuilderError($"No @id provided in sqlParameters. This is required for this datasource: {dataSourceResult.DataSource!.Name}", step));
+			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id") != null && sql.Contains("@id");
+			if (hasId || parameterInfos.Count == 0) return (instruction, null);
+			
+			return (instruction, new StepBuilderError($"No @id provided in either sqlParameters or sql statement. @id MUST be provided in both. This is required for this datasource: {dataSourceResult.DataSource!.Name}", step));
 
 
 		}
@@ -781,25 +916,14 @@ Reason:{error.Message}", step,
 		}
 
 
-		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, string dataSourceName, GoalStep step)
+		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, DataSource dataSource, GoalStep step)
 		{
-
-			if (string.IsNullOrEmpty(dataSourceName))
-			{
-				var dataSource = step.GetVariable<DataSource>();
-				if (dataSource != null)
-				{
-					dataSourceName = dataSource.Name;
-				}
-			}
-
 			var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
-			if (!anchors.ContainsKey(dataSourceName))
+			if (!anchors.ContainsKey(dataSource.Name))
 			{
-				(dataSourceName, _) = dbSettings.GetNameAndPathByVariable(dataSourceName, null);
-				if (!anchors.ContainsKey(dataSourceName))
+				if (!anchors.ContainsKey(dataSource.Name))
 				{
-					return (false, dataSourceName, new StepBuilderError($"Data source name '{dataSourceName}' does not exists.", step,
+					return (false, dataSource.Name, new StepBuilderError($"Data source name '{dataSource.Name}' does not exists.", step,
 					 FixSuggestion: $@"Choose datasource name from one of there: {string.Join(", ", anchors.Select(p => p.Key))}"));
 				}
 			}
@@ -813,10 +937,10 @@ Reason:{error.Message}", step,
 
 
 			var anchor = anchors
-				.FirstOrDefault(kvp => kvp.Key.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
+				.FirstOrDefault(kvp => kvp.Key.Equals(dataSource.Name, StringComparison.OrdinalIgnoreCase));
 			if (anchor.Key == null)
 			{
-				return (false, dataSourceName, new StepBuilderError($"Could not find data source {dataSourceName} to validate sql", step));
+				return (false, dataSource.Name, new StepBuilderError($"Could not find data source {dataSource.Name} to validate sql", step));
 			}
 
 			try
@@ -832,7 +956,7 @@ Reason:{error.Message}", step,
 				string errorInfo = "Error(s) while trying to valid the sql.\n";
 				errorInfo += $"\tDataSource: {anchor.Key} - Error Message:{ex.Message}\n";
 
-				return (false, dataSourceName, new StepBuilderError(errorInfo, Step: step, Retry: false));
+				return (false, dataSource.Name, new StepBuilderError(errorInfo, Step: step, Retry: false));
 			}
 
 		}

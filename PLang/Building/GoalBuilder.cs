@@ -149,7 +149,7 @@ namespace PLang.Building
 					return buildStepError;
 				}
 			}
-
+			goal.GoalSteps[i].Hash = null;
 			goal.GoalSteps[i].Hash = JsonConvert.SerializeObject(goal.GoalSteps[i], GoalSerializer.Settings).ComputeHash().Hash;
 			WriteToGoalPrFile(goal);
 
@@ -264,6 +264,12 @@ namespace PLang.Building
 					logger.LogDebug($"   - Done running builder methods - {stopwatch.ElapsedMilliseconds}");
 				}
 
+				if (string.IsNullOrEmpty(step.Hash))
+				{
+					step.IsValid = false;
+					step.Reload = false;
+					continue;
+				}
 				step.IsValid = true;
 
 			}

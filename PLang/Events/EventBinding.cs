@@ -54,15 +54,19 @@ namespace PLang.Events
 		[IgnoreWhenInstructed]
 		public string UniqueId { get { return Guid.NewGuid().ToString(); } }
 		[JsonIgnore]
+		[IgnoreWhenInstructed]
 		public Goal? Goal { get; set; }
 		[JsonIgnore]
+		[IgnoreWhenInstructed]
 		public GoalStep? GoalStep { get; set; }
 		[JsonIgnore]
+		[IgnoreWhenInstructed]
 		public Instruction? Instruction { get; set; }
 
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }
 		[JsonIgnore]
+		[IgnoreWhenInstructed]
 		public Goal SourceGoal { get; internal set; }
 		[JsonIgnore]
 		public GoalStep SourceStep { get; internal set; }

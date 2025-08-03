@@ -22,11 +22,11 @@ namespace PLang.Utils
 			multipleError.Add(secondError);
 			return multipleError;
 		}
-		public static IError GetMultipleError(IError initialError, IError? secondError)
+		public static MultipleError GetMultipleError(IError initialError, IError? secondError)
 		{
-			if (secondError == null) return initialError;
-
 			var multipleError = new MultipleError(initialError);
+			if (secondError == null) return multipleError;
+			
 			multipleError.Add(secondError);
 			return multipleError;
 		}
@@ -55,32 +55,17 @@ namespace PLang.Utils
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 
-			if (error is RuntimeEventError rve && rve.InitialError != null)
+			if (error is MultipleError me)
 			{
-				//error = rve.InitialError;
+				string str = ToFormat(contentType, me.InitialError, propertyOrder, extraInfo).ToString();
+				foreach (var item in me.ErrorChain)
+				{
+					if (item is ErrorHandled) continue;
+					str += "\n\n------------\n" + ToFormat(contentType, item, propertyOrder, extraInfo).ToString();
+				}
+				return str;
 			}
 
-
-			if (error is IUserInputError && contentType == "json")
-			{
-				JsonRpcError jsonRpcError = new()
-				{
-					Code = error.StatusCode,
-					Message = error.Message//, Data = data
-				};
-
-				if (JsonHelper.IsJson(error.Message))
-				{
-					return error.Message;
-				}
-				else
-				{
-					var obj = new JObject();
-					obj.Add("error", true);
-					obj.Add("message", error.Message);
-					return obj;
-				}
-			}
 			var errorType = error.GetType();
 			var properties = error.GetType().GetProperties();
 			var propertyOrderValue = new Dictionary<string, object?>();
@@ -150,7 +135,7 @@ namespace PLang.Utils
 				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 🧩 Key:  {error.Key}
-#️⃣ StatusCode:  {error.StatusCode}
+#️⃣  StatusCode:  {error.StatusCode}
 
 🔍   ================== Error Details ==================   🔍
 
@@ -217,18 +202,8 @@ namespace PLang.Utils
 				}
 				else
 				{
-					foreach (var param in genericFunction.Parameters)
-					{
-						if (parameterValues.ContainsKey(param.Name))
-						{
-							var value = parameterValues[param.Name]?.ToString().MaxLength(5000) ?? "[empty]";
-							paramsStr += $"\t{param.Name} : {value}\n";
-						}
-						else
-						{
-							paramsStr += $"\t{param.Name} : [empty]\n";
-						}
-					}
+					paramsStr = GetFormattedGfParameters(genericFunction.Parameters, parameterValues);
+					
 				}
 				string returnStr = "";
 				if (genericFunction.ReturnValues != null && genericFunction.ReturnValues.Count > 0)
@@ -326,6 +301,34 @@ namespace PLang.Utils
 			}
 
 			return message;
+		}
+
+		private static string GetFormattedGfParameters(List<Parameter>? parameters, Dictionary<string, object?> parameterValues)
+		{
+			string paramsStr = "\n";
+			foreach (var param in parameters)
+			{
+				if (parameterValues.ContainsKey(param.Name))
+				{
+					var paramValue = parameterValues[param.Name];
+					if (paramValue != null && (paramValue.GetType().IsPrimitive || paramValue is string))
+					{
+						var value = parameterValues[param.Name]?.ToString().MaxLength(5000) ?? "[empty]";
+						paramsStr += $"\t\t{param.Name} : {value}\n";
+					} else
+					{
+						var value = JsonConvert.SerializeObject(parameterValues[param.Name]).MaxLength(5000) ?? "[empty]";
+						paramsStr += $"\t\t{param.Name} : {value}\n";
+					}
+					
+				}
+				else
+				{
+					paramsStr += $"\t\t{param.Name} : [empty]\n";
+				}
+			}
+
+			return paramsStr;
 		}
 
 		internal static string MakeForLlm(IBuilderError error)

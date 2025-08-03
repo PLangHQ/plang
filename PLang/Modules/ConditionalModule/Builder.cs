@@ -26,6 +26,17 @@ namespace PLang.Modules.ConditionalModule
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
+			if (step.NextStep?.Indent > step.Indent)
+			{
+				AppendToSystemCommand(@"This if statement has nested block.");
+			}
+			if (step.Text.Contains("%!"))
+			{
+				AppendToSystemCommand(@"variables starting with ! are global or app scoped variable, such a %!error%, %!goal%, etc. 
+statments like `if %!error.Handled% does NOT mean it is false
+");
+			}
+
 			return await Build(step, null);
 		}
 

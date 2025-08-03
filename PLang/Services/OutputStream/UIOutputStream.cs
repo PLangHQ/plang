@@ -18,8 +18,6 @@ namespace PLang.Services.OutputStream
 		private bool disposed;
 
 		public MemoryStack? MemoryStack { get; internal set; }
-		public Goal? Goal { get; internal set; }
-		public GoalStep? GoalStep { get; internal set; }
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
 		StringBuilder sb;
@@ -43,7 +41,7 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			return await IForm.Ask(askOptions, callback, error);
 		}
@@ -87,14 +85,14 @@ namespace PLang.Services.OutputStream
 			return "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
-			await Write(obj, type, statusCode, -1, paramaters);
+			await Write(step, obj, type, statusCode, -1, paramaters);
 		}
 
 
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, int stepNr = -1, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, int stepNr = -1, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) return;
 			if (statusCode == 200)
@@ -133,14 +131,6 @@ namespace PLang.Services.OutputStream
 
 		}
 
-
-
-
-		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
-		{
-			await Write(obj, type, statusCode, []);
-			Flush();
-		}
 
 		public virtual void Dispose()
 		{

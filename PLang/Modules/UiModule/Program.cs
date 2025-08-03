@@ -28,7 +28,7 @@ namespace PLang.Modules.UiModule
 	{
 		Task Flush();
 	}
-	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI")]
+	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript.")]
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -117,12 +117,15 @@ namespace PLang.Modules.UiModule
 			Event,          // click, change, …
 		}
 
-		[Description("Member should match case sensitive the javascript member attribute, e.g. innerHTML")]
+		[Description(@"Member should match case sensitive the javascript member attribute, e.g. innerHTML
+
+Attribute: Member is the key in the SetAttribute js method
+")]
 		public record DomInstruction(string Selector, string Member, object? Value, DomMemberKind Kind = DomMemberKind.Property);
 		public async Task<IError?> SetElement(List<DomInstruction> domInstructions)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(domInstructions);
+			await outputStream.Write(goalStep, domInstructions);
 			return null;
 
 		}
@@ -132,7 +135,7 @@ namespace PLang.Modules.UiModule
 		public async Task<IError?> RemoveElement(List<DomRemove> domRemoves)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(domRemoves);
+			await outputStream.Write(goalStep, domRemoves);
 			return null;
 
 		}
@@ -141,7 +144,7 @@ namespace PLang.Modules.UiModule
 		public async Task<IError?> ExecuteJavascript(JavascriptFunction javascriptFunction)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(javascriptFunction);
+			await outputStream.Write(goalStep, javascriptFunction);
 			return null;
 		}
 
@@ -163,11 +166,19 @@ namespace PLang.Modules.UiModule
 
 
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
-		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null, string? Target = null, string LayoutName = "default", bool RenderToOutputstream = false);
+
+
+		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null, 
+			string? CssSelector = null, string Action = "innerHTML", bool Unique = false, string LayoutName = "default", bool RenderToOutputstream = false);
 		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
 ```plang
 - render product.html => renderToOutputstream = true
 - render frontpage.html, write to %html% => renderToOutputstream = false
+- render product.html to #main => renderToOutputstream = true, cssSelector=""#main""
+
+CssSelector can be null when not defined by user.
+Action:innerHTML|innerText|append|prepend|replace|outerHTML|outerText
+Unique: default is false. this element should only exist one time on web page, it will not overwrite existing element
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
 		{
@@ -201,10 +212,26 @@ namespace PLang.Modules.UiModule
 				}
 			}
 
-			if (options.RenderToOutputstream)
+			if (options.Parameters == null)
+			{
+				options = options with { Parameters = new() };
+			}
+			options.Parameters.Add("unique", options.Unique);
+
+			if (!string.IsNullOrEmpty(options.CssSelector))
+			{
+				options.Parameters.Add("cssSelector", options.CssSelector);
+			}			
+			
+			if (!string.IsNullOrEmpty(options.Action))
+			{
+				options.Parameters.Add("action", options.Action);
+			}
+
+			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{
 
-				await outputStreamFactory.CreateHandler().Write(content);
+				await outputStreamFactory.CreateHandler().Write(goalStep, content, parameters: options.Parameters);
 			}
 
 			return (options, null);

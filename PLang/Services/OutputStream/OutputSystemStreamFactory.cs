@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Utils;
 
@@ -35,7 +36,8 @@ namespace PLang.Services.OutputStream
 		{
 			var serviceName = (name != null) ? name : currentType;
 
-			return container.GetInstance<IOutputStream>(serviceName);
+			var os = container.GetInstance<IOutputStream>(serviceName);
+			return os;
 		}
 	}
 }

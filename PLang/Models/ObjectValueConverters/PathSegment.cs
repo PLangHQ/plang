@@ -1,4 +1,5 @@
 ﻿using PLang.Models.ObjectValueExtractors;
+using PLang.Runtime;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,13 +15,16 @@ namespace PLang.Models.ObjectValueConverters
 	{
 		Path, Index, Method, Math
 	}
-	public record PathSegment(string Value, SegmentType Type);
+	public record PathSegment(string Value, SegmentType Type)
+	{
+		public object? ValueOfPath;
+	};
 
 	public static class PathSegmentParser
 	{
 		static ConcurrentDictionary<string, List<PathSegment>> PathCache = new();
 
-		public static List<PathSegment> ParsePath(string path)
+		public static List<PathSegment> ParsePath(string path, MemoryStack? memoryStack = null)
 		{
 			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
 
@@ -67,7 +71,8 @@ namespace PLang.Models.ObjectValueConverters
 					}
 					else if (match.Groups[2].Success)
 					{
-						segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Index));
+						var position = memoryStack.Get<object>(match.Groups[2].Value);
+						segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Index) {  ValueOfPath = position });
 					}
 				}
 			} catch (Exception ex)

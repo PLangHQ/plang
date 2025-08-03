@@ -14,6 +14,7 @@ namespace PLang.Errors.Events
 
 	public record HandledEventError(IError InitialError, int StatusCode, string Key, string Message, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : IEventError, IErrorHandled
 	{
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public GoalStep? Step { get; set; }
 		public Goal Goal { get; set; }
 

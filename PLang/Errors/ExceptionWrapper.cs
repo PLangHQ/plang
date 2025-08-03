@@ -13,6 +13,7 @@ namespace PLang.Errors
 {
 	public class ExceptionWrapper : Exception, IError, IBuilderError
 	{
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public bool Retry => false;
 		public ExceptionWrapper(IError error) : base(error.Message)
 		{

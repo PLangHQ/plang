@@ -76,10 +76,20 @@ namespace PLang.Utils
 			{
 				foreach (var item in callbackData)
 				{
-					var obj = memoryStack.Get(item.Key);
-					if (obj != null)
+					if (item.Value == null) continue;
+
+					if (VariableHelper.IsVariable(item.Value))
 					{
-						var encryptedValue = await encryption.Encrypt(obj);
+						var obj = memoryStack.Get(item.Value.ToString());
+						if (obj != null)
+						{
+							var encryptedValue = await encryption.Encrypt(obj);
+							callbackData.AddOrReplace(item.Key, encryptedValue);
+						}
+					}
+					else
+					{
+						var encryptedValue = await encryption.Encrypt(item.Value);
 						callbackData.AddOrReplace(item.Key, encryptedValue);
 					}
 				}

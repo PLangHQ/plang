@@ -20,7 +20,7 @@ namespace PLang.Errors.Handlers
         {
 			var askOptions = new AskOptions(error.Message);
 
-            (var result, var askError) = await outputStreamFactory.CreateHandler().Ask(askOptions);
+            (var result, var askError) = await outputStreamFactory.CreateHandler().Ask(error.Step, askOptions);
 			if (askError != null) return (false, askError);
 
             return await error.InvokeCallback([result]);

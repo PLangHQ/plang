@@ -27,7 +27,7 @@ namespace PLang.Services.OutputStream
 
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
-		public GoalStep Step { get; set; }
+		
 
 		public string Output => "text";
 		public bool IsStateful => false;
@@ -35,13 +35,13 @@ namespace PLang.Services.OutputStream
 		public bool IsFlushed { get; set; }
 		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			throw new NotImplementedException("WebsocketOutputStream.Ask");
 
 			using var ms = new MemoryStream();
 			var jsonOutputStream = new JsonOutputStream(ms, Encoding.UTF8, IsStateful);
-			(_, error) = await jsonOutputStream.Ask(askOptions, callback, error);
+			(_, error) = await jsonOutputStream.Ask(step, askOptions, callback, error);
 			if (error != null) return (null, error);
 
 			await webSocket.SendAsync(ms.ToArray(), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -54,7 +54,7 @@ namespace PLang.Services.OutputStream
 			throw new NotImplementedException();
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) { return; }
 

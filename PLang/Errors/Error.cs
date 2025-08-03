@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors.Events;
@@ -8,11 +9,13 @@ using PLang.Utils;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Errors
 {
 	public interface IError
 	{
+		public string Id { get; }
 		public int StatusCode { get; }
 		public string Key { get; }
 		public string Message { get; }
@@ -55,6 +58,7 @@ namespace PLang.Errors
 			this.HelpfulLinks = HelpfulLinks;
 		}
 		//public Error(IErrorReporting error)
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
 		public string? FixSuggestion { get; set; }
@@ -142,7 +146,16 @@ namespace PLang.Errors
 
 		public IError? InitialError { get; } = null;
 	}
+	public class ObjectValueConverter : System.Text.Json.Serialization.JsonConverter<ObjectValue>
+	{
+		public override ObjectValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			=> throw new NotImplementedException();
 
+		public override void Write(Utf8JsonWriter writer, ObjectValue value, JsonSerializerOptions options)
+		{
+			System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+		}
+	}
 	public class IErrorConverter : System.Text.Json.Serialization.JsonConverter<IError>
 	{
 		public override IError Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -151,8 +164,16 @@ namespace PLang.Errors
 		public override void Write(Utf8JsonWriter writer, IError value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
-			writer.WriteString("Message", value.Message);
-			writer.WriteString("ToString", value.ToFormat("text").ToString());
+			writer.WriteString("message", value.Message);
+			writer.WriteString("details", ErrorHelper.ToFormat("text", value).ToString());
+			writer.WriteString("key", value.Key);
+			writer.WriteString("type", value.GetType().Name);
+			if (value is UserInputError uie)
+			{
+				writer.WriteString("callback", JsonConvert.SerializeObject(uie.Callback).ToBase64());
+
+			}
+			writer.WriteString("statusCode", value.StatusCode.ToString());
 			writer.WriteEndObject();
 		}
 	}

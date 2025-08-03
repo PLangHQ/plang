@@ -2,6 +2,7 @@
 using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
@@ -14,6 +15,8 @@ using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using RazorEngineCore;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Pipelines;
@@ -22,6 +25,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using UAParser.Objects;
 using static PLang.Modules.FileModule.CsvHelper;
+using static PLang.Modules.OutputModule.Program;
+using static PLang.Modules.UiModule.Program;
+using static PLang.Runtime.Startup.ModuleLoader;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
@@ -91,63 +97,22 @@ namespace PLang.Modules.OutputModule
 			User = 0, System = 1
 		}
 
-		[Description("Remove % from AnswerVariableName. TemplateFile points to a file for custom rendering")]
-		public class AskOptions
+		[Description("QuestionOrTemplateFile either the question or points to a file for custom rendering")]
+		public record AskOptions(string QuestionOrTemplateFile, int StatusCode = 202,
+			Dictionary<string, object?>? CallbackData = null, GoalToCallInfo? OnCallback = null,
+			UserOrSystemEnum? UserOrSystem = UserOrSystemEnum.User, string? Channel = "default")
+
 		{
-			public string Question { get; set; }
-
-			[IgnoreWhenInstructed]
-			public int StatusCode { get; set; }
-
-			public Dictionary<string, string>? ValidationRegexPatternAndErrorMessage { get; set; }
-			public Dictionary<string, object?>? CallbackData { get; set; }
-			[IgnoreWhenInstructed]
-			public Dictionary<string, object>? Parameters { get; set; }
-			public Dictionary<string, string>? Choices { get; set; }
-			public bool IsMultiChoice { get; set; }
-			public string? TemplateFile { get; set; }
-			[IgnoreWhenInstructed]
-			public GoalToCallInfo? OnCallback { get; set; }
-			public string AnswerVariableName { get; set; }
-			[IgnoreWhenInstructed]
-			public UserOrSystemEnum? UserOrSystem { get; set; }
-			[IgnoreWhenInstructed]
-			public string? Channel { get; set; }
-			public bool IncludeNonce { get; set; } = false;
-
-			[JsonIgnore]
-			public TemplateEngineModule.Program? TemplateEngine { get; set; }
-
-			[Description("answerVariableName is the variable being written to without %, e.g. write into %answer% => answerVariableName=\"answer\"")]
-			public AskOptions(
-				string question,
-				int statusCode = 202,
-				Dictionary<string, string>? validationRegexPatternAndErrorMessage = null,
-				Dictionary<string, object>? callbackData = null,
-				Dictionary<string, object>? parameters = null,
-				Dictionary<string, string>? choices = null,
-				bool isMultiChoice = false,
-				string? templateFile = null,
-				GoalToCallInfo? onCallback = null,
-				string answerVariableName = "answer",
-				UserOrSystemEnum? userOrSystem = null,
-				string? channel = null, bool includeNonce = false)
+			[LlmIgnore]
+			public bool IsTemplateFile
 			{
-				Question = question;
-				StatusCode = statusCode;
-				ValidationRegexPatternAndErrorMessage = validationRegexPatternAndErrorMessage;
-				CallbackData = callbackData;
-				Parameters = parameters;
-				Choices = choices;
-				IsMultiChoice = isMultiChoice;
-				TemplateFile = templateFile;
-				OnCallback = onCallback;
-				AnswerVariableName = answerVariableName;
-				UserOrSystem = userOrSystem;
-				Channel = channel;
-				IncludeNonce = includeNonce;
+				get
+				{
+					return (!string.IsNullOrEmpty(Path.GetExtension(QuestionOrTemplateFile)));
+				}
 			}
 		}
+			;
 
 		public record AskTemplateError(object Error, string OnErrorMethod);
 		/*
@@ -168,96 +133,99 @@ namespace PLang.Modules.OutputModule
 			return (null, null);
 		}*/
 
-		[Description("Send to a question to the output stream and waits for answer.")]
+
+		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
 		{
 			var result = await AskInternal(askOptions);
-			while (result.Error is IUserInputError ude)
+			/*while (result.Error is IUserInputError ude)
 			{
 				result = await AskInternal(askOptions, ude);
-			}
+			}*/
 			return result;
+		}
+
+		private string GetCallbackPath()
+		{
+			string path = "/";
+			if (HttpContext != null)
+			{
+				path = (HttpContext.Request.Path.Value ?? "/") + goalStep.Goal.GoalName + "_" + goalStep.Number;
+			}
+			return path;
 		}
 
 		private async Task<(object? Answer, IError? Error)> AskInternal(AskOptions askOptions, IError? error = null)
 		{
-
-			object? answer;
-			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
+			List<ObjectValue>? answers = new();
+			var outputStream = outputStreamFactory.CreateHandler();
 			if (goalStep.Callback != null)
 			{
-				string answerVariableName = askOptions.AnswerVariableName.Replace("%", "");
-				if (HttpContext.Request.HasFormContentType)
+				(answers, error) = await ProcessCallbackAnswer(askOptions, error);
+				if (error != null && error is UserInputError uie2)
 				{
-					answer = memoryStack.Get("request.body." + answerVariableName);
-				}
-				else
-				{
-					return (null, new ProgramError("Could not find answer"));
-				}
+					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
+					uie2 = uie2 with { Callback = newCallBack };
+					
+					error = await Write(uie2);
+					if (error != null) return (answers, error);
 
-				if (askOptions.OnCallback != null)
-				{
-					Dictionary<string, object?> parameters = new();
-					parameters.Add(answerVariableName, answer);
+					uie2.Handled = true;
 
-					// onCallback is called before getting the options
-					var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
-					var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
-					if (runGoalResult.Error != null) return (null, runGoalResult.Error);
+					return (answers, uie2);
+
 				}
-				return await ProcessAnswer(answer, askOptions, outputStream.IsStateful);
+				return (answers, error);
 			}
 
+			var callback = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
+			(var answer, error) = await outputStream.Ask(goalStep, askOptions, callback, error);
+			if (error != null) return (null, error);
 
-			outputStream.Step = goalStep;
-			string path = "/";
-			if (HttpContext != null)
+			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asking user a question", Levels: 9999));
+
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
 			{
-				path = HttpContext.Request.Path;
+				return (null, new ProgramError("No variable to write into", goalStep,
+					FixSuggestion: @$"add `write to %answer%` to you step, e.g. `- {goalStep.Text}, write into %answer%"));
 			}
 
-			var callback = await StepHelper.GetCallback(path, askOptions.CallbackData, memoryStack, goalStep, programFactory, !askOptions.IncludeNonce);
-			(answer, error) = await outputStream.Ask(askOptions, callback, error);
-			if (error != null) return (null, error); 
+			answers.Add(new ObjectValue(function.ReturnValues[0].VariableName, answer));
 
-			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "", Levels: 9999)); 
+			(answers, error) = await ValidateAnswers(answers, askOptions);
+			if (error != null && error is UserInputError uie)
+			{
+				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
+				uie = uie with { Callback = newCallBack };
 
-			return await ProcessAnswer(answer, askOptions, outputStream.IsStateful);
+				error = await Write(uie);
+				if (error != null) return (answers, error);
 
+				uie.Handled = true;
+
+				return (answers, uie);
+
+			}
+			return (answers, error);
 		}
 
-		private async Task<(object?, IError?)> ProcessAnswer(object? answer, AskOptions askOptions, bool isStateful)
+
+		private async Task<(List<ObjectValue>? Answers, IError? Error)> ProcessCallbackAnswer(AskOptions askOptions, IError? error = null)
 		{
-			// escape any variable that user inputs
-			answer = answer?.ToString()?.Replace("%", @"\%") ?? string.Empty;
-			if (askOptions.ValidationRegexPatternAndErrorMessage == null)
+			if (HttpContext == null || !HttpContext.Request.HasFormContentType)
 			{
-				return (answer, null);
+				return (null, new ProgramError("Request no longer available", goalStep));
 			}
-
-			GroupedUserInputErrors groupedErrors = new GroupedUserInputErrors();
-			foreach (var validation in askOptions.ValidationRegexPatternAndErrorMessage)
-			{
-				var regexPattern = variableHelper.LoadVariables(validation.Key)?.ToString() ?? null;
-				if (!string.IsNullOrEmpty(regexPattern) && !Regex.IsMatch(answer.ToString(), regexPattern))
-				{
-					groupedErrors.Add(new UserInputError(validation.Value, goalStep));
-				}
-			}
-			if (groupedErrors.Count > 0) return (answer, groupedErrors);
-
-			if (isStateful) return (answer, null);
 
 			var callbackBase64 = memoryStack.Get<string>("request.body.callback");
-			if (string.IsNullOrEmpty(callbackBase64)) return (null, new ProgramError("callback was invalid", goalStep));
+			if (string.IsNullOrEmpty(callbackBase64))
+			{
+				return (null, new ProgramError("callback was invalid", goalStep));
+			}
+
 			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
-			if ((callback?.CallbackData == null || callback?.CallbackData?.Count == 0) && function.ReturnValues?.Count > 0)
-			{
-				answer = memoryStack.Get("request.body");
-			}
-			else
+			if ((callback?.CallbackData != null && callback?.CallbackData?.Count > 0))
 			{
 				foreach (var item in callback?.CallbackData ?? [])
 				{
@@ -266,48 +234,71 @@ namespace PLang.Modules.OutputModule
 
 					var decryptedValue = await encryption.Decrypt(value);
 					memoryStack.Put(item.Key, decryptedValue);
-
+					if (askOptions.CallbackData?.ContainsKey(item.Key) == true)
+					{
+						askOptions.CallbackData[item.Key] = decryptedValue;
+					}
 				}
 			}
 
+			(List<ObjectValue> answers, error) = GetStatelessAnswers();
+			if (error != null) return (null, error);
 
-			return (answer, null);
+			return await ValidateAnswers(answers!, askOptions);
+		}
+
+		private async Task<(List<ObjectValue> Answers, IError? Error)> ValidateAnswers(List<ObjectValue> answers, AskOptions askOptions)
+		{
+			if (askOptions.OnCallback == null) return (answers, null);
+
+			foreach (var answer in answers)
+			{
+				askOptions.OnCallback.Parameters.AddOrReplace(answer.Name, answer.Value);
+			}
+
+			var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
+			if (runGoalResult.Error != null)
+			{
+				return (answers, runGoalResult.Error);
+			}
+			return (answers, null);
 
 		}
 
-		public record Option(int ListNumber, object SelectionInfo)
+		private (List<ObjectValue>?, IError?) GetStatelessAnswers()
 		{
-			[LlmIgnore]
-			public ObjectValue? ObjectValue { get; set; }
-		};
+			List<ObjectValue> answers = new();
 
-		private (List<Option>? Options, IError? Error) GetOptions(string? answer)
-		{
-			if (string.IsNullOrEmpty(answer)) return (null, new ProgramError("Answer was empty", goalStep));
-
-			List<Option> options = new();
-			var variables = variableHelper.GetVariables(answer);
-			if (variables.Count == 0) return (null, new ProgramError("No variables defined in selection. It must contain a variable.", goalStep));
-
-			var roots = variables.Select(p => p.Root);
-			var distinctRoots = roots.Distinct();
-			if (distinctRoots.Count() > 1)
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
 			{
-				return (null, new ProgramError("Only one type of variable can be used.", goalStep));
+				return (null, new ProgramError("No variable to write into", goalStep,
+					FixSuggestion: @$"add `write to %answer%` to you step, e.g. `- {goalStep.Text}, write into %answer%"));
 			}
 
-			for (int i = 0; i < variables.Count; i++)
+
+			foreach (var rv in function.ReturnValues)
 			{
-				object? value = variables[i].Value;
-				if (value != null)
+				var variableName = rv.VariableName.Replace("%", "");
+				var result = memoryStack.Get("request.body." + variableName);
+				if (result == null)
 				{
-					options.Add(new Option((i + 1), value) { ObjectValue = variables[i] });
+					var dict = memoryStack.Get<Dictionary<string, object?>>("request.body");
+					var newDict = dict.Where(p => p.Key != "callback").ToDictionary();
+					answers.Add(new ObjectValue(variableName, newDict));
+				}
+				else
+				{
+					answers.Add(new ObjectValue(variableName, result));
 				}
 			}
 
-			return (options, null);
+			if (answers.Count == 0)
+			{
+				return (null, new UserInputError("No answer provided", goalStep));
+			}
 
-
+			return (answers, null);
 		}
 
 		public void Dispose()
@@ -325,7 +316,7 @@ namespace PLang.Modules.OutputModule
 			ReferenceLoopHandling ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
 		[Description("Write out json content. Only choose this method when it's clear user is defining a json output, e.g. `- write out '{name:John}'. Do your best to make sure that content is valid json. Any %variable% should have double quotes around it. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
-		public async Task<IError?> WriteJson(object? content, JsonOptions? jsonOptions = null, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
+		public async Task<IError?> WriteJson(GoalStep step, object? content, JsonOptions? jsonOptions = null, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
 		{
 
 			JsonSerializerSettings settings = new();
@@ -350,7 +341,7 @@ namespace PLang.Modules.OutputModule
 			return await Write(JsonConvert.SerializeObject(content, settings), type, statusCode, paramaters, channel);
 		}
 
-		public async Task<IError?> Write(object content, OutputStreamInfo outputStreamInfo)
+		public async Task<IError?> WriteWithStreamInfo(object content, OutputStreamInfo outputStreamInfo)
 		{
 			IOutputStream os;
 			if (outputStreamInfo.Channel.Equals("system", StringComparison.OrdinalIgnoreCase))
@@ -366,7 +357,7 @@ namespace PLang.Modules.OutputModule
 			if (outputStreamInfo.Serializer.Equals("json", StringComparison.OrdinalIgnoreCase))
 			{
 				content = JsonConvert.SerializeObject(content);
-				await os.Write(content);
+				await os.Write(goalStep, content);
 			}
 			else if (outputStreamInfo.Serializer.Equals("csv", StringComparison.OrdinalIgnoreCase))
 			{
@@ -382,14 +373,14 @@ namespace PLang.Modules.OutputModule
 				if (os is HttpOutputStream httpOutputStream)
 				{
 					httpOutputStream.SetContentType("text/csv");
-				}				
+				}
 				await memoryStream.CopyToAsync(os.Stream);
-				
+
 			}
 			else
 			{
-				
-				await os.Write(content);
+
+				await os.Write(goalStep, content);
 			}
 			return null;
 		}
@@ -421,11 +412,11 @@ namespace PLang.Modules.OutputModule
 			// todo: quick fix, this should be dynamic with multiple channels, such as, user(default), system, notification, audit, metric, logs warning, and user custom channel.
 			if (channel == "system")
 			{
-				await outputSystemStreamFactory.CreateHandler().Write(content, type, statusCode, paramaters);
+				await outputSystemStreamFactory.CreateHandler().Write(goalStep, content, type, statusCode, paramaters);
 			}
 			else
 			{
-				await outputStreamFactory.CreateHandler().Write(content, type, statusCode, paramaters);
+				await outputStreamFactory.CreateHandler().Write(goalStep, content, type, statusCode, paramaters);
 			}
 
 			return null;

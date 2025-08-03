@@ -24,7 +24,6 @@ namespace PLang.Services.OutputStream
 		public Stream Stream => throw new NotImplementedException();
 
 		public Stream ErrorStream => throw new NotImplementedException();
-		public GoalStep Step { get; set; }
 
 		public string Output => "text";
 		public bool IsStateful => false;
@@ -32,7 +31,7 @@ namespace PLang.Services.OutputStream
 		public bool IsFlushed { get; set; }
 		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			throw new NotImplementedException();
 		}
@@ -42,7 +41,7 @@ namespace PLang.Services.OutputStream
 			throw new NotImplementedException();
 		}
 
-		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			throw new NotImplementedException();
 		}

@@ -2,6 +2,7 @@
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
@@ -10,13 +11,15 @@ namespace PLang.Services.SettingsService
 
 	public class Settings : ISettings
     {
-        private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
+		private readonly IEngine engine;
+		private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
         private readonly IPLangFileSystem fileSystem;
 
 
-        public Settings(ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem)
+        public Settings(IEngine engine, ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem)
         {
-            this.settingsRepositoryFactory = settingsRepositoryFactory;
+			this.engine = engine;
+			this.settingsRepositoryFactory = settingsRepositoryFactory;
             this.fileSystem = fileSystem;
         }
 
@@ -86,8 +89,8 @@ namespace PLang.Services.SettingsService
             }
 
             string settingValue = JsonConvert.SerializeObject(value);
-
-            var signature = ""; //todo sign settings
+			key = GetKey(key);
+			var signature = ""; //todo sign settings
             var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
             var handler = settingsRepositoryFactory.CreateHandler();
 
@@ -134,6 +137,7 @@ namespace PLang.Services.SettingsService
             if (key == null) key = type;
             var settingsRepo = settingsRepositoryFactory.CreateHandler();
 
+			key = GetKey(key);
 			var setting = settingsRepo.Get(callingType.FullName, type, key);
             if (setting == null) return new();
 
@@ -141,11 +145,19 @@ namespace PLang.Services.SettingsService
             return list;
         }
 
-        public void Remove<T>(Type callingType, string? key = null)
+		private string GetKey(string key)
+		{
+			if (key.Contains(engine.Environment + ".")) return key;
+
+			return engine.Environment + "." + key;
+		}
+
+		public void Remove<T>(Type callingType, string? key = null)
         {
             var type = typeof(T).FullName;
             if (key == null) key = type;
 
+			key = GetKey(key);
 			var settingsRepo = settingsRepositoryFactory.CreateHandler();
 			var setting = settingsRepo.Get(callingType.FullName, type, key);
             if (setting == null) return;
@@ -161,8 +173,8 @@ namespace PLang.Services.SettingsService
                 throw new RuntimeException("defaultValue cannot be null");
             }
             var type = defaultValue.GetType().FullName;
-
-            var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+			key = GetKey(key);
+			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
             if (setting == null)
             {
                 throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
@@ -187,7 +199,7 @@ namespace PLang.Services.SettingsService
         {
             var type = typeof(T).FullName;
             if (key == null) key = type;
-
+			key = GetKey(key);
 			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
 			if (setting == null) return defaultValue;
 
@@ -217,8 +229,8 @@ namespace PLang.Services.SettingsService
         {
             var type = typeof(T).FullName;
             if (key == null) key = type;
-
-            var setting = settingsRepositoryFactory.CreateHandler().Get(GetType().FullName, type, key);
+			key = GetKey(key);
+			var setting = settingsRepositoryFactory.CreateHandler().Get(GetType().FullName, type, key);
             return setting != null;
 
 		}

@@ -22,7 +22,7 @@ using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.ConditionalModule
 {
-	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods over SimpleCondition and CompoundCondition")]
+	[Description(@"if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods in this module over SimpleCondition and CompoundCondition")]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;
@@ -195,8 +195,14 @@ namespace PLang.Modules.ConditionalModule
 			{
 				result = str.Contains(contains.ToString());
 			}
-
-			if (item is IList list)
+			if (item is JObject jObject)
+			{
+				result = jObject.ContainsKey(contains);
+			} else if (item is JArray jArray)
+			{
+				result = jArray.Any(x => x.ToString().Contains(contains));
+			}
+			else if (item is IList list)
 			{
 				result = list.Contains(contains);
 			}
@@ -412,25 +418,9 @@ namespace PLang.Modules.ConditionalModule
 						returnVars = taskExecuted.Variables;
 						error = taskExecuted.error;
 
-						if (taskExecuted.error != null && taskExecuted.error is not Return)
-						{
-							if (taskExecuted.error is EndGoal eg)
-							{
-								if (--eg.Levels > 0) return (returnVars, taskExecuted.error);
-							}
-							else
-							{
-								return (returnVars, taskExecuted.error);
-							}
-						}
-						else if (taskExecuted.error is Return r)
+						if (taskExecuted.error == null && taskExecuted.error is Return r)
 						{
 							return (r.ReturnVariables, null);
-							/*
-							foreach (var variable in r.ReturnVariables)
-							{
-								memoryStack.Put(variable);
-							}*/
 						}
 					}
 					catch { }
@@ -468,7 +458,7 @@ namespace PLang.Modules.ConditionalModule
 				}
 			}
 
-			return (returnVars,null);
+			return (returnVars, error);
 		}
 	}
 }

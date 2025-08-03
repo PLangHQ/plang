@@ -81,7 +81,7 @@ namespace PLang.Modules.TemplateEngineModule
 
 			if (outputStreamFactory != null && (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
-				await outputStreamFactory.CreateHandler().Write(result.Result);
+				await outputStreamFactory.CreateHandler().Write(goalStep, result.Result);
 			}
 
 			return result;

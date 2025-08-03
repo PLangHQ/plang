@@ -15,7 +15,7 @@ namespace PLang.Errors
 {
 	public record ExceptionError : IError, IBuilderError
 	{
-
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public static readonly string UnhandledError = "UnhandledError";
 		public bool Retry { get; set; }
 		public ExceptionError(IError error)

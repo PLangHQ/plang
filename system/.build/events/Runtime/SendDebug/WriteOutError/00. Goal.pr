@@ -11,6 +11,7 @@
       "Description": "Send the content of the variable %!error%, which presumably contains error information, to the logging system to record the error for diagnostics or auditing.",
       "PrFileName": "01. logger_error.pr",
       "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\WriteOutError\\01. logger_error.pr",
+      "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
@@ -21,10 +22,11 @@
       "LoggerLevel": null,
       "ErrorHandlers": null,
       "Retry": false,
+      "RetryCount": 1,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 43,
+      "LineNumber": 44,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -73,7 +75,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5c2f50d0865c1286ca9f1dec07a8a711bfd19523cbe332e78ff64343debe6822",
+      "Hash": "8b45b542b21a663caf54c4e35ea169252b7960baf33515dd29c4c65f3389fc04",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -91,8 +93,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "9019d929d1cbcbbb7fd6976cf47f95d2a51566c12fe9ddf480b5a83fdb9983a8",
-  "Hash": "dcedd7bedd4dce6b2620c8831a258256a2684199cdb3489631ce580d55bd8419",
+  "Hash": "d7b3061bbbe5dc98edc93869a1575fbaee7aca14e746f5d7690084423894c5fe",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be logged."
   },

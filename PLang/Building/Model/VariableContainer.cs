@@ -28,7 +28,7 @@ namespace PLang.Building.Model
 		protected readonly List<Variable> _variables = new();
 
 		[IgnoreWhenInstructed]
-		public IReadOnlyList<Variable> Variables => _variables;
+		public List<Variable> Variables => _variables;
 
 	
 		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)

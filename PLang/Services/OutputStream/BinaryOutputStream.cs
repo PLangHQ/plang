@@ -30,7 +30,6 @@ namespace PLang.Services.OutputStream
 		}
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }
-		public GoalStep Step { get; set; }
 		public IEngine Engine { get; set; }
 		public string Output => "json";
 
@@ -38,7 +37,7 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			
 			return (null, null);
@@ -49,7 +48,7 @@ namespace PLang.Services.OutputStream
 			return "";
 		}
 
-		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj is IError)
 			{

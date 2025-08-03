@@ -17,7 +17,7 @@ namespace PLang.Services.DbService
 {
 	public interface IDbServiceFactory
 	{
-		IDbConnection CreateHandler(GoalStep goalStep);
+		IDbConnection CreateHandler(DataSource dataSource);
 	}
 
 	public class DbServiceFactory : BaseFactory, IDbServiceFactory
@@ -29,11 +29,9 @@ namespace PLang.Services.DbService
 			this.isBuilder = isBuilder;
 		}
 
-		public IDbConnection CreateHandler(GoalStep goalStep)
+		public IDbConnection CreateHandler(DataSource dataSource)
 		{
-			var dataSource = goalStep.GetVariable<DataSource>();
-
-			if (dataSource == null) throw new Exception("Could not find datasource in context");
+			if (dataSource == null) throw new Exception("Data source cannot be empty");
 
 			var connection = container.GetInstance<IDbConnection>(dataSource.TypeFullName);
 

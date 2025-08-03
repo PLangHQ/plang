@@ -19,14 +19,17 @@ namespace PLang.Modules.CachingModule
 			return await appCache.Get(key);
 		}
 		[MethodSettings(CanBeCached = false)]
-		public async Task SetForSlidingExpiration(string key, object value, int timeInSeconds = 60 * 10)
+		public async Task SetForSlidingExpiration(string key, object? value, int timeInSeconds = 60 * 10)
 		{
+			if (value == null) return;
+
 			TimeSpan slidingExpiration = TimeSpan.FromSeconds(timeInSeconds);
 			await appCache.Set(key, value, (TimeSpan) slidingExpiration);
 		}
 		[MethodSettings(CanBeCached = false)]
-		public async Task SetForAbsoluteExpiration(string key, object value, int timeInSeconds = 60 * 10)
+		public async Task SetForAbsoluteExpiration(string key, object? value, int timeInSeconds = 60 * 10)
 		{
+			if (value == null) return;
 			DateTimeOffset absoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(timeInSeconds);
 			await appCache.Set(key, value, absoluteExpiration);
 		}

@@ -3,7 +3,7 @@ SendDebug
 - post http://localhost:%plang.debugPort%/ 
     data: { 
         "line":"%!Event.SourceStep.LineNumber%", 
-        "AbsolutePath":"%!Event.SourceGoal.AbsoluteGoalPath%" 
+        "AbsolutePath":"%!Event.SourceGoal.AbsoluteGoalPath%"        
         }
     timeout 30 min
     write to %debugResponse%
@@ -22,7 +22,8 @@ SendDebugInfo
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!Event.SourceStep.Index%,
         "!Error":"%!error%",
-        "!GoalVariables":"%!Event.SourceGoal.GetVariables()%"
+        "!GoalVariables":"%!Event.SourceGoal.GetVariables()%",
+        "StepRelativeGoalPath":"%!Event.SourceStep.RelativeGoalPath%",
         }
     dont sign
     timeout 30 min

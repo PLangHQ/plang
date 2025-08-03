@@ -56,7 +56,7 @@ namespace PLang.Modules.ThrowErrorModule
 				}
 			}
 
-			return new ErrorHandled(error);
+			return new EndGoal(endingGoal, goalStep, error.Message);
 		}
 
 		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]

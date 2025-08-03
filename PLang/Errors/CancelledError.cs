@@ -23,6 +23,7 @@ namespace PLang.Errors
 			this.step = step;
 			this.function = function;
 		}
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public int StatusCode => 9001;
 
 		public string Key => "CancelledError";

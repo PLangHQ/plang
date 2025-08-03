@@ -260,7 +260,11 @@ namespace PLang.Models.ObjectValueExtractors
 							{
 								return null;
 							}
+
+							
+							
 							convertedParams[i] = TypeHelper.ConvertToType(strValue, paramType);
+							
 						}
 						else if (memoryStack != null)
 						{

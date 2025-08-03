@@ -65,6 +65,7 @@ namespace PLang.Building.Model
 			function.Instruction = instruction;
 			instruction.Function = function;
 
+			step.Instruction = instruction;
 
 			return instruction;
 		}
@@ -138,6 +139,7 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public Dictionary<string, object?> Properties { get; set; } = new();
 
+		[IgnoreWhenInstructed]
 		[JsonProperty(Order = 6)]
 		[LlmIgnore]
 		public List<LlmRequest> LlmRequest { get; set; } = new();

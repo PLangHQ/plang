@@ -188,6 +188,26 @@ namespace PLang.Modules
 Previous LLM request resulted in this error, see in <error>. 
 Make sure to use the information in <error> to return valid JSON response"
 , step));
+			} catch	(Exception ex2)
+			{
+				string? innerMessage = ex2.InnerException?.Message;
+				if (ex2.InnerException?.InnerException != null)
+				{
+					innerMessage = ex2.InnerException?.InnerException.Message;
+				}
+				
+
+				return (null, new StepBuilderError(
+					$@"
+<error>
+{innerMessage}
+{ex2.Message}
+<error>
+<llm_response>
+{question.RawResponse}
+<llm_response>
+"
+, step, ex: ex2, Retry: false, ContinueBuild: false));
 			}
 		}
 

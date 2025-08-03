@@ -10,10 +10,12 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Namotion.Reflection;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -109,7 +111,7 @@ public class Program : BaseProgram, IDisposable
 		var webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
 		if (webserverInfo == null)
 		{
-			await outputStreamFactory.CreateHandler().Write($"Webserver named '{webserverName}' does not exist");
+			await outputStreamFactory.CreateHandler().Write(goalStep, $"Webserver named '{webserverName}' does not exist");
 			return null;
 		}
 
@@ -376,6 +378,7 @@ public class Program : BaseProgram, IDisposable
 					app.UseForwardedHeaders();
 					app.UseHttpsRedirection();
 					app.UseResponseCompression();
+					
 					app.Run(async ctx => await HandleRequestAsync(ctx, webserverInfo));
 				});
 			});
@@ -397,9 +400,31 @@ public class Program : BaseProgram, IDisposable
 	}
 
 
+	public class DisposeTracker : IDisposable
+	{
+		private readonly HttpContext _context;
 
+		public DisposeTracker(HttpContext context)
+		{
+			_context = context;
+		}
+
+		public void Dispose()
+		{
+			int i = 0;
+			//Console.WriteLine($"Response disposed for: {_context.Request.Path}");
+			//Console.WriteLine(Environment.StackTrace); // Stack trace
+		}
+	}
 	private async Task HandleRequestAsync(HttpContext httpContext, WebserverInfo webserverInfo)
 	{
+		
+		httpContext.Response.OnStarting(() =>
+		{
+			//Console.WriteLine($"Headers about to be sent for:");
+			return Task.CompletedTask;
+		});
+		httpContext.Response.RegisterForDispose(new DisposeTracker(httpContext));
 		var outputStream = GetOutputStream(httpContext);
 
 		if (webserverInfo.SignedRequestRequired && !httpContext.Request.Headers.TryGetValue("X-Signature", out var value))
@@ -410,11 +435,17 @@ public class Program : BaseProgram, IDisposable
 
 		var error = await HandleRequest(httpContext, outputStream, webserverInfo);
 
-		if (error != null && error is not ErrorHandled)
+		if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
 		{
 			await ShowError(httpContext.Response, outputStream, error);
+		} else
+		{
+			if (!httpContext.Response.HasStarted)
+			{
+				httpContext.Response.StatusCode = 200;
+			}
 		}
-		//await httpContext.Response.CompleteAsync();
+		await httpContext.Response.CompleteAsync();
 
 
 	}
@@ -468,7 +499,8 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverInfo webserverInfo, Routing routing, HttpContext httpContext, IOutputStream outputStream)
+	private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverInfo webserverInfo, 
+		Routing routing, HttpContext httpContext, IOutputStream outputStream)
 	{
 		if (goal == null)
 		{
@@ -517,9 +549,8 @@ public class Program : BaseProgram, IDisposable
 		if (error != null) return error;
 		logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
 		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream);
+		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
 
-		engine.HttpContext = httpContext;
 		if (requestObjectValue != null)
 		{
 			engine.GetMemoryStack().Put(requestObjectValue, goalStep);
@@ -533,20 +564,32 @@ public class Program : BaseProgram, IDisposable
 			}
 		}
 		logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
-
-		(var vars, error) = await engine.RunGoal(goal, 0);
-		if (error != null && error is not IErrorHandled)
+		var onRequestBegin = prParser.GetEvent("OnRequestBegin");
+		if (onRequestBegin != null)
 		{
-			(var returnVars, error) = await eventRuntime.AppErrorEvents(error);
+			var result = await engine.RunGoal(onRequestBegin);
+			if (result.Error != null)
+			{
+				Console.WriteLine(result.Error);
+			}
 
-			pool.Return(engine);
-			return error;
 		}
-		pool.Return(engine);
+		(var vars, error) = await engine.RunGoal(goal, 0);
+		if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
+		{
+			(var returnVars, error) = await engine.GetEventRuntime().AppErrorEvents(error);
+		}
+
+		var onRequestEnd = prParser.GetEvent("OnRequestEnd");
+		if (onRequestEnd != null)
+		{
+			await engine.RunGoal(onRequestEnd);
+		}
+		pool.Return(engine, true);
 
 		logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
 
-		return null;
+		return error;
 	}
 
 	private async Task<(List<CallbackInfo>? CallbackInfo, IError? Error)> GetCallbackInfos(HttpRequest request)
@@ -593,8 +636,8 @@ public class Program : BaseProgram, IDisposable
 			{
 				resp.StatusCode = error.StatusCode;
 			}
-
-			await outputStream.Write(error, statusCode: error.StatusCode);
+			var step = (error.Step != null) ? error.Step : goalStep;
+			await outputStream.Write(step, error, statusCode: error.StatusCode);
 
 		}
 		catch (Exception ex)
@@ -616,9 +659,9 @@ public class Program : BaseProgram, IDisposable
 		httpContext.Response.ContentType = "application/plang+json; charset=utf-8";
 
 		string? query = httpContext.Request.QueryString.Value;
-		if (query == "?plang.poll=1")
+		if (query?.StartsWith("?plang.poll=1") == true)
 		{
-			await HandlePlangPoll(httpContext, signature.Identity);
+			await HandlePlangPoll(httpContext, signature.Identity, outputStream);
 			return null;
 		}
 		logger.LogDebug($" - get routing - {stopwatch.ElapsedMilliseconds}");
@@ -688,37 +731,103 @@ public class Program : BaseProgram, IDisposable
 		return ms.ToArray();
 	}
 
-	private async Task HandlePlangPoll(HttpContext httpContext, string Identity)
+	private async Task HandlePlangPoll(HttpContext httpContext, string Identity, IOutputStream outputStream)
 	{
 		var response = httpContext.Response;
 		response.ContentType = "application/plang+json; charset=utf-8";
 		response.Headers.Add("Cache-Control", "no-cache");
 
+		bool startPoll = !liveConnections.ContainsKey(Identity);
+
+		
+		
+		
+		
 		liveConnections.AddOrReplace(Identity, new LiveConnection(response, true));
 
-		var payload = JsonConvert.SerializeObject("ping");
-		var buffer = Encoding.UTF8.GetBytes(payload + Environment.NewLine);
+		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
+		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+
+		var requestProperties = GetRequestProperties(httpContext);
+		var objectValue = new ObjectValue("request", new Dictionary<string, object>(), properties: requestProperties);
+		engine.GetMemoryStack().Put(objectValue);
+
+		string? query = httpContext.Request.QueryString.Value;
+
+		var onRequestBegin = prParser.GetEvent("OnRequestBegin");
+		if (onRequestBegin != null)
+		{
+			var result = await engine.RunGoal(onRequestBegin);
+			if (result.Error != null)
+			{
+				Console.WriteLine(result.Error);
+			}
+		}
+
+		var onConnect = prParser.GetEvent("OnConnect");
+		if (onConnect != null)
+		{
+			await engine.RunGoal(onConnect);
+		}
+
+		var onRefresh = prParser.GetEvent("OnRefresh");
+		if (onRefresh != null && query?.Contains("refresh=1") == true)
+		{
+			await engine.RunGoal(onRefresh);
+		} 
+		
+
+		pool.Return(engine, true);
 
 		try
 		{
+			var payload = JsonConvert.SerializeObject("ping");
+			var buffer = Encoding.UTF8.GetBytes(payload + Environment.NewLine);
+
 			while (true)
 			{
 				await response.Body.WriteAsync(buffer, 0, buffer.Length);
 				await response.Body.FlushAsync();
 				await Task.Delay(TimeSpan.FromSeconds(20));
 			}
+
+			var onRequestEnd = prParser.GetEvent("OnRequestEnd");
+			if (onRequestEnd != null)
+			{
+				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
+				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+
+				await engine.RunGoal(onRequestEnd);
+
+				pool.Return(engine, true);
+			}
 		}
 		catch (Exception ex)
 		{
+			var onDisconnect = prParser.GetEvent("OnDisconnect");
+			var onRequestEnd = prParser.GetEvent("OnRequestEnd");
+
 			// client disconnected or other I/O error
 			liveConnections.TryRemove(Identity, out var liveConnection);
-			if (liveConnection?.OnDisconnect != null)
+			if (onDisconnect != null || onRequestEnd != null)
 			{
-				var caller = GetProgramModule<CallGoalModule.Program>();
-				await caller.RunGoal(liveConnection.OnDisconnect);
+				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
+				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+				if (onDisconnect != null)
+				{
+					await engine.RunGoal(onDisconnect);
+				}
+				if (onRequestEnd != null)
+				{
+					await engine.RunGoal(onRequestEnd);
+				}
+				pool.Return(engine, true);
 			}
-			Console.WriteLine($"Long-poll ended: {ex.Message}");
+			//Console.WriteLine($"Long-poll ended: {ex.Message}");
 		}
+
+		
+
 	}
 
 
@@ -787,6 +896,29 @@ public class Program : BaseProgram, IDisposable
 
 	public async Task<IError?> Redirect(string url, bool permanent = false, bool preserveMethod = false)
 	{
+		var os = outputStreamFactory.CreateHandler();
+		if (os is HttpOutputStream hos)
+		{
+			(var response, var isFlushed, var error) = hos.GetResponse();
+			if (response != null && !isFlushed && !response.HasStarted)
+			{
+				response.Redirect(url, permanent, preserveMethod);
+				await response.Body.FlushAsync();
+				await response.CompleteAsync();
+				os.IsFlushed = true;
+
+			}
+		}
+
+		var topGoal = goal;
+		while (topGoal.ParentGoal != null)
+		{
+			topGoal = topGoal.ParentGoal;
+		}
+
+
+		return new EndGoal(topGoal, goalStep, "Redirect", Levels: 999);
+		/*
 		if (HttpContext == null)
 		{
 			return new ProgramError("Header has been sent to browser. Redirect cannot be sent after that.", StatusCode: 500);
@@ -795,8 +927,8 @@ public class Program : BaseProgram, IDisposable
 
 		HttpContext.Response.Redirect(url, permanent, preserveMethod);
 		await HttpContext.Response.Body.FlushAsync();
+		*/
 
-		return null;
 	}
 
 	public async Task WriteToResponseHeader(Dictionary<string, object> headers)
@@ -967,19 +1099,20 @@ Frontpage
 
 	}
 
-	string[] supportedHeaders = ["data-plang-js", "data-plang-js-params", "data-plang-target-element", "data-plang-action"];
+	string[] supportedHeaders = ["data-plang-js", "data-plang-response", "data-plang-js-params", "data-plang-cssSelector", "data-plang-action"];
 
 	private void ParseHeaders(HttpContext ctx, IOutputStream outputStream)
 	{
 		var headers = ctx.Request.Headers;
 
 
-		Dictionary<string, string?> responseProperties = new();
+		Dictionary<string, object?> responseProperties = new();
 		foreach (var supportedHeader in supportedHeaders)
 		{
-			if (headers.TryGetValue(supportedHeader, out var value))
+			var keyValue = headers.FirstOrDefault(p => p.Key.Equals(supportedHeader, StringComparison.OrdinalIgnoreCase));
+			if (!string.IsNullOrEmpty(keyValue.Value.FirstOrDefault()))
 			{
-				responseProperties.AddOrReplace(supportedHeader, value.ToString());
+				responseProperties.AddOrReplace(supportedHeader, keyValue.Value.FirstOrDefault());
 			}
 		}
 
@@ -1001,7 +1134,7 @@ Frontpage
 		logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
 		ParseHeaders(ctx, outputStream);
 		logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
-		var properties = GetRequest(ctx);
+		var properties = GetRequestProperties(ctx);
 		logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");
 		// ---------- JSON --------------------------------------------------------
 		if (req.HasJsonContentType())
@@ -1028,7 +1161,12 @@ Frontpage
 			if (!parameters.ContainsKey("body"))
 			{
 				var form = await req.ReadFormAsync();
-				var fields = form.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
+				var fields = form.ToDictionary(
+					pair => pair.Key,
+					pair => pair.Value.Count > 1
+							 ? (object)pair.Value.ToArray()          // keep all repeated values
+							 : (object)pair.Value.ToString()!        // single value
+				);
 
 				var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
 				if (form.Files.Count > 0)
@@ -1250,7 +1388,9 @@ Frontpage
 	private IOutputStream GetOutputStream(HttpContext httpContext)
 	{
 		var contentType = GetContentType(httpContext.Request);
-		return new HttpOutputStream(httpContext.Response, engine, contentType, 4096, httpContext.Request.Path, null);
+		var os = new HttpOutputStream(httpContext.Response, engine, contentType, 4096, httpContext.Request.Path, null);
+		
+		return os;
 	}
 
 	private string GetContentType(HttpRequest request)
@@ -1268,7 +1408,7 @@ Frontpage
 		return "text/html";
 	}
 
-	private Properties? GetRequest(HttpContext httpContext)
+	private Properties? GetRequestProperties(HttpContext httpContext)
 	{
 		var request = httpContext.Request;
 		Properties properties = new();

@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Utils;
 using System;
@@ -44,11 +45,15 @@ namespace PLang.Services.OutputStream
 
 		public IOutputStream CreateHandler(string? name = null)
 		{
-			if (name == null && outputStream != null) return outputStream;
+			if (name == null && outputStream != null)
+			{
+				return outputStream;
+			}
 
 			var serviceName = (name != null) ? name : currentType;
 
-			return container.GetInstance<IOutputStream>(serviceName);
+			var os = container.GetInstance<IOutputStream>(serviceName);
+			return os;
 		}
 	}
 }

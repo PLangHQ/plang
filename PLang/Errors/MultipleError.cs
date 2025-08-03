@@ -21,7 +21,7 @@ namespace PLang.Errors
 
 	public record GroupedErrors(string Key = "GroupedErrors", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
 	{
-
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public string Message
 		{
 			get
@@ -111,7 +111,7 @@ namespace PLang.Errors
 
 	public record MultipleError(IError InitialError, string Key = "MultipleError", int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : IError
 	{
-
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public string Message
 		{
 			get
@@ -183,6 +183,22 @@ namespace PLang.Errors
 				}
 			}
 
+		}
+		
+		public bool IsErrorHandled
+		{
+			get
+			{
+				bool isErrorHandled = false;
+
+				//loop through error chain, if last error is IErrorHandled, then it is considered handled
+				foreach (var error in ErrorChain)
+				{
+					if (error is IErrorHandled) isErrorHandled = true;
+					if (error is not IErrorHandled) isErrorHandled = false;
+				}
+				return isErrorHandled;
+			}
 		}
 		public object ToFormat(string contentType = "text")
 		{

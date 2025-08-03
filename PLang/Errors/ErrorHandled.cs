@@ -14,6 +14,7 @@ namespace PLang.Errors
 
 	public record Return(List<ObjectValue> ReturnVariables) : IError, IErrorHandled
 	{
+		public string Id { get; } = Guid.NewGuid().ToString();
 		public bool IgnoreError => true;
 
 		public IError? InitialError { get; } = null;

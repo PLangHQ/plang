@@ -21,7 +21,7 @@ namespace PLang.Services.OutputStream
 {
 	public interface IResponseProperties
 	{
-		Dictionary<string, string?> ResponseProperties { get; set; }
+		Dictionary<string, object?> ResponseProperties { get; set; }
 	}
 
 	public class HttpOutputStream : IOutputStream, IResponseProperties
@@ -34,7 +34,7 @@ namespace PLang.Services.OutputStream
 		private LiveConnection? liveResponse;
 		private readonly string path;
 		private readonly Encoding encoding;
-		private Dictionary<string, string?> responseProperties;
+		private Dictionary<string, object?> responseProperties;
 
 		public HttpOutputStream(HttpResponse response, IEngine engine, string contentType, int bufferSize, string path, LiveConnection? liveResponse)
 		{
@@ -56,9 +56,9 @@ namespace PLang.Services.OutputStream
 		{
 			this.liveResponse = liveResponse;
 		}
-		public GoalStep Step { get; set; }
+
 		public bool IsStateful { get { return false; } }
-		public Dictionary<string, string?> ResponseProperties
+		public Dictionary<string, object?> ResponseProperties
 		{
 
 			get { 
@@ -83,7 +83,7 @@ namespace PLang.Services.OutputStream
 			set { engine = value; }
 		}
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			(var response, var isFlushed, error) = GetResponse();
 			if (error != null) return (null, error);
@@ -92,14 +92,15 @@ namespace PLang.Services.OutputStream
 
 			if (!isFlushed)
 			{
-				response.StatusCode = askOptions.StatusCode;
+				response.StatusCode = (askOptions.StatusCode == 0) ? 202 : askOptions.StatusCode;
 				response.ContentType = contentType;
 			}
-			
+			var responseProperties = GetResponseProperties(step, response);
+
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, ResponseProperties);
+				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, responseProperties);
 			}
 			else if (contentType.Contains("json"))
 			{
@@ -113,11 +114,8 @@ namespace PLang.Services.OutputStream
 			{
 				outputStream = new TextOutputStream(response.Body, encoding, false, bufferSize, path);
 			}
-			outputStream.Step = Step;
-			
 
-
-			var result = await outputStream.Ask(askOptions, callback, error);
+			var result = await outputStream.Ask(step, askOptions, callback, error);
 			IsFlushed = true;
 
 			return result;
@@ -131,14 +129,15 @@ namespace PLang.Services.OutputStream
 			return "";
 		}
 
-		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 
 			(var response, var isFlushed, var error) = GetResponse();
 			if (error != null) throw new ExceptionWrapper(error);
-			if (response == null)
+			if (response == null || !response.Body.CanWrite)
 			{
 				Console.WriteLine("Response is null, so to console it goes: " + obj);
+				return;
 				//throw new Exception("Response is null");
 			}
 
@@ -148,7 +147,7 @@ namespace PLang.Services.OutputStream
 				{
 					if (!response.HasStarted)
 					{
-						response.StatusCode = httpStatusCode;
+						response.StatusCode = (httpStatusCode == 0) ? 200 : httpStatusCode;
 						response.Headers.TryAdd("Content-Type", contentType);
 					}
 				}
@@ -158,10 +157,13 @@ namespace PLang.Services.OutputStream
 				}
 			}
 
+			var responseProperties = GetResponseProperties(step, response, paramaters);
+			
+
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, ResponseProperties);
+				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, responseProperties);
 			}
 			else if (contentType.Contains("json"))
 			{
@@ -180,15 +182,55 @@ namespace PLang.Services.OutputStream
 				outputStream = new BinaryOutputStream(response.Body, encoding, false);
 			}
 
-			await outputStream.Write(obj);
+			await outputStream.Write(step, obj, parameters: responseProperties);
 
 			IsFlushed = true;
 
 		}
 
+		private Dictionary<string, object?> GetResponseProperties(GoalStep step, HttpResponse response, Dictionary<string, object?>? parameters = null)
+		{
+			if (parameters == null) parameters = new();
+			try
+			{
+				parameters.AddOrReplace("path", response.HttpContext.Request.Path.Value);
+				parameters.AddOrReplace("id", Path.Join(path, step.Goal.GoalName, step.Number.ToString()).Replace("\\", "/"));
+			} catch (Exception ex)
+			{
+				int i = 0;
+			}
+			foreach (var prop in responseProperties)
+			{
+				if (prop.Key.Equals("data-plang-cssSelector", StringComparison.OrdinalIgnoreCase))
+				{
+					if (!parameters.ContainsKey("cssSelector"))
+					{
+						parameters.AddOrReplace("cssSelector", prop.Value);
+					}
+				}
+				else if (prop.Key.Equals("data-plang-action", StringComparison.OrdinalIgnoreCase))
+				{
+					if (!parameters.ContainsKey("action"))
+					{
+						parameters.AddOrReplace("action", prop.Value);
+					}
+				}
+				else
+				{
+					if (!parameters.ContainsKey(prop.Key))
+					{
+						parameters.AddOrReplace(prop.Key, prop.Value);
+					}
+				}
+			}
+			return parameters;
+		}
+
 		public bool SetContentType(string contentType)
 		{
-			
+			(var response, var isFlushed, _) = GetResponse();
+
+			if (response == null) return false;
 			if (response.HasStarted) return false;
 			
 			response.Headers.ContentType = contentType;

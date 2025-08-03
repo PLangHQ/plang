@@ -36,69 +36,50 @@ namespace PLang.Services.OutputStream
 		}
 		public Stream Stream => standardOutputStream;
 		public Stream ErrorStream => standardErrorStream;
-		public GoalStep Step { get; set; }
+		
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
 		public IEngine Engine { get; set; }
-		public bool IsFlushed { get;set; }
+		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			string? strOptions = GetStringFormattedOptions(askOptions.Choices);
+
 			SetColor(askOptions.StatusCode);
 			if (error != null)
 			{
 				Console.WriteLine(error);
 			}
 
-			Console.WriteLine($"[Ask] {askOptions.Question}{strOptions}");
+			
+
+			string content = askOptions.QuestionOrTemplateFile;
+			if (askOptions.IsTemplateFile)
+			{
+				var templateEngine = new Modules.TemplateEngineModule.Program(Engine.FileSystem, Engine.GetMemoryStack(), null);
+				templateEngine.SetGoal(step.Goal);
+
+				(content, var renderError) = await templateEngine.RenderFile(askOptions.QuestionOrTemplateFile, new());
+				return (null, renderError);
+			}
+
+			Console.WriteLine($"[Ask] {askOptions.QuestionOrTemplateFile}");
 			IsFlushed = true;
 
 			object? answer = Console.ReadLine();
 			Console.ResetColor();
-			
-			if (strOptions != null && askOptions.Choices != null)
-			{
-				if (answer == null)
-				{
-					return await Ask(askOptions, callback, new UserInputError($"'{answer}' is not valid answer", Step));
-				}
 
-				var option = askOptions.Choices.FirstOrDefault(p => p.Key.Equals(answer.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
-				if (option.Key == null)
-				{
-					return await Ask(askOptions, callback, new UserInputError($"{answer} is not valid answer", Step));
-				}
-
-			}
 
 			return (answer, null);
 		}
 
-		private string? GetStringFormattedOptions(Dictionary<string, string>? choices)
-		{
-			if (choices == null) return null;
-
-			string? strOptions = null;
-			foreach (var option in choices)
-			{
-				if (option.Key != option.Value)
-				{
-					strOptions += $"\n\t{option.Key}. {option.Value}";
-				} else
-				{
-					strOptions += $"\n\t{option.Key}.";
-				}
-			}
-			return strOptions;
-		}
 
 		public string Read()
 		{
 			return Console.ReadLine() ?? "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null)
+		public async Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null)
 		{
 			if (obj == null) return;
 
@@ -112,7 +93,8 @@ namespace PLang.Services.OutputStream
 			if (parameters != null)
 			{
 				long? position = parameters.FirstOrDefault(p => p.Key.Equals("position", StringComparison.OrdinalIgnoreCase)).Value as long?;
-				if (position != null) {
+				if (position != null)
+				{
 					Console.SetCursorPosition(0, Console.CursorTop - (int)position);
 				}
 			}
@@ -138,7 +120,8 @@ namespace PLang.Services.OutputStream
 			IsFlushed = true;
 		}
 
-		private string ToJson(object obj) {
+		private string ToJson(object obj)
+		{
 			JsonSerializerSettings settings = new JsonSerializerSettings()
 			{
 				Formatting = Formatting.Indented,
@@ -172,7 +155,7 @@ namespace PLang.Services.OutputStream
 				}
 
 				if (color != null || background != null) return;
-			}			
+			}
 
 			if (statusCode >= 500)
 			{

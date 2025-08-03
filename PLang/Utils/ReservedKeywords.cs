@@ -9,7 +9,11 @@
 		public static readonly string ParametersAtAppStart = "!ArgsAtAppStart";
 		public static readonly string Debug = "!Debug";
 		public static readonly string CSharpDebug = "!CSharpDebug";
-		public static readonly string Test = "!Test";
+		public static readonly string Environment = "!Environment";
+		
+		//todo: should remove and use Environment
+		public static string Test = "!Test";
+
 		public static readonly string Goal = "!Goal";
 		public static readonly string Step = "!Step";
 		public static readonly string StepIndex = "!StepIndex";
@@ -50,6 +54,7 @@
 		public static readonly string DefaultTargetElement = "!TargetElement";
 		internal static string StartingEngine = "!StartingEngine";
 		internal static string Signature = "!Signature";
+		
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords
 		{

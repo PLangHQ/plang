@@ -83,7 +83,7 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			Func<object, double> toDouble = x => Convert.ToDouble(x);
 
-			var parts = segment.Value.Split(':', 2, StringSplitOptions.TrimEntries);
+			var parts = segment.Value.TrimStart('(').TrimEnd(')').Split(':', 2, StringSplitOptions.TrimEntries);
 			string op = parts[0].ToLowerInvariant();
 			string param = parts.Length > 1 ? parts[1] : null;
 
@@ -167,7 +167,11 @@ namespace PLang.Models.ObjectValueExtractors
 			foreach (var op in MathOperators)
 			{
 				idx = value.IndexOf(op);
-				if (idx != -1) return idx;
+				if (idx != -1)
+				{
+					if (value.IndexOf('(') == idx-1)
+						return idx;
+				}
 			}
 			return -1;
 		}

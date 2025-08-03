@@ -37,8 +37,8 @@ namespace PLang.Events
 		Task<(object? Variables, IError? Error)> RunGoalEvents(string eventType, Goal goal, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, Goal goal, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunStepEvents(string eventType, Goal goal, GoalStep step, bool isBuilder = false);
-		Task<(object? Variables, IError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false);
-		Task<(object? Variables, IError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false);
+		Task<(object? Variables, MultipleError Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false);
+		Task<(object? Variables, MultipleError Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> AppErrorEvents(IError error);
 		void SetContainer(IServiceContainer container);
 		void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents);
@@ -129,7 +129,7 @@ namespace PLang.Events
 			foreach (var goal in eventsFiles)
 			{
 				logger.LogDebug($" - Load file {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
-				
+
 				foreach (var step in goal.GoalSteps)
 				{
 					if (step.EventBinding == null) continue;
@@ -143,7 +143,7 @@ namespace PLang.Events
 					var eventBinding = events.FirstOrDefault(p => p == step.EventBinding);
 					if (eventBinding != null) continue;
 
-					bool isLocal = goal.AbsolutePrFolderPath.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));					
+					bool isLocal = goal.AbsolutePrFolderPath.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));
 					var binding = step.EventBinding with { Goal = goal, GoalStep = step, IsOnStep = false, IsLocal = isLocal };
 					events.Add(binding);
 				}
@@ -167,7 +167,7 @@ namespace PLang.Events
 			{
 				runtimeEvents = events;
 			}
-		
+
 			return null;
 		}
 
@@ -277,7 +277,7 @@ namespace PLang.Events
 				if (!HasAppBinding(eve, error)) continue;
 
 				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
-				
+
 				var result = await Run(eve, error.Goal, step, error);
 				if (result.Variables != null) variables.AddRange(result.Variables);
 
@@ -319,13 +319,14 @@ namespace PLang.Events
 			return false;
 		}
 
-		private async Task<(object? Variables, IError? Error)> HandleGoalError(Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
+		private async Task<(object? Variables, MultipleError? Error)> HandleGoalError(Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
 		{
-			if (eventsToRun.Count == 0) return (null, error);
+			var me = new MultipleError(error);
+			if (eventsToRun.Count == 0) return (null, me);
 
 			bool hasHandled = false;
 
-			var me = new MultipleError(error);
+
 			List<object?>? Variables = new();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
@@ -341,27 +342,10 @@ namespace PLang.Events
 
 				if (result.Error != null)
 				{
-					if (result.Error is IErrorHandled)
-					{
-						error.Handled = true;
-						me = null;
-						continue;
-					}
-					if (me == null)
-					{
-						me = new MultipleError(result.Error);
-					}
-					else
-					{
-						me.Add(result.Error);
-					}
+					me.Add(result.Error);
 				}
 			}
 
-			if (me != null && me.ErrorChain.Count == 0)
-			{
-				return (Variables, me.InitialError);
-			}
 			return (Variables, me);
 		}
 
@@ -421,10 +405,10 @@ namespace PLang.Events
 			return (Variables, null);
 		}
 
-		public async Task<(object? Variables, IError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false)
+		public async Task<(object? Variables, MultipleError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false)
 		{
 			var bindings = (isBuilder) ? builderEvents : runtimeEvents;
-			if (bindings == null) return (null, error);
+			if (bindings == null) return (null, new MultipleError(error));
 
 			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
 			var eventsToRun = bindings.Where(p => p.EventScope == EventScope.GoalError).ToList();
@@ -468,15 +452,16 @@ namespace PLang.Events
 		}
 
 
-		public async Task<(object? Variables, IError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false)
+		public async Task<(object? Variables, MultipleError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false)
 		{
+			var me = new MultipleError(error);
 			if (error is EndGoal)
 			{
-				return (null, error);
+				return (null, me);
 			}
 
 			List<EventBinding>? bindings = (isBuilder) ? builderEvents : runtimeEvents;
-			if (bindings == null) return (null, error);
+			if (bindings == null) return (null, me);
 
 			List<EventBinding> eventsToRun = new();
 			eventsToRun.AddRange(bindings.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
@@ -506,7 +491,8 @@ namespace PLang.Events
 					{
 						ShowLogError(goal, step, error);
 					}
-					return (null, new ErrorHandled(error));
+					me.Add(new ErrorHandled(error));
+					return (null, me);
 				}
 			}
 
@@ -514,11 +500,11 @@ namespace PLang.Events
 
 			if (eventsToRun.Count == 0)
 			{
-				return (null, error);
+				return (null, me);
 			}
 
 			List<object> variablesToReturn = new();
-			var me = new MultipleError(error);
+			
 			foreach (var eve in eventsToRun)
 			{
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
@@ -529,20 +515,7 @@ namespace PLang.Events
 
 					if (eventError.Error != null)
 					{
-						if (eventError.Error is IErrorHandled)
-						{
-							error.Handled = true;
-							me = null;
-							continue;
-						}
-						if (me == null)
-						{
-							me = new MultipleError(eventError.Error);
-						}
-						else
-						{
-							me.Add(eventError.Error);
-						}
+						me.Add(eventError.Error);
 					}
 
 					if (eve.OnErrorContinueNextStep) return (eventError.Variables, null);
@@ -550,10 +523,6 @@ namespace PLang.Events
 
 			}
 
-			if (me != null && me.ErrorChain.Count == 0)
-			{
-				return (variablesToReturn, me.InitialError);
-			}
 			return (variablesToReturn, me);
 		}
 
@@ -617,7 +586,7 @@ namespace PLang.Events
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Error, error);
-			
+
 				/*
 				//todo: hack, we should not be modifying the goal name. 
 				if (eve.IsOnStep) {

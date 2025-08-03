@@ -481,6 +481,12 @@ public class TypeHelper : ITypeHelper
 		if (value == null) return null;
 		if (value is System.DBNull) return null;
 
+		// this one happens a lot, so special if for
+		if (targetType == typeof(IFormatProvider))
+		{
+			return value;
+		}
+
 		if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
 		{
 			return value.ToString();
@@ -521,12 +527,18 @@ public class TypeHelper : ITypeHelper
 
 		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
 		{
+			if (IsRecordWithToString(value))
+			{
+				return value.ToString();
+			}
+
 			var customSettings = new JsonSerializerSettings
 			{
 				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
 				MaxDepth = 5,
 				Converters = new List<JsonConverter>(),
 				NullValueHandling = NullValueHandling.Include,
+				ContractResolver = new IgnoreWhenInstructedResolver(true),
 				Formatting = Newtonsoft.Json.Formatting.None
 			};
 			return JsonConvert.SerializeObject(value, customSettings);

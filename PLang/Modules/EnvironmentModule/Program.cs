@@ -91,6 +91,11 @@ namespace PLang.Modules.EnvironmentModule
 			return CultureInfo.CurrentCulture;
 		}
 
+		public async Task SetEnvironment(string name)
+		{
+			engine.Environment = name;
+		}
+
 		[Description("Make sure to convert user code to valid BCP 47 code, language-country")]
 		public async Task SetCultureLanguageCode(string code = "en-US")
 		{

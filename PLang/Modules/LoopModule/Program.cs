@@ -21,7 +21,7 @@ using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 
 namespace PLang.Modules.LoopModule
 {
-	[Description("While, for, foreach, loops, go through a list")]
+	[Description("While, for, foreach, loops, repeat, go through a list and call a goal")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;
@@ -60,6 +60,17 @@ namespace PLang.Modules.LoopModule
 			}
 			foreach (var chunk in source.Chunk(size)) yield return chunk;
 		}
+
+		public async Task<IError?> Repeat(int repeatCounter, [HandlesVariableAttribute] GoalToCallInfo goalToCall, int startIndex = 0)
+		{
+			var groupedErrors = new GroupedErrors("RepeatErrors");
+			for (int i= startIndex;i<repeatCounter;i++)
+			{
+				(var returnEngine, var variables, var error) = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, goal);
+				if (error != null) return error;
+			}
+			return null;
+		} 
 
 		public IEnumerable<IReadOnlyList<object>> Split(IEnumerable source, int size) =>
 			Split(source.Cast<object>(), size);
@@ -139,7 +150,7 @@ namespace PLang.Modules.LoopModule
 					enumerables = Split(enumerables, linqOptions.Split);
 				}
 
-				int idx = 1;
+				int idx = 0;
 				if (effectiveThreads == 1)
 				{
 					foreach (var param in goalToCall.Parameters)

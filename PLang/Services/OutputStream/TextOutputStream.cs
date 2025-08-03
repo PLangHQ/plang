@@ -35,8 +35,6 @@ namespace PLang.Services.OutputStream
 		}
 		public Stream Stream => stream;
 		public Stream ErrorStream => stream;
-		public GoalStep Step { get; set; }
-
 
 		public string Output { get => "text"; }
 		public bool IsStateful => isStatefull;
@@ -44,24 +42,10 @@ namespace PLang.Services.OutputStream
 		public bool IsFlushed { get; set; }
 		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
-		{
-			string? strOptions = null;
-			if (askOptions.Choices != null)
-			{
-				foreach (var option in askOptions.Choices)
-				{
-					if (option.Key != option.Value)
-					{
-						strOptions += $"\n\t{option.Key}. {option.Value}";
-					} else
-					{
-						strOptions += $"\n\t{option.Key}.";
-					}
-				}
-			}
+		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
+		{		
 
-			var bytes = encoding.GetBytes($"[Ask] {askOptions.Question}{strOptions}");
+			var bytes = encoding.GetBytes($"[Ask] {askOptions.QuestionOrTemplateFile}");
 			
 			await this.stream.WriteAsync(bytes);
 			await this.stream.FlushAsync();
@@ -70,12 +54,6 @@ namespace PLang.Services.OutputStream
 			if (!IsStateful) return (null, null);
 
 			string endMarker = "\n";
-			if (askOptions.Parameters != null && askOptions.Parameters.ContainsKey("endMarker"))
-			{
-				endMarker = askOptions.Parameters["endMarker"].ToString() ?? "\n";
-				if (string.IsNullOrEmpty(endMarker)) endMarker = "\n";
-			}
-
 			string line = await ReadUntilAsync(stream, encoding, endMarker);
 			return (line, null);
 		}
@@ -120,7 +98,7 @@ namespace PLang.Services.OutputStream
 			return Console.ReadLine() ?? "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) return;
 

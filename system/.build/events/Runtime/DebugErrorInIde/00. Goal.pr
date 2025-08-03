@@ -4,20 +4,20 @@
   "Text": "DebugErrorInIde",
   "GoalSteps": [
     {
-      "Text": "call goal SendDebug",
+      "Text": "call goal SendDebugInfo",
       "Comment": null,
       "ModuleType": "PLang.Modules.CallGoalModule",
-      "Name": "call_goal_senddebug",
-      "Description": "This step triggers the execution of the goal named 'SendDebug', which is likely a predefined set of steps or a subroutine designed to perform debugging or logging actions",
-      "PrFileName": "01. call_goal_senddebug.pr",
-      "RelativePrPath": ".build\\events\\Runtime\\DebugErrorInIde\\01. call_goal_senddebug.pr",
+      "Name": "call_goal_senddebuginfo",
+      "Description": "Execute the goal named SendDebugInfo, which likely performs debugging information sending or logging as defined elsewhere in the system",
+      "PrFileName": "01. call_goal_senddebuginfo.pr",
+      "RelativePrPath": ".build\\events\\Runtime\\DebugErrorInIde\\01. call_goal_senddebuginfo.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
       "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-07-29T19:03:26.4910982+00:00",
+      "Generated": "2025-07-30T13:40:35.8810565+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -64,25 +64,25 @@
             "content": [
               {
                 "type": "text",
-                "text": "call goal SendDebug"
+                "text": "call goal SendDebugInfo"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "{\n  \"ExplainUserIntent\": \"Invoke the execution of a predefined goal named 'SendDebug' within the plang environment\",\n  \"Reason\": \"The step explicitly uses the phrase 'call goal' which matches the functionality of the CallGoalModule that handles calling other goals or apps\",\n  \"StepName\": \"call_goal_senddebug\",\n  \"StepDescription\": \"This step triggers the execution of the goal named 'SendDebug', which is likely a predefined set of steps or a subroutine designed to perform debugging or logging actions\",\n  \"Modules\": [\"PLang.Modules.CallGoalModule\"],\n  \"Confidence\": \"Very High\",\n  \"Inconsistency\": null\n}"
+        "RawResponse": "{\n  \"ExplainUserIntent\": \"Invoke the predefined goal named SendDebugInfo to perform its associated tasks\",\n  \"Reason\": \"The step explicitly uses 'call goal' syntax which is directly handled by the CallGoalModule designed to call other goals or apps\",\n  \"StepName\": \"call_goal_senddebuginfo\",\n  \"StepDescription\": \"Execute the goal named SendDebugInfo, which likely performs debugging information sending or logging as defined elsewhere in the system\",\n  \"Modules\": [\"PLang.Modules.CallGoalModule\"],\n  \"Confidence\": \"Very High\",\n  \"Inconsistency\": null\n}"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "89223abfde7704215760c3ff8f2099bc87ca5f583ad8c8cf786c92b121edf5ef",
+      "Hash": "91f20ca2193ab429370a1289caebe7c8f59a414fe1f7ad975326d7602f7c282f",
       "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\events\\Runtime\\DebugErrorInIde.goal",
-      "UserIntent": "Invoke the execution of a predefined goal named 'SendDebug' within the plang environment"
+      "UserIntent": "Invoke the predefined goal named SendDebugInfo to perform its associated tasks"
     }
   ],
   "SubGoals": [],
-  "Description": "The goal DebugErrorInIde is designed to initiate the process of debugging an error within the Integrated Development Environment (IDE) by calling another goal, SendDebug. This goal does not require any specific input variables to execute.",
+  "Description": "The goal DebugErrorInIde is designed to initiate the process of debugging an error within an Integrated Development Environment (IDE) by calling another goal, SendDebugInfo. This goal serves as a function that triggers the necessary steps to gather and send debugging information for further analysis.",
   "Visibility": 1,
   "GoalFileName": "DebugErrorInIde.goal",
   "RelativeGoalPath": "\\events\\Runtime\\DebugErrorInIde.goal",
@@ -93,7 +93,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3ade15f9b2e5065fe29aebc6e04c013f6814932fb33e7df81dbe282f43b9a336",
+  "Hash": "151e80019790e85cc792910e22da499071ac49ddbd286879ee0d114b72208ea9",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,

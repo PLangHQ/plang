@@ -186,16 +186,17 @@ public class ObjectValue
 	{
 		var value = Get(path, typeof(T), memoryStack);
 		if (value == null) return default;
+			
 		return (T?)value;
 	}
 	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
 	{
 		if (string.IsNullOrEmpty(path)) return ObjectValue.Null;
 
-		var segments = PathSegmentParser.ParsePath(path);
+		var segments = PathSegmentParser.ParsePath(path, memoryStack);
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
-		if (objectValue == null) return ObjectValue.Nullable(path);
+		if (objectValue == null) return ObjectValue.Nullable(path, this.Initiated);
 
 		return objectValue;
 	}
@@ -227,7 +228,7 @@ public class ObjectValue
 
 	public virtual object? ValueAs(ObjectValue objectValue, Type convertToType)
 	{
-		return ObjectValueConverter.Convert(objectValue, convertToType);
+		return Models.ObjectValueConverters.ObjectValueConverter.Convert(objectValue, convertToType);
 
 	}
 

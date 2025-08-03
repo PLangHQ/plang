@@ -380,6 +380,7 @@ namespace PLang.Building.Parsers
 					goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
 					goals[i].GoalSteps[b].Number = prevStep.Number;
 					goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
+					goals[i].GoalSteps[b].Hash = prevStep.Hash;
 
 					goals[i].GoalSteps[b].Description = prevStep.Description;
 					goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;

@@ -17,7 +17,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-07-29T11:29:26.2789339+00:00",
+      "Generated": "2025-07-30T13:38:30.4753035+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -75,7 +75,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f1c4e13c763829a8be43ac208ed2af340ac026957424a8d829f94b84f37b7d01",
+      "Hash": "ab0fce6c4f1c9dbdb5f758611044683cdc65dde09ef37c7089d95247d9989db7",
       "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal",
       "UserIntent": null
@@ -93,7 +93,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "550e7d2a9f01a476b5e7520ac814fe9825382d6a7065333ac9b9871846038616",
+  "Hash": "b12c49f48635996e1072c7520a1eae588c5a3cbb2893698274e41b87fa93d673",
   "IncomingVariablesRequired": {
     "error": "The specific error message that needs to be logged."
   },

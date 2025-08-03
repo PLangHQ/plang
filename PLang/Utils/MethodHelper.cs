@@ -708,14 +708,14 @@ public class MethodHelper
 			}
 			else if (variableValue is JObject jobject)
 			{
-				try
+				/*try
 				{
 					dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
 				}
 				catch (Exception)
-				{
+				{*/
 					var itemWithList = jobject.ToObject<Dictionary<string, List<object?>?>>();
-					if (itemWithList == null) throw;
+					//if (itemWithList == null) throw;
 
 					dict = new();
 					foreach (var item in itemWithList)
@@ -731,7 +731,7 @@ public class MethodHelper
 							dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], null));
 						}
 					}
-				}
+				//}
 			}
 			else if (JsonHelper.IsJson(variableValue, out object? obj))
 			{
