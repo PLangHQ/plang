@@ -12,6 +12,7 @@ using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
 using PLang.Errors.Methods;
 using PLang.Errors.Runtime;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -55,6 +56,7 @@ namespace PLang.Modules
 		protected IAskUserHandlerFactory askUserHandlerFactory;
 		protected ISettings settings;
 		protected bool IsBuilder { get; } = false;
+		protected bool IsDebugMode { get; } = false;
 		public HttpContext? HttpContext
 		{
 			get
@@ -71,7 +73,9 @@ namespace PLang.Modules
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
+			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebugMode);
 			IsBuilder = isBuilder;
+			IsDebugMode = isDebugMode;
 		}
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpContext? httpContext)
@@ -219,17 +223,11 @@ namespace PLang.Modules
 
 					if (ex is MissingSettingsException mse)
 					{
-						var settingsError = new AskUserError(mse.Message, async (object[]? result) =>
-						{
-							var value = result?[0] ?? null;
-							if (value is Array) value = ((object[])value)[0];
+						var engine = ((ServiceContainer)container).GetInstance<IEngine>();
+						error = await MissingSettingsHelper.HandleMissingSetting(engine, mse);
+						if (error != null) return (null, error);
 
-							await mse.InvokeCallback(value);
-							return (true, null);
-						});
-
-						(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-						if (isHandled) return await RunFunction(function);
+						return await RunFunction(function);
 					}
 
 					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex, Key: ex.GetType().FullName ?? "ProgramError");
@@ -335,12 +333,17 @@ namespace PLang.Modules
 		private async Task<(object?, IError?)> HandleFileAccess(FileAccessException fa)
 		{
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
+			var engine = container.GetInstance<IEngine>();
 
-			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
+			(var answer, var error) = await AskUser.GetAnswer(engine, fa.Message);
+			if (error != null) return (null, error);
+
+			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
+			if (error != null) return (null, error);
+
 			if (isHandled) return await RunFunction(function);
-
-			return (null, ErrorHelper.GetMultipleError(askUserFileAccess, handlerError));
+			
+			return (false, null);
 		}
 
 		private (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)

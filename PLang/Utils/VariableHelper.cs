@@ -311,8 +311,10 @@ namespace PLang.Utils
 		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, object? defaultValue = null)
 		{
 			var children = jobject.Children();
-			foreach (var child in children)
+			for (int b=0;b< children.Count();b++)
 			{
+				var child = children.ElementAt(b);
+			
 				if (child is JValue jValue)
 				{
 					var obj = LoadVariables(jValue.Value);
@@ -330,7 +332,7 @@ namespace PLang.Utils
 						}
 						catch (Exception ex)
 						{
-							int b = 0;
+							int c = 0;
 						}
 					}
 					else

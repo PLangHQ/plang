@@ -6,9 +6,11 @@ using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Events;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Data;
@@ -54,6 +56,7 @@ namespace PLang.Building
 
 		public async Task<IError?> Start(IServiceContainer container, string? absoluteGoalPath = null)
 		{
+			IError? error;
 			try
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
@@ -69,7 +72,7 @@ namespace PLang.Building
 				logger.LogDebug($"Done Init folder, now load event runtime - {stopwatch.ElapsedMilliseconds}");
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
-				var error = eventRuntime.Load(true);
+				error = eventRuntime.Load(true);
 				if (error != null) return error;
 
 				logger.LogDebug($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
@@ -154,12 +157,18 @@ namespace PLang.Building
 				if (ex is FileAccessException fa)
 				{
 					var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-					var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
+					var engine = container.GetInstance<IEngine>();
 
-					(var isFaHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
-					if (isFaHandled) return await Start(container);
+					(var answer, error) = await AskUser.GetAnswer(engine, fa.Message);
+					if (error != null) return error;
 
-					return ErrorHelper.GetMultipleError(askUserFileAccess, handlerError);
+					(var _, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
+					if (error != null) return error;
+
+					return await Start(container);
+
+					
+
 				}
 
 				if (ex is MissingSettingsException mse)
@@ -180,7 +189,7 @@ namespace PLang.Building
 				var step = (ex is BuilderStepException bse) ? bse.Step : null;
 				var goal = (ex is BuilderException be) ? be.Goal : null;
 
-				var error = new ExceptionError(ex, ex.Message, goal ?? step?.Goal, step, Key: ex.GetType().FullName);
+				error = new ExceptionError(ex, ex.Message, goal ?? step?.Goal, step, Key: ex.GetType().FullName);
 				var handler = exceptionHandlerFactory.CreateHandler();
 				(var isHandled, var handleError) = await handler.Handle(error);
 				if (!isHandled)

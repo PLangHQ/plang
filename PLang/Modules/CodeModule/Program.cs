@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Nethereum.ABI.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -98,7 +99,8 @@ namespace PLang.Modules.CodeModule
 			}
 			catch (Exception ex)
 			{
-				var error = CodeExceptionHandler.GetError(ex, implementation, goalStep);
+				var engine = ((ServiceContainer) container).GetInstance<IEngine>();
+				var error = await CodeExceptionHandler.GetError(engine, ex, implementation, goalStep);
 
 				return (null, error);
 			}

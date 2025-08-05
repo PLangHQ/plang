@@ -467,7 +467,7 @@ namespace PLang.Modules.VariableModule
 			foreach (var key in keyValues)
 			{
 				var objectValue = memoryStack.GetObjectValue(key.Key, false);
-				if (objectValue.Initiated) continue;
+				if (objectValue.Initiated && objectValue.Value != null) continue;
 
 				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}

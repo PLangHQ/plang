@@ -54,7 +54,7 @@ namespace PLangTests.Mocks
 			
 		}
 
-		public bool IsPathRooted(string? path)
+		public bool IsPlangRooted(string? path)
 		{
 			throw new NotImplementedException();
 		}
@@ -70,6 +70,11 @@ namespace PLangTests.Mocks
 		}
 
 		public void ClearFileAccess()
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool IsOsRooted(string path)
 		{
 			throw new NotImplementedException();
 		}

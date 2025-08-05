@@ -1,5 +1,6 @@
 ﻿using Castle.Components.DictionaryAdapter;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
+using Nethereum.Contracts.Standards.ERC20.TokenList;
 using Nethereum.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -291,6 +292,17 @@ namespace PLang.Utils
 					propertyType = propertyInfo.PropertyType.GenericTypeArguments[0];
 				}
 				bool isRequired = propertyInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
+				if (isRequired)
+				{
+					var ctx = new NullabilityInfoContext();
+					isRequired = ctx.Create(propertyInfo).ReadState == NullabilityState.NotNull;
+				}
+				/*
+				// --- generated property (same information) ---
+				var nameProp = type.GetProperty(nameof(Person.Name))!;
+				bool propIsNullable = ctx.Create(nameProp).ReadState == NullabilityState.Nullable;
+				*/
+
 				object? defaultValue = null;
 				if (instance != null)
 				{
@@ -382,7 +394,7 @@ namespace PLang.Utils
 							{
 								Type = propertyType.FullNameNormalized(),
 								Name = propertyInfo.Name,
-								Description = (parameterDescriptions + " (see Type information in SupportingObjects)").Trim(),
+								Description = ($" (see {propertyType.FullNameNormalized()} type information in SupportingObjects)").Trim(),
 								IsRequired = isRequired
 							};
 						}

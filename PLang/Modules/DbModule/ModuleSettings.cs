@@ -448,7 +448,8 @@ Be concise"));
 
 			if (dataSource == null)
 			{
-				return await GetDataSourceNotFoundError(dsNameAndPath.dataSourceName, step);
+				(dataSource, var error) = await GetDataSourceNotFoundError(dsNameAndPath.dataSourceName, step);
+				if (dataSource == null) return (null, error);
 			}
 
 			if (!IsBuilder && name.Contains("%"))
@@ -544,9 +545,12 @@ Be concise"));
 
 		private async Task<IError?> CreateDatabase(string localPath, string connectionString, string name)
 		{
-			using (var fs = fileSystem.File.Create(localPath))
+			if (!fileSystem.File.Exists(localPath))
 			{
-				fs.Close();
+				using (var fs = fileSystem.File.Create(localPath))
+				{
+					fs.Close();
+				}
 			}
 
 			string sql = @"CREATE TABLE __Variables__ (
@@ -560,7 +564,7 @@ Be concise"));
 			var connection = new SqliteConnection(connectionString);
 			await connection.OpenAsync();
 			var transaction = await connection.BeginTransactionAsync();
-			await connection.ExecuteAsync(sql);
+			await connection.ExecuteAsync(sql, transaction: transaction);
 
 			var error = await ExecuteSetup(transaction, name);
 			if (error != null)
@@ -574,7 +578,7 @@ Be concise"));
 			}
 			await transaction.CommitAsync();
 			await connection.CloseAsync();
-
+			await connection.DisposeAsync();
 			return null;
 		}
 
@@ -599,7 +603,7 @@ Be concise"));
 				if (string.IsNullOrEmpty(sql)) continue;
 				try
 				{
-					await transaction.Connection!.ExecuteAsync(sql);
+					await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
 				}
 				catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 1)
 				{
@@ -620,7 +624,11 @@ Be concise"));
 
 		private async Task<(DataSource? DataSource, IError? Error)> ProcessDataSource(DataSource? dataSource)
 		{
-			if (dataSource == null) return await GetDataSourceNotFoundError(null, null);
+			if (dataSource == null)
+			{
+				(dataSource, var error) = await GetDataSourceNotFoundError(null, null);
+				if (error != null) return (null, error);
+			}
 
 			if (dataSource.TypeFullName != typeof(SqliteConnection).FullName) return (dataSource, null);
 
@@ -667,6 +675,28 @@ Be concise"));
 			{
 				existingDatasources = "No datasources available";
 			}
+
+
+			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName == name);
+			if (setupGoal != null)
+			{
+				var createDataSourceStep = setupGoal.GoalSteps[0];
+				var instruction = JsonHelper.ParseFilePath<Building.Model.Instruction>(fileSystem, createDataSourceStep.AbsolutePrFilePath);
+				var gf = instruction.Function as DbGenericFunction;
+
+				if (gf != null && gf.Name == "CreateDataSource")
+				{
+					var dsName = gf.GetParameter<string>("name");
+					var dsDataType = gf.GetParameter<string>("databaseType");
+					var setAsDefaultForApp = gf.GetParameter<bool?>("setAsDefaultForApp") ?? false;
+					var keepHistoryEventSourcing = gf.GetParameter<bool?>("keepHistoryEventSourcing") ?? false;
+
+					(var ds, var error) = await CreateDataSource(dsName, dsDataType, setAsDefaultForApp, keepHistoryEventSourcing);
+					
+					if (ds != null) return (ds, null);
+				}
+			}
+
 
 			return (null, new BuilderError($"Datasource '{name}' does not exists", Key: "DataSourceNotFound",
 						FixSuggestion: $@"{existingDatasources}

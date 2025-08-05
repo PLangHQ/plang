@@ -197,7 +197,8 @@ The dataSourceName is provided by external and MUST NOT be changed in any way. A
 			if (dataSources != null && dataSources.Count > 1)
 			{
 				List<string> aliases = ["main"];
-				aliases.AddRange(dataSources.Skip(1).Select(p => {
+				aliases.AddRange(dataSources.Skip(1).Select(p =>
+				{
 					if (p.Name.Contains("/"))
 					{
 						return p.Name.Substring(0, p.Name.IndexOf('/'));
@@ -210,7 +211,8 @@ The dataSourceName is provided by external and MUST NOT be changed in any way. A
 These databases use ATTACH in sqlite: ""{strDataSources}"". 
 That means sql statements MUST be prefixed, e.g. `select * from data.orders`, keep the prefix in sql statement.
 <prefix_examples>";
-				foreach (var alias in aliases) {
+				foreach (var alias in aliases)
+				{
 					system += $@"
 `select * from {alias}.products` => sql = ""select * from {alias}.products""
 `update {alias}.variants set title=%title%` => sql = ""update {alias}.variants set title=@title""
@@ -232,7 +234,8 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 
 			var gf = buildResult.Instruction.Function as DbGenericFunction;
 
-			if (gf == null || gf.Name == "N/A") {
+			if (gf == null || gf.Name == "N/A")
+			{
 				return (null, new StepBuilderError("Could not mappe step to a function", goalStep, Retry: false));
 			}
 
@@ -358,7 +361,8 @@ When a direct method is not provided for the user intentented sql statement, use
 			}
 
 			// todo: hack with execute sql file
-			if (methodsAndTables.ContainsMethod("ExecuteSqlFile"))
+			if (methodsAndTables.ContainsMethod("ExecuteSqlFile")
+				|| methodsAndTables.TableNames[0] == "ExecuteDynamicSql")
 			{
 				return (methodsAndTables, null);
 			}
@@ -371,7 +375,7 @@ When a direct method is not provided for the user intentented sql statement, use
 				return (methodsAndTables, null);
 			}
 
-			
+
 
 			// tables names are only needed for select, update, delete, insert, etc.
 			if (methodsAndTables.TableNames == null || methodsAndTables.TableNames.Count == 0)
@@ -435,7 +439,7 @@ When a direct method is not provided for the user intentented sql statement, use
 				}
 			}
 			IError? rError;
-			
+
 			foreach (var dataSource in dataSources)
 			{
 
@@ -573,10 +577,10 @@ When a direct method is not provided for the user intentented sql statement, use
 		{
 			var dataSourceResult = GetDataSourceName(step, gf);
 			if (dataSourceResult.Error != null) return dataSourceResult.Error;
-			
+
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceResult.DataSourceName);
 			if (error != null) return new BuilderError(error);
-			
+
 			var sql = GenericFunctionHelper.GetParameterValueAsString(gf, "sql");
 			if (VariableHelper.IsVariable(sql))
 			{
@@ -795,11 +799,11 @@ Reason:{error.Message}", step,
 			{
 				return (instruction, new StepBuilderError("No parameters included. It needs at least to have @id", step));
 			}
-			var sql = gf.GetParameter<string>("sql"); 
+			var sql = gf.GetParameter<string>("sql");
 
 			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id") != null && sql.Contains("@id");
 			if (hasId || parameterInfos.Count == 0) return (instruction, null);
-			
+
 			return (instruction, new StepBuilderError($"No @id provided in either sqlParameters or sql statement. @id MUST be provided in both. This is required for this datasource: {dataSourceResult.DataSource!.Name}", step));
 
 
@@ -915,9 +919,20 @@ Reason:{error.Message}", step,
 
 		}
 
+		public bool HasNoSqlValidation()
+		{
+			var obj = AppContext.GetData(ReservedKeywords.ParametersAtAppStart);
+			if (obj != null && obj is string[] args)
+			{
+				if (args.Any(p => p.Equals("--nosql"))) return true;
+			}
+			return false;
+		}
 
 		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, DataSource dataSource, GoalStep step)
 		{
+			
+
 			var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 			if (!anchors.ContainsKey(dataSource.Name))
 			{

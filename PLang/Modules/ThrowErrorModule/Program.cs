@@ -55,6 +55,7 @@ namespace PLang.Modules.ThrowErrorModule
 					endingGoal = endingGoal.ParentGoal;
 				}
 			}
+			if (endingGoal == null) endingGoal = @event.SourceGoal;
 
 			return new EndGoal(endingGoal, goalStep, error.Message);
 		}
@@ -96,6 +97,7 @@ namespace PLang.Modules.ThrowErrorModule
 					endingGoal = endingGoal.ParentGoal;
 				}
 			}
+			if (endingGoal == null) endingGoal = goal;
 
 			return new EndGoal(endingGoal, goalStep, message ?? "", Levels: levels);
 		}

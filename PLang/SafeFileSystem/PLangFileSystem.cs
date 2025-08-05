@@ -145,27 +145,32 @@ namespace PLang.SafeFileSystem
 			this.fileAccesses.RemoveAll(p => p.path != this.SystemDirectory);
 		}
 
-		public bool IsPathRooted(string? path)
+		public bool IsPlangRooted(string? path)
 		{
 			if (string.IsNullOrWhiteSpace(path))
 			{
 				throw new Exception("path cannot be empty");
 			}
 
-			if (path.StartsWith("//")) return true;
+			if (path.AdjustPathToOs().StartsWith(Path.DirectorySeparatorChar)) return true;
+			return false;
+		}
+
+		public bool IsOsRooted(string path)
+		{
+
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
 				if (Regex.IsMatch(path, "^[A-Z]{1}:", RegexOptions.IgnoreCase))
 				{
 					return true;
 				}
-			} else if (path.StartsWith("/"))
+			}
+			else if (path.StartsWith("//"))
 			{
 				return true;
 			}
-
 			return false;
-
 		}
 
 		public string ValidatePath(string? path)
@@ -179,17 +184,29 @@ namespace PLang.SafeFileSystem
 			{
 				throw new Exception("File access has not been initated. Call IPLangFileSystem.Init");
 			}
-
-			if (!IsPathRooted(path))
+			RootDirectory = RootDirectory.TrimEnd(Path.DirectorySeparatorChar);
+			
+			if (IsPlangRooted(path))
+			{
+				if (!path.StartsWith(RootDirectory))
+				{
+					path = Path.GetFullPath(Path.Join(RootDirectory, path));
+				}
+			}
+			else if (IsOsRooted(path))
+			{
+				if (path.StartsWith("//"))
+				{
+					path = path.Substring(0, 1);
+				}
+			}
+			else
 			{
 				path = Path.GetFullPath(Path.Join(RootDirectory, path));
-			} else if (path != null && path.StartsWith("//"))
-			{
-				path = path.Substring(0, 1);
+				
 			}
 
-			RootDirectory = RootDirectory.TrimEnd(Path.DirectorySeparatorChar);
-			path = Path.GetFullPath(path);
+		
 			if (!path.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase))
 			{
 				var appName = RootDirectory ?? Path.DirectorySeparatorChar.ToString();
@@ -222,7 +239,8 @@ Your answer:
 ");
 			}
 
-			if (!IsPathRooted(path) && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
+
+			if (!IsPlangRooted(path) && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
 			{
 				var osPath = Path.Join(AppContext.BaseDirectory, "os", path);
 				if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
@@ -230,7 +248,7 @@ Your answer:
 					path = osPath;
 				}
 			}
-
+			
 			return path;
 		}
 

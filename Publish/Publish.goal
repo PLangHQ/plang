@@ -19,7 +19,9 @@ BuildPlatform
 - if %platform% == 'win-x64' then
     - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang -p:Version=%version%
     stream data: %buildVar%
-    working dir ../   
+    working dir ../ 
+- copy "../os" folder to "plang/os", exclude ".db", overwrite
+- copy "../system" folder to "plang/system", exclude ".db", overwrite
 - write out 'Compress plang folder'   
 - compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite
 - delete folder 'plang'

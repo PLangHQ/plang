@@ -1,0 +1,42 @@
+{
+  "Hash": null,
+  "SignedMessage": null,
+  "Text": "ask \"%__plang_question%\", channel=\"system\", write to %__plang_answer%",
+  "ModuleType": "PLang.Modules.OutputModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to ask a question on the system channel and capture the response into the variable %__plang_answer%. The 'Ask' function is designed to send a question to an output stream and wait for an answer, returning the answer as a value. The parameters include the question text and the channel, and the return value will be stored in the specified variable.",
+    "Name": "Ask",
+    "Parameters": [
+      {
+        "Type": "PLang.Modules.OutputModule.Program+AskOptions",
+        "Name": "askOptions",
+        "Value": {
+          "QuestionOrTemplateFile": "%__plang_question%",
+          "StatusCode": 200,
+          "Channel": "system"
+        }
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%__plang_answer%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "askOptions": {
+        "Name": "askOptions",
+        "FullTypeName": "PLang.Modules.OutputModule.Program+AskOptions"
+      }
+    },
+    "ReturnValues": {
+      "%__plang_answer%": {
+        "Name": "%__plang_answer%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  }
+}

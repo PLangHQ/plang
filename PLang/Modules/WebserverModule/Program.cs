@@ -46,6 +46,8 @@ using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reflection;
+using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -168,8 +170,8 @@ public class Program : BaseProgram, IDisposable
 	public record Routing(string Path, Route? Route = null, string[]? Method = null, string ContentType = "text/html",
 								long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
 
-	[Description(@"When path is /api, ContentType=application/json unless defined by user. When user defines a variable in path, it should be defined in GoalToCallInfo, /product/%id% => Parameters: id=%id%")]
-	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> PathParameters, GoalToCallInfo? goalToCall = null,
+	[Description(@"When path is /api, ContentType=application/json unless defined by user. When user defines a variable in path, it should be defined in GoalToCallInfo, /product/%id% => Parameters: id=%id%. When GoalToCallInfo is not defined by user, use Path as Name in GoalToCallInfo")]
+	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> PathParameters, GoalToCallInfo goalToCall,
 		[Description("Default is GET")]
 		string[]? method = null, string ContentType = "text/html",
 								long? MaxContentLength = 8 * 1024,
@@ -334,6 +336,9 @@ public class Program : BaseProgram, IDisposable
 						throw new ExceptionWrapper(certResult.Error);
 					}
 
+					
+
+			
 					if (IPAddress.TryParse(host, out var ip))
 					{
 						k.Listen(ip, port, l =>
@@ -347,14 +352,16 @@ public class Program : BaseProgram, IDisposable
 					}
 					else if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
 					{
+						/*
 						k.ListenLocalhost(port, l =>
 						{
 							l.Protocols = HttpProtocols.Http1AndHttp2;
 							l.UseHttps(certResult.Certificate);
-						});
+						});*/
 					}
 					else
 					{
+						Console.WriteLine("Host '{host}' is not a valid IP or 'localhost'.");
 						throw new ArgumentException($"Host '{host}' is not a valid IP or 'localhost'.");
 					}
 
@@ -407,10 +414,12 @@ public class Program : BaseProgram, IDisposable
 		public DisposeTracker(HttpContext context)
 		{
 			_context = context;
+			
 		}
 
 		public void Dispose()
 		{
+			Console.WriteLine("dispose path:" + _context.Request.Path);
 			int i = 0;
 			//Console.WriteLine($"Response disposed for: {_context.Request.Path}");
 			//Console.WriteLine(Environment.StackTrace); // Stack trace
@@ -445,6 +454,7 @@ public class Program : BaseProgram, IDisposable
 				httpContext.Response.StatusCode = 200;
 			}
 		}
+		Console.WriteLine("CompleteAsync");
 		await httpContext.Response.CompleteAsync();
 
 
@@ -902,10 +912,12 @@ public class Program : BaseProgram, IDisposable
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null && !isFlushed && !response.HasStarted)
 			{
+				Console.WriteLine("redirect");
 				response.Redirect(url, permanent, preserveMethod);
 				await response.Body.FlushAsync();
 				await response.CompleteAsync();
 				os.IsFlushed = true;
+				hos.IsComplete = true;
 
 			}
 		}

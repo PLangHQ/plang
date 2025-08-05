@@ -25,6 +25,7 @@ namespace PLang.Building.Parsers
 		private List<Goal> builderEventsGoals = null!;
 
 		ConcurrentDictionary<string, List<Goal>> Events = new();
+		ConcurrentDictionary<string, List<Goal>> SystemEvents = new();
 		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
@@ -55,6 +56,22 @@ namespace PLang.Building.Parsers
 			if (goals == null) return eventGoals;
 			eventGoals = goals.Where(p => p.GoalName.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
 			Events.TryAdd(name, eventGoals);
+			return eventGoals;
+		}
+
+		public Goal? GetSystemEvent(string name)
+		{
+			var events = GetSystemEvents(name);
+			return events.FirstOrDefault();
+		}
+		public List<Goal> GetSystemEvents(string name)
+		{
+			if (SystemEvents.TryGetValue(name, out var eventGoals)) return eventGoals;
+
+			eventGoals = new();
+			if (goals == null) return eventGoals;
+			eventGoals = systemGoals.Where(p => p.GoalName.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+			SystemEvents.TryAdd(name, eventGoals);
 			return eventGoals;
 		}
 
@@ -188,7 +205,7 @@ namespace PLang.Building.Parsers
 		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = AppContext.BaseDirectory;
-			await fileAccessHandler.ValidatePathResponse(appName, path, "y");
+			await fileAccessHandler.ValidatePathResponse(appName, path, "y", fileSystem.Id);
 			// not using IPlangFileSystem here, we need to get the goal in the runtime folder
 			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(path, "Goals", ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();			
 			
@@ -238,7 +255,6 @@ namespace PLang.Building.Parsers
 			}
 		
 			var files = fileSystem.Directory.GetFiles(buildDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
-
 			files = files.Select(file => new
 			{
 				FileName = file,
@@ -341,7 +357,7 @@ namespace PLang.Building.Parsers
 			}
 			goalNameOrPath = goalNameOrPath.AdjustPathToOs().Replace(".goal", "").Replace("!", "");
 
-			if (appStartupPath != fileSystem.RootDirectory && !fileSystem.IsPathRooted(appStartupPath))
+			if (appStartupPath != fileSystem.RootDirectory && !fileSystem.IsPlangRooted(appStartupPath))
 			{
 				appStartupPath = appStartupPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
 				if (!appStartupPath.StartsWith(fileSystem.Path.DirectorySeparatorChar.ToString()))
@@ -397,7 +413,7 @@ namespace PLang.Building.Parsers
 		public List<Goal> GetGoals(bool force = false)
 		{
 			if (!force && goals != null) return goals;
-
+			
 			goals = LoadAllGoalsByPath(fileSystem.RootDirectory);
 			publicGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
 			

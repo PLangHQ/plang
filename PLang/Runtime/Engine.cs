@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -12,6 +13,7 @@ using PLang.Errors.Handlers;
 using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
 using PLang.Events;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -511,10 +513,15 @@ namespace PLang.Runtime
 
 		private async Task<(bool, IError?)> HandleFileAccessError(FileAccessRequestError fare)
 		{
-			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			var askUserFileAccess = new AskUserFileAccess(fare.AppName, fare.Path, fare.Message, fileAccessHandler.ValidatePathResponse);
 
-			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+			var engine = container.GetInstance<IEngine>();
+
+			(var answer, var error) = await AskUser.GetAnswer(engine, fare.Message);
+			if (error != null) return (false, error);
+
+			return await fileAccessHandler.ValidatePathResponse(fare.AppName, fare.Path, answer.ToString(), engine.FileSystem.Id);
+			
 		}
 
 
@@ -686,14 +693,27 @@ namespace PLang.Runtime
 					if (error is EndGoal endGoal)
 					{
 						logger.LogDebug($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-
-						if (!endGoal.EndingGoal.RelativePrPath.Equals(goal.RelativePrPath))
+						try
 						{
-							logger.LogDebug($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-							return (returnValues, stepIndex, endGoal);
+							if (!endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true)
+							{
+								logger.LogDebug($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+								return (returnValues, stepIndex, endGoal);
+							}
+							else if (endGoal.EndingGoal == null)
+							{
+								logger.LogError("Ending goal is null, this should not happen:" + JsonConvert.SerializeObject(endGoal));
+							}
+						}
+						catch (Exception ex)
+						{
+							Console.WriteLine(ex);
+							Console.WriteLine("endGoal.EndingGoal:" + JsonConvert.SerializeObject(endGoal.EndingGoal));
+							Console.WriteLine("goal:" + JsonConvert.SerializeObject(goal));
+
 						}
 
-						logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+							logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 						return (returnValues, stepIndex, null);
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex);
@@ -1022,7 +1042,11 @@ private async Task CacheGoal(Goal goal)
 			}
 			catch (MissingSettingsException mse)
 			{
-				return await HandleMissingSettings(mse, goal, step, stepIndex);
+				var engine = container.GetInstance<IEngine>();
+				var error = await MissingSettingsHelper.HandleMissingSetting(engine, mse);
+				if (error != null) return (null, error);
+
+				return await ProcessPrFile(goal, step, stepIndex);
 			}
 			logger.LogDebug($"     - Init instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 			classInstance.Init(container, goal, step, step.Instruction, this.HttpContext);
@@ -1107,38 +1131,14 @@ private async Task CacheGoal(Goal goal)
 		}
 
 		private List<IDisposable> listOfDisposables = new();
-		private async Task<(object?, IError?)> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
-		{
-			var settingsError = new Errors.AskUser.AskUserError("[" + (mse.Key) + "] " + mse.Message, async (object[]? result) =>
-			{
-				var value = result?[0] ?? null;
-				if (value is Array) value = ((object[])value)[0];
-
-				await mse.InvokeCallback(value);
-				return (true, null);
-			});
-
-			(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-			if (isMseHandled)
-			{
-				return await ProcessPrFile(goal, goalStep, stepIndex);
-			}
-
-			if (handlerError != null)
-			{
-				return (null, handlerError);
-			}
-			else
-			{
-				return (null, new StepError(mse.Message, goalStep, Exception: mse));
-			}
-
-		}
+		
 		private Goal? GetStartGoal(string goalName)
 		{
 			string prPath = fileSystem.Path.Join(goalName.Replace(".goal", ""), ISettings.GoalFileName);
 			string absolutePath = fileSystem.Path.Join(fileSystem.BuildPath, prPath);
+			
 			return prParser.GetGoal(absolutePath);
+			
 		}
 		private List<string> GetStartGoals(List<string> goalNames)
 		{

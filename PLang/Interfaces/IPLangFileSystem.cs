@@ -19,7 +19,8 @@ namespace PLang.Interfaces
 
 		void AddFileAccess(FileAccessControl fileAccess);
 		void ClearFileAccess();
-		bool IsPathRooted(string? path);
+		bool IsOsRooted(string path);
+		bool IsPlangRooted(string? path);
 		void SetFileAccess(List<FileAccessControl> fileAccesses);
 		public string ValidatePath(string? path);
 	}

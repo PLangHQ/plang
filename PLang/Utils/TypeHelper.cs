@@ -507,6 +507,8 @@ public class TypeHelper : ITypeHelper
 		}
 		if (value is JValue jValue)
 		{
+			if (jValue.Value == null) return null;
+
 			return Convert.ChangeType(jValue.Value, targetType, CultureInfo.InvariantCulture);
 		}
 

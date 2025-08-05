@@ -97,53 +97,5 @@
       ]
     },
     "ReturnValues": {}
-  },
-  "LlmRequest": [
-    {
-      "temperature": 0.0,
-      "top_p": 0.0,
-      "frequencyPenalty": 0.0,
-      "presencePenalty": 0.0,
-      "maxLength": 4000,
-      "llmResponseType": "json",
-      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-      "model": "gpt-4.1-mini",
-      "promptMessage": [
-        {
-          "role": "system",
-          "content": [
-            {
-              "type": "text",
-              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\nONLY when string is prefixed with # is for translation, modify the string to be \"#:...\", e.g. #\"Hello\" => \"#:Hello\".\r\n\r\n< Example >\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-            },
-            {
-              "type": "text",
-              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-            }
-          ]
-        },
-        {
-          "role": "assistant",
-          "content": [
-            {
-              "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nIterate over each item in the cssFiles list and call the AppendToTypes goal with the parameter Type set to 'css' for each item\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"threadCount\",\"DefaultValue\":1,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"cpuUsage\",\"DefaultValue\":0.0,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"failFast\",\"DefaultValue\":true,\"Description\":null,\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallBeforeItemIsProcessed\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallAfterItemIsProcessed\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false}],\"ReturnValue\":null}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"DefaultValue\":null,\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\ncssFiles (type:object), \r\n## defined variables ##"
-            }
-          ]
-        },
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": "foreach %cssFiles% call AppendToTypes Type=\"css\""
-            }
-          ]
-        }
-      ],
-      "type": "PLang.Modules.GenericFunctionBuilder",
-      "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each item in the %cssFiles% list and call the AppendToTypes goal with the parameter Type set to 'css' for each item. The RunLoop function is designed to loop through a collection and call a specified goal with parameters for each item.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%cssFiles%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AppendToTypes\",\n        \"Parameters\": {\n          \"Type\": \"css\"\n        }\n      }\n    }\n  ]\n}"
-    }
-  ]
+  }
 }

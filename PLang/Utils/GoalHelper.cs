@@ -158,7 +158,12 @@ namespace PLang.Utils
 			if (foundGoals.Count() == 1) return foundGoals.First();
 			if (foundGoals.Count() == 0) return null;
 
-			return foundGoals.FirstOrDefault(p => p.RelativeGoalPath == step.Goal.RelativeGoalPath);
+			var goal = foundGoals.FirstOrDefault(p => p.RelativeGoalPath == step.Goal.RelativeGoalPath);
+			if (goal != null) return goal;
+
+			goal = foundGoals.FirstOrDefault();
+			
+			return goal;
 		}
 
 		static string MergePath(string currentRelativePath, string newPath) =>

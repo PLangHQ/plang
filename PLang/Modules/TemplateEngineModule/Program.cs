@@ -15,6 +15,7 @@ using Scriban.Syntax;
 using System.Collections;
 using System.ComponentModel;
 using System.Dynamic;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.RegularExpressions;
@@ -139,20 +140,31 @@ namespace PLang.Modules.TemplateEngineModule
 
 				return (result, null);
 			}
-			catch (ScriptRuntimeException ex)
+			catch (Exception ex) when (ex is ScriptRuntimeException || ex is InvalidOperationException)
 			{
 
 				var relativeFilePath = (string.IsNullOrEmpty(fullPath)) ? "" : fullPath.AdjustPathToOs().Replace(fileSystem.RootDirectory, "");
-				var innerException = ex.InnerException as ScriptRuntimeException ?? ex;
+				var innerException = ex.InnerException ?? ex;
+				var exMessage = ex.Message;
+				var originalMessage = "";
+				if (innerException is ScriptRuntimeException sre)
+				{
+					exMessage = sre.Message;
+					originalMessage = sre.OriginalMessage;
+				}
+				else
+				{
+					originalMessage = ex.Message;
+				}
 				string message;
 				string pattern = @"\((\d+),(\d+)\)";
-				Match match = Regex.Match(innerException.Message, pattern);
+				Match match = Regex.Match(exMessage, pattern);
 				if (match.Success)
 				{
 					int.TryParse(match.Groups[1].Value?.Trim(), out int lineNumber);
 					int.TryParse(match.Groups[2].Value?.Trim(), out int columnNumber);
 
-					message = $"{innerException.OriginalMessage} in {relativeFilePath} - line: {lineNumber} | column: {columnNumber}";
+					message = $"{originalMessage} in {relativeFilePath} - line: {lineNumber} | column: {columnNumber}";
 					var lines = content.Split('\n');
 					if (lines.Length > lineNumber)
 					{
@@ -333,9 +345,28 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			(_, exists) = ContainsVariable("render", templateContext);
 			if (!exists)
 			{
-				globals.Import("render", new Func<string, Task<string>>(async (path) =>
+				globals.Import("render", new Func<string, object[]?, Task<string>>(async (path, vars) =>
 				{
-					var result = await RenderFile(path, writeToOutputStream: false);
+					var modelDict = new Dictionary<string, object?>();
+
+					if (vars != null && vars.Length > 0)
+					{
+						foreach (var variable in vars)
+						{
+							if (variable is ScriptObject so)
+							{
+								foreach (var key in so.Keys)
+								{
+									modelDict.AddOrReplace(key, so[key]);
+								}
+							} else
+							{
+								modelDict.AddOrReplace("model", variable);
+							}
+						}
+
+					}
+					var result = await RenderFile(path, modelDict, writeToOutputStream: false);
 					if (result.Item2 != null)
 					{
 						throw new ExceptionWrapper(result.Item2);

@@ -243,6 +243,11 @@ namespace PLang.Container
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath, IEngine? parentEngine = null)
 		{
+			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+			{
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+			};
+
 			container.RegisterSingleton<MemoryStack>();
 			
 

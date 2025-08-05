@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Errors.Builder;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System;
@@ -51,9 +52,15 @@ namespace PLang.Modules.FileModule
 			if (path?.Contains("%") == true) return null;
 
 			var absolutePath = PathHelper.GetPath(path, fileSystem, step.Goal);
-			if (!fileSystem.File.Exists(absolutePath))
+			try
 			{
-				logger.LogWarning($"Could not find file: {path}. This may not be a problem, depending on your system. Looked for it at {absolutePath}.");
+				if (!fileSystem.File.Exists(absolutePath))
+				{
+					logger.LogWarning($"Could not find file: {path}. This may not be a problem, depending on your system. Looked for it at {absolutePath}.");
+				}
+			} catch (FileAccessException ex)
+			{
+				logger.LogWarning($"  - Dont have permission to read file {path}. Will ask for permission at runtime");
 			}
 			return null;
 		}

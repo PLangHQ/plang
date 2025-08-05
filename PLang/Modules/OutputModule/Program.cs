@@ -108,7 +108,9 @@ namespace PLang.Modules.OutputModule
 			{
 				get
 				{
-					return (!string.IsNullOrEmpty(Path.GetExtension(QuestionOrTemplateFile)));
+					if (QuestionOrTemplateFile.Contains("\n") || QuestionOrTemplateFile.Contains("\r") || QuestionOrTemplateFile.Contains("\r")) return false;
+					string ext = Path.GetExtension(QuestionOrTemplateFile);
+					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
 				}
 			}
 		}

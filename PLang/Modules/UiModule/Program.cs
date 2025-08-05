@@ -68,7 +68,7 @@ namespace PLang.Modules.UiModule
 					storedFrameworks.Add(framework);
 				}
 			}
-			
+
 			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
 			goal.AddVariable(framework);
 		}
@@ -85,7 +85,7 @@ namespace PLang.Modules.UiModule
 			// ask llm, creata layout for me, %readme%
 			// write to output file
 
-			
+
 
 
 			context.TryGetValue("Layouts", out object? obj);
@@ -168,8 +168,23 @@ Attribute: Member is the key in the SetAttribute js method
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 
 
-		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null, 
-			string? CssSelector = null, string Action = "innerHTML", bool Unique = false, string LayoutName = "default", bool RenderToOutputstream = false);
+		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null,
+			string? CssSelector = null, string Action = "innerHTML", bool Unique = false, string LayoutName = "default", bool RenderToOutputstream = false)
+		{
+
+			[LlmIgnore]
+			public bool IsTemplateFile
+			{
+				get
+				{
+					if (FileName.Contains("\n") || FileName.Contains("\r") || FileName.Contains("\r")) return false;
+					string ext = Path.GetExtension(FileName);
+					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
+				}
+
+			}
+		}
+			;
 		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
 ```plang
 - render product.html => renderToOutputstream = true
@@ -182,13 +197,21 @@ Unique: default is false. this element should only exist one time on web page, i
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
 		{
-			var filePath = GetPath(options.FileName);
-			if (!fileSystem.File.Exists(filePath))
+			string html;
+			if (options.IsTemplateFile)
 			{
-				return (null, new ProgramError($"Template file {options.FileName} not found", goalStep, StatusCode: 404));
-			}
+				var filePath = GetPath(options.FileName);
+				if (!fileSystem.File.Exists(filePath))
+				{
+					return (null, new ProgramError($"Template file {options.FileName} not found", goalStep, StatusCode: 404));
+				}
 
-			var html = await fileSystem.File.ReadAllTextAsync(filePath);
+				html = await fileSystem.File.ReadAllTextAsync(filePath);
+			}
+			else
+			{
+				html = options.FileName;
+			}
 
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
 			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
@@ -221,8 +244,8 @@ Unique: default is false. this element should only exist one time on web page, i
 			if (!string.IsNullOrEmpty(options.CssSelector))
 			{
 				options.Parameters.Add("cssSelector", options.CssSelector);
-			}			
-			
+			}
+
 			if (!string.IsNullOrEmpty(options.Action))
 			{
 				options.Parameters.Add("action", options.Action);
@@ -234,7 +257,7 @@ Unique: default is false. this element should only exist one time on web page, i
 				await outputStreamFactory.CreateHandler().Write(goalStep, content, parameters: options.Parameters);
 			}
 
-			return (options, null);
+			return (content, null);
 		}
 		public record Html(string Value, string? TargetElement = null);
 		public async Task<(string?, IError?)> RenderImageToHtml(string path)

@@ -225,6 +225,8 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 
 		public async Task<(Instruction Instruction, IBuilderError? Error)> RunStepValidation(GoalStep step, Model.Instruction instruction, IGenericFunction gf)
 		{
+			if (HasNoValidation()) return (instruction, null);
+
 			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);
 
@@ -233,9 +235,19 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 
 			return (instruction, null);
 		}
-
+		public bool HasNoValidation()
+		{
+			var obj = AppContext.GetData(ReservedKeywords.ParametersAtAppStart);
+			if (obj != null && obj is string[] args)
+			{
+				if (args.Any(p => p.Equals("--novalidation"))) return true;
+			}
+			return false;
+		}
 		public async Task<(Instruction Instruction, IBuilderError? Error)> RunBuilderMethod(GoalStep goalStep, Model.Instruction instruction, IGenericFunction gf)
 		{
+			
+
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"    - Running 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
 

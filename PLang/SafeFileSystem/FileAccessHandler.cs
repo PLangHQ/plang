@@ -13,7 +13,7 @@ namespace PLang.SafeFileSystem
 {
 	public interface IFileAccessHandler
 	{
-		Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer);
+		Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer, string processId);
 		void GiveAccess(string appName, string path);
 	}
 	public class FileAccessHandler : IFileAccessHandler
@@ -40,7 +40,7 @@ namespace PLang.SafeFileSystem
 		// when getting access, sign the request with root
 		// the signature is then validated by root before giving access next time 
 
-		public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer)
+		public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer, string processId)
 		{
 			if (string.IsNullOrWhiteSpace(answer)) return (false, null);
 
@@ -50,10 +50,9 @@ namespace PLang.SafeFileSystem
 
 			if (answer == "y" || answer == "yes")
 			{
-				var expires = DateTime.UtcNow.AddSeconds(90);
-				AddFileAccess(appName, path, expires);
+				AddFileAccess(appName, path, null, processId);
 
-				logger.LogDebug($"{appName} has access to {path} until {expires}");
+				logger.LogDebug($"{appName} has access to {path} on processId {processId}");
 				return (true, null);
 			}
 
@@ -105,7 +104,7 @@ GiveAccess : yes|no|null"));
 			return (true, null);
 		}
 
-		private void AddFileAccess(string appName, string path, DateTime expires)
+		private void AddFileAccess(string appName, string path, DateTime? expires = null, string? processId = null)
 		{
 			path = path.AdjustPathToOs();
 			var fileAccesses = settings.GetValues<FileAccessControl>(typeof(PLangFileSystem));
@@ -115,7 +114,7 @@ GiveAccess : yes|no|null"));
 				fileAccesses.Remove(fileAccess);
 			}
 
-			fileAccesses.Add(new FileAccessControl(appName, path, expires));
+			fileAccesses.Add(new FileAccessControl(appName, path, expires, processId));
 			settings.SetList(typeof(PLangFileSystem), fileAccesses);
 			fileSystem.SetFileAccess(fileAccesses);
 		}

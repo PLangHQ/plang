@@ -53,6 +53,8 @@ namespace PLang.Building.Model
 		}
 		public void AddVariable(Variable goalVariable)
 		{
+			if (goalVariable == null) return;
+
 			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(goalVariable.VariableName, StringComparison.OrdinalIgnoreCase));
 			if (variableIdx == -1)
 			{

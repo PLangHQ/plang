@@ -198,6 +198,10 @@ namespace PLang.Modules.FileModule
 					{
 						return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound", StatusCode: 404));
 					}
+					if (IsDebugMode)
+					{
+						logger.LogWarning($"File not found. path: {path} | absolutePath:{absolutePath}");
+					}
 					return (returnValueIfFileNotExisting, null);
 				}
 			}
@@ -549,6 +553,7 @@ namespace PLang.Modules.FileModule
 
 		public record File(string Name, string Extension, string Type, string Path, string AbsolutePath, Properties? FileInfo = null);
 
+		[Description("excludePatterns is array of regex patterns, when matching with star, make sure to use .*")]
 		public async Task<List<File>> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
 		string[]? excludePatterns = null, bool includeSubfolders = false, bool includeFileInfo = false, string? filterOnType = null)
 		{
@@ -560,7 +565,10 @@ namespace PLang.Modules.FileModule
 			var paths = files.Select(path => path.Replace(fileSystem.RootDirectory, ""));
 			if (excludePatterns != null)
 			{
-				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
+				paths = paths.Where(file => !excludePatterns.Any(pattern =>
+				{
+					return Regex.IsMatch(file, pattern);
+				}));
 			}
 
 			List<File> filesToReturn = new();
@@ -573,7 +581,18 @@ namespace PLang.Modules.FileModule
 					continue;
 				}
 
-				var absolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, path);
+				string absolutePath;
+				string relativePath;
+				if (fileSystem.IsOsRooted(path))
+				{
+					absolutePath = path;
+					relativePath = path.Replace(directoryPath, "");
+				}
+				else
+				{
+					absolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, path);
+					relativePath = path;
+				}
 				var name = fileSystem.Path.GetFileName(path);
 
 				System.IO.FileInfo? fi = null;
@@ -582,7 +601,7 @@ namespace PLang.Modules.FileModule
 					fi = new System.IO.FileInfo(absolutePath);
 				}
 
-				filesToReturn.Add(new File(name, extension, type, path, absolutePath, GetProperties(fi)));
+				filesToReturn.Add(new File(name, extension, type, relativePath, absolutePath, GetProperties(fi)));
 			}
 
 			return filesToReturn;
@@ -699,7 +718,7 @@ namespace PLang.Modules.FileModule
 			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				var copyDestinationFilePath = fileSystem.Path.Join(destinationPath, file.Name);
+				var copyDestinationFilePath = fileSystem.Path.Join(destinationPath, file.Path);
 				await CopyFile(file.AbsolutePath, copyDestinationFilePath, true, overwriteFiles);
 			}
 

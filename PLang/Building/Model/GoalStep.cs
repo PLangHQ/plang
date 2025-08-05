@@ -34,6 +34,7 @@ namespace PLang.Building.Model
 		public string RelativePrPath { get; set; }
 
 		[LlmIgnore]
+		[IgnoreWhenInstructed]
 		public string AbsolutePrFilePath { get; set; }
 
 		[LlmIgnore]

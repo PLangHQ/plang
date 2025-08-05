@@ -35,7 +35,7 @@ namespace PLang.Services.OutputStream
 		private readonly string path;
 		private readonly Encoding encoding;
 		private Dictionary<string, object?> responseProperties;
-
+		public bool IsComplete { get; set; } = false;
 		public HttpOutputStream(HttpResponse response, IEngine engine, string contentType, int bufferSize, string path, LiveConnection? liveResponse)
 		{
 			this.response = response;
@@ -85,6 +85,12 @@ namespace PLang.Services.OutputStream
 
 		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
+			if (IsComplete)
+			{
+				Console.WriteLine("IsComplete");
+				return (null, new EndGoal(new Goal { RelativeGoalPath = "RootOfApp" }, step, "Response complete"));
+			}
+
 			(var response, var isFlushed, error) = GetResponse();
 			if (error != null) return (null, error);
 
@@ -131,12 +137,17 @@ namespace PLang.Services.OutputStream
 
 		public async Task Write(GoalStep step, object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
+			if (IsComplete)
+			{
+				Console.WriteLine("IsComplete");
+				return;
+			}
 
 			(var response, var isFlushed, var error) = GetResponse();
 			if (error != null) throw new ExceptionWrapper(error);
 			if (response == null || !response.Body.CanWrite)
 			{
-				Console.WriteLine("Response is null, so to console it goes: " + obj);
+				Console.WriteLine("Response is null, so to console it goes: " + obj.ToString().Replace("\n", "").MaxLength(200));
 				return;
 				//throw new Exception("Response is null");
 			}

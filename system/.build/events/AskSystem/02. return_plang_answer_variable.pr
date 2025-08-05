@@ -1,0 +1,30 @@
+{
+  "Hash": null,
+  "SignedMessage": null,
+  "Text": "return %__plang_answer%",
+  "ModuleType": "PLang.Modules.VariableModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to return the value stored in the variable %__plang_answer% as the output of the current step or goal. The appropriate function to use is 'Return' with the variable %__plang_answer%.",
+    "Name": "Return",
+    "Parameters": [
+      {
+        "Type": "System.Collections.Generic.Dictionary`2[System.String,System.Object]",
+        "Name": "variables",
+        "Value": {
+          "__plang_answer": "%__plang_answer%"
+        }
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "variables": {
+        "Name": "variables",
+        "FullTypeName": "System.Collections.Generic.Dictionary`2[System.String,System.Object]"
+      }
+    },
+    "ReturnValues": {}
+  }
+}
