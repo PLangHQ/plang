@@ -162,7 +162,15 @@ namespace PLang.Modules.OutputModule
 		private async Task<(object? Answer, IError? Error)> AskInternal(AskOptions askOptions, IError? error = null)
 		{
 			List<ObjectValue>? answers = new();
-			var outputStream = outputStreamFactory.CreateHandler();
+			IOutputStream outputStream;
+			if (askOptions.Channel == "system")
+			{
+				outputStream = outputSystemStreamFactory.CreateHandler();
+			}
+			else
+			{
+				outputStream = outputStreamFactory.CreateHandler();
+			}
 			if (goalStep.Callback != null)
 			{
 				(answers, error) = await ProcessCallbackAnswer(askOptions, error);
@@ -443,7 +451,7 @@ namespace PLang.Modules.OutputModule
 				}
 			}
 
-			// todo: quick fix, this should be dynamic with multiple channels, such as, user(default), system, notification, audit, metric, logs warning, and user custom channel.
+			// todo: quick fix, this should be dynamic with multiple channels, such as, user(default), system, notification, loading, audit, metric, logs warning, and user custom channel.
 			if (channel == "system")
 			{
 				await outputSystemStreamFactory.CreateHandler().Write(goalStep, content, type, statusCode, paramaters);
