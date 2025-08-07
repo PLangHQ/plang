@@ -41,9 +41,9 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode = 202, Callback? callback = null, IError? error = null)
 		{
-			return await IForm.Ask(askOptions, callback, error);
+			return await IForm.Ask(question, callback, error);
 		}
 
 		public async Task Execute(string javascriptToCall)

@@ -125,7 +125,7 @@ Attribute: Member is the key in the SetAttribute js method
 		public async Task<IError?> SetElement(List<DomInstruction> domInstructions)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, domInstructions);
+			await outputStream.Write(goalStep, domInstructions, "domInstruction");
 			return null;
 
 		}
@@ -135,7 +135,7 @@ Attribute: Member is the key in the SetAttribute js method
 		public async Task<IError?> RemoveElement(List<DomRemove> domRemoves)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, domRemoves);
+			await outputStream.Write(goalStep, domRemoves, "domRemove");
 			return null;
 
 		}
@@ -144,7 +144,7 @@ Attribute: Member is the key in the SetAttribute js method
 		public async Task<IError?> ExecuteJavascript(JavascriptFunction javascriptFunction)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, javascriptFunction);
+			await outputStream.Write(goalStep, javascriptFunction, "javascriptFunction");
 			return null;
 		}
 
@@ -254,7 +254,7 @@ Unique: default is false. this element should only exist one time on web page, i
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{
 
-				await outputStreamFactory.CreateHandler().Write(goalStep, content, parameters: options.Parameters);
+				await outputStreamFactory.CreateHandler().Write(goalStep, content, "html", parameters: options.Parameters);
 			}
 
 			return (content, null);

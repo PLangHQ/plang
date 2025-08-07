@@ -3,14 +3,18 @@ using AngleSharp.Io;
 using Jil;
 using LightInject;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Microsoft.Playwright;
 using Namotion.Reflection;
 using NBitcoin.Secp256k1;
+using Nethereum.Web3;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
@@ -33,6 +37,7 @@ using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
+using PLang.Services.Transformers;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using System.Collections.Concurrent;
@@ -40,6 +45,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
@@ -55,6 +61,8 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml.Linq;
 using UAParser;
+using UAParser.Objects;
+using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
 using static Dapper.SqlMapper;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.WebserverModule.Program;
@@ -74,7 +82,7 @@ public class Program : BaseProgram, IDisposable
 	private readonly IPseudoRuntime pseudoRuntime;
 	private readonly IEngine engine;
 	private readonly ProgramFactory programFactory;
-	private readonly static List<WebserverInfo> listeners = new();
+	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
 	ConcurrentDictionary<string, LiveConnection> liveConnections;
 
@@ -108,9 +116,9 @@ public class Program : BaseProgram, IDisposable
 		return liveConnections.Count;
 	}
 
-	public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
+	public async Task<WebserverProperties?> ShutdownWebserver(string webserverName)
 	{
-		var webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
+		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
 		if (webserverInfo == null)
 		{
 			await outputStreamFactory.CreateHandler().Write(goalStep, $"Webserver named '{webserverName}' does not exist");
@@ -128,8 +136,7 @@ public class Program : BaseProgram, IDisposable
 		var webserverInfo = await ShutdownWebserver(webserverName);
 		if (webserverInfo == null) return false;
 
-		await StartWebserver(webserverInfo.WebserverName, webserverInfo.Scheme, webserverInfo.Host, webserverInfo.Port,
-			webserverInfo.MaxContentLengthInBytes, webserverInfo.DefaultResponseContentEncoding, webserverInfo.SignedRequestRequired, webserverInfo.Routings);
+		await StartWebserver(webserverInfo);
 
 		return true;
 	}
@@ -151,7 +158,7 @@ public class Program : BaseProgram, IDisposable
 			throw new ObjectDisposedException(this.GetType().FullName);
 		}
 	}
-
+	/*
 	public record WebserverInfo(string WebserverName, string Scheme, string Host, int Port,
 		long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<Routing>? Routings)
 		: IDisposable
@@ -164,50 +171,44 @@ public class Program : BaseProgram, IDisposable
 			Console.WriteLine($"Shutting down {Scheme}://{Host}:{Port}");
 			this.Listener.StopAsync();
 		}
-	}
+	}*/
 	public record ParamInfo(string Name, string VariableOrValue, string Type, string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
 	public record GoalToCallWithParamInfo(string Name, List<ParamInfo> Parameters);
-	public record Routing(string Path, Route? Route = null, string[]? Method = null, string ContentType = "text/html",
-								long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
+	public record Routing(string Path, Route Route, RequestProperties RequestProperties, ResponseProperties ResponseProperties);
 
-	[Description(@"When path is /api, ContentType=application/json unless defined by user. When user defines a variable in path, it should be defined in GoalToCallInfo, /product/%id% => Parameters: id=%id%. When GoalToCallInfo is not defined by user, use Path as Name in GoalToCallInfo")]
-	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> PathParameters, GoalToCallInfo goalToCall,
-		[Description("Default is GET")]
-		string[]? method = null, string ContentType = "text/html",
-								long? MaxContentLength = 8 * 1024,
-								[Description("Default is utf-8")]
-								string? DefaultResponseContentEncoding = null,
-								string? webserverName = "default")
+	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
+		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{
-		WebserverInfo? webserverInfo = null;
-		if (webserverName != null)
+		var webserverInfo = goal.GetVariable<WebserverProperties>();
+		if (webserverInfo == null)
 		{
-			webserverInfo = (listeners.Count == 1) ? listeners[0] : listeners.FirstOrDefault(p => p.WebserverName == webserverName);
-			if (webserverInfo == null)
+			return new ProgramError("You can only add route on start of webserver", goalStep,
+				FixSuggestion: @"Add on start to call a goal, e.g. `- start webserver, on start call AddRoutes`, then in in the AddRoutes goal add each route, e.g.
+```plang
+AddRoutes
+- add route ""/user"", call goal User
+- add route ""/cart"", call goal Cart
+```
+");
+		}
+
+		requestProperties = TypeHelper.SetProperties(requestProperties);
+		responseProperties = TypeHelper.SetProperties(responseProperties);
+
+		if (goalToCall == null)
+		{
+			var goal = prParser.GetAllGoals().FirstOrDefault(p => p.RelativeGoalPath.Replace(".goal", "").Equals(path, StringComparison.OrdinalIgnoreCase));
+			if (goal == null) return new ProgramError($"Could not find goal {path}.goal");
+
+			goalToCall = new GoalToCallInfo(goal.GoalName)
 			{
-				return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, function);
-			}
-		}
-		else if (listeners.Count > 1)
-		{
-			return new ProgramError($"There are {listeners.Count} servers, please define which webserver you want to assign this routing to.", goalStep, function,
-					FixSuggestion: $"rewrite the step to include the server name e.g. `- {goalStep.Text}, on {listeners[0].WebserverName} webserver");
-		}
-		else if (listeners.Count == 0)
-		{
-			return new ProgramError($"There are 0 servers, please define a webserver.", goalStep, function,
-					FixSuggestion: $"create a step before adding a route e.g. `- start webserver");
+				Path = goal.RelativePrPath
+			};
 		}
 
-		if (webserverInfo == null) webserverInfo = listeners[0];
+		var route = BuildRoute(path, pathParameters, goalToCall);
 
-		if (method == null || method.Length == 0) method = ["GET"];
-
-		if (webserverInfo.Routings == null) webserverInfo.Routings = new();
-
-		var route = BuildRoute(path, PathParameters, goalToCall);
-
-		webserverInfo.Routings.Add(new Routing(path, route, method, ContentType, MaxContentLength, DefaultResponseContentEncoding));
+		webserverInfo.Routings.Add(new Routing(path, route, requestProperties, responseProperties));
 
 		return null;
 	}
@@ -224,7 +225,9 @@ public class Program : BaseProgram, IDisposable
 		var m = route.PathRegex.Match(path);
 		if (!m.Success) return (false, null, null);
 
-		var method = routing.Method.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
+		var methods = routing.RequestProperties.Methods ?? ["GET"];
+
+		var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
 		if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", goalStep));
 
 		var dict = m.Groups.Keys
@@ -301,26 +304,124 @@ public class Program : BaseProgram, IDisposable
 
 	public record CertInfo(string FileName, string Password);
 
-	public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
-		int port = 8080, long maxContentLengthInBytes = 4096 * 2,
-		string defaultResponseContentEncoding = "utf-8",
-		bool signedRequestRequired = false, List<Routing>? routings = null, CertInfo? certInfo = null)
+	[Description("Default Methods=[\"GET\"]")]
+	public record RequestProperties(List<string> Methods, long MaxContentLengthInBytes = 1024 * 8, bool SignedRequestRequired = false)
 	{
-		if (listeners.FirstOrDefault(p => p.WebserverName == webserverName) != null)
+		public RequestProperties() : this(["GET"]) { }
+	}
+	public record ResponseProperties(string ContentType = "text/html", string ResponseEncoding = "utf-8");
+
+	public record WebserverProperties(string Name = "default", string Host = "*", int Port = 8080,
+		RequestProperties? DefaultRequestProperties = null, ResponseProperties? DefaultResponseProperties = null,
+		GoalToCallInfo? OnStart = null, GoalToCallInfo? OnShutdown = null,
+		GoalToCallInfo? OnRequestBegin = null, GoalToCallInfo? OnRequestEnd = null,
+		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollEnd = null
+		)
+		: IDisposable
+	{
+		[LlmIgnore]
+		public IHost Listener { get; set; }
+
+		[LlmIgnore]
+		public List<Routing> Routings { get; set; } = new();
+
+		[LlmIgnore]
+		public X509Certificate2? Certificate { get; set; }
+
+
+		public void Dispose()
 		{
-			throw new RuntimeException($"Webserver '{webserverName}' already exists. Give it a different name");
+			Console.WriteLine($"Shutting down {Host}:{Port}");
+			this.Listener.StopAsync();
+		}
+	}
+
+	public async Task<IError?> SetCertificate(string permFilePath, string? privateKeyFile = null)
+	{
+		var webserver = goal.GetVariable<WebserverProperties>();
+		if (webserver == null)
+		{
+			return new ProgramError("You can only set certificate on start of webserver", goalStep,
+				FixSuggestion: @"Add on start to call a goal, e.g. `- start webserver, on start call OnStartingWebserver`, then in in the OnStartingWebserver goal add each route, e.g.
+```plang
+OnStartingWebserver
+- set certificate, ""premFile.pem"", ""privatekey.pem""
+```
+
+
+");
+		}
+		if (!string.IsNullOrEmpty(permFilePath))
+		{
+			if (!fileSystem.File.Exists(permFilePath))
+			{
+				return new ProgramError($"Could not find {permFilePath}");
+			}
+		}
+		if (!string.IsNullOrEmpty(privateKeyFile))
+		{
+			if (!fileSystem.File.Exists(privateKeyFile))
+			{
+				return new ProgramError($"Could not find {privateKeyFile}");
+			}
 		}
 
-		if (listeners.FirstOrDefault(p => p.Port == port) != null)
+		var cert = X509Certificate2
+		   .CreateFromPemFile(permFilePath, privateKeyFile);
+		webserver.Certificate = cert;
+		return null;
+	}
+
+	public async Task<IError?> SetSelfSignedCertificate()
+	{
+		var webserver = goal.GetVariable<WebserverProperties>();
+		if (webserver == null)
 		{
-			throw new RuntimeException($"Port {port} is already in use. Select different port to run on, e.g.\n-Start webserver, port 4687");
+			return new ProgramError("You can only set certificate on start of webserver", goalStep,
+				FixSuggestion: @"Add on start to call a goal, e.g. `- start webserver, on start call OnStartingWebserver`, then in in the OnStartingWebserver goal add each route, e.g.
+```plang
+OnStartingWebserver
+- set self signed cert
+```
+
+
+");
+		}
+		var certHelper = container.GetInstance<ICertHelper>();
+		var certResult = certHelper.GetOrCreateCert(null);
+		if (certResult.Error != null) return certResult.Error;
+
+		webserver.Certificate = certResult.Certificate;
+		return null;
+	}
+
+	public async Task<(WebserverProperties?, IError?)> StartWebserver(WebserverProperties webserverProperties)
+	{
+		if (listeners.FirstOrDefault(p => p.Name == webserverProperties.Name) != null)
+		{
+			throw new RuntimeException($"Webserver '{webserverProperties.Name}' already exists. Give it a different name");
+		}
+
+		if (listeners.FirstOrDefault(p => p.Port == webserverProperties.Port) != null)
+		{
+			throw new RuntimeException($"Port {webserverProperties.Port} is already in use. Select different port to run on, e.g.\n-Start webserver, port 4687");
 		}
 
 		var assembly = Assembly.GetAssembly(this.GetType());
 		string version = assembly!.GetName().Version!.ToString();
 
-		//var builder = WebApplication.CreateBuilder();
-		var webserverInfo = new WebserverInfo(webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, routings);
+		var requestProperties = TypeHelper.SetProperties(webserverProperties.DefaultRequestProperties);
+		var responseProperties = TypeHelper.SetProperties(webserverProperties.DefaultResponseProperties);
+		webserverProperties = webserverProperties with { DefaultRequestProperties = requestProperties, DefaultResponseProperties = responseProperties };
+
+		goal.AddVariable(webserverProperties);
+
+		if (webserverProperties.OnStart != null)
+		{
+			var (_, error) = await engine.RunGoal(webserverProperties.OnStart, goal);
+			if (error != null) return (webserverProperties, error);
+		}
+
 
 		var builder = Host.CreateDefaultBuilder()
 			.ConfigureLogging(l => l.ClearProviders())
@@ -329,47 +430,35 @@ public class Program : BaseProgram, IDisposable
 
 				web.UseKestrel(k =>
 				{
-					var certHelper = container.GetInstance<ICertHelper>();
-					var certResult = certHelper.GetOrCreateCert(certInfo);
-					if (certResult.Error != null)
+					if (webserverProperties.Host == "localhost")
 					{
-						throw new ExceptionWrapper(certResult.Error);
-					}
-
-					
-
-			
-					if (IPAddress.TryParse(host, out var ip))
-					{
-						k.Listen(ip, port, l =>
+						k.ListenLocalhost(webserverProperties.Port, l =>
 						{
 							l.Protocols = HttpProtocols.Http1AndHttp2;
-							l.UseHttps(certResult.Certificate, (options) =>
+							if (webserverProperties.Certificate != null)
 							{
-
-							});
+								l.UseHttps(webserverProperties.Certificate);
+							}
 						});
-					}
-					else if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-					{
-						/*
-						k.ListenLocalhost(port, l =>
-						{
-							l.Protocols = HttpProtocols.Http1AndHttp2;
-							l.UseHttps(certResult.Certificate);
-						});*/
 					}
 					else
 					{
-						Console.WriteLine("Host '{host}' is not a valid IP or 'localhost'.");
-						throw new ArgumentException($"Host '{host}' is not a valid IP or 'localhost'.");
+						IPAddress address = (webserverProperties.Host == "*") ? IPAddress.Any : IPAddress.TryParse(webserverProperties.Host, out var ip) ? ip : IPAddress.Any;
+						k.Listen(address, webserverProperties.Port, l =>
+						{
+							l.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+							if (webserverProperties.Certificate != null)
+							{
+								l.UseHttps(webserverProperties.Certificate);
+							}
+						});
 					}
 
 					k.AddServerHeader = false;
 				});
 				web.ConfigureServices(s =>
 				{
-					s.AddSingleton(webserverInfo);
+					s.AddSingleton(webserverProperties);
 					s.AddResponseCompression(o =>
 					{
 						o.EnableForHttps = true;
@@ -383,84 +472,184 @@ public class Program : BaseProgram, IDisposable
 				web.Configure(app =>
 				{
 					app.UseForwardedHeaders();
-					app.UseHttpsRedirection();
+					if (webserverProperties.Certificate != null)
+					{
+						app.UseHttpsRedirection();
+					}
 					app.UseResponseCompression();
-					
-					app.Run(async ctx => await HandleRequestAsync(ctx, webserverInfo));
+					app.UseStaticFiles();
+					app.Run(async ctx => await HandleRequestAsync(ctx, webserverProperties));
+
 				});
 			});
 
 		var app = builder.Build();
 
-		webserverInfo.Listener = app;
+
+		webserverProperties.Listener = app;
 
 		await app.StartAsync();
 
-		listeners.Add(webserverInfo);
+		listeners.Add(webserverProperties);
 
-		logger.LogDebug($"Listening on {host}:{port}...");
-		Console.WriteLine($" - Listening on {host}:{port}...");
+		logger.LogDebug($"Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
+		Console.WriteLine($" - Listening on {webserverProperties.Host}:{webserverProperties.Port}...");
 
 		KeepAlive(listeners, "Webserver");
 
-		return webserverInfo;
+		return (webserverProperties, null);
 	}
 
-
-	public class DisposeTracker : IDisposable
+	private async Task HandleError(IEngine? engine, IError error)
 	{
-		private readonly HttpContext _context;
 
-		public DisposeTracker(HttpContext context)
+		(_, var error2) = await eventRuntime.AppErrorEvents(error);
+		if (error2 == null) return;
+
+		//last effort, write to system output
+		var output = outputStreamFactory.CreateHandler("system");
+		await output.Write(goalStep, error, "error", 500);
+	}
+
+	private HttpOutputStream GetOutputStream(WebserverProperties webserverProperties, HttpContext httpContext)
+	{
+		var transformer = GetTransformer(webserverProperties, httpContext);
+		return new HttpOutputStream(httpContext.Response, liveConnections, transformer);
+	}
+
+	private async Task<(IEngine?, IError?)> GetEngine(WebserverProperties webserverProperties, HttpContext context)
+	{
+		if (context.Items.TryGetValue("Engine", out object? obj) && obj is IEngine)
 		{
-			_context = context;
-			
+			var e = obj as IEngine;
+			Console.WriteLine($"e.id: {e.Id}");
+			return (e, null);
 		}
 
-		public void Dispose()
+
+		var outputStream = GetOutputStream(webserverProperties, context);
+		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
+		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, context);
+
+		var requestProperties = GetRequestProperties(context);
+		ParseHeaders(context, outputStream);
+
+		var objectValue = new ObjectValue("request", new Dictionary<string, object>(), properties: requestProperties);
+		engine.GetMemoryStack().Put(objectValue);
+		Console.WriteLine($"pool engine.id: {engine.Id}");
+		context.Items.Add("Engine", engine);
+
+		return (engine, null);
+	}
+
+	private async Task RunOnRequest(IEngine engine, GoalToCallInfo goalToCall)
+	{
+
+		(_, var error) = await engine!.RunGoal(goalToCall, goal);
+		if (error == null) return;
+
+
+		if (error != null)
 		{
-			Console.WriteLine("dispose path:" + _context.Request.Path);
-			int i = 0;
-			//Console.WriteLine($"Response disposed for: {_context.Request.Path}");
-			//Console.WriteLine(Environment.StackTrace); // Stack trace
+			(_, error) = await eventRuntime.AppErrorEvents(error);
+			if (error == null) return;
+
+			var output = outputStreamFactory.CreateHandler("error");
+			await output.Write(goalStep, error, "error", 500);
 		}
 	}
-	private async Task HandleRequestAsync(HttpContext httpContext, WebserverInfo webserverInfo)
+
+	private async Task HandleRequestAsync(HttpContext ctx, WebserverProperties webserverProperties)
 	{
-		
-		httpContext.Response.OnStarting(() =>
+		IEngine? engine = null;
+		try
 		{
-			//Console.WriteLine($"Headers about to be sent for:");
-			return Task.CompletedTask;
-		});
-		httpContext.Response.RegisterForDispose(new DisposeTracker(httpContext));
-		var outputStream = GetOutputStream(httpContext);
-
-		if (webserverInfo.SignedRequestRequired && !httpContext.Request.Headers.TryGetValue("X-Signature", out var value))
-		{
-			await ShowError(httpContext.Response, outputStream, new Error("All requests must be signed"));
-			return;
-		}
-
-		var error = await HandleRequest(httpContext, outputStream, webserverInfo);
-
-		if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
-		{
-			await ShowError(httpContext.Response, outputStream, error);
-		} else
-		{
-			if (!httpContext.Response.HasStarted)
+			if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !ctx.Request.Headers.TryGetValue("X-Signature", out var value))
 			{
-				httpContext.Response.StatusCode = 200;
+				await ShowError(ctx.Response, GetOutputStream(webserverProperties, ctx), new Error("All requests must be signed"));
+				return;
 			}
+
+			(engine, var error) = await GetEngine(webserverProperties, ctx);
+			if (error != null || engine == null)
+			{
+				await HandleError(engine, error);
+				return;
+			}
+
+			(var signedMessage, error) = await VerifySignature(engine!, ctx);
+			if (error != null)
+			{
+				await HandleError(engine, error);
+				return;
+			}
+
+			if (webserverProperties.OnRequestBegin != null)
+			{
+				await RunOnRequest(engine, webserverProperties.OnRequestBegin);
+			}
+
+			if (webserverProperties.OnPollStart != null)
+			{
+				string? query = ctx.Request.QueryString.Value;
+				if (query?.StartsWith("?plang.poll=1") == true)
+				{
+					await HandlePlangPoll(engine, ctx, webserverProperties, signedMessage);
+					return;
+				}
+			}
+
+			var outputStream = engine.OutputStreamFactory.CreateHandler();
+			error = await HandleRequest(ctx, outputStream, webserverProperties);
+
+			if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
+			{
+				await ShowError(ctx.Response, outputStream, error);
+				return;
+			}
+			else
+			{
+				if (!ctx.Response.HasStarted)
+				{
+					ctx.Response.StatusCode = 200;
+				}
+			}
+
+			if (webserverProperties.OnRequestEnd != null)
+			{
+				await RunOnRequest(engine, webserverProperties.OnRequestEnd);
+			}
+
+			if (error != null)
+			{
+				await HandleError(engine, error);
+
+			}
+
 		}
-		Console.WriteLine("CompleteAsync");
-		await httpContext.Response.CompleteAsync();
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex);
+		}
+		finally
+		{
+			if (engine != null)
+			{
+				Console.WriteLine($"REturn(reques done) e.id:{engine.Id}");
+				var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
+				pool.Return(engine);
+			}
+
+
+			Console.WriteLine($"--------  End:{ctx.Request.Path.Value} - {ctx.TraceIdentifier}  --------");
+			await ctx.Response.CompleteAsync();
+		}
+
 
 
 	}
 
-	private async Task<IError?> HandleRequest(HttpContext httpContext, IOutputStream outputStream, WebserverInfo webserverInfo)
+	private async Task<IError?> HandleRequest(HttpContext httpContext, IOutputStream outputStream, WebserverProperties webserverInfo)
 	{
 		try
 		{
@@ -483,7 +672,7 @@ public class Program : BaseProgram, IDisposable
 
 			if (goal == null)
 			{
-				return await ProcessGeneralRequest(httpContext, outputStream);
+				return await ProcessGeneralRequest(httpContext);
 			}
 
 			if (routing == null)
@@ -492,10 +681,6 @@ public class Program : BaseProgram, IDisposable
 			}
 
 			logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
-			(var signedMessage, error) = await VerifySignature(httpContext, outputStream);
-			// Unsigned requests are allowed, so we let 401 through
-			if (error?.StatusCode != 401) return error;
-
 
 			error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
 
@@ -509,7 +694,7 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverInfo webserverInfo, 
+	private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverProperties webserverInfo,
 		Routing routing, HttpContext httpContext, IOutputStream outputStream)
 	{
 		if (goal == null)
@@ -520,12 +705,12 @@ public class Program : BaseProgram, IDisposable
 
 		var resp = httpContext.Response;
 		var request = httpContext.Request;
-		resp.OnStarting(() =>
+		/*resp.OnStarting(() =>
 		{
 			int i = 0;
 
 			return Task.CompletedTask;
-		});
+		});*/
 
 
 		if (request.QueryString.Value == "__signature__")
@@ -536,16 +721,16 @@ public class Program : BaseProgram, IDisposable
 			return null;
 		}
 
-		long maxContentLength = routing.MaxContentLength ?? webserverInfo.MaxContentLengthInBytes;
+		long maxContentLength = routing.RequestProperties.MaxContentLengthInBytes;
 		if (request.ContentLength > maxContentLength)
 		{
 			return new Error($"Content sent to server is to big. Max {maxContentLength} bytes", StatusCode: 413);
 		}
 
-		string strEncoding = routing.DefaultResponseContentEncoding ?? webserverInfo.DefaultResponseContentEncoding;
+		string strEncoding = routing.ResponseProperties.ResponseEncoding;
 		var encoding = Encoding.GetEncoding(strEncoding);
 
-		resp.Headers["Content-Type"] = $"{routing.ContentType}; charset={encoding.BodyName}";
+		resp.Headers["Content-Type"] = $"{routing.ResponseProperties.ContentType}; charset={encoding.BodyName}";
 
 		resp.Headers.Add("X-Goal-Hash", goal.Hash);
 		resp.Headers.Add("X-Goal-Signature", goal.Signature);
@@ -554,23 +739,26 @@ public class Program : BaseProgram, IDisposable
 
 		(var requestObjectValue, var error) = await ParseRequest(httpContext, outputStream);
 		if (error != null) return error;
+
 		logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
+
 		(var callbackInfos, error) = await GetCallbackInfos(request);
 		if (error != null) return error;
+
 		logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
-		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+
+		var engine = httpContext.Items["Engine"] as IEngine;
 
 		if (requestObjectValue != null)
 		{
-			engine.GetMemoryStack().Put(requestObjectValue, goalStep);
+			engine.MemoryStack.Put(requestObjectValue, goalStep);
 		}
-		engine.CallbackInfos = callbackInfos;
+		engine!.CallbackInfos = callbackInfos;
 		if (slugVariables != null)
 		{
 			foreach (var item in slugVariables)
 			{
-				engine.GetMemoryStack().Put(item, goalStep, disableEvent: true);
+				engine.MemoryStack.Put(item, goalStep, disableEvent: true);
 			}
 		}
 		logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
@@ -585,17 +773,10 @@ public class Program : BaseProgram, IDisposable
 
 		}
 		(var vars, error) = await engine.RunGoal(goal, 0);
-		if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
+		if (error != null && !error.Handled && error is not IErrorHandled)
 		{
 			(var returnVars, error) = await engine.GetEventRuntime().AppErrorEvents(error);
 		}
-
-		var onRequestEnd = prParser.GetEvent("OnRequestEnd");
-		if (onRequestEnd != null)
-		{
-			await engine.RunGoal(onRequestEnd);
-		}
-		pool.Return(engine, true);
 
 		logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
 
@@ -648,7 +829,8 @@ public class Program : BaseProgram, IDisposable
 			}
 			var step = (error.Step != null) ? error.Step : goalStep;
 			await outputStream.Write(step, error, statusCode: error.StatusCode);
-
+			
+			await resp.CompleteAsync();
 		}
 		catch (Exception ex)
 		{
@@ -657,43 +839,52 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverInfo webserverInfo, List<Routing>? routings, IOutputStream outputStream)
+	private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverProperties webserverInfo, List<Routing>? routings, IOutputStream outputStream)
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 
 		logger.LogDebug($" - Verify signature - {stopwatch.ElapsedMilliseconds}");
 
-		(var signature, var error) = await VerifySignature(httpContext, outputStream);
-		if (error != null) return error;
-
 		httpContext.Response.ContentType = "application/plang+json; charset=utf-8";
 
-		string? query = httpContext.Request.QueryString.Value;
-		if (query?.StartsWith("?plang.poll=1") == true)
-		{
-			await HandlePlangPoll(httpContext, signature.Identity, outputStream);
-			return null;
-		}
 		logger.LogDebug($" - get routing - {stopwatch.ElapsedMilliseconds}");
-		(var goal, var routing, var slugVariables, error) = GetGoalByRouting(routings, httpContext.Request);
+		(var goal, var routing, var slugVariables, var error) = GetGoalByRouting(routings, httpContext.Request);
+		
 		if (error != null) return error;
 		if (routing == null) return new NotFoundError("Routing not found");
 		if (goal == null) return new NotFoundError("Goal not found");
 
-		routing = routing with { ContentType = "application/plang+json" };
+		var rp = routing.ResponseProperties with { ContentType = "application/plang+json" };
+		routing = routing with { ResponseProperties = rp };
 
 		logger.LogDebug($" - ProcessGoal starts - {stopwatch.ElapsedMilliseconds}");
+
 		error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
+		
 		logger.LogDebug($" - ProcessGoal done - {stopwatch.ElapsedMilliseconds}");
 		return error;
 	}
 
-	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(HttpContext httpContext, IOutputStream outputStream)
+	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(IEngine engine, HttpContext httpContext)
 	{
-		var signatureData = httpContext.Request.Headers["X-Signature"].ToString();
+		if (httpContext.Items.TryGetValue("SignedMessage", out object? sig) && sig is SignedMessage sm)
+		{
+			engine.MemoryStack.Put(ReservedKeywords.Identity, sm.Identity);
+			engine.MemoryStack.Put(ReservedKeywords.Signature, sm.Signature);
+
+			return (sm, null);
+		}
+
+		if (!httpContext.Request.Headers.TryGetValue("X-Signature", out var signatureHeader))
+		{
+			engine.MemoryStack.Remove(ReservedKeywords.Identity);
+			return (null, null);
+		}
+
+		var signatureData = signatureHeader.ToString();
 		if (string.IsNullOrEmpty(signatureData))
 		{
-			memoryStack.Remove(ReservedKeywords.Identity);
+			engine.MemoryStack.Remove(ReservedKeywords.Identity);
 			return (null, new UnauthorizedError("X-Signature is empty. Use plang app or compatible to continue."));
 		}
 
@@ -706,28 +897,20 @@ public class Program : BaseProgram, IDisposable
 
 		byte[] rawBody = await GetRawBody(request);
 
-
 		var signing = GetProgramModule<IdentityModule.Program>();
 		var verifiedSignatureResult = await signing.VerifySignature(signatureData, headers, rawBody);
 		if (verifiedSignatureResult.Signature != null)
 		{
-			memoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);
-			memoryStack.Put(ReservedKeywords.Signature, verifiedSignatureResult.Signature);
-			LiveConnection? liveResponse = null;
-			if (verifiedSignatureResult.Signature != null && verifiedSignatureResult.Signature.Identity != null)
-			{
-				liveConnections.TryGetValue(verifiedSignatureResult.Signature.Identity, out liveResponse);
-				if (liveResponse != null && outputStream is HttpOutputStream httpOutputStream)
-				{
-					httpOutputStream.SetLiveResponse(liveResponse);
-				}
-			}
-
+			engine.MemoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);
+			engine.MemoryStack.Put(ReservedKeywords.Signature, verifiedSignatureResult.Signature);
 		}
 		else
 		{
-			memoryStack.Remove(ReservedKeywords.Identity);
+			engine.MemoryStack.Remove(ReservedKeywords.Identity);
 		}
+
+		httpContext.Items.Add("SignedMessage", verifiedSignatureResult.Signature);
+
 		return verifiedSignatureResult;
 	}
 
@@ -741,27 +924,48 @@ public class Program : BaseProgram, IDisposable
 		return ms.ToArray();
 	}
 
-	private async Task HandlePlangPoll(HttpContext httpContext, string Identity, IOutputStream outputStream)
+	private async Task HandlePlangPoll(IEngine engine, HttpContext ctx, WebserverProperties props, SignedMessage? signedMessage)
 	{
-		var response = httpContext.Response;
-		response.ContentType = "application/plang+json; charset=utf-8";
-		response.Headers.Add("Cache-Control", "no-cache");
+		if (signedMessage == null) return;
 
-		bool startPoll = !liveConnections.ContainsKey(Identity);
 
-		
-		
-		
-		
-		liveConnections.AddOrReplace(Identity, new LiveConnection(response, true));
+		var outputStream = engine.OutputStreamFactory.CreateHandler() as HttpOutputStream;
+		LiveConnection? liveResponse = null;
 
+		liveConnections.TryGetValue(signedMessage.Identity, out liveResponse);
+		if (liveResponse != null && outputStream is HttpOutputStream httpOutputStream)
+		{
+			outputStream.SetIdentity(signedMessage!.Identity);
+		}
+
+		bool startPoll = !liveConnections.ContainsKey(signedMessage.Identity);
+
+		var response = ctx.Response;
+		if (!response.HasStarted)
+		{
+			response.ContentType = "application/plang+json; charset=utf-8";
+			response.Headers.Add("Cache-Control", "no-cache");
+		}
+		 
+		//liveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(null, true));
+
+		if (props.OnPollStart != null)
+		{
+			var (_, error) = await engine.RunGoal(props.OnPollStart, goal);
+			if (error != null)
+			{
+				await HandleError(engine, error);
+			}
+		}
+
+
+		//return the engine, because we dont need it for long poll
+		ctx.Items.Remove("Engine");
 		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+		Console.WriteLine($"REturn(poll) e.id:{engine.Id}");
+		pool.Return(engine, true);
 
-		var requestProperties = GetRequestProperties(httpContext);
-		var objectValue = new ObjectValue("request", new Dictionary<string, object>(), properties: requestProperties);
-		engine.GetMemoryStack().Put(objectValue);
-
+		/*
 		string? query = httpContext.Request.QueryString.Value;
 
 		var onRequestBegin = prParser.GetEvent("OnRequestBegin");
@@ -774,20 +978,14 @@ public class Program : BaseProgram, IDisposable
 			}
 		}
 
-		var onConnect = prParser.GetEvent("OnConnect");
-		if (onConnect != null)
-		{
-			await engine.RunGoal(onConnect);
-		}
+		
 
 		var onRefresh = prParser.GetEvent("OnRefresh");
 		if (onRefresh != null && query?.Contains("refresh=1") == true)
 		{
 			await engine.RunGoal(onRefresh);
-		} 
-		
+		}*/
 
-		pool.Return(engine, true);
 
 		try
 		{
@@ -805,10 +1003,10 @@ public class Program : BaseProgram, IDisposable
 			if (onRequestEnd != null)
 			{
 				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
 
 				await engine.RunGoal(onRequestEnd);
-
+				Console.WriteLine($"REturn(OnRequestEnd) e.id:{engine.Id}");
 				pool.Return(engine, true);
 			}
 		}
@@ -818,31 +1016,28 @@ public class Program : BaseProgram, IDisposable
 			var onRequestEnd = prParser.GetEvent("OnRequestEnd");
 
 			// client disconnected or other I/O error
-			liveConnections.TryRemove(Identity, out var liveConnection);
-			if (onDisconnect != null || onRequestEnd != null)
+			liveConnections.TryRemove(signedMessage.Identity, out var liveConnection);
+			if (onDisconnect != null)
 			{
 				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, httpContext);
+				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
 				if (onDisconnect != null)
 				{
 					await engine.RunGoal(onDisconnect);
 				}
-				if (onRequestEnd != null)
-				{
-					await engine.RunGoal(onRequestEnd);
-				}
+				Console.WriteLine($"REturn(onDisconnect) e.id:{engine.Id}");
 				pool.Return(engine, true);
 			}
 			//Console.WriteLine($"Long-poll ended: {ex.Message}");
 		}
 
-		
+
 
 	}
 
 
 
-	private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext, IOutputStream outputStream)
+	private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext)
 	{
 		var requestedFile = httpContext.Request.Path.Value;
 		if (string.IsNullOrEmpty(requestedFile)) return new NotFoundError("Path is empty");
@@ -861,13 +1056,25 @@ public class Program : BaseProgram, IDisposable
 		{
 			return new NotFoundError($"{requestedFile} was not found");
 		}
-
-		await using var stream = fileSystem.File.OpenRead(filePath);
-		httpContext.Response.ContentLength = stream.Length;
-		httpContext.Response.ContentType = mimeType;
-		await stream.CopyToAsync(outputStream.Stream);
-
-
+		Console.WriteLine($"     - {filePath} - read stream - {httpContext.TraceIdentifier}");
+		try
+		{
+			await using var stream = fileSystem.File.OpenRead(filePath);
+			if (httpContext.Response.HasStarted)
+			{
+				int i = 0;
+			}
+			else
+			{
+				httpContext.Response.ContentLength = stream.Length;
+				httpContext.Response.ContentType = mimeType;
+			}
+			await stream.CopyToAsync(httpContext.Response.Body);
+			Console.WriteLine($"     - {filePath} - end read stream - {httpContext.TraceIdentifier}");
+		} catch (Exception ex)
+		{
+			Console.WriteLine($"     - {filePath} - end read stream - {httpContext.TraceIdentifier} | ex:" + ex);
+		}
 		return null;
 	}
 	private string? GetMimeType(string extension)
@@ -1397,12 +1604,17 @@ Frontpage
 
 
 
-	private IOutputStream GetOutputStream(HttpContext httpContext)
+	private ITransformer GetTransformer(WebserverProperties props, HttpContext httpContext)
 	{
-		var contentType = GetContentType(httpContext.Request);
-		var os = new HttpOutputStream(httpContext.Response, engine, contentType, 4096, httpContext.Request.Path, null);
-		
-		return os;
+		string? contentType = httpContext.Request.Headers.Accept.FirstOrDefault();
+		if (contentType == null) contentType = props.DefaultResponseProperties!.ContentType;
+		Encoding encoding = Encoding.GetEncoding(props.DefaultResponseProperties!.ResponseEncoding);
+
+		if (contentType.StartsWith("application/plang")) return new PlangTransformer(encoding);
+		if (contentType.StartsWith("application/json")) return new JsonTransformer(encoding);
+		if (contentType.StartsWith("text/html")) return new HtmlTransformer(encoding);
+
+		return new TextTransformer(encoding);
 	}
 
 	private string GetContentType(HttpRequest request)

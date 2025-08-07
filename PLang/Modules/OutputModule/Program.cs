@@ -14,6 +14,7 @@ using PLang.Models;
 using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.Transformers;
 using PLang.Utils;
 using RazorEngineCore;
 using System.Collections.Generic;
@@ -27,6 +28,7 @@ using UAParser.Objects;
 using static PLang.Modules.FileModule.CsvHelper;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.UiModule.Program;
+using static PLang.Modules.WebserverModule.Program;
 using static PLang.Runtime.Startup.ModuleLoader;
 using static PLang.Utils.StepHelper;
 
@@ -134,7 +136,7 @@ namespace PLang.Modules.OutputModule
 			caller.RunGoal("/modules/UiModule/RenderUserIntent", )
 			return (null, null);
 		}*/
-
+		
 
 		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
@@ -180,8 +182,38 @@ namespace PLang.Modules.OutputModule
 				return (answers, error);
 			}
 
-			var callback = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
-			(var answer, error) = await outputStream.Ask(goalStep, askOptions, callback, error);
+			var path = GetCallbackPath();
+			var url = (HttpContext.Request.Path.Value ?? "/");
+			var callback = await StepHelper.GetCallback(url, askOptions.CallbackData, memoryStack, goalStep, programFactory);
+			
+			Dictionary<string, object?> parameters = new();
+			parameters.AddOrReplace("askOptions", askOptions);
+			parameters.AddOrReplace("callback", JsonConvert.SerializeObject(callback).ToBase64());
+			parameters.AddOrReplace("error", error);
+			parameters.Add("url", url);
+			parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
+
+			if (outputStream is HttpOutputStream httpOutputStream)
+			{
+				foreach (var rp in httpOutputStream.ResponseProperties)
+				{
+					parameters.AddOrReplace(rp.Key, rp.Value);
+				}
+			}			
+
+			string? content = null;
+			if (askOptions.IsTemplateFile)
+			{
+				var templateEngine = GetProgramModule<Modules.TemplateEngineModule.Program>();
+				(content, var renderError) = await templateEngine.RenderFile(askOptions.QuestionOrTemplateFile, parameters);
+				if (renderError != null) return (null, renderError);
+			}
+			else
+			{
+				content = variableHelper.LoadVariables(askOptions.QuestionOrTemplateFile)?.ToString();
+			}
+						
+			(var answer, error) = await outputStream.Ask(goalStep, content, askOptions.StatusCode, callback, error);
 			if (error != null) return (null, error);
 
 			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asking user a question", Levels: 9999));
@@ -211,7 +243,7 @@ namespace PLang.Modules.OutputModule
 			return (answers, error);
 		}
 
-
+		
 		private async Task<(List<ObjectValue>? Answers, IError? Error)> ProcessCallbackAnswer(AskOptions askOptions, IError? error = null)
 		{
 			if (HttpContext == null || !HttpContext.Request.HasFormContentType)

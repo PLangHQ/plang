@@ -33,32 +33,10 @@ namespace PLang.Modules.ThrowErrorModule
 		public async Task<IError?> Throw(object? message, string key = "UserDefinedError", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
 			if (message is IError) return message as IError;
-			//await outputStreamFactory.CreateHandler().Write(message, type, statusCode);
+
 			return new UserInputError(message.ToString(), goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
 		}
 
-		[Description("Mark the error as handled for the stack. Depth is how far up the stack it should end, previous goal is 1")]
-		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
-		public async Task<IError> MarkErrorAsHandled(int levels = 0)
-		{
-			var error = goal.GetVariable(ReservedKeywords.Error) as IError;
-			if (error == null) return new ProgramError("This can only be called in an event and when an error occured.", goalStep);
-
-			var @event = goal.GetVariable(ReservedKeywords.Event) as EventBinding;
-			if (@event == null) return new ProgramError("Event could not be retrieved." + ErrorReporting.CreateIssueShouldNotHappen, goalStep);
-
-			var endingGoal = @event.SourceGoal;
-			while (levels-- > 0)
-			{
-				if (endingGoal != null && endingGoal.ParentGoal != null)
-				{
-					endingGoal = endingGoal.ParentGoal;
-				}
-			}
-			if (endingGoal == null) endingGoal = @event.SourceGoal;
-
-			return new EndGoal(endingGoal, goalStep, error.Message);
-		}
 
 		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]
 		public async Task<IError?> Retry(int maxRetries = 1, string? maxRetriesReachedMesage = null, string key = "MaxRetries", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)

@@ -37,14 +37,14 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode, Callback? callback = null, IError? error = null)
 		{
-			
-			return (null, null);
+			throw new NotImplementedException();
 		}
 
 		public string Read()
 		{
+			throw new NotImplementedException();
 			return "";
 		}
 

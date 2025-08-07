@@ -12,11 +12,11 @@ using System.Text;
 using System.Threading.Tasks;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
-
+/*
 namespace PLang.Services.OutputStream
 {
 	
-
+	
 	public class TextOutputStream : IOutputStream
 	{
 		private readonly bool isStatefull;
@@ -134,3 +134,4 @@ namespace PLang.Services.OutputStream
 
 	}
 }
+	*/

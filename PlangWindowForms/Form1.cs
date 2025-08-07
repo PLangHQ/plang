@@ -73,7 +73,7 @@ namespace PlangWindowForms
 			InitializeWebView();
 
 		}
-		public Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public Task<(object?, IError?)> Ask(object question, Callback? callback = null, IError? error = null)
 		{
 			throw new NotImplementedException();
 		}

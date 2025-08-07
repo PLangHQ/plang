@@ -42,28 +42,16 @@ namespace PLang.Services.OutputStream
 		public IEngine Engine { get; set; }
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode, Callback? callback = null, IError? error = null)
 		{
 
-			SetColor(askOptions.StatusCode);
+			SetColor(statusCode);
 			if (error != null)
 			{
 				Console.WriteLine(error);
 			}
 
-			
-
-			string content = askOptions.QuestionOrTemplateFile;
-			if (askOptions.IsTemplateFile)
-			{
-				var templateEngine = new Modules.TemplateEngineModule.Program(Engine.FileSystem, Engine.GetMemoryStack(), null);
-				templateEngine.SetGoal(step.Goal);
-
-				(content, var renderError) = await templateEngine.RenderFile(askOptions.QuestionOrTemplateFile, new());
-				return (null, renderError);
-			}
-
-			Console.WriteLine($"[Ask] {askOptions.QuestionOrTemplateFile}");
+			Console.WriteLine($"[Ask] {question}");
 			IsFlushed = true;
 
 			object? answer = Console.ReadLine();

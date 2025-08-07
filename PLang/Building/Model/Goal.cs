@@ -160,6 +160,11 @@ namespace PLang.Building.Model
 			}
 		}
 
+		internal void Deconstruct(out object goal, out object error)
+		{
+			throw new NotImplementedException();
+		}
+
 		public Dictionary<string, string>? IncomingVariablesRequired { get; set; }
 		[LlmIgnore]
 		public string? DataSourceName { get; set; }

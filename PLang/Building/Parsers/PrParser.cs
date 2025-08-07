@@ -1,8 +1,10 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -326,6 +328,30 @@ namespace PLang.Building.Parsers
 			if (publicGoals.Count > 0) return publicGoals;
 			LoadAllGoals();
 			return publicGoals;
+		}
+
+		public (Goal? Goal, IError? Error) GetGoal(GoalToCallInfo goalToCall)
+		{
+			var goals = GetAllGoals();
+			if (!string.IsNullOrEmpty(goalToCall.Path))
+			{				
+				var goal = goals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
+				if (goal == null) return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {goalToCall.Path}", "GoalNotFound"));
+				return (goal, null);
+			}
+
+			var goalsFound = goals.Where(p => p.GoalName.Equals(goalToCall.Name, StringComparison.OrdinalIgnoreCase));
+			if (goalsFound.Count() > 1)
+			{
+				string fixSuggestion = $"Rename one of these goals:\n\t{string.Join("\n", goalsFound.Select(p => p.RelativeGoalPath))}";
+				return (null, new Error($"Found more the one goal with the name {goalToCall.Name}. Cannot decide which to use.", 
+					FixSuggestion: fixSuggestion));
+			}
+			if (goalsFound.Any())
+			{
+				return (goalsFound.First(), null);
+			}
+			return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found.", "GoalNotFound"));
 		}
 
 		public Goal? GetGoal(string absolutePrFilePath)

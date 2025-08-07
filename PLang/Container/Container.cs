@@ -37,8 +37,10 @@ using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
+using PLang.Services.Transformers;
 using PLang.Utils;
 using System.CodeDom;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Net;
 using System.Reflection;
@@ -78,14 +80,14 @@ namespace PLang.Container
 		}
 		
 		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, 
-			HttpContext httpContext, string contentType, LiveConnection? liveResponse)
+			HttpContext httpContext, string contentType, ConcurrentDictionary<string, LiveConnection>? liveResponses)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, 
-				new HttpOutputStream(httpContext.Response, container.GetInstance<IEngine>(), contentType, 4096, httpContext.Request.Path, liveResponse));
+				new HttpOutputStream(httpContext.Response, liveResponses, new HtmlTransformer(Encoding.UTF8)));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));

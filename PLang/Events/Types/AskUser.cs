@@ -10,7 +10,7 @@ namespace PLang.Events.Types
 	public class AskUser
 	{
 
-		public static async Task<(object?, IError?)> GetAnswer(IEngine engine, string question)
+		public static async Task<(object? Answer, IError? Error)> GetAnswer(IEngine engine, string question)
 		{
 
 

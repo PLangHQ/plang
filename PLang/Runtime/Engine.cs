@@ -53,6 +53,7 @@ namespace PLang.Runtime
 		IPLangFileSystem FileSystem { get; }
 		List<CallbackInfo>? CallbackInfos { get; set; }
 		PrParser PrParser { get; }
+		MemoryStack MemoryStack { get; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
@@ -72,6 +73,8 @@ namespace PLang.Runtime
 		void ReplaceMemoryStack(MemoryStack memoryStack);
 		void Return(bool reset = false);
 		void SetOutputStream(IOutputStream outputStream);
+		Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -116,6 +119,7 @@ namespace PLang.Runtime
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
 		public HttpContext? HttpContext { get; set; }
+		public MemoryStack MemoryStack { get { return memoryStack; } }
 		public PrParser PrParser { get { return prParser; } }
 
 		IEngine? _parentEngine = null;
@@ -139,7 +143,6 @@ namespace PLang.Runtime
 		{
 			this.outputStream = outputStream;
 			OutputStreamFactory.SetOutputStream(outputStream);
-			outputStream.Engine = this;
 		}
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public void ReplaceContext(PLangAppContext context)
@@ -156,11 +159,12 @@ namespace PLang.Runtime
 			{
 				throw new Exception($"Parent engine is null on return. {ErrorReporting.CreateIssueShouldNotHappen}");
 			}
-			outputStream.Engine = ParentEngine;
+
 			context = ParentEngine.GetContext();
 			memoryStack.Clear();
 			_parentEngine = null;
 			callingStep = null;
+			HttpContext = null;
 			fileSystem.ClearFileAccess();
 			this.eventRuntime.GetActiveEvents().Clear();
 			foreach (var item in listOfDisposables)
@@ -515,12 +519,11 @@ namespace PLang.Runtime
 		{
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			var engine = container.GetInstance<IEngine>();
-
-			(var answer, var error) = await AskUser.GetAnswer(engine, fare.Message);
+		
+			(var answer, var error) = await AskUser.GetAnswer(this, fare.Message);
 			if (error != null) return (false, error);
 
-			return await fileAccessHandler.ValidatePathResponse(fare.AppName, fare.Path, answer.ToString(), engine.FileSystem.Id);
+			return await fileAccessHandler.ValidatePathResponse(fare.AppName, fare.Path, answer.ToString(), FileSystem.Id);
 			
 		}
 
@@ -581,7 +584,21 @@ namespace PLang.Runtime
 			}
 			return;
 		}
+		public async Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, uint waitForXMillisecondsBeforeRunningGoal = 0)
+		{
+			if (parentGoal == null) return (null, new ProgramError("Parent goal cannot be empty"));
 
+			var (goal, error) = PrParser.GetGoal(goalToCall);
+			if (error != null) return (null, error);
+
+			foreach (var parameter in goalToCall.Parameters)
+			{
+				memoryStack.Put(parameter.Key, parameter.Value);
+			}
+			goal!.ParentGoal = parentGoal;
+			
+			return await RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
+		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
@@ -905,17 +922,17 @@ private async Task CacheGoal(Goal goal)
 		private async Task<(object? ReturnValue, IError? Error)> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount)
 		{
 			if (error == null || error is IErrorHandled || error is EndGoal || error is IUserInputError) return (null, error);
+			if (step.ModuleType == "PLang.Modules.ThrowErrorModule" && step.Instruction?.Function.Name == "Throw") return (null, error);
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{
-				(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
-				if (handlerError != null)
-				{
-					return (null, ErrorHelper.GetMultipleError(error, handlerError));
-				}
+				var (answer, answerError) = await AskUser.GetAnswer(this, aue.Message);
+				if (answerError != null) return (null, answerError);
+
+				var (_, callbackError) = await aue.InvokeCallback([answer]);
+				if (callbackError != null) return (null, callbackError);
 
 				return await RunStep(goal, goalStepIndex);
-
 			}
 
 			if (error is FileAccessRequestError fare)
@@ -949,12 +966,10 @@ private async Task CacheGoal(Goal goal)
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
 			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
-			if (!stepErrorResult.Error.IsErrorHandled)
+			if (stepErrorResult.Error != null)
 			{
 				return stepErrorResult;
 			}
-
-			//if (stepErrorResult.Error is IErrorHandled) error = null;
 
 			// step.Retry can be step by a goal in RunOnErrorStepEvents
 			if (step.Retry || ShouldRunRetry(errorHandler, false))

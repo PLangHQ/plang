@@ -16,7 +16,7 @@ namespace PLang.Interfaces
 		Task ExecuteCode(string content);
 		*/
 		Task Flush(string content);
-		Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null);
+		Task<(object?, IError?)> Ask(object askOptions, Callback? callback = null, IError? error = null);
 
 		public SynchronizationContext SynchronizationContext { get; set; }
 		bool Visible { get; set; }

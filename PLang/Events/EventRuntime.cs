@@ -37,8 +37,8 @@ namespace PLang.Events
 		Task<(object? Variables, IError? Error)> RunGoalEvents(string eventType, Goal goal, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, Goal goal, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunStepEvents(string eventType, Goal goal, GoalStep step, bool isBuilder = false);
-		Task<(object? Variables, MultipleError Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false);
-		Task<(object? Variables, MultipleError Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false);
+		Task<(object? Variables, IError Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false);
+		Task<(object? Variables, IError Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> AppErrorEvents(IError error);
 		void SetContainer(IServiceContainer container);
 		void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents);
@@ -262,51 +262,7 @@ namespace PLang.Events
 		}
 
 
-		public async Task<(object? Variables, IError? Error)> AppErrorEvents(IError error)
-		{
-			if (runtimeEvents == null) return (null, error);
 
-			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
-			if (eventsToRun.Count == 0) return (null, error);
-
-			List<object?> variables = new();
-			var me = new MultipleError(error);
-
-			foreach (var eve in eventsToRun)
-			{
-				if (!HasAppBinding(eve, error)) continue;
-
-				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
-
-				var result = await Run(eve, error.Goal, step, error);
-				if (result.Variables != null) variables.AddRange(result.Variables);
-
-				if (result.Error != null)
-				{
-					if (result.Error is IErrorHandled)
-					{
-						error.Handled = true;
-						me = null;
-						continue;
-					}
-					if (me == null)
-					{
-						me = new MultipleError(result.Error);
-					}
-					else
-					{
-						me.Add(result.Error);
-					}
-				}
-			}
-
-			if (me != null && me.ErrorChain.Count == 0)
-			{
-				return (variables, me.InitialError);
-			}
-			return (variables, me);
-
-		}
 
 		private bool HasAppBinding(EventBinding eve, IError error)
 		{
@@ -317,52 +273,6 @@ namespace PLang.Events
 			if (eve.GoalToBindTo.Name == ".*" || eve.GoalToBindTo.Name == "*") return true;
 
 			return false;
-		}
-
-		private async Task<(object? Variables, MultipleError? Error)> HandleGoalError(Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
-		{
-			var me = new MultipleError(error);
-			if (eventsToRun.Count == 0) return (null, me);
-
-			bool hasHandled = false;
-
-
-			List<object?>? Variables = new();
-			for (var i = 0; i < eventsToRun.Count; i++)
-			{
-				var eve = eventsToRun[i];
-				if (ActiveEvents.ContainsKey(eve.Id)) continue;
-				if (!GoalHasBinding(goal, eve) || !HasAppBinding(eve, error)) continue;
-
-				var result = await Run(eve, goal, step, error);
-				if (result.Variables != null)
-				{
-					Variables.AddRange(result.Variables);
-				}
-
-				if (result.Error != null)
-				{
-					me.Add(result.Error);
-				}
-			}
-
-			return (Variables, me);
-		}
-
-		private void ShowLogError(Goal? goal, GoalStep? step, IError error)
-		{
-			// when running in --debug or --csdebug mode write out to log an error happened
-			string stepText = "";
-			if (step != null)
-			{
-				stepText = $" at {step.Text.ReplaceLineEndings("").MaxLength(20, "...")}:{step.LineNumber}";
-			}
-			string goalText = "Error";
-			if (goal != null)
-			{
-				goalText = $"Goal {goal.GoalFileName} had error";
-			}
-			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message?.ReplaceLineEndings("")}");
 		}
 
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal)
@@ -405,17 +315,7 @@ namespace PLang.Events
 			return (Variables, null);
 		}
 
-		public async Task<(object? Variables, MultipleError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false)
-		{
-			var bindings = (isBuilder) ? builderEvents : runtimeEvents;
-			if (bindings == null) return (null, new MultipleError(error));
 
-			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
-			var eventsToRun = bindings.Where(p => p.EventScope == EventScope.GoalError).ToList();
-
-			return await HandleGoalError(goal, error, step, eventsToRun);
-
-		}
 
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx)
 		{
@@ -451,17 +351,82 @@ namespace PLang.Events
 			return (null, null);
 		}
 
-
-		public async Task<(object? Variables, MultipleError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false)
+		public async Task<(object? Variables, IError? Error)> AppErrorEvents(IError error)
 		{
-			var me = new MultipleError(error);
+			if (runtimeEvents == null) return (null, error);
+
+			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
+			if (eventsToRun.Count == 0) return (null, error);
+
+			List<object?> variables = new();
+
+			foreach (var eve in eventsToRun)
+			{
+				if (!HasAppBinding(eve, error)) continue;
+
+				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
+
+				var result = await Run(eve, error.Goal, step, error);
+
+				if (result.Error != null && result.Error is not IErrorHandled)
+				{
+					error.ErrorChain.Add(result.Error);
+				}
+				else
+				{
+					error = null;
+				}
+				break;
+
+			}
+
+			return (null,error);
+		}
+
+		public async Task<(object? Variables, IError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false)
+		{
+			var bindings = (isBuilder) ? builderEvents : runtimeEvents;
+			if (bindings == null) return (null, error);
+
+			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
+			var eventsToRun = bindings.Where(p => p.EventScope == EventScope.GoalError).ToList();
+
+			if (eventsToRun.Count == 0) return (null, error);
+
+			List<object?>? Variables = new();
+			for (var i = 0; i < eventsToRun.Count; i++)
+			{
+				var eve = eventsToRun[i];
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
+				if (!GoalHasBinding(goal, eve) || !HasAppBinding(eve, error)) continue;
+
+				var result = await Run(eve, goal, step, error);
+
+				if (result.Error != null && result.Error is not IErrorHandled)
+				{
+					error.ErrorChain.Add(result.Error);
+				}
+				else
+				{
+					error = null;
+				}
+				break;
+			}
+
+			return (null, error);
+		}
+
+
+
+		public async Task<(object? Variables, IError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false)
+		{
 			if (error is EndGoal)
 			{
-				return (null, me);
+				return (null, error);
 			}
 
 			List<EventBinding>? bindings = (isBuilder) ? builderEvents : runtimeEvents;
-			if (bindings == null) return (null, me);
+			if (bindings == null) return (null, error);
 
 			List<EventBinding> eventsToRun = new();
 			eventsToRun.AddRange(bindings.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
@@ -491,8 +456,8 @@ namespace PLang.Events
 					{
 						ShowLogError(goal, step, error);
 					}
-					me.Add(new ErrorHandled(error));
-					return (null, me);
+
+					return (null, null);
 				}
 			}
 
@@ -500,30 +465,30 @@ namespace PLang.Events
 
 			if (eventsToRun.Count == 0)
 			{
-				return (null, me);
+				return (null, error);
 			}
 
-			List<object> variablesToReturn = new();
-			
 			foreach (var eve in eventsToRun)
 			{
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 				{
 					var eventError = await Run(eve, goal, step, error);
-					if (eventError.Variables != null) variablesToReturn.AddRange(eventError.Variables);
 
-					if (eventError.Error != null)
+					if (eventError.Error != null && eventError.Error is not IErrorHandled)
 					{
-						me.Add(eventError.Error);
+						error.ErrorChain.Add(eventError.Error);
 					}
-
-					if (eve.OnErrorContinueNextStep) return (eventError.Variables, null);
+					else
+					{
+						error = null;
+					}
+					break;
 				}
 
 			}
 
-			return (variablesToReturn, me);
+			return (null, error);
 		}
 
 
@@ -560,6 +525,22 @@ namespace PLang.Events
 
 
 			return (null, error);
+		}
+
+		private void ShowLogError(Goal? goal, GoalStep? step, IError error)
+		{
+			// when running in --debug or --csdebug mode write out to log an error happened
+			string stepText = "";
+			if (step != null)
+			{
+				stepText = $" at {step.Text.ReplaceLineEndings("").MaxLength(20, "...")}:{step.LineNumber}";
+			}
+			string goalText = "Error";
+			if (goal != null)
+			{
+				goalText = $"Goal {goal.GoalFileName} had error";
+			}
+			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message?.ReplaceLineEndings("")}");
 		}
 
 		private async Task<(object? Variables, IError? Error)> Run(EventBinding eve, Goal? sourceGoal = null, GoalStep? sourceStep = null, IError? error = null, bool isBuilder = false)

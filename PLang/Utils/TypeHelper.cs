@@ -9,6 +9,7 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
+using PLang.Modules.WebserverModule;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -969,5 +970,40 @@ public class TypeHelper : ITypeHelper
 		}
 	}
 
+	public static T SetProperties<T>(T? obj = null) where T : class
+	{
+		var type = typeof(T);
+		var ctor = type.GetConstructors().First();
+
+		object? ArgValue(System.Reflection.ParameterInfo p)
+		{
+			if (obj == null)
+				return p.HasDefaultValue
+					 ? p.DefaultValue!
+					 : GetDefault(p.ParameterType);
+
+			var prop = type.GetProperty(p.Name!,
+						BindingFlags.Public |
+						BindingFlags.Instance |
+						BindingFlags.IgnoreCase);
+
+			var current = prop?.GetValue(obj);
+			return IsUnset(current, p.ParameterType) && p.HasDefaultValue
+				 ? p.DefaultValue!
+				 : current;
+		}
+
+		var args = ctor.GetParameters().Select(ArgValue).ToArray();
+		return (T)Activator.CreateInstance(type, args)!;
+	}
+
+	// helpers -------------------------------------------------------------
+	private static bool IsUnset(object? v, Type t) =>
+		v == null ||
+		(v is IList list && list.Count == 0) ||
+		(t.IsValueType && v.Equals(Activator.CreateInstance(t)));
+
+	private static object? GetDefault(Type t) =>
+		t.IsValueType ? Activator.CreateInstance(t) : null;
 }
 

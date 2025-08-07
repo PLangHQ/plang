@@ -11,7 +11,7 @@ using System.Net;
 using System.Text;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
-
+/*
 namespace PLang.Services.OutputStream
 {
 	public class JsonOutputStream : IOutputStream
@@ -77,3 +77,4 @@ namespace PLang.Services.OutputStream
 
 	}
 }
+*/

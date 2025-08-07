@@ -140,7 +140,7 @@ namespace PLang.Modules.VariableModule
 
 		}
 
-		[Description("Set value to a variable then Store/Save variable(s) in a persistant storage")]
+		[Description("Set value to a variable then Store/Save variable(s) in a persistant storage. The storing of the variables must be defined by user.")]
 		public async Task<IError?> SetValueAndStore([HandlesVariable] Dictionary<string, object> variables)
 		{
 			List<string> vars = new();

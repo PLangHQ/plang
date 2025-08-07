@@ -15,20 +15,19 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
+	/*
 	public class HtmlOutputStream : IOutputStream
 	{
 		private readonly Stream stream;
 		private readonly Encoding encoding;
-		private IEngine engine;
 		private readonly string url;
 		private readonly bool isStateful;
 		private readonly int bufferSize;
 
-		public HtmlOutputStream(Stream stream, Encoding encoding, IEngine engine, string url, bool isStateful, int bufferSize = 4096)
+		public HtmlOutputStream(Stream stream, Encoding encoding, string url, bool isStateful, int bufferSize = 4096)
 		{
 			this.stream = stream;
 			this.encoding = encoding;
-			this.engine = engine;
 			this.url = url;
 			this.isStateful = isStateful;
 			this.bufferSize = bufferSize;
@@ -36,43 +35,18 @@ namespace PLang.Services.OutputStream
 
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }
-		public IEngine Engine
-		{
-			get
-			{
-				return engine;
-			}
-			set { engine = value; }
-		}
 
 		public string Output => "html";
 		public bool IsStateful { get { return isStateful; } }
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, AskOptions askOptions, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object question, Callback? callback = null, IError? error = null)
 		{
-			Dictionary<string, object?> parameters = new();
-			parameters.Add("askOptions", askOptions);
-			parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());
-			parameters.Add("url", url);
-			parameters.Add("error", error);
+			if (!stream.CanWrite) return (null, null);
 
-			string? content = null;
-			IError? renderError = null;
-
-			var templateEngine = new Modules.TemplateEngineModule.Program(engine.FileSystem, engine.GetMemoryStack(), null);
-			templateEngine.SetGoal(step.Goal);
-
-			if (askOptions.IsTemplateFile)
-			{
-				(content, renderError) = await templateEngine.RenderFile(askOptions.QuestionOrTemplateFile, parameters);
-			}
-			else
-			{
-				(content, renderError) = await templateEngine.RenderFile("/modules/OutputModule/ask.html", parameters);
-			}
-			if (renderError != null) return (null, renderError);
+			string? content = TypeHelper.GetAsString(question, Output);
+			if (content == null) return (null, null);
 
 			using var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true);
 			await writer.WriteAsync(content);
@@ -103,5 +77,5 @@ namespace PLang.Services.OutputStream
 
 		}
 
-	}
+	}*/
 }
