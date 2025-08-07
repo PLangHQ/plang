@@ -361,8 +361,10 @@ When a direct method is not provided for the user intentented sql statement, use
 			}
 
 			// todo: hack with execute sql file
-			if (methodsAndTables.ContainsMethod("ExecuteSqlFile")
-				|| methodsAndTables.TableNames[0] == "ExecuteDynamicSql")
+			if (methodsAndTables.ContainsMethod("ExecuteSqlFile") ||
+				methodsAndTables.ContainsMethod("ExecuteDynamicSql")
+
+				|| (methodsAndTables.TableNames.Count > 0 && methodsAndTables.TableNames[0] == "ExecuteDynamicSql"))
 			{
 				return (methodsAndTables, null);
 			}

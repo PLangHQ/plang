@@ -504,10 +504,11 @@ namespace PLang.Modules.DbModule
 		
 		internal async Task<(long RowsAffected, IError? Error)> Execute(DataSource dataSource, string sql, List<string> tableAllowList)
 		{
+			/*
 			if (tableAllowList.Count == 0)
 			{
 				return (0, new ProgramError("You must define a allow list of tables"));
-			}
+			}*/
 
 			//todo: this is not a secure allow check
 			//should deconstruct the sql to find out real table in sql statement

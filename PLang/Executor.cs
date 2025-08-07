@@ -236,8 +236,7 @@ namespace PLang
 
 		public async Task Build(string[]? args)
 		{
-			var factory = container.GetInstance<IErrorHandlerFactory>();
-			var handler = factory.CreateHandler();
+			
 			try
 			{
 				this.engine = container.GetInstance<IEngine>();
@@ -250,11 +249,8 @@ namespace PLang
 				var error = await builder.Start(container);
 				if (error != null)
 				{
-					(var isHandled, var errorHandler) = await handler.Handle(error);
-					if (errorHandler != null && errorHandler is not IErrorHandled)
-					{
-						await handler.ShowError(error);
-					}
+					Console.WriteLine(error);
+					await this.engine.GetEventRuntime().AppErrorEvents(error);
 				}
 				else
 				{
@@ -265,7 +261,7 @@ namespace PLang
 			{
 				var error = new ExceptionError(ex);
 
-				await handler.ShowError(error);
+				await this.engine.GetEventRuntime().AppErrorEvents(error);
 			}
 		}
 
