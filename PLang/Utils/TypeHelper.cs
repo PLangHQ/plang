@@ -10,6 +10,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.WebserverModule;
+using PLang.Runtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -481,6 +482,7 @@ public class TypeHelper : ITypeHelper
 	{
 		if (value == null) return null;
 		if (value is System.DBNull) return null;
+		if (value is ObjectValue ov) value = ov.Value;
 
 		// this one happens a lot, so special if for
 		if (targetType == typeof(IFormatProvider))
@@ -589,7 +591,7 @@ public class TypeHelper : ITypeHelper
 				};
 				return token.ToObject(targetType, jsonSerializer);
 			}
-
+			
 			return Convert.ChangeType(value, targetType);
 		}
 		catch (Exception ex)

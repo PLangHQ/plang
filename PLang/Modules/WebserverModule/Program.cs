@@ -348,14 +348,14 @@ OnStartingWebserver
 		}
 		if (!string.IsNullOrEmpty(permFilePath))
 		{
-			if (!fileSystem.File.Exists(permFilePath))
+			if (!File.Exists(permFilePath))
 			{
 				return new ProgramError($"Could not find {permFilePath}");
 			}
 		}
 		if (!string.IsNullOrEmpty(privateKeyFile))
 		{
-			if (!fileSystem.File.Exists(privateKeyFile))
+			if (!File.Exists(privateKeyFile))
 			{
 				return new ProgramError($"Could not find {privateKeyFile}");
 			}
@@ -438,6 +438,8 @@ OnStartingWebserver
 					}
 					else
 					{
+
+
 						IPAddress address = (webserverProperties.Host == "*") ? IPAddress.Any : IPAddress.TryParse(webserverProperties.Host, out var ip) ? ip : IPAddress.Any;
 						k.Listen(address, webserverProperties.Port, l =>
 						{
@@ -816,10 +818,10 @@ OnStartingWebserver
 	{
 		try
 		{
-			if (!resp.HasStarted)
+			/*if (!resp.HasStarted)
 			{
 				resp.StatusCode = error.StatusCode;
-			}
+			}*/
 			var step = (error.Step != null) ? error.Step : goalStep;
 			await outputStream.Write(step, error, statusCode: error.StatusCode);
 			
@@ -1025,7 +1027,8 @@ OnStartingWebserver
 
 		if (!fileSystem.File.Exists(filePath))
 		{
-			return new NotFoundError($"{requestedFile} was not found");
+			httpContext.Response.StatusCode = 404;
+			return null;
 		}
 
 		try

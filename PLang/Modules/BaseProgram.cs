@@ -162,7 +162,7 @@ namespace PLang.Modules
 				if (error != null) return (null, error);
 
 				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
-				//logger.LogTrace("Parameters:{0}", parameterValues);
+				logger.LogTrace("         - Parameters:{0}", JsonConvert.SerializeObject(parameterValues, Formatting.None));
 
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);

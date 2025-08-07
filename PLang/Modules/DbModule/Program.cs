@@ -248,10 +248,19 @@ namespace PLang.Modules.DbModule
 			var transaction = goal.GetVariable<IDbTransaction>();
 			if (transaction == null) return new ProgramError("No transaction found");
 
-			transaction.Commit();
-			transaction.Connection?.Close();
-
-			goal.RemoveVariable<IDbTransaction>();
+			try
+			{
+				transaction.Commit();
+				transaction.Connection?.Close();
+			}
+			catch (Exception ex)
+			{
+				return new ExceptionError(ex, "Transaction commited, but should not", goal, goalStep);
+			}
+			finally
+			{
+				goal.RemoveVariable<IDbTransaction>();
+			}
 
 			return null;
 		}

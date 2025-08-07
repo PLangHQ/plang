@@ -372,6 +372,10 @@ namespace PLang.Events
 				{
 					error.ErrorChain.Add(result.Error);
 				}
+				else if (result.Error is IErrorHandled || result.Error is UserInputError)
+				{
+					error = result.Error;
+				}
 				else
 				{
 					error = null;
@@ -405,6 +409,10 @@ namespace PLang.Events
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
+				}
+				else if (result.Error is IErrorHandled || result.Error is UserInputError)
+				{
+					error = result.Error;
 				}
 				else
 				{
@@ -478,6 +486,10 @@ namespace PLang.Events
 					if (eventError.Error != null && eventError.Error is not IErrorHandled)
 					{
 						error.ErrorChain.Add(eventError.Error);
+					}
+					else if (eventError.Error is IErrorHandled || eventError.Error is UserInputError)
+					{
+						error = eventError.Error;
 					}
 					else
 					{

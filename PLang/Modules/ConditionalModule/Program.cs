@@ -424,6 +424,8 @@ namespace PLang.Modules.ConditionalModule
 						{
 							return (r.ReturnVariables, null);
 						}
+						if (error != null) return (returnVars, error);
+
 					}
 					catch { }
 
@@ -433,7 +435,7 @@ namespace PLang.Modules.ConditionalModule
 					}
 				}
 			}
-
+			
 			if (result && throwErrorOnTrue != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();
