@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using IdGen;
+using Newtonsoft.Json;
 using Nostr.Client.Client;
 using PLang.Building.Model;
 using PLang.Errors;
@@ -20,13 +21,14 @@ namespace PLang.Services.OutputStream
 		private readonly Encoding encoding;
 		private bool isStateful;
 		private readonly int bufferSize;
-
+		public string Id { get; set; }
 		public BinaryOutputStream(Stream stream, Encoding encoding, bool isStateful, int bufferSize = 4096)
 		{
 			this.stream = stream;
 			this.encoding = encoding;
 			this.isStateful = isStateful;
 			this.bufferSize = bufferSize;
+			Id = Guid.NewGuid().ToString();
 		}
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }

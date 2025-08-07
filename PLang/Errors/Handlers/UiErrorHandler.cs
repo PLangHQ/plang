@@ -8,7 +8,7 @@ namespace PLang.Errors.Handlers
 	{
         private readonly IErrorDialog dialog;
 
-        public UiErrorHandler(IErrorDialog dialog, IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
+        public UiErrorHandler(IErrorDialog dialog) : base()
         {
             this.dialog = dialog;
         }

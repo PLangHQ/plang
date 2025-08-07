@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Runtime;
 
 namespace PLang.Services.OutputStream
 {
@@ -6,7 +7,7 @@ namespace PLang.Services.OutputStream
 	{
 		IOutputStream CreateHandler(string? channel = null);
 		IOutputStreamFactory SetContext(string? name);
-		void SetOutputStream(IOutputStream outputStream);
+		void SetEngine(IEngine engine);
 	}
 	public interface IOutputSystemStreamFactory
 	{

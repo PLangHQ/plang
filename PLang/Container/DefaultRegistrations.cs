@@ -51,30 +51,14 @@ namespace PLang.Container
 			}
 		}
 
-		public static void RegisterAskUserHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IAskUserHandler? instance = null)
-		{
-			container.Register<IAskUserHandlerFactory>(factory =>
-			{
-				SetContext(container, type, ReservedKeywords.Inject_AskUserHandler, isDefault);
-				return new AskUserHandlerFactory(container);
-			});
 
-			if (instance != null)
-			{
-				container.Register(factor =>
-				{
-					return instance;
-				}, instance.GetType().FullName);
-			}
-		}
-
-		public static void RegisterOutputStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
+		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
 		{
 			SetContext(container, type, ReservedKeywords.Inject_OutputStream, isDefault, setToContext);
-			container.RegisterSingleton<IOutputStreamFactory>(factory =>
+			container.Register<IOutputStreamFactory>(factory =>
 			{
 				var defaultType = GetDefault(container, ReservedKeywords.Inject_OutputStream);
-				return new OutputStreamFactory(container, defaultType);
+				return new OutputStreamFactory(container, engine, defaultType);
 			});
 
 			if (instance != null)

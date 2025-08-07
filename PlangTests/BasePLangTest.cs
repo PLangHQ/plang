@@ -69,7 +69,6 @@ namespace PLangTests
 		protected IPLangSigningService signingService;
 		protected IPLangAppsRepository appsRepository;
 		protected IHttpClientFactory httpClientFactory;
-		protected IAskUserHandlerFactory askUserHandlerFactory;
 		protected IAskUserHandler askUserHandler;
 		protected IErrorHandler errorHandler;
 		protected IErrorHandlerFactory errorHandlerFactory;
@@ -133,7 +132,7 @@ namespace PLangTests
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IErrorSystemHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IErrorSystemHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -168,12 +167,6 @@ namespace PLangTests
 			llmServiceFactory = Substitute.For<ILlmServiceFactory>();
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			container.RegisterInstance(llmServiceFactory);
-
-			askUserHandler = Substitute.For<IAskUserHandler>();
-			container.RegisterInstance(askUserHandler);
-			askUserHandlerFactory = Substitute.For<IAskUserHandlerFactory>();
-			askUserHandlerFactory.CreateHandler().Returns(askUserHandler);
-			container.RegisterInstance(askUserHandlerFactory);
 
 			outputStream = Substitute.For<IOutputStream>();
 			container.RegisterInstance(outputStream);

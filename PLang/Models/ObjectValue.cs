@@ -22,7 +22,22 @@ public class DynamicObjectValue : ObjectValue
 
 	public override object Value
 	{
-		get { return func(); }
+		get { 
+			var value = func();
+
+			if (value is ObjectValue ov) return ov.Value;
+			return value;
+		}
+	}
+
+	public new Properties Properties
+	{
+		get
+		{
+			var value = func();
+			if (value is ObjectValue ov) return ov.Properties;
+			return base.Properties;
+		}
 	}
 }
 

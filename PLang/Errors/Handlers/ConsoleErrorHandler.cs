@@ -7,7 +7,7 @@ namespace PLang.Errors.Handlers
 	public class ConsoleErrorHandler : BaseErrorHandler, IErrorHandler
 	{
 
-		public ConsoleErrorHandler(IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
+		public ConsoleErrorHandler() : base()
 		{
 		}
 

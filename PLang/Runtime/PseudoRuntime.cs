@@ -73,6 +73,7 @@ namespace PLang.Runtime
 			if (error != null) return (engine, null, error);
 			if (goalToRun == null) return (engine, null, new Error($"{goalToCall.Name} could not be found"));
 
+			var runtimeEngine = engine;
 			try
 			{
 				// todo: (Decision) The idea behind isolation is when you call a external app, that app should not have access
@@ -83,8 +84,8 @@ namespace PLang.Runtime
 				if (isolated || !waitForExecution || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
 				{
 					isRented = true;
-					
-					engine = await engine.GetEnginePool(fileSystem.RootDirectory).RentAsync(engine, callingStep, fileSystem.RootDirectory);
+
+					runtimeEngine = await engine.RentAsync(callingStep, engine.OutputStream);
 				}
 
 
@@ -96,7 +97,7 @@ namespace PLang.Runtime
 					goalToRun.ParentGoal = callingGoal;
 				}
 
-				var memoryStack = engine.GetMemoryStack();
+				var memoryStack = runtimeEngine.GetMemoryStack();
 
 				if (parameters != null)
 				{
@@ -118,7 +119,7 @@ namespace PLang.Runtime
 				Task<(object? Variables, IError? Error)> task;
 				if (waitForExecution)
 				{
-					task = engine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
+					task = runtimeEngine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
 					try
 					{
 						await task;
@@ -142,21 +143,24 @@ namespace PLang.Runtime
 					{
 						try
 						{
-							var result = await engine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
+							var result = await runtimeEngine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
 							return result;
 						} catch
 						{
 							throw;
 						} finally
 						{
-							engine.ParentEngine?.GetEnginePool(engine.Path).Return(engine);
+							if (isRented)
+							{
+								engine.Return(runtimeEngine);
+							}
 						}
 						
 					});
 					
-					KeepAlive(engine, task);
+					KeepAlive(runtimeEngine, task);
 
-					return (engine, task, null);
+					return (runtimeEngine, task, null);
 				}
 
 
@@ -187,11 +191,11 @@ namespace PLang.Runtime
 			{
 				if (goalToRun != null)
 				{
-					await goalToRun.DisposeVariables(engine.GetMemoryStack());
+					await goalToRun.DisposeVariables(runtimeEngine.GetMemoryStack());
 				}
 				if (isRented && waitForExecution)
 				{
-					engine.ParentEngine?.GetEnginePool(engine.Path).Return(engine);
+					engine.Return(runtimeEngine);
 				}
 			}
 		}

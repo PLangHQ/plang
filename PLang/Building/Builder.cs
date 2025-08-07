@@ -32,13 +32,13 @@ namespace PLang.Building
 		private readonly IEventRuntime eventRuntime;
 		private readonly PrParser prParser;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
-		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		private readonly IGoalParser goalParser;
+		private readonly IEngine engine;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory, 
-			IGoalParser goalParser)
+			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, 
+			IGoalParser goalParser, IEngine engine)
 		{
 
 			this.fileSystem = fileSystem;
@@ -49,8 +49,8 @@ namespace PLang.Building
 			this.eventRuntime = eventRuntime;
 			this.prParser = prParser;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
-			this.askUserHandlerFactory = askUserHandlerFactory;
 			this.goalParser = goalParser;
+			this.engine = engine;
 		}
 
 
@@ -173,17 +173,13 @@ namespace PLang.Building
 
 				if (ex is MissingSettingsException mse)
 				{
-					var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
-					{
-						var value = result?[0] ?? null;
-						if (value is Array) value = ((object[])value)[0];
+					var (answer, askError) = await AskUser.GetAnswer(engine, mse.Message);
+					if (askError != null) return askError;
 
-						await mse.InvokeCallback(value);
-						return (true, null);
-					});
+					askError = await mse.InvokeCallback(answer);
+					if (askError != null) return askError;
 
-					(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-					if (isMseHandled) return await Start(container);
+					return await Start(container);
 				}
 
 				var step = (ex is BuilderStepException bse) ? bse.Step : null;

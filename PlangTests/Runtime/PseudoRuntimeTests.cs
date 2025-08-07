@@ -66,7 +66,7 @@ namespace PLang.Runtime.Tests
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(),
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -149,7 +149,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 

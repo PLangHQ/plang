@@ -1,4 +1,5 @@
 ﻿using AngleSharp.Css.Values;
+using IdGen;
 using MimeKit;
 using Newtonsoft.Json;
 using PLang.Building.Model;
@@ -24,7 +25,7 @@ namespace PLang.Services.OutputStream
 	{
 		Stream standardOutputStream;
 		Stream standardErrorStream;
-
+		public string Id { get; set; }
 		public ConsoleOutputStream()
 		{
 			// todo: dont think this is good, why override encoding?
@@ -33,6 +34,7 @@ namespace PLang.Services.OutputStream
 
 			standardOutputStream = Console.OpenStandardOutput();
 			standardErrorStream = Console.OpenStandardError();
+			Id = Guid.NewGuid().ToString();
 		}
 		public Stream Stream => standardOutputStream;
 		public Stream ErrorStream => standardErrorStream;

@@ -29,24 +29,65 @@ namespace PLang.Services.OutputStream
 
 	public class HttpOutputStream : IOutputStream, IResponseProperties
 	{
-		private readonly HttpResponse response;
-		private ConcurrentDictionary<string, LiveConnection> liveResponses;
+		private readonly HttpContext httpContext;
+		private readonly WebserverProperties webserverProperties;
+		private readonly ConcurrentDictionary<string, LiveConnection> liveConnections;
 		private readonly ITransformer transformer;
 
 		private Dictionary<string, object?> responseProperties;
 		private string identity;
+		private string path;
+		public string Id { get; set; }
 		public bool IsComplete { get; set; } = false;
-		public HttpOutputStream(HttpResponse response, ConcurrentDictionary<string, LiveConnection> liveResponses, ITransformer transformer)
+		public HttpOutputStream(HttpContext httpContext, WebserverProperties webserverProperties, ConcurrentDictionary<string, LiveConnection> liveConnections)
 		{
-			this.response = response;
-			this.liveResponses = liveResponses;
-			this.transformer = transformer;
+
+			path = httpContext.Request.Path.Value ?? "/";
+			this.httpContext = httpContext;
+			this.webserverProperties = webserverProperties;
+			this.liveConnections = liveConnections;
+			this.transformer = GetTransformer(webserverProperties, httpContext);
 			this.responseProperties = new();
+			Id = Guid.NewGuid().ToString();
 
 		}
 
-		public Stream Stream { get { return this.response.Body; } }
-		public Stream ErrorStream { get { return this.response.Body; } }
+		private ITransformer GetTransformer(WebserverProperties props, HttpContext httpContext)
+		{
+			string? contentType = httpContext.Request.Headers.Accept.FirstOrDefault();
+			if (contentType == null) contentType = webserverProperties.DefaultResponseProperties!.ContentType;
+			Encoding encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties!.ResponseEncoding);
+
+			if (contentType.StartsWith("application/plang")) return new PlangTransformer(encoding);
+			if (contentType.StartsWith("application/json")) return new JsonTransformer(encoding);
+			if (contentType.StartsWith("text/html")) return new HtmlTransformer(encoding);
+
+			return new TextTransformer(encoding);
+		}
+
+		public Stream Stream
+		{
+			get
+			{
+				if (httpContext == null)
+				{
+					throw new Exception("HttpContext is null. This should be");
+				}
+
+				return httpContext.Response.Body;
+			}
+		}
+		public Stream ErrorStream
+		{
+			get
+			{
+				if (httpContext == null)
+				{
+					throw new Exception("HttpContext is null. This should be");
+				}
+				return httpContext.Response.Body;
+			}
+		}
 
 		public void SetIdentity(string identity)
 		{
@@ -54,6 +95,7 @@ namespace PLang.Services.OutputStream
 		}
 
 		public bool IsStateful { get { return false; } }
+		public bool MainResponseIsDone { get; set; }
 		public Dictionary<string, object?> ResponseProperties
 		{
 
@@ -73,7 +115,6 @@ namespace PLang.Services.OutputStream
 			if (parameters == null) parameters = new();
 			try
 			{
-				string path = response.HttpContext.Request.Path.Value;
 				parameters.AddOrReplace("path", path);
 				parameters.AddOrReplace("id", Path.Join(path, step.Goal.GoalName, step.Number.ToString()).Replace("\\", "/"));
 			}
@@ -118,6 +159,9 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 
+		public HttpContext HttpContext => httpContext;
+
+		public ConcurrentDictionary<string, LiveConnection> LiveConnections => liveConnections;
 
 		public async Task<(object?, IError?)> Ask(GoalStep step, object? question, int statusCode, Callback? callback = null, IError? error = null)
 		{
@@ -134,7 +178,7 @@ namespace PLang.Services.OutputStream
 
 			if (response == null) throw new Exception("Response is null");
 
-			if (!isFlushed)
+			if (!isFlushed && !response.HasStarted)
 			{
 				response.StatusCode = statusCode;
 				response.ContentType = $"{transformer.ContentType}; charset={transformer.Encoding.WebName}";
@@ -168,7 +212,8 @@ namespace PLang.Services.OutputStream
 			if (error != null) throw new ExceptionWrapper(error);
 			if (response == null || !response.Body.CanWrite)
 			{
-				Console.WriteLine("Response is null, so to console it goes: " + obj.ToString().Replace("\n", "").MaxLength(200));
+
+				Console.WriteLine($"Response is null - {Id}, so to console it goes: " + obj.ToString().ClearHtml().Replace("\n", "").MaxLength(200));
 				return;
 				//throw new Exception("Response is null");
 			}
@@ -218,9 +263,9 @@ namespace PLang.Services.OutputStream
 		{
 			try
 			{
-				if (response.Body.CanWrite)
+				if (!MainResponseIsDone && httpContext.Response.Body.CanWrite)
 				{
-					return (response, IsFlushed, null);
+					return (httpContext.Response, IsFlushed, null);
 				}
 			}
 			catch (Exception ex)
@@ -230,9 +275,9 @@ namespace PLang.Services.OutputStream
 
 			try
 			{
-				if (liveResponses == null || string.IsNullOrEmpty(this.identity)) return (null, false, null);
+				if (liveConnections == null || string.IsNullOrEmpty(this.identity)) return (null, false, null);
 
-				if (!liveResponses.TryGetValue(identity, out LiveConnection? liveConnection))
+				if (!liveConnections.TryGetValue(identity, out LiveConnection? liveConnection))
 				{
 					return (null, false, null);
 				}
@@ -243,7 +288,10 @@ namespace PLang.Services.OutputStream
 			}
 			catch (Exception ex)
 			{
-				return (null, true, new ExceptionError(ex));
+				Console.WriteLine("Live connection no longer available:" + ex);
+				liveConnections.TryRemove(identity, out var _);
+
+				return (null, true, null);
 			}
 
 		}

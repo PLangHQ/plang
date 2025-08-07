@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static PLang.Modules.OutputModule.Program;
 
 namespace PLang.Services.OutputStream
@@ -15,20 +17,23 @@ namespace PLang.Services.OutputStream
 	public class OutputStreamFactory : BaseFactory, IOutputStreamFactory
 	{
 		private readonly PLangAppContext appContext;
+		private IEngine engine;
 		private string defaultType;
 		private string currentType;
-		private IOutputStream? outputStream;
 
-		public OutputStreamFactory(IServiceContainer container, string defaultType) : base(container)
+		public OutputStreamFactory(IServiceContainer container, IEngine engine, string defaultType) : base(container)
 		{
 			this.appContext = container.GetInstance<PLangAppContext>();
+			this.engine = engine;
 			this.defaultType = defaultType;
 			this.currentType = defaultType;
 		}
-		public void SetOutputStream(IOutputStream outputStream)
+
+		public void SetEngine(IEngine engine)
 		{
-			this.outputStream = outputStream;
+			this.engine = engine;
 		}
+
 		public IOutputStreamFactory SetContext(string? name)
 		{
 			if (string.IsNullOrEmpty(name))
@@ -45,9 +50,9 @@ namespace PLang.Services.OutputStream
 
 		public IOutputStream CreateHandler(string? name = null)
 		{
-			if (name == null && outputStream != null)
+			if (name == null && engine.OutputStream != null)
 			{
-				return outputStream;
+				return engine.OutputStream;
 			}
 
 			var serviceName = (name != null) ? name : currentType;

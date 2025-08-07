@@ -3,7 +3,7 @@ using PLang.Interfaces;
 using PLang.Utils;
 
 namespace PLang.Exceptions.AskUser
-{
+{/*
 	public interface IAskUserHandlerFactory
 	{
 		IAskUserHandler CreateHandler();
@@ -21,5 +21,5 @@ namespace PLang.Exceptions.AskUser
 			var serviceName = GetServiceName(ReservedKeywords.Inject_AskUserHandler);
 			return container.GetInstance<IAskUserHandler>(serviceName);
 		}
-	}
+	}*/
 }

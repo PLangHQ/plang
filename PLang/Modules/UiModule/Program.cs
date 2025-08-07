@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LightInject;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Attributes;
@@ -11,6 +12,7 @@ using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using RazorEngineCore;
 using Scriban;
 using Scriban.Syntax;
 using Sprache;
@@ -253,7 +255,6 @@ Unique: default is false. this element should only exist one time on web page, i
 
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{
-
 				await outputStreamFactory.CreateHandler().Write(goalStep, content, "html", parameters: options.Parameters);
 			}
 

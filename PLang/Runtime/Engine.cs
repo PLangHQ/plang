@@ -55,6 +55,7 @@ namespace PLang.Runtime
 		PrParser PrParser { get; }
 		MemoryStack MemoryStack { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
+		IOutputStream OutputStream { get; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
@@ -75,7 +76,8 @@ namespace PLang.Runtime
 		void Return(bool reset = false);
 		void SetOutputStream(IOutputStream outputStream);
 		Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, uint waitForXMillisecondsBeforeRunningGoal = 0);
-		
+		Task<IEngine> RentAsync(GoalStep callingStep, IOutputStream output);
+		void Return(IEngine engine, bool reset = false);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -112,7 +114,6 @@ namespace PLang.Runtime
 		private ISettings settings;
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
-		private IAskUserHandlerFactory askUserHandlerFactory;
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
 		private IOutputStream outputStream;
 
@@ -128,96 +129,12 @@ namespace PLang.Runtime
 		{
 			public bool IsFlushed { get; set; } = IsFlushed;
 		};
+		public IOutputStream OutputStream { get { return outputStream; } }
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;
 		public IEngine? ParentEngine { get { return _parentEngine; } }
-		public void SetParentEngine(IEngine parentEngine)
-		{
-			this._parentEngine = parentEngine;
-			if (fileSystem.RootDirectory != parentEngine.Path)
-			{
-				fileSystem.AddFileAccess(new FileAccessControl(fileSystem.RootDirectory, parentEngine.Path, ProcessId: this.fileSystem.Id));
-			}
 
-			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents();
-			this.eventRuntime.SetActiveEvents(activeEvents);
-		}
-
-		public List<CallbackInfo>? CallbackInfos { get; set; }
-
-		public void SetOutputStream(IOutputStream outputStream)
-		{
-			this.outputStream = outputStream;
-			OutputStreamFactory.SetOutputStream(outputStream);
-		}
-		public IPLangFileSystem FileSystem { get { return fileSystem; } }
-		public void ReplaceContext(PLangAppContext context)
-		{
-			this.context = context;
-		}
-		public void ReplaceMemoryStack(MemoryStack memoryStack)
-		{
-			this.memoryStack = memoryStack;
-		}
-		public void Return(bool reset = false)
-		{
-			if (ParentEngine == null)
-			{
-				throw new Exception($"Parent engine is null on return. {ErrorReporting.CreateIssueShouldNotHappen}");
-			}
-
-			context = ParentEngine.GetContext();
-			memoryStack.Clear();
-			_parentEngine = null;
-			callingStep = null;
-			HttpContext = null;
-			fileSystem.ClearFileAccess();
-			this.eventRuntime.GetActiveEvents().Clear();
-			foreach (var item in listOfDisposables)
-			{
-				item.Dispose();
-			}
-			if (reset)
-			{
-				CallbackInfos = null;
-				var prParser = container.GetInstance<PrParser>();
-				prParser.ClearVariables();
-			}
-			Name = string.Empty;
-		}
-
-		ConcurrentDictionary<string, EnginePool> enginePools = new();
-
-		public EnginePool GetEnginePool(string rootPath)
-		{
-			rootPath = rootPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
-			if (enginePools.TryGetValue(rootPath, out var pool)) return pool;
-
-			var newContainer = container;
-			var tempContext = container.GetInstance<PLangAppContext>();
-
-			int i = 0;
-
-			pool = new EnginePool(2, () =>
-			{
-
-				using var serviceContainer = new ServiceContainer();
-				serviceContainer.RegisterForPLang(rootPath, "/", container.GetInstance<IAskUserHandlerFactory>(),
-									container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
-									container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
-
-				var engine = serviceContainer.GetInstance<IEngine>();
-				engine.Init(serviceContainer);
-				engine.SetParentEngine(this);
-
-				return engine;
-			});
-
-			enginePools.TryAdd(rootPath, pool);
-			return pool;
-
-		}
 		public Engine()
 		{
 			Id = Guid.NewGuid().ToString();
@@ -227,6 +144,7 @@ namespace PLang.Runtime
 			};
 
 		}
+
 
 		public void Init(IServiceContainer container, PLangAppContext? context = null)
 		{
@@ -242,7 +160,6 @@ namespace PLang.Runtime
 			this.eventRuntime.Load();
 			logger.LogDebug($" ---------- Init on Engine  ---------- {stopwatch.ElapsedMilliseconds}");
 			this.typeHelper = container.GetInstance<ITypeHelper>();
-			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 
 			this.OutputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.prParser = container.GetInstance<PrParser>();
@@ -266,6 +183,111 @@ namespace PLang.Runtime
 			logger.LogDebug($" ---------- Done Init on Engine  ---------- {stopwatch.ElapsedMilliseconds}");
 		}
 
+
+
+
+		public void SetParentEngine(IEngine parentEngine)
+		{
+			this._parentEngine = parentEngine;
+			if (fileSystem.RootDirectory != parentEngine.Path)
+			{
+				fileSystem.AddFileAccess(new FileAccessControl(fileSystem.RootDirectory, parentEngine.Path, ProcessId: this.fileSystem.Id));
+			}
+
+			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents();
+			this.eventRuntime.SetActiveEvents(activeEvents);
+		}
+
+		public List<CallbackInfo>? CallbackInfos { get; set; }
+
+		public void SetOutputStream(IOutputStream outputStream)
+		{
+			this.outputStream = outputStream;
+		}
+		public IPLangFileSystem FileSystem { get { return fileSystem; } }
+		public void ReplaceContext(PLangAppContext context)
+		{
+			this.context = context;
+		}
+		public void ReplaceMemoryStack(MemoryStack memoryStack)
+		{
+			this.memoryStack = memoryStack;
+		}
+
+		public async Task<IEngine> RentAsync(GoalStep callingStep, IOutputStream outputStream)
+		{
+			var enginePool = GetEnginePool(Path);
+			return await enginePool.RentAsync(this, callingStep, Path, outputStream);
+		}
+		public void Return(IEngine engine, bool reset = false)
+		{
+			var enginePool = GetEnginePool(Path);
+			enginePool.Return(engine, reset);
+		}
+
+		public void Return(bool reset = false)
+		{
+			if (ParentEngine == null)
+			{
+				throw new Exception($"Parent engine is null on return. {ErrorReporting.CreateIssueShouldNotHappen}");
+			}
+
+			context = ParentEngine.GetContext();
+			memoryStack.Clear();
+			callingStep = null;
+
+			if (outputStream is HttpOutputStream hos)
+			{
+				hos.MainResponseIsDone = true;
+			}
+
+			outputStream = ParentEngine.OutputStream;
+			HttpContext = ParentEngine.HttpContext;
+			fileSystem.ClearFileAccess();
+			this.eventRuntime.GetActiveEvents().Clear();
+			foreach (var item in listOfDisposables)
+			{
+				item.Dispose();
+			}
+			if (reset)
+			{
+				CallbackInfos = null;
+				var prParser = container.GetInstance<PrParser>();
+				prParser.ClearVariables();
+			}
+			Name = string.Empty;
+		}
+
+		ConcurrentDictionary<string, EnginePool> enginePools = new();
+
+		public EnginePool GetEnginePool(string rootPath)
+		{
+			rootPath = rootPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
+			if (enginePools.TryGetValue(rootPath, out var pool)) return pool;
+
+			var tempContext = container.GetInstance<PLangAppContext>();
+
+			pool = new EnginePool(2, () =>
+			{
+
+				using var serviceContainer = new ServiceContainer();
+				
+				serviceContainer.RegisterForPLang(rootPath, "/",
+									container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
+									container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
+
+				var engine = serviceContainer.GetInstance<IEngine>();
+				engine.Init(serviceContainer);
+				engine.SetParentEngine(this);
+
+				return engine;
+			});
+
+			enginePools.TryAdd(rootPath, pool);
+			return pool;
+
+		}
+		
 		public MemoryStack GetMemoryStack() => this.memoryStack;
 
 		public IEventRuntime GetEventRuntime()

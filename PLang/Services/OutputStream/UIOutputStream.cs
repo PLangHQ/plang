@@ -30,6 +30,7 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public string Id { get; set; }
 
 		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{
@@ -37,7 +38,7 @@ namespace PLang.Services.OutputStream
 			IForm = iForm;
 			Stream = new MemoryStream();
 			ErrorStream = new MemoryStream();
-
+			Id = Guid.NewGuid().ToString();
 			sb = new StringBuilder();
 		}
 

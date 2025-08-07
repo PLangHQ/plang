@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,7 +71,7 @@ namespace PLang.Runtime
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
 			engine.CallbackInfos = parentEngine.CallbackInfos;
-			engine.HttpContext = httpContext;
+			
 
 			if (outputStream != null)
 			{
@@ -79,6 +80,12 @@ namespace PLang.Runtime
 			{
 				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
 				engine.SetOutputStream(outputStream);
+			}
+			engine.OutputStreamFactory.SetEngine(engine);
+
+			if (outputStream is HttpOutputStream hos)
+			{
+				engine.HttpContext = hos.HttpContext;
 			}
 
 			if (callingStep != null)

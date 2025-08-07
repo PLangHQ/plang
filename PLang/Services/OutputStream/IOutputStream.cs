@@ -13,6 +13,8 @@ namespace PLang.Services.OutputStream
 		public string Output { get; }
 		public bool IsStateful { get; }
 		public bool IsFlushed { get; set; }
+		string Id { get; set; }
+
 		public Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null);
         public string Read();
         public Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode = 202, Callback? callback = null, IError? error = null);

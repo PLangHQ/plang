@@ -16,7 +16,7 @@ namespace PLang.Errors.Handlers
 		private readonly ILogger logger;
 		private readonly ProgramFactory programFactory;
 
-		public HttpErrorHandler(HttpContext httpContext, IAskUserHandlerFactory askUserHandlerFactory, ILogger logger, ProgramFactory programFactory) : base(askUserHandlerFactory)
+		public HttpErrorHandler(HttpContext httpContext, ILogger logger, ProgramFactory programFactory) : base()
 		{
 			this.httpContext = httpContext;
 			this.logger = logger;

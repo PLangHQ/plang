@@ -3,6 +3,7 @@ using IdGen;
 using LightInject;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
+using Nethereum.Hex.HexConvertors;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.Cmp;
 using PLang.Building.Model;
@@ -53,8 +54,8 @@ namespace PLang.Modules
 		protected IPLangFileSystem fileSystem;
 		protected MethodHelper methodHelper;
 		protected IFileAccessHandler fileAccessHandler;
-		protected IAskUserHandlerFactory askUserHandlerFactory;
 		protected ISettings settings;
+		protected IEngine engine;
 		protected bool IsBuilder { get; } = false;
 		protected bool IsDebugMode { get; } = false;
 		public HttpContext? HttpContext
@@ -90,9 +91,9 @@ namespace PLang.Modules
 			this.appCache = container.GetInstance<IAppCache>();
 			this.outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 			this.settings = container.GetInstance<ISettings>();
 			_listenerContext = httpContext;
+			this.engine = container.GetInstance<IEngine>();
 
 			this.goal = goal;
 			this.goalStep = step;
@@ -262,17 +263,13 @@ namespace PLang.Modules
 			{
 				if (ex is MissingSettingsException mse)
 				{
-					var settingsError = new AskUserError(mse.Message, async (object[]? result) =>
-					{
-						var value = result?[0] ?? null;
-						if (value is Array) value = ((object[])value)[0];
+					(var answer, var error) = await AskUser.GetAnswer(engine, mse.Message);
+					if (error != null) return (null, error);
 
-						await mse.InvokeCallback(value);
-						return (true, null);
-					});
+					error = await mse.InvokeCallback(answer);
+					if (error != null) return (null, error);
 
-					(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-					if (isHandled) return await RunFunction(function);
+					return await RunFunction(function);
 				}
 				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Key: ex.GetType().FullName ?? "ProgramError", 500, Exception: ex);
 
@@ -322,12 +319,15 @@ namespace PLang.Modules
 
 		private async Task<(bool, IError?)> HandleAskUser(AskUserError aue)
 		{
-			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
-			if (handlerError is AskUserError aueSecond)
+			var (answer, error) = await AskUser.GetAnswer(engine, aue.Message);
+			if (error != null) return (false, error);
+
+			(var isHandled, error) = await aue.InvokeCallback([answer]);
+			if (error is AskUserError aueSecond)
 			{
 				return await HandleAskUser(aueSecond);
 			}
-			return (isHandled, handlerError);
+			return (isHandled, error);
 		}
 
 		private async Task<(object?, IError?)> HandleFileAccess(FileAccessException fa)

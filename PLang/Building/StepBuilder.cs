@@ -6,6 +6,7 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -38,12 +39,12 @@ public class StepBuilder : IStepBuilder
 	private readonly IErrorHandlerFactory exceptionHandlerFactory;
 	private readonly PLangAppContext context;
 	private readonly ISettings settings;
-	private readonly IAskUserHandlerFactory askUserHandlerFactory;
+	private readonly IEngine engine;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
-				PLangAppContext context, ISettings settings, IAskUserHandlerFactory askUserHandlerFactory)
+				PLangAppContext context, ISettings settings, IEngine engine)
 	{
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
@@ -56,7 +57,7 @@ public class StepBuilder : IStepBuilder
 		this.exceptionHandlerFactory = exceptionHandlerFactory;
 		this.context = context;
 		this.settings = settings;
-		this.askUserHandlerFactory = askUserHandlerFactory;
+		this.engine = engine;
 	}
 
 	public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string> excludeModules, IBuilderError? previousBuildError = null)
@@ -201,14 +202,17 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<IBuilderError?> HandleAskUserError(Errors.AskUser.AskUserError aue)
 	{
-		(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+		var (answer, error) = await AskUser.GetAnswer(engine, aue.Message);
+		if (error != null) return new BuilderError(error);
 
-		if (handlerError is Errors.AskUser.AskUserError aue2)
+		(var isHandled, error) = await aue.InvokeCallback([answer]);
+		if (error is AskUserError aueSecond)
 		{
-			return await HandleAskUserError(aue2);
+			return await HandleAskUserError(aue);
 		}
-		if (handlerError is ExceptionError) return new BuilderError(handlerError, false);
-		if (handlerError != null) return new BuilderError(handlerError);
+
+		if (error is ExceptionError) return new BuilderError(error, false);
+		if (error != null) return new BuilderError(error);
 		return null;
 	}
 
