@@ -54,6 +54,7 @@ namespace PLang.Runtime
 		List<CallbackInfo>? CallbackInfos { get; set; }
 		PrParser PrParser { get; }
 		MemoryStack MemoryStack { get; }
+		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
@@ -121,6 +122,12 @@ namespace PLang.Runtime
 		public HttpContext? HttpContext { get; set; }
 		public MemoryStack MemoryStack { get { return memoryStack; } }
 		public PrParser PrParser { get { return prParser; } }
+
+		public ConcurrentDictionary<string, LiveConnection> LiveConnections { get; set; } = new();
+		public record LiveConnection(Microsoft.AspNetCore.Http.HttpResponse Response, bool IsFlushed)
+		{
+			public bool IsFlushed { get; set; } = IsFlushed;
+		};
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;

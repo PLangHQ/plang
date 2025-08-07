@@ -66,6 +66,7 @@ using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
 using static Dapper.SqlMapper;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.WebserverModule.Program;
+using static PLang.Runtime.Engine;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.WebserverModule;
@@ -84,13 +85,8 @@ public class Program : BaseProgram, IDisposable
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
-	ConcurrentDictionary<string, LiveConnection> liveConnections;
-
-	public record LiveConnection(Microsoft.AspNetCore.Http.HttpResponse Response, bool IsFlushed, GoalToCallInfo? OnConnect = null, GoalToCallInfo? OnDisconnect = null)
-	{
-		public bool IsFlushed { get; set; } = IsFlushed;
-	};
-
+	
+	 
 	public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 		, ISettings settings, IOutputStreamFactory outputStreamFactory
 		, PrParser prParser,
@@ -106,14 +102,13 @@ public class Program : BaseProgram, IDisposable
 		this.engine = engine;
 		this.programFactory = programFactory;
 
-		liveConnections = new();
 	}
 
 
 
 	public async Task<long> GetNumberOfLiveConnections()
 	{
-		return liveConnections.Count;
+		return engine.LiveConnections.Count;
 	}
 
 	public async Task<WebserverProperties?> ShutdownWebserver(string webserverName)
@@ -477,7 +472,6 @@ OnStartingWebserver
 						app.UseHttpsRedirection();
 					}
 					app.UseResponseCompression();
-					app.UseStaticFiles();
 					app.Run(async ctx => await HandleRequestAsync(ctx, webserverProperties));
 
 				});
@@ -514,7 +508,7 @@ OnStartingWebserver
 	private HttpOutputStream GetOutputStream(WebserverProperties webserverProperties, HttpContext httpContext)
 	{
 		var transformer = GetTransformer(webserverProperties, httpContext);
-		return new HttpOutputStream(httpContext.Response, liveConnections, transformer);
+		return new HttpOutputStream(httpContext.Response, engine.LiveConnections, transformer);
 	}
 
 	private async Task<(IEngine?, IError?)> GetEngine(WebserverProperties webserverProperties, HttpContext context)
@@ -522,7 +516,7 @@ OnStartingWebserver
 		if (context.Items.TryGetValue("Engine", out object? obj) && obj is IEngine)
 		{
 			var e = obj as IEngine;
-			Console.WriteLine($"e.id: {e.Id}");
+
 			return (e, null);
 		}
 
@@ -536,8 +530,15 @@ OnStartingWebserver
 
 		var objectValue = new ObjectValue("request", new Dictionary<string, object>(), properties: requestProperties);
 		engine.GetMemoryStack().Put(objectValue);
-		Console.WriteLine($"pool engine.id: {engine.Id}");
+
 		context.Items.Add("Engine", engine);
+
+		(var signedMessage, var error) = await VerifySignature(engine!, context);
+		if (error != null) return (engine, error);
+		if (signedMessage != null)
+		{
+			outputStream.SetIdentity(signedMessage.Identity);
+		}
 
 		return (engine, null);
 	}
@@ -561,7 +562,7 @@ OnStartingWebserver
 
 	private async Task HandleRequestAsync(HttpContext ctx, WebserverProperties webserverProperties)
 	{
-		IEngine? engine = null;
+		IEngine? requestEngine = null;
 		try
 		{
 			if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !ctx.Request.Headers.TryGetValue("X-Signature", out var value))
@@ -570,23 +571,16 @@ OnStartingWebserver
 				return;
 			}
 
-			(engine, var error) = await GetEngine(webserverProperties, ctx);
-			if (error != null || engine == null)
+			(requestEngine, var error) = await GetEngine(webserverProperties, ctx);
+			if (error != null || requestEngine == null)
 			{
-				await HandleError(engine, error);
-				return;
-			}
-
-			(var signedMessage, error) = await VerifySignature(engine!, ctx);
-			if (error != null)
-			{
-				await HandleError(engine, error);
+				await HandleError(requestEngine, error);
 				return;
 			}
 
 			if (webserverProperties.OnRequestBegin != null)
 			{
-				await RunOnRequest(engine, webserverProperties.OnRequestBegin);
+				await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin);
 			}
 
 			if (webserverProperties.OnPollStart != null)
@@ -594,12 +588,12 @@ OnStartingWebserver
 				string? query = ctx.Request.QueryString.Value;
 				if (query?.StartsWith("?plang.poll=1") == true)
 				{
-					await HandlePlangPoll(engine, ctx, webserverProperties, signedMessage);
+					await HandlePlangPoll(requestEngine, ctx, webserverProperties);
 					return;
 				}
 			}
 
-			var outputStream = engine.OutputStreamFactory.CreateHandler();
+			var outputStream = requestEngine.OutputStreamFactory.CreateHandler();
 			error = await HandleRequest(ctx, outputStream, webserverProperties);
 
 			if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
@@ -617,12 +611,12 @@ OnStartingWebserver
 
 			if (webserverProperties.OnRequestEnd != null)
 			{
-				await RunOnRequest(engine, webserverProperties.OnRequestEnd);
+				await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd);
 			}
 
 			if (error != null)
 			{
-				await HandleError(engine, error);
+				await HandleError(requestEngine, error);
 
 			}
 
@@ -633,15 +627,12 @@ OnStartingWebserver
 		}
 		finally
 		{
-			if (engine != null)
+			if (requestEngine != null)
 			{
-				Console.WriteLine($"REturn(reques done) e.id:{engine.Id}");
 				var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-				pool.Return(engine);
+				pool.Return(requestEngine);
 			}
 
-
-			Console.WriteLine($"--------  End:{ctx.Request.Path.Value} - {ctx.TraceIdentifier}  --------");
 			await ctx.Response.CompleteAsync();
 		}
 
@@ -657,10 +648,12 @@ OnStartingWebserver
 			IError? error = null;
 
 			var acceptedTypes = httpContext.Request.Headers.Accept.FirstOrDefault();
-
+			
+			
 			var isPlangRequest = acceptedTypes?.StartsWith("application/plang") ?? false;
 			if (isPlangRequest)
 			{
+				Console.WriteLine($"plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
 				error = await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, outputStream);
 				logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -681,7 +674,7 @@ OnStartingWebserver
 			}
 
 			logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
-
+			Console.WriteLine($"classic: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 			error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
 
 			logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -924,21 +917,22 @@ OnStartingWebserver
 		return ms.ToArray();
 	}
 
-	private async Task HandlePlangPoll(IEngine engine, HttpContext ctx, WebserverProperties props, SignedMessage? signedMessage)
+	private async Task HandlePlangPoll(IEngine requestEngine, HttpContext ctx, WebserverProperties props)
 	{
+		SignedMessage? signedMessage = ctx.Items["SignedMessage"] as SignedMessage;
 		if (signedMessage == null) return;
 
 
-		var outputStream = engine.OutputStreamFactory.CreateHandler() as HttpOutputStream;
-		LiveConnection? liveResponse = null;
+		var outputStream = requestEngine.OutputStreamFactory.CreateHandler() as HttpOutputStream;
 
-		liveConnections.TryGetValue(signedMessage.Identity, out liveResponse);
+		LiveConnection? liveResponse = null;
+		this.engine.LiveConnections.TryGetValue(signedMessage.Identity, out liveResponse);
 		if (liveResponse != null && outputStream is HttpOutputStream httpOutputStream)
 		{
 			outputStream.SetIdentity(signedMessage!.Identity);
 		}
 
-		bool startPoll = !liveConnections.ContainsKey(signedMessage.Identity);
+		bool startPoll = !this.engine.LiveConnections.ContainsKey(signedMessage.Identity);
 
 		var response = ctx.Response;
 		if (!response.HasStarted)
@@ -947,14 +941,14 @@ OnStartingWebserver
 			response.Headers.Add("Cache-Control", "no-cache");
 		}
 		 
-		//liveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(null, true));
+		this.engine.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(ctx.Response, true));
 
 		if (props.OnPollStart != null)
 		{
-			var (_, error) = await engine.RunGoal(props.OnPollStart, goal);
+			var (_, error) = await requestEngine.RunGoal(props.OnPollStart, goal);
 			if (error != null)
 			{
-				await HandleError(engine, error);
+				await HandleError(requestEngine, error);
 			}
 		}
 
@@ -962,30 +956,8 @@ OnStartingWebserver
 		//return the engine, because we dont need it for long poll
 		ctx.Items.Remove("Engine");
 		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-		Console.WriteLine($"REturn(poll) e.id:{engine.Id}");
-		pool.Return(engine, true);
-
-		/*
-		string? query = httpContext.Request.QueryString.Value;
-
-		var onRequestBegin = prParser.GetEvent("OnRequestBegin");
-		if (onRequestBegin != null)
-		{
-			var result = await engine.RunGoal(onRequestBegin);
-			if (result.Error != null)
-			{
-				Console.WriteLine(result.Error);
-			}
-		}
-
 		
-
-		var onRefresh = prParser.GetEvent("OnRefresh");
-		if (onRefresh != null && query?.Contains("refresh=1") == true)
-		{
-			await engine.RunGoal(onRefresh);
-		}*/
-
+		pool.Return(requestEngine, true);
 
 		try
 		{
@@ -1003,11 +975,11 @@ OnStartingWebserver
 			if (onRequestEnd != null)
 			{
 				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
+				requestEngine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
 
-				await engine.RunGoal(onRequestEnd);
-				Console.WriteLine($"REturn(OnRequestEnd) e.id:{engine.Id}");
-				pool.Return(engine, true);
+				await requestEngine.RunGoal(onRequestEnd);
+
+				pool.Return(requestEngine, true);
 			}
 		}
 		catch (Exception ex)
@@ -1016,19 +988,18 @@ OnStartingWebserver
 			var onRequestEnd = prParser.GetEvent("OnRequestEnd");
 
 			// client disconnected or other I/O error
-			liveConnections.TryRemove(signedMessage.Identity, out var liveConnection);
+			this.engine.LiveConnections.TryRemove(signedMessage.Identity, out var liveConnection);
 			if (onDisconnect != null)
 			{
 				pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-				engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
+				requestEngine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream, ctx);
 				if (onDisconnect != null)
 				{
-					await engine.RunGoal(onDisconnect);
+					await requestEngine.RunGoal(onDisconnect);
 				}
-				Console.WriteLine($"REturn(onDisconnect) e.id:{engine.Id}");
-				pool.Return(engine, true);
+
+				pool.Return(requestEngine, true);
 			}
-			//Console.WriteLine($"Long-poll ended: {ex.Message}");
 		}
 
 
@@ -1056,7 +1027,7 @@ OnStartingWebserver
 		{
 			return new NotFoundError($"{requestedFile} was not found");
 		}
-		Console.WriteLine($"     - {filePath} - read stream - {httpContext.TraceIdentifier}");
+
 		try
 		{
 			await using var stream = fileSystem.File.OpenRead(filePath);
@@ -1070,7 +1041,7 @@ OnStartingWebserver
 				httpContext.Response.ContentType = mimeType;
 			}
 			await stream.CopyToAsync(httpContext.Response.Body);
-			Console.WriteLine($"     - {filePath} - end read stream - {httpContext.TraceIdentifier}");
+
 		} catch (Exception ex)
 		{
 			Console.WriteLine($"     - {filePath} - end read stream - {httpContext.TraceIdentifier} | ex:" + ex);
@@ -1119,7 +1090,6 @@ OnStartingWebserver
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null && !isFlushed && !response.HasStarted)
 			{
-				Console.WriteLine("redirect");
 				response.Redirect(url, permanent, preserveMethod);
 				await response.Body.FlushAsync();
 				await response.CompleteAsync();

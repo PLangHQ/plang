@@ -17,6 +17,7 @@ using System.Net.Mail;
 using System.Text;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.WebserverModule.Program;
+using static PLang.Runtime.Engine;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
@@ -38,6 +39,7 @@ namespace PLang.Services.OutputStream
 		public HttpOutputStream(HttpResponse response, ConcurrentDictionary<string, LiveConnection> liveResponses, ITransformer transformer)
 		{
 			this.response = response;
+			this.liveResponses = liveResponses;
 			this.transformer = transformer;
 			this.responseProperties = new();
 
