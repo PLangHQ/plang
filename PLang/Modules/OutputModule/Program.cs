@@ -191,7 +191,7 @@ namespace PLang.Modules.OutputModule
 			}
 
 			var path = GetCallbackPath();
-			var url = (HttpContext.Request.Path.Value ?? "/");
+			var url = (HttpContext?.Request.Path.Value ?? "/");
 			var callback = await StepHelper.GetCallback(url, askOptions.CallbackData, memoryStack, goalStep, programFactory);
 			
 			Dictionary<string, object?> parameters = new();
