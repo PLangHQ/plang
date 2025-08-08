@@ -18,8 +18,29 @@ namespace PLang.Modules.AssertModule
 		{
 		}
 
-	
-	
+		[Description("User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them")]
+		public async Task<IError?> Contains(object? contains, object? actualValue)
+		{
+			bool result = false;
+			if (contains is string str1 && actualValue is string str2) {
+				
+				result = str2.Contains(str1);
+				if (!result) return new AssertError($"The value does not contain '{contains}", contains, actualValue, goalStep);
+				return null;
+			}
+
+			var strContains = TypeHelper.GetAsString(contains);
+			var strActual = TypeHelper.GetAsString(actualValue);
+
+			
+			result = strActual.Contains(strContains);
+
+			if (!result) return new AssertError($"The value does not contain value.", strContains, strActual, goalStep);
+			return null;
+
+
+		}
+
 
 
 		[Description("User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them")]

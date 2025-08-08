@@ -1,6 +1,7 @@
 ﻿
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Errors.Builder;
 using PLang.Models;
 using PLang.Utils;
@@ -12,10 +13,12 @@ namespace PLang.Modules.MockModule;
 public class Builder : BaseBuilder
 {
 	private readonly ITypeHelper typeHelper;
+	private readonly IGoalParser goalParser;
 
-	public Builder(ITypeHelper typeHelper) : base()
+	public Builder(ITypeHelper typeHelper, IGoalParser goalParser) : base()
 	{
 		this.typeHelper = typeHelper;
+		this.goalParser = goalParser;
 	}
 	public record ModuleType(string Name);
 	public record MethodName(string Name);
@@ -68,6 +71,10 @@ The method user is mocking has the following information:
 
 ", goalStep);
 		if (error != null) return (null, error);
+
+		(var goalFound, var error2) = GoalHelper.GetGoalPath(goalStep, goalToCallAndParams.GoalToCall, goalParser.GetGoals(), new());
+		if (error != null) return (null, new BuilderError(error2) { Retry = false });
+		goalToCallAndParams.GoalToCall.Path = goalFound.RelativePrPath;
 
 		var mockData = new MockData(goalToCallAndParams.GoalToCall, moduleType.FullName, method.Name, goalToCallAndParams.Parameters);
 		var parameters2 = new List<Parameter>();

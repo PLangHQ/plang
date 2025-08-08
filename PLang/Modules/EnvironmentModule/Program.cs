@@ -93,6 +93,10 @@ namespace PLang.Modules.EnvironmentModule
 
 		public async Task SetEnvironment(string name)
 		{
+			if (name.Equals("test", StringComparison.OrdinalIgnoreCase))
+			{
+				AppContext.SetSwitch(ReservedKeywords.Test, true);
+			}
 			engine.Environment = name;
 		}
 

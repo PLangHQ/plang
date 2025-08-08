@@ -45,6 +45,7 @@ namespace PLang.Events
 		ConcurrentDictionary<string, string> GetActiveEvents();
 		Task<(object? Variables, IError? Error)> RunOnModuleError(MethodInfo method, IError error, Exception ex);
 		IError? Reload();
+		void AddEvent(EventBinding eventBinding);
 	}
 	public class EventRuntime : IEventRuntime
 	{
@@ -112,6 +113,11 @@ namespace PLang.Events
 			if (error != null) return error;
 
 			return null;
+		}
+
+		public void AddEvent(EventBinding eventBinding)
+		{
+			this.runtimeEvents?.Add(eventBinding);
 		}
 
 		public IError? Load(bool isBuilder = false)

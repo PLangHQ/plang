@@ -1,6 +1,7 @@
 ﻿using Epiforge.Extensions.Components;
 using IdGen;
 using LightInject;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Nethereum.Hex.HexConvertors;
@@ -29,6 +30,7 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
 
@@ -117,7 +119,7 @@ namespace PLang.Modules
 			instruction.Function.Instruction = instruction;
 			instruction.Step = goalStep;
 			return await RunFunction(instruction.Function);
-			
+
 		}
 
 		private T GetModule<T>() where T : BaseProgram
@@ -173,35 +175,7 @@ namespace PLang.Modules
 				{
 					if (engine.Mocks.Count > 0)
 					{
-						var mockMethod = engine.Mocks.FirstOrDefault(p => p.ModuleType == goalStep.ModuleType + ".Program" && p.MethodName == function.Name);
-						if (mockMethod != null)
-						{
-							if (mockMethod.Parameters.Count == 0)
-							{
-								task = engine.RunGoal(mockMethod.GoalToCall, goal);
-							} else
-							{
-								bool isMatch = false;
-								foreach (var parameter in mockMethod.Parameters)
-								{
-									if (parameterValues.ContainsKey(parameter.Key) && parameterValues[parameter.Key]?.Equals(parameter.Value) == true)
-									{
-										isMatch = true;
-									} else
-									{
-										isMatch = false;
-									}
-								}
-								if (isMatch)
-								{
-									task = engine.RunGoal(mockMethod.GoalToCall, goal);
-								}
-
-							}
-
-
-
-						}
+						task = RunMockIfMatch(goalStep, function, parameterValues);
 					}
 
 					if (task == null)
@@ -239,7 +213,8 @@ namespace PLang.Modules
 					{
 						await task;
 					}
-					catch (Exception ex) {
+					catch (Exception ex)
+					{
 						int i = 0;
 					}
 				}
@@ -286,7 +261,7 @@ namespace PLang.Modules
 				(result, error) = await HandleError(result, error);
 
 				SetReturnValue(function, result, properties);
-				
+
 				if (error == null)
 				{
 					await SetCachedItem(result);
@@ -313,13 +288,56 @@ namespace PLang.Modules
 			}
 		}
 
+		private Task<(object?, IError?)>? RunMockIfMatch(GoalStep goalStep, IGenericFunction function, Dictionary<string, object?> parameterValues)
+		{
+			var mockMethods = engine.Mocks.Where(p => p.ModuleType == goalStep.ModuleType + ".Program" && p.MethodName == function.Name);
+			if (!mockMethods.Any()) return null;
+
+			foreach (var mockMethod in mockMethods)
+			{
+				if (mockMethod.Parameters == null) continue;
+				if (mockMethod.Parameters.Count == 0)
+				{
+					mockMethod.GoalToCall.Parameters.AddOrReplace(parameterValues);
+					return engine.RunGoal(mockMethod.GoalToCall, goal);
+				}
+				else
+				{
+					bool isMatch = false;
+					foreach (var parameter in mockMethod.Parameters)
+					{
+						if (parameterValues.ContainsKey(parameter.Key) && parameterValues[parameter.Key]?.Equals(parameter.Value) == true)
+						{
+							isMatch = true;
+						} else if (parameter.Value?.ToString() != null && 
+								parameter.Value.ToString()?.EndsWith("*") == true && 
+								parameterValues[parameter.Key]?.ToString()?.StartsWith(parameter.Value.ToString()) == true)
+						{
+							isMatch = true;
+						}
+						else
+						{
+							isMatch = false;
+						}
+					}
+					if (isMatch)
+					{
+						mockMethod.GoalToCall.Parameters.AddOrReplace(parameterValues);
+						return engine.RunGoal(mockMethod.GoalToCall, goal);
+					}
+
+				}
+			}
+			return null;
+		}
+
 		private async Task<(object? ReturnValue, IError? error)> HandleError(object? result, IError? error)
 		{
 			if (error == null || error is EndGoal) return (result, error);
 
 			if (error.Goal == null) error.Goal = goal;
-			if (error.Step == null)	error.Step = goalStep;
-			if (error is ProgramError pe && pe.GenericFunction is null)	pe.GenericFunction = function;
+			if (error.Step == null) error.Step = goalStep;
+			if (error is ProgramError pe && pe.GenericFunction is null) pe.GenericFunction = function;
 
 			//only add variables on first error
 			if (error is not Return && error.Variables.Count == 0)
@@ -340,7 +358,8 @@ namespace PLang.Modules
 
 				return (result, ErrorHelper.GetMultipleError(error, handlerError));
 			}
-			if (function.ReturnValues != null) {
+			if (function.ReturnValues != null)
+			{
 				var errorReturnValue = function.ReturnValues.FirstOrDefault(p => p.VariableName.Replace("%", "").Equals("!error"));
 				if (errorReturnValue != null)
 				{
@@ -378,7 +397,7 @@ namespace PLang.Modules
 			if (error != null) return (null, error);
 
 			if (isHandled) return await RunFunction(function);
-			
+
 			return (false, null);
 		}
 
@@ -509,7 +528,7 @@ namespace PLang.Modules
 					if (returnValues.Count == 1 && objectValues.Count == 1)
 					{
 						var objectValue = objectValues[0];
-						
+
 						memoryStack.Put(new ObjectValue(returnValues[0].VariableName, objectValue.Value, properties: properties), goalStep);
 					}
 					else if (returnValues.Count == 1 && objectValues.Count > 1)
@@ -553,8 +572,8 @@ namespace PLang.Modules
 				{
 					foreach (var returnValue in returnValues)
 					{
-						var ov = new ObjectValue(returnValue.VariableName, objectValue.Value, properties:  objectValue.Properties);
-						
+						var ov = new ObjectValue(returnValue.VariableName, objectValue.Value, properties: objectValue.Properties);
+
 						memoryStack.Put(ov, goalStep);
 					}
 
@@ -730,8 +749,9 @@ namespace PLang.Modules
 			if (aliveType == null)
 			{
 				aliveType = new Alive(instance.GetType(), key, [instance]);
-				alives.Add(aliveType);				
-			} else
+				alives.Add(aliveType);
+			}
+			else
 			{
 				aliveType.Instances.Add(instance);
 			}
@@ -741,7 +761,7 @@ namespace PLang.Modules
 		public void RemoveKeepAlive(object instance, string key)
 		{
 			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
-			if (alives == null) return;	
+			if (alives == null) return;
 
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
 			if (aliveType != null)
@@ -776,7 +796,7 @@ namespace PLang.Modules
 		{
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
-protected string GetSystemPath(string? path)
+		protected string GetSystemPath(string? path)
 		{
 			return PathHelper.GetSystemPath(path, fileSystem, this.Goal);
 		}

@@ -126,7 +126,13 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Hash input. Salt is provided by language when user does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
-		public async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
+		public async Task<(object?, IError?)> Hash(object? variable, bool? useSalt = null, string? salt = null, string type = "keccak256")
+		{
+			return await Hash(variable, true, useSalt, salt, type);
+		}
+
+		
+		internal async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
 		{
 			if (variable is string)
 			{
@@ -158,7 +164,7 @@ namespace PLang.Modules.CryptographicModule
 			if (type.Equals("keccak256", StringComparison.OrdinalIgnoreCase))
 			{
 				var keccak = new Sha3Keccack();
-				
+
 
 				byte[] hashBytes = keccak.CalculateHash(bytes);
 				if (!returnAsString) return (hashBytes, null);
@@ -270,7 +276,7 @@ namespace PLang.Modules.CryptographicModule
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404, 
+				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404,
 					FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
 			}
 

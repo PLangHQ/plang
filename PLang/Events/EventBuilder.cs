@@ -75,12 +75,7 @@ namespace PLang.Events
                     continue;
                 }
 
-                string buildLlmSystemInfo = "";
-                if (filePath.EndsWith("BuildEvents.goal"))
-                {
-                    buildLlmSystemInfo = @$"This event are for the builder. ";
-
-				}
+               
 
                 for (int i = 0; i < goal.GoalSteps.Count; i++)
                 {
@@ -95,33 +90,7 @@ namespace PLang.Events
                     var eventTypeScheme = TypeHelper.GetJsonSchema(typeof(EventType));
                     var eventScope = TypeHelper.GetJsonSchema(typeof(EventScope));
 
-                    promptMessage.Add(new LlmMessage("system", $@"
-User will provide event binding, you will be provided with c# model to map the code to. 
-{buildLlmSystemInfo}
-
-EventType is required, Error defaults to 'After' EventType if not defined by user.
-EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
-GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Any pattern from user must be translated to regex version without ^ and $, e.g. user defines folder matching pattern such as /ui/*, it should then be the regex version of that: /ui/.*
-GoalToCall is required. This should be a specific goal, keep path as user defines  
-GoalToCallParameters parameters that user wants to sent to goal
-StepNumber & StepText reference a specific step that the user wants to bind to
-IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
-WaitForExecution: indicates if goal should by run and forget
-RunOnlyOnStartParameter: parameters at the startup of the application, it should start with --, for example --debug
-ErrorKey: is key of the error message (case insensitive)
-ErrorMessage: checks if error.Message contains a message  (case insensitive)
-ErrorStatusCode: matches the status code of the error message
-Map correct number to EventType and EventScope
-Include OS goals must be defined by user when set to true
-
-EventType {{ Before , After }}
-EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, GoalError, StepError, ModuleError }}
-
-
-<examples>
-- before goal end ... => EventType = After, EventScope = Goal  //indicates that this should run just before it end or after it has runned
-<examples>
-"));
+                    promptMessage.Add(new LlmMessage("system", GetSystemPrompt(filePath.EndsWith("BuildEvents.goal"))));
                  
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
@@ -196,6 +165,44 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
             }
             return (validGoalFiles, null);
         }
+
+		public static string GetSystemPrompt(bool isBuildEvents)
+		{
+			string buildLlmSystemInfo = "";
+			if (isBuildEvents)
+			{
+				buildLlmSystemInfo = @$"This event are for the builder. ";
+
+			}
+			string system = $@"
+User will provide event binding, you will be provided with c# model to map the code to. 
+{buildLlmSystemInfo}
+
+EventType is required, Error defaults to 'After' EventType if not defined by user.
+EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
+GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Any pattern from user must be translated to regex version without ^ and $, e.g. user defines folder matching pattern such as /ui/*, it should then be the regex version of that: /ui/.*
+GoalToCall is required. This should be a specific goal, keep path as user defines  
+GoalToCallParameters parameters that user wants to sent to goal
+StepNumber & StepText reference a specific step that the user wants to bind to
+IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
+WaitForExecution: indicates if goal should by run and forget
+RunOnlyOnStartParameter: parameters at the startup of the application, it should start with --, for example --debug
+ErrorKey: is key of the error message (case insensitive)
+ErrorMessage: checks if error.Message contains a message  (case insensitive)
+ErrorStatusCode: matches the status code of the error message
+Map correct number to EventType and EventScope
+Include OS goals must be defined by user when set to true
+
+EventType {{ Before , After }}
+EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, GoalError, StepError, ModuleError }}
+
+
+<examples>
+- before goal end ... => EventType = After, EventScope = Goal  //indicates that this should run just before it end or after it has runned
+<examples>
+";
+			return system;
+		}
 
 		private IError? validateEventModel(EventBinding eventBinding, GoalStep step)
 		{

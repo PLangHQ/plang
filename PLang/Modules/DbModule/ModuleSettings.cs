@@ -19,6 +19,7 @@ using PLang.Runtime;
 using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -62,6 +63,9 @@ namespace PLang.Modules.DbModule
 			this.variableHelper = variableHelper;
 			this.dbFactory = dbFactory;
 			this.appCache = appCache;
+
+			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
+			UseInMemoryDataSource = inMemory;
 		}
 
 		public bool UseInMemoryDataSource { get; set; } = false;
