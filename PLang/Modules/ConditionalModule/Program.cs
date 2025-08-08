@@ -446,6 +446,7 @@ namespace PLang.Modules.ConditionalModule
 				var module = GetProgramModule<ThrowErrorModule.Program>();
 				return (returnVars, await module.Throw(throwErrorOnFalse.errorMessage ?? "Is not empty", throwErrorOnFalse.type, throwErrorOnFalse.statusCode));
 			}
+			if (!result) return (returnVars, error);
 
 			var nextStep = goalStep.NextStep;
 			if (nextStep != null)

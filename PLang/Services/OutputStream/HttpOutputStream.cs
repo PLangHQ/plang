@@ -15,6 +15,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Text;
+using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.WebserverModule.Program;
 using static PLang.Runtime.Engine;
@@ -110,13 +111,24 @@ namespace PLang.Services.OutputStream
 
 		}
 
-		private Dictionary<string, object?> GetResponseProperties(GoalStep step, Dictionary<string, object?>? parameters = null)
+		private Dictionary<string, object?> GetResponseProperties(GoalStep step, Dictionary<string, object?>? parameters = null, Callback? callback = null)
 		{
 			if (parameters == null) parameters = new();
 			try
 			{
 				parameters.AddOrReplace("path", path);
 				parameters.AddOrReplace("id", Path.Join(path, step.Goal.GoalName, step.Number.ToString()).Replace("\\", "/"));
+
+				//todo: just while I haven't fixed
+				if (parameters.ContainsKey("target"))
+				{
+					parameters.AddOrReplace("cssSelector", parameters["target"]);
+				}
+
+				if (callback != null)
+				{
+					parameters.AddOrReplace("callback", JsonConvert.SerializeObject(callback).ToBase64());
+				}
 			}
 			catch (Exception ex)
 			{
@@ -163,7 +175,8 @@ namespace PLang.Services.OutputStream
 
 		public ConcurrentDictionary<string, LiveConnection> LiveConnections => liveConnections;
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, object? question, int statusCode, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object? question, int statusCode, 
+			Callback? callback = null, IError? error = null, Dictionary<string, object?>? parameters = null)
 		{
 			if (question == null) return (null, null);
 
@@ -184,7 +197,7 @@ namespace PLang.Services.OutputStream
 				response.ContentType = $"{transformer.ContentType}; charset={transformer.Encoding.WebName}";
 			}
 
-			var responseProperties = GetResponseProperties(step);
+			var responseProperties = GetResponseProperties(step, parameters, callback);
 			error = await transformer.Transform(Stream, question, responseProperties);
 
 			IsFlushed = true;

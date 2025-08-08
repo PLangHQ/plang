@@ -271,9 +271,17 @@ public class TypeHelper : ITypeHelper
 		return json;
 	}
 
-
+	private static string GetPrimativeScheme(Type type)
+	{
+		return @$"{{ ""object"": {type.Name} }}";
+	}
 	public static string GetJsonSchema(Type type, bool ignoreInstructed = true)
 	{
+		if (type.IsPrimitive || type == typeof(string))
+		{
+			return GetPrimativeScheme(type);
+		}
+
 		if (IsRecordType(type))
 		{
 			return GetJsonSchemaForRecord(type);

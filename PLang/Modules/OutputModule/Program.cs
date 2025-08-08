@@ -99,9 +99,14 @@ namespace PLang.Modules.OutputModule
 			User = 0, System = 1
 		}
 
-		[Description("QuestionOrTemplateFile either the question or points to a file for custom rendering")]
+		[Description(@"QuestionOrTemplateFile either the question or points to a file for custom rendering. 
+When key is not defined for call back data, the key is same as variable.
+Target is what to target in the UI, e.g. CssSelector for html, or name of Javascript function
+Action=set|append|prepend|before|after|execute   (execute only applies to javascript)
+")]
 		public record AskOptions(string QuestionOrTemplateFile, int StatusCode = 202,
 			Dictionary<string, object?>? CallbackData = null, GoalToCallInfo? OnCallback = null,
+			string? Target = null, string? Action = null,
 			UserOrSystemEnum? UserOrSystem = UserOrSystemEnum.User, string? Channel = "default")
 
 		{
@@ -110,6 +115,7 @@ namespace PLang.Modules.OutputModule
 			{
 				get
 				{
+					if (QuestionOrTemplateFile == null) return false;
 					if (QuestionOrTemplateFile.Contains("\n") || QuestionOrTemplateFile.Contains("\r") || QuestionOrTemplateFile.Contains("\r")) return false;
 					string ext = Path.GetExtension(QuestionOrTemplateFile);
 					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
@@ -118,25 +124,6 @@ namespace PLang.Modules.OutputModule
 		}
 			;
 
-		public record AskTemplateError(object Error, string OnErrorMethod);
-		/*
-		[Description("Remove % from AnswerVariableName.")]
-		public record AskTemplateOptions(string OutputFile, AskTemplateError error)
-		{
-
-
-		}
-
-		[Description("Send to a question to the output stream and waits for answer. This is used when user defines complex options, it will build ui for it")]
-		public async Task<(object?, IError?)> AskTemplate(AskTemplateOptions askOptions)
-		{/*
-			Dictionary<string, object?>
-
-			var caller = GetProgramModule<CallGoalModule.Program>();
-			caller.RunGoal("/modules/UiModule/RenderUserIntent", )
-			return (null, null);
-		}*/
-		
 
 		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
@@ -174,6 +161,9 @@ namespace PLang.Modules.OutputModule
 			if (goalStep.Callback != null)
 			{
 				(answers, error) = await ProcessCallbackAnswer(askOptions, error);
+				goalStep.Callback = null;
+				engine.CallbackInfos = null;
+
 				if (error != null && error is UserInputError uie2)
 				{
 					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
@@ -201,6 +191,7 @@ namespace PLang.Modules.OutputModule
 			parameters.Add("url", url);
 			parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
 
+			
 			if (outputStream is HttpOutputStream httpOutputStream)
 			{
 				foreach (var rp in httpOutputStream.ResponseProperties)
@@ -220,8 +211,18 @@ namespace PLang.Modules.OutputModule
 			{
 				content = variableHelper.LoadVariables(askOptions.QuestionOrTemplateFile)?.ToString();
 			}
-						
-			(var answer, error) = await outputStream.Ask(goalStep, content, askOptions.StatusCode, callback, error);
+
+			Dictionary<string, object?> uiDirection = new();
+			if (!string.IsNullOrEmpty(askOptions.Target))
+			{
+				uiDirection.Add("target", askOptions.Target);
+			}
+			if (!string.IsNullOrEmpty(askOptions.Action))
+			{
+				uiDirection.Add("action", askOptions.Action);
+			}
+
+			(var answer, error) = await outputStream.Ask(goalStep, content, askOptions.StatusCode, callback, error, uiDirection);
 			if (error != null) return (null, error);
 
 			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asking user a question", Levels: 9999));
@@ -262,7 +263,15 @@ namespace PLang.Modules.OutputModule
 			var callbackBase64 = memoryStack.Get<string>("request.body.callback");
 			if (string.IsNullOrEmpty(callbackBase64))
 			{
-				return (null, new ProgramError("callback was invalid", goalStep));
+				if (HttpContext != null && HttpContext.Request.Headers.TryGetValue("X-Callback", out var value))
+				{
+					callbackBase64 = value.ToString();
+				}
+
+				if (string.IsNullOrEmpty(callbackBase64))
+				{
+					return (null, new ProgramError("callback was empty", goalStep));
+				}
 			}
 
 			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());

@@ -11,6 +11,7 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -626,6 +627,21 @@ namespace PLang.Modules.FileModule
 
 			return "unknown";
 
+		}
+
+		public async Task<(object?, IError?)> ReadXml(string path)
+		{
+			var result = await ReadTextFile(path);
+			if (result.Error != null) return (null, result.Error);
+
+			// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+			// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+			XmlDocument xmlDoc = new XmlDocument();
+			xmlDoc.LoadXml(Regex.Replace(result.Content.ToString(), "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+			string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+			
+			return (JsonConvert.DeserializeObject(jsonString), null);
 		}
 
 		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)

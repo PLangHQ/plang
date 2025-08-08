@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using AngleSharp.Dom;
+using LightInject;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Utilities.Zlib;
@@ -186,7 +187,17 @@ Attribute: Member is the key in the SetAttribute js method
 
 			}
 		}
-			;
+
+		private string GetCallbackPath()
+		{
+			string path = "/";
+			if (HttpContext != null)
+			{
+				path = (HttpContext.Request.Path.Value ?? "/") + goalStep.Goal.GoalName + "_" + goalStep.Number;
+			}
+			return path;
+		}
+
 		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
 ```plang
 - render product.html => renderToOutputstream = true
@@ -214,7 +225,18 @@ Unique: default is false. this element should only exist one time on web page, i
 			{
 				html = options.FileName;
 			}
-
+			var url = (HttpContext?.Request.Path.Value ?? "/");
+			if (options.Parameters == null) options = options with { Parameters = new() };
+			if (!options.Parameters.ContainsKey("url"))
+			{
+				options.Parameters.Add("url", url);
+			}
+			if (!options.Parameters.ContainsKey("id"))
+			{
+				string path = GetCallbackPath();
+				options.Parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
+			}
+			
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
 			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
 			if (error != null) return (content, error);

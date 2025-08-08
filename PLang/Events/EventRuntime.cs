@@ -353,7 +353,7 @@ namespace PLang.Events
 
 		public async Task<(object? Variables, IError? Error)> AppErrorEvents(IError error)
 		{
-			if (runtimeEvents == null) return (null, error);
+			if (runtimeEvents == null || error == null) return (null, error);
 
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
 			if (eventsToRun.Count == 0) return (null, error);

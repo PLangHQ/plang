@@ -321,6 +321,17 @@ namespace PLang.Modules.WebserverModule
 			if (request.HasFormContentType)
 			{
 				callbackValue = request.Form["callback"];
+				if (string.IsNullOrEmpty(callbackValue))
+				{
+					if (request.Headers.TryGetValue("X-Callback", out var value))
+					{
+						callbackValue = value.ToString();
+					}
+					else
+					{
+						return (null, null);
+					}
+				}
 			}
 			else
 			{
@@ -434,6 +445,8 @@ namespace PLang.Modules.WebserverModule
 			byte[] rawBody = await GetRawBody(request);
 
 			var verifiedSignatureResult = await identity.VerifySignature(signatureData, headers, rawBody);
+			if (verifiedSignatureResult.Error != null) return (null, verifiedSignatureResult.Error);
+
 			if (verifiedSignatureResult.Signature != null)
 			{
 				engine.MemoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);

@@ -133,7 +133,7 @@ Rules:
 			if (methodsAndTables.ContainsMethod("insert"))
 			{
 				system += "\n- when user defines to write into come sort of %id%, then choose the method which select id of row back";
-				if (dataSource.KeepHistory)
+				if (dataSource?.KeepHistory == true)
 				{
 					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response";
 					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
@@ -162,18 +162,30 @@ Rules:
 			{
 				system += @$"
 - You MUST generate ReturnValues for the select statement, see <select_example>
+- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
+- when user defines, write to %variable%, then result is an object
+
+<select_example>
+`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
+`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
+`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders
+
+<select_example>
+";
+
+
+			}
+			if (methodsAndTables.ContainsMethod("SelectOneRow"))
+			{
+				system += $@"
 - select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'
 - user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid
-- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
 - Returning 1 mean user want only one row to be returned (limit 1)
 
 <select_example>
 `select id from users where id=%id%` => ReturnValues => VariableName:  id
 `select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice
 `select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
-`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
-`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
-
 <select_example>
 ";
 			}
@@ -300,7 +312,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 
 			public bool ContainsMethod(string name)
 			{
-				return Methods.FirstOrDefault(p => p.Key.Contains(name, StringComparison.OrdinalIgnoreCase)).Key != null;
+				return Methods.FirstOrDefault(p => p.Key.Contains(name, StringComparison.OrdinalIgnoreCase) && p.Value == "high").Key != null;
 			}
 		};
 
@@ -806,7 +818,12 @@ Reason:{error.Message}", step,
 			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id") != null && sql.Contains("@id");
 			if (hasId || parameterInfos.Count == 0) return (instruction, null);
 
-			return (instruction, new StepBuilderError($"No @id provided in either sqlParameters or sql statement. @id MUST be provided in both. This is required for this datasource: {dataSourceResult.DataSource!.Name}", step));
+			return (instruction, new StepBuilderError($"No @id provided in either sqlParameters or sql statement. @id MUST be provided in both. This is required for this datasource: {dataSourceResult.DataSource!.Name}", step, 
+				FixSuggestion: @"Examples:
+`- insert into users, write to %id%` => sql = ""insert into users (id) values (@id)"", sqlParameter must contain,  ParameterInfo(""@id"", ""auto"", ""System.Int64"")
+
+
+"));
 
 
 		}

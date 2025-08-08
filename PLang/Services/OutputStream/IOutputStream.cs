@@ -17,7 +17,7 @@ namespace PLang.Services.OutputStream
 
 		public Task Write(GoalStep step, object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null);
         public string Read();
-        public Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode = 202, Callback? callback = null, IError? error = null);
+        public Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode = 202, Callback? callback = null, IError? error = null, Dictionary<string, object?>? parameters = null);
 		
     }
 

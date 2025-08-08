@@ -57,6 +57,7 @@ namespace PLang.Errors
 		[IgnoreWhenInstructed]
 		public bool Handled { get; set; }
 		public List<ObjectValue> Variables { get; set; } = new();
+		
 		public void Add(IError error)
 		{
 			if (ErrorChain == null) ErrorChain = new();

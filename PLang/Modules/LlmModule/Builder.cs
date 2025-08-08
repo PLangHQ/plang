@@ -34,6 +34,8 @@ model is default gpt-4o-mini
 the json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} 
 the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
 
+make sure to return value if user wants to write the result into a variable.
+
 ## examples ##
 system: %system%
 [

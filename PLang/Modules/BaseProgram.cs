@@ -171,7 +171,43 @@ namespace PLang.Modules
 				Task? task = null;
 				try
 				{
-					task = method.FastInvoke(this, parameterValues.Values.ToArray()) as Task;
+					if (engine.Mocks.Count > 0)
+					{
+						var mockMethod = engine.Mocks.FirstOrDefault(p => p.ModuleType == goalStep.ModuleType + ".Program" && p.MethodName == function.Name);
+						if (mockMethod != null)
+						{
+							if (mockMethod.Parameters.Count == 0)
+							{
+								task = engine.RunGoal(mockMethod.GoalToCall, goal);
+							} else
+							{
+								bool isMatch = false;
+								foreach (var parameter in mockMethod.Parameters)
+								{
+									if (parameterValues.ContainsKey(parameter.Key) && parameterValues[parameter.Key]?.Equals(parameter.Value) == true)
+									{
+										isMatch = true;
+									} else
+									{
+										isMatch = false;
+									}
+								}
+								if (isMatch)
+								{
+									task = engine.RunGoal(mockMethod.GoalToCall, goal);
+								}
+
+							}
+
+
+
+						}
+					}
+
+					if (task == null)
+					{
+						task = method.FastInvoke(this, parameterValues.Values.ToArray()) as Task;
+					}
 				}
 				catch (System.ArgumentException ex)
 				{
@@ -419,6 +455,18 @@ namespace PLang.Modules
 					if (field.FieldType == typeof(IError))
 					{
 						error = fieldValue as IError;
+						if (error is Return r)
+						{
+							if (r.ReturnVariables.Count == 1)
+							{
+								value = r.ReturnVariables[0];
+							}
+							else
+							{
+								value = r.ReturnVariables;
+							}
+							error = null;
+						}
 					}
 					else if (field.FieldType == typeof(Properties))
 					{

@@ -44,7 +44,7 @@ namespace PLang.Services.OutputStream
 		public IEngine Engine { get; set; }
 		public bool IsFlushed { get; set; }
 
-		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode, Callback? callback = null, IError? error = null)
+		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode, Callback? callback = null, IError? error = null, Dictionary<string, object?>? parameters = null)
 		{
 
 			SetColor(statusCode);

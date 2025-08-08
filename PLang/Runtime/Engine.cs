@@ -32,6 +32,7 @@ using System.IO.Abstractions;
 using System.Net;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
+using static PLang.Modules.MockModule.Program;
 using static PLang.Runtime.PseudoRuntime;
 using static PLang.Utils.StepHelper;
 
@@ -56,6 +57,7 @@ namespace PLang.Runtime
 		MemoryStack MemoryStack { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
 		IOutputStream OutputStream { get; }
+		List<MockData> Mocks { get; init; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
@@ -142,9 +144,10 @@ namespace PLang.Runtime
 			{
 				Console.WriteLine($"Unhandled exception: {args.ExceptionObject}");
 			};
+			this.Mocks = new();
 
 		}
-
+		public List<MockData> Mocks { get; init; }
 
 		public void Init(IServiceContainer container, PLangAppContext? context = null)
 		{
@@ -164,7 +167,7 @@ namespace PLang.Runtime
 			this.OutputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
-
+			
 			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			var outputStream = outputStreamFactory.CreateHandler();
 			var memoryStack = container.GetInstance<MemoryStack>();
