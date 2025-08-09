@@ -216,7 +216,9 @@ Unique: default is false. this element should only exist one time on web page, i
 				var filePath = GetPath(options.FileName);
 				if (!fileSystem.File.Exists(filePath))
 				{
-					return (null, new ProgramError($"Template file {options.FileName} not found", goalStep, StatusCode: 404));
+					string? similarFilesMessage = FileSuggestionHelper.BuildNotFoundMessage(fileSystem, filePath);
+					return (null, new ProgramError($"Template file {options.FileName} not found at {filePath}", goalStep, StatusCode: 404,
+						FixSuggestion: similarFilesMessage));
 				}
 
 				html = await fileSystem.File.ReadAllTextAsync(filePath);

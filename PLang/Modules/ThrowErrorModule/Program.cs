@@ -28,15 +28,17 @@ namespace PLang.Modules.ThrowErrorModule
 			this.programFactory = programFactory;
 		}
 
-		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.")]
+		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user. error is %!error% if user defines it")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> Throw(object? message, string key = "UserDefinedError", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
 			if (message is IError) return message as IError;
 
-			return new UserInputError(message.ToString(), goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
+			string errorMessage = (message == null) ? "UserDefinedError" : message.ToString() ?? "UserDefinedError";
+			
+			return new UserInputError(errorMessage, goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
 		}
-
+		 
 
 		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]
 		public async Task<IError?> Retry(int maxRetries = 1, string? maxRetriesReachedMesage = null, string key = "MaxRetries", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)

@@ -251,6 +251,7 @@ public class Program : BaseProgram, IDisposable
 					app.UseResponseCompression();
 					app.Run(async ctx => {
 						IEngine? requestEngine = null;
+						IError? error = null;
 						bool poll = false;
 						try
 						{
@@ -258,18 +259,57 @@ public class Program : BaseProgram, IDisposable
 							requestEngine = await webserverEngine.RentAsync(goalStep, httpOutputStream);
 							requestEngine.HttpContext = ctx;
 							requestEngine.Name = "RequestEngine";
-							poll = await requestHandler.HandleRequestAsync(requestEngine, ctx, webserverProperties);
+							(poll, error) = await requestHandler.HandleRequestAsync(requestEngine, ctx, webserverProperties);
+
+							if (error != null)
+							{
+								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
+								
+								if (error != null)
+								{
+									//AppError had error, this is a critical thing and should not happen
+									//So we write the error to the console as last resort.	
+									//
+									string strError = error.ToString();
+									Console.WriteLine(" ---- Critical Error  ---- ");
+									Console.WriteLine(strError);
+									Console.WriteLine(" ---- Critical Error  ---- ");
+									if (!ctx.Response.HasStarted)
+									{
+										ctx.Response.StatusCode = 500;
+									}
+									await requestEngine.OutputStream.Write(goalStep, new Error("Unexpected Error", "CriticalError", 500));
+
+								}
+							} else
+							{
+								if (!ctx.Response.HasStarted)
+								{
+									ctx.Response.StatusCode = 200;
+								}
+							}
 						}
 						catch (Exception ex)
 						{
 							try
 							{
-								await this.eventRuntime.AppErrorEvents(new ExceptionError(ex, ex.Message, goal, goalStep));
+								// something bad happend, write error using the original app engine
+								(_, error) = await this.eventRuntime.AppErrorEvents(new ExceptionError(ex, ex.Message, goal, goalStep));
+								if (error != null)
+								{
+									//AppError had error, this is a critical thing and should not happen
+									//So we write the error to the console as last resort.								
+									Console.WriteLine(" ---- Critical Error  ---- ");
+									Console.WriteLine(error);
+									Console.WriteLine(" ---- Critical Error  ---- ");
+								}
 							}
 							catch (Exception ex2)
 							{
+								Console.WriteLine(" ---- Critical Exception  ---- ");
 								Console.WriteLine(ex2);
 								Console.WriteLine(ex);
+								Console.WriteLine(" ---- Critical Exception  ---- ");
 							}
 						}
 						finally

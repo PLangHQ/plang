@@ -66,16 +66,6 @@ namespace PLang.Services.Transformers
 			return await jsonTransformer.Transform(stream, outputData, properties, type);
 		}
 
-		sealed class JTokenConverter : System.Text.Json.Serialization.JsonConverter<JToken>
-		{
-			public override bool CanConvert(System.Type t) => typeof(JToken).IsAssignableFrom(t);
-
-			public override JToken Read(ref Utf8JsonReader r, System.Type t, JsonSerializerOptions o) =>
-				throw new NotSupportedException();      // we never need to read
-
-			public override void Write(Utf8JsonWriter w, JToken token, JsonSerializerOptions o) =>
-				w.WriteRawValue(token.ToString(Formatting.None), skipInputValidation: true);
-		}
 
 		private static string GetOutputType(object obj)
 		{

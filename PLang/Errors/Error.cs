@@ -136,7 +136,8 @@ namespace PLang.Errors
 			};
 	}
 
-	public record EndGoal(Goal EndingGoal, GoalStep Step, string Message, int StatusCode  = 200, int Levels = 0) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled
+	public record EndGoal(Goal EndingGoal, GoalStep Step, string Message, int StatusCode  = 200, int Levels = 0) 
+		: StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled
 	{
 		public override GoalStep? Step { get; set; } = Step;
 		public override Goal? Goal { get; set; } = Step.Goal;

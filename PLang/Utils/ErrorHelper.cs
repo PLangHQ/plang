@@ -26,7 +26,7 @@ namespace PLang.Utils
 		{
 			var multipleError = new MultipleError(initialError);
 			if (secondError == null) return multipleError;
-			
+
 			multipleError.Add(secondError);
 			return multipleError;
 		}
@@ -54,6 +54,7 @@ namespace PLang.Utils
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
+			detailedError = true;
 
 			if (error is MultipleError me)
 			{
@@ -128,14 +129,30 @@ namespace PLang.Utils
 			}
 
 			string firstLine = $"";
+			if (error.ErrorChain.Count > 0)
+			{
+				firstLine += @$"
+🤕 === NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
+
+First we will give you the original error, then each error that occured will show
+
+🤕 === NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
+
+
+";
+			}
+
+			firstLine += $@"
+🔴   ================== {error.Key}({error.StatusCode}) ==================   🔴
+";
+
 			if (step != null)
 			{
-
-
-				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
+				firstLine += $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 🧩 Key:  {error.Key}
 #️⃣  StatusCode:  {error.StatusCode}
+🕑 Time: {error.CreatedUtc}
 
 🔍   ================== Error Details ==================   🔍
 
@@ -162,17 +179,17 @@ namespace PLang.Utils
 			string? variables = null;
 			if (error.Variables.Count > 0)
 			{
-				variables = @"🏷️  Variables:";
+				variables = @"🏷️  Variables in step:";
 				foreach (var variable in error.Variables)
 				{
 					string value;
-					if (variable.PathAsVariable.StartsWith("%Settings."))
+					if (variable.PathAsVariable.StartsWith(" %Settings."))
 					{
 						value = "*****";
 					}
 					else
 					{
-						value = JsonConvert.SerializeObject(variable.Value).MaxLength(5000);
+						value = JsonHelper.ToStringIgnoreError(variable.Value).MaxLength(150).ReplaceLineEndings("").Trim();
 					}
 					variables += $"\n\t - {variable.PathAsVariable} => {value}";
 				}
@@ -198,12 +215,12 @@ namespace PLang.Utils
 				string paramsStr = $"";
 				if (parameterValues == null)
 				{
-					paramsStr = JsonConvert.SerializeObject(genericFunction.Parameters).MaxLength(5000);
+					paramsStr = JsonHelper.ToStringIgnoreError(genericFunction.Parameters).MaxLength(5000);
 				}
 				else
 				{
 					paramsStr = GetFormattedGfParameters(genericFunction.Parameters, parameterValues);
-					
+
 				}
 				string returnStr = "";
 				if (genericFunction.ReturnValues != null && genericFunction.ReturnValues.Count > 0)
@@ -217,7 +234,8 @@ namespace PLang.Utils
 				string? paramInfo = null;
 				if (!string.IsNullOrEmpty(paramsStr) || !string.IsNullOrEmpty(returnStr))
 				{
-					paramInfo = $@"- Parameters:
+					paramInfo = $@"
+	- Parameters:
 		{FormatLine(paramsStr, "-", true)}
 		{FormatLine(returnStr, "-", true)}";
 				}
@@ -241,7 +259,7 @@ namespace PLang.Utils
 ".TrimEnd();
 
 			string message = $@"
-🔴   ================== {error.Key}({error.StatusCode}) ==================   🔴
+
 
 {firstLine.TrimEnd()}
 
@@ -269,9 +287,9 @@ namespace PLang.Utils
 				obj.Add("Message", message);
 				if (genericFunction != null)
 				{
-					obj.Add("Parameters", JsonConvert.SerializeObject(genericFunction.Parameters));
-					obj.Add("ParameterValues", JsonConvert.SerializeObject(parameterValues));
-					obj.Add("ReturnValues", JsonConvert.SerializeObject(genericFunction.ReturnValues));
+					obj.Add("Parameters", JsonHelper.ToStringIgnoreError(genericFunction.Parameters));
+					obj.Add("ParameterValues", JsonHelper.ToStringIgnoreError(parameterValues));
+					obj.Add("ReturnValues", JsonHelper.ToStringIgnoreError(genericFunction.ReturnValues));
 				}
 
 				if (callStack != null)
@@ -299,8 +317,16 @@ namespace PLang.Utils
 	StackTrace: {FormatLine(exception.StackTrace)}
 ";
 			}
-
+			if (error.ErrorChain.Count > 0)
+			{
+				foreach (var nextError in error.ErrorChain)
+				{
+					message += "\n\n\t\t<==== Next error ===> ";
+					message += nextError.ToFormat();
+				}
+			}
 			return message;
+
 		}
 
 		private static string GetFormattedGfParameters(List<Parameter>? parameters, Dictionary<string, object?> parameterValues)
@@ -308,19 +334,21 @@ namespace PLang.Utils
 			string paramsStr = "\n";
 			foreach (var param in parameters)
 			{
-				if (parameterValues.ContainsKey(param.Name))
+				var keyValue = parameterValues.FirstOrDefault(p => p.Key.Equals(param.Name, StringComparison.OrdinalIgnoreCase));
+				if (keyValue.Value != null)
 				{
-					var paramValue = parameterValues[param.Name];
-					if (paramValue != null && (paramValue.GetType().IsPrimitive || paramValue is string))
+					var paramValue = keyValue.Value;
+					if (paramValue != null && TypeHelper.IsConsideredPrimitive(paramValue.GetType()))
 					{
-						var value = parameterValues[param.Name]?.ToString().MaxLength(5000) ?? "[empty]";
-						paramsStr += $"\t\t{param.Name} : {value}\n";
-					} else
-					{
-						var value = JsonConvert.SerializeObject(parameterValues[param.Name]).MaxLength(5000) ?? "[empty]";
+						var value = paramValue?.ToString().MaxLength(150).ReplaceLineEndings("").Trim() ?? "[empty]";
 						paramsStr += $"\t\t{param.Name} : {value}\n";
 					}
-					
+					else
+					{
+						var value = JsonHelper.ToStringIgnoreError(paramValue).MaxLength(150).ReplaceLineEndings("").Trim() ?? "[empty]";
+						paramsStr += $"\t\t{param.Name} : {value}\n";
+					}
+
 				}
 				else
 				{
@@ -337,9 +365,10 @@ namespace PLang.Utils
 <error>";
 
 			List<string> repeatMessage = new();
-			if (!string.IsNullOrEmpty(error.Message)) {
+			if (!string.IsNullOrEmpty(error.Message))
+			{
 				repeatMessage.Add(error.Message);
-				errorMessage += $"\nError Message: { error.Message}\n";
+				errorMessage += $"\nError Message: {error.Message}\n";
 			}
 			if (!string.IsNullOrEmpty(error.FixSuggestion))
 			{
@@ -353,7 +382,7 @@ namespace PLang.Utils
 
 					if (repeatMessage.Contains(errorChain.Message))
 					{
-						errorMessage += @$"ATTENTION: This is the {repeatMessage.Count+1} time you have made this error. Make SURE YOU FIX IT:
+						errorMessage += @$"ATTENTION: This is the {repeatMessage.Count + 1} time you have made this error. Make SURE YOU FIX IT:
 Error Message: " + errorChain.Message;
 						if (error.Step != null) error.Step.Retry = false;
 					}
@@ -383,7 +412,7 @@ This is the previous LLM response:
 {functionJson}
 ```
 ";
-			}		
+			}
 
 			return errorMessage;
 		}
@@ -399,7 +428,7 @@ This is the previous LLM response:
 				errors = ge.ErrorChain;
 				foreach (var error in errors)
 				{
-					message += $"\t- {error.Message}\n";				
+					message += $"\t- {error.Message}\n";
 				}
 
 				if (ge.Step != null)

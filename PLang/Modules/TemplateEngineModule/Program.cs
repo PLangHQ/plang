@@ -71,7 +71,13 @@ namespace PLang.Modules.TemplateEngineModule
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
 			{
-				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function, StatusCode: 404));
+				
+				string? similarFilesMessage = FileSuggestionHelper.BuildNotFoundMessage(fileSystem, fullPath);
+				
+
+				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}"
+					, goalStep, this.function, StatusCode: 404,
+					FixSuggestion: similarFilesMessage));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
 			var result = await RenderContent(content, fullPath, variables);

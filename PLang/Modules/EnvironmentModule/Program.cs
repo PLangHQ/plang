@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using static PLang.Modules.MockModule.Program;
 
 namespace PLang.Modules.EnvironmentModule
 {
@@ -66,10 +67,7 @@ namespace PLang.Modules.EnvironmentModule
 		{
 			return Environment.ProcessId;
 		}
-		public async Task<string> GetAllSettings()
-		{
-			return settings.SerializeSettings();
-		}
+
 		public async Task<string> GetOSDescription()
 		{
 			return RuntimeInformation.OSDescription;
@@ -89,6 +87,12 @@ namespace PLang.Modules.EnvironmentModule
 		public async Task<CultureInfo> GetCurrentCulture()
 		{
 			return CultureInfo.CurrentCulture;
+		}
+
+		[Description("Get active mocks on engine, used for testing")]
+		public async Task<List<MockData>> GetMocks()
+		{
+			return engine.Mocks;
 		}
 
 		public async Task SetEnvironment(string name)
@@ -137,6 +141,11 @@ namespace PLang.Modules.EnvironmentModule
 		{
 			//Install npm is being executed at build time
 			return;
+		}
+
+		public async Task<List<PLang.Models.Setting>> GetSettings()
+		{
+			return settings.GetAllSettings().ToList();
 		}
 	}
 }

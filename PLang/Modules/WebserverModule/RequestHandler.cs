@@ -43,30 +43,29 @@ namespace PLang.Modules.WebserverModule
 			this.prParser = prParser;
 		}
 
-		public async Task<bool> HandleRequestAsync(IEngine requestEngine, HttpContext ctx, WebserverProperties webserverProperties)
+		public async Task<(bool, IError?)> HandleRequestAsync(IEngine requestEngine, HttpContext ctx, WebserverProperties webserverProperties)
 		{
-			
+			IError? error = null;
 			try
 			{
 				if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !ctx.Request.Headers.TryGetValue("X-Signature", out var value))
 				{
-					await HandleError(requestEngine, new Error("All requests must be signed"));
-					return false;
+					return (false, new Error("All requests must be signed"));
 				}
 
-				(var signedMessage, var error) = await VerifySignature(requestEngine, ctx);
-				if (error != null) {
-					await HandleError(requestEngine, error);
-					return false;
-				}
+				(var signedMessage, error) = await VerifySignature(requestEngine, ctx);
+				if (error != null)  return (false, error);
 
-				(var requestObjectValue, error) = ParseRequest(ctx, requestEngine.OutputStream).Result;
-				requestEngine.MemoryStack.Put(requestObjectValue);
-				
+				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputStream);
+				if (error != null) return (false, error);
+
+				// put "request" object into memory
+				requestEngine.MemoryStack.Put(requestObjectValue);				
 
 				if (webserverProperties.OnRequestBegin != null)
 				{
-					await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin);
+					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin);
+					if (error != null) return (false, error);
 				}
 
 				if (webserverProperties.OnPollStart != null)
@@ -74,55 +73,32 @@ namespace PLang.Modules.WebserverModule
 					string? query = ctx.Request.QueryString.Value;
 					if (query?.StartsWith("?plang.poll=1") == true)
 					{
-						await HandlePlangPoll(requestEngine, ctx, webserverProperties);
-						return true;
+						error = await HandlePlangPoll(requestEngine, ctx, webserverProperties);
+						if (error != null) return (false, error);
+
+						//return true to create long lasting connection
+						return (true, null);
 					}
 				}
 
 
 				error = await HandleRequest(ctx, requestEngine, webserverProperties);
-
-				if (error != null && !error.Handled && error is not IErrorHandled && error is not EndGoal)
-				{
-					await HandleError(requestEngine, error);
-					return false;
-				}
-				else
-				{
-					if (!ctx.Response.HasStarted)
-					{
-						ctx.Response.StatusCode = 200;
-					}
-				}
+				if (error != null) return (false, error);
 
 				if (webserverProperties.OnRequestEnd != null)
 				{
-					await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd);
+					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd);
+					if (error != null) return (false, error);
 				}
 
-				if (error != null)
-				{
-					await HandleError(requestEngine, error);
-
-				}
+				return (false, error);
 
 			}
 			catch (Exception ex)
 			{
-				try
-				{
-					var (_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(new ExceptionError(ex, ex.Message, goal, step));
-					if (error != null)
-					{
-						Console.WriteLine(error);
-					}
-				} catch (Exception ex2)
-				{
-					Console.WriteLine(ex2);
-					Console.WriteLine(ex);
-				}
+				return (false, new ExceptionError(ex, ex.Message, goal, step));
+				
 			}
-			return false;
 
 		}
 
@@ -175,22 +151,19 @@ namespace PLang.Modules.WebserverModule
 			}
 		}
 
-		private async Task HandleError(IEngine? engine, IError error)
+		private async Task<IError?> HandleError(IEngine? engine, IError error)
 		{
-			if (error is IErrorHandled) return;
+			if (error is IErrorHandled) return null;
 
 			//last effort, write to system output
 			if (engine != null)
 			{
-				(_, var error2) = await engine.GetEventRuntime().AppErrorEvents(error);
-				if (error2 == null) return;
-
-
-				await engine.OutputStream.Write(step, error, "error", 500);
+				(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
+				return error;
 			}
 			else
 			{
-				Console.WriteLine(error.ToString());
+				return error;
 			}
 		}
 
@@ -215,20 +188,13 @@ namespace PLang.Modules.WebserverModule
 
 
 
-		private async Task RunOnRequest(IEngine engine, GoalToCallInfo goalToCall)
+		private async Task<IError?> RunOnRequest(IEngine engine, GoalToCallInfo goalToCall)
 		{
 
 			(_, var error) = await engine!.RunGoal(goalToCall, goal);
-			if (error == null) return;
+			if (error is IErrorHandled) error = null;
+			return error;
 
-			if (error != null)
-			{
-				(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
-				if (error == null) return;
-
-				var output = engine.OutputStream;
-				await output.Write(step, error, "error", 500);
-			}
 		}
 
 		private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverProperties webserverInfo,
@@ -303,12 +269,8 @@ namespace PLang.Modules.WebserverModule
 			}
 			logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
 
-
 			(var vars, error) = await requestEngine.RunGoal(goal, 0);
-			if (error != null && !error.Handled && error is not IErrorHandled)
-			{
-				(var returnVars, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
-			}
+			if (error is IErrorHandled) error = null;
 
 			logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
 
@@ -477,13 +439,13 @@ namespace PLang.Modules.WebserverModule
 			return ms.ToArray();
 		}
 
-		private async Task HandlePlangPoll(IEngine requestEngine, HttpContext ctx, WebserverProperties props)
+		private async Task<IError?> HandlePlangPoll(IEngine requestEngine, HttpContext ctx, WebserverProperties props)
 		{
 			SignedMessage? signedMessage = ctx.Items["SignedMessage"] as SignedMessage;
-			if (signedMessage == null) return;
+			if (signedMessage == null) return null;
 
 			var outputStream = requestEngine.OutputStream as HttpOutputStream;
-			if (outputStream == null) return;
+			if (outputStream == null) return new Error("OutputStream is not HttpOutputStream");
 
 			LiveConnection? liveResponse = null;
 			outputStream.LiveConnections.TryGetValue(signedMessage.Identity, out liveResponse);
@@ -502,13 +464,9 @@ namespace PLang.Modules.WebserverModule
 			if (props.OnPollStart != null)
 			{
 				var (_, error) = await requestEngine.RunGoal(props.OnPollStart, goal);
-				if (error != null)
-				{
-					await HandleError(requestEngine, error);
-				}
+				return error;
 			}
-
-
+			return null;
 		}
 
 
@@ -525,7 +483,8 @@ namespace PLang.Modules.WebserverModule
 			var mimeType = GetMimeType(fileExtension);
 			if (mimeType == null)
 			{
-				return new Error($"MimeType for {fileExtension} is not supported");
+				fileExtension = httpContext.Request.Path.ToString();
+				return new Error($"MimeType for '{fileExtension}' is not supported", StatusCode: 415);
 			}
 
 			if (!fileSystem.File.Exists(filePath))
@@ -659,6 +618,7 @@ namespace PLang.Modules.WebserverModule
 					responseProperties.AddOrReplace(supportedHeader, keyValue.Value.FirstOrDefault());
 				}
 			}
+			responseProperties.AddOrReplace("Path", ctx.Request.Path.ToString());
 
 			if (responseProperties.Count > 0 && outputStream is IResponseProperties rp)
 			{

@@ -54,6 +54,16 @@ namespace PLang.Services.Transformers
 
 		}
 
+		sealed class JTokenConverter : System.Text.Json.Serialization.JsonConverter<JToken>
+		{
+			public override bool CanConvert(System.Type t) => typeof(JToken).IsAssignableFrom(t);
+
+			public override JToken Read(ref Utf8JsonReader r, System.Type t, JsonSerializerOptions o) =>
+				throw new NotSupportedException();      // we never need to read
+
+			public override void Write(Utf8JsonWriter w, JToken token, JsonSerializerOptions o) =>
+				w.WriteRawValue(token.ToString(Formatting.None), skipInputValidation: true);
+		}
 		public async Task<IError?> Transform(Stream stream, object data, Dictionary<string, object?>? properties = null, string type = "text")
 		{
 			try

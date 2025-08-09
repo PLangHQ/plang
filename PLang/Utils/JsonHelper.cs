@@ -95,6 +95,25 @@ namespace PLang.Utils
 			}
 		}
 
+		public static string ToStringIgnoreError(object? obj)
+		{
+			if (obj == null) return "";
+			var customSettings = new JsonSerializerSettings
+			{
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+				MaxDepth = 5,
+				Error = HandleSerializationError,
+				Converters = new List<JsonConverter>(),
+				NullValueHandling = NullValueHandling.Include,
+				Formatting = Formatting.None
+			};
+			return JsonConvert.SerializeObject(obj, customSettings);
+		}
+		private static void HandleSerializationError(object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
+		{
+			e.ErrorContext.Handled = true;
+		}
+
 
 		public static async Task<(bool IsValid, IError? Error)> ValidateSchemaAsync(string schemaJson)
 		{

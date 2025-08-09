@@ -374,9 +374,14 @@ namespace PLang.Events
 
 				var result = await Run(eve, error.Goal, step, error);
 
+				Console.WriteLine("\n\n\n---------- error (EventRuntime.debug.output) | start -------------");
+				Console.WriteLine($@"Type:{error.GetType()} | Message:{error.Message}");
+				Console.WriteLine(error.ToString());
+
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
+					Console.WriteLine($@"Chain added:{error.ErrorChain.Count}");
 				}
 				else if (result.Error is IErrorHandled || result.Error is UserInputError)
 				{
@@ -386,11 +391,13 @@ namespace PLang.Events
 				{
 					error = null;
 				}
+				Console.WriteLine($@"IsNull so handled:{(error == null)}");
+				Console.WriteLine("---------- error (EventRuntime.debug.output) | end -------------\n\n\n");
 				break;
 
 			}
 
-			return (null,error);
+			return (null, error);
 		}
 
 		public async Task<(object? Variables, IError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false)
@@ -501,6 +508,7 @@ namespace PLang.Events
 					{
 						error = null;
 					}
+
 					break;
 				}
 
