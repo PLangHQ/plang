@@ -62,7 +62,11 @@ namespace PLang.Modules.ConditionalModule
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc. && = \"AND\", || = \"OR\"")]
+		[Description(@"Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
+IsNot=True for ‘is not’, ‘does not’, 
+Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
+"
+)]
 		public async Task<(object?, IError?)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -163,6 +167,8 @@ namespace PLang.Modules.ConditionalModule
 			var result = IsEmptyCheck(item);
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
+
+		[Description("example: `if %code% contains 123, 345 then ....`, `if %zip% is one of (223,333) then...`")]
 		public async Task<(object?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCallInfo? goalToCallIfTrue = null,  GoalToCallInfo? goalToCallIfFalse = null, 
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -186,7 +192,9 @@ namespace PLang.Modules.ConditionalModule
 			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 
 		}
-		public async Task<(object?, IError?)> ContainsString(object? item, string contains, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+
+		[Description("isNot property reverse true to false, example: `if %name% contains \"john\" then`, `if %product% contains %title% then call goal DoProdudct`, `if %name% does not contain \"bill\"` (isNot=true)")]
+		public async Task<(object?, IError?)> ContainsString(object? item, string contains, bool isNot = false, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -207,6 +215,8 @@ namespace PLang.Modules.ConditionalModule
 			{
 				result = list.Contains(contains);
 			}
+			
+			if (isNot) result = !result;
 
 			if (result != null)
 			{

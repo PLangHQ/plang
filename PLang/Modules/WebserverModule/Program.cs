@@ -263,6 +263,10 @@ public class Program : BaseProgram, IDisposable
 
 							if (error != null)
 							{
+								if (!ctx.Response.HasStarted)
+								{
+									ctx.Response.StatusCode = error.StatusCode;
+								}
 								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
 								
 								if (error != null)
@@ -274,10 +278,7 @@ public class Program : BaseProgram, IDisposable
 									Console.WriteLine(" ---- Critical Error  ---- ");
 									Console.WriteLine(strError);
 									Console.WriteLine(" ---- Critical Error  ---- ");
-									if (!ctx.Response.HasStarted)
-									{
-										ctx.Response.StatusCode = 500;
-									}
+									
 									await requestEngine.OutputStream.Write(goalStep, new Error("Unexpected Error", "CriticalError", 500));
 
 								}
@@ -465,7 +466,7 @@ AddRoutes
 			{
 				var j = pathPart.IndexOf('%', i + 1);
 				var name = pathPart[(i + 1)..j];
-				regex.Append($"(?<{name}>[^/?&-]+)");   // stop at / ? & or - (hyphen safe)
+				regex.Append($"(?<{name}>[^/?&]+)");   // stop at / ? & or - (hyphen safe)
 				i = j + 1;
 			}
 			else

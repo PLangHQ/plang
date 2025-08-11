@@ -373,11 +373,11 @@ namespace PLang.Events
 				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
 
 				var result = await Run(eve, error.Goal, step, error);
-
+				/*
 				Console.WriteLine("\n\n\n---------- error (EventRuntime.debug.output) | start -------------");
 				Console.WriteLine($@"Type:{error.GetType()} | Message:{error.Message}");
 				Console.WriteLine(error.ToString());
-
+				*/
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
@@ -391,8 +391,8 @@ namespace PLang.Events
 				{
 					error = null;
 				}
-				Console.WriteLine($@"IsNull so handled:{(error == null)}");
-				Console.WriteLine("---------- error (EventRuntime.debug.output) | end -------------\n\n\n");
+				//Console.WriteLine($@"IsNull so handled:{(error == null)}");
+				//Console.WriteLine("---------- error (EventRuntime.debug.output) | end -------------\n\n\n");
 				break;
 
 			}

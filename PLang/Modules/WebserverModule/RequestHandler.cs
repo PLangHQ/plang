@@ -53,14 +53,24 @@ namespace PLang.Modules.WebserverModule
 					return (false, new Error("All requests must be signed"));
 				}
 
-				(var signedMessage, error) = await VerifySignature(requestEngine, ctx);
-				if (error != null)  return (false, error);
 
+				(var signedMessage, error) = await VerifySignature(requestEngine, ctx);
+				if (error != null)
+				{
+					(var requestObjectValue2, error) = await ParseRequest(ctx, requestEngine.OutputStream);
+				
+					// put "request" object into memory
+					requestEngine.MemoryStack.Put(requestObjectValue2);
+					return (false, error);
+				}
+
+
+				// this should be below 
 				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputStream);
 				if (error != null) return (false, error);
 
 				// put "request" object into memory
-				requestEngine.MemoryStack.Put(requestObjectValue);				
+				requestEngine.MemoryStack.Put(requestObjectValue);
 
 				if (webserverProperties.OnRequestBegin != null)
 				{
@@ -117,7 +127,7 @@ namespace PLang.Modules.WebserverModule
 				var isPlangRequest = acceptedTypes?.StartsWith("application/plang") ?? false;
 				if (isPlangRequest)
 				{
-					Console.WriteLine($"plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
+					Console.WriteLine($"{DateTime.Now} - plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 					logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
 					error = await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, requestEngine);
 					logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -138,7 +148,7 @@ namespace PLang.Modules.WebserverModule
 				}
 
 				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
-				Console.WriteLine($"classic: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
+				Console.WriteLine($"{DateTime.Now} - classic: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 				error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, requestEngine);
 
 				logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -732,7 +742,7 @@ namespace PLang.Modules.WebserverModule
 			var methods = routing.RequestProperties.Methods ?? ["GET"];
 
 			var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
-			if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", step));
+			if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", step, StatusCode: 405));
 
 			var dict = m.Groups.Keys
 							 .Where(k => k != "0")
@@ -765,12 +775,13 @@ namespace PLang.Modules.WebserverModule
 			var request = httpContext.Request;
 			Properties properties = new();
 			properties.Add(new ObjectValue("Method", request.Method));
-			properties.Add(new ObjectValue("ContentLength", request.ContentLength));
+			properties.Add(new ObjectValue("Path", request.Path.Value));
 			properties.Add(new ObjectValue("QueryString", request.QueryString.ToString()));
-			properties.Add(new ObjectValue("ContentType", request.ContentType));
 			properties.Add(new ObjectValue("HasFormContentType", request.HasFormContentType));
 			properties.Add(new ObjectValue("HasJsonContentType", request.HasJsonContentType()));
 
+			properties.Add(new ObjectValue("ContentLength", request.ContentLength));
+			properties.Add(new ObjectValue("ContentType", request.ContentType));
 			properties.Add(new ObjectValue("Headers", request.Headers));
 			properties.Add(new ObjectValue("KeepAlive", request.Headers.KeepAlive.ToString()));
 
@@ -785,7 +796,9 @@ namespace PLang.Modules.WebserverModule
 
 			if (!string.IsNullOrEmpty(request.Headers.UserAgent))
 			{
+				properties.Add(new ObjectValue("UserAgent", request.Headers.UserAgent));
 				var clientInfo = parser.Parse(request.Headers.UserAgent, true);
+				
 				properties.Add(new ObjectValue("ClientInfo", clientInfo));
 			}
 

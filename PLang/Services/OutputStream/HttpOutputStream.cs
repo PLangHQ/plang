@@ -191,7 +191,7 @@ namespace PLang.Services.OutputStream
 
 			if (response == null) throw new Exception("Response is null");
 
-			if (!isFlushed && !response.HasStarted)
+			if (!isFlushed && !response.HasStarted && response.StatusCode == 200)
 			{
 				response.StatusCode = statusCode;
 				response.ContentType = $"{transformer.ContentType}; charset={transformer.Encoding.WebName}";
@@ -235,7 +235,7 @@ namespace PLang.Services.OutputStream
 			{
 				try
 				{
-					if (!response.HasStarted)
+					if (!response.HasStarted && response.StatusCode == 200)
 					{
 						response.StatusCode = (httpStatusCode == 0) ? 200 : httpStatusCode;
 						response.ContentType = $"{transformer.ContentType}; charset={transformer.Encoding.WebName}";

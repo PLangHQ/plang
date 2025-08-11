@@ -69,8 +69,10 @@ namespace PLang.Modules.ConditionalModule
 
 			public static bool EvaluateCompound(Condition n) => n.Logic!.ToUpperInvariant() switch
 			{
+				"&&" => n.Conditions!.All(Evaluate),
 				"AND" => n.Conditions!.All(Evaluate),
 				"OR" => n.Conditions!.Any(Evaluate),
+				"||" => n.Conditions!.Any(Evaluate),
 				_ => throw new NotSupportedException($"Logic '{n.Logic}'")
 			};
 

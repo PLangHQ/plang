@@ -48,16 +48,22 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 		{
 			return dictionary.Remove(key);
 		}
-		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList")]
-		public async Task<List<object>> AddItemsToList(List<object?> value, List<object>? listInstance = null)
+		[Description("Method always returns instance of a list, ReturnValues with the list name should always be used")]
+		public async Task<(List<object>?, IError?)> AddItemsToList(List<object?> value)
 		{
 			if (value == null) return new();
+
+			if (this.function.ReturnValues == null || function.ReturnValues.Count ==0 )
+			{
+				return (null, new Error("No variable to add to"));
+			}
+			var listInstance = memoryStack.Get<List<object>>(this.function.ReturnValues[0].VariableName);
 
 			if (listInstance == null) listInstance = new List<object>();
 
 			listInstance.AddRange(value);
 
-			return listInstance;
+			return (listInstance, null);
 		}
 
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined")]
