@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
@@ -6,7 +7,12 @@ using PLang.Models;
 using PLang.Models.ObjectValueConverters;
 using PLang.Models.ObjectValueExtractors;
 using PLang.Utils;
+using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Xml.Linq;
 using Websocket.Client.Logging;
 
@@ -141,9 +147,15 @@ public class ObjectValue
 			var parent = Parent;
 			if (parent == null) return this;
 
+			int counter = 0;
 			while (parent.Parent != null)
 			{
 				parent = parent.Parent;
+				if (counter++ > 100)
+				{
+					Console.WriteLine($"To deep: ObjectValue.Root - goalName:{Name}");
+					break;
+				}
 			}
 			return parent;
 		}
@@ -293,4 +305,196 @@ public class ObjectValue
 	{
 		return new ObjectValue(variableName ?? String.Empty, null, typeof(Nullable), null, initiated);
 	}
+
+	public void Set(string path, ObjectValue childObjectValue)
+	{
+		ObjectPath.Set(this, path, childObjectValue);
+	}
+}
+
+public static class ObjectPath
+{
+	public static void Set(ObjectValue root, string path, object? newValue)
+	{
+		var tokens = Parse(path);
+		if (tokens.Count == 0) throw new ArgumentException("Empty path.", nameof(path));
+
+		var i = 0;
+		if (tokens[0] is KeyToken k0 && string.Equals(k0.Name, root.Path, StringComparison.Ordinal)) i++;
+		if (i >= tokens.Count) { root.Value = newValue; return; }
+
+		root.Value = EnsureContainer(root.Value, tokens[i]);
+		var cur = root.Value;
+
+		for (; i < tokens.Count; i++)
+		{
+			var last = i == tokens.Count - 1;
+			var t = tokens[i];
+			var next = last ? null : tokens[i + 1];
+
+			if (t is KeyToken kt)
+			{
+				if (cur is IDictionary<string, object?> d)
+				{
+					if (!d.TryGetValue(kt.Name, out var child) || child == null || (!last && !IsContainer(child)))
+					{
+						if (last) { d[kt.Name] = newValue; return; }
+						d[kt.Name] = CreateContainer(next);
+					}
+					if (last) { d[kt.Name] = newValue; return; }
+					d[kt.Name] = EnsureContainer(d[kt.Name], next!);
+					cur = d[kt.Name];
+				}
+				else if (cur is IDictionary nd)
+				{
+					var child = nd.Contains(kt.Name) ? nd[kt.Name] : null;
+					if (child == null || (!last && !IsContainer(child)))
+					{
+						if (last) { nd[kt.Name] = newValue; return; }
+						nd[kt.Name] = CreateContainer(next);
+					}
+					if (last) { nd[kt.Name] = newValue; return; }
+					nd[kt.Name] = EnsureContainer(nd[kt.Name], next!);
+					cur = nd[kt.Name];
+				}
+				else throw new InvalidOperationException($"Segment '{kt.Name}' requires a dictionary.");
+			}
+			else if (t is IndexToken ix)
+			{
+				if (cur is IList list)
+				{
+					EnsureSize(list, ix.Index + 1);
+					var child = list[ix.Index];
+					if (child == null || (!last && !IsContainer(child)))
+					{
+						if (last) { list[ix.Index] = newValue; return; }
+						list[ix.Index] = CreateContainer(next);
+					}
+					if (last) { list[ix.Index] = newValue; return; }
+					list[ix.Index] = EnsureContainer(list[ix.Index], next!);
+					cur = list[ix.Index];
+				}
+				else throw new InvalidOperationException($"Index {ix.Index} requires a list.");
+			}
+		}
+	}
+
+	static object CreateContainer(Token? next) =>
+		next is IndexToken ? new List<object?>() : new Dictionary<string, object?>(StringComparer.Ordinal);
+
+	static object EnsureContainer(object? o, Token first)
+	{
+		if (IsContainer(o)) return o!;
+		if (o is null) return CreateContainer(first);
+		return MaterializeToMutable(o, first);
+	}
+
+	static bool IsContainer(object? o) => o is IDictionary || o is IList;
+
+	static void EnsureSize(IList list, int size) { while (list.Count < size) list.Add(null); }
+
+	// --- Anonymous/POCO support ---
+	static object MaterializeToMutable(object o, Token next)
+	{
+		// Arrays -> List<object?>
+		if (o is Array arr) return ArrayToList(arr);
+		// Any other object -> Dictionary<string, object?>
+		return ObjectToDictionary(o);
+	}
+
+	static IList ArrayToList(Array a)
+	{
+		var list = new List<object?>(a.Length);
+		foreach (var e in a) list.Add(CloneValue(e));
+		return list;
+	}
+
+	static Dictionary<string, object?> ObjectToDictionary(object o)
+	{
+		var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
+		var t = o.GetType();
+		foreach (var p in t.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+		{
+			if (p.GetMethod is null || p.GetIndexParameters().Length != 0) continue;
+			var v = p.GetValue(o);
+			dict[p.Name] = CloneValue(v);
+		}
+		return dict;
+	}
+
+	static object? CloneValue(object? v)
+	{
+		if (v is null) return null;
+		if (IsPrimitiveLike(v)) return v;
+		if (v is IDictionary<string, object?> d1)
+			return d1.ToDictionary(kv => kv.Key, kv => CloneValue(kv.Value), StringComparer.Ordinal);
+		if (v is IDictionary d2)
+		{
+			var m = new Dictionary<string, object?>(StringComparer.Ordinal);
+			foreach (DictionaryEntry e in d2) m[Convert.ToString(e.Key, CultureInfo.InvariantCulture)!] = CloneValue(e.Value);
+			return m;
+		}
+		if (v is Array a) return ArrayToList(a);
+		if (v is IList l)
+		{
+			var n = new List<object?>(l.Count);
+			foreach (var e in l) n.Add(CloneValue(e));
+			return n;
+		}
+		return ObjectToDictionary(v); // anonymous/POCO
+	}
+
+	static bool IsPrimitiveLike(object v)
+	{
+		if (v is string or DateTime or DateTimeOffset or Guid or decimal) return true;
+		var tc = Type.GetTypeCode(v.GetType());
+		return tc is >= TypeCode.Boolean and <= TypeCode.Double;
+	}
+
+	public static List<Token> Parse(string path)
+	{
+		if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path");
+
+		path = path.Replace("%", "");
+		var tokens = new List<Token>();
+		var sb = new StringBuilder();
+
+		for (int i = 0; i < path.Length; i++)
+		{
+			var c = path[i];
+			if (c == '.')
+			{
+				if (sb.Length > 0) { tokens.Add(new KeyToken(sb.ToString())); sb.Clear(); }
+				continue;
+			}
+			if (c == '[')
+			{
+				if (sb.Length > 0) { tokens.Add(new KeyToken(sb.ToString())); sb.Clear(); }
+				int j = ++i, start = j;
+				while (j < path.Length && path[j] != ']')
+				{
+					if (!char.IsDigit(path[j])) throw new FormatException("Non-numeric index.");
+					j++;
+				}
+				if (j >= path.Length) throw new FormatException("Missing ']'.");
+				var num = path.Substring(start, j - start);
+				if (num.Length == 0) throw new FormatException("Empty index.");
+				tokens.Add(new IndexToken(int.Parse(num, CultureInfo.InvariantCulture)));
+				i = j;
+				continue;
+			}
+			sb.Append(c);
+		}
+		if (sb.Length > 0) tokens.Add(new KeyToken(sb.ToString()));
+		return tokens;
+	}
+
+	public abstract record Token;
+	public sealed record KeyToken(string Name) : Token;
+	public sealed record IndexToken(int Index) : Token;
+
+	public static bool IsAnonymousType(Type t) =>
+		Attribute.IsDefined(t, typeof(CompilerGeneratedAttribute)) &&
+		t.IsGenericType && t.Name.Contains("AnonymousType", StringComparison.Ordinal) &&
+		(t.Attributes & TypeAttributes.NotPublic) == TypeAttributes.NotPublic;
 }

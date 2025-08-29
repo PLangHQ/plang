@@ -139,12 +139,12 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public Dictionary<string, object?> Properties { get; set; } = new();
 
-		[IgnoreWhenInstructed]
 		[JsonProperty(Order = 6)]
 		[LlmIgnore]
 		public List<LlmRequest> LlmRequest { get; set; } = new();
 
 		[IgnoreWhenInstructed]
+		[LlmIgnore]
 		public Stopwatch Stopwatch { get; set; }
 		BuilderError invalidInstructionFileError = new BuilderError("The .pr file seem to be invalid", Key: "InvalidInstructionFile");
 		public IBuilderError? ValidateGenericFunction(GenericFunction[]? gfs)

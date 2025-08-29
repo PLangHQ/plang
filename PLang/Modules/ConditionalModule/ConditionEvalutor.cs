@@ -1,4 +1,6 @@
 ﻿using NBitcoin.Secp256k1;
+using Newtonsoft.Json.Linq;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections;
@@ -60,12 +62,30 @@ namespace PLang.Modules.ConditionalModule
 				">=" => Cmp(n) >= 0,
 				"<=" => Cmp(n) <= 0,
 				"in" => n.RightValue is IEnumerable r && r.Cast<object>().Contains(n.LeftValue),
+				"isEmpty" => IsEmpty(n.LeftValue, n.RightValue),
 				"contains" => Has(n.LeftValue, n.RightValue),
 				"startsWith" => Str(n, (s, x) => s.StartsWith(x, StringComparison.Ordinal)),
 				"endsWith" => Str(n, (s, x) => s.EndsWith(x, StringComparison.Ordinal)),
 				"indexOf" => Str(n, (s, x) => s.IndexOf(x, StringComparison.Ordinal) >= 0),
 				_ => throw new NotSupportedException($"Op '{n.Operator}'")
 			};
+
+			private static bool IsEmpty(object? leftValue, object? rightValue)
+			{
+				object? value = leftValue;
+				if (value == null) value = rightValue;
+
+				if (value != null)
+				{
+					if (value is ObjectValue ovLeft) return ovLeft.IsEmpty;
+					if (value == null) return true;
+					if (value is string str) return string.IsNullOrWhiteSpace(str);
+					if (value is IList list) return list.Count == 0;
+					if (value is IDictionary dict) return dict.Count == 0;
+				}
+
+				return true;
+			}
 
 			public static bool EvaluateCompound(Condition n) => n.Logic!.ToUpperInvariant() switch
 			{

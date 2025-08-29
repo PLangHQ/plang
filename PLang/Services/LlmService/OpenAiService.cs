@@ -68,10 +68,18 @@ namespace PLang.Services.OpenAi
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, url);
-
-			settings.SetSharedSettings(appId);
-			string bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
-			settings.SetSharedSettings(null);
+			string? bearer = null;
+			try
+			{
+				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
+			} catch { }
+			if (string.IsNullOrEmpty(bearer))
+			{
+				settings.SetSharedSettings(appId);
+				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
+				settings.SetSharedSettings(null);
+			}
+			
 			string data = $@"{{
 		""model"":""{question.model}"",
 		""temperature"":{question.temperature},

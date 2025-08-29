@@ -1,10 +1,12 @@
-﻿using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
+﻿using NBitcoin.Protocol;
+using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -60,15 +62,43 @@ namespace PLang.Utils
 			string method = goal.GoalName;
 
 			callbackInfos.Push(new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex));
+			
+			/*
+			 * TODO: fix this
+			 * 
+			 * List<string> callStackGoals is a temp fix, the ParentGoal should not be set on goal object
+			 * it should be set on CallStack object that needs to be created, goal object should
+			 * not change at runtime. this is because if same goal is called 2 or more times
+			 * in a callstack, the parent goal is overwritten
+			 * */
+			List<string> callStackGoals = new();
+			callStackGoals.Add(goal.RelativePrPath);
 
-			if (goal.ParentGoal != null)
-			{
-				var parentGoal = goal.ParentGoal;
-				while (parentGoal != null)
+
+			var parentGoal = goal.ParentGoal;
+			while (parentGoal != null)
+			{					
+				if (callStackGoals.Contains(parentGoal.RelativePrPath))
+				{
+					parentGoal = null;
+				} else
 				{
 					callbackInfos.Push(new CallbackInfo(parentGoal.GoalName, parentGoal.Hash, parentGoal.CurrentStepIndex));
+					callStackGoals.Add(parentGoal.RelativePrPath);
+
 					parentGoal = parentGoal.ParentGoal;
+					
 				}
+
+				// todo: temp thing while figuring out to deep calls
+				int counter = 0;
+				if (counter++ > 100)
+				{
+					Console.WriteLine($"To deep: GoalHelper.IsPartOfCallStack - goalName: {goal?.GoalName}");
+					break;
+				}
+
+				
 			}
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(step);
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.TagHelpers;
+﻿using Jil;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -34,13 +35,15 @@ public class MethodHelper
 	private readonly VariableHelper variableHelper;
 	private readonly ITypeHelper typeHelper;
 	private readonly ILogger logger;
+	private readonly MemoryStack memoryStack;
 	private ConcurrentDictionary<string, MethodInfo> cachedMethodInfo;
-	public MethodHelper(VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger)
+	public MethodHelper(VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack)
 	{
 		//this.goalStep = goalStep;
 		this.variableHelper = variableHelper;
 		this.typeHelper = typeHelper;
 		this.logger = logger;
+		this.memoryStack = memoryStack;
 		cachedMethodInfo = new();
 	}
 
@@ -419,9 +422,25 @@ public class MethodHelper
 
 	private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 	{
+		
 		object? value = variableValue;
 		if (handlesAttribute == null)
 		{
+			if (variableValue is JObject jobj)
+			{
+				string str = variableValue.ToString();
+				if (!str.Contains("%Settings."))
+				{
+					var newJobj = jobj.DeepClone();
+					newJobj.ResolvePlaceholders(name => memoryStack.Get(name));
+					var obj = newJobj.ToObject(parameter.ParameterType);
+
+					parameterValues.Add(parameter.Name!, obj);
+					return;
+					int i = 0;
+				}
+			}
+
 			value = LoadVariables(variableValue);
 		}
 

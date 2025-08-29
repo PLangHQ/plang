@@ -10,7 +10,7 @@ namespace PLang.Utils
 		{
 			if (body == null) return "";
 			if (body is string str) return str;
-			if (body is JValue) return body.ToString();
+			if (body is JToken jToken) return jToken.ToString(Newtonsoft.Json.Formatting.None);// body.ToString();
 
 			if (IsToStringOverridden(body)) return body.ToString();
 

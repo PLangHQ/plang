@@ -389,7 +389,6 @@ Error handling is process by another step, if you see 'on error...' you can igno
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
 Dictionary<T1, T2> value is {{key: value, ... }}
-ONLY when string is prefixed with # is for translation, modify the string to be ""#:..."", e.g. #""Hello"" => ""#:Hello"".
 Variable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(""yyyy-MM-dd"")% then type of %updated% is System.DateTime 
  
 <Example>

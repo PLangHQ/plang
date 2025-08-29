@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Net.WebSockets;
+using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -33,12 +34,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using UAParser;
+using static Dapper.SqlMapper;
 using static PLang.Runtime.Engine;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.WebserverModule;
 
-[Description("Start webserver, add route, set certificate, write to Header, Cookie, send file to client")]
+[Description("Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client")]
 public class Program : BaseProgram, IDisposable
 {
 	private readonly ILogger logger;
@@ -75,7 +77,10 @@ public class Program : BaseProgram, IDisposable
 
 	public async Task<long> GetNumberOfLiveConnections()
 	{
-		return engine.LiveConnections.Count;
+		if (listeners.Count == 0) return 0;
+
+		return listeners.Sum(p => p.Engine.LiveConnections.Count);
+		
 	}
 
 	public async Task<WebserverProperties?> ShutdownWebserver(string webserverName)
@@ -183,6 +188,8 @@ public class Program : BaseProgram, IDisposable
 		webserverEngine.Init(webserverContainer, context);
 		webserverEngine.Name = "WebserverEngine";
 		goal.AddVariable(webserverProperties);
+		
+		engine.ChildEngines.Add(webserverEngine);
 
 		RequestHandler requestHandler = webserverContainer.GetInstance<RequestHandler>();
 
@@ -202,7 +209,16 @@ public class Program : BaseProgram, IDisposable
 				{
 					if (webserverProperties.Host == "localhost")
 					{
-						k.ListenLocalhost(webserverProperties.Port, l =>
+						k.Listen(IPAddress.Loopback, webserverProperties.Port, l =>
+						{
+							l.Protocols = HttpProtocols.Http1AndHttp2;
+							if (webserverProperties.Certificate != null)
+							{
+								l.UseHttps(webserverProperties.Certificate);
+							}
+						});
+
+						k.Listen(IPAddress.IPv6Loopback, webserverProperties.Port, l =>
 						{
 							l.Protocols = HttpProtocols.Http1AndHttp2;
 							if (webserverProperties.Certificate != null)
@@ -253,19 +269,26 @@ public class Program : BaseProgram, IDisposable
 						IEngine? requestEngine = null;
 						IError? error = null;
 						bool poll = false;
+						string? identity = null;
+						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
+							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+
 							var httpOutputStream = new HttpOutputStream(ctx, webserverProperties, webserverEngine.LiveConnections);
 							requestEngine = await webserverEngine.RentAsync(goalStep, httpOutputStream);
 							requestEngine.HttpContext = ctx;
-							requestEngine.Name = "RequestEngine";
-							(poll, error) = await requestHandler.HandleRequestAsync(requestEngine, ctx, webserverProperties);
+							requestEngine.Name = "RequestEngine_" + ctx.Request.Path.Value;
+							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, ctx, webserverProperties);
 
 							if (error != null)
 							{
 								if (!ctx.Response.HasStarted)
 								{
 									ctx.Response.StatusCode = error.StatusCode;
+
+									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
+									ctx.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
 								}
 								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
 								
@@ -319,11 +342,14 @@ public class Program : BaseProgram, IDisposable
 							{
 								webserverEngine.Return(requestEngine, true);
 							}
+							
+							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+
 						}
 
 						if (poll)
 						{
-							await DoPoll(ctx.Response);
+							await DoPoll(ctx, identity, webserverEngine, webserverProperties);
 						}
 					});
 
@@ -348,25 +374,55 @@ public class Program : BaseProgram, IDisposable
 		return (webserverProperties, null);
 	}
 
-	private async Task DoPoll(Microsoft.AspNetCore.Http.HttpResponse response)
+	private async Task DoPoll(HttpContext context, string? identity, IEngine webserverEngine, WebserverProperties webserverProperties)
 	{
+		if (string.IsNullOrEmpty(identity)) return;
+
+		var response = context.Response;
+
 		try
 		{
 			var payload = JsonConvert.SerializeObject("ping");
 			var buffer = Encoding.UTF8.GetBytes(payload + Environment.NewLine);
 
-			while (true)
+			var ct = context.RequestAborted;
+			await response.StartAsync(ct);
+
+			while (!ct.IsCancellationRequested)
 			{
-				await response.Body.WriteAsync(buffer, 0, buffer.Length);
-				await response.Body.FlushAsync();
-				await Task.Delay(TimeSpan.FromSeconds(20));
+				await response.Body.WriteAsync(buffer, 0, buffer.Length, ct);
+				await response.Body.FlushAsync(ct);
+				await Task.Delay(TimeSpan.FromSeconds(20), ct);
 			}
 
+			if (ct.IsCancellationRequested)
+			{
+				int b = 0;
+			}
 
+		}
+		catch (OperationCanceledException)
+		{
+			webserverEngine.LiveConnections.Remove(identity, out _);
+			if (webserverProperties.OnPollEnd != null)
+			{
+				//run onpoll end
+			}
 		}
 		catch (Exception ex)
 		{
+			webserverEngine.LiveConnections.Remove(identity, out _);
+			if (webserverProperties.OnPollEnd != null)
+			{
+				//run onpoll end
+			}
 			Console.WriteLine(ex);
+		} finally
+		{
+			try { await response.CompleteAsync(); } catch (Exception ex) {
+
+				int i = 0;
+			}
 		}
 	}
 
@@ -537,9 +593,15 @@ OnStartingWebserver
 		}
 
 		var topGoal = goal;
+		int counter=0;
 		while (topGoal.ParentGoal != null)
 		{
 			topGoal = topGoal.ParentGoal;
+			if (counter++ > 100)
+			{
+				Console.WriteLine($"To deep: Webserver.Redirect - goalName: {topGoal.GoalName}");
+				break;
+			}
 		}
 
 
@@ -566,7 +628,7 @@ OnStartingWebserver
 		foreach (var header in headers)
 		{
 			if (header.Value == null) continue;
-			HttpContext.Response.Headers.Add(header.Key, header.Value.ToString());
+			HttpContext.Response.Headers.TryAdd(header.Key, header.Value.ToString());
 		}
 	}
 
@@ -617,21 +679,27 @@ Frontpage
 		if (HttpContext == null) return (null, new ProgramError("HttpContext is empty. Is this being called during a web request?",
 			FixSuggestion: missingHttpContextFixSuggestion));
 
+
 		HttpContext.Request.Cookies.TryGetValue(name, out var value);
 		return (value, null);
 	}
 
 	public async Task<IError?> WriteCookie(string name, string value, int expiresInSeconds = 60 * 60 * 24 * 7)
 	{
-		if (HttpContext == null) return new ProgramError("HttpContext is empty. Is this being called during a web request?",
-			FixSuggestion: missingHttpContextFixSuggestion);
-
 		CookieOptions options = new();
 		options.Expires = DateTime.Now.AddSeconds(expiresInSeconds);
 		options.HttpOnly = true;
 		options.Secure = true;
 
-		HttpContext.Response.Cookies.Append(name, value, options);
+		var os = engine.OutputStream;
+		if (os is HttpOutputStream hos)
+		{
+			(var response, var isFlushed, var error) = hos.GetResponse();
+			if (response != null)
+			{
+				response.Cookies.Append(name, value, options);
+			}
+		}
 		return null;
 	}
 
@@ -662,7 +730,7 @@ Frontpage
 		response.ContentLength = fileInfo.Length;
 		if (string.IsNullOrEmpty(fileName)) fileName = fileInfo.Name;
 
-		response.Headers.Add("Content-Disposition", $"attachment; filename=\"{fileName}\"");
+		response.Headers.TryAdd("Content-Disposition", $"attachment; filename=\"{fileName}\"");
 
 		using (var fs = fileSystem.File.OpenRead(path))
 		{

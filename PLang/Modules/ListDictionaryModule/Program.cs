@@ -53,7 +53,7 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 		{
 			if (value == null) return new();
 
-			if (this.function.ReturnValues == null || function.ReturnValues.Count ==0 )
+			if (this.function.ReturnValues == null || function.ReturnValues.Count == 0)
 			{
 				return (null, new Error("No variable to add to"));
 			}
@@ -260,11 +260,15 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 				return (null, new ProgramError($"Object is empty, cannot group by on empty object"));
 			}
 
-			if (obj is IList list && list.Count > 0)
+			
+
+			if (obj is IList list)
 			{
+				if (list.Count == 0) return (obj, null);
+
 				var dict = TypeHelper.AsDictionary(list[0]);
 				if (dict == null) return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
-				
+
 				Dictionary<object, List<object>> groupedDict = new();
 				foreach (var item in list)
 				{
@@ -285,7 +289,7 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 
 				return (groupedDict, null);
 			}
-			
+
 			return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
 		}
 
@@ -301,9 +305,10 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 						iList1.Add(item);
 					}
 					return (iList1, null);
-				} else
+				}
+				else
 				{
-					for (int i= iList1.Count-1;i>=0;i--)
+					for (int i = iList1.Count - 1; i >= 0; i--)
 					{
 						iList2.Insert(0, iList1[i]);
 					}
@@ -331,7 +336,7 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 			if (list1 is JArray jArray1 && list2 is JArray jArray2)
 			{
 				JArray mergedArray = new JArray(jArray1.Concat(jArray2)
-					.Select(token => token.ToString())  
+					.Select(token => token.ToString())
 					.Distinct(StringComparer.OrdinalIgnoreCase)
 					.Select(str => (JToken)str));
 				return (mergedArray, null);

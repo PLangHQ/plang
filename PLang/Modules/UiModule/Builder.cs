@@ -93,15 +93,22 @@ Response with only the function name you would choose");
 
 		public async Task<(Instruction?, IBuilderError?)> BuilderRenderTemplate(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
+			
+			var renderOption = gf.GetParameter<RenderTemplateOptions>("options");
+			if (string.IsNullOrEmpty(renderOption.FileNameOrHtml))
+			{
+				return (instruction, new StepBuilderError("FileName or html needs to be defined", step));
+			}
+
 			var events = gf.GetParameter<List<Event>?>("events");
 			if (events == null || events.Count == 0) return (instruction, null);
 
 
-			var renderOption = gf.GetParameter<RenderTemplateOptions>("options");
 			
-			if (renderOption.FileName.Contains("%"))
+
+			if (renderOption?.FileNameOrHtml.Contains("%") == true)
 			{
-				return (instruction, new StepBuilderError($"Events cannot be added to dynamic file path {renderOption.FileName}", step));
+				return (instruction, new StepBuilderError($"Events cannot be added to dynamic file path {renderOption.FileNameOrHtml}", step));
 			}
 
 			List<LlmMessage> messages = new();
@@ -131,7 +138,7 @@ Examples:
 
 "));
 
-			var templatePath = PathHelper.GetPath(renderOption.FileName, fileSystem, step.Goal);
+			var templatePath = PathHelper.GetPath(renderOption.FileNameOrHtml, fileSystem, step.Goal);
 			var html = fileSystem.File.ReadAllText(templatePath);
 			messages.Add(new LlmMessage("user", html));
 

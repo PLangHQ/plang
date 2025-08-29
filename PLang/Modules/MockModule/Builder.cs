@@ -27,7 +27,12 @@ public class Builder : BaseBuilder
 	{
 		var modules = typeHelper.GetRuntimeModules();
 		var (module, error) = await this.LlmRequest<ModuleType>(@$"
-What <module> is user intengint to map?
+What <module> is user intending to map?
+Each mock maps to a module and must call a goal that will perform the mocking
+
+Example:
+`mock http post http://example.org, call goal ProcessExample` => ModuleType=""Namespace.HttpModule"" the goal that will be called to resolve the mocking is ProcessExample
+
 
 <modules>
 {string.Join("\n", modules.Where(p => !p.FullName.StartsWith("PLang.Modules.MockModule")).Select(p => p.FullName).ToArray())}

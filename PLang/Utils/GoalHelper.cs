@@ -59,10 +59,17 @@ namespace PLang.Utils
 		{
 			int i = 0;
 			var parent = goal.ParentGoal;
+			
 			while (parent != null)
 			{
 				parent = parent.ParentGoal;
 				i++;
+
+				if (i > 100)
+				{
+					Console.WriteLine($"To deep: ErrorHelper - goalName: {goal?.GoalName}");
+					break;
+				}
 			}
 			return new string(' ', i);
 		}
@@ -82,12 +89,18 @@ namespace PLang.Utils
 			if (endGoal.Step == null) return false;
 
 			if (goal.RelativePrPath.Equals(endGoal.Step.Goal.RelativePrPath)) return true;
-
+			int counter = 0;
 			var parentGoal = endGoal.Step.Goal.ParentGoal;
 			while (parentGoal != null)
 			{
 				if (goal.RelativePrPath.Equals(parentGoal.RelativePrPath)) return true;
 				parentGoal = parentGoal.ParentGoal;
+
+				if (counter++ > 100)
+				{
+					Console.WriteLine($"To deep: GoalHelper.IsPartOfCallStack - goalName: {goal?.GoalName}");
+					break;
+				}
 			}
 			return false;
 

@@ -403,5 +403,27 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(expected.AddDays(5), ov2.Value);
 
 		}
+
+
+		[TestMethod]
+		public void Test_ObjectValue_TestSet()
+		{
+			var user = new
+			{
+				name = "abc",
+				zip = 100
+			};
+
+			var objectValue = new ObjectValue("user", user);
+			var zipObjectValue = new ObjectValue("zip", 200, parent: objectValue);
+
+			objectValue.Set(zipObjectValue.PathAsVariable, zipObjectValue);
+
+
+			var zip = objectValue.Get<int>("zip");
+
+			Assert.AreEqual(200, zip);
+			int i = 0;
+		}
 	}
 }

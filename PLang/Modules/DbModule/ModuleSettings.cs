@@ -25,6 +25,7 @@ using System.Data;
 using System.Data.Common;
 using System.IO.Abstractions;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using static PLang.Modules.DbModule.Builder;
@@ -77,6 +78,10 @@ namespace PLang.Modules.DbModule
 			public bool KeepHistory { get; set; } = KeepHistory;
 			[LlmIgnore]
 			public string NameInStep { get; set; }
+			
+			[System.Text.Json.Serialization.JsonIgnore]
+			[Newtonsoft.Json.JsonIgnore]
+			public List<string> AttachedDbs { get; set; } = new();
 		}
 
 		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -445,6 +450,11 @@ Be concise"));
 			if (name.StartsWith("/"))
 			{
 				name = name.TrimStart('/');
+			}
+			if (step != null)
+			{
+				var stepDataSource = step.Goal.GetVariable<DataSource>();
+				if (stepDataSource?.Name == name) return (stepDataSource, null);
 			}
 			var dataSources = await GetAllDataSources();
 			var dsNameAndPath = GetNameAndPathByVariable(name, null);

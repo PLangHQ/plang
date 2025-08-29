@@ -33,7 +33,7 @@ using static PLang.Modules.FileModule.CsvHelper;
 
 namespace PLang.Modules.FileModule
 {
-	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream")]
+	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads files, such as text, llm, csv, xls, pdf files and raw stream")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPLangFileSystem fileSystem;

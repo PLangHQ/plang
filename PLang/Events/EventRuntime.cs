@@ -373,11 +373,15 @@ namespace PLang.Events
 				var step = (error.Goal != null) ? error.Goal.GoalSteps[error.Goal.CurrentStepIndex] : null;
 
 				var result = await Run(eve, error.Goal, step, error);
-				/*
+				
 				Console.WriteLine("\n\n\n---------- error (EventRuntime.debug.output) | start -------------");
 				Console.WriteLine($@"Type:{error.GetType()} | Message:{error.Message}");
 				Console.WriteLine(error.ToString());
-				*/
+				var engine = container.GetInstance<IEngine>();
+				if (engine.HttpContext != null)
+				{
+					Console.WriteLine("UserAgent:" + engine.HttpContext.Request.Headers.UserAgent);
+				}
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
@@ -391,8 +395,8 @@ namespace PLang.Events
 				{
 					error = null;
 				}
-				//Console.WriteLine($@"IsNull so handled:{(error == null)}");
-				//Console.WriteLine("---------- error (EventRuntime.debug.output) | end -------------\n\n\n");
+				Console.WriteLine($@"IsNull so handled:{(error == null)}");
+				Console.WriteLine("---------- error (EventRuntime.debug.output) | end -------------\n\n\n");
 				break;
 
 			}
@@ -744,7 +748,7 @@ namespace PLang.Events
 		 * GoalToBindTo = GenerateData(.goal)?:ProcessFile => Binds to any goal name called ProcessFile in the GenerateData.goal, if multiple then it will bind to all
 		 */
 
-		public bool IsGoalInEventCallstack(Goal goal, string path, int level = 0)
+		public bool IsGoalInEventCallstack(Goal goal, string path, int level = 0, List<string>? callStackGoals = null)
 		{
 			if (level == 100)
 			{
@@ -752,9 +756,25 @@ namespace PLang.Events
 				logger.LogError($"To deep IsGoalInEventCallstack. goalName:{goal.GoalName} | path:{path} | parent:'{parent}'");
 				return false;
 			}
+
+			
+
 			if (goal.RelativePrPath == path) return true;
 			if (goal.ParentGoal == null) return false;
-			return IsGoalInEventCallstack(goal.ParentGoal, path, ++level);
+			if (callStackGoals?.Contains(goal.ParentGoal.RelativePrPath) == true) return false;
+
+			/*
+			 * TODO: fix this
+			 * 
+			 * List<string> callStack is a fix, the ParentGoal should not be set on goal object
+			 * it should be set on CallStack object that needs to be created, goal object should
+			 * not change at runtime. this is because if same goal is called 2 or more times
+			 * in a callstack, the parent goal is overwritten
+			 * */
+			if (callStackGoals == null) callStackGoals = new();
+			callStackGoals.Add(goal.ParentGoal.RelativePrPath);
+
+			return IsGoalInEventCallstack(goal.ParentGoal, path, ++level, callStackGoals);
 		}
 
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)

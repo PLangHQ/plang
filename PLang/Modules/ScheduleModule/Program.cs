@@ -205,6 +205,7 @@ namespace PLang.Modules.ScheduleModule
 
 		private List<CronJob> CleanDeletedCronJobs(ISettings settings, IPLangFileSystem fileSystem, List<CronJob> cronJobs)
 		{
+			int counter = 0;
 			for (int i = 0; i < cronJobs.Count; i++)
 			{
 				CronJob cronJob = cronJobs[i];
@@ -212,6 +213,11 @@ namespace PLang.Modules.ScheduleModule
 				{
 					cronJobs.RemoveAt(i);
 					i--;
+					counter++;
+					if (counter > 100)
+					{
+						Console.WriteLine("!!! LOOP CleanDeletedCronJobs");
+					}
 				}
 			}
 
@@ -246,7 +252,7 @@ namespace PLang.Modules.ScheduleModule
 						continue;
 					}
 
-					logger.LogDebug($"Running cron - GoalName:{item.GoalName}");
+					logger.LogInformation($"Running cron - GoalName:{item.GoalName}");
 
 					using (CancellationTokenSource cts = new CancellationTokenSource())
 					{
@@ -254,7 +260,7 @@ namespace PLang.Modules.ScheduleModule
 
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName);
+						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, goal);
 						if (result.error != null)
 						{
 							logger.LogError(result.error.ToString());

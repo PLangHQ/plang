@@ -302,7 +302,7 @@ replace ""<strong>"" with """" from %html%, write to %html% => string ExecutePla
 	return html;
 }}
 Parameters: [{{Name:""html"", Value:""%html%"", Type:""string""}}]
-ReturnValue: ""%html%""
+ReturnValue: [""type"":""System.String"", VariableName:""%html%""]
 
 %list.Count%*50, write to %result% => long ExecutePlangCode(long? listαCount) {{
     //validate input parameter 
@@ -310,7 +310,7 @@ ReturnValue: ""%html%""
 	return result;
 }}
 Parameters: [{{Name:""listαCount"", Value:""%list.Count%"", Type:""long""}}]
-ReturnValues: ""%result%""
+ReturnValues: [""type"":""System.Int64"", VariableName:""%result%""]
 
 %response.data.total%*%response.data.total_amount%, write to %allTotal%, => long ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount) {{ 
     //validate input parameter 
@@ -318,7 +318,7 @@ ReturnValues: ""%result%""
 	return allTotal;
 }}
 Parameters: [{{Name:""response.data.total"", Value:""%response.data.total%"", Type:""dynamic""}}, Name:""response.data.total_amount"", Value:""%response.data.total_amount%"", Type:""dynamic""}}]
-ReturnValues: ""%allTotal%""
+ReturnValues: [""type"":""List<object>"", VariableName:""%allTotal%""]
 
 
 get filename of %filePath%, write to %fileName% => string ExecutePlangCode(IPlangFileSystem fileSystem, string filePath) {{
@@ -327,7 +327,7 @@ get filename of %filePath%, write to %fileName% => string ExecutePlangCode(IPlan
 	return fileName;
 }}
 Parameters: [{{Name:""fileSystem"", Value:""%filePath%"", Type:""string""}}]
-ReturnValues: ""%fileName%""
+ReturnValues: [""type"":""System.String"", VariableName:""%fileName%""]
 ## examples ##");
 
 			if (error != null)

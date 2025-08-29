@@ -43,14 +43,14 @@ namespace PLang.Modules.WebserverModule
 			this.prParser = prParser;
 		}
 
-		public async Task<(bool, IError?)> HandleRequestAsync(IEngine requestEngine, HttpContext ctx, WebserverProperties webserverProperties)
+		public async Task<(bool, string?, IError?)> HandleRequestAsync(IEngine requestEngine, HttpContext ctx, WebserverProperties webserverProperties)
 		{
 			IError? error = null;
 			try
 			{
 				if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !ctx.Request.Headers.TryGetValue("X-Signature", out var value))
 				{
-					return (false, new Error("All requests must be signed"));
+					return (false, null, new Error("All requests must be signed"));
 				}
 
 
@@ -61,13 +61,13 @@ namespace PLang.Modules.WebserverModule
 				
 					// put "request" object into memory
 					requestEngine.MemoryStack.Put(requestObjectValue2);
-					return (false, error);
+					return (false, signedMessage?.Identity, error);
 				}
 
 
 				// this should be below 
 				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputStream);
-				if (error != null) return (false, error);
+				if (error != null) return (false, signedMessage?.Identity, error);
 
 				// put "request" object into memory
 				requestEngine.MemoryStack.Put(requestObjectValue);
@@ -75,7 +75,7 @@ namespace PLang.Modules.WebserverModule
 				if (webserverProperties.OnRequestBegin != null)
 				{
 					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin);
-					if (error != null) return (false, error);
+					if (error != null) return (false, signedMessage?.Identity, error);
 				}
 
 				if (webserverProperties.OnPollStart != null)
@@ -84,29 +84,29 @@ namespace PLang.Modules.WebserverModule
 					if (query?.StartsWith("?plang.poll=1") == true)
 					{
 						error = await HandlePlangPoll(requestEngine, ctx, webserverProperties);
-						if (error != null) return (false, error);
+						if (error != null) return (false, signedMessage?.Identity, error);
 
 						//return true to create long lasting connection
-						return (true, null);
+						return (true, signedMessage?.Identity, null);
 					}
 				}
 
 
 				error = await HandleRequest(ctx, requestEngine, webserverProperties);
-				if (error != null) return (false, error);
+				if (error != null) return (false, signedMessage?.Identity, error);
 
 				if (webserverProperties.OnRequestEnd != null)
 				{
 					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd);
-					if (error != null) return (false, error);
+					if (error != null) return (false, signedMessage?.Identity, error);
 				}
 
-				return (false, error);
+				return (false, signedMessage?.Identity, error);
 
 			}
 			catch (Exception ex)
 			{
-				return (false, new ExceptionError(ex, ex.Message, goal, step));
+				return (false, null, new ExceptionError(ex, ex.Message, goal, step));
 				
 			}
 
@@ -128,9 +128,8 @@ namespace PLang.Modules.WebserverModule
 				if (isPlangRequest)
 				{
 					Console.WriteLine($"{DateTime.Now} - plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
-					logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
+					
 					error = await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, requestEngine);
-					logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
 					return error;
 				}
 
@@ -252,18 +251,19 @@ namespace PLang.Modules.WebserverModule
 				resp.Headers.Add("X-Goal-Signature", goal.Signature);
 			}
 			logger.LogDebug($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
+			
+			if (request.Method == "HEAD") return null;
 
 			(var requestObjectValue, var error) = await ParseRequest(httpContext, requestEngine.OutputStream);
 			if (error != null) return error;
 
 			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
 
-			(var callbackInfos, error) = await GetCallbackInfos(request);
+			(var callbackInfos, goal, error) = await GetCallbackInfos(request, goal);
 			if (error != null) return error;
+			if (goal == null) return new ProgramError("Server code has changed. New request needs to be made", step, StatusCode: 503);
 
 			logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
-
-
 
 			if (requestObjectValue != null)
 			{
@@ -287,7 +287,7 @@ namespace PLang.Modules.WebserverModule
 			return error;
 		}
 
-		private async Task<(List<CallbackInfo>? CallbackInfo, IError? Error)> GetCallbackInfos(HttpRequest request)
+		private async Task<(List<CallbackInfo>? CallbackInfo, Goal? goal, IError? Error)> GetCallbackInfos(HttpRequest request, Goal goal)
 		{
 			string? callbackValue = "";
 			if (request.HasFormContentType)
@@ -301,20 +301,20 @@ namespace PLang.Modules.WebserverModule
 					}
 					else
 					{
-						return (null, null);
+						return (null, goal, null);
 					}
 				}
 			}
 			else
 			{
-				if (!request.Headers.TryGetValue("callback", out var value)) return (null, null);
+				if (!request.Headers.TryGetValue("callback", out var value)) return (null, goal, null);
 				callbackValue = value.ToString();
 			}
 
-			if (string.IsNullOrEmpty(callbackValue)) return (null, null);
+			if (string.IsNullOrEmpty(callbackValue)) return (null, goal, null);
 
 			var callbackResult = await CallbackHelper.GetCallbackInfos(identity, callbackValue);
-			if (callbackResult.Error != null) return (null, callbackResult.Error);
+			if (callbackResult.Error != null) return (null, goal, callbackResult.Error);
 
 			var callbackInfos = callbackResult.CallbackInfos;
 
@@ -327,9 +327,11 @@ namespace PLang.Modules.WebserverModule
 					context.AddOrReplace(key, request.Headers[key]);
 				}
 			}*/
+			var last = callbackInfos.LastOrDefault();
 
+			goal = prParser.GetAllGoals().FirstOrDefault(p => p.Hash == last.GoalHash);
 
-			return (callbackInfos, null);
+			return (callbackInfos, goal, null);
 		}
 
 		private async Task ShowError(Microsoft.AspNetCore.Http.HttpResponse resp, IOutputStream outputStream, IError error)
@@ -493,8 +495,8 @@ namespace PLang.Modules.WebserverModule
 			var mimeType = GetMimeType(fileExtension);
 			if (mimeType == null)
 			{
-				fileExtension = httpContext.Request.Path.ToString();
-				return new Error($"MimeType for '{fileExtension}' is not supported", StatusCode: 415);
+				httpContext.Response.StatusCode = 404;
+				return new Error($"Not Found - {httpContext.Request.Path.ToString()}", StatusCode: 404);
 			}
 
 			if (!fileSystem.File.Exists(filePath))
@@ -647,7 +649,7 @@ namespace PLang.Modules.WebserverModule
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			var parameters = new Dictionary<string, object?>();
 			var req = ctx.Request;
-			var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
+			
 			ObjectValue objectValue;
 			logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
 			ParseHeaders(ctx, outputStream);
@@ -663,10 +665,13 @@ namespace PLang.Modules.WebserverModule
 
 				using var reader = new StreamReader(req.Body);
 				var bodyString = await reader.ReadToEndAsync();
-
-				// Parse into JToken (can be JObject or JArray)
-				JToken json = JToken.Parse(bodyString);
-				parameters.Add("body", json);
+				
+				if (!string.IsNullOrEmpty(bodyString))
+				{
+					// Parse into JToken (can be JObject or JArray)
+					JToken json = JToken.Parse(bodyString);
+					parameters.Add("body", json);
+				}
 
 				logger.LogDebug($" - JsonHandler done - {stopwatch.ElapsedMilliseconds}");
 			}
@@ -692,21 +697,28 @@ namespace PLang.Modules.WebserverModule
 						payload.Add("_files", form.Files);
 					}
 
-					parameters.Add("body", payload);
+					if (payload.Count > 0)
+					{
+						parameters.Add("body", payload);
+					}
 				}
 
 				logger.LogDebug($"    - FormHandler done - {stopwatch.ElapsedMilliseconds}");
 
 			}
 
-			if (query.Count > 0)
+			if (req.Query.Count > 0)
 			{
-				var qs = new Dictionary<string, object?>();
-				foreach (var (k, v) in query)
+				var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
+				if (query.Count > 0)
 				{
-					qs.Add(k, v);
+					var qs = new Dictionary<string, object?>();
+					foreach (var (k, v) in query)
+					{
+						qs.Add(k, v);
+					}
+					parameters.Add("query", query);
 				}
-				parameters.Add("query", query);
 			}
 
 			objectValue = new ObjectValue("request", parameters, properties: properties);
@@ -740,9 +752,13 @@ namespace PLang.Modules.WebserverModule
 			if (!m.Success) return (false, null, null);
 
 			var methods = routing.RequestProperties.Methods ?? ["GET"];
-
-			var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
-			if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", step, StatusCode: 405));
+			
+			//todo: just temp, should be in build
+			if (request.Method != "HEAD")
+			{
+				var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
+				if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", step, StatusCode: 405));
+			}
 
 			var dict = m.Groups.Keys
 							 .Where(k => k != "0")

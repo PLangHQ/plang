@@ -43,6 +43,7 @@ namespace PLang.Building.Parsers
 
 			builderEventsGoals = GetEventsFiles(true);
 			runtimeEventsGoals = GetEventsFiles(false);
+
 		}
 
 		public Goal? GetEvent(string name)

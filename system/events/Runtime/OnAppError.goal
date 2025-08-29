@@ -1,3 +1,2 @@
 OnAppError
-- if %!error.Handled% is false then 
-    - write out system error "%!error%"
+- write out system error "%!error%"

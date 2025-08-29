@@ -102,7 +102,7 @@ namespace PLang.Modules.OutputModule
 		[Description(@"QuestionOrTemplateFile either the question or points to a file for custom rendering. 
 When key is not defined for call back data, the key is same as variable.
 Target is what to target in the UI, e.g. CssSelector for html, or name of Javascript function
-Action=set|append|prepend|before|after|execute   (execute only applies to javascript)
+Action=set|overwrite|append|prepend|before|after|execute   (execute only applies to javascript)
 ")]
 		public record AskOptions(string QuestionOrTemplateFile, int StatusCode = 202,
 			Dictionary<string, object?>? CallbackData = null, GoalToCallInfo? OnCallback = null,
@@ -292,7 +292,7 @@ Action=set|append|prepend|before|after|execute   (execute only applies to javasc
 				}
 			}
 
-			(List<ObjectValue> answers, error) = GetStatelessAnswers();
+			(List<ObjectValue> answers, error) = GetStatelessAnswers(askOptions.CallbackData);
 			if (error != null) return (null, error);
 
 			return await ValidateAnswers(answers!, askOptions);
@@ -306,6 +306,10 @@ Action=set|append|prepend|before|after|execute   (execute only applies to javasc
 			{
 				askOptions.OnCallback.Parameters.AddOrReplace(answer.Name, answer.Value);
 			}
+			foreach (var askOptionsData  in askOptions.CallbackData ?? [])
+			{
+				askOptions.OnCallback.Parameters.AddOrReplace(askOptionsData.Key, askOptionsData.Value);
+			}
 
 			var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
 			var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
@@ -317,7 +321,7 @@ Action=set|append|prepend|before|after|execute   (execute only applies to javasc
 
 		}
 
-		private (List<ObjectValue>?, IError?) GetStatelessAnswers()
+		private (List<ObjectValue>?, IError?) GetStatelessAnswers(Dictionary<string, object?> callbackData)
 		{
 			List<ObjectValue> answers = new();
 
@@ -328,6 +332,7 @@ Action=set|append|prepend|before|after|execute   (execute only applies to javasc
 			}
 
 
+
 			foreach (var rv in function.ReturnValues)
 			{
 				var variableName = rv.VariableName.Replace("%", "");
@@ -335,8 +340,11 @@ Action=set|append|prepend|before|after|execute   (execute only applies to javasc
 				if (result == null)
 				{
 					var dict = memoryStack.Get<Dictionary<string, object?>>("request.body");
-					var newDict = dict.Where(p => p.Key != "callback").ToDictionary();
-					answers.Add(new ObjectValue(variableName, newDict));
+					if (dict != null && dict.Count > 0)
+					{
+						var newDict = dict.Where(p => p.Key != "callback").ToDictionary();
+						answers.Add(new ObjectValue(variableName, newDict));
+					}
 				}
 				else
 				{

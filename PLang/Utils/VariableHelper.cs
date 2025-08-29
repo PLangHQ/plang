@@ -173,9 +173,11 @@ namespace PLang.Utils
 		private object? LoadVariablesToJObject(JObject incomingJObject, List<ObjectValue> variables, object? defaultValue)
 		{
 			var jobject = incomingJObject.DeepClone() as JObject;
-
-			foreach (var variable in variables)
+			int refillJObjectCounter = 0;
+			for (int c=0;c<variables.Count;c++)
 			{
+				var variable = variables[c];
+
 				var jsonProperty = FindPropertyNameByValue(jobject, variable.PathAsVariable);
 				if (jsonProperty == null)
 				{
@@ -250,6 +252,20 @@ namespace PLang.Utils
 						{
 							jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, variable.Value.ToString());
 						}
+					}
+				}
+
+				// when jobject contains variable multiple time, then repeat the search
+				// on the same variable, so do c--, this is not ideal implementation
+				if (jobject.ToString().Contains(variable.PathAsVariable))
+				{
+					refillJObjectCounter++;
+					if (refillJObjectCounter < 20)
+					{
+						c--;
+					} else
+					{
+						throw new Exception($"Could not fill jobject for {variable.PathAsVariable}. Object is: {jobject.ToString()}");
 					}
 				}
 

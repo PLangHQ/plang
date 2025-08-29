@@ -198,6 +198,7 @@ First we will give you the original error, then each error that occured will sho
 			if (goal?.ParentGoal != null)
 			{
 				var parentGoal = goal;
+				int counter = 0;
 				while (parentGoal != null)
 				{
 					if (callStack != null) callStack += "\n\t";
@@ -206,6 +207,12 @@ First we will give you the original error, then each error that occured will sho
 
 					callStack += $"{parentGoal.GoalName} - {parentGoal.RelativeGoalPath}:{currentStep.LineNumber}";
 					parentGoal = parentGoal.ParentGoal;
+
+					if (counter++ > 100)
+					{
+						Console.WriteLine($"To deep: ErrorHelper - goalName: {parentGoal?.GoalName}");
+						break;
+					}
 				}
 				callStack = "\n🛝  Call stack:\n\t" + callStack;
 			}

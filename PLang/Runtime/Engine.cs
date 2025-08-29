@@ -58,6 +58,9 @@ namespace PLang.Runtime
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
 		IOutputStream OutputStream { get; }
 		List<MockData> Mocks { get; init; }
+		IServiceContainer Container { get; }
+		List<IEngine> ChildEngines { get; set; }
+		IAppCache AppCache { get; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
@@ -126,6 +129,17 @@ namespace PLang.Runtime
 		public MemoryStack MemoryStack { get { return memoryStack; } }
 		public PrParser PrParser { get { return prParser; } }
 
+
+		public IAppCache AppCache
+		{
+			get
+			{
+				return container.GetInstance<IAppCache>();
+			}
+		}
+
+		public IServiceContainer Container { get { return this.container; } }
+		public List<IEngine> ChildEngines { get; set; } = new();
 		public ConcurrentDictionary<string, LiveConnection> LiveConnections { get; set; } = new();
 		public record LiveConnection(Microsoft.AspNetCore.Http.HttpResponse Response, bool IsFlushed)
 		{
@@ -167,7 +181,7 @@ namespace PLang.Runtime
 			this.OutputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
-			
+
 			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			var outputStream = outputStreamFactory.CreateHandler();
 			var memoryStack = container.GetInstance<MemoryStack>();
@@ -241,7 +255,7 @@ namespace PLang.Runtime
 
 			if (outputStream is HttpOutputStream hos)
 			{
-				hos.MainResponseIsDone = true;
+				//hos.MainResponseIsDone = true;
 			}
 
 			outputStream = ParentEngine.OutputStream;
@@ -273,8 +287,8 @@ namespace PLang.Runtime
 			pool = new EnginePool(2, () =>
 			{
 
-				using var serviceContainer = new ServiceContainer();
-				
+				var serviceContainer = new ServiceContainer();
+
 				serviceContainer.RegisterForPLang(rootPath, "/",
 									container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
 									container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
@@ -290,7 +304,7 @@ namespace PLang.Runtime
 			return pool;
 
 		}
-		
+
 		public MemoryStack GetMemoryStack() => this.memoryStack;
 
 		public IEventRuntime GetEventRuntime()
@@ -385,7 +399,9 @@ namespace PLang.Runtime
 					if (error != null) return (ov, error);
 				}
 
+
 				WatchForRebuild();
+
 			}
 			catch (Exception ex)
 			{
@@ -426,7 +442,7 @@ namespace PLang.Runtime
 						if (aliveTaskType?.Instances != null)
 						{
 							bool isCompleted = true;
-
+							int counter = 0;
 							List<Task> tasks = new();
 							for (int i = 0; i < aliveTaskType.Instances.Count; i++)
 							{
@@ -443,6 +459,11 @@ namespace PLang.Runtime
 									aliveTaskType.Instances.Remove(engineWait);
 									engineWait.engine.ParentEngine?.GetEnginePool(engineWait.engine.Path).Return(engineWait.engine);
 									i--;
+									counter++;
+									if (counter > 100)
+									{
+										Console.WriteLine("!!! LOOP waiting on engine");
+									}
 								}
 							}
 							if (aliveTaskType.Instances.Count == 0)
@@ -473,9 +494,13 @@ namespace PLang.Runtime
 			{
 				item.Dispose();
 			}
-			//context?.Clear();
-			//_debugSemaphore.Dispose();
 
+			foreach (var child in ChildEngines)
+			{
+				child.Container.Dispose();
+			}
+
+			//container.Dispose();
 
 			this.disposed = true;
 		}
@@ -490,6 +515,8 @@ namespace PLang.Runtime
 
 		private void WatchForRebuild()
 		{
+			if (ParentEngine != null) return;
+
 			string path = fileSystem.Path.Join(fileSystem.BuildPath);
 			if (fileWatcher != null) fileWatcher.Dispose();
 
@@ -522,6 +549,19 @@ namespace PLang.Runtime
 
 									pool.Value.ReloadGoals();
 								}
+
+								foreach (var childEngine in ChildEngines)
+								{
+									childEngine.PrParser.ForceLoadAllGoals();
+									childEngine.GetEventRuntime().Reload();
+									if (error != null)
+									{
+										Console.WriteLine(error);
+									}
+									var pool = childEngine.GetEnginePool(childEngine.Path);
+									pool.ReloadGoals();
+								}
+
 							}
 						}, TaskScheduler.Default);
 				}
@@ -551,12 +591,12 @@ namespace PLang.Runtime
 		{
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-		
+
 			(var answer, var error) = await AskUser.GetAnswer(this, fare.Message);
 			if (error != null) return (false, error);
 
 			return await fileAccessHandler.ValidatePathResponse(fare.AppName, fare.Path, answer.ToString(), FileSystem.Id);
-			
+
 		}
 
 
@@ -628,7 +668,7 @@ namespace PLang.Runtime
 				memoryStack.Put(parameter.Key, parameter.Value);
 			}
 			goal!.ParentGoal = parentGoal;
-			
+
 			return await RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
@@ -637,7 +677,7 @@ namespace PLang.Runtime
 			goal.Stopwatch = Stopwatch.StartNew();
 			goal.UniqueId = Guid.NewGuid().ToString();
 
-			logger.LogDebug($"Goal {goal.GoalName}");
+			logger.LogInformation($"[Start] Goal {goal.GoalName}");
 
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
@@ -660,7 +700,7 @@ namespace PLang.Runtime
 
 				//if (await CachedGoal(goal)) return null;
 				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, 0);
-				
+
 				await DisposeGoal(goal);
 
 				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
@@ -696,7 +736,7 @@ namespace PLang.Runtime
 					}
 				}
 				goal.Stopwatch.Stop();
-				logger.LogDebug($"=> Total time for {goal.GoalName} - " + goal.Stopwatch.ElapsedMilliseconds);
+				logger.LogInformation($"[End] Goal: {goal.GoalName} => " + goal.Stopwatch.ElapsedMilliseconds);
 
 			}
 
@@ -704,7 +744,7 @@ namespace PLang.Runtime
 
 		private async Task DisposeGoal(Goal goal)
 		{
-			
+
 		}
 
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0)
@@ -730,7 +770,10 @@ namespace PLang.Runtime
 					}
 					logger.LogDebug($"   - Step has callback info - {stepWatch.ElapsedMilliseconds}");
 				}
+				logger.LogInformation("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
 				(returnValues, error) = await RunStep(goal, stepIndex);
+				logger.LogInformation("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
+
 				if (error != null)
 				{
 					logger.LogDebug($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
@@ -762,7 +805,7 @@ namespace PLang.Runtime
 
 						}
 
-							logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+						logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 						return (returnValues, stepIndex, null);
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex);
@@ -953,7 +996,7 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<(object? ReturnValue, IError? Error)> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount)
 		{
-			if (error == null || error is IErrorHandled || error is EndGoal || error is IUserInputError) return (null, error);
+			if (error == null || error is IErrorHandled) return (null, error);
 			if (step.ModuleType == "PLang.Modules.ThrowErrorModule" && step.Instruction?.Function.Name == "Throw") return (null, error);
 
 			if (error is Errors.AskUser.AskUserError aue)
@@ -1178,14 +1221,14 @@ private async Task CacheGoal(Goal goal)
 		}
 
 		private List<IDisposable> listOfDisposables = new();
-		
+
 		private Goal? GetStartGoal(string goalName)
 		{
 			string prPath = fileSystem.Path.Join(goalName.Replace(".goal", ""), ISettings.GoalFileName);
 			string absolutePath = fileSystem.Path.Join(fileSystem.BuildPath, prPath);
-			
+
 			return prParser.GetGoal(absolutePath);
-			
+
 		}
 		private List<string> GetStartGoals(List<string> goalNames)
 		{

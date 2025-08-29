@@ -126,7 +126,7 @@ namespace PLang.Modules.PlangModule
 		}
 
 
-		public async Task<(string?, IError?)> GetModules(string stepText, List<string> excludeModules)
+		public async Task<(string?, IError?)> GetModules(string stepText, List<string>? excludeModules = null)
 		{
 			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
 			var userRequestedModule = GetUserRequestedModule(stepText);
@@ -432,7 +432,13 @@ namespace PLang.Modules.PlangModule
 
 		}
 
-	
+		public async Task<(ClassDescription?, IError?)> GetMehodInfo(string type, string methodName)
+		{
+			var cdh = new ClassDescriptionHelper();
+			return cdh.GetClassDescription(Type.GetType(type + ".Program"), methodName);
+
+		}
+		
 
 		public class MethodInfoDto
 		{

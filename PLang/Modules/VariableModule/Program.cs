@@ -67,7 +67,7 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key));
 				try
 				{
-					var result = await db.Select(dataSource, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+					var result = await db.Select([dataSource], "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
 					if (result.Error != null && result.Error.Message.Contains("no such table"))
 					{
 						var createTableResult = await CreateVariablesTable(db);
@@ -415,7 +415,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null)
+		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null, string? FullTypeName = null)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
@@ -434,6 +434,12 @@ namespace PLang.Modules.VariableModule
 					key = newKey.ToString();
 				}
 			}
+
+			if (FullTypeName != null && FullTypeName != "System.Object")
+			{
+				content = TypeHelper.ConvertToType(content, Type.GetType(FullTypeName));
+			}
+
 			logger.LogDebug($"         - loaded % - {stopwatch.ElapsedMilliseconds}");
 			memoryStack.Put(key, content, goalStep: goalStep);
 			logger.LogDebug($"         - Done put into memorystack - {stopwatch.ElapsedMilliseconds}");
@@ -461,7 +467,11 @@ namespace PLang.Modules.VariableModule
 
 
 
-		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.
+Example:
+`set default value %name% = %request.body.name%, %zip% = %request.body.zip%` => [{key=%name%, value=%request.body.zip%}, {key=%zip%, value=%request.body.zip%}]
+`set default value %target% = ""#body"" => {key=%target%, value=""#body""}
+")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
@@ -486,15 +496,29 @@ namespace PLang.Modules.VariableModule
 			}
 		}
 
-		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
-		{
-			foreach (var key in keyValues)
-			{
-				var objectValue = memoryStack.GetObjectValue(key.Key, false);
-				object? value = !VariableHelper.IsEmpty(key.Value.Item1) ? key.Value.Item1 : key.Value.Item2;
+		[Description("Type should be c# object type, e.g. System.String, System.DateTime, etc. When undefined, set to System.Object")]
+		public record VariableIfEmpty(string Name, object FirstValue, object ValueIfFirstIsEmpty, string Type);
 
-				await SetVariable(key.Key, value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
+		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		{
+			foreach (var variable in variables)
+			{
+				
+
+
+				var value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.Get(str) : variable.FirstValue;
+				var value2 = (variable.ValueIfFirstIsEmpty is string str2 && str2.Contains("%")) ? memoryStack.Get(str2) : variable.ValueIfFirstIsEmpty;
+
+				var objectValue = memoryStack.GetObjectValue(variable.Name, false);
+				object? val = !VariableHelper.IsEmpty(value) ? value : value2;
+
+				if (variable.Type != "System.Object")
+				{
+					val = TypeHelper.ConvertToType(val, Type.GetType(variable.Type));
+				}
+
+				await SetVariable(variable.Name, val, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
 
@@ -512,6 +536,16 @@ namespace PLang.Modules.VariableModule
 				value = value.ToString();
 			}
 
+			if (val is string str && str.TrimStart().StartsWith("[") && str.TrimEnd().EndsWith("]"))
+			{
+				try
+				{
+					val = JArray.Parse(str.Trim());
+				}
+				catch { }
+			}
+
+
 			if ((val == null || val is string) && value is string)
 			{
 				if (val == null) val = "";
@@ -519,13 +553,19 @@ namespace PLang.Modules.VariableModule
 				string appendingValue = (seperatorLocation == "start") ? seperator.ToString() + value.ToString() : value.ToString() + seperator.ToString();
 				val = (valueLocation == "postfix") ? val + appendingValue : appendingValue + val;
 			}
+			else if (val is JArray jArray)
+			{
+				jArray.Add(value);
+
+				val = jArray;
+			}
 			else if (val is System.Collections.IList list)
 			{
 				if (!shouldBeUnique || (shouldBeUnique && !list.Contains(val)))
 				{
 					list.Add(value);
 				}
-			}
+			}			
 			else
 			{
 				val = new List<object>();

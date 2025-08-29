@@ -282,6 +282,7 @@ namespace PLang.Modules
 
 					return await RunFunction(function);
 				}
+				
 				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Key: ex.GetType().FullName ?? "ProgramError", 500, Exception: ex);
 
 				return (null, pe);

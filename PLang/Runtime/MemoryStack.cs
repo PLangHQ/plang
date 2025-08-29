@@ -132,6 +132,9 @@ namespace PLang.Runtime
 
 				for (int i = 0; i < varsInStep.Count; i++)
 				{
+					//prevent endless loop
+					if (varsInStep[i].Equals("%!memorystack%", StringComparison.OrdinalIgnoreCase)) continue;
+
 					var ov = this.GetObjectValue(varsInStep[i]);
 
 					if (!ov.Initiated)
@@ -309,6 +312,11 @@ namespace PLang.Runtime
 			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == keyPath.VariableName);
 			if (contextObject.Key == null) return null;
 
+			var dict = contextObject.Value as Dictionary<string, object>;
+			if (dict != null && keyPath.Path != null && dict.ContainsKey(keyPath.Path.TrimStart('.')))
+			{
+				return new ObjectValue(keyPath.VariableName, dict[keyPath.Path.TrimStart('.')]);
+			}
 			var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
 			return new ObjectValue(keyPath.VariableName, contextObject.Value, type, null, true);
 		}
@@ -1226,7 +1234,28 @@ namespace PLang.Runtime
 				throw new Exception($"The key '{key}' cannot be added to memory stack");
 			}
 
-			ObjectValue? prevObjectValue = variables.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value;
+			ObjectValue? prevObjectValue;
+			if (key.Contains("."))
+			{
+				var childObjectValue = GetObjectValue(key);
+				if (childObjectValue.Parent != null)
+				{
+					string childPath = key;
+					var ovToSet = objectValue;
+					
+					(key, objectValue) = GetTopObjectValueAndKey(childObjectValue);
+					prevObjectValue = objectValue;
+					
+					objectValue.Set(childObjectValue.PathAsVariable, ovToSet);
+				} else
+				{
+					prevObjectValue = childObjectValue;
+				}
+			}
+			else
+			{
+				prevObjectValue = variables.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value;
+			}
 
 			if (prevObjectValue != null)
 			{
@@ -1249,6 +1278,17 @@ namespace PLang.Runtime
 			}
 
 		}
+
+		private (string key, ObjectValue objectValue) GetTopObjectValueAndKey(ObjectValue prevObjectValue)
+		{
+			var parent = prevObjectValue.Parent ?? prevObjectValue;
+			while (parent.Parent != null)
+			{
+				parent = parent.Parent;
+			}
+			return (parent.Path, parent);
+		}
+
 		private static readonly object _locker = new();
 
 		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep? step = null)

@@ -112,6 +112,8 @@ namespace PLang.Modules.LlmModule
 			return goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 		}
 
+
+		[Description("When user intent is to write the result into a %variable%, make sure to respond with ReturnValues")]
 		public async Task<(object?, IError?, Properties?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
@@ -207,66 +209,49 @@ namespace PLang.Modules.LlmModule
 			var properties = new Properties();
 			properties.Add(new ObjectValue("Llm", llmQuestion));
 
-			IError? error = null;
-			try
+			(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
+
+			if (queryError != null) return (null, queryError, properties);
+			if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
+
+			promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
+			goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
+			goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
+
+			if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 			{
-				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
-
-				if (queryError != null) return (null, queryError, properties);
-				if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
-
-				promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
-				goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
-				goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
-
-				if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
-				{
-					return (response, null, properties);
-				}
-
-				if (response is not JObject)
-				{
-					return (response, new ProgramError("Response from LLM is not written to variable", FixSuggestion: $"Add `write to %result%` to you step, e.g. {goalStep.Text}\n\twrite to %result%"), properties);
-				}
-
-				var returnValues = new List<ObjectValue>();
-				var objResult = (JObject)response;
-				foreach (var property in objResult.Properties())
-				{
-					if (property.Value is JValue)
-					{
-						var value = ((JValue)property.Value).Value;
-
-						var objectValue = new ObjectValue(property.Name, value);
-						returnValues.Add(objectValue);
-
-					}
-					else
-					{
-						var objectValue = new ObjectValue(property.Name, property.Value);
-						returnValues.Add(objectValue);
-					}
-				}
-				return (returnValues, null, properties);
-
-
-
+				return (response, null, properties);
 			}
-			catch (Exception ex)
+
+			if (response is not JObject)
 			{
-				error = new ProgramError(ex.Message, goalStep, function);
+				return (response, new ProgramError("Response from LLM is not written to variable", FixSuggestion: $"Add `write to %result%` to you step, e.g. {goalStep.Text}\n\twrite to %result%"), properties);
 			}
-			finally
+
+			var returnValues = new List<ObjectValue>();
+			var objResult = (JObject)response;
+			foreach (var property in objResult.Properties())
 			{
-				LogLevel logLevel = LogLevel.Trace;
-				Enum.TryParse(goalStep.LoggerLevel, true, out logLevel);
+				if (property.Value is JValue)
+				{
+					var value = ((JValue)property.Value).Value;
 
-				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
-				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
+					var objectValue = new ObjectValue(property.Name, value);
+					returnValues.Add(objectValue);
 
-
+				}
+				else
+				{
+					var objectValue = new ObjectValue(property.Name, property.Value);
+					returnValues.Add(objectValue);
+				}
 			}
-			return (null, error, properties);
+			return (returnValues, null, properties);
+
+
+
+
+
 		}
 
 

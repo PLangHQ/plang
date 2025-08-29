@@ -37,7 +37,7 @@ namespace PLang.Modules.HttpModule
 			{
 				return (absoluteSaveTo, null, null);
 			}
-			
+
 
 			using (var client = httpClientFactory.CreateClient())
 			{
@@ -374,7 +374,7 @@ namespace PLang.Modules.HttpModule
 		public virtual async Task<(object? Data, IError? Error, Properties Properties)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
-			
+
 			var requestUrl = this.variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
@@ -400,17 +400,28 @@ namespace PLang.Modules.HttpModule
 					}
 				}
 			}
-			if (context.ContainsKey("!callback"))
+
+			if (context != null)
 			{
-				request.Headers.TryAddWithoutValidation("!callback", JsonConvert.SerializeObject(context["!callback"]));
-			}
-			if (context.ContainsKey("!contract"))
-			{
-				request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(context["!contract"]));
+				if (context.ContainsKey("!callback"))
+				{
+					request.Headers.TryAddWithoutValidation("!callback", JsonConvert.SerializeObject(context["!callback"]));
+				}
+				if (context.ContainsKey("!contract"))
+				{
+					request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(context["!contract"]));
+				}
 			}
 			if (request.Headers.Accept.Count == 0)
 			{
-				request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+				if (string.IsNullOrEmpty(contentType))
+				{
+					request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+				}
+				else
+				{
+					request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+				}
 			}
 			Dictionary<string, object?> requestValue = new();
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
@@ -430,7 +441,8 @@ namespace PLang.Modules.HttpModule
 			}
 
 			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-			
+
+
 			requestValue.Add("Headers", request.Headers);
 			requestValue.Add("Url", url);
 			Properties properties = new();
@@ -446,20 +458,36 @@ namespace PLang.Modules.HttpModule
 				var mediaType = response.Content.Headers.ContentType?.MediaType;
 				if (!response.IsSuccessStatusCode)
 				{
-					
+
 					var result = await programFactory.GetProgram<SerializerModule.Program>(goalStep).Deserialize(response.Content.ReadAsStream(), mediaType);
 					if (result.Error != null && result.Error.Key != "SerializerNotDefined") return (null, result.Error, GetHttpResponse(properties, response));
 
 
 					string responseStr = await response.Content.ReadAsStringAsync();
-					
+
 					var obj = result.Object as Dictionary<string, object?>;
 					if (obj == null)
-					{						
+					{
 						if (string.IsNullOrEmpty(responseStr))
 						{
 							responseStr = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
 						}
+
+						if (IsXml(response.Content.Headers.ContentType?.MediaType))
+						{
+							// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+							// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+							XmlDocument xmlDoc = new XmlDocument();
+							xmlDoc.LoadXml(Regex.Replace(responseStr, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+							string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+							properties = GetHttpResponse(properties, response);
+							return (JsonConvert.DeserializeObject(jsonString), null, properties);
+
+						}
+
+
+
 						properties = GetHttpResponse(properties, response);
 						return (result.Object, new ProgramError(responseStr, goalStep, function, StatusCode: (int)response.StatusCode), properties);
 					}
@@ -470,7 +498,7 @@ namespace PLang.Modules.HttpModule
 						var signature = await programFactory.GetProgram<IdentityModule.Program>(goalStep).VerifySignature(signatureJson.Value.ToString());
 						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(properties, response));
 
-						if (signature.Signature != null)
+						if (context != null && signature.Signature != null)
 						{
 							context.AddOrReplace(ReservedKeywords.Signature, signature.Signature);
 							context.AddOrReplace(ReservedKeywords.ServiceIdentity, signature.Signature.Identity);

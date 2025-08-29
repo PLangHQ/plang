@@ -11,6 +11,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.WebserverModule;
 using PLang.Runtime;
+using Sprache;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -537,6 +538,15 @@ public class TypeHelper : ITypeHelper
 			var jArray2 = new JArray((IEnumerable<JToken>)value);
 			return jArray2.ToString();
 		}
+		if (value is string str && targetType.Name.StartsWith("List`"))
+		{
+			try
+			{
+				var list = JsonConvert.DeserializeObject(str, targetType);
+				return list;
+			}
+			catch { }
+		}
 
 		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
 		{
@@ -712,7 +722,7 @@ public class TypeHelper : ITypeHelper
 		{
 			theNumericType = item1.GetType();
 			var obj = TypeHelper.ConvertToType(item2, item1.GetType());
-			if (obj != null)
+			if (obj != null && obj.GetType() == theNumericType)
 			{
 				success = true;
 				return (item1, obj);

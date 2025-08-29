@@ -18,13 +18,15 @@ using System.Threading.Tasks;
 
 namespace PLang.Runtime
 {
+	public record EngineInfo(IEngine Engine, DateTime LastAccess);
+
+
 	public class EnginePool : IDisposable
 	{
-		private readonly ConcurrentBag<IEngine> _pool = new();
-		private readonly SemaphoreSlim _semaphore;
+		private readonly ConcurrentQueue<EngineInfo> _pool = new();
+
 		private readonly Func<IEngine> _factory;
 		private readonly int _maxSize;
-		private int _currentCount;
 		private bool disposed;
 
 		public EnginePool(int initialSize, Func<IEngine> factory, int maxSize = 50)
@@ -35,32 +37,75 @@ namespace PLang.Runtime
 			_factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			_maxSize = maxSize;
 			//todo: dont really understand this SemaphoreSlim, seems to work
-			_semaphore = new SemaphoreSlim(maxSize, maxSize);
-			
+
+			_ = Task.Run(async () =>
+			{
+				while (!disposed)
+				{
+					await Task.Delay(TimeSpan.FromSeconds(30));
+					await CheckPoolSize();
+				}
+			});
+
 			for (int i = 0; i < initialSize; i++)
 			{
 				var engine = _factory();
 				SetProperties(engine, engine.ParentEngine, null, engine.Name, engine.OutputStreamFactory.CreateHandler());
 
-				_pool.Add(engine);
-				//Interlocked.Increment(ref _currentCount);
+				_pool.Enqueue(new EngineInfo(engine, DateTime.Now));
 			}
+		}
+
+		private async Task CheckPoolSize()
+		{
+			var now = DateTime.UtcNow;
+			var keep = new List<EngineInfo>();
+
+			while (_pool.TryDequeue(out var info))
+			{
+				if (now - info.LastAccess < TimeSpan.FromMinutes(3) || keep.Count < 2)
+					keep.Add(info);
+				else
+				{
+					var proc = Process.GetCurrentProcess();
+					
+					try { 
+						info.Engine.Container.Dispose();
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine("Dispose engine on CheckPoolSize:" + ex);
+
+					}
+					
+				}
+			}
+
+			foreach (var item in keep)
+				_pool.Enqueue(item);
+
+
 		}
 
 		public void ReloadGoals()
 		{
-			foreach (var engine in _pool)
+			foreach (var engineInfo in _pool)
 			{
-				engine.PrParser.ForceLoadAllGoals();
+				engineInfo.Engine.PrParser.ForceLoadAllGoals();
+				engineInfo.Engine.GetEventRuntime().Reload();
 			}
 		}
 
 		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null, HttpContext? httpContext = null)
 		{
-			if (_pool.TryTake(out var engine))
+			var proc = Process.GetCurrentProcess();
+
+			if (_pool.TryDequeue(out var engineInfo))
 			{
-				return SetProperties(engine, parentEngine, callingStep, name, outputStream, httpContext);
+				return SetProperties(engineInfo.Engine, parentEngine, callingStep, name, outputStream, httpContext);
 			}
+			
+			Console.WriteLine($"Create new engine: {_pool.Count}");
 
 			var newEngine = _factory();
 			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream, httpContext);
@@ -71,12 +116,13 @@ namespace PLang.Runtime
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
 			engine.CallbackInfos = parentEngine.CallbackInfos;
-			
+
 
 			if (outputStream != null)
 			{
 				engine.SetOutputStream(outputStream);
-			} else
+			}
+			else
 			{
 				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
 				engine.SetOutputStream(outputStream);
@@ -93,6 +139,12 @@ namespace PLang.Runtime
 				engine.SetCallingStep(callingStep);
 			}
 
+			
+			engine.AddContext("!plang.output", outputStream.Output);			
+			engine.AddContext("!plang.osPath", engine.FileSystem.SystemDirectory);
+			engine.AddContext("!plang.rootPath", parentEngine?.Path ?? engine.FileSystem.RootDirectory);
+
+
 			//engine.GetContext().Clear();
 			foreach (var item in parentEngine.GetContext())
 			{
@@ -104,7 +156,7 @@ namespace PLang.Runtime
 			{
 				engine.GetMemoryStack().Put(item, callingStep);
 			}
-						
+
 			return engine;
 		}
 
@@ -112,7 +164,7 @@ namespace PLang.Runtime
 		{
 			engine.Return(reset);
 
-			_pool.Add(engine);
+			_pool.Enqueue(new EngineInfo(engine, DateTime.Now));
 		}
 
 		public virtual void Dispose()
@@ -121,8 +173,14 @@ namespace PLang.Runtime
 			{
 				return;
 			}
-			_semaphore.Dispose();
+
+			foreach (var item in _pool)
+			{
+				item.Engine.Dispose();
+			}
+
 			this.disposed = true;
+
 		}
 
 		protected virtual void ThrowIfDisposed()

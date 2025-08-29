@@ -1,0 +1,37 @@
+{
+  "Hash": null,
+  "SignedMessage": null,
+  "Text": "write out system error \"%!error%\"",
+  "ModuleType": "PLang.Modules.OutputModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to write out the system error message. The Write function is suitable for outputting text content with a specified channel. Here, the channel is set to 'system' to indicate it is a system error message, and the content is the variable %!error%.",
+    "Name": "Write",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "content",
+        "Value": "%!error%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "channel",
+        "Value": "system"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "content": {
+        "Name": "content",
+        "FullTypeName": "System.Object"
+      },
+      "channel": {
+        "Name": "channel",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {}
+  }
+}

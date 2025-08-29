@@ -17,7 +17,7 @@ namespace PLang.Errors.Runtime
 		public override Goal? Goal { get; set; } = Step.Goal;
 		public override string ToString()
 		{
-			return Message; 
+			return base.ToString(); 
 		}
 	}
 }

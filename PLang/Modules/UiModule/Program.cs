@@ -171,8 +171,8 @@ Attribute: Member is the key in the SetAttribute js method
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 
 
-		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null,
-			string? CssSelector = null, string Action = "innerHTML", bool Unique = false, string LayoutName = "default", bool RenderToOutputstream = false)
+		public record RenderTemplateOptions(string FileNameOrHtml, Dictionary<string, object?>? Parameters = null,
+			string? CssSelector = null, string Action = "innerHTML", bool ReRender = true, string LayoutName = "default", bool RenderToOutputstream = false)
 		{
 
 			[LlmIgnore]
@@ -180,8 +180,8 @@ Attribute: Member is the key in the SetAttribute js method
 			{
 				get
 				{
-					if (FileName.Contains("\n") || FileName.Contains("\r") || FileName.Contains("\r")) return false;
-					string ext = Path.GetExtension(FileName);
+					if (FileNameOrHtml.Contains("\n") || FileNameOrHtml.Contains("\r") || FileNameOrHtml.Contains("\r")) return false;
+					string ext = Path.GetExtension(FileNameOrHtml);
 					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
 				}
 
@@ -198,26 +198,30 @@ Attribute: Member is the key in the SetAttribute js method
 			return path;
 		}
 
-		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
+		[Description(@" Examples:
 ```plang
 - render product.html => renderToOutputstream = true
 - render frontpage.html, write to %html% => renderToOutputstream = false
-- render product.html to #main => renderToOutputstream = true, cssSelector=""#main""
+- render product.html to #main => renderToOutputstream = true, ReRender=true, cssSelector=""#main""
+- replace #main with template.html => cssSelector=#main, action=replace, ReRender=true, FileName=template.html, renderToOutputStream= true
+- set html of #product to product.html => cssSelector=#product, action=innerHTML, ReRender=true, FileName=product.html, renderToOutputStream= true
+- append to #list to item.html => cssSelector=#list, action=append, ReRender=true, FileName=item.html, renderToOutputStream= true
 
 CssSelector can be null when not defined by user.
 Action:innerHTML|innerText|append|prepend|replace|outerHTML|outerText
-Unique: default is false. this element should only exist one time on web page, it will not overwrite existing element
+ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
+When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
 		{
 			string html;
 			if (options.IsTemplateFile)
 			{
-				var filePath = GetPath(options.FileName);
+				var filePath = GetPath(options.FileNameOrHtml);
 				if (!fileSystem.File.Exists(filePath))
 				{
 					string? similarFilesMessage = FileSuggestionHelper.BuildNotFoundMessage(fileSystem, filePath);
-					return (null, new ProgramError($"Template file {options.FileName} not found at {filePath}", goalStep, StatusCode: 404,
+					return (null, new ProgramError($"Template file {options.FileNameOrHtml} not found at {filePath}", goalStep, StatusCode: 404,
 						FixSuggestion: similarFilesMessage));
 				}
 
@@ -225,7 +229,7 @@ Unique: default is false. this element should only exist one time on web page, i
 			}
 			else
 			{
-				html = options.FileName;
+				html = options.FileNameOrHtml;
 			}
 			var url = (HttpContext?.Request.Path.Value ?? "/");
 			if (options.Parameters == null) options = options with { Parameters = new() };
@@ -265,7 +269,7 @@ Unique: default is false. this element should only exist one time on web page, i
 			{
 				options = options with { Parameters = new() };
 			}
-			options.Parameters.Add("unique", options.Unique);
+			options.Parameters.Add("reRender", options.ReRender);
 
 			if (!string.IsNullOrEmpty(options.CssSelector))
 			{

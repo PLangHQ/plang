@@ -93,19 +93,19 @@ namespace PLang.Container
 			container.RegisterOutputSystemStreamFactory(outputStream.GetType(), true, outputStream);
 
 			container.Register<RequestHandler>(factory =>
-					new RequestHandler(step, 
-									factory.GetInstance<ILogger>(), 
+					new RequestHandler(step,
+									factory.GetInstance<ILogger>(),
 									factory.GetInstance<IPLangFileSystem>(),
 									factory.GetInstance<Modules.IdentityModule.Program>(),
 									factory.GetInstance<PrParser>()));
 			/*
 		container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 			*/
-		var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), new PLang.Modules.ProgramFactory(container));
-		container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
+			var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), new PLang.Modules.ProgramFactory(container));
+			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
 
-		container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
-		
+			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
+
 			RegisterEventRuntime(container);
 			RegisterBaseVariables(container);
 		}
@@ -238,7 +238,7 @@ namespace PLang.Container
 			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			var outputStream = outputStreamFactory.CreateHandler();
 			if (outputStream != null)
-			{				
+			{
 				context.AddOrReplace("!plang.output", outputStream.Output);
 			}
 
@@ -364,6 +364,11 @@ namespace PLang.Container
 			container.RegisterSingleton<IAppCache, InMemoryCaching>(typeof(InMemoryCaching).FullName);
 			container.RegisterSingleton(factory =>
 			{
+				if (parentEngine != null)
+				{
+					return parentEngine.AppCache;
+				}
+
 				string type = GetImplementation(context, ReservedKeywords.Inject_Caching, typeof(InMemoryCaching));
 				return factory.GetInstance<IAppCache>(type);
 			});

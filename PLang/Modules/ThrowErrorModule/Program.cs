@@ -35,8 +35,8 @@ namespace PLang.Modules.ThrowErrorModule
 			if (message is IError) return message as IError;
 
 			string errorMessage = (message == null) ? "UserDefinedError" : message.ToString() ?? "UserDefinedError";
-			
 			return new UserInputError(errorMessage, goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
+			
 		}
 		 
 

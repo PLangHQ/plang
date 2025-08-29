@@ -98,6 +98,8 @@ namespace PLang.Modules.TemplateEngineModule
 		{
 
 			var templateContext = new TemplateContext();
+			templateContext.EnableNullIndexer = true;
+			templateContext.EnableRelaxedMemberAccess = true;
 			templateContext.MemberRenamer = member => member.Name;
 
 			if (variables != null)
@@ -351,6 +353,11 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			(_, exists) = ContainsVariable("render", templateContext);
 			if (!exists)
 			{
+				globals.Import("render2", new Func<string, Dictionary<string, object>?, Task<string>>(async (path, vars) =>
+				{
+					return "hello";
+				}));
+
 				globals.Import("render", new Func<string, object[]?, Task<string>>(async (path, vars) =>
 				{
 					var modelDict = new Dictionary<string, object?>();

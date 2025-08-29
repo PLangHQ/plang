@@ -44,6 +44,10 @@ namespace PLang.Models.ObjectValueConverters
 				}
 			}
 
+			if (type != typeof(ObjectValue) && objectValue.Value is ObjectValue ov2)
+			{
+				return System.Convert.ChangeType(ov2.Value, type);
+			}
 			return System.Convert.ChangeType(objectValue.Value, type);
 		}
 
