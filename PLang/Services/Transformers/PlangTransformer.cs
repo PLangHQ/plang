@@ -25,6 +25,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.UiModule.Program;
+using static PLang.Services.Transformers.PlangTransformer;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.Transformers
@@ -60,6 +61,14 @@ namespace PLang.Services.Transformers
 
 		public async Task<IError?> Transform(Stream stream, object data, Dictionary<string, object?>? properties, string type = "html")
 		{
+			
+			if (data is IError error)
+			{
+				var errorOutputData = new ErrorOutputData("error", error, properties);
+				return await jsonTransformer.Transform(stream, errorOutputData, properties, type);
+				
+			}
+
 			//todo: hack, remove this
 			if (type == "text") type = "html";
 			var outputData = new OutputData(type, data, properties);

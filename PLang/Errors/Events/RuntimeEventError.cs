@@ -41,10 +41,10 @@ namespace PLang.Errors.Events
 				}
 			}
 			IError error = this;
-			while (error is RuntimeEventError ree &&  ree.InitialError != null)
+			/*while (error is RuntimeEventError ree &&  ree.InitialError != null)
 			{
 				error = ree.InitialError;
-			}
+			}*/
 			return ErrorHelper.ToFormat(contentType, error, extraInfo: str);
 
         }

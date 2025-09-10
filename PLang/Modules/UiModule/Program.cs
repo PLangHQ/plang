@@ -172,7 +172,8 @@ Attribute: Member is the key in the SetAttribute js method
 
 
 		public record RenderTemplateOptions(string FileNameOrHtml, Dictionary<string, object?>? Parameters = null,
-			string? CssSelector = null, string Action = "innerHTML", bool ReRender = true, string LayoutName = "default", bool RenderToOutputstream = false)
+			string? CssSelector = null, string Action = "innerHTML", bool ReRender = true, string LayoutName = "default", 
+			bool RenderToOutputstream = false, string StatusCode = "200", bool DontRenderMainLayout = false)
 		{
 
 			[LlmIgnore]
@@ -248,7 +249,7 @@ When user doesn't write the return value into any variable, set it as renderToOu
 			if (error != null) return (content, error);
 
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax"))
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
 			{
 				var layoutOptions = GetLayoutOptions();
 
@@ -283,7 +284,9 @@ When user doesn't write the return value into any variable, set it as renderToOu
 
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{
-				await outputStreamFactory.CreateHandler().Write(goalStep, content, "html", parameters: options.Parameters);
+				int statusCode = (string.IsNullOrWhiteSpace(options.StatusCode)) ? 200 : int.Parse(options.StatusCode);
+
+				await outputStreamFactory.CreateHandler().Write(goalStep, content, "html", statusCode: statusCode, parameters: options.Parameters);
 			}
 
 			return (content, null);

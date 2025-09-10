@@ -24,6 +24,7 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -52,7 +53,7 @@ namespace PLang.Runtime
 		public string Environment { get; set; }
 		GoalStep? CallingStep { get; }
 		IPLangFileSystem FileSystem { get; }
-		List<CallbackInfo>? CallbackInfos { get; set; }
+		CallbackInfo? CallbackInfo { get; set; }
 		PrParser PrParser { get; }
 		MemoryStack MemoryStack { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
@@ -215,7 +216,7 @@ namespace PLang.Runtime
 			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
-		public List<CallbackInfo>? CallbackInfos { get; set; }
+		public CallbackInfo? CallbackInfo { get; set; }
 
 		public void SetOutputStream(IOutputStream outputStream)
 		{
@@ -268,7 +269,7 @@ namespace PLang.Runtime
 			}
 			if (reset)
 			{
-				CallbackInfos = null;
+				CallbackInfo = null;
 				var prParser = container.GetInstance<PrParser>();
 				prParser.ClearVariables();
 			}
@@ -757,16 +758,15 @@ namespace PLang.Runtime
 			{
 				Stopwatch stepWatch = Stopwatch.StartNew();
 				logger.LogDebug($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
-				if (CallbackInfos != null)
+				if (CallbackInfo != null && CallbackInfo.GoalHash == goal.Hash)
 				{
-					var callbackInfo = CallbackInfos.FirstOrDefault(p => p.GoalHash == goal.Hash);
-					if (callbackInfo != null && stepIndex < callbackInfo.StepIndex)
+					if (stepIndex < CallbackInfo.StepIndex)
 					{
 						continue;
 					}
-					else if (callbackInfo != null && stepIndex == callbackInfo.StepIndex)
+					else if (stepIndex == CallbackInfo.StepIndex)
 					{
-						goal.GoalSteps[stepIndex].Callback = callbackInfo;
+						goal.GoalSteps[stepIndex].Callback = CallbackInfo;
 					}
 					logger.LogDebug($"   - Step has callback info - {stepWatch.ElapsedMilliseconds}");
 				}

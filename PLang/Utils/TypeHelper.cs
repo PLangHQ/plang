@@ -532,6 +532,10 @@ public class TypeHelper : ITypeHelper
 		{
 			return jToken.ToObject(targetType);
 		}
+		if (value is DateTimeOffset dto && targetType == typeof(DateTime))
+		{
+			return dto.DateTime;
+		}
 
 		if (IsListOfJToken(value) && targetType == typeof(string))
 		{

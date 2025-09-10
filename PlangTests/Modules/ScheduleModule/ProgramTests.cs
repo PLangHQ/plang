@@ -23,7 +23,7 @@ namespace PLangTests.Modules.ScheduleModule
 		{
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
 			p.Init(container, null, new PLang.Building.Model.GoalStep(), null,  null);
 			await p.Sleep(100);
 			stopwatch.Stop();
@@ -45,7 +45,7 @@ namespace PLangTests.Modules.ScheduleModule
 				});
 
 
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
 			await p.Schedule(cronCommand, goalName);
 
 			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<CronJob>>(list => 
@@ -84,7 +84,7 @@ namespace PLangTests.Modules.ScheduleModule
 				return now;
 			};
 
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
 			await p.Run();
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
 
@@ -147,7 +147,7 @@ namespace PLangTests.Modules.ScheduleModule
 			{
 				return now;
 			};
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
 			await p.Run();
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
 

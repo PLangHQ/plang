@@ -115,7 +115,7 @@ namespace PLang.Runtime
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
-			engine.CallbackInfos = parentEngine.CallbackInfos;
+			engine.CallbackInfo = parentEngine.CallbackInfo;
 
 
 			if (outputStream != null)

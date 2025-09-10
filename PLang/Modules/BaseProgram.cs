@@ -247,7 +247,7 @@ namespace PLang.Modules
 					if (this is IDisposable disposable)
 					{
 						//logger.LogDebug($"Calling Dispose for {this}");
-						//disposable.Dispose();
+						disposable.Dispose();
 					}
 					return (null, pe);
 				}

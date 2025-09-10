@@ -382,9 +382,9 @@ Your job is:
 %variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
 leave %variable% as is and do not change text to a variable
 null is used to represent no value, e.g. {{ ""name"": null }}
-Variables should not be changed, they can include dot(.) and parentheses()
+Variables MUST not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
-Parameter.Value that is type String MUST be without escaping quotes. See <Example>
+Parameters that is type System.String MUST be without escaping quotes. See <Example>
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed

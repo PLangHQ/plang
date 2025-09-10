@@ -48,7 +48,7 @@ namespace PLang.Errors.Events
 				}
 			}
 
-			return ErrorHelper.ToFormat(contentType, InitialError ?? this, extraInfo: str);
+			return ErrorHelper.ToFormat(contentType, this, extraInfo: str);
 
 		}
 	}

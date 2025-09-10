@@ -382,6 +382,8 @@ namespace PLang.Events
 				{
 					Console.WriteLine("UserAgent:" + engine.HttpContext.Request.Headers.UserAgent);
 				}
+				if (result.Error == error) continue;
+
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
 					error.ErrorChain.Add(result.Error);
@@ -422,6 +424,7 @@ namespace PLang.Events
 				if (!GoalHasBinding(goal, eve) || !HasAppBinding(eve, error)) continue;
 
 				var result = await Run(eve, goal, step, error);
+				if (result.Error == error) continue;
 
 				if (result.Error != null && result.Error is not IErrorHandled)
 				{
@@ -499,6 +502,8 @@ namespace PLang.Events
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 				{
 					var eventError = await Run(eve, goal, step, error);
+					
+					if (eventError.Error == error) continue;
 
 					if (eventError.Error != null && eventError.Error is not IErrorHandled)
 					{
@@ -680,6 +685,7 @@ namespace PLang.Events
 				{
 					return (Variables, (IEventError)ude);
 				}
+				if (result.Error == error) return (Variables, error);
 
 				if (isBuilder)
 				{

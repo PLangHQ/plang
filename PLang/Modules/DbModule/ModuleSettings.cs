@@ -525,6 +525,7 @@ Be concise"));
 			}
 			else
 			{
+				
 				var connection = new SqliteConnection(connectionString);
 				await connection.OpenAsync();
 				var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable='SetupHash'");
@@ -539,15 +540,40 @@ Be concise"));
 				if (value.ToString() != setupCache?.ToString())
 				{
 					var transaction = await connection.BeginTransactionAsync();
-					var error = await ExecuteSetup(transaction, dataSource.Name);
-					if (error != null)
+					try
+					{
+						IDbConnection? anchorDb = null;
+						var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection>;
+						if (anchors != null && anchors.TryGetValue(dataSource.Name, out anchorDb))
+						{
+							anchorDb.Close();
+						}
+						var error = await ExecuteSetup(transaction, dataSource.Name);
+						if (error != null)
+						{
+							await transaction.RollbackAsync();
+							return (null, error);
+						} else
+						{
+							await transaction.CommitAsync();
+
+							if (anchorDb != null)
+							{
+								anchorDb.Open();
+							}
+						}
+					}
+					catch (Exception ex)
 					{
 						await transaction.RollbackAsync();
-						await connection.CloseAsync();
-						return (null, error);
+						return (null, new ExceptionError(ex, ex.Message));
 					}
-					await transaction.CommitAsync();
-					await connection.CloseAsync();
+					finally
+					{
+						await connection.CloseAsync();
+					}
+
+					
 				}
 			}
 
@@ -619,11 +645,20 @@ Be concise"));
 				{
 					await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
 				}
-				catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 1)
+				catch (Microsoft.Data.Sqlite.SqliteException ex)
 				{
+					List<string> ignoreErrorMessages = ["already exists", "duplicate column name"];
+					if (!ignoreErrorMessages.Any(p => ex.Message.Contains(p)))
+					{
+						return new StepError(ex.Message, step, Exception: ex);
+					}
+
 					int i = 0;
 					// Error code 1 = "table already exists" in most cases
 					// Ignore and continue
+				} catch (Exception ex)
+				{
+					return new StepError(ex.Message, step, Exception: ex);
 				}
 			}
 

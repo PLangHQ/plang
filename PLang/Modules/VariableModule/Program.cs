@@ -36,7 +36,26 @@ namespace PLang.Modules.VariableModule
 			this.variableHelper = variableHelper;
 		}
 
-		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables)
+		private async Task<(DataSource?, IError?)> GetDataSource(string? dataSourceName)
+		{
+			DataSource? dataSource = null;
+			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
+			if (dataSourceName != null)
+			{
+				(dataSource, var error) = await db.GetDataSource(dataSourceName);
+				if (error != null) return (null, error);
+
+			}
+			else
+			{
+				dataSource = (await db.GetDataSources()).FirstOrDefault(p => p.IsDefault);
+			}
+			if (dataSource == null) return (null, new ProgramError($"Could not find data source(dataSourceName:'{dataSourceName}')", goalStep));
+
+			return (dataSource, null);
+		}
+
+		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, string? dataSourceName = null)
 		{
 			Dictionary<string, object?> varsWithValue = new();
 			foreach (var variable in variables)
@@ -44,21 +63,25 @@ namespace PLang.Modules.VariableModule
 				varsWithValue.Add(variable, null);
 			}
 
-			return await LoadWithDefaultValueInternal(varsWithValue);
+			var (dataSource, error) = await GetDataSource(dataSourceName);
+			if (error != null) return (null, error);
+
+			return await LoadWithDefaultValueInternal(varsWithValue, dataSource);
 		}
 
 		[Description(@"Loads(not setting a variable) a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
-		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
+		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, string? dataSourceName = null)
 		{
-			return await LoadWithDefaultValueInternal(variablesWithDefaultValue);
+			var (dataSource, error) = await GetDataSource(dataSourceName);
+			if (error != null) return (null, error);
+
+			return await LoadWithDefaultValueInternal(variablesWithDefaultValue, dataSource);
 		}
 
-		private async Task<(object?, IError?)> LoadWithDefaultValueInternal([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
+		private async Task<(object?, IError?)> LoadWithDefaultValueInternal([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, DataSource dataSource)
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 
-			var dataSource = goalStep.GetVariable<DataSource>();
-			if (dataSource == null) return (null, new ProgramError("No datasource has been set"));
 
 			List<object?> objects = new();
 			foreach (var variable in variablesWithDefaultValue)
@@ -70,7 +93,7 @@ namespace PLang.Modules.VariableModule
 					var result = await db.Select([dataSource], "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
 					if (result.Error != null && result.Error.Message.Contains("no such table"))
 					{
-						var createTableResult = await CreateVariablesTable(db);
+						var createTableResult = await CreateVariablesTable(db, dataSource);
 						if (createTableResult.Error != null) return (null, createTableResult.Error);
 						return await LoadWithDefaultValue(variablesWithDefaultValue);
 					}
@@ -126,10 +149,9 @@ namespace PLang.Modules.VariableModule
 			return (objects, null);
 		}
 
-		private async Task<(long, IError? Error)> CreateVariablesTable(DbModule.Program db)
+		private async Task<(long, IError? Error)> CreateVariablesTable(DbModule.Program db, DataSource dataSource)
 		{
-			var dataSource = goalStep.GetVariable<DataSource>();
-			return await db.Execute(dataSource.NameInStep, @"CREATE TABLE __Variables__ (
+			return await db.Execute(dataSource, @"CREATE TABLE __Variables__ (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     variable TEXT NOT NULL UNIQUE,
     value TEXT,
@@ -141,19 +163,30 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description("Set value to a variable then Store/Save variable(s) in a persistant storage. The storing of the variables must be defined by user.")]
-		public async Task<IError?> SetValueAndStore([HandlesVariable] Dictionary<string, object> variables)
+		public async Task<IError?> SetValueAndStore([HandlesVariable] Dictionary<string, object> variables, string? dataSourceName = null)
 		{
+			var (dataSource, error) = await GetDataSource(dataSourceName);
+			if (error != null) return error;
+
 			List<string> vars = new();
 			foreach (var variable in variables)
 			{
 				memoryStack.Put(variable.Key, variable.Value);
 				vars.Add(variable.Key);
 			}
-			return await Store(vars);
+			return await Store(vars, dataSource!);
+		}
+		[Description("Store/Save variable(s) in a persistant storage")]
+		public async Task<IError?> Store([HandlesVariable] List<string> variables, string? dataSourceName = null)
+		{
+			var (dataSource, error) = await GetDataSource(dataSourceName);
+			if (error != null) return error;
+
+			return await Store(variables, dataSource!);
 		}
 
-		[Description("Store/Save variable(s) in a persistant storage")]
-		public async Task<IError?> Store([HandlesVariable] List<string> variables)
+
+		internal async Task<IError?> Store([HandlesVariable] List<string> variables, DataSource dataSource)
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 			var datasource = goalStep.GetVariable<DataSource>();
@@ -176,18 +209,21 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "variable", variable));
 				parameters.Add(new ParameterInfo("System.String", "value", JsonConvert.SerializeObject(value)));
 
-				var result = await db.Select(datasource.NameInStep, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
-				if (result.Error != null)
+				var (rowsAffected, error) = await db.Insert(datasource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
+				
+				if (error != null)
 				{
-					if (result.Error.Message.Contains("no such table"))
+					if (error.Message.Contains("no such table"))
 					{
-						var createTableResult = await CreateVariablesTable(db);
+						var createTableResult = await CreateVariablesTable(db, dataSource);
 						if (createTableResult.Error != null) return createTableResult.Error;
 
-						return await Store(variables);
+						return await Store(variables, datasource);
 					}
-					return result.Error;
+					return error;
 				}
+
+				if (rowsAffected == 0) return new ProgramError($"Variable was not updated. It should always be updated. Something is wrong. {ErrorReporting.CreateIssueShouldNotHappen}", goalStep);
 			}
 			return null;
 		}

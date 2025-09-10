@@ -203,7 +203,7 @@ namespace PLang.Modules.DbModule
 				if (dbConnection is SqliteConnection)
 				{
 					using var command = dbConnection.CreateCommand();
-					command.CommandText = "PRAGMA foreign_keys = ON;";
+					//command.CommandText = "PRAGMA foreign_keys = ON;";
 					command.ExecuteNonQuery();
 				}
 			}
@@ -589,6 +589,8 @@ namespace PLang.Modules.DbModule
 				}
 
 				Done(prepare.connection);
+
+
 				return (rowsAffected, null);
 			}
 			catch (Exception ex)
@@ -618,7 +620,7 @@ namespace PLang.Modules.DbModule
 			logger.LogWarning($"Had error running Setup ({goalStep.Text}) but will continue. Error message:{ex.Message}");
 		}
 
-		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment")]
+		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment. When renaming a table and dropping, include  PRAGMA foreign_keys=OFF; at start and PRAGMA foreign_keys=ON; PRAGMA foreign_key_check; at the end")]
 		public async Task<(long, IError?)> CreateTable(string sql)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(goal.DataSourceName, goalStep);

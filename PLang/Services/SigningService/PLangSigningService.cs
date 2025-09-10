@@ -203,12 +203,12 @@ namespace PLang.Services.SigningService
 			var expires = clientSignedMessage.Expires;
 			if (expires < SystemTime.OffsetUtcNow())
 			{
-				return (null, new ServiceError($"Signature expired at {expires}", GetType(), SignatureInvalid));
+				return (null, new ServiceError($"Signature expired at {expires}", GetType(), SignatureInvalid, StatusCode: 401));
 			}
 
 			if (clientSignedMessage.Created < SystemTime.OffsetUtcNow().AddMinutes(-5))
 			{
-				return (null, new ServiceError("The signature is to old.", GetType(), SignatureInvalid));
+				return (null, new ServiceError("The signature is to old.", GetType(), SignatureInvalid, StatusCode: 401));
 			}
 
 			if (contracts != null)
@@ -225,7 +225,7 @@ namespace PLang.Services.SigningService
 			var usedNonce = await appCache.Get(cacheKey);
 			if (usedNonce != null)
 			{
-				return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid));
+				return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid, StatusCode: 403));
 			}
 			await appCache.Set(cacheKey, true, DateTimeOffset.Now.AddMinutes(5).AddSeconds(5));
 			

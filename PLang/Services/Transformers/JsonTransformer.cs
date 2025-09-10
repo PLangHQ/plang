@@ -70,6 +70,7 @@ namespace PLang.Services.Transformers
 			{
 				var options = new JsonSerializerOptions { WriteIndented = false, ReferenceHandler = ReferenceHandler.IgnoreCycles, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, };
 				options.Converters.Add(new IErrorConverter());
+				options.Converters.Add(new ErrorOutputDataConverter());
 				options.Converters.Add(new ObjectValueConverter());
 
 				await System.Text.Json.JsonSerializer.SerializeAsync(stream, data, options);

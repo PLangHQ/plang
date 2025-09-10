@@ -2,6 +2,8 @@
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using System.Collections;
+using System.Linq;
+using System.Linq.Dynamic.Core;
 
 namespace PLang.Models.ObjectValueExtractors
 {
@@ -19,7 +21,13 @@ namespace PLang.Models.ObjectValueExtractors
 
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
-			if (segment.Type == SegmentType.Index) throw new NotImplementedException("Is Index on DictionaryExtractor");
+			if (segment.Type == SegmentType.Index)
+			{
+				var list = dict.Values.ToDynamicList();
+				if (list.Count > long.Parse(segment.Value)) return new ObjectValue("[5]", list[int.Parse(segment.Value)]);
+								
+				throw new NotImplementedException("Is Index on DictionaryExtractor");
+			}
 
 			if (dict.Count == 0) return null;
 

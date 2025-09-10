@@ -48,7 +48,7 @@ namespace PLang.Errors.Events
 		public bool Handled { get; set; }
 		public object ToFormat(string contentType = "text")
 		{
-			return InitialError.ToFormat(contentType);
+			return this.ToFormat(contentType);
 		}
 	}
 }

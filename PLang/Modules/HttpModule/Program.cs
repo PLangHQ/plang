@@ -9,12 +9,14 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Models.Formats;
 using PLang.Modules.WebCrawlerModule.Models;
+using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using static System.Net.WebRequestMethods;
 
 namespace PLang.Modules.HttpModule
 {
@@ -22,6 +24,7 @@ namespace PLang.Modules.HttpModule
 	public class Program(IPLangFileSystem fileSystem, IHttpClientFactory httpClientFactory,
 		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
 	{
+		private new readonly IPLangFileSystem fileSystem = fileSystem;
 		private new readonly VariableHelper variableHelper = variableHelper;
 
 		public record HttpRequest(string Url, string Method = "GET", object? Data = null, Dictionary<string, object?>? Headers = null, string Encoding = "utf-8", string ContentType = "text/html", int TimeoutInSeconds = 30, bool SignRequest = true);
@@ -144,7 +147,7 @@ namespace PLang.Modules.HttpModule
 
 
 			using (var httpClient = httpClientFactory.CreateClient())
-			using (var fileStream = File.OpenRead(filePath))
+			using (var fileStream = fileSystem.File.OpenRead(filePath))
 			{
 				using (var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString()))
 				{
@@ -521,18 +524,28 @@ namespace PLang.Modules.HttpModule
 					properties = GetHttpResponse(properties, response);
 					return (null, new ProgramError(responseStr, goalStep, function, Key: response.ReasonPhrase ?? "HttpError", StatusCode: (int)response.StatusCode), properties);
 				}
+				var bytes = await response.Content.ReadAsByteArrayAsync();
 
 				if (!IsTextResponse(mediaType))
-				{
-					var bytes = await response.Content.ReadAsByteArrayAsync();
+				{					
 					properties = GetHttpResponse(properties, response);
 					return (bytes, null, properties);
 				}
 
-				string responseBody = await response.Content.ReadAsStringAsync();
+				var charset = UtfUnknown.CharsetDetector.DetectFromBytes(bytes);
+				var enc = charset.Detected?.Encoding ?? Encoding.UTF8;
+
+				// Ensure non-UTF encodings are available
+				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+				string responseBody = enc.GetString(bytes);
+				
+
+				//string responseBody = await response.Content.ReadAsStringAsync();
 				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
 				{
 					properties = GetHttpResponse(properties, response);
+					properties.Add(new ObjectValue("Encoding", enc));
 					try
 					{
 						return (JsonConvert.DeserializeObject(responseBody), null, properties);
@@ -548,14 +561,14 @@ namespace PLang.Modules.HttpModule
 					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
 					XmlDocument xmlDoc = new XmlDocument();
 					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-
+					properties.Add(new ObjectValue("Encoding", enc));
 					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
 					properties = GetHttpResponse(properties, response);
 					return (JsonConvert.DeserializeObject(jsonString), null, properties);
 
 				}
 				properties = GetHttpResponse(properties, response);
-
+				properties.Add(new ObjectValue("Encoding", enc));
 				return (responseBody, null, properties);
 
 			}
@@ -633,11 +646,11 @@ namespace PLang.Modules.HttpModule
 		{
 			if (mediaType == null) return false;
 
-			if (mediaType.Contains("text/")) return true;
+			if (mediaType.Contains("text/") || mediaType.Contains("/text")) return true;
 
 			if (mediaType.Contains("application/"))
 			{
-				string[] possibleTextTypes = { "json", "xml", "html", "javascript", "x-yaml", "rtf", "toml", "x-latex", "sgml", "ecmascript", "x-sh", "x-perl", "x-python", "x-ruby" };
+				string[] possibleTextTypes = { "json", "xml", "text", "html", "javascript", "x-yaml", "rtf", "toml", "x-latex", "sgml", "ecmascript", "x-sh", "x-perl", "x-python", "x-ruby" };
 				foreach (var item in possibleTextTypes)
 				{
 					if (mediaType.Contains(item)) return true;

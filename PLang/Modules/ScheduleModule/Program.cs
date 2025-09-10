@@ -31,10 +31,12 @@ namespace PLang.Modules.ScheduleModule
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IAppCache appCache;
 		private readonly ModuleSettings moduleSettings;
 		public PrParser PrParser { get; }
 
-		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime, ILogger logger, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory) : base()
+		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime, 
+			ILogger logger, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory, IAppCache appCache) : base()
 		{
 			this.settings = settings;
 			PrParser = prParser;
@@ -43,6 +45,7 @@ namespace PLang.Modules.ScheduleModule
 			this.logger = logger;
 			this.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
+			this.appCache = appCache;
 			this.moduleSettings = new ModuleSettings(settings);
 
 		}
@@ -54,6 +57,41 @@ namespace PLang.Modules.ScheduleModule
 			//make sure we always wait for execution
 			goalStep.WaitForExecution = true;
 			await Task.Delay(sleepTimeInMilliseconds);
+		}
+
+		public record WaitIncreasignlyCounter(string Key, int Counter);
+		[Description("Waits increasingly in a key")]
+		[MethodSettings(CanBeAsync = false)]
+		public async Task<IError?> WaitIncreasingly(string key, List<int> millisecondsDelay, int timeoutInSeconds = 5*60)
+		{
+			if (string.IsNullOrEmpty(key)) return new ProgramError("Key cannot be empty");
+
+			string cacheKey = "WaitIncreasingly_" + key;
+			var request = (await appCache.Get(cacheKey)) as WaitIncreasignlyCounter;
+			if (request == null) request = new WaitIncreasignlyCounter(key, 0);
+
+			int waitFor = 0;
+			if (millisecondsDelay.Count <= request.Counter)
+			{
+				waitFor = millisecondsDelay.LastOrDefault();
+			} else
+			{
+				waitFor = millisecondsDelay[request.Counter];
+			}
+			request = request with { Counter = request.Counter+1 };
+
+			await appCache.Set(cacheKey, request, TimeSpan.FromSeconds(timeoutInSeconds));
+			
+			//make sure we always wait for execution
+			goalStep.WaitForExecution = true;
+
+			if (waitFor == 0) return null;
+			
+			logger.LogWarning($"Waiting {waitFor} (counter:{request.Counter}) because of key:{key} - ");
+			await Task.Delay(waitFor);
+			
+			
+			return null;
 		}
 
 		public async Task<IError?> WaitOnVariable([HandlesVariable] string variableName, GoalToCallInfo goalToCall, long timeInMilliseconds = 1000)
@@ -238,7 +276,7 @@ namespace PLang.Modules.ScheduleModule
 				{
 					item = list[i];
 					
-					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
 					var schedule = CrontabSchedule.Parse(item.CronCommand);
 
 					var nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);

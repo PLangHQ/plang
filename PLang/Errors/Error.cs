@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors.AskUser;
 using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
@@ -9,6 +10,7 @@ using PLang.Utils;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static PLang.Services.Transformers.PlangTransformer;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Errors
@@ -175,6 +177,29 @@ namespace PLang.Errors
 
 			}
 			writer.WriteString("statusCode", value.StatusCode.ToString());
+			writer.WriteEndObject();
+		}
+	}
+	public class ErrorOutputDataConverter : System.Text.Json.Serialization.JsonConverter<ErrorOutputData>
+	{
+		public override ErrorOutputData Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			=> throw new NotImplementedException();
+
+		public override void Write(Utf8JsonWriter writer, ErrorOutputData value, JsonSerializerOptions options)
+		{
+			var error = value.Data;
+
+			writer.WriteStartObject();
+			writer.WriteString("message", error.Message);
+			//writer.WriteString("details", ErrorHelper.ToFormat("text", error).ToString());
+			writer.WriteString("key", error.Key);
+			writer.WriteString("type", "error");
+			if (error is StatelessCallbackError sce)
+			{
+				writer.WriteString("callback", JsonConvert.SerializeObject(sce.Callback).ToBase64());
+
+			}
+			writer.WriteString("statusCode", error.StatusCode.ToString());
 			writer.WriteEndObject();
 		}
 	}

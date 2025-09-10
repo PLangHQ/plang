@@ -23,7 +23,10 @@ using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.ConditionalModule
 {
-	[Description(@"if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods in this module over SimpleCondition and CompoundCondition")]
+	[Description(@"if statement for the user intent. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods in this module over SimpleCondition and CompoundCondition. 
+if statement can throw an error, e.g. `if %isValid% is false, then throw error 'Not valid'`
+
+")]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;
@@ -257,6 +260,11 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 
 		}
 
+		[Description(@"Check if item equals(==) another object. 
+`if %id% == 100 then IsEqual, else IsNotEqual....` => IsEqual is goalToCallIfTrue, IsNotEqual is goalToCallIfFalse
+`if %name% is 'john'....`
+`if %zip equals 123....
+")]
 		public async Task<(object? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)

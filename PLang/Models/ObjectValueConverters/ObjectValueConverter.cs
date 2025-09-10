@@ -43,11 +43,22 @@ namespace PLang.Models.ObjectValueConverters
 					return System.Convert.ChangeType(list[0], type);
 				}
 			}
+			
 
 			if (type != typeof(ObjectValue) && objectValue.Value is ObjectValue ov2)
 			{
+				if (type.IsInstanceOfType(ov2.Value))
+				{
+					return ov2.Value;
+				}
 				return System.Convert.ChangeType(ov2.Value, type);
 			}
+
+			if (type.IsInstanceOfType(objectValue.Value))
+			{
+				return objectValue.Value;
+			}
+
 			return System.Convert.ChangeType(objectValue.Value, type);
 		}
 

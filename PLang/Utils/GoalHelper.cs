@@ -201,7 +201,7 @@ namespace PLang.Utils
 			if (goalName.Contains(Path.DirectorySeparatorChar))
 			{
 				goalName = goalName.Substring(goalName.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-				goalPath = goalToCall.Name.Replace(goalName, "").AdjustPathToOs();
+				goalPath = goalToCall.Name.Substring(0, goalToCall.Name.LastIndexOf(goalName)).AdjustPathToOs();
 			}
 
 			string relativePath;

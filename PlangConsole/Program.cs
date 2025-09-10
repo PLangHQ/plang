@@ -28,6 +28,8 @@ Console.CancelKeyPress += (_, e) =>
 
 if (builder)
 {
+	AppContext.SetSwitch("Builder", true);
+
 	var container = new ServiceContainer();
 	container.RegisterForPLangBuilderConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
 

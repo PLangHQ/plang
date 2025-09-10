@@ -102,7 +102,7 @@ namespace PLang.Modules.DbModule
 					}
 				}
 			}
-			
+
 
 			if (dataSources.Count == 0)
 			{
@@ -238,6 +238,18 @@ Rules:
 - Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)
 - use <dataSourceAndTableInfos> to build a valid sql for {sqlType}
 ";
+				if (methodsAndTables.DataSourceWithTableInfos.Count > 1)
+				{
+					system += @"
+- Make sure to sort the dataSourceNames in your response so that the table marked as main comes first. For example:
+	let say there are 2 data sources, 'marketing' and 'data'
+	`select * from main.products p join marketing.hits h on p.id=h.productId`
+	then use <dataSourceAndTableInfos> to determine what dataSourceName the products table belongs and sort it as first in dataSourceNames";
+
+
+
+				}
+
 			}
 			if (dataSource != null)
 			{
@@ -311,7 +323,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 				}
 
 				List<string>? dsNames = gf.GetParameter<List<string>>("dataSourceNames");
-				
+
 				if (dataSource == null && (dsNames == null || dsNames.Count == 0))
 				{
 					return (null, new StepBuilderError("Missing dataSourceName. Please include it", goalStep));
@@ -322,7 +334,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 					foreach (var dsName in dsNames)
 					{
 						(_, var error2) = await dbSettings.GetDataSource(dsName);
-						if (error2 != null) return (null, new BuilderError($"Datasource '{dsName}' does not exist. Use the original names of the data sources provided."));
+						if (error2 != null) return (null, new BuilderError($"Datasource '{dsName}' does not exist. Use the original names of the data sources provided. The dataSourceName that belonds to '{dsName}' should come first in your response"));
 					}
 
 
@@ -385,7 +397,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 			public ClassDescription ClassDescription { get; set; }
 
 			[LlmIgnore]
-			public Dictionary<string, List<TableInfo>> DataSourceWithTableInfos { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+			public OrderedDictionary<string, List<TableInfo>> DataSourceWithTableInfos { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
 			public bool ContainsMethod(string name)
 			{
@@ -487,7 +499,7 @@ When table name is unknown at built time because it is created with variable, us
 
 
 				methodsAndTables.DataSource = dataSource;
-				methodsAndTables.DataSourceWithTableInfos.Add("", tableInfos);
+				methodsAndTables.DataSourceWithTableInfos.Add(dataSource.Name, tableInfos);
 				return (methodsAndTables, null);
 			}
 
@@ -563,7 +575,21 @@ When table name is unknown at built time because it is created with variable, us
 					}
 					else
 					{
-						methodsAndTables.DataSourceWithTableInfos.Add(dataSource.Name, tableInfos);
+						bool isMain = false;
+						var tableNameInMain = (methodsAndTables.TableNames.FirstOrDefault(p => p.StartsWith("main.")) ?? "").Replace("main.", "");
+						if (tableInfos.FirstOrDefault(p => p.Name.Equals(tableNameInMain, StringComparison.OrdinalIgnoreCase)) != null)
+						{
+							isMain = true;
+						}
+
+						if (isMain)
+						{
+							methodsAndTables.DataSourceWithTableInfos.Insert(0, dataSource.Name, tableInfos);
+						}
+						else
+						{
+							methodsAndTables.DataSourceWithTableInfos.Add(dataSource.Name, tableInfos);
+						}
 					}
 
 				}
@@ -1077,11 +1103,9 @@ Reason:{error.Message}", step,
 			var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 			if (!anchors.ContainsKey(dataSource.Name))
 			{
-				if (!anchors.ContainsKey(dataSource.Name))
-				{
-					return (false, dataSource.Name, new StepBuilderError($"Data source name '{dataSource.Name}' does not exists.", step,
-					 FixSuggestion: $@"Choose datasource name from one of there: {string.Join(", ", anchors.Select(p => p.Key))}"));
-				}
+				return (false, dataSource.Name, new StepBuilderError($"Data source name '{dataSource.Name}' does not exists.", step,
+				 FixSuggestion: $@"Choose datasource name from one of there: {string.Join(", ", anchors.Select(p => p.Key))}"));
+
 			}
 
 

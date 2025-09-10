@@ -46,7 +46,11 @@ namespace PLang.Runtime
 						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, bool isEvent = false)
 		{
 
-			if (callingGoal == null) return (engine, null, new Error($"Calling goal is null. {ErrorReporting.CreateIssueShouldNotHappen}"));
+			if (callingGoal == null)
+			{
+				callingGoal = prParser.GetAllGoals().FirstOrDefault(p => p.GoalName == "Start");
+				if (callingGoal == null) return (engine, null, new Error($"Calling goal is null. {ErrorReporting.CreateIssueShouldNotHappen}"));
+			}
 
 			var goalName = goalToCall.Name;
 			var parameters = goalToCall.Parameters;
@@ -103,13 +107,15 @@ namespace PLang.Runtime
 				{
 					foreach (var param in parameters ?? [])
 					{
+						object? value = (param.Value is ObjectValue ov) ? ov.Value : param.Value;
 						if (param.Key.StartsWith("!"))
 						{
-							goalToRun.AddVariable(param.Value, variableName: param.Key);
+							goalToRun.AddVariable(value, variableName: param.Key);
 						}
 						else
 						{
-							memoryStack.Put(param.Key, param.Value, goalStep: callingStep, disableEvent: true);
+													
+							memoryStack.Put(param.Key, value, goalStep: callingStep, disableEvent: true);
 						}
 					}
 				}

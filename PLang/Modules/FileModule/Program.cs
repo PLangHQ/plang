@@ -350,12 +350,40 @@ namespace PLang.Modules.FileModule
 		
 
 
-		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool appendToFile = false, 
+		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false, 
 			CsvOptions? csvOptions = null, bool createDirectoryAutomatically = true)
 		{
 			if (csvOptions == null) csvOptions = new();
 
-			var absolutePath = GetPath(path);
+			Encoding? enc = Encoding.UTF8;
+			if (VariableHelper.IsVariable(variableToWriteToCsv))
+			{
+				var ov = memoryStack.GetObjectValue(variableToWriteToCsv.ToString());
+				var encoding = ov.Properties.FirstOrDefault(p => p.Name == "Encoding");
+				if (encoding != null)
+				{
+					enc = encoding.ValueAs<Encoding>();
+				}
+
+				variableToWriteToCsv = ov.Value;
+				if (enc != null)
+				{
+					if (csvOptions.Encoding == null)
+					{
+						csvOptions = csvOptions with { Encoding = enc.EncodingName };
+					} else if (csvOptions.Encoding != enc.EncodingName)
+					{
+						var encodingTo = Encoding.GetEncoding(csvOptions.Encoding);
+						var bytes = encodingTo.GetBytes(ov.Value.ToString());
+						variableToWriteToCsv = encodingTo.GetString(bytes);
+					}
+				}
+			} else
+			{
+				variableToWriteToCsv = variableHelper.LoadVariables(variableToWriteToCsv);
+			}
+
+				var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
 			{
 				var dirPath = fileSystem.Path.GetDirectoryName(absolutePath);

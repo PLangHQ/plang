@@ -162,7 +162,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 			{
 				(answers, error) = await ProcessCallbackAnswer(askOptions, error);
 				goalStep.Callback = null;
-				engine.CallbackInfos = null;
+				engine.CallbackInfo = null;
 
 				if (error != null && error is UserInputError uie2)
 				{
@@ -260,13 +260,15 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 				return (null, new ProgramError("Request no longer available", goalStep));
 			}
 
-			var callbackBase64 = memoryStack.Get<string>("request.body.callback");
+			string? callbackBase64 = null;
+			if (HttpContext != null && HttpContext.Request.Headers.TryGetValue("X-Callback", out var headerValue))
+			{
+				callbackBase64 = headerValue.ToString();
+			}
+
 			if (string.IsNullOrEmpty(callbackBase64))
 			{
-				if (HttpContext != null && HttpContext.Request.Headers.TryGetValue("X-Callback", out var value))
-				{
-					callbackBase64 = value.ToString();
-				}
+				callbackBase64 = memoryStack.Get<string>("request.body.callback");
 
 				if (string.IsNullOrEmpty(callbackBase64))
 				{
@@ -480,6 +482,8 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 
 			return null;
 		}
+
+		public record OutData(object Content, string Type, int StatusCode = 200, Dictionary<string, object?>? parameters = null);
 
 	}
 }

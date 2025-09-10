@@ -6,6 +6,7 @@ using PLang.Models;
 using PLang.Modules;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,39 +18,50 @@ namespace PLang.Utils
 	{
 
 
-		public static async Task<(List<CallbackInfo>? CallbackInfos, IError? Error)> GetCallbackInfos(Modules.IdentityModule.Program identity, string? callbackInfos)
+		public static async Task<(Callback? Callback, Callback? NewCallback, IError? Error)> GetCallback(Modules.IdentityModule.Program identity, string? callbackInfos)
 		{
-			if (string.IsNullOrEmpty(callbackInfos)) return (null, null);
+			if (string.IsNullOrEmpty(callbackInfos)) return (null, null, null);
 
 			byte[] bytes = Convert.FromBase64String(callbackInfos);
 			string decoded = Encoding.UTF8.GetString(bytes);
 
-			var obj = JObject.Parse(decoded);
-			if (obj == null || obj["CallbackInfos"] == null || obj["Signature"] == null) return (null, null);
+			var callback = JsonConvert.DeserializeObject<Callback>(decoded);
+			if (callback == null || callback.CallbackInfo == null || callback.Signature == null) return (null, null, null);
 
 
-			List<CallbackInfo>? callbacks = obj["CallbackInfos"]?.ToObject<List<CallbackInfo>>();
-			if (callbacks == null) return (null, new Error("Callback info not valid format", Data: obj["CallbackInfos"]));
+			var callbackInfo = callback.CallbackInfo;
+			if (callbackInfo == null) return (null, null, new Error("Callback info not valid format", Data: callback.CallbackInfo));
 
-			SignedMessage? signature = obj["Signature"]?.ToObject<SignedMessage>();
-			if (signature == null) return (null, new Error("Signature not validate format", Data: obj["Signature"]));
+			SignedMessage? signature = callback.Signature;
+			if (signature == null) return (null, null, new Error("Signature not valid format", Data: callback.Signature));
 
 			
 			var identityKey = await identity.GetMyIdentity();
 
 			if (signature.Identity == null || !signature.Identity.Equals(identityKey.Identifier))
 			{
-				return (null, new Error("Identity does not match"));
+				return (null, null, new Error("Identity does not match"));
 			}
 
 			var result = await identity.VerifySignature(signature);
-			if (result.Error != null) return (null, result.Error);
+			if (result.Error != null)
+			{
+				// signature is to old or nonce has been used, create new callback and allow user to sign again
+				if (result.Error.StatusCode == 401 || result.Error.StatusCode == 403)
+				{
+					var signed = await identity.Sign(callback);
+					return (null, new Callback(callback.Path, callback.CallbackData, callback.CallbackInfo, signed), result.Error);
+				}
+				
+				return (null, null, result.Error);
+			}
+
 			if (result.Signature != null)
 			{
-				return (callbacks, null);
+				return (callback, null, null);
 			}
 			
-			return (null, new Error("Signature could not be verified"));
+			return (null, null, new Error("Signature could not be verified"));
 
 		}
 	}

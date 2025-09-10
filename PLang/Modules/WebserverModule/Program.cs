@@ -3,6 +3,7 @@ using LightInject;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Net.Http.Headers;
 using Nethereum.RPC.Eth;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -11,6 +12,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
 using PLang.Events;
 using PLang.Exceptions;
@@ -290,6 +292,13 @@ public class Program : BaseProgram, IDisposable
 									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
 									ctx.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
 								}
+
+								if (error is StatelessCallbackError)
+								{
+									await requestEngine.OutputStream.Write(goalStep, error);
+									return;
+								}
+
 								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
 								
 								if (error != null)
@@ -297,12 +306,17 @@ public class Program : BaseProgram, IDisposable
 									//AppError had error, this is a critical thing and should not happen
 									//So we write the error to the console as last resort.	
 									//
-									string strError = error.ToString();
-									Console.WriteLine(" ---- Critical Error  ---- ");
-									Console.WriteLine(strError);
-									Console.WriteLine(" ---- Critical Error  ---- ");
-									
-									await requestEngine.OutputStream.Write(goalStep, new Error("Unexpected Error", "CriticalError", 500));
+									try
+									{
+
+										await requestEngine.OutputStream.Write(goalStep, error);
+									} catch (Exception ex)
+									{
+										string strError = error.ToString();
+										Console.WriteLine(" ---- Could not write error to output stream - Critical Error  ---- ");
+										Console.WriteLine(strError);
+										Console.WriteLine(" ---- Critical Error  ---- ");
+									}
 
 								}
 							} else
@@ -714,30 +728,36 @@ Frontpage
 
 	public async Task<IError?> SendFileToClient(string path, string? fileName = null)
 	{
-		var mimeType = RequestHandler.GetMimeType(path);
-		if (mimeType == null) return new ProgramError($"mime type for {path} is not supported");
-
-
-		var response = HttpContext.Response;
-		if (!fileSystem.File.Exists(path))
+		var absolutePath = GetPath(path);
+		
+		if (!fileSystem.File.Exists(absolutePath))
 		{
 			return new NotFoundError("File not found");
 		}
 
+		var mimeType = RequestHandler.GetMimeType(path);
+		if (mimeType == null) mimeType = "application/octet-stream";
+
+		var response = HttpContext.Response;
+		response.StatusCode = StatusCodes.Status200OK;
 		response.ContentType = mimeType;
 
-		var fileInfo = fileSystem.FileInfo.New(path);
-		response.ContentLength = fileInfo.Length;
-		if (string.IsNullOrEmpty(fileName)) fileName = fileInfo.Name;
-
-		response.Headers.TryAdd("Content-Disposition", $"attachment; filename=\"{fileName}\"");
-
-		using (var fs = fileSystem.File.OpenRead(path))
+		if (string.IsNullOrEmpty(fileName))
 		{
-			fs.CopyTo(response.Body);
+			var fileInfo = fileSystem.FileInfo.New(absolutePath);
+			fileName = fileInfo.Name;
 		}
 
-		response.StatusCode = (int)HttpStatusCode.OK;
+
+		var cd = new ContentDispositionHeaderValue("attachment");
+		cd.SetHttpFileName(fileName);
+		response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
+
+		await using var s = fileSystem.File.OpenRead(absolutePath);
+		response.ContentLength = s.Length;      
+		await s.CopyToAsync(response.Body, response.HttpContext.RequestAborted);
+		await response.Body.FlushAsync(response.HttpContext.RequestAborted);
+		
 
 		return null;
 	}

@@ -5,10 +5,9 @@ namespace PLang.Services.LoggerService
 
 	public class Logger<T> : ILogger<T>
 	{
-		public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+		LogLevel logLevelByUser = LogLevel.Warning;
+		public Logger()
 		{
-			LogLevel? logLevelByUser = LogLevel.Warning;
-
 			string? loggerLevel = AppContext.GetData("--logger") as string;
 			if (loggerLevel != null)
 			{
@@ -30,6 +29,12 @@ namespace PLang.Services.LoggerService
 			{
 				logLevelByUser = LogLevel.Information;
 			}
+		}
+
+		
+		public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+		{
+			
 
 			if (logLevel < logLevelByUser)
 			{
@@ -65,7 +70,7 @@ namespace PLang.Services.LoggerService
 
 		public bool IsEnabled(LogLevel logLevel)
 		{
-			return true;
+			return logLevel >= logLevelByUser;
 		}
 
 		public IDisposable? BeginScope<TState>(TState state) where TState : notnull

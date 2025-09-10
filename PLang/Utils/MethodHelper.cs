@@ -139,8 +139,8 @@ public class MethodHelper
 						{
 							if (memoryStack != null) memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 
-							ReturnObjectProperties.Add(returnValue.VariableName, 
-								new ParameterType() { Name = returnValue.VariableName , FullTypeName = returnValue.Type });
+							ReturnObjectProperties.Add(returnValue.VariableName,
+								new ParameterType() { Name = returnValue.VariableName, FullTypeName = returnValue.Type });
 						}
 					}
 
@@ -177,12 +177,12 @@ public class MethodHelper
 			var typeFound = methodInfo.GetParameters().FirstOrDefault(p => IsTypeMatching(p.ParameterType.FullNameNormalized(), buildParameter.Type));
 			if (typeFound == null)
 			{
-				buildErrors.Add(new InvalidParameterError(goalStep.Instruction?.Function.Name, $"{buildParameter.Type} {buildParameter.Name} is not of the correct type.", goalStep, 
+				buildErrors.Add(new InvalidParameterError(goalStep.Instruction?.Function.Name, $"{buildParameter.Type} {buildParameter.Name} is not of the correct type.", goalStep,
 					FixSuggestion: $"Make sure to format the type correctly, e.g. {typeof(string).FullNameNormalized()}, {typeof(List<string>).FullNameNormalized()}, {typeof(int?).FullNameNormalized()}"));
 			}
 		}
 		if (buildErrors.Count > 0) return (null, buildErrors);
-		
+
 		foreach (var methodParameter in methodInfo.GetParameters())
 		{
 			try
@@ -277,7 +277,7 @@ public class MethodHelper
 	private List<ParameterType> GetParameterTypes(string parameterName, Type type)
 	{
 		List<ParameterType> objectProperties = new();
-		
+
 
 		var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -422,7 +422,7 @@ public class MethodHelper
 
 	private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 	{
-		
+
 		object? value = variableValue;
 		if (handlesAttribute == null)
 		{
@@ -432,7 +432,16 @@ public class MethodHelper
 				if (!str.Contains("%Settings."))
 				{
 					var newJobj = jobj.DeepClone();
-					newJobj.ResolvePlaceholders(name => memoryStack.Get(name));
+					newJobj.ResolvePlaceholders(name =>
+					{
+						var value = memoryStack.Get(name);
+						if (value is ObjectValue ov) return ov.Value;
+						if (value is List<object> list && list.FirstOrDefault() is ObjectValue)
+						{
+							return list.Select(p => ((ObjectValue)p).Value);
+						}
+						return value;
+					});
 					var obj = newJobj.ToObject(parameter.ParameterType);
 
 					parameterValues.Add(parameter.Name!, obj);
@@ -733,23 +742,23 @@ public class MethodHelper
 				}
 				catch (Exception)
 				{*/
-					var itemWithList = jobject.ToObject<Dictionary<string, List<object?>?>>();
-					//if (itemWithList == null) throw;
+				var itemWithList = jobject.ToObject<Dictionary<string, List<object?>?>>();
+				//if (itemWithList == null) throw;
 
-					dict = new();
-					foreach (var item in itemWithList)
+				dict = new();
+				foreach (var item in itemWithList)
+				{
+					if (item.Value == null) continue;
+
+					if (item.Value.Count > 1)
 					{
-						if (item.Value == null) continue;
-
-						if (item.Value.Count > 1)
-						{
-							dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], item.Value[1]));
-						}
-						else if (item.Value.Count > 0)
-						{
-							dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], null));
-						}
+						dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], item.Value[1]));
 					}
+					else if (item.Value.Count > 0)
+					{
+						dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], null));
+					}
+				}
 				//}
 			}
 			else if (JsonHelper.IsJson(variableValue, out object? obj))
