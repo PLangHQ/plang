@@ -6,6 +6,8 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
+using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -20,24 +22,22 @@ using static PLang.Utils.StepHelper;
 namespace PLang.Services.OutputStream
 {
 
-
+	/*
 	public class ConsoleOutputStream : IOutputStream
 	{
+		ConsoleSink ConsoleSink { get; set; }
+
+
 		Stream standardOutputStream;
 		Stream standardErrorStream;
 		public string Id { get; set; }
 		public ConsoleOutputStream()
 		{
-			// todo: dont think this is good, why override encoding?
-			Console.OutputEncoding = Encoding.UTF8;
-			Console.InputEncoding = Encoding.UTF8;
+			ConsoleSink = new ConsoleSink();
 
-			standardOutputStream = Console.OpenStandardOutput();
-			standardErrorStream = Console.OpenStandardError();
-			Id = Guid.NewGuid().ToString();
 		}
-		public Stream Stream => standardOutputStream;
-		public Stream ErrorStream => standardErrorStream;
+		public Stream Stream => Console.OpenStandardInput();
+		public Stream ErrorStream => Console.OpenStandardError();
 		
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
@@ -46,7 +46,9 @@ namespace PLang.Services.OutputStream
 
 		public async Task<(object?, IError?)> Ask(GoalStep step, object question, int statusCode, Callback? callback = null, IError? error = null, Dictionary<string, object?>? parameters = null)
 		{
+			AskMessage askMessage = new AskMessage(question, "info", statusCode)
 
+			return await ConsoleSink.AskAsync()
 			SetColor(statusCode);
 			if (error != null)
 			{
@@ -174,5 +176,5 @@ namespace PLang.Services.OutputStream
 				Console.ResetColor();
 			}
 		}
-	}
+	}*/
 }

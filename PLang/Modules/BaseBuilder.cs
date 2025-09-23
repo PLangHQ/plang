@@ -16,6 +16,7 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using PLang.Utils.JsonConverters;
 using System;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
@@ -229,7 +230,7 @@ Make sure to use the information in <error> to return valid JSON response"
 				var parameter = Parameters?.FirstOrDefault(p => p.Name == name);
 				if (parameter == null) return default;
 
-				return (T?)TypeHelper.ConvertToType(parameter.Value, typeof(T));
+				return (T?)TypeHelper.ConvertToType(parameter.Value, typeof(T), new PlaceholderPrimitiveConverter());
 			}
 			public GenericFunction SetParameter(string name, object value)
 			{

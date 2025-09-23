@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 
 namespace PLang.Services.OutputStream
@@ -32,11 +33,11 @@ namespace PLang.Services.OutputStream
 			return this;
 		}
 
-		public IOutputStream CreateHandler(string? name = null)
+		public IOutputSink CreateHandler(string? name = null)
 		{
 			var serviceName = (name != null) ? name : currentType;
 
-			var os = container.GetInstance<IOutputStream>(serviceName);
+			var os = container.GetInstance<IOutputSink>(serviceName);
 			return os;
 		}
 	}

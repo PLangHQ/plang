@@ -23,6 +23,7 @@ using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using System.Collections;
@@ -57,7 +58,7 @@ namespace PLang.Runtime
 		PrParser PrParser { get; }
 		MemoryStack MemoryStack { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
-		IOutputStream OutputStream { get; }
+		IOutputSink OutputSink { get; }
 		List<MockData> Mocks { get; init; }
 		IServiceContainer Container { get; }
 		List<IEngine> ChildEngines { get; set; }
@@ -80,9 +81,9 @@ namespace PLang.Runtime
 		void ReplaceContext(PLangAppContext pLangAppContext);
 		void ReplaceMemoryStack(MemoryStack memoryStack);
 		void Return(bool reset = false);
-		void SetOutputStream(IOutputStream outputStream);
+		void SetOutputSink(IOutputSink outputStream);
 		Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, uint waitForXMillisecondsBeforeRunningGoal = 0);
-		Task<IEngine> RentAsync(GoalStep callingStep, IOutputStream output);
+		Task<IEngine> RentAsync(GoalStep callingStep, IOutputSink output);
 		void Return(IEngine engine, bool reset = false);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
@@ -121,7 +122,7 @@ namespace PLang.Runtime
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
-		private IOutputStream outputStream;
+		private IOutputSink outputSink;
 
 		private PrParser prParser;
 		private MemoryStack memoryStack;
@@ -146,7 +147,7 @@ namespace PLang.Runtime
 		{
 			public bool IsFlushed { get; set; } = IsFlushed;
 		};
-		public IOutputStream OutputStream { get { return outputStream; } }
+		public IOutputSink OutputSink { get { return outputSink; } }
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;
@@ -190,7 +191,6 @@ namespace PLang.Runtime
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var plangGlobal = new Dictionary<string, object>()
 			{
-				{ "output", outputStream.Output },
 				{ "osPath", fileSystem.SystemDirectory },
 				{ "rootPath", fileSystem.RootDirectory },
 				{ "EngineUniqueId", Id}
@@ -218,9 +218,9 @@ namespace PLang.Runtime
 
 		public CallbackInfo? CallbackInfo { get; set; }
 
-		public void SetOutputStream(IOutputStream outputStream)
+		public void SetOutputSink(IOutputSink outputSink)
 		{
-			this.outputStream = outputStream;
+			this.outputSink = outputSink;
 		}
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public void ReplaceContext(PLangAppContext context)
@@ -232,10 +232,10 @@ namespace PLang.Runtime
 			this.memoryStack = memoryStack;
 		}
 
-		public async Task<IEngine> RentAsync(GoalStep callingStep, IOutputStream outputStream)
+		public async Task<IEngine> RentAsync(GoalStep callingStep, IOutputSink outputSink)
 		{
 			var enginePool = GetEnginePool(Path);
-			return await enginePool.RentAsync(this, callingStep, Path, outputStream);
+			return await enginePool.RentAsync(this, callingStep, Path, outputSink);
 		}
 		public void Return(IEngine engine, bool reset = false)
 		{
@@ -254,12 +254,8 @@ namespace PLang.Runtime
 			memoryStack.Clear();
 			callingStep = null;
 
-			if (outputStream is HttpOutputStream hos)
-			{
-				//hos.MainResponseIsDone = true;
-			}
-
-			outputStream = ParentEngine.OutputStream;
+			
+			outputSink = ParentEngine.OutputSink;
 			HttpContext = ParentEngine.HttpContext;
 			fileSystem.ClearFileAccess();
 			this.eventRuntime.GetActiveEvents().Clear();
@@ -728,14 +724,6 @@ namespace PLang.Runtime
 			{
 				AppContext.SetData("GoalLogLevelByUser", null);
 
-				var os = OutputStreamFactory.CreateHandler();
-				if (os is UIOutputStream)
-				{
-					if (goal.ParentGoal == null)
-					{
-						((UIOutputStream)os).Flush();
-					}
-				}
 				goal.Stopwatch.Stop();
 				logger.LogInformation($"[End] Goal: {goal.GoalName} => " + goal.Stopwatch.ElapsedMilliseconds);
 

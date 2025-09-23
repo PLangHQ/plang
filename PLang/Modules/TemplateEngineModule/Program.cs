@@ -7,6 +7,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using Scriban;
@@ -88,7 +89,8 @@ namespace PLang.Modules.TemplateEngineModule
 
 			if (outputStreamFactory != null && (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
-				await outputStreamFactory.CreateHandler().Write(goalStep, result.Result);
+				var renderMessage = new RenderMessage(result.Result);
+				await outputStreamFactory.CreateHandler().SendAsync(renderMessage);
 			}
 
 			return result;

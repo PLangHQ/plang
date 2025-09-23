@@ -84,10 +84,7 @@ Response with only the function name you would choose");
 			if (result.BuilderError != null) return (null, result.BuilderError);
 
 			var function = result.Instruction.Function;
-			if (function.Name == "RenderHtml")
-			{
-				return await BuildRenderHtml(step);
-			}
+			
 			return result;
 		}
 
@@ -95,15 +92,19 @@ Response with only the function name you would choose");
 		{
 			
 			var renderOption = gf.GetParameter<RenderTemplateOptions>("options");
-			if (string.IsNullOrEmpty(renderOption.FileNameOrHtml))
+			if (renderOption.RenderMessage == null)
+			{
+				return (instruction, new StepBuilderError("RenderMessage needs to be defined", step));
+			}
+			if (string.IsNullOrEmpty(renderOption.RenderMessage.Content))
 			{
 				return (instruction, new StepBuilderError("FileName or html needs to be defined", step));
 			}
-
+			
 			var events = gf.GetParameter<List<Event>?>("events");
 			if (events == null || events.Count == 0) return (instruction, null);
 
-
+			/*
 			
 
 			if (renderOption?.FileNameOrHtml.Contains("%") == true)

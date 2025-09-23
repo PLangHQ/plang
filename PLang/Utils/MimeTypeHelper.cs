@@ -40,6 +40,7 @@
 				".css" => "text/css",
 				".csv" => "text/csv",
 				".json" => "application/json",
+				".js.map" => "application/json",
 				".pdf" => "application/pdf",
 				".doc" => "application/msword",
 				".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

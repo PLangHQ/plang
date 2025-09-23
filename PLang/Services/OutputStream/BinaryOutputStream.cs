@@ -14,6 +14,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
+	/*
 	public class BinaryOutputStream : IOutputStream
 	{
 
@@ -65,5 +66,5 @@ namespace PLang.Services.OutputStream
 
 		}
 
-	}
+	}*/
 }

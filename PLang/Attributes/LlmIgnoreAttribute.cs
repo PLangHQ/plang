@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Attributes
 {
-	[AttributeUsage(AttributeTargets.Property)]
+	[AttributeUsage(AttributeTargets.All)]
 	public class LlmIgnoreAttribute : Attribute { }
 	
 }

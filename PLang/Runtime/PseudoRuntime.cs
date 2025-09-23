@@ -89,7 +89,7 @@ namespace PLang.Runtime
 				{
 					isRented = true;
 
-					runtimeEngine = await engine.RentAsync(callingStep, engine.OutputStream);
+					runtimeEngine = await engine.RentAsync(callingStep, engine.OutputSink);
 				}
 
 

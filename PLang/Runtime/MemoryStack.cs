@@ -313,10 +313,18 @@ namespace PLang.Runtime
 			if (contextObject.Key == null) return null;
 
 			var dict = contextObject.Value as Dictionary<string, object>;
-			if (dict != null && keyPath.Path != null && dict.ContainsKey(keyPath.Path.TrimStart('.')))
+			if (dict != null && keyPath.Path != null)
 			{
-				return new ObjectValue(keyPath.VariableName, dict[keyPath.Path.TrimStart('.')]);
+				if (dict.TryGetValue(keyPath.Path.TrimStart('.'), out object? value))
+				{
+					return new ObjectValue(keyPath.VariableName, value);
+				}
+				else
+				{
+					return ObjectValue.Nullable(keyPath.FullPath);
+				}
 			}
+			
 			var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
 			return new ObjectValue(keyPath.VariableName, contextObject.Value, type, null, true);
 		}

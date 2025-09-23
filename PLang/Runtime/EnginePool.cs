@@ -4,6 +4,7 @@ using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -96,7 +97,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null, HttpContext? httpContext = null)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputSink? outputStream = null, HttpContext? httpContext = null)
 		{
 			var proc = Process.GetCurrentProcess();
 
@@ -111,7 +112,7 @@ namespace PLang.Runtime
 			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream, httpContext);
 		}
 
-		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream, HttpContext? httpContext = null)
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputSink? outputStream, HttpContext? httpContext = null)
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
@@ -120,18 +121,18 @@ namespace PLang.Runtime
 
 			if (outputStream != null)
 			{
-				engine.SetOutputStream(outputStream);
+				engine.SetOutputSink(outputStream);
 			}
 			else
 			{
 				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
-				engine.SetOutputStream(outputStream);
+				engine.SetOutputSink(outputStream);
 			}
 			engine.OutputStreamFactory.SetEngine(engine);
 
-			if (outputStream is HttpOutputStream hos)
+			if (outputStream is HttpSink hos)
 			{
-				engine.HttpContext = hos.HttpContext;
+				engine.HttpContext = httpContext;
 			}
 
 			if (callingStep != null)
@@ -140,7 +141,6 @@ namespace PLang.Runtime
 			}
 
 			
-			engine.AddContext("!plang.output", outputStream.Output);			
 			engine.AddContext("!plang.osPath", engine.FileSystem.SystemDirectory);
 			engine.AddContext("!plang.rootPath", parentEngine?.Path ?? engine.FileSystem.RootDirectory);
 

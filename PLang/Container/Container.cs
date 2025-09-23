@@ -1,7 +1,6 @@
 ﻿using Castle.DynamicProxy;
 using LightInject;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
@@ -16,42 +15,31 @@ using PLang.Errors;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
-using PLang.Modules.IdentityModule;
 using PLang.Modules.MessageModule;
-using PLang.Modules.SerializerModule;
 using PLang.Modules.WebserverModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.ArchiveService;
 using PLang.Services.CachingService;
-using PLang.Services.DbService;
 using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Services.IdentityService;
 using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
-using PLang.Services.Transformers;
 using PLang.Utils;
-using System.CodeDom;
-using System.Collections.Concurrent;
 using System.Data;
-using System.Net;
 using System.Reflection;
-using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
-using static PLang.Modules.WebserverModule.Program;
-using static PLang.Runtime.Engine;
 
 
 namespace PLang.Container
@@ -118,8 +106,8 @@ namespace PLang.Container
 
 			var engine = container.GetInstance<IEngine>();
 
-			container.RegisterOutputStreamFactory(engine, typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
-			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputStreamFactory(engine, typeof(AppOutputSink), true, new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputSystemStreamFactory(typeof(AppOutputSink), true, new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm));
 
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
 			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
@@ -134,8 +122,8 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
-			container.RegisterOutputStreamFactory(engine, typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
+			container.RegisterOutputStreamFactory(engine, typeof(ConsoleSink), true, new ConsoleSink());
+			container.RegisterOutputSystemStreamFactory(typeof(ConsoleSink), true, new ConsoleSink());
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			RegisterEventRuntime(container);
@@ -151,8 +139,8 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
-			container.RegisterOutputStreamFactory(engine, typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
+			container.RegisterOutputStreamFactory(engine, typeof(ConsoleSink), true, new ConsoleSink());
+			container.RegisterOutputSystemStreamFactory(typeof(ConsoleSink), true, new ConsoleSink());
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 
@@ -235,14 +223,7 @@ namespace PLang.Container
 			});
 
 			var context = container.GetInstance<PLangAppContext>();
-			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream != null)
-			{
-				context.AddOrReplace("!plang.output", outputStream.Output);
-			}
-
-
+			
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			context.AddOrReplace("!plang.osPath", fileSystem.SystemDirectory);
 			context.AddOrReplace("!plang.rootPath", parentEngine?.Path ?? fileSystem.RootDirectory);

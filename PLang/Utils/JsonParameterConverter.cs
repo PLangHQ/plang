@@ -52,7 +52,7 @@ public static class JObjectVarResolver
 					{
 						var name = m.Groups["name"].Value;
 						var v = resolve(name);
-						return v?.ToString() ?? m.Value; // keep placeholder if not found
+						return v?.ToString() ?? "";
 					});
 					token.Replace(new JValue(replaced));
 				}

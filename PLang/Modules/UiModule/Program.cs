@@ -12,6 +12,8 @@ using PLang.Models;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using RazorEngineCore;
 using Scriban;
@@ -22,6 +24,7 @@ using System.ComponentModel;
 using System.Dynamic;
 using System.IO.Compression;
 using System.Threading;
+using System.Threading.Channels;
 using static PLang.Modules.UiModule.Program;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -35,11 +38,13 @@ namespace PLang.Modules.UiModule
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly MemoryStack memoryStack;
 		private string? clientTarget;
-		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
+		public Program(IOutputStreamFactory outputStream, IOutputSystemStreamFactory outputSystemStreamFactory, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
 		{
 			this.outputStreamFactory = outputStream;
+			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
 
@@ -112,7 +117,7 @@ namespace PLang.Modules.UiModule
 		}
 
 
-		public enum DomMemberKind
+		public enum UiFacet
 		{
 			Property,      // innerHTML, className, etc.
 			Attribute,     // data-id, src, …
@@ -124,31 +129,37 @@ namespace PLang.Modules.UiModule
 
 Attribute: Member is the key in the SetAttribute js method
 ")]
-		public record DomInstruction(string Selector, string Member, object? Value, DomMemberKind Kind = DomMemberKind.Property);
-		public async Task<IError?> SetElement(List<DomInstruction> domInstructions)
+		public record UiInstruction(string Selector, string Member, object? Value, UiFacet Kind = UiFacet.Property);
+		public async Task<IError?> SetElement(List<UiInstruction> uiInstructions, string actor = "user", string channel = "default")
 		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, domInstructions, "domInstruction");
-			return null;
 
+			Dictionary<string, object> param = new();
+			param.Add("instructions", uiInstructions);
+
+			var executeMessage = new ExecuteMessage("uiInstruction", param, Channel: channel, Actor: actor);
+
+			var outputSink = outputStreamFactory.CreateHandler();
+			return await outputSink.SendAsync(executeMessage);
 		}
 
-		public record DomRemove(string Selector);
+		public record UiRemove(string Selector);
 		[Description("Remove/delete an element by a css selector")]
-		public async Task<IError?> RemoveElement(List<DomRemove> domRemoves)
+		public async Task<IError?> RemoveElement(List<UiRemove> domRemoves, string actor = "user", string channel = "default")
 		{
+			Dictionary<string, object> param = new();
+			param.Add("instructions", domRemoves);
+
+			var executeMessage = new ExecuteMessage("uiRemove", param, Channel: channel, Actor: actor);
+
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, domRemoves, "domRemove");
-			return null;
+			return await outputStream.SendAsync(executeMessage);
 
 		}
 
-		public record JavascriptFunction(string MethodName, Dictionary<string, object> Parameters);
-		public async Task<IError?> ExecuteJavascript(JavascriptFunction javascriptFunction)
+		public async Task<IError?> ExecuteJavascript(ExecuteMessage executeMessage)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			await outputStream.Write(goalStep, javascriptFunction, "javascriptFunction");
-			return null;
+			return await outputStream.SendAsync(executeMessage);
 		}
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)
@@ -171,9 +182,8 @@ Attribute: Member is the key in the SetAttribute js method
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 
 
-		public record RenderTemplateOptions(string FileNameOrHtml, Dictionary<string, object?>? Parameters = null,
-			string? CssSelector = null, string Action = "innerHTML", bool ReRender = true, string LayoutName = "default", 
-			bool RenderToOutputstream = false, string StatusCode = "200", bool DontRenderMainLayout = false)
+		public record RenderTemplateOptions(RenderMessage RenderMessage, bool ReRender = true, string LayoutName = "default", 
+			bool RenderToOutputstream = false, bool DontRenderMainLayout = false)
 		{
 
 			[LlmIgnore]
@@ -181,8 +191,8 @@ Attribute: Member is the key in the SetAttribute js method
 			{
 				get
 				{
-					if (FileNameOrHtml.Contains("\n") || FileNameOrHtml.Contains("\r") || FileNameOrHtml.Contains("\r")) return false;
-					string ext = Path.GetExtension(FileNameOrHtml);
+					if (RenderMessage.Content.Contains("\n") || RenderMessage.Content.Contains("\r") || RenderMessage.Content.Contains("\r")) return false;
+					string ext = Path.GetExtension(RenderMessage.Content);
 					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
 				}
 
@@ -203,13 +213,13 @@ Attribute: Member is the key in the SetAttribute js method
 ```plang
 - render product.html => renderToOutputstream = true
 - render frontpage.html, write to %html% => renderToOutputstream = false
-- render product.html to #main => renderToOutputstream = true, ReRender=true, cssSelector=""#main""
-- replace #main with template.html => cssSelector=#main, action=replace, ReRender=true, FileName=template.html, renderToOutputStream= true
-- set html of #product to product.html => cssSelector=#product, action=innerHTML, ReRender=true, FileName=product.html, renderToOutputStream= true
-- append to #list to item.html => cssSelector=#list, action=append, ReRender=true, FileName=item.html, renderToOutputStream= true
+- render product.html to #main => renderToOutputstream = true, ReRender=true, Target=""#main""
+- replace #main with template.html => Target=#main, actions=[""replace""], ReRender=true, FileName=template.html, renderToOutputStream= true
+- set html of #product to product.html => Target=#product, actions=[""replace""], ReRender=true, FileName=product.html, renderToOutputStream= true
+- append to #list to item.html, scroll to view => Target=#list, actions=[""replace"", ""scrollIntoView""], ReRender=true, FileName=item.html, renderToOutputStream= true
 
-CssSelector can be null when not defined by user.
-Action:innerHTML|innerText|append|prepend|replace|outerHTML|outerText
+Target can be null when not defined by user.
+Actions: list of action to preform, the default is 'replace'(innerHTML).
 ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
 When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
 ```")]
@@ -218,11 +228,11 @@ When user doesn't write the return value into any variable, set it as renderToOu
 			string html;
 			if (options.IsTemplateFile)
 			{
-				var filePath = GetPath(options.FileNameOrHtml);
+				var filePath = GetPath(options.RenderMessage.Content);
 				if (!fileSystem.File.Exists(filePath))
 				{
 					string? similarFilesMessage = FileSuggestionHelper.BuildNotFoundMessage(fileSystem, filePath);
-					return (null, new ProgramError($"Template file {options.FileNameOrHtml} not found at {filePath}", goalStep, StatusCode: 404,
+					return (null, new ProgramError($"Template file {options.RenderMessage.Content} not found at {filePath}", goalStep, StatusCode: 404,
 						FixSuggestion: similarFilesMessage));
 				}
 
@@ -230,26 +240,27 @@ When user doesn't write the return value into any variable, set it as renderToOu
 			}
 			else
 			{
-				html = options.FileNameOrHtml;
+				html = options.RenderMessage.Content;
 			}
 			var url = (HttpContext?.Request.Path.Value ?? "/");
-			if (options.Parameters == null) options = options with { Parameters = new() };
-			if (!options.Parameters.ContainsKey("url"))
+			Dictionary<string, object?> Parameters = new();
+
+			if (!Parameters.ContainsKey("url"))
 			{
-				options.Parameters.Add("url", url);
+				Parameters.Add("url", url);
 			}
-			if (!options.Parameters.ContainsKey("id"))
+			if (!Parameters.ContainsKey("id"))
 			{
 				string path = GetCallbackPath();
-				options.Parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
+				Parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
 			}
 			
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
-			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
+			(var content, var error) = await templateEngine.RenderContent(html, variables: Parameters);
 			if (error != null) return (content, error);
 
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
+			if (outputStream is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
 			{
 				var layoutOptions = GetLayoutOptions();
 
@@ -266,27 +277,25 @@ When user doesn't write the return value into any variable, set it as renderToOu
 				}
 			}
 
-			if (options.Parameters == null)
-			{
-				options = options with { Parameters = new() };
-			}
-			options.Parameters.Add("reRender", options.ReRender);
+			var rm = options.RenderMessage with { Content = content };
+			options = options with {  RenderMessage = rm };	
 
-			if (!string.IsNullOrEmpty(options.CssSelector))
-			{
-				options.Parameters.Add("cssSelector", options.CssSelector);
-			}
-
-			if (!string.IsNullOrEmpty(options.Action))
-			{
-				options.Parameters.Add("action", options.Action);
-			}
-
+			Parameters.Add("reRender", options.ReRender);
+			
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{
-				int statusCode = (string.IsNullOrWhiteSpace(options.StatusCode)) ? 200 : int.Parse(options.StatusCode);
-
-				await outputStreamFactory.CreateHandler().Write(goalStep, content, "html", statusCode: statusCode, parameters: options.Parameters);
+				
+				IOutputSink outputSink;
+				if (options.RenderMessage.Actor == "system")
+				{
+					outputSink = outputSystemStreamFactory.CreateHandler();
+				} else
+				{
+					outputSink = outputStreamFactory.CreateHandler();
+				}
+				
+				error = await outputSink.SendAsync(options.RenderMessage);
+				return (null, error);
 			}
 
 			return (content, null);

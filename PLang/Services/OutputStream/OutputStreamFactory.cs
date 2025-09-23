@@ -2,6 +2,7 @@
 using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -48,16 +49,16 @@ namespace PLang.Services.OutputStream
 			return this;
 		}
 
-		public IOutputStream CreateHandler(string? name = null)
+		public IOutputSink CreateHandler(string? name = null)
 		{
-			if (name == null && engine.OutputStream != null)
+			if (name == null && engine.OutputSink != null)
 			{
-				return engine.OutputStream;
+				return engine.OutputSink;
 			}
 
 			var serviceName = (name != null) ? name : currentType;
 
-			var os = container.GetInstance<IOutputStream>(serviceName);
+			var os = container.GetInstance<IOutputSink>(serviceName);
 			return os;
 		}
 	}

@@ -1,28 +1,6 @@
-﻿using MimeKit;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using PLang.Building.Model;
-using PLang.Errors;
-using PLang.Interfaces;
-using PLang.Modules;
-using PLang.Runtime;
-using PLang.Services.Transformers;
-using PLang.Utils;
-using ReverseMarkdown.Converters;
-using System;
-using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Http;
-using System.Net.Mail;
-using System.Text;
-using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
-using static PLang.Modules.OutputModule.Program;
-using static PLang.Modules.WebserverModule.Program;
-using static PLang.Runtime.Engine;
-using static PLang.Utils.StepHelper;
-
-namespace PLang.Services.OutputStream
+﻿namespace PLang.Services.OutputStream
 {
+	/*
 	public interface IResponseProperties
 	{
 		Dictionary<string, object?> ResponseProperties { get; set; }
@@ -309,5 +287,5 @@ namespace PLang.Services.OutputStream
 
 		}
 
-	}
+	}*/
 }

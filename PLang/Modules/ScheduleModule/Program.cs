@@ -14,6 +14,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -161,7 +162,7 @@ namespace PLang.Modules.ScheduleModule
 			IPseudoRuntime pseudoRuntime = this.pseudoRuntime;
 			IPLangFileSystem fileSystem = this.fileSystem;
 
-			if (outputStreamFactory.CreateHandler() is not UIOutputStream)
+			if (outputStreamFactory.CreateHandler() is not AppOutputSink)
 			{
 				logger.LogDebug("Initiate new engine for scheduler");
 				using (var containerForScheduler = new ServiceContainer())

@@ -5,6 +5,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using System.ComponentModel;
 
 namespace PLang.Modules.WindowAppModule
@@ -27,7 +28,7 @@ namespace PLang.Modules.WindowAppModule
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is not UIOutputStream os)
+			if (outputStream is not AppOutputSink os)
 			{
 				return new StepError("This is not UI Output, did you run plang instead of plangw?", goalStep);
 			}

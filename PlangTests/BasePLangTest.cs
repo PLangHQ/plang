@@ -20,6 +20,7 @@ using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
@@ -59,8 +60,8 @@ namespace PLangTests
 		protected IEventSourceRepository eventSourceRepository;
 		protected IEncryption encryption;
 		protected IEncryptionFactory encryptionFactory;
-		protected IOutputStream outputStream;
-		protected IOutputStream outputSystemStream;
+		protected IOutputSink outputStream;
+		protected IOutputSink outputSystemStream;
 		protected IOutputStreamFactory outputStreamFactory;
 		protected IOutputSystemStreamFactory outputSystemStreamFactory;
 		protected ProgramFactory programFactory;
@@ -168,13 +169,13 @@ namespace PLangTests
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			container.RegisterInstance(llmServiceFactory);
 
-			outputStream = Substitute.For<IOutputStream>();
+			outputStream = Substitute.For<IOutputSink>();
 			container.RegisterInstance(outputStream);
 			outputStreamFactory = Substitute.For<IOutputStreamFactory>();
 			outputStreamFactory.CreateHandler().Returns(outputStream);
 			container.RegisterInstance(outputStreamFactory);
 
-			outputSystemStream = Substitute.For<IOutputStream>();
+			outputSystemStream = Substitute.For<IOutputSink>();
 			container.RegisterInstance(outputSystemStream);
 			outputSystemStreamFactory = Substitute.For<IOutputSystemStreamFactory>();
 			outputSystemStreamFactory.CreateHandler().Returns(outputStream);

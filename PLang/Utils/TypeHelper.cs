@@ -11,6 +11,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.WebserverModule;
 using PLang.Runtime;
+using PLang.Utils.JsonConverters;
 using Sprache;
 using System;
 using System.Collections;
@@ -487,7 +488,7 @@ public class TypeHelper : ITypeHelper
 		if (obj == null) return default;
 		return (T?)obj;
 	}
-	public static object? ConvertToType(object? value, Type targetType)
+	public static object? ConvertToType(object? value, Type targetType, JsonConverter? jsonConverter = null)
 	{
 		if (value == null) return null;
 		if (value is System.DBNull) return null;
@@ -513,9 +514,14 @@ public class TypeHelper : ITypeHelper
 		if (targetType.IsInstanceOfType(value))
 			return value;
 
+		var settings = new JsonSerializerSettings();
+		if (jsonConverter != null) settings.Converters.Add(jsonConverter);
+		var serializer = JsonSerializer.Create(settings);
+
 		if (value is JObject jobj)
 		{
-			return jobj.ToObject(targetType);
+			
+			return jobj.ToObject(targetType, serializer);
 		}
 		if (value is JValue jValue)
 		{
@@ -526,11 +532,11 @@ public class TypeHelper : ITypeHelper
 
 		if (value is JArray jArray)
 		{
-			return jArray.ToObject(targetType);
+			return jArray.ToObject(targetType, serializer);
 		}
 		if (value is JToken jToken)
 		{
-			return jToken.ToObject(targetType);
+			return jToken.ToObject(targetType, serializer);
 		}
 		if (value is DateTimeOffset dto && targetType == typeof(DateTime))
 		{

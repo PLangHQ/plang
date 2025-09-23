@@ -8,6 +8,7 @@ using PLang.Runtime;
 using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Data;
@@ -52,7 +53,7 @@ namespace PLang.Container
 		}
 
 
-		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
+		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputSink? instance = null, bool setToContext = false)
 		{
 			SetContext(container, type, ReservedKeywords.Inject_OutputStream, isDefault, setToContext);
 			container.Register<IOutputStreamFactory>(factory =>
@@ -73,7 +74,7 @@ namespace PLang.Container
 
 			
 		}
-		public static void RegisterOutputSystemStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
+		public static void RegisterOutputSystemStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputSink? instance = null, bool setToContext = false)
 		{
 			SetContext(container, type, ReservedKeywords.Inject_OutputSystemStream, isDefault, setToContext);
 			container.RegisterSingleton<IOutputSystemStreamFactory>(factory =>

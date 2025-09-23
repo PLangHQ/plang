@@ -438,7 +438,21 @@ namespace PLang.Modules.PlangModule
 			return cdh.GetClassDescription(Type.GetType(type + ".Program"), methodName);
 
 		}
-		
+
+		public async Task ShowErrorDetails()
+		{
+			HttpContext?.Items.TryAdd("__Plang.ShowErrorDetails__", true);
+		}
+
+		public async Task HideErrorDetails()
+		{
+			HttpContext?.Items.Remove("__Plang.ShowErrorDetails__");
+		}
+		public async Task<bool> CanSeeErrorDetails()
+		{
+			return HttpContext?.Items.ContainsKey("__Plang.ShowErrorDetails__") == true;
+		}
+
 
 		public class MethodInfoDto
 		{

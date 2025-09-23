@@ -1,14 +1,9 @@
-﻿using AngleSharp.Common;
-using LightInject;
-using Microsoft.AspNetCore.Builder;
+﻿using LightInject;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
-using Nethereum.RPC.Eth;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using PLang.Attributes;
-using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
@@ -18,27 +13,20 @@ using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
-using PLang.Services.Transformers;
+using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Net.WebSockets;
-using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using UAParser;
-using static Dapper.SqlMapper;
-using static PLang.Runtime.Engine;
-using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.WebserverModule;
 
@@ -50,16 +38,17 @@ public class Program : BaseProgram, IDisposable
 	private readonly IPLangFileSystem fileSystem;
 	private readonly ISettings settings;
 	private readonly IOutputStreamFactory outputStreamFactory;
+	private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 	private readonly PrParser prParser;
 	private readonly IPseudoRuntime pseudoRuntime;
 	private readonly IEngine engine;
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
-	
-	 
+
+
 	public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
-		, ISettings settings, IOutputStreamFactory outputStreamFactory
+		, ISettings settings, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory
 		, PrParser prParser,
 		IPseudoRuntime pseudoRuntime, IEngine engine, Modules.ProgramFactory programFactory) : base()
 	{
@@ -68,6 +57,7 @@ public class Program : BaseProgram, IDisposable
 		this.fileSystem = fileSystem;
 		this.settings = settings;
 		this.outputStreamFactory = outputStreamFactory;
+		this.outputSystemStreamFactory = outputSystemStreamFactory;
 		this.prParser = prParser;
 		this.pseudoRuntime = pseudoRuntime;
 		this.engine = engine;
@@ -82,32 +72,33 @@ public class Program : BaseProgram, IDisposable
 		if (listeners.Count == 0) return 0;
 
 		return listeners.Sum(p => p.Engine.LiveConnections.Count);
-		
+
 	}
 
-	public async Task<WebserverProperties?> ShutdownWebserver(string webserverName)
+	public async Task<(WebserverProperties?, IError?)> ShutdownWebserver(string webserverName)
 	{
 		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
 		if (webserverInfo == null)
 		{
-			await outputStreamFactory.CreateHandler().Write(goalStep, $"Webserver named '{webserverName}' does not exist");
-			return null;
+			var error = await outputSystemStreamFactory.CreateHandler().SendAsync(new TextMessage($"Webserver named '{webserverName}' does not exist"));
+			return (webserverInfo, error);
 		}
 
 		await webserverInfo.Listener.StopAsync();
 
 		listeners.Remove(webserverInfo);
-		return webserverInfo;
+		return (webserverInfo, null);
 	}
 
-	public async Task<bool> RestartWebserver(string webserverName = "default")
+	public async Task<(WebserverProperties?, IError?)> RestartWebserver(string webserverName = "default")
 	{
-		var webserverInfo = await ShutdownWebserver(webserverName);
-		if (webserverInfo == null) return false;
+		var (webserverInfo, error) = await ShutdownWebserver(webserverName);
+		if (error != null) return (webserverInfo, error);
 
-		await StartWebserver(webserverInfo);
+		if (webserverInfo == null) return (webserverInfo, null);
 
-		return true;
+		return await StartWebserver(webserverInfo);
+
 	}
 
 	public virtual void Dispose()
@@ -127,7 +118,7 @@ public class Program : BaseProgram, IDisposable
 			throw new ObjectDisposedException(this.GetType().FullName);
 		}
 	}
-	
+
 
 	[Description("Default Methods=[\"GET\"]")]
 	public record RequestProperties(List<string> Methods, long MaxContentLengthInBytes = 1024 * 8, bool SignedRequestRequired = false)
@@ -190,7 +181,7 @@ public class Program : BaseProgram, IDisposable
 		webserverEngine.Init(webserverContainer, context);
 		webserverEngine.Name = "WebserverEngine";
 		goal.AddVariable(webserverProperties);
-		
+
 		engine.ChildEngines.Add(webserverEngine);
 
 		RequestHandler requestHandler = webserverContainer.GetInstance<RequestHandler>();
@@ -267,7 +258,8 @@ public class Program : BaseProgram, IDisposable
 						app.UseHttpsRedirection();
 					}
 					app.UseResponseCompression();
-					app.Run(async ctx => {
+					app.Run(async ctx =>
+					{
 						IEngine? requestEngine = null;
 						IError? error = null;
 						bool poll = false;
@@ -277,7 +269,7 @@ public class Program : BaseProgram, IDisposable
 						{
 							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
-							var httpOutputStream = new HttpOutputStream(ctx, webserverProperties, webserverEngine.LiveConnections);
+							var httpOutputStream = new HttpSink(ctx, webserverProperties, webserverEngine.LiveConnections);
 							requestEngine = await webserverEngine.RentAsync(goalStep, httpOutputStream);
 							requestEngine.HttpContext = ctx;
 							requestEngine.Name = "RequestEngine_" + ctx.Request.Path.Value;
@@ -295,23 +287,33 @@ public class Program : BaseProgram, IDisposable
 
 								if (error is StatelessCallbackError)
 								{
-									await requestEngine.OutputStream.Write(goalStep, error);
+									await requestEngine.OutputSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode));
 									return;
 								}
 
 								(_, error) = await requestEngine.GetEventRuntime().AppErrorEvents(error);
-								
+
 								if (error != null)
 								{
-									//AppError had error, this is a critical thing and should not happen
-									//So we write the error to the console as last resort.	
-									//
+									
 									try
 									{
-
-										await requestEngine.OutputStream.Write(goalStep, error);
-									} catch (Exception ex)
+										ErrorMessage errorMessage;
+										if (ctx.Items.ContainsKey("__Plang.ShowErrorDetails__"))
+										{
+											errorMessage = new ErrorMessage(error.ToString(), error.Key, "error", error.StatusCode);
+										}
+										else
+										{
+											errorMessage = new ErrorMessage(error.Message, error.Key, "error", error.StatusCode);
+										}
+										await requestEngine.OutputSink.SendAsync(errorMessage);
+									}
+									catch (Exception ex)
 									{
+										//AppError had error, this is a critical thing and should not happen
+										//So we write the error to the console as last resort.	
+									 
 										string strError = error.ToString();
 										Console.WriteLine(" ---- Could not write error to output stream - Critical Error  ---- ");
 										Console.WriteLine(strError);
@@ -319,7 +321,8 @@ public class Program : BaseProgram, IDisposable
 									}
 
 								}
-							} else
+							}
+							else
 							{
 								if (!ctx.Response.HasStarted)
 								{
@@ -356,7 +359,7 @@ public class Program : BaseProgram, IDisposable
 							{
 								webserverEngine.Return(requestEngine, true);
 							}
-							
+
 							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
 						}
@@ -397,7 +400,7 @@ public class Program : BaseProgram, IDisposable
 		try
 		{
 			var payload = JsonConvert.SerializeObject("ping");
-			var buffer = Encoding.UTF8.GetBytes(payload + Environment.NewLine);
+			var buffer = Encoding.UTF8.GetBytes(Environment.NewLine + payload + Environment.NewLine);
 
 			var ct = context.RequestAborted;
 			await response.StartAsync(ct);
@@ -431,9 +434,12 @@ public class Program : BaseProgram, IDisposable
 				//run onpoll end
 			}
 			Console.WriteLine(ex);
-		} finally
+		}
+		finally
 		{
-			try { await response.CompleteAsync(); } catch (Exception ex) {
+			try { await response.CompleteAsync(); }
+			catch (Exception ex)
+			{
 
 				int i = 0;
 			}
@@ -591,8 +597,8 @@ OnStartingWebserver
 
 	public async Task<IError?> Redirect(string url, bool permanent = false, bool preserveMethod = false)
 	{
-		var os = engine.OutputStream;
-		if (os is HttpOutputStream hos)
+		var os = engine.OutputSink;
+		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null && !isFlushed && !response.HasStarted)
@@ -600,14 +606,13 @@ OnStartingWebserver
 				response.Redirect(url, permanent, preserveMethod);
 				await response.Body.FlushAsync();
 				await response.CompleteAsync();
-				os.IsFlushed = true;
 				hos.IsComplete = true;
 
 			}
 		}
 
 		var topGoal = goal;
-		int counter=0;
+		int counter = 0;
 		while (topGoal.ParentGoal != null)
 		{
 			topGoal = topGoal.ParentGoal;
@@ -705,8 +710,8 @@ Frontpage
 		options.HttpOnly = true;
 		options.Secure = true;
 
-		var os = engine.OutputStream;
-		if (os is HttpOutputStream hos)
+		var os = engine.OutputSink;
+		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null)
@@ -729,7 +734,7 @@ Frontpage
 	public async Task<IError?> SendFileToClient(string path, string? fileName = null)
 	{
 		var absolutePath = GetPath(path);
-		
+
 		if (!fileSystem.File.Exists(absolutePath))
 		{
 			return new NotFoundError("File not found");
@@ -754,17 +759,17 @@ Frontpage
 		response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
 
 		await using var s = fileSystem.File.OpenRead(absolutePath);
-		response.ContentLength = s.Length;      
+		response.ContentLength = s.Length;
 		await s.CopyToAsync(response.Body, response.HttpContext.RequestAborted);
 		await response.Body.FlushAsync(response.HttpContext.RequestAborted);
-		
+
 
 		return null;
 	}
 
 
 
-	private async Task<IError?> ProcessWebsocketRequest(HttpListenerContext httpContext, IOutputStream outputStream)
+	private async Task<IError?> ProcessWebsocketRequest(HttpListenerContext httpContext, IOutputSink outputStream)
 	{
 		return new Error("Not Supported");
 		/*

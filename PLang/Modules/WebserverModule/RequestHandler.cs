@@ -1,23 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
-using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
-using PLang.Services.OutputStream;
-using PLang.Services.Transformers;
+using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using UAParser;
 using static PLang.Modules.WebserverModule.Program;
 using static PLang.Runtime.Engine;
@@ -60,7 +55,7 @@ namespace PLang.Modules.WebserverModule
 				(var signedMessage, error) = await VerifySignature(requestEngine, ctx);
 				if (error != null)
 				{
-					(var requestObjectValue2, error) = await ParseRequest(ctx, requestEngine.OutputStream);
+					(var requestObjectValue2, error) = await ParseRequest(ctx, requestEngine.OutputSink);
 
 					// put "request" object into memory
 					requestEngine.MemoryStack.Put(requestObjectValue2);
@@ -69,7 +64,7 @@ namespace PLang.Modules.WebserverModule
 
 
 				// this should be below 
-				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputStream);
+				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputSink);
 				if (error != null) return (false, signedMessage?.Identity, error);
 
 				// put "request" object into memory
@@ -257,7 +252,7 @@ namespace PLang.Modules.WebserverModule
 
 			if (request.Method == "HEAD") return null;
 
-			(var requestObjectValue, var error) = await ParseRequest(httpContext, requestEngine.OutputStream);
+			(var requestObjectValue, var error) = await ParseRequest(httpContext, requestEngine.OutputSink);
 			if (error != null) return error;
 
 			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
@@ -334,27 +329,6 @@ namespace PLang.Modules.WebserverModule
 			return (callbackInfo, goal, null);
 		}
 
-		private async Task ShowError(Microsoft.AspNetCore.Http.HttpResponse resp, IOutputStream outputStream, IError error)
-		{
-			try
-			{
-				/*if (!resp.HasStarted)
-				{
-					resp.StatusCode = error.StatusCode;
-				}*/
-				var errorStep = (error.Step != null) ? error.Step : step;
-
-
-				await outputStream.Write(errorStep, error, statusCode: error.StatusCode);
-
-				await resp.CompleteAsync();
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Error:" + error.ToString());
-				Console.WriteLine("Exception when writing out error:" + ex);
-			}
-		}
 
 		private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverProperties webserverInfo, List<Routing>? routings, IEngine requestEngine)
 		{
@@ -432,7 +406,7 @@ namespace PLang.Modules.WebserverModule
 				engine.MemoryStack.Remove(ReservedKeywords.Identity);
 			}
 
-			var outputStream = engine.OutputStream as HttpOutputStream;
+			var outputStream = engine.OutputSink as HttpSink;
 			if (outputStream != null)
 			{
 				outputStream.SetIdentity(verifiedSignatureResult.Signature.Identity);
@@ -458,7 +432,7 @@ namespace PLang.Modules.WebserverModule
 			SignedMessage? signedMessage = ctx.Items["SignedMessage"] as SignedMessage;
 			if (signedMessage == null) return null;
 
-			var outputStream = requestEngine.OutputStream as HttpOutputStream;
+			var outputStream = requestEngine.OutputSink as HttpSink;
 			if (outputStream == null) return new Error("OutputStream is not HttpOutputStream");
 
 			LiveConnection? liveResponse = null;
@@ -549,6 +523,7 @@ namespace PLang.Modules.WebserverModule
 
 				case ".js": return "application/javascript";
 				case ".json": return "application/json";
+				case ".map": return "application/json";
 				case ".xml": return "application/xml";
 				case ".csv": return "application/csv";
 
@@ -618,7 +593,7 @@ namespace PLang.Modules.WebserverModule
 
 		string[] supportedHeaders = ["data-plang-js", "data-plang-response", "data-plang-js-params", "data-plang-cssSelector", "data-plang-action"];
 
-		private void ParseHeaders(HttpContext ctx, IOutputStream outputStream)
+		private void ParseHeaders(HttpContext ctx, IOutputSink outputStream)
 		{
 			var headers = ctx.Request.Headers;
 
@@ -634,13 +609,13 @@ namespace PLang.Modules.WebserverModule
 			}
 			responseProperties.AddOrReplace("Path", ctx.Request.Path.ToString());
 
-			if (responseProperties.Count > 0 && outputStream is IResponseProperties rp)
+			if (responseProperties.Count > 0 && outputStream is HttpSink rp)
 			{
 				rp.ResponseProperties = responseProperties;
 			}
 		}
 
-		private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx, IOutputStream outputStream)
+		private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx, IOutputSink outputStream)
 		{
 			if (ctx is null) return (null, new Error("context is empty"));
 			if (ctx.Items.TryGetValue("request", out object? value) && value != null)

@@ -309,11 +309,6 @@ namespace PLang.Modules.MessageModule
 					error = ErrorHelper.GetMultipleError(error, handlerError);
 				}
 
-				var os = outputStreamFactory.CreateHandler();
-				if (os is UIOutputStream)
-				{
-					((UIOutputStream)os).Flush();
-				}
 				return error;
 
 			}

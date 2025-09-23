@@ -42,8 +42,7 @@ namespace PLang.Modules.TerminalModule
 
 		public async Task Read(string? variableName)
 		{
-			var result = outputStreamFactory.CreateHandler().Read();
-			memoryStack.Put(variableName, result, goalStep: goalStep);
+			throw new NotImplementedException("Read is not implemented");
 		}
 
 		[Description("Run a executable. Parameters string should not be escaped. onDataStreamVariable and onErrorStreamVariable need to be defined by the user, this is not same as returning a variable (write to %variable%)")]

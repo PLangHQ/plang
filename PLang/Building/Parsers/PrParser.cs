@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.Export;
 using static PLang.Runtime.Startup.ModuleLoader;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Building.Parsers
 {
@@ -143,7 +144,7 @@ namespace PLang.Building.Parsers
 			AdjustPathsToOS(goal);
 			goal.IsSystem = absolutePrFilePath.Contains(fileSystem.SystemDirectory);
 
-			
+
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
 				goal.GoalSteps[i].AbsolutePrFilePath = fileSystem.Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
@@ -197,21 +198,21 @@ namespace PLang.Building.Parsers
 				instructions.TryAdd(step.AbsolutePrFilePath, instruction);
 			}
 			return instruction;
-			
+
 		}
 		public List<Goal> ForceLoadAllGoals()
 		{
 			var goals = LoadAllGoals(true);
 			return goals;
-		}	
+		}
 
 		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = AppContext.BaseDirectory;
 			await fileAccessHandler.ValidatePathResponse(appName, path, "y", fileSystem.Id);
 			// not using IPlangFileSystem here, we need to get the goal in the runtime folder
-			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(path, "Goals", ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();			
-			
+			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(path, "Goals", ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+
 			var goals = new List<Goal>();
 			foreach (var file in files)
 			{
@@ -227,7 +228,7 @@ namespace PLang.Building.Parsers
 						publicGoals.Add(goal);
 					}
 				}
-			}		
+			}
 
 			return this.goals;
 		}
@@ -236,7 +237,7 @@ namespace PLang.Building.Parsers
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"   -- Loading all goals(force:{force})");
-			
+
 			GetGoals(force);
 			GetSystemGoals(force);
 
@@ -245,18 +246,19 @@ namespace PLang.Building.Parsers
 				instructions.Clear();
 			}
 
-			logger.LogDebug($"   -- Done loading all goals - {stopwatch.ElapsedMilliseconds}"); 
+			logger.LogDebug($"   -- Done loading all goals - {stopwatch.ElapsedMilliseconds}");
 			return goals;
 		}
 
-		public List<Goal> LoadAllGoalsByPath(string dir) { 
+		public List<Goal> LoadAllGoalsByPath(string dir)
+		{
 
 			string buildDir = fileSystem.Path.Join(dir, ".build");
 			if (!fileSystem.Directory.Exists(buildDir))
 			{
 				return new List<Goal>();
 			}
-		
+
 			var files = fileSystem.Directory.GetFiles(buildDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 			files = files.Select(file => new
 			{
@@ -266,7 +268,7 @@ namespace PLang.Building.Parsers
 					file.ToLower().Contains(@"setup\") ? 2 :
 					file.ToLower().Contains(@"start\") ? 3 : 4
 			}).OrderBy(file => file.Order)
-				.ThenBy(file => file.FileName) 
+				.ThenBy(file => file.FileName)
 				.Select(file => file.FileName).ToList();
 
 
@@ -279,7 +281,7 @@ namespace PLang.Building.Parsers
 					goals.Add(goal);
 				}
 			}
-			
+
 			return goals;
 		}
 
@@ -335,7 +337,7 @@ namespace PLang.Building.Parsers
 		{
 			var goals = GetAllGoals();
 			if (!string.IsNullOrEmpty(goalToCall.Path))
-			{				
+			{
 				var goal = goals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
 				if (goal == null) return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {goalToCall.Path}", "GoalNotFound"));
 				return (goal, null);
@@ -345,7 +347,7 @@ namespace PLang.Building.Parsers
 			if (goalsFound.Count() > 1)
 			{
 				string fixSuggestion = $"Rename one of these goals:\n\t{string.Join("\n", goalsFound.Select(p => p.RelativeGoalPath))}";
-				return (null, new Error($"Found more the one goal with the name {goalToCall.Name}. Cannot decide which to use.", 
+				return (null, new Error($"Found more the one goal with the name {goalToCall.Name}. Cannot decide which to use.",
 					FixSuggestion: fixSuggestion));
 			}
 			if (goalsFound.Any())
@@ -405,7 +407,7 @@ namespace PLang.Building.Parsers
 			// match goal from root, e.g. /Start
 			if (goalNameOrPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 			{
-				goal = goals.FirstOrDefault(p=> p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+				goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 
@@ -416,21 +418,22 @@ namespace PLang.Building.Parsers
 				goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
-			
+
 			goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
 			goal = goals.FirstOrDefault(p => goalNameOrPath.TrimStart(fileSystem.Path.DirectorySeparatorChar).Equals(fileSystem.Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(fileSystem.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
-		
+
 			var possibleGoals = goals.Where(p => p.RelativePrFolderPath.EndsWith(goalNameOrPath, StringComparison.OrdinalIgnoreCase)).ToList();
 			if (possibleGoals.Count == 1) return possibleGoals[0];
 			if (possibleGoals.Count > 1)
 			{
-				var goalNames = possibleGoals.Select(p => {
-						return p.RelativeGoalPath;
-					});
+				var goalNames = possibleGoals.Select(p =>
+				{
+					return p.RelativeGoalPath;
+				});
 				throw new GoalNotFoundException($"{goalNameOrPath} Could not be found. There are {possibleGoals.Count} to choose from. {string.Join(",", goalNames)}", appStartupPath, goalNameOrPath);
 			}
 
@@ -440,10 +443,10 @@ namespace PLang.Building.Parsers
 		public List<Goal> GetGoals(bool force = false)
 		{
 			if (!force && goals != null) return goals;
-			
+
 			goals = LoadAllGoalsByPath(fileSystem.RootDirectory);
 			publicGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
-			
+
 
 			return goals;
 		}
@@ -453,7 +456,7 @@ namespace PLang.Building.Parsers
 			if (!force && systemGoals != null) return systemGoals;
 
 			systemGoals = LoadAllGoalsByPath(fileSystem.SystemDirectory);
-			
+
 			return systemGoals;
 		}
 		public List<Goal> GetApps()
@@ -478,7 +481,8 @@ namespace PLang.Building.Parsers
 
 			List<string>? files = new();
 
-			if (fileSystem.Directory.Exists(appPath)) {
+			if (fileSystem.Directory.Exists(appPath))
+			{
 				files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(appPath, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 			}
 
@@ -513,7 +517,7 @@ namespace PLang.Building.Parsers
 				if (instruction == null) continue;
 
 				if (instruction.Function.Name != functionName) continue;
-				
+
 				instructions.Add(instruction);
 			}
 
@@ -564,28 +568,27 @@ namespace PLang.Building.Parsers
 
 		internal void ClearVariables()
 		{
-			foreach (var goal in goals)
+			for (int i = 0; i < goals.Count; i++)
 			{
-				foreach (var variable  in goal.Variables)
+				for (int b = 0; b < goals[i].Variables.Count; b++)
 				{
-					if (variable.DisposeFunc != null)
+					if (goals[i].Variables[b].DisposeFunc != null)
 					{
-						variable.DisposeFunc().Wait();
+						goals[i].Variables[b]?.DisposeFunc()?.Wait();
 					}
 				}
-				
-				foreach (var step in goal.GoalSteps)
+				for (int b = 0; b < goals[i].GoalSteps.Count; b++)
 				{
-					step.Callback = null;
-					foreach (var variable in step.Variables)
+					for (int c = 0; c < goals[i].GoalSteps[b].Variables.Count; c++)
 					{
-						if (variable.DisposeFunc != null)
+						if (goals[i].GoalSteps[b].Variables[c]?.DisposeFunc != null)
 						{
-							variable.DisposeFunc().Wait();
+							goals[i].GoalSteps[b].Variables[c]?.DisposeFunc()?.Wait();
 						}
 					}
 				}
 			}
+
 		}
 	}
 }

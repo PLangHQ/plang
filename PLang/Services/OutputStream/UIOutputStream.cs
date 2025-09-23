@@ -12,6 +12,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
+	/*
 	public class UIOutputStream : IOutputStream, IDisposable
 	{
 		private readonly IFileSystem fileSystem;
@@ -181,5 +182,5 @@ namespace PLang.Services.OutputStream
 		}
 
 
-	}
+	}*/
 }
