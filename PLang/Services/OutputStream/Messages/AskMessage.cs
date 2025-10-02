@@ -7,7 +7,7 @@ namespace PLang.Services.OutputStream.Messages;
 
 
 [Description(@"
-Content can be a filename or a text that will be written to stream. 
+Content can be a filename or a text that will be written to stream, e.g. `render template.html` => Content=""template.html"". 
 Target defines where in the UI to write the content, this can be null and will be controlled by external system
 Actions are actions executed on the content, built in actions are: 'replace, append, prepend, clear, remove, scrollIntoView, focus, highlight, show, hide, notify, alert, badge, vibrate, navigate, reload, open, close'. 
 A user can define multiple actions, user:`render 'product.html' to #main, replace the content, navigate and scroll into view => Actions:[""replace"", ""navigate"", ""scrollIntoView""]
@@ -16,25 +16,26 @@ Channel: default|log|audit|security|metric or custom defined by user
 Actor: user|system => user is the default actor when Channel=default, for other channels use system as actor unless defined by user.
 CallbackData: %variables% that are sent with the form
 OnCallback: Goal to call after recieving an answer.
-
 ")]
 public sealed record AskMessage(
+	[property: Description("file name or general text content or %variable%")]
 	string Content,
 	string? Target = null,
+	[property: Description("List of action(s) to take, e.g. append, replace, prepend, navigate, etc...")]
 	IReadOnlyList<string>? Actions = null,
 	string Level = "info",
 	int StatusCode = 200,
 	string Channel = "default", string Actor = "user",
-	[LlmIgnore]
-	IReadOnlyDictionary<string, object?>? Meta = null,
+	[param: LlmIgnore]
+	IReadOnlyDictionary<string, object?>? Properties = null,
 	Dictionary<string, object?>? CallbackData = null, 
 	GoalToCallInfo? OnCallback = null,
-	[LlmIgnore]
+	[param: LlmIgnore]
 	Callback? Callback = null)
 	: OutMessage(
 		MessageKind.Ask,
 		Level,
 		StatusCode,
 		Target,
-		Actions ?? new[] { "ask" }, Channel, Actor,
-		Meta);
+		Actions ?? new[] { "replace" }, Channel, Actor,
+		Properties);

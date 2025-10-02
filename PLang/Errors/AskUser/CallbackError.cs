@@ -2,7 +2,7 @@
 {
     public interface ICallbackError { }
 
-    public abstract record CallbackError(string Message, Func<object[]?, Task<(bool, IError?)>> Callback, string Key = "CallbackError") : Error(Message, Key), ICallbackError
+    public abstract record CallbackError(string Actor, string Channel, string Message, Func<object[]?, Task<(bool, IError?)>> Callback, string Key = "CallbackError") : Error(Message, Key), ICallbackError
 	{
         public abstract Task InvokeCallback(object[]? value);
 

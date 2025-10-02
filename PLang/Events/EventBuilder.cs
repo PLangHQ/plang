@@ -37,14 +37,14 @@ namespace PLang.Events
 		private readonly ITypeHelper typeHelper;
 
 		public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-            ISettings settings, IGoalParser goalParser, MemoryStack memoryStack, PrParser prParser, ITypeHelper typeHelper)
+            ISettings settings, IGoalParser goalParser, IMemoryStackAccessor memoryStackAccessor, PrParser prParser, ITypeHelper typeHelper)
         {
             this.fileSystem = fileSystem;
             this.llmServiceFactory = llmServiceFactory;
             this.logger = logger;
             this.settings = settings;
             this.goalParser = goalParser;
-            this.memoryStack = memoryStack;
+            this.memoryStack = memoryStackAccessor.Current;
             this.prParser = prParser;
 			this.typeHelper = typeHelper;
 		}
@@ -103,7 +103,7 @@ namespace PLang.Events
                     }
 
 
-					(var foundGoal, error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, eventBinding.GoalToCall, goalParser.GetGoals(), new());
+					(var foundGoal, error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, eventBinding.GoalToCall, goalParser.GetGoals(), new List<Goal>());
 					if (error != null) return (new(), new BuilderError(error));
 
 					eventBinding.GoalToCall.Path = foundGoal.RelativePrPath;

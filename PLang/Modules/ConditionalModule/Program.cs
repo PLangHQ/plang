@@ -33,13 +33,15 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
+		private readonly IPLangContextAccessor contextAccessor;
 
-		public Program(IEngine engine, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, ILogger logger) : base()
+		public Program(IEngine engine, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, ILogger logger, IPLangContextAccessor contextAccessor) : base()
 		{
 			this.engine = engine;
 			this.pseudoRuntime = pseudoRuntime;
 			this.fileSystem = fileSystem;
 			this.logger = logger;
+			this.contextAccessor = contextAccessor;
 		}
 
 		public async Task<(object?, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
@@ -391,7 +393,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			catch (Exception ex)
 			{
 				var engine = ((ServiceContainer)container).GetInstance<IEngine>();
-				var error = await CodeExceptionHandler.GetError(engine, ex, implementation, goalStep);
+				var error = await CodeExceptionHandler.GetError(engine, ex, implementation, goalStep, context);
 				return (null, error);
 			}
 
@@ -409,7 +411,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
 				{
-					goalToCallOnTrue.Name = variableHelper.LoadVariables(goalToCallOnTrue.Name)?.ToString();
+					goalToCallOnTrue.Name = memoryStack.LoadVariables(goalToCallOnTrue.Name)?.ToString();
 				}
 				goalToCall = goalToCallOnTrue;
 			}
@@ -417,7 +419,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			{
 				if (VariableHelper.IsVariable(goalToCallOnFalse))
 				{
-					goalToCallOnFalse.Name = variableHelper.LoadVariables(goalToCallOnFalse.Name)?.ToString();
+					goalToCallOnFalse.Name = memoryStack.LoadVariables(goalToCallOnFalse.Name)?.ToString();
 				}
 				goalToCall = goalToCallOnFalse;
 			}
@@ -426,9 +428,9 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			IError? error = null;
 			if (goalToCall != null)
 			{
-				goalToCall.Parameters = variableHelper.LoadVariables(goalToCall.Parameters);
+				goalToCall.Parameters = memoryStack.LoadVariables(goalToCall.Parameters);
 
-				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, goal);
+				task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, goal);
 				if (task != null)
 				{
 					try

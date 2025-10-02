@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using NBitcoin.Secp256k1;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
@@ -39,49 +40,51 @@ namespace PLang.Modules.WebserverModule
 			this.prParser = prParser;
 		}
 
-		public async Task<(bool, string?, IError?)> HandleRequestAsync(IEngine requestEngine, HttpContext ctx, WebserverProperties webserverProperties)
+		public async Task<(bool, string?, IError?)> HandleRequestAsync(IEngine requestEngine, PLangContext context, WebserverProperties webserverProperties)
 		{
 			IError? error = null;
 			try
 			{
-				if (!ctx.Request.Body.CanRead) return (false, null, null);
+				var httpContext = context.HttpContext!;
+				var request = httpContext.Request;
+				if (!request.Body.CanRead) return (false, null, null);
 
-				if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !ctx.Request.Headers.TryGetValue("X-Signature", out var value))
+				if (webserverProperties.DefaultRequestProperties!.SignedRequestRequired && !request.Headers.TryGetValue("X-Signature", out var value))
 				{
 					return (false, null, new Error("All requests must be signed"));
 				}
 
 
-				(var signedMessage, error) = await VerifySignature(requestEngine, ctx);
+				(var signedMessage, error) = await VerifySignature(requestEngine, context);
 				if (error != null)
 				{
-					(var requestObjectValue2, error) = await ParseRequest(ctx, requestEngine.OutputSink);
+					(var requestObjectValue2, error) = await ParseRequest(context);
 
 					// put "request" object into memory
-					requestEngine.MemoryStack.Put(requestObjectValue2);
+					context.MemoryStack.Put(requestObjectValue2);
 					return (false, signedMessage?.Identity, error);
 				}
 
 
 				// this should be below 
-				(var requestObjectValue, error) = await ParseRequest(ctx, requestEngine.OutputSink);
+				(var requestObjectValue, error) = await ParseRequest(context);
 				if (error != null) return (false, signedMessage?.Identity, error);
 
 				// put "request" object into memory
-				requestEngine.MemoryStack.Put(requestObjectValue);
+				context.MemoryStack.Put(requestObjectValue);
 
 				if (webserverProperties.OnRequestBegin != null)
 				{
-					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin);
+					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestBegin, context);
 					if (error != null) return (false, signedMessage?.Identity, error);
 				}
 
 				if (webserverProperties.OnPollStart != null)
 				{
-					string? query = ctx.Request.QueryString.Value;
+					string? query = request.QueryString.Value;
 					if (query?.StartsWith("?plang.poll=1") == true)
 					{
-						error = await HandlePlangPoll(requestEngine, ctx, webserverProperties);
+						error = await HandlePlangPoll(requestEngine, context, webserverProperties);
 						if (error != null) return (false, signedMessage?.Identity, error);
 
 						//return true to create long lasting connection
@@ -90,12 +93,12 @@ namespace PLang.Modules.WebserverModule
 				}
 
 
-				error = await HandleRequest(ctx, requestEngine, webserverProperties);
+				error = await HandleRequest(context, requestEngine, webserverProperties);
 				if (error != null) return (false, signedMessage?.Identity, error);
 
 				if (webserverProperties.OnRequestEnd != null)
 				{
-					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd);
+					error = await RunOnRequest(requestEngine, webserverProperties.OnRequestEnd, context);
 					if (error != null) return (false, signedMessage?.Identity, error);
 				}
 
@@ -112,13 +115,14 @@ namespace PLang.Modules.WebserverModule
 
 
 
-		private async Task<IError?> HandleRequest(HttpContext httpContext, IEngine requestEngine, WebserverProperties webserverInfo)
+		private async Task<IError?> HandleRequest(PLangContext context, IEngine requestEngine, WebserverProperties webserverInfo)
 		{
 			try
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				IError? error = null;
-
+				
+				var httpContext = context.HttpContext!;
 				var acceptedTypes = httpContext.Request.Headers.Accept.FirstOrDefault();
 
 
@@ -127,7 +131,7 @@ namespace PLang.Modules.WebserverModule
 				{
 					Console.WriteLine($"{DateTime.Now} - plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 
-					error = await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, requestEngine);
+					error = await ProcessPlangRequest(context, webserverInfo, webserverInfo.Routings, requestEngine);
 					return error;
 				}
 
@@ -146,7 +150,7 @@ namespace PLang.Modules.WebserverModule
 
 				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
 				Console.WriteLine($"{DateTime.Now} - classic: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
-				error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, requestEngine);
+				error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, context, requestEngine);
 
 				logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
 
@@ -157,24 +161,6 @@ namespace PLang.Modules.WebserverModule
 				return new Error(ex.Message, Key: "WebserverCore", 500, ex);
 			}
 		}
-
-		private async Task<IError?> HandleError(IEngine? engine, IError error)
-		{
-			if (error is IErrorHandled) return null;
-
-			//last effort, write to system output
-			if (engine != null)
-			{
-				(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
-				return error;
-			}
-			else
-			{
-				return error;
-			}
-		}
-
-
 
 
 		private string GetContentType(HttpRequest request)
@@ -195,17 +181,17 @@ namespace PLang.Modules.WebserverModule
 
 
 
-		private async Task<IError?> RunOnRequest(IEngine engine, GoalToCallInfo goalToCall)
+		private async Task<IError?> RunOnRequest(IEngine engine, GoalToCallInfo goalToCall, PLangContext context)
 		{
 
-			(_, var error) = await engine!.RunGoal(goalToCall, goal);
+			(_, var error) = await engine!.RunGoal(goalToCall, goal, context);
 			if (error is IErrorHandled) error = null;
 			return error;
 
 		}
 
 		private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverProperties webserverInfo,
-			Routing routing, HttpContext httpContext, IEngine requestEngine)
+			Routing routing, PLangContext context, IEngine requestEngine)
 		{
 			if (goal == null)
 			{
@@ -213,6 +199,7 @@ namespace PLang.Modules.WebserverModule
 			}
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
+			var httpContext = context.HttpContext!;
 			var resp = httpContext.Response;
 			var request = httpContext.Request;
 			/*resp.OnStarting(() =>
@@ -252,7 +239,7 @@ namespace PLang.Modules.WebserverModule
 
 			if (request.Method == "HEAD") return null;
 
-			(var requestObjectValue, var error) = await ParseRequest(httpContext, requestEngine.OutputSink);
+			(var requestObjectValue, var error) = await ParseRequest(context);
 			if (error != null) return error;
 
 			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
@@ -265,20 +252,20 @@ namespace PLang.Modules.WebserverModule
 
 			if (requestObjectValue != null)
 			{
-				requestEngine.MemoryStack.Put(requestObjectValue, step);
+				context.MemoryStack.Put(requestObjectValue, step);
 			}
-			requestEngine!.CallbackInfo = callbackInfo;
+			context!.CallbackInfo = callbackInfo;
 			if (slugVariables != null)
 			{
 				foreach (var item in slugVariables)
 				{
-					requestEngine.MemoryStack.Put(item, step, disableEvent: true);
+					context.MemoryStack.Put(item, step, disableEvent: true);
 				}
 			}
 			logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
 
-			(var vars, error) = await requestEngine.RunGoal(goal, 0);
-			if (error is IErrorHandled) error = null;
+			(var vars, error) = await requestEngine.RunGoal(goal, context);
+			//if (error is IErrorHandled) error = null;
 
 			logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
 
@@ -307,22 +294,6 @@ namespace PLang.Modules.WebserverModule
 			if (newCallback != null) return (null, goal, new StatelessCallbackError(newCallback, statusCode: error?.StatusCode ?? 400));
 			if (error != null) return (null, goal, error);
 			
-
-			//if (callbackResult.NewCallback != null) return (null, goal, new CallbackError());
-
-
-
-
-			/*
-			var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
-			foreach (var key in keys)
-			{
-				if (key != null && !context.ContainsKey(key))
-				{
-					context.AddOrReplace(key, request.Headers[key]);
-				}
-			}*/
-
 			var callbackInfo = callback.CallbackInfo;
 			goal = prParser.GetAllGoals().FirstOrDefault(p => p.Hash == callbackInfo.GoalHash);
 
@@ -330,10 +301,11 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverProperties webserverInfo, List<Routing>? routings, IEngine requestEngine)
+		private async Task<IError?> ProcessPlangRequest(PLangContext context, WebserverProperties webserverInfo, List<Routing>? routings, IEngine requestEngine)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
+			var httpContext = context.HttpContext!;
 			logger.LogDebug($" - Verify signature - {stopwatch.ElapsedMilliseconds}");
 			if (!httpContext.Response.HasStarted)
 			{
@@ -352,34 +324,27 @@ namespace PLang.Modules.WebserverModule
 
 			logger.LogDebug($" - ProcessGoal starts - {stopwatch.ElapsedMilliseconds}");
 
-			error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, requestEngine);
+			error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, context, requestEngine);
 
 			logger.LogDebug($" - ProcessGoal done - {stopwatch.ElapsedMilliseconds}");
 			return error;
 		}
 
 
-		private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(IEngine engine, HttpContext httpContext)
+		private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(IEngine engine, PLangContext context)
 		{
-			/*
-			if (httpContext.Items.TryGetValue("SignedMessage", out object? sig) && sig is SignedMessage sm)
-			{
-				engine.MemoryStack.Put(ReservedKeywords.Identity, sm.Identity);
-				engine.MemoryStack.Put(ReservedKeywords.Signature, sm.Signature);
+			if (context.SignedMessage != null) return (context.SignedMessage, null);
 
-				return (sm, null);
-			}*/
+			var httpContext = context.HttpContext!;
 
 			if (!httpContext.Request.Headers.TryGetValue("X-Signature", out var signatureHeader))
 			{
-				engine.MemoryStack.Remove(ReservedKeywords.Identity);
 				return (null, null);
 			}
 
 			var signatureData = signatureHeader.ToString();
 			if (string.IsNullOrEmpty(signatureData))
 			{
-				engine.MemoryStack.Remove(ReservedKeywords.Identity);
 				return (null, new UnauthorizedError("X-Signature is empty. Use plang app or compatible to continue."));
 			}
 
@@ -398,20 +363,18 @@ namespace PLang.Modules.WebserverModule
 
 			if (verifiedSignatureResult.Signature != null)
 			{
-				engine.MemoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);
-				engine.MemoryStack.Put(ReservedKeywords.Signature, verifiedSignatureResult.Signature);
-			}
-			else
-			{
-				engine.MemoryStack.Remove(ReservedKeywords.Identity);
-			}
+				context.SignedMessage = verifiedSignatureResult.Signature;
+				context.Identity = verifiedSignatureResult.Signature.Identity;
 
-			var outputStream = engine.OutputSink as HttpSink;
-			if (outputStream != null)
-			{
-				outputStream.SetIdentity(verifiedSignatureResult.Signature.Identity);
+				context.MemoryStack.Put(new DynamicObjectValue("Identity", () =>
+				{
+					return context.Identity;
+				}));
+				context.MemoryStack.Put(new DynamicObjectValue("!Signature", () =>
+				{
+					return context.SignedMessage;
+				}));
 			}
-			httpContext.Items.Add("SignedMessage", verifiedSignatureResult.Signature);
 
 			return verifiedSignatureResult;
 		}
@@ -427,31 +390,32 @@ namespace PLang.Modules.WebserverModule
 			return ms.ToArray();
 		}
 
-		private async Task<IError?> HandlePlangPoll(IEngine requestEngine, HttpContext ctx, WebserverProperties props)
+		private async Task<IError?> HandlePlangPoll(IEngine requestEngine, PLangContext context, WebserverProperties props)
 		{
-			SignedMessage? signedMessage = ctx.Items["SignedMessage"] as SignedMessage;
+			var httpContext = context.HttpContext!;
+			SignedMessage? signedMessage = context.SignedMessage;
 			if (signedMessage == null) return null;
 
-			var outputStream = requestEngine.OutputSink as HttpSink;
+			var outputStream = context.UserSink as HttpSink;
 			if (outputStream == null) return new Error("OutputStream is not HttpOutputStream");
 
 			LiveConnection? liveResponse = null;
-			outputStream.LiveConnections.TryGetValue(signedMessage.Identity, out liveResponse);
+			outputStream.LiveConnections.TryGetValue(context.Identity, out liveResponse);
 
-			bool startPoll = requestEngine.LiveConnections.ContainsKey(signedMessage.Identity);
+			bool startPoll = requestEngine.LiveConnections.ContainsKey(context.Identity);
 
-			var response = ctx.Response;
+			var response = httpContext.Response;
 			if (!response.HasStarted)
 			{
 				response.ContentType = "application/plang+json; charset=utf-8";
 				response.Headers.Add("Cache-Control", "no-cache");
 			}
 
-			outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(ctx.Response, true));
+			outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(httpContext.Response, true));
 
 			if (props.OnPollStart != null)
 			{
-				var (_, error) = await requestEngine.RunGoal(props.OnPollStart, goal);
+				var (_, error) = await requestEngine.RunGoal(props.OnPollStart, goal, context);
 				return error;
 			}
 			return null;
@@ -563,7 +527,7 @@ namespace PLang.Modules.WebserverModule
 		{
 			if (string.IsNullOrEmpty(routing.Route?.Goal?.Name)) return (null, new ProgramError("Goal name in route is empty", step, StatusCode: 500));
 
-			var result = GoalHelper.GetGoal("/", fileSystem.RootDirectory, routing.Route.Goal, prParser.GetGoals(), new());
+			var result = GoalHelper.GetGoal("/", fileSystem.RootDirectory, routing.Route.Goal, prParser.GetGoals(), new List<Goal>());
 			if (result.Item1 != null) return (result.Item1, null);
 
 			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.Route.Goal.Name);
@@ -591,7 +555,7 @@ namespace PLang.Modules.WebserverModule
 
 		}
 
-		string[] supportedHeaders = ["data-plang-js", "data-plang-response", "data-plang-js-params", "data-plang-cssSelector", "data-plang-action"];
+		string[] supportedHeaders = ["p-target", "p-actions", "p-before-actions", "p-after-actions"];
 
 		private void ParseHeaders(HttpContext ctx, IOutputSink outputStream)
 		{
@@ -615,10 +579,11 @@ namespace PLang.Modules.WebserverModule
 			}
 		}
 
-		private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx, IOutputSink outputStream)
+		private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(PLangContext context)
 		{
-			if (ctx is null) return (null, new Error("context is empty"));
-			if (ctx.Items.TryGetValue("request", out object? value) && value != null)
+			HttpContext httpContext = context.HttpContext!;
+			if (httpContext is null) return (null, new Error("context is empty"));
+			if (httpContext.Items.TryGetValue("request", out object? value) && value != null)
 			{
 				return (value as ObjectValue, null);
 			}
@@ -626,13 +591,13 @@ namespace PLang.Modules.WebserverModule
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			var parameters = new Dictionary<string, object?>();
-			var req = ctx.Request;
+			var req = httpContext.Request;
 
 			ObjectValue objectValue;
 			logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
-			ParseHeaders(ctx, outputStream);
+			ParseHeaders(httpContext, context.UserSink);
 			logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
-			var properties = GetRequestProperties(ctx);
+			var properties = GetRequestProperties(httpContext);
 			logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");
 			// ---------- JSON --------------------------------------------------------
 			if (req.HasJsonContentType())
@@ -700,7 +665,7 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			objectValue = new ObjectValue("request", parameters, properties: properties);
-			ctx.Items.Add("request", objectValue);
+			httpContext.Items.Add("request", objectValue);
 			logger.LogDebug($"    - Return request object - {stopwatch.ElapsedMilliseconds}");
 			return (objectValue, null);
 		}

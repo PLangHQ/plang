@@ -3,6 +3,7 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Events.Types;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Runtime;
 
 namespace PLang.Utils
@@ -10,7 +11,7 @@ namespace PLang.Utils
 	public class MissingSettingsHelper
 	{
 
-		public static async Task<IError?> Handle(IEngine engine, IEnumerable<IError> missingSettings)
+		public static async Task<IError?> Handle(IEngine engine, PLangContext context, IEnumerable<IError> missingSettings)
 		{
 			if (!missingSettings.Any()) return null;
 
@@ -22,16 +23,16 @@ namespace PLang.Utils
 				if (asked.Contains(missing.Message)) continue;
 				asked.Add(missing.Message);
 
-				var error = await HandleMissingSetting(engine, (MissingSettingsException)missing.Exception);
+				var error = await HandleMissingSetting(engine, context, (MissingSettingsException)missing.Exception);
 				if (error != null) return error;
 								
 			}
 			return null;
 		}
 
-		public static async Task<IError?> HandleMissingSetting(IEngine engine, MissingSettingsException missing)
+		public static async Task<IError?> HandleMissingSetting(IEngine engine, PLangContext context, MissingSettingsException missing)
 		{
-			(var answer, var error) = await AskUser.GetAnswer(engine, missing.Message);
+			(var answer, var error) = await AskUser.GetAnswer(engine, context, missing.Message);
 			if (error != null) return error;
 
 			error = await missing.InvokeCallback(answer);

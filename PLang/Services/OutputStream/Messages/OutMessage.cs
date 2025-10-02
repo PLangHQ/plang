@@ -6,6 +6,6 @@ public abstract record OutMessage(
 	string Level,
 	int StatusCode,
 	string? Target,
-	IReadOnlyList<string> Actions,
+	IReadOnlyList<string>? Actions,
 	string Channel = "default", string Actor = "user",
-	IReadOnlyDictionary<string, object?>? Meta = null);
+	IReadOnlyDictionary<string, object?>? Properties = null);

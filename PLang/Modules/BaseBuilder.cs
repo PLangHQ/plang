@@ -38,8 +38,8 @@ namespace PLang.Modules
 		private ILlmServiceFactory llmServiceFactory;
 		private ITypeHelper typeHelper;
 		private ILogger logger;
-		private MemoryStack memoryStack;
-		private PLangAppContext context;
+		protected MemoryStack memoryStack;
+		protected PLangContext context;
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
 		protected GoalStep GoalStep;
@@ -54,7 +54,7 @@ namespace PLang.Modules
 
 		[Init]
 		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"        - Start InitBaseBuilder - {stopwatch.ElapsedMilliseconds}");
@@ -389,9 +389,10 @@ Parameters that is type System.String MUST be without escaping quotes. See <Exam
 Error handling is process by another step, if you see 'on error...' you can ignore it
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
-Dictionary<T1, T2> value is {{key: value, ... }}
+Dictionary<T1, T2> value is {{key: value, ... }} => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => {{ key: ""userId"", value:""%userId%""}}
 Variable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(""yyyy-MM-dd"")% then type of %updated% is System.DateTime 
- 
+List, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array
+
 <Example>
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
@@ -453,7 +454,7 @@ ReturnValue rules
 		[Method]
 		public string GetVariablesInStep(GoalStep step)
 		{
-			var variables = variableHelper.GetVariables(step.Text).DistinctBy(p => p.PathAsVariable);
+			var variables = variableHelper.GetVariables(step.Text, memoryStack).DistinctBy(p => p.PathAsVariable);
 			string vars = "";
 
 			// todo: hack, why is Goal null?

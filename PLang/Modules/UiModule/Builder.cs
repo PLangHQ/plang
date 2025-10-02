@@ -379,7 +379,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 			var framework = gf.GetParameter<UiFramework>("framework");
 			var dict = new Dictionary<string, object?>();
-			dict.Add("framework", variableHelper.LoadVariables(framework));
+			dict.Add("framework", memoryStack.LoadVariables(framework));
 
 			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetFrameworks", dict);
 
@@ -402,7 +402,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 			var options = gf.GetParameter<LayoutOptions>("options");
 			var dict = new Dictionary<string, object?>();
-			dict.Add("options", variableHelper.LoadVariables(options));
+			dict.Add("options", memoryStack.LoadVariables(options));
 
 			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetLayout", dict);
 

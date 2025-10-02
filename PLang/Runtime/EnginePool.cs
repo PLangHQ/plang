@@ -51,7 +51,7 @@ namespace PLang.Runtime
 			for (int i = 0; i < initialSize; i++)
 			{
 				var engine = _factory();
-				SetProperties(engine, engine.ParentEngine, null, engine.Name, engine.OutputStreamFactory.CreateHandler());
+				SetProperties(engine, engine.ParentEngine, null, engine.Name);
 
 				_pool.Enqueue(new EngineInfo(engine, DateTime.Now));
 			}
@@ -97,65 +97,35 @@ namespace PLang.Runtime
 			}
 		}
 
-		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputSink? outputStream = null, HttpContext? httpContext = null)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name)
 		{
 			var proc = Process.GetCurrentProcess();
 
 			if (_pool.TryDequeue(out var engineInfo))
 			{
-				return SetProperties(engineInfo.Engine, parentEngine, callingStep, name, outputStream, httpContext);
+				return SetProperties(engineInfo.Engine, parentEngine, callingStep, name);
 			}
 			
 			Console.WriteLine($"Create new engine: {_pool.Count}");
 
 			var newEngine = _factory();
-			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream, httpContext);
+			return SetProperties(newEngine, parentEngine, callingStep, name);
 		}
 
-		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputSink? outputStream, HttpContext? httpContext = null)
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name)
 		{
 			engine.Name = name;
-			engine.SetParentEngine(parentEngine);
-			engine.CallbackInfo = parentEngine.CallbackInfo;
-
-
-			if (outputStream != null)
-			{
-				engine.SetOutputSink(outputStream);
-			}
-			else
-			{
-				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
-				engine.SetOutputSink(outputStream);
-			}
-			engine.OutputStreamFactory.SetEngine(engine);
-
-			if (outputStream is HttpSink hos)
-			{
-				engine.HttpContext = httpContext;
-			}
-
-			if (callingStep != null)
-			{
-				engine.SetCallingStep(callingStep);
-			}
-
-			
+			engine.SetParentEngine(parentEngine);			
 			engine.AddContext("!plang.osPath", engine.FileSystem.SystemDirectory);
-			engine.AddContext("!plang.rootPath", parentEngine?.Path ?? engine.FileSystem.RootDirectory);
+			engine.AddContext("!plang.rootPath", parentEngine.Path ?? engine.FileSystem.RootDirectory);
+			engine.SystemSink = parentEngine.SystemSink;
+			engine.UserSink = parentEngine.UserSink;
 
-
-			//engine.GetContext().Clear();
-			foreach (var item in parentEngine.GetContext())
+			foreach (var item in parentEngine.GetAppContext())
 			{
-				engine.GetContext().AddOrReplace(item.Key, item.Value);
+				engine.GetAppContext().AddOrReplace(item.Key, item.Value);
 			}
 
-			//engine.GetMemoryStack().Clear();
-			foreach (var item in parentEngine.GetMemoryStack().GetMemoryStack())
-			{
-				engine.GetMemoryStack().Put(item, callingStep);
-			}
 
 			return engine;
 		}

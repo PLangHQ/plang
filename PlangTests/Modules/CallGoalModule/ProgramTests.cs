@@ -21,7 +21,7 @@ namespace PLangTests.Modules.CallGoalModule
 			base.Initialize();
 			var goal = new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() };
 			
-			p = new Program(pseudoRuntime, engine, prParser);
+			p = new Program(pseudoRuntime, engine, prParser, contextAccessor);
 			p.Init(container, goal, null, null, null);
 		}
 
@@ -33,7 +33,7 @@ namespace PLangTests.Modules.CallGoalModule
 
 			await p.RunGoal(goalToCall);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
+			await pseudoRuntime.Received(1).RunGoal(engine, contextAccessor, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
 		}
 
 		[TestMethod]
@@ -49,7 +49,7 @@ namespace PLangTests.Modules.CallGoalModule
 			var goalToCall = new GoalToCallInfo("!apps/GoalWith1Step", parameters);
 			await p.RunGoal(goalToCall);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
+			await pseudoRuntime.Received(1).RunGoal(engine, contextAccessor, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
 		}
 
 
@@ -64,7 +64,7 @@ namespace PLangTests.Modules.CallGoalModule
 			var goalToCall = new GoalToCallInfo("!Process/File", parameters);
 			await p.RunGoal(goalToCall, waitForExecution);			
 
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Is<PLangAppContext>(p => p.ContainsKey("test")), 
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(), 
 					Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>(), waitForExecution);
 		}
 	}

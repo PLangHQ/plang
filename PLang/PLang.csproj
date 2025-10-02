@@ -147,4 +147,8 @@
     <None Remove="Modules\NewFolder1\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Runtime\Debug\" />
+  </ItemGroup>
+
 </Project>

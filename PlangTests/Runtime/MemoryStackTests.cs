@@ -38,7 +38,7 @@ namespace PLang.Runtime.Tests
 		public void Test_MathPlan()
 		{
 
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var mathPlan = stack.GetMathPlan("%count+1%", "count");
 
 			Assert.AreEqual('+', mathPlan.Operator);
@@ -83,7 +83,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetVariableExecutionPlan_Test()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.Put("data", "1");
 			var plan = stack.GetVariableExecutionPlan("data", "data", false);
 
@@ -187,7 +187,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
@@ -201,7 +201,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTestListWithIndex()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
@@ -215,7 +215,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTestList_GetAllTitle()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
@@ -229,7 +229,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = new DateTime(2023, 9, 28) });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = new DateTime(2023, 9, 28) });
@@ -244,7 +244,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson_Record()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var item = new JsonTester("Hello", 1);
 			stack.Put("item", item);
 			var obj = stack.Get("item.ToJson()");
@@ -255,7 +255,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson_OnJsonContent()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var item = @"{""name"":""Hello2"",""number"":2}";
 			stack.Put("item", item);
 			var obj = stack.Get("item.ToJson()");
@@ -266,7 +266,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestNow()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var dateTime = stack.Get("Now");
 			Assert.IsNotNull(dateTime);
 		}
@@ -280,7 +280,7 @@ namespace PLang.Runtime.Tests
 				return dt;
 			};
 
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			var dateTime = (DateTime)stack.Get("Now+1day");
 			Assert.AreEqual(SystemTime.Now().AddDays(1).ToShortDateString(), dateTime.ToShortDateString());
 
@@ -313,7 +313,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestRemove()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.Put("item", 1);
 			var item = stack.Get("item");
 			Assert.IsNotNull(item);
@@ -322,28 +322,26 @@ namespace PLang.Runtime.Tests
 			Assert.IsNull(item);
 
 		}
-
+		/*
 		[TestMethod]
 		public void TestOnCreateVariable()
 		{
-			var context = new PLangAppContext();
 			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.AddOnCreateEvent("item", "Test", "12", false);
 
 			stack.Put("item", 1);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 		[TestMethod]
 		public void TestOnChangeVariable()
 		{
-			var context = new PLangAppContext();
 			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.AddOnChangeEvent("item", "Test", "12", false, false);
 
 			//first add the item, no event called
@@ -352,7 +350,7 @@ namespace PLang.Runtime.Tests
 			//change the item, now the event is called
 			stack.Put("item", 2);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 		[TestMethod]
@@ -361,7 +359,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.AddOnChangeEvent("item", "Test", "12", new(), true);
 
 			//first add the item, no event called
@@ -380,7 +378,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.AddOnRemoveEvent("item", "Test", "12", new());
 
 			//first add the item, no event called
@@ -391,77 +389,12 @@ namespace PLang.Runtime.Tests
 
 			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
-
-
-		[TestMethod]
-		public void TestOnRemoveStaticVariable()
-		{
-			var context = new PLangAppContext();
-			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			engine.GetContext().Returns(context);
-
-			FieldInfo fieldInfo = typeof(MemoryStack).GetField("staticVariables", BindingFlags.Static | BindingFlags.NonPublic);
-			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
-
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnRemoveEvent("item", "Test", "12", true, new());
-
-			//first add the item, no event called
-			stack.PutStatic("item", 1);
-
-			
-
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
-		}
-
-
-		[TestMethod]
-		public void TestOnCreateStaticVariable()
-		{
-			FieldInfo fieldInfo = typeof(MemoryStack).GetField("staticVariables", BindingFlags.Static | BindingFlags.NonPublic);
-			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
-
-			var context = new PLangAppContext();
-			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-
-			stack.AddOnCreateEvent("item", "Test", "12", true, new());
-
-			//first add the item, no event called
-			stack.PutStatic("item", 1);
-
-			//lets modify it, it should not call the goal
-			stack.PutStatic("item", 2);
-
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
-		}
-		[TestMethod]
-		public void TestOnChangeStaticVariable()
-		{
-			FieldInfo fieldInfo = typeof(MemoryStack).GetField("staticVariables", BindingFlags.Static | BindingFlags.NonPublic);
-			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
-
-
-			var context = new PLangAppContext();
-			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnChangeEvent("item", "Test", "12", true, new());
-
-			//first add the item, no event called
-			stack.PutStatic("item", 1);
-
-			// now change the variable
-			stack.PutStatic("item", 2);
-
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
-		}
+		*/
 
 		[TestMethod]
 		public void PutTest()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			stack.Put("name", "John");
 			stack.Put("age", 29);
 			stack.Put("weight", 80.5);

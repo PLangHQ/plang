@@ -33,7 +33,7 @@ namespace PLang.SafeFileSystem
 			var parentEngine = container.GetInstance<IEngine>("ParentEngine");
 			if (parentEngine == null) throw new Exception($"Did not expect ParentEngine to be null.{ErrorReporting.CreateIssueShouldNotHappen}");
 
-			return new PLangFileSystem(parentEngine.Path, "/", container.GetInstance<PLangAppContext>());
+			return new PLangFileSystem(parentEngine.Path, "/");
 
 		}
 	}

@@ -21,7 +21,7 @@ namespace PLang.Building.Events.Tests
 		public void Init()
 		{
 			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, prParser, context, logger, null, memoryStack);
+			eventRuntime = new EventRuntime(fileSystem, prParser, appContext, contextAccessor, logger, null, null);
 		}
 
 		[TestMethod()]
@@ -139,7 +139,7 @@ namespace PLang.Building.Events.Tests
 				
 			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, Goal.NotFound);
 				
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 						@"\", new Models.GoalToCallInfo("Process"));
 			
 		}
@@ -168,7 +168,7 @@ namespace PLang.Building.Events.Tests
 
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp, Goal.NotFound);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 						@"\", "!Process");
 
 		}
@@ -196,7 +196,7 @@ namespace PLang.Building.Events.Tests
 
 			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.AppError, Goal.NotFound);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 						@"\", "!Process");
 
 		}
@@ -226,7 +226,7 @@ namespace PLang.Building.Events.Tests
 			// test that both Before and After type works. When app ends there is no difference between Before and After
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, Goal.NotFound);
 
-			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
+			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 						@"\", "!Process");
 
 		}
@@ -254,7 +254,7 @@ namespace PLang.Building.Events.Tests
 
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.AppError, Goal.NotFound);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 						@"\", "!Process");
 
 		}
@@ -287,7 +287,7 @@ namespace PLang.Building.Events.Tests
 
 				await eventRuntime.RunGoalEvents(EventType.Before, goal);
 
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
@@ -320,7 +320,7 @@ namespace PLang.Building.Events.Tests
 
 				await eventRuntime.RunGoalEvents(EventType.After, goal);
 
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
@@ -353,7 +353,7 @@ namespace PLang.Building.Events.Tests
 				{
 					await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
@@ -387,7 +387,7 @@ namespace PLang.Building.Events.Tests
 				{
 					await eventRuntime.RunStepEvents(EventType.After, goal, step);
 				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
@@ -419,7 +419,7 @@ namespace PLang.Building.Events.Tests
 			foreach (var goal in goals)
 			{
 				await eventRuntime.RunGoalErrorEvents(goal, 0, new Error("Test"));
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
@@ -453,7 +453,7 @@ namespace PLang.Building.Events.Tests
 				{
 					await eventRuntime.RunOnErrorStepEvents(new Error("Test error"), goal, step);
 				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<IPLangContextAccessor>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}

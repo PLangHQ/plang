@@ -34,13 +34,11 @@ namespace PLang.Modules.TemplateEngineModule
 ```")]
 	public class Program : BaseProgram
 	{
-		private readonly IOutputStreamFactory outputStreamFactory;
 
-		public Program(IPLangFileSystem fileSystem, MemoryStack memoryStack, IOutputStreamFactory outputStreamFactory)
+		public Program(IPLangFileSystem fileSystem, IMemoryStackAccessor memoryStackAccessor)
 		{
-			base.memoryStack = memoryStack;
 			base.fileSystem = fileSystem;
-			this.outputStreamFactory = outputStreamFactory;
+			base.memoryStack = memoryStackAccessor.Current;
 		}
 
 		static IReadOnlyDictionary<string, HashSet<string>> GetMembers(Template template)
@@ -87,10 +85,10 @@ namespace PLang.Modules.TemplateEngineModule
 
 			if (!writeToOutputStream) return result;
 
-			if (outputStreamFactory != null && (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
+			if (writeToOutputStream || (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
-				var renderMessage = new RenderMessage(result.Result);
-				await outputStreamFactory.CreateHandler().SendAsync(renderMessage);
+				var renderMessage = new RenderMessage(result.Result, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
+				await context.UserSink.SendAsync(renderMessage);
 			}
 
 			return result;

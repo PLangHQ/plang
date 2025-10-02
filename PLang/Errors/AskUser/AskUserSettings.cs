@@ -15,7 +15,8 @@ namespace PLang.Errors.AskUser
 
 	}
 
-	public record AskUserSettingsResponse(string App, string Path, string Message, Func<string, string, string?, Task<(bool, IError?)>> CallbackMethod) : AskUserError(Message, CreateAdapter(CallbackMethod))
+	public record AskUserSettingsResponse(string App, string Path, string Message, Func<string, string, string?, Task<(bool, IError?)>> CallbackMethod,
+		string Actor = "system", string Channel = "default") : AskUserError(Actor, Channel, Message, CreateAdapter(CallbackMethod))
     {
         public override async Task<(bool, IError?)> InvokeCallback(object?[] answer)
         {

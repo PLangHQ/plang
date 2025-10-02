@@ -2,6 +2,7 @@
 using Microsoft.Data.Sqlite;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace PLang.Services.DbService
 {
 	public interface IDbServiceFactory
 	{
-		IDbConnection CreateHandler(DataSource dataSource);
+		IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack);
 	}
 
 	public class DbServiceFactory : BaseFactory, IDbServiceFactory
@@ -29,7 +30,7 @@ namespace PLang.Services.DbService
 			this.isBuilder = isBuilder;
 		}
 
-		public IDbConnection CreateHandler(DataSource dataSource)
+		public IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack)
 		{
 			if (dataSource == null) throw new Exception("Data source cannot be empty");
 
@@ -48,7 +49,7 @@ namespace PLang.Services.DbService
 				else if (dataSource.ConnectionString.Contains("%"))
 				{
 					var variableHelper = container.GetInstance<VariableHelper>();
-					connection.ConnectionString = variableHelper.LoadVariables(dataSource.ConnectionString).ToString();
+					connection.ConnectionString = memoryStack.LoadVariables(dataSource.ConnectionString).ToString();
 				}
 				else
 				{

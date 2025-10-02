@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using PLang.Attributes;
+using System.ComponentModel;
 
 namespace PLang.Services.OutputStream.Messages;
 
@@ -15,6 +16,7 @@ public sealed record ExecuteMessage(
 	string Level = "info",
 	int StatusCode = 200,
 	string? Target = null, string Channel = "default", string Actor = "user",
-	IReadOnlyDictionary<string, object?>? Meta = null)
-	: OutMessage(MessageKind.Execute, Level, StatusCode, Target, Array.Empty<string>(), Channel, Actor, Meta);
+	[LlmIgnore]
+	IReadOnlyDictionary<string, object?>? Properties = null)
+	: OutMessage(MessageKind.Execute, Level, StatusCode, Target, Array.Empty<string>(), Channel, Actor, Properties);
 

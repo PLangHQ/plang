@@ -8,24 +8,31 @@ public static class JObjectVarResolver
 {
 	static readonly Regex Placeholder = new("%(?<name>[^%]+)%", RegexOptions.Compiled);
 
-	public static void ResolvePlaceholders(this JToken token, Func<string, object?> resolve)
+	public static void ResolvePlaceholders(this JToken token, Type targetType, Func<string, Type?, object?> resolve)
 	{
 		switch (token.Type)
 		{
 			case JTokenType.Object:
 				var properties = ((JObject)token).Properties();
-				for (int i=0;i< properties.Count();i++)
+				foreach (var prop in properties)
 				{
-					ResolvePlaceholders(properties.ElementAt(i).Value, resolve);
+					var propInfo = targetType?.GetProperty(prop.Name);
+					var propType = propInfo?.PropertyType ?? typeof(object);
+					ResolvePlaceholders(prop.Value, propType ?? targetType, resolve);
 				}
-					
+
 				break;
 
 			case JTokenType.Array:
 				var jArray = (JArray)token;
 				for (int i = 0; i < jArray.Count; i++)
 				{
-					ResolvePlaceholders(jArray[i], resolve);
+					var type = targetType ?? typeof(object);
+					if (type.GenericTypeArguments.Length > 0)
+					{
+						type = type.GenericTypeArguments[0];
+					}
+					ResolvePlaceholders(jArray[i], type, resolve);
 				}
 				break;
 
@@ -37,7 +44,7 @@ public static class JObjectVarResolver
 				if (matches.Count == 1 && matches[0].Value == s)
 				{
 					var name = matches[0].Groups["name"].Value;
-					var value = resolve(name);
+					var value = resolve(name, targetType);
 					JToken newTok = value switch
 					{
 						null => JValue.CreateNull(),
@@ -51,7 +58,7 @@ public static class JObjectVarResolver
 					var replaced = Placeholder.Replace(s, m =>
 					{
 						var name = m.Groups["name"].Value;
-						var v = resolve(name);
+						var v = resolve(name, targetType);
 						return v?.ToString() ?? "";
 					});
 					token.Replace(new JValue(replaced));

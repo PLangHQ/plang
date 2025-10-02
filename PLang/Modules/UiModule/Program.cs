@@ -37,18 +37,9 @@ namespace PLang.Modules.UiModule
 	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI. Execute javascript.")]
 	public class Program : BaseProgram, IFlush
 	{
-		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
-		private readonly MemoryStack memoryStack;
-		private string? clientTarget;
-		public Program(IOutputStreamFactory outputStream, IOutputSystemStreamFactory outputSystemStreamFactory, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
+		public Program() : base()
 		{
-			this.outputStreamFactory = outputStream;
-			this.outputSystemStreamFactory = outputSystemStreamFactory;
-			this.fileSystem = fileSystem;
-			this.memoryStack = memoryStack;
 
-			clientTarget = memoryStack.Get("!target") as string;
 		}
 		public enum Type { css, js };
 		[Description("Type=css|js")]
@@ -96,7 +87,7 @@ namespace PLang.Modules.UiModule
 
 
 
-			context.TryGetValue("Layouts", out object? obj);
+			appContext.TryGetValue("Layouts", out object? obj);
 			var layouts = obj as List<LayoutOptions>;
 			if (layouts == null)
 			{
@@ -112,7 +103,7 @@ namespace PLang.Modules.UiModule
 			{
 				layouts[idx] = options;
 			}
-			context.AddOrReplace("Layouts", layouts);
+			appContext.AddOrReplace("Layouts", layouts);
 			return (layouts, null);
 		}
 
@@ -136,10 +127,10 @@ Attribute: Member is the key in the SetAttribute js method
 			Dictionary<string, object> param = new();
 			param.Add("instructions", uiInstructions);
 
-			var executeMessage = new ExecuteMessage("uiInstruction", param, Channel: channel, Actor: actor);
+			var executeMessage = new ExecuteMessage("uiInstruction", param, Channel: channel, Actor: actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
 
-			var outputSink = outputStreamFactory.CreateHandler();
-			return await outputSink.SendAsync(executeMessage);
+			var sink = context.GetSink(actor);
+			return await sink.SendAsync(executeMessage);
 		}
 
 		public record UiRemove(string Selector);
@@ -149,22 +140,22 @@ Attribute: Member is the key in the SetAttribute js method
 			Dictionary<string, object> param = new();
 			param.Add("instructions", domRemoves);
 
-			var executeMessage = new ExecuteMessage("uiRemove", param, Channel: channel, Actor: actor);
+			var executeMessage = new ExecuteMessage("uiRemove", param, Channel: channel, Actor: actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
 
-			var outputStream = outputStreamFactory.CreateHandler();
-			return await outputStream.SendAsync(executeMessage);
+			var sink = context.GetSink(actor);
+			return await sink.SendAsync(executeMessage);
 
 		}
 
 		public async Task<IError?> ExecuteJavascript(ExecuteMessage executeMessage)
 		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			return await outputStream.SendAsync(executeMessage);
+			var sink = context.GetSink(executeMessage.Actor);
+			return await sink.SendAsync(executeMessage);
 		}
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)
 		{
-			context.TryGetValue("Layouts", out object? obj);
+			appContext.TryGetValue("Layouts", out object? obj);
 			var layouts = obj as List<LayoutOptions>;
 			if (layouts == null)
 			{
@@ -191,9 +182,7 @@ Attribute: Member is the key in the SetAttribute js method
 			{
 				get
 				{
-					if (RenderMessage.Content.Contains("\n") || RenderMessage.Content.Contains("\r") || RenderMessage.Content.Contains("\r")) return false;
-					string ext = Path.GetExtension(RenderMessage.Content);
-					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
+					return PathHelper.IsTemplateFile(RenderMessage.Content);
 				}
 
 			}
@@ -223,7 +212,7 @@ Actions: list of action to preform, the default is 'replace'(innerHTML).
 ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
 When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
 ```")]
-		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
+		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
 			string html;
 			if (options.IsTemplateFile)
@@ -259,8 +248,8 @@ When user doesn't write the return value into any variable, set it as renderToOu
 			(var content, var error) = await templateEngine.RenderContent(html, variables: Parameters);
 			if (error != null) return (content, error);
 
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
+			var sink = context.GetSink(options.RenderMessage.Actor);
+			if (sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
 			{
 				var layoutOptions = GetLayoutOptions();
 
@@ -283,33 +272,25 @@ When user doesn't write the return value into any variable, set it as renderToOu
 			Parameters.Add("reRender", options.ReRender);
 			
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
-			{
-				
-				IOutputSink outputSink;
-				if (options.RenderMessage.Actor == "system")
-				{
-					outputSink = outputSystemStreamFactory.CreateHandler();
-				} else
-				{
-					outputSink = outputStreamFactory.CreateHandler();
-				}
-				
-				error = await outputSink.SendAsync(options.RenderMessage);
+			{				
+				error = await sink.SendAsync(options.RenderMessage);
 				return (null, error);
 			}
 
 			return (content, null);
 		}
 		public record Html(string Value, string? TargetElement = null);
-		public async Task<(string?, IError?)> RenderImageToHtml(string path)
+		public async Task<(object?, IError?)> RenderImageToHtml(string path)
 		{
 			var param = new Dictionary<string, object?>();
 			param.Add("path", path);
-			var result = await Executor.RunGoal("/modules/ui/RenderFile", param);
+
+			var goalToCall = new GoalToCallInfo("/modules/ui/RenderFile", param);
+
+			var result = await engine.RunGoal(goalToCall, goal, context);
 			if (result.Error != null) return (null, result.Error);
 
-			var html = result.Engine.GetMemoryStack().Get<string>("html");
-			return (html, null);
+			return (result.Variables, null);
 		}
 
 		public Task Flush()

@@ -51,11 +51,6 @@ namespace PLang.Services.OutputStream
 
 		public IOutputSink CreateHandler(string? name = null)
 		{
-			if (name == null && engine.OutputSink != null)
-			{
-				return engine.OutputSink;
-			}
-
 			var serviceName = (name != null) ? name : currentType;
 
 			var os = container.GetInstance<IOutputSink>(serviceName);

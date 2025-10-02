@@ -37,14 +37,16 @@ public class StepBuilder : IStepBuilder
 	private readonly MemoryStack memoryStack;
 	private readonly VariableHelper variableHelper;
 	private readonly IErrorHandlerFactory exceptionHandlerFactory;
-	private readonly PLangAppContext context;
+	private readonly PLangAppContext appContext;
+	private readonly PLangContext context;
 	private readonly ISettings settings;
 	private readonly IEngine engine;
+	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-				MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
-				PLangAppContext context, ISettings settings, IEngine engine)
+				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
+				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine)
 	{
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
@@ -52,12 +54,15 @@ public class StepBuilder : IStepBuilder
 		this.instructionBuilder = instructionBuilder;
 		this.eventRuntime = eventRuntime;
 		this.typeHelper = typeHelper;
-		this.memoryStack = memoryStack;
+		this.memoryStack = memoryStackAccessor.Current;
 		this.variableHelper = variableHelper;
 		this.exceptionHandlerFactory = exceptionHandlerFactory;
-		this.context = context;
+		this.appContext = appContext;
+		this.context = contextAccessor.Current;
 		this.settings = settings;
 		this.engine = engine;
+
+		this.memoryStackAccessor = memoryStackAccessor;
 	}
 
 	public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string> excludeModules, IBuilderError? previousBuildError = null)
@@ -202,7 +207,7 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<IBuilderError?> HandleAskUserError(Errors.AskUser.AskUserError aue)
 	{
-		var (answer, error) = await AskUser.GetAnswer(engine, aue.Message);
+		var (answer, error) = await AskUser.GetAnswer(engine, context, aue.Message);
 		if (error != null) return new BuilderError(error);
 
 		(var isHandled, error) = await aue.InvokeCallback([answer]);
@@ -262,7 +267,7 @@ public class StepBuilder : IStepBuilder
 		// lets load the return value into memoryStack
 		if (gf.ReturnValues?.Count > 0)
 		{
-			await LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
+			await LoadVariablesIntoMemoryStack(gf, memoryStack, settings);
 		}
 
 		var builderRun = await this.instructionBuilder.RunStepValidation(step, instruction, gf);
@@ -424,7 +429,8 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			throw new Exception($"StepPropertiesSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");
 		}
 		var content = fileSystem.File.ReadAllText(stepInformationSystemPath);
-		var templateProgram = new Modules.TemplateEngineModule.Program(fileSystem, memoryStack, null);
+		
+		var templateProgram = new Modules.TemplateEngineModule.Program(fileSystem, memoryStackAccessor);
 
 		Dictionary<string, object> variables = new();
 		variables.Add("canBeCached", canBeCached);
@@ -521,7 +527,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 {modulesAvailable}
 <modules>
 ";
-		var variablesInStep = variableHelper.GetVariables(step.Text);
+		var variablesInStep = variableHelper.GetVariables(step.Text, memoryStack);
 		if (variablesInStep.Count > 0)
 		{
 			assistant += $@"
@@ -555,7 +561,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		return llmRequest;
 	}
 
-	public async Task<IBuilderError?> LoadVariablesIntoMemoryStack(IGenericFunction gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+	public async Task<IBuilderError?> LoadVariablesIntoMemoryStack(IGenericFunction gf, MemoryStack memoryStack, ISettings settings)
 	{
 		if (gf.ReturnValues != null && gf.ReturnValues.Count > 0)
 		{
@@ -565,9 +571,9 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			}
 		}
 
-		return await LoadParameters(gf, memoryStack, context, settings);
+		return await LoadParameters(gf, memoryStack, settings);
 	}
-	private async Task<IBuilderError?> LoadParameters(IGenericFunction gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+	private async Task<IBuilderError?> LoadParameters(IGenericFunction gf, MemoryStack memoryStack, ISettings settings)
 	{
 		// todo: hack for now, should be able to load dynamically variables that are being set at build time
 		// might have to structure the build
@@ -586,7 +592,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 	protected string GetVariablesInStep(GoalStep step)
 	{
-		var variables = variableHelper.GetVariables(step.Text);
+		var variables = variableHelper.GetVariables(step.Text, memoryStack);
 		string vars = "";
 		foreach (var variable in variables)
 		{

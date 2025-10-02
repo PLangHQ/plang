@@ -109,15 +109,15 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Hmac hash sizes are 256, 384, 512")]
-		public async Task<string> HashHmacShaInput(string input, string? secretKey = null, int hashSize = 256)
+		public async Task<(string?, IError?)> HashHmacShaInput(string input, string? secretKey = null, int hashSize = 256)
 		{
 			if (secretKey == null) secretKey = settings.GetSalt();
 			if (string.IsNullOrEmpty(secretKey))
 			{
-				throw new Exception("secretKey is missing");
+				return (null, new ProgramError("secretKey is missing", goalStep));
 			}
 
-			return input.ComputeHmacSha256(secretKey, hashSize);
+			return (input.ComputeHmacSha256(secretKey, hashSize), null);
 		}
 		[Description("Hash input, useSalt = true for passwords. Salt is provided by language when use does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
 		public async Task<(object?, IError?)> HashPassword(object? variable, bool returnAsString = false, bool useSalt = true, string? salt = null, string type = "keccak256")
@@ -300,19 +300,19 @@ namespace PLang.Modules.CryptographicModule
 
 		public void Dispose()
 		{
-			context?.Remove(CurrentBearerToken);
+			appContext?.Remove(CurrentBearerToken);
 		}
 
 		public async Task SetCurrentBearerToken(string name)
 		{
-			context?.AddOrReplace(CurrentBearerToken, name);
+			appContext?.AddOrReplace(CurrentBearerToken, name);
 		}
 
 		public async Task<string> GetBearerSecret()
 		{
-			if (context.ContainsKey(CurrentBearerToken))
+			if (appContext.ContainsKey(CurrentBearerToken))
 			{
-				return moduleSettings.GetBearerSecret(context[CurrentBearerToken].ToString()).Secret;
+				return moduleSettings.GetBearerSecret(appContext[CurrentBearerToken].ToString()).Secret;
 			}
 			return moduleSettings.GetDefaultBearerSecret().Secret;
 		}

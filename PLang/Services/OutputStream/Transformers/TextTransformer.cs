@@ -2,6 +2,7 @@
 using Parlot.Fluent;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.Diagnostics;
@@ -24,7 +25,7 @@ public class TextTransformer : ITransformer
 
 	public virtual string ContentType { get { return "plain/text"; } }
 
-	public async Task<(long, IError?)> Transform(HttpContext httpContext, PipeWriter writer, OutMessage obj, CancellationToken ct = default)
+	public async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage obj, CancellationToken ct = default)
 	{
 		if (obj == null) return (0, null);
 
@@ -40,7 +41,7 @@ public class TextTransformer : ITransformer
 			{
 				needed = encoding.GetByteCount(tm.Content);
 
-				gate = await TransformerHelper.GetGate(httpContext, ct);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 				span = writer.GetSpan(needed);
 
 				
@@ -54,7 +55,7 @@ public class TextTransformer : ITransformer
 			if (obj is RenderMessage rm)
 			{
 				needed = encoding.GetByteCount(rm.Content);
-				gate = await TransformerHelper.GetGate(httpContext, ct);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 				span = writer.GetSpan(needed);
 
 				
@@ -70,7 +71,7 @@ public class TextTransformer : ITransformer
 			if (content == null) return (0, null);
 
 			needed = encoding.GetByteCount(content);
-			gate = await TransformerHelper.GetGate(httpContext, ct);
+			gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 			span = writer.GetSpan(needed);
 
 			

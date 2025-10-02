@@ -1,12 +1,21 @@
 ﻿using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Services.OutputStream.Messages;
+using System.Text;
+using System.Xml.Linq;
 
 namespace PLang.Utils
 {
 	public class PathHelper
 	{
 
-
+		public static bool IsTemplateFile(string path)
+		{
+			if (path.Contains("\n") || path.Contains("\r") || path.Contains("\r")) return false;
+			if (Encoding.UTF8.GetByteCount(path) > 255) return false;
+			string ext = Path.GetExtension(path);
+			return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
+		}
 		public static string GetSystemPath(string? path, IPLangFileSystem fileSystem, Goal goal)
 		{
 			return string.Join(fileSystem.SystemDirectory, path);

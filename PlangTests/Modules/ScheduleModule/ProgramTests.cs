@@ -23,7 +23,7 @@ namespace PLangTests.Modules.ScheduleModule
 		{
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 			p.Init(container, null, new PLang.Building.Model.GoalStep(), null,  null);
 			await p.Sleep(100);
 			stopwatch.Stop();
@@ -45,7 +45,7 @@ namespace PLangTests.Modules.ScheduleModule
 				});
 
 
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 			await p.Schedule(cronCommand, goalName);
 
 			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<CronJob>>(list => 
@@ -84,9 +84,9 @@ namespace PLangTests.Modules.ScheduleModule
 				return now;
 			};
 
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 			await p.Run();
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(), Arg.Any<string>(), "Process");
 
 
 			SystemTime.OffsetUtcNow = () =>
@@ -95,7 +95,7 @@ namespace PLangTests.Modules.ScheduleModule
 			};
 
 			await p.Run();
-			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>());
+			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<IPLangContextAccessor>(), Arg.Any<string>(), Arg.Any<string>());
 
 			SystemTime.OffsetUtcNow = () =>
 			{
@@ -103,7 +103,7 @@ namespace PLangTests.Modules.ScheduleModule
 			};
 
 			await p.Run();
-			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>());
+			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<IPLangContextAccessor>(), Arg.Any<string>(), Arg.Any<string>());
 
 			SystemTime.OffsetUtcNow = () =>
 			{
@@ -147,9 +147,9 @@ namespace PLangTests.Modules.ScheduleModule
 			{
 				return now;
 			};
-			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 			await p.Run();
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<IPLangContextAccessor>(), Arg.Any<string>(), "Process");
 
 
 		}

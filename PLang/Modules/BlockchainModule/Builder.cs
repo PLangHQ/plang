@@ -13,11 +13,11 @@ namespace PLang.Modules.BlockchainModule
     public class Builder : BaseBuilder 
 	{
 		private readonly ISettings settings;
-		private readonly PLangAppContext context;
+		private readonly PLangContext context;
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly Program program;
 
-		public Builder(ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory)
+		public Builder(ISettings settings, PLangContext context, ILlmServiceFactory llmServiceFactory)
 		{
 			this.settings = settings;
 			this.context = context;

@@ -25,13 +25,14 @@ namespace PLang.Building.Parsers
 		private readonly IServiceContainer container;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
+		private readonly ILogger logger;
 		private List<Goal> goals = null!;
-		public GoalParser(IServiceContainer container, IPLangFileSystem fileSystem, ISettings settings)
+		public GoalParser(IServiceContainer container, IPLangFileSystem fileSystem, ISettings settings, ILogger logger)
 		{
 			this.container = container;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
-
+			this.logger = logger;
 			this.goals = GetGoals();
 		}
 
@@ -237,9 +238,15 @@ namespace PLang.Building.Parsers
 				}
 			}
 
+			string escapedPath = goalFileAbsolutePath.Replace(" ", "%20");
 			if (goals.Count() == 0)
 			{
-				throw new Exception($"No goal defined in {goalFileAbsolutePath}. Are you missing a goal name in the goal file?");
+				logger.LogWarning($@"No goal defined in ""file:///{escapedPath}"". Are you missing a goal name in the goal file?");
+			}
+
+			if (goals.FirstOrDefault(p => p.GoalSteps.Count == 0) != null)
+			{
+				logger.LogWarning($@"Steps not defined in ""file:///{escapedPath}"". Did you forget to create steps in a goal?");
 			}
 
 			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());

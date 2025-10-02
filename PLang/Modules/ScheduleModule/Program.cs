@@ -31,13 +31,12 @@ namespace PLang.Modules.ScheduleModule
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IAppCache appCache;
 		private readonly ModuleSettings moduleSettings;
 		public PrParser PrParser { get; }
 
 		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime, 
-			ILogger logger, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory, IAppCache appCache) : base()
+			ILogger logger, IPLangFileSystem fileSystem, IAppCache appCache) : base()
 		{
 			this.settings = settings;
 			PrParser = prParser;
@@ -45,7 +44,6 @@ namespace PLang.Modules.ScheduleModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.logger = logger;
 			this.fileSystem = fileSystem;
-			this.outputStreamFactory = outputStreamFactory;
 			this.appCache = appCache;
 			this.moduleSettings = new ModuleSettings(settings);
 
@@ -116,9 +114,9 @@ namespace PLang.Modules.ScheduleModule
 				await Task.Delay(100);
 			}
 			
-			var result = await pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCall);
+			var result = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, goalToCall);
 
-			return result.error;
+			return result.Error;
 		}
 
 		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCallInfo GoalName, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
@@ -162,12 +160,12 @@ namespace PLang.Modules.ScheduleModule
 			IPseudoRuntime pseudoRuntime = this.pseudoRuntime;
 			IPLangFileSystem fileSystem = this.fileSystem;
 
-			if (outputStreamFactory.CreateHandler() is not AppOutputSink)
+			if (context.SystemSink is not AppOutputSink)
 			{
 				logger.LogDebug("Initiate new engine for scheduler");
 				using (var containerForScheduler = new ServiceContainer())
 				{
-					containerForScheduler.RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
+					containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), null, null, parentEngine: engine);
 
 					engine = containerForScheduler.GetInstance<IEngine>();
 					engine.Init(containerForScheduler);
@@ -233,7 +231,7 @@ namespace PLang.Modules.ScheduleModule
 				while (true)
 				{
 					
-					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem, outputStreamFactory);
+					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
 					//run every 1 min
 					await Task.Delay(60 * 1000);
@@ -265,7 +263,7 @@ namespace PLang.Modules.ScheduleModule
 		}
 
 
-		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
+		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			logger.LogDebug("Running 1 min cron check");
 			CronJob? item = null;
@@ -277,7 +275,7 @@ namespace PLang.Modules.ScheduleModule
 				{
 					item = list[i];
 					
-					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory, appCache);
+					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 					var schedule = CrontabSchedule.Parse(item.CronCommand);
 
 					var nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);
@@ -295,14 +293,14 @@ namespace PLang.Modules.ScheduleModule
 
 					using (CancellationTokenSource cts = new CancellationTokenSource())
 					{
-						engine.GetMemoryStack().Clear();
+						context.MemoryStack.Clear();
 
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, goal);
-						if (result.error != null)
+						var result = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal);
+						if (result.Error != null)
 						{
-							logger.LogError(result.error.ToString());
+							logger.LogError(result.Error.ToString());
 						}
 					}
 

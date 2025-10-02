@@ -48,7 +48,7 @@ namespace PLang.Modules.HttpModule
 				{
 					foreach (var header in headers)
 					{
-						var value = this.variableHelper.LoadVariables(header.Value);
+						var value = this.memoryStack.LoadVariables(header.Value);
 						if (value != null)
 						{
 							client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, value.ToString());
@@ -139,7 +139,7 @@ namespace PLang.Modules.HttpModule
 			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
-			var requestUrl = this.variableHelper.LoadVariables(url);
+			var requestUrl = this.memoryStack.LoadVariables(url);
 			if (requestUrl == null)
 			{
 				return (null, new ProgramError("url cannot be empty", goalStep, function), null);
@@ -157,7 +157,7 @@ namespace PLang.Modules.HttpModule
 					{
 						foreach (var header in requestHeaders)
 						{
-							var value = this.variableHelper.LoadVariables(header.Value).ToString();
+							var value = this.memoryStack.LoadVariables(header.Value).ToString();
 							request.Headers.TryAddWithoutValidation(header.Key, value);
 						}
 					}
@@ -169,7 +169,7 @@ namespace PLang.Modules.HttpModule
 					{
 						foreach (var header in contentHeaders)
 						{
-							var value = this.variableHelper.LoadVariables(header.Value).ToString();
+							var value = this.memoryStack.LoadVariables(header.Value).ToString();
 							content.Headers.TryAddWithoutValidation(header.Key, value);
 						}
 					}
@@ -212,7 +212,7 @@ namespace PLang.Modules.HttpModule
 			{
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
-				var requestUrl = this.variableHelper.LoadVariables(url);
+				var requestUrl = this.memoryStack.LoadVariables(url);
 				if (requestUrl == null)
 				{
 					return (null, new ProgramError("url cannot be empty", goalStep, function), null);
@@ -233,7 +233,7 @@ namespace PLang.Modules.HttpModule
 							{
 								string fileName = property.Value.ToString().Substring(1);
 								string typeValue = null;
-								fileName = this.variableHelper.LoadVariables(fileName).ToString();
+								fileName = this.memoryStack.LoadVariables(fileName).ToString();
 
 								if (fileName != null && fileName.Contains(";"))
 								{
@@ -283,7 +283,7 @@ namespace PLang.Modules.HttpModule
 						{
 							foreach (var header in headers)
 							{
-								var value = this.variableHelper.LoadVariables(header.Value).ToString();
+								var value = this.memoryStack.LoadVariables(header.Value).ToString();
 								request.Headers.TryAddWithoutValidation(header.Key, value);
 							}
 						}
@@ -378,7 +378,7 @@ namespace PLang.Modules.HttpModule
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 
-			var requestUrl = this.variableHelper.LoadVariables(url);
+			var requestUrl = this.memoryStack.LoadVariables(url);
 			if (requestUrl == null)
 			{
 				return (null, new ProgramError("url cannot be empty", goalStep, function), null);
@@ -396,7 +396,7 @@ namespace PLang.Modules.HttpModule
 			{
 				foreach (var header in headers)
 				{
-					var value = this.variableHelper.LoadVariables(header.Value);
+					var value = this.memoryStack.LoadVariables(header.Value);
 					if (value != null)
 					{
 						request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
@@ -404,15 +404,15 @@ namespace PLang.Modules.HttpModule
 				}
 			}
 
-			if (context != null)
+			if (appContext != null)
 			{
-				if (context.ContainsKey("!callback"))
+				if (appContext.ContainsKey("!callback"))
 				{
-					request.Headers.TryAddWithoutValidation("!callback", JsonConvert.SerializeObject(context["!callback"]));
+					request.Headers.TryAddWithoutValidation("!callback", JsonConvert.SerializeObject(appContext["!callback"]));
 				}
-				if (context.ContainsKey("!contract"))
+				if (appContext.ContainsKey("!contract"))
 				{
-					request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(context["!contract"]));
+					request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(appContext["!contract"]));
 				}
 			}
 			if (request.Headers.Accept.Count == 0)
@@ -501,10 +501,10 @@ namespace PLang.Modules.HttpModule
 						var signature = await programFactory.GetProgram<IdentityModule.Program>(goalStep).VerifySignature(signatureJson.Value.ToString());
 						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(properties, response));
 
-						if (context != null && signature.Signature != null)
+						if (appContext != null && signature.Signature != null)
 						{
-							context.AddOrReplace(ReservedKeywords.Signature, signature.Signature);
-							context.AddOrReplace(ReservedKeywords.ServiceIdentity, signature.Signature.Identity);
+							appContext.AddOrReplace(ReservedKeywords.Signature, signature.Signature);
+							appContext.AddOrReplace(ReservedKeywords.ServiceIdentity, signature.Signature.Identity);
 						}
 					}
 					var responseJson = obj.FirstOrDefault(p => p.Key.Equals("response", StringComparison.OrdinalIgnoreCase));

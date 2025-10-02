@@ -25,7 +25,7 @@ namespace PLang.Modules.CachingModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new OpenAiService(settings, logger, llmCaching, context);
+			var aiService = new OpenAiService(settings, logger, llmCaching, appContext);
 			llmServiceFactory.CreateHandler().Returns(aiService);
 
 

@@ -45,6 +45,8 @@ namespace PlangWindowForms
 		IEngine engine;
 		IPLangFileSystem fileSystem;
 		IOutputStreamFactory outputStreamFactory;
+		IPLangContextAccessor contextAccessor;
+		PLangContext context;
 		Executor pLang;
 		private string[] args;
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -68,6 +70,10 @@ namespace PlangWindowForms
 			fileSystem = container.GetInstance<IPLangFileSystem>();
 			outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			pLang = new Executor(container);
+
+			Engine.InitPerRequest(container);
+
+			contextAccessor = container.GetInstance<IPLangContextAccessor>();
 
 			InitializeComponent();
 			InitializeWebView();
@@ -207,7 +213,6 @@ namespace PlangWindowForms
 				return;
 			}
 
-			var context = engine.GetContext();
 
 			outputTargetElement = jObj["outputTarget"]?.ToString() ?? "body";
 			domOperation = jObj["domOperation"]?.ToString() ?? "innerHTML";
@@ -228,10 +233,10 @@ namespace PlangWindowForms
 			try
 			{				
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				engine.GetMemoryStack().GetMemoryStack().Clear();
-				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName);
+				
+				var goalResult = await pseudoRuntime.RunGoal(engine, contextAccessor, "", goalName);
 
-				ShowErrorInDevTools(goalResult.error);
+				ShowErrorInDevTools(goalResult.Error);
 
 				lastJsonMesage = receivedMessage;
 			}
@@ -244,7 +249,7 @@ namespace PlangWindowForms
 		public record JsVariable(string name, string goalToCall, Dictionary<string, object?>? parameters);
 		public async Task ListenToVariables()
 		{
-			var variables = engine.GetMemoryStack().GetVariablesWithEvent(VariableEventType.OnChange);
+			var variables = context.MemoryStack.GetVariablesWithEvent(VariableEventType.OnChange);
 			List<JsVariable> jsVars = new();
 			foreach (var variable in variables)
 			{
@@ -346,7 +351,7 @@ namespace PlangWindowForms
 				{
 					GoalToCallInfo goalToCall = new GoalToCallInfo(parsedUrl.goalName, parsedUrl.param);
 
-					var task = pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalToCall);
+					var task = pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall);
 					task.Wait();
 					var goalResult = task.Result;
 					int i = 0;
@@ -396,12 +401,11 @@ namespace PlangWindowForms
 
 			if (@event["EventType"].Value<string>() == "OnChange")
 			{
-				var context = engine.GetContext();
 				var goal = new PLang.Building.Model.Goal();
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				var variable = @event["Variable"];
-				var memoryStack = engine.GetMemoryStack();
+				var memoryStack = context.MemoryStack;
 				memoryStack.Put(variable["name"].Value<string>(), variable["value"].Value<object?>());
 
 			}
@@ -509,12 +513,12 @@ namespace PlangWindowForms
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				//engine.GetMemoryStack().GetMemoryStack().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
-				var wait =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalToCall).ConfigureAwait(false);
+				var wait =  pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall).ConfigureAwait(false);
 				var goalResult = await wait;
 
-				if (goalResult.error != null)
+				if (goalResult.Error != null)
 				{
-					ShowError(goalResult.error);
+					ShowError(goalResult.Error);
 					return;
 				}
 

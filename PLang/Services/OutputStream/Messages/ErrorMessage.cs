@@ -1,7 +1,22 @@
-﻿namespace PLang.Services.OutputStream.Messages;
+﻿using PLang.Attributes;
+using System.ComponentModel;
+using static PLang.Utils.StepHelper;
 
+namespace PLang.Services.OutputStream.Messages;
+
+[Description(@"Content can be a filename or a text that will be written to stream. 
+Target defines where in the UI to write the content, this can be null and will be controlled by external system
+Actions are actions executed on the content, built in actions are: 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, notify, alert, vibrate, navigate, replaceState, reload, open, close'. 
+A user can define multiple actions, user:`render 'product.html' to #main, replace the content, navigate and scroll into view => Actions:[""replace"", ""navigate"", ""scrollIntoView""]
+Level: trace|debug|info(default)|warning|error|critical. info is default. when user defines a level without a channel, assume channel=log
+Channel: default|log|audit|security|metric or custom defined by user
+Actor: user|system => user is the default actor when Channel=default, for other channels use system as actor unless defined by user.
+")]
 public sealed record ErrorMessage(
-	string Message, string Key = "UserDefinedError", string Level = "error", int StatusCode = 400,
+	string Content, string Key = "UserDefinedError", string Level = "error", int StatusCode = 400,
 	string? Target = null, string Channel = "default", string Actor = "user", IReadOnlyList<string>? Actions = null,
-	string? Fix = null, string? Links = null, IReadOnlyDictionary<string, object?>? Meta = null)
-	: OutMessage(MessageKind.Error, Level, StatusCode, Target, Actions ?? new[] { "notify" }, Channel, Actor, Meta);
+	string? FixSuggestion = null, string? HelpfullLinks = null,
+	[param: LlmIgnore] Callback? Callback = null,
+	[param: LlmIgnore] 
+	IReadOnlyDictionary<string, object?>? Properties = null)
+	: OutMessage(MessageKind.Error, Level, StatusCode, Target, Actions ?? new[] { "notify" }, Channel, Actor, Properties);

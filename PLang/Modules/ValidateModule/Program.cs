@@ -31,11 +31,11 @@ namespace PLang.Modules.ValidateModule
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";
 			if (variables == null)
 			{
-				return new UserInputError(errorMessage, goalStep, StatusCode: 500);
+				return new ProgramError(errorMessage, goalStep, StatusCode: 500);
 			}
 			if (variables.Count == 0)
 			{
-				return new UserInputError(errorMessage, goalStep, StatusCode: 500);
+				return new ProgramError(errorMessage, goalStep, StatusCode: 500);
 			}
 
 			var multiError = new GroupedErrors("ValidateModule.IsNotEmpty");
@@ -44,7 +44,7 @@ namespace PLang.Modules.ValidateModule
 			{
 				if (variable.IsEmpty)
 				{
-					multiError.Add(new UserInputError($"{variable.PathAsVariable} is empty", goalStep, StatusCode: statusCode));
+					multiError.Add(new ProgramError($"{variable.PathAsVariable} is empty", goalStep, StatusCode: statusCode));
 					continue;
 				}
 			}
@@ -54,7 +54,7 @@ namespace PLang.Modules.ValidateModule
 		[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]
 		public async Task<IError?> HasPattern([HandlesVariable] string[]? variables, string pattern, string errorMessage, int statusCode = 400)
 		{
-			if (variables == null) return new UserInputError("Variables are empty", goalStep);
+			if (variables == null) return new ProgramError("Variables are empty", goalStep);
 
 			foreach (var variable in variables)
 			{
@@ -71,7 +71,7 @@ namespace PLang.Modules.ValidateModule
 
 				if (!Regex.IsMatch(valueToTest ?? "", pattern))
 				{
-					return new UserInputError(errorMessage, goalStep, StatusCode: statusCode);
+					return new ProgramError(errorMessage, goalStep, StatusCode: statusCode);
 				}
 			}
 
@@ -84,11 +84,11 @@ namespace PLang.Modules.ValidateModule
 
 			foreach (var variable in variables)
 			{
-				var code = variableHelper.LoadVariables(variable)?.ToString()?.Trim();
+				var code = memoryStack.LoadVariables(variable)?.ToString()?.Trim();
 
 				if (string.IsNullOrWhiteSpace(code) || code.Length != 2)
 				{
-					multiError.Add(new UserInputError($"{code} is not 2 letters", goalStep));
+					multiError.Add(new ProgramError($"{code} is not 2 letters", goalStep));
 				}
 				else
 				{
@@ -143,7 +143,7 @@ namespace PLang.Modules.ValidateModule
 
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "item is not in list";
 
-			return (null, new UserInputError(errorMessage, goalStep));
+			return (null, new ProgramError(errorMessage, goalStep));
 		}
 
 

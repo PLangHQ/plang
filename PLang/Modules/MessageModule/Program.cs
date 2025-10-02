@@ -50,8 +50,7 @@ namespace PLang.Modules.MessageModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
-		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
+
 		private readonly IErrorHandlerFactory errorHandlerFactory;
 		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly IPLangFileSystem fileSystem;
@@ -62,7 +61,6 @@ namespace PLang.Modules.MessageModule
 
 		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
 			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
-			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IPLangFileSystem fileSystem
 			) : base()
 		{
@@ -73,8 +71,6 @@ namespace PLang.Modules.MessageModule
 			this.llmServiceFactory = llmServiceFactory;
 			this.client = client;
 			this.signingService = signingService;
-			this.outputStreamFactory = outputStreamFactory;
-			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.errorHandlerFactory = errorHandlerFactory;
 			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.fileSystem = fileSystem;
@@ -100,7 +96,7 @@ namespace PLang.Modules.MessageModule
 			{
 				throw new ArgumentException($"{publicKeyOrName} could not be found in set of keys");
 			}
-			context.AddOrReplace(CurrentAccountIdx, idx);
+			appContext.AddOrReplace(CurrentAccountIdx, idx);
 		}
 
 		IDisposable? disconnectDisposable = null;
@@ -218,7 +214,7 @@ namespace PLang.Modules.MessageModule
 
 			using (var container = new ServiceContainer())
 			{
-				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory);
+				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, errorHandlerFactory, errorSystemHandlerFactory, parentEngine: engine);
 
 				var content = ev.DecryptContent(privateKey);
 				var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
@@ -286,7 +282,7 @@ namespace PLang.Modules.MessageModule
 				goalName.Parameters.AddOrReplaceDict(parameters);
 
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, goal);
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, goalName, goal);
 				if (task == null) return null;
 
 
@@ -350,7 +346,7 @@ namespace PLang.Modules.MessageModule
 
 			}
 
-			content = variableHelper.LoadVariables(content).ToString();
+			content = memoryStack.LoadVariables(content).ToString();
 
 			var headers = new Dictionary<string, object>();
 			headers.Add("hex-public-key", currentKey.HexPublicKey);
@@ -384,7 +380,7 @@ namespace PLang.Modules.MessageModule
 
 		public void Dispose()
 		{
-			context.Remove(CurrentAccountIdx);
+			appContext.Remove(CurrentAccountIdx);
 
 			disconnectDisposable?.Dispose();
 			messageReceivedDisposable?.Dispose();
@@ -400,9 +396,9 @@ namespace PLang.Modules.MessageModule
 			}
 
 			NostrKey? key = null;
-			if (context.ContainsKey(CurrentAccountIdx))
+			if (appContext.ContainsKey(CurrentAccountIdx))
 			{
-				int idx = (int)context[CurrentAccountIdx];
+				int idx = (int)appContext[CurrentAccountIdx];
 				if (idx < keys.Count)
 				{
 					key = keys[idx];

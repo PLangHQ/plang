@@ -147,6 +147,7 @@ namespace PLang.Services.SettingsService
 
 		private string GetKey(string key)
 		{
+			key = key.Replace("%", "");
 			if (key.Contains(engine.Environment + ".")) return key;
 
 			return engine.Environment + "." + key;

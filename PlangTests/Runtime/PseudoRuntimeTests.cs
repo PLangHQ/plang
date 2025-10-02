@@ -50,12 +50,11 @@ namespace PLang.Runtime.Tests
 		[TestMethod()]
 		public async Task RunGoalTest_InternalApp()
 		{
-			var context = new PLangAppContext();
 			context.AddOrReplace("Test", 1);
 			engine.GetGoal("GoalWith1Step.goal").Returns(new Goal());
-			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal");
+			await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "GoalWith1Step.goal");
 
-			await engine.Received(1).RunGoal(Arg.Any<Goal>());
+			await engine.Received(1).RunGoal(Arg.Any<Goal>(), context);
 		}
 
 
@@ -65,15 +64,14 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(),
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
 				IEngine engine = container.GetInstance<IEngine>();
-				engine.GetMemoryStack().Returns(a =>
+				context.MemoryStack.Returns(a =>
 				{
-					return new MemoryStack(pseudoRuntime, engine, settings, context);
+					return new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 				});
 				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
 				return container;
@@ -83,18 +81,17 @@ namespace PLang.Runtime.Tests
 			
 			context.AddOrReplace("Test", 1);
 
-			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
+			context.MemoryStack.Returns(new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor));
 
 			var parameters = new Dictionary<string, object?>();
 			parameters.AddOrReplace("Name", "Jim");
 
 			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
 
-			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
+			await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 
-			await engine.Received(1).RunGoal(Arg.Any<Goal>());
+			await engine.Received(1).RunGoal(Arg.Any<Goal>(), context);
 
-			engine.Received(1).GetMemoryStack();
 
 		}
 
@@ -102,7 +99,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{	
 
-			(var e, var vars, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal");
+			(var e, var vars, var err) = await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "UnknownGoal.goal");
 			Assert.AreEqual("No goals available", err.Message);
 		}
 
@@ -146,17 +143,15 @@ namespace PLang.Runtime.Tests
 		[TestMethod()]
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
-			var context = new PLangAppContext();
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
 				IEngine engine = container.GetInstance<IEngine>();
-				engine.GetMemoryStack().Returns(a =>
+				context.MemoryStack.Returns(a =>
 				{
-					return new MemoryStack(pseudoRuntime, engine, settings, context);
+					return new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 				});
 				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
 				return container;
@@ -168,7 +163,7 @@ namespace PLang.Runtime.Tests
 			
 			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
 
-			engine.GetMemoryStack().Returns(memoryStackMock);
+			context.MemoryStack.Returns(memoryStackMock);
 			var parameters = new Dictionary<string, object>
 	{
 		{"%Name", "Jim"},
@@ -177,7 +172,7 @@ namespace PLang.Runtime.Tests
 
 			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
 
-			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
+			await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 
 			memoryStackMock.Received(1).Put("Name", "Jim");
 			memoryStackMock.Received(1).Put("Age", 30);

@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using LightInject;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nethereum.Hex.HexConvertors;
 using PLangTests;
 using PLangTests.Helpers;
 using PLangTests.Mocks;
@@ -18,25 +20,21 @@ namespace PLang.Runtime.Tests
 		[TestMethod()]
 		public void EngineTestNewInstance_ShouldNotShareSameMemory()
 		{
-			var context = new Dictionary<string, object>();
-			context.Add("Test", 1);
-
 			var fileSystem = new PLangMockFileSystem();
 			var content = PrReaderHelper.GetPrFileRaw("Start.pr");
 			fileSystem.AddFile(fileSystem.GoalsPath, new MockFileData(content));
 
 			var serviceContainer = CreateServiceContainer();
 
-			var engine = new Runtime.Engine();
 			engine.Init(serviceContainer);
 			engine.AddContext("Test", true);
-			Assert.AreEqual(true, engine.GetContext()["Test"]);
+			Assert.AreEqual(true, engine.GetAppContext()["Test"]);
 
-			var serviceContainer2 = CreateServiceContainer();
+			var serviceContainer2 = (ServiceContainer) CreateServiceContainer();
 			//Make sure that get instance doesnt give previous engine instance
-			var engine2 = new Runtime.Engine();
+			var engine2 = serviceContainer2.GetInstance<IEngine>();
 			engine2.Init(serviceContainer2);
-			Assert.IsFalse(engine2.GetContext().ContainsKey("Test"));
+			Assert.IsFalse(engine2.GetAppContext().ContainsKey("Test"));
 
 		}
 

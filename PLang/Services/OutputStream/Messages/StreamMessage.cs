@@ -1,4 +1,6 @@
-﻿namespace PLang.Services.OutputStream.Messages;
+﻿using PLang.Attributes;
+
+namespace PLang.Services.OutputStream.Messages;
 
 public enum StreamPhase { Start, Chunk, End, Abort }
 

@@ -19,7 +19,7 @@ namespace PLangTests.Modules.PythonModule
 		public void Init()
 		{
 			base.Initialize();
-			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStreamFactory, fileSystem, programFactory, engine);
+			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, fileSystem, programFactory, engine);
 			terminalProgram.Init(container, null, null, null, null);
 
 		}
@@ -39,7 +39,7 @@ namespace PLangTests.Modules.PythonModule
 			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
 
 			
-			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
+			var p = new Program(fileSystem, logger, settings, signingService, terminalProgram);
 			p.Init(container, null, null, null, null);
 			string[] vars = new string[] { "result" };
 			 await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
@@ -60,8 +60,7 @@ namespace PLangTests.Modules.PythonModule
 			string content = File.ReadAllText(Path.Join(Environment.CurrentDirectory, "main_params.py"));
 			fileSystem.AddFile("main_params.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 
-			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
-			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
+			var p = new Program(fileSystem, logger, settings, signingService, terminalProgram);
 			p.Init(container, null, null, null, null);
 
 			string[] vars = new string[] { "result" };

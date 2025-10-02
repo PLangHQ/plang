@@ -20,13 +20,13 @@ namespace PLang.Modules.CallGoalModule
 		private readonly MemoryStack memoryStack;
 		private readonly ILogger logger;
 
-		public Builder(IGoalParser goalParser, PrParser prParser, MemoryStack memoryStack, ILogger logger)
+		public Builder(IGoalParser goalParser, PrParser prParser, IMemoryStackAccessor memoryStackAccessor, ILogger logger)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"        - Start constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");
 			this.goalParser = goalParser;
 			this.prParser = prParser;
-			this.memoryStack = memoryStack;
+			this.memoryStack = memoryStackAccessor.Current;
 			this.logger = logger;
 			logger.LogDebug($"        - End constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");
 		}
@@ -122,7 +122,7 @@ The parameters provided in <function> might not be correct, these are the legal 
 			logger.LogDebug($"      - getting goals - {stopwatch.ElapsedMilliseconds}");
 			var disableSystemGoals = gf.GetParameter<bool>("disableSystemGoals");
 			var goals = goalParser.GetGoals();
-			var systemGoals = (disableSystemGoals) ? new() : prParser.GetSystemGoals();
+			var systemGoals = (disableSystemGoals) ? new List<Goal>() : prParser.GetSystemGoals();
 
 			(var goal, var error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, goalToCall, goals, systemGoals);
 			if (error != null) return (instruction, new BuilderError(error));

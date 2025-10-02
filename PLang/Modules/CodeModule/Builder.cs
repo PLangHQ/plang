@@ -19,16 +19,14 @@ namespace PLang.Modules.CodeModule
 
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
-		private readonly MemoryStack memoryStack;
 		private readonly ILogger logger;
 		private readonly ProgramFactory programFactory;
 		private int errorCount = 0;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger, ProgramFactory programFactory) : base()
+		public Builder(IPLangFileSystem fileSystem, PrParser prParser, ILogger logger, ProgramFactory programFactory) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
-			this.memoryStack = memoryStack;
 			this.logger = logger;
 			this.programFactory = programFactory;
 		}

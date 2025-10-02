@@ -24,17 +24,15 @@ namespace PLang.Modules.TerminalModule
 	{
 		private readonly ILogger logger;
 		private readonly ISettings settings;
-		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ProgramFactory programFactory;
 		private readonly IEngine engine;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IOutputStreamFactory outputStreamFactory, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine) : base()
+		public Program(ILogger logger, ISettings settings, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
-			this.outputStreamFactory = outputStreamFactory;
 			this.fileSystem = fileSystem;
 			this.programFactory = programFactory;
 			this.engine = engine;
@@ -54,9 +52,9 @@ namespace PLang.Modules.TerminalModule
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
-				if (Goal != null && Goal.IsSystem && engine.CallingStep != null)
+				if (Goal != null && Goal.IsSystem && context.CallingStep != null)
 				{
-					pathToWorkingDirInTerminal = engine.CallingStep.Goal.AbsoluteGoalFolderPath;
+					pathToWorkingDirInTerminal = context.CallingStep.Goal.AbsoluteGoalFolderPath;
 				}
 				else
 				{

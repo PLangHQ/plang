@@ -20,7 +20,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<IError?> Start(IServiceContainer container, string? absoluteGoalPath = null);
+		Task<IError?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null);
 	}
 	public class Builder : IBuilder
 	{
@@ -34,11 +34,12 @@ namespace PLang.Building
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly IGoalParser goalParser;
 		private readonly IEngine engine;
+		private readonly PLangAppContext appContext;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
 			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, 
-			IGoalParser goalParser, IEngine engine)
+			IGoalParser goalParser, IEngine engine, PLangAppContext appContext)
 		{
 
 			this.fileSystem = fileSystem;
@@ -51,10 +52,11 @@ namespace PLang.Building
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.goalParser = goalParser;
 			this.engine = engine;
+			this.appContext = appContext;
 		}
 
 
-		public async Task<IError?> Start(IServiceContainer container, string? absoluteGoalPath = null)
+		public async Task<IError?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null)
 		{
 			IError? error;
 			try
@@ -81,7 +83,7 @@ namespace PLang.Building
 				foreach (var setupGoal in setupGoals)
 				{
 					logger.LogDebug($"Start setup file build on '{setupGoal.GoalName}' - {stopwatch.ElapsedMilliseconds}");
-					var goalError = await goalBuilder.BuildGoal(container, setupGoal);
+					var goalError = await goalBuilder.BuildGoal(container, setupGoal, context);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
 						return goalError;
@@ -114,7 +116,7 @@ namespace PLang.Building
 				{
 					Stopwatch buildGoalTime = Stopwatch.StartNew();
 					logger.LogDebug($"Building goal {goalToBuild.GoalName} - {stopwatch.ElapsedMilliseconds}");
-					var goalError = await goalBuilder.BuildGoal(container, goalToBuild);
+					var goalError = await goalBuilder.BuildGoal(container, goalToBuild, context);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
 						return goalError;
@@ -159,13 +161,13 @@ namespace PLang.Building
 					var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 					var engine = container.GetInstance<IEngine>();
 
-					(var answer, error) = await AskUser.GetAnswer(engine, fa.Message);
+					(var answer, error) = await AskUser.GetAnswer(engine, context, fa.Message);
 					if (error != null) return error;
 
 					(var _, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
 					if (error != null) return error;
 
-					return await Start(container);
+					return await Start(container, context);
 
 					
 
@@ -173,13 +175,13 @@ namespace PLang.Building
 
 				if (ex is MissingSettingsException mse)
 				{
-					var (answer, askError) = await AskUser.GetAnswer(engine, mse.Message);
+					var (answer, askError) = await AskUser.GetAnswer(engine, context, mse.Message);
 					if (askError != null) return askError;
 
 					askError = await mse.InvokeCallback(answer);
 					if (askError != null) return askError;
 
-					return await Start(container);
+					return await Start(container, context);
 				}
 
 				var step = (ex is BuilderStepException bse) ? bse.Step : null;
@@ -208,7 +210,7 @@ namespace PLang.Building
 
 		private void ReleaseDatabase()
 		{
-			var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection>;
+			var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new());
 			foreach (var anchor in anchors ?? [])
 			{
 				anchor.Value.Close();

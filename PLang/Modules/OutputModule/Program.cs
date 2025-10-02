@@ -14,23 +14,19 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric and it can have different serialization, text, json, csv, binary, etc.")]
-	public class Program : BaseProgram, IDisposable
+	[Description("Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
+	public class Program : BaseProgram
 	{
-		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly VariableHelper variableHelper;
 		private readonly ProgramFactory programFactory;
 
-		public Program(IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, VariableHelper variableHelper, ProgramFactory programFactory) : base()
+		public Program(VariableHelper variableHelper, ProgramFactory programFactory) : base()
 		{
-			this.outputStreamFactory = outputStreamFactory;
-			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.variableHelper = variableHelper;
 			this.programFactory = programFactory;
 		}
 
-		[Description("channel=user|system|audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
+		[Description("channel=audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
 		public record OutputStreamInfo(string Channel = "user", string Serializer = "default", Dictionary<string, object?>? Options = null);
 
 		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
@@ -63,7 +59,7 @@ namespace PLang.Modules.OutputModule
 				string json = "";
 				foreach (var option in options)
 				{
-					json += $"<{option.Key}>\n{JsonConvert.SerializeObject(variableHelper.LoadVariables(option.Value))}\n<{option.Key}>\n";
+					json += $"<{option.Key}>\n{JsonConvert.SerializeObject(memoryStack.LoadVariables(option.Value))}\n<{option.Key}>\n";
 				}
 				param.Add("options", json);
 			}
@@ -137,57 +133,53 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 		private async Task<(object? Answer, IError? Error)> AskInternal(AskMessage askMessage, IError? error = null)
 		{
 			List<ObjectValue>? answers = new();
-			IOutputSink outputStream;
-			if (askMessage.Actor == "system")
-			{
-				outputStream = outputSystemStreamFactory.CreateHandler();
-			}
-			else
-			{
-				outputStream = outputStreamFactory.CreateHandler();
-			}
-			if (goalStep.Callback != null)
+			IOutputSink outputStream = context.GetSink(askMessage.Actor);
+
+			if (context.CallbackInfo != null)
 			{
 				(answers, error) = await ProcessCallbackAnswer(askMessage, error);
-				goalStep.Callback = null;
-				engine.CallbackInfo = null;
+				context.CallbackInfo = null;
 
 				if (error != null && error is UserInputError uie2)
 				{
-					throw new NotImplementedException("AskUser error");/*
-					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askOptions.CallbackData, memoryStack, goalStep, programFactory);
-					uie2 = uie2 with { Callback = newCallBack };
+					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+					var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };
+					uie2 = uie2 with { Callback = newCallBack, ErrorMessage = errorMessage };
 
-					error = await Write(uie2);
-					if (error != null) return (answers, error);
-
-					uie2.Handled = true;
-
-					return (answers, uie2);*/
+					return (answers, uie2);
 
 				}
 				return (answers, error);
 			}
-
-			var path = GetCallbackPath();
-			var url = (HttpContext?.Request.Path.Value ?? "/");
-			var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory);
-
 			Dictionary<string, object?> parameters = new();
-			parameters.AddOrReplace("askOptions", askMessage);
-			parameters.AddOrReplace("callback", JsonConvert.SerializeObject(callback).ToBase64());
-			parameters.AddOrReplace("error", error);
-			parameters.Add("url", url);
-			parameters.AddOrReplace("id", Path.Join(path, goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/"));
 
-
-			if (outputStream is HttpSink httpOutputStream)
+			if (!outputStream.IsStateful)
 			{
-				foreach (var rp in httpOutputStream.ResponseProperties)
+				var path = GetCallbackPath();
+				var url = (HttpContext?.Request.Path.Value ?? "/");
+				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				
+				askMessage = askMessage with { Callback = callback };
+
+				parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());				
+				parameters.Add("url", url);
+
+				if (context.DebugMode)
 				{
-					parameters.AddOrReplace(rp.Key, rp.Value);
+					parameters.Add("prFile", goalStep.PrFileName);
+				}
+
+				if (outputStream is HttpSink httpOutputStream)
+				{
+					foreach (var rp in httpOutputStream.ResponseProperties)
+					{
+						parameters.AddOrReplace(rp.Key, rp.Value);
+					}
 				}
 			}
+
+			parameters.AddOrReplace("askMessage", askMessage);
+			parameters.AddOrReplace("error", error);
 
 			string? content = null;
 			if (IsTemplateFile(askMessage.Content))
@@ -198,22 +190,15 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 			}
 			else
 			{
-				content = variableHelper.LoadVariables(askMessage.Content)?.ToString();
+				content = memoryStack.LoadVariables(askMessage.Content)?.ToString();
 			}
 
-			Dictionary<string, object?> uiDirection = new();
-			if (!string.IsNullOrEmpty(askMessage.Target))
-			{
-				uiDirection.Add("target", askMessage.Target);
-			}
-			
-			uiDirection.Add("actions", askMessage.Actions);
-			
+			askMessage = askMessage with { Content = content };
 
 			(var answer, error) = await outputStream.AskAsync(askMessage);
 			if (error != null) return (null, error);
 
-			if (!outputStream.IsStateful) return (null, new EndGoal(new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asking user a question", Levels: 9999));
+			if (!outputStream.IsStateful) return (null, new EndGoal(true, new Goal() { RelativePrPath = "RootOfApp" }, goalStep, "Asking user a question", Levels: 9999));
 
 			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
 			{
@@ -284,7 +269,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 				}
 			}
 
-			(List<ObjectValue> answers, error) = GetStatelessAnswers(askOptions.CallbackData);
+			(List<ObjectValue>? answers, error) = GetStatelessAnswers(askOptions.CallbackData);
 			if (error != null) return (null, error);
 
 			return await ValidateAnswers(answers!, askOptions);
@@ -352,15 +337,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 			return (answers, null);
 		}
 
-		public void Dispose()
-		{
-			var stream = outputStreamFactory.CreateHandler();
-			if (stream is IDisposable disposable)
-			{
-				disposable.Dispose();
-			}
-
-		}
+		
 
 		public record JsonOptions(NullValueHandling NullValueHandling = NullValueHandling.Include, DateFormatHandling DateFormatHandling = DateFormatHandling.IsoDateFormat,
 			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
@@ -443,21 +420,15 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 		[Description("Write to the output. . statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
-			IOutputSink outputSink;
-			// todo: quick fix, this should be dynamic with multiple channels, such as, user(default), system, notification, loading, audit, metric, logs warning, and user custom channel.
-			if (textMessage.Actor == "system")
-			{
-				outputSink = outputSystemStreamFactory.CreateHandler();
-			}
-			else
-			{
-				outputSink = outputStreamFactory.CreateHandler();
-			}
+			
 
-			return await outputSink.SendAsync(textMessage);
+			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
+			textMessage = textMessage with { Path = stepPath };
+
+			var sink = context.GetSink(textMessage.Actor);
+			return await sink.SendAsync(textMessage);
 		}
 
-		public record OutData(object Content, string Type, int StatusCode = 200, Dictionary<string, object?>? parameters = null);
 
 	}
 }

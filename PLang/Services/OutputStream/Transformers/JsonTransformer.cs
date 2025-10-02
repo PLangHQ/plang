@@ -1,5 +1,6 @@
 ﻿using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
 using System.IO.Pipelines;
 using System.Text;
@@ -18,7 +19,7 @@ public class JsonTransformer : ITransformer
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		WriteIndented = false,
-		Converters = { new JsonStringEnumConverter() }
+		Converters = { new JsonStringEnumConverter(), new ObjectValueConverter() }
 	};
 
 	protected readonly JsonWriterOptions _writerOptions = new()
@@ -28,19 +29,21 @@ public class JsonTransformer : ITransformer
 
 	public JsonTransformer(Encoding enc) => Encoding = enc;
 
-	public virtual async Task<(long, IError?)> Transform(HttpContext httpContext, PipeWriter writer, OutMessage m, CancellationToken ct = default)
+	public virtual async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage m, CancellationToken ct = default)
 	{
-		var env = TransformerHelper.BuildEnvelope(m);
+		var env = TransformerHelper.BuildEnvelope(m, context);
 		SemaphoreSlim? gate = null;
 		try
 		{
-			using var jsonWriter = new Utf8JsonWriter(writer, _writerOptions);
+			long length = 0;
+			using (var jsonWriter = new Utf8JsonWriter(writer, _writerOptions))
+			{
 
-			gate = await TransformerHelper.GetGate(httpContext, ct);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 
-			System.Text.Json.JsonSerializer.Serialize(jsonWriter, env, _opts);
-			long length = jsonWriter.BytesCommitted;
-			jsonWriter.Flush();
+				System.Text.Json.JsonSerializer.Serialize(jsonWriter, env, _opts);
+				length = jsonWriter.BytesCommitted;
+			}
 
 			var nl = writer.GetSpan(1);
 			nl[0] = (byte)'\n';

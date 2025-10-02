@@ -78,20 +78,20 @@ namespace PLang.Modules.WebSocketModule
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 			List<WebsocketConnection>? connections = new();
-			if (context.ContainsKey(WebsocketClient))
+			if (appContext.ContainsKey(WebsocketClient))
 			{
-				connections = context[WebsocketClient] as List<WebsocketConnection>;
+				connections = appContext[WebsocketClient] as List<WebsocketConnection>;
 				if (connections == null) connections = new();
 			}
 			connections.Add(new WebsocketConnection(name, _socket));
 
-			context.AddOrReplace(WebsocketClient, connections);
+			appContext.AddOrReplace(WebsocketClient, connections);
 			return (_socket, null);
 		}
 
 		public async Task<IError?> Send(object message, string? name = null)
 		{
-			if (!context.ContainsKey(WebsocketClient)) 
+			if (!appContext.ContainsKey(WebsocketClient)) 
 			{
 				return new ProgramError("Not connection available to a websocket server", goalStep, function);
 			}
@@ -106,9 +106,9 @@ namespace PLang.Modules.WebSocketModule
 			{
 				return;
 			}
-			if (context.ContainsKey(WebsocketClient))
+			if (appContext.ContainsKey(WebsocketClient))
 			{
-				var connections = context[WebsocketClient] as List<WebsocketConnection>;
+				var connections = appContext[WebsocketClient] as List<WebsocketConnection>;
 				if (connections != null)
 				{
 					foreach (var connection in connections)

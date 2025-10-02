@@ -21,11 +21,11 @@ namespace PLang.Building.Parsers
 {
 	public class PrParser
 	{
-		private List<Goal> goals = null!;
-		private List<Goal> publicGoals = null!;
-		private List<Goal> systemGoals = null!;
-		private List<Goal> runtimeEventsGoals = null!;
-		private List<Goal> builderEventsGoals = null!;
+		private IReadOnlyList<Goal> goals = null!;
+		private IReadOnlyList<Goal> publicGoals = null!;
+		private IReadOnlyList<Goal> systemGoals = null!;
+		private IReadOnlyList<Goal> runtimeEventsGoals = null!;
+		private IReadOnlyList<Goal> builderEventsGoals = null!;
 
 		ConcurrentDictionary<string, List<Goal>> Events = new();
 		ConcurrentDictionary<string, List<Goal>> SystemEvents = new();
@@ -200,12 +200,12 @@ namespace PLang.Building.Parsers
 			return instruction;
 
 		}
-		public List<Goal> ForceLoadAllGoals()
+		public IReadOnlyList<Goal> ForceLoadAllGoals()
 		{
 			var goals = LoadAllGoals(true);
 			return goals;
 		}
-
+		/*
 		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = AppContext.BaseDirectory;
@@ -231,9 +231,9 @@ namespace PLang.Building.Parsers
 			}
 
 			return this.goals;
-		}
+		}*/
 
-		public List<Goal> LoadAllGoals(bool force = false)
+		public IReadOnlyList<Goal> LoadAllGoals(bool force = false)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"   -- Loading all goals(force:{force})");
@@ -318,7 +318,7 @@ namespace PLang.Building.Parsers
 			}
 			return goals;
 		}
-		public List<Goal> GetAllGoals()
+		public IReadOnlyList<Goal> GetAllGoals()
 		{
 			if (goals.Count > 0) return goals;
 
@@ -326,7 +326,7 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
-		public List<Goal> GetPublicGoals()
+		public IReadOnlyList<Goal> GetPublicGoals()
 		{
 			if (publicGoals.Count > 0) return publicGoals;
 			LoadAllGoals();
@@ -440,7 +440,7 @@ namespace PLang.Building.Parsers
 			return goal;
 		}
 
-		public List<Goal> GetGoals(bool force = false)
+		public IReadOnlyList<Goal> GetGoals(bool force = false)
 		{
 			if (!force && goals != null) return goals;
 
@@ -451,7 +451,7 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
-		public List<Goal> GetSystemGoals(bool force = false)
+		public IReadOnlyList<Goal> GetSystemGoals(bool force = false)
 		{
 			if (!force && systemGoals != null) return systemGoals;
 
@@ -508,7 +508,7 @@ namespace PLang.Building.Parsers
 		}
 
 
-		public (List<Instruction>? Instructions, IError? Error) GetInstructions(List<GoalStep> steps, string? functionName = null)
+		public (List<Instruction>? Instructions, IError? Error) GetInstructions(IReadOnlyList<GoalStep> steps, string? functionName = null)
 		{
 			var instructions = new List<Instruction>();
 			foreach (var step in steps)
@@ -525,7 +525,7 @@ namespace PLang.Building.Parsers
 
 		}
 
-		public List<Goal> GetEventsFiles(bool builder = false)
+		public IReadOnlyList<Goal> GetEventsFiles(bool builder = false)
 		{
 			if (builderEventsGoals != null && builder) return builderEventsGoals;
 			if (runtimeEventsGoals != null && !builder) return runtimeEventsGoals;

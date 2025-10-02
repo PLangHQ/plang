@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Parsers;
@@ -37,8 +38,6 @@ public class Program : BaseProgram, IDisposable
 	private readonly IEventRuntime eventRuntime;
 	private readonly IPLangFileSystem fileSystem;
 	private readonly ISettings settings;
-	private readonly IOutputStreamFactory outputStreamFactory;
-	private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 	private readonly PrParser prParser;
 	private readonly IPseudoRuntime pseudoRuntime;
 	private readonly IEngine engine;
@@ -48,16 +47,13 @@ public class Program : BaseProgram, IDisposable
 
 
 	public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
-		, ISettings settings, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory
-		, PrParser prParser,
+		, ISettings settings, PrParser prParser,
 		IPseudoRuntime pseudoRuntime, IEngine engine, Modules.ProgramFactory programFactory) : base()
 	{
 		this.logger = logger;
 		this.eventRuntime = eventRuntime;
 		this.fileSystem = fileSystem;
 		this.settings = settings;
-		this.outputStreamFactory = outputStreamFactory;
-		this.outputSystemStreamFactory = outputSystemStreamFactory;
 		this.prParser = prParser;
 		this.pseudoRuntime = pseudoRuntime;
 		this.engine = engine;
@@ -80,7 +76,7 @@ public class Program : BaseProgram, IDisposable
 		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
 		if (webserverInfo == null)
 		{
-			var error = await outputSystemStreamFactory.CreateHandler().SendAsync(new TextMessage($"Webserver named '{webserverName}' does not exist"));
+			var error = await context.SystemSink.SendAsync(new TextMessage($"Webserver named '{webserverName}' does not exist"));
 			return (webserverInfo, error);
 		}
 
@@ -175,11 +171,14 @@ public class Program : BaseProgram, IDisposable
 		webserverProperties = webserverProperties with { DefaultRequestProperties = requestProperties, DefaultResponseProperties = responseProperties };
 
 		var webserverContainer = new ServiceContainer();
-		webserverContainer.RegisterForPLangWebserver(goalStep, this.engine);
+		webserverContainer.RegisterForPLangWebserver(goalStep, this.engine, context);
 
 		var webserverEngine = webserverContainer.GetInstance<IEngine>();
-		webserverEngine.Init(webserverContainer, context);
+		webserverEngine.Init(webserverContainer);
 		webserverEngine.Name = "WebserverEngine";
+		webserverEngine.UserSink = engine.UserSink;
+		webserverEngine.SystemSink = engine.SystemSink;
+
 		goal.AddVariable(webserverProperties);
 
 		engine.ChildEngines.Add(webserverEngine);
@@ -188,7 +187,7 @@ public class Program : BaseProgram, IDisposable
 
 		if (webserverProperties.OnStart != null)
 		{
-			var (_, error) = await engine.RunGoal(webserverProperties.OnStart, goal);
+			var (_, error) = await engine.RunGoal(webserverProperties.OnStart, goal, context);
 			if (error != null) return (webserverProperties, error);
 		}
 
@@ -258,36 +257,57 @@ public class Program : BaseProgram, IDisposable
 						app.UseHttpsRedirection();
 					}
 					app.UseResponseCompression();
-					app.Run(async ctx =>
+					app.Run(async httpContext =>
 					{
 						IEngine? requestEngine = null;
 						IError? error = null;
 						bool poll = false;
 						string? identity = null;
+
 						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
-							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+							
+							
+							requestEngine = await webserverEngine.RentAsync(goalStep);
+							requestEngine.Name = "RequestEngine_" + httpContext.Request.Path.Value;
 
-							var httpOutputStream = new HttpSink(ctx, webserverProperties, webserverEngine.LiveConnections);
-							requestEngine = await webserverEngine.RentAsync(goalStep, httpOutputStream);
-							requestEngine.HttpContext = ctx;
-							requestEngine.Name = "RequestEngine_" + ctx.Request.Path.Value;
-							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, ctx, webserverProperties);
 
-							if (error != null)
+							var memoryStack = MemoryStack.New(container, requestEngine);
+							var msa = container.GetInstance<IMemoryStackAccessor>();
+							msa.Current = memoryStack;
+
+							PLangContext context = new(memoryStack, requestEngine, ExecutionMode.HttpRequest);
+
+							var contextAccessor = container.GetInstance<IPLangContextAccessor>();
+							contextAccessor.Current = context;
+							context.HttpContext = httpContext;
+
+							var httpOutputSink = new HttpSink(context, webserverProperties, webserverEngine.LiveConnections);
+							context.UserSink = httpOutputSink;
+							context.SystemSink = engine.SystemSink;
+							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
+
+							if (error != null && error is not EndGoal)
 							{
-								if (!ctx.Response.HasStarted)
+								if (!httpContext.Response.HasStarted)
 								{
-									ctx.Response.StatusCode = error.StatusCode;
+									httpContext.Response.StatusCode = error.StatusCode;
 
 									var encoding = Encoding.GetEncoding(webserverProperties.DefaultResponseProperties.ResponseEncoding);
-									ctx.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
+									httpContext.Response.ContentType = $"{webserverProperties.DefaultResponseProperties.ContentType}; charset={encoding.BodyName}";
 								}
 
-								if (error is StatelessCallbackError)
+								if (error is StatelessCallbackError stc)
 								{
-									await requestEngine.OutputSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode));
+									await context.UserSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode, Callback: stc.Callback));
+									return;
+								}
+								if (error is UserInputError uie)
+								{
+									var sink = context.GetSink(uie.ErrorMessage?.Actor ?? "user");
+									await sink.SendAsync(uie.ErrorMessage);
 									return;
 								}
 
@@ -298,16 +318,9 @@ public class Program : BaseProgram, IDisposable
 									
 									try
 									{
-										ErrorMessage errorMessage;
-										if (ctx.Items.ContainsKey("__Plang.ShowErrorDetails__"))
-										{
-											errorMessage = new ErrorMessage(error.ToString(), error.Key, "error", error.StatusCode);
-										}
-										else
-										{
-											errorMessage = new ErrorMessage(error.Message, error.Key, "error", error.StatusCode);
-										}
-										await requestEngine.OutputSink.SendAsync(errorMessage);
+										string content = (context.ShowErrorDetails) ? error.ToString()! : error.Message;
+										var errorMessage = new ErrorMessage(content, error.Key, "error", error.StatusCode);
+										await context.UserSink.SendAsync(errorMessage);
 									}
 									catch (Exception ex)
 									{
@@ -324,9 +337,9 @@ public class Program : BaseProgram, IDisposable
 							}
 							else
 							{
-								if (!ctx.Response.HasStarted)
+								if (!httpContext.Response.HasStarted)
 								{
-									ctx.Response.StatusCode = 200;
+									httpContext.Response.StatusCode = 200;
 								}
 							}
 						}
@@ -360,13 +373,13 @@ public class Program : BaseProgram, IDisposable
 								webserverEngine.Return(requestEngine, true);
 							}
 
-							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", ctx.Request.Path.Value, stopwatch.ElapsedMilliseconds);
+							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
 						}
 
 						if (poll)
 						{
-							await DoPoll(ctx, identity, webserverEngine, webserverProperties);
+							await DoPoll(httpContext, identity, webserverEngine, webserverProperties);
 						}
 					});
 
@@ -597,7 +610,7 @@ OnStartingWebserver
 
 	public async Task<IError?> Redirect(string url, bool permanent = false, bool preserveMethod = false)
 	{
-		var os = engine.OutputSink;
+		var os = context.UserSink;
 		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
@@ -624,7 +637,7 @@ OnStartingWebserver
 		}
 
 
-		return new EndGoal(topGoal, goalStep, "Redirect", Levels: 999);
+		return new EndGoal(true,topGoal, goalStep, "Redirect", StatusCode: 302, Levels: 999);
 		/*
 		if (HttpContext == null)
 		{
@@ -710,7 +723,7 @@ Frontpage
 		options.HttpOnly = true;
 		options.Secure = true;
 
-		var os = engine.OutputSink;
+		var os = context.UserSink;
 		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
@@ -934,7 +947,7 @@ Frontpage
 
 					websocketData.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 
-					await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall);
+					await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RootDirectory, websocketData.GoalToCall);
 				}
 				messageStream.SetLength(0);
 			}

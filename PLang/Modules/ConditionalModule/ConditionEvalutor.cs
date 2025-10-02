@@ -93,12 +93,20 @@ Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
 
 			public static bool EvaluateCompound(Condition n) => n.Logic!.ToUpperInvariant() switch
 			{
-				"&&" => n.Conditions!.All(Evaluate),
-				"AND" => n.Conditions!.All(Evaluate),
-				"OR" => n.Conditions!.Any(Evaluate),
-				"||" => n.Conditions!.Any(Evaluate),
+				"&&" or "AND" => EvaluateAll(n.Conditions!),
+				"OR" or "||" => n.Conditions!.Any(Evaluate),
 				_ => throw new NotSupportedException($"Logic '{n.Logic}'")
 			};
+
+			private static bool EvaluateAll(IEnumerable<Condition> conditions)
+			{
+				foreach (var condition in conditions)
+				{
+					if (!Evaluate(condition))
+						return false;
+				}
+				return true;
+			}
 
 			/* helpers */
 			static int? Cmp(Condition n)

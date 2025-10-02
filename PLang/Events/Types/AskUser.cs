@@ -3,6 +3,7 @@ using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Runtime;
 
 namespace PLang.Events.Types
@@ -10,7 +11,7 @@ namespace PLang.Events.Types
 	public class AskUser
 	{
 
-		public static async Task<(object? Answer, IError? Error)> GetAnswer(IEngine engine, string question)
+		public static async Task<(object? Answer, IError? Error)> GetAnswer(IEngine engine, PLangContext context, string question)
 		{
 
 
@@ -29,9 +30,9 @@ AskSystem
 
 
 
-			engine.GetMemoryStack().Put("__plang_question", question);
+			context.MemoryStack.Put("__plang_question", question);
 
-			var goalResult = await engine.RunGoal(askUser);
+			var goalResult = await engine.RunGoal(askUser, context);
 			if (goalResult.Error is Return r)
 			{
 				if (r.ReturnVariables.Count == 0)

@@ -37,14 +37,14 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		public IContentExtractor Extractor { get; set; }
 
 		public PLangLlmService(LlmCaching llmCaching, Modules.IdentityModule.Program signer,
-			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack, Modules.HttpModule.Program http)
+			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, IMemoryStackAccessor memoryStackAccessor, Modules.HttpModule.Program http)
 		{
 			this.llmCaching = llmCaching;
 			this.signer = signer;
 			this.logger = logger;
 			this.context = context;
 			this.fileSystem = fileSystem;
-			this.memoryStack = memoryStack;
+			this.memoryStack = memoryStackAccessor.Current;
 			this.http = http;
 			
 			this.Extractor = new JsonExtractor();
@@ -208,7 +208,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				{
 					AppContext.TryGetSwitch("Builder", out bool isBuilder);
 					string strIsBuilder = (isBuilder) ? " build" : "";
-					return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+					return (null, new AskUserError("system", "default", @$"You need to purchase credits to use Plang LLM service. Lets do this now.
 (If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
 What is name of payer?", GetCountry));
@@ -266,14 +266,14 @@ What is name of payer?", GetCountry));
 		{
 			if (value == null)
 			{
-				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				var error = new AskUserError("system", "default", "Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
 				return (false, error);
 			}
 
 			object[] nameArray = (object[])value;
 			if (nameOfPayer == "" && (nameArray == null || string.IsNullOrEmpty(nameArray[0].ToString())))
 			{
-				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				var error = new AskUserError("system", "default", "Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
 				return (false, error);
 			}
 
@@ -282,11 +282,11 @@ What is name of payer?", GetCountry));
 				nameOfPayer = nameArray[0].ToString();
 			}
 
-			return (false, new AskUserError("What is your two letter country? (e.g. US, UK, FR, ...)", async (object[]? countryArray) =>
+			return (false, new AskUserError("system", "default", "What is your two letter country? (e.g. US, UK, FR, ...)", async (object[]? countryArray) =>
 			{
 				if (countryArray == null || countryArray.Length == 0 || string.IsNullOrEmpty(countryArray[0].ToString()))
 				{
-					return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
+					return (false, new AskUserError("system", "default", "Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 				}
 
 				var responseBody = await DoPlangRequest(countryArray);
@@ -305,9 +305,9 @@ What is name of payer?", GetCountry));
 				{
 					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))
 					{
-						return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
+						return (false, new AskUserError("system", "default", "Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 					}
-					return (false, new AskUserError("Could not create url. Lets try again. What is your name?", GetCountry));
+					return (false, new AskUserError("system", "default", "Could not create url. Lets try again. What is your name?", GetCountry));
 				}
 			}));
 		}

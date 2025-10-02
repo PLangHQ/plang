@@ -11,9 +11,11 @@ using System.ComponentModel;
 
 namespace PLang.Modules.CallGoalModule
 {
+	
 	[Description("Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
+		public PLangContext Context { get { return context; } }
 
 		[Description("Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \"Start\" when it cannot be mapped")]
 		public async Task<(object? Variables, IError? Error)> RunApp(AppToCallInfo appToCall, bool waitForExecution = true,
@@ -31,7 +33,7 @@ namespace PLang.Modules.CallGoalModule
 			}
 			
 			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appToCall.AppName + "_" + appToCall.Name);
-
+			var newContext = new PLangContext(memoryStack.Clone(newEngine), newEngine, ExecutionMode.Console);
 			try
 			{
 				if (appToCall.Parameters != null)
@@ -40,17 +42,17 @@ namespace PLang.Modules.CallGoalModule
 					{
 						if (item.Key.StartsWith("!"))
 						{
-							newEngine.GetContext().AddOrReplace(item.Key, this.variableHelper.LoadVariables(item.Value));
+							newContext.AddOrReplace(item.Key, this.memoryStack.LoadVariables(item.Value));
 						}
 						else
 						{
-							newEngine.GetMemoryStack().Put(item.Key, item.Value, goalStep: goalStep);
+							newContext.MemoryStack.Put(item.Key, item.Value, goalStep: goalStep);
 						}
 					}
 				}
 
 
-				(var vars, error) = await newEngine.RunGoal(goal);
+				(var vars, error) = await newEngine.RunGoal(goal, context);
 
 				return (vars, error);
 
@@ -76,12 +78,11 @@ namespace PLang.Modules.CallGoalModule
 			{
 				string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
 				int indent = (goalStep == null) ? 0 : goalStep.Indent;
-				var context = engine.GetContext();
 
-				var result = await pseudoRuntime.RunGoal(engine, context, path, goalInfo, goal,
+				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, path, goalInfo, goal,
 						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated, disableSystemGoals, isEvent);
 
-				if (result.error is Return ret)
+				if (result.Error is Return ret)
 				{
 					return (ret.ReturnVariables, null);
 				}
@@ -92,7 +93,7 @@ namespace PLang.Modules.CallGoalModule
 					return (result.Variables, null);
 				}*/
 
-				return (result.Variables, result.error);
+				return (result.Variables, result.Error);
 			} catch (Exception ex)
 			{
 				Console.WriteLine("RunGoal:" + ex.ToString());

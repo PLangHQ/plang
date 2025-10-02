@@ -21,11 +21,11 @@ namespace PLang.Modules.CallGoalModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new PLang.Services.OpenAi.OpenAiService(settings, logger, llmCaching, context);
+			var llmService = new PLang.Services.OpenAi.OpenAiService(settings, logger, llmCaching, appContext);
 			llmServiceFactory.CreateHandler().Returns(llmService);
 		
 
-			builder = new Builder(goalParser, prParser, memoryStack, logger);
+			builder = new Builder(goalParser, prParser, memoryStackAccessor, logger);
 			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
@@ -35,7 +35,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			builder = new Builder(goalParser, prParser, memoryStack, logger);
+			builder = new Builder(goalParser, prParser, memoryStackAccessor, logger);
 			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		

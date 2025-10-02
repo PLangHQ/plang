@@ -488,7 +488,7 @@ public class TypeHelper : ITypeHelper
 		if (obj == null) return default;
 		return (T?)obj;
 	}
-	public static object? ConvertToType(object? value, Type targetType, JsonConverter? jsonConverter = null)
+	public static object? ConvertToType(object? value, Type targetType, JsonConverter? jsonConverter = null, string? variableName = null)
 	{
 		if (value == null) return null;
 		if (value is System.DBNull) return null;
@@ -548,17 +548,21 @@ public class TypeHelper : ITypeHelper
 			var jArray2 = new JArray((IEnumerable<JToken>)value);
 			return jArray2.ToString();
 		}
-		if (value is string str && targetType.Name.StartsWith("List`"))
+
+		if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
 		{
-			try
-			{
-				var list = JsonConvert.DeserializeObject(str, targetType);
-				return list;
-			}
-			catch { }
+			return ConvertToDictionary(targetType, value, variableName);
 		}
 
-		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
+
+		if (typeof(System.Collections.IEnumerable).IsAssignableFrom(targetType) && targetType != typeof(string))
+		{
+			return ConvertToList(targetType, value);
+		}
+
+		
+
+			if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
 		{
 			if (IsRecordWithToString(value))
 			{
@@ -646,6 +650,61 @@ public class TypeHelper : ITypeHelper
 
 		}
 	}
+
+	public static IDictionary ConvertToDictionary(Type targetType, object value, string? variableName = null)
+	{
+		var keyType = targetType.GetGenericArguments()[0];
+		var valType = targetType.GetGenericArguments()[1];
+
+		if (value is IDictionary<string, object?> dict)
+		{
+			var result = (System.Collections.IDictionary)Activator.CreateInstance(targetType)!;
+			foreach (var kvp in dict)
+				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
+			return result;
+		} else if (variableName != null)
+		{
+			var result = (System.Collections.IDictionary)Activator.CreateInstance(targetType)!;
+			result.Add(variableName, value);
+			return result;
+		}
+
+		throw new Exception("Not sure what todo?");
+	}
+	public static IList ConvertToList(Type targetType, object value)
+	{
+		// Figure out the element type
+		var elemType =
+			targetType.IsArray
+				? targetType.GetElementType()!
+				: targetType.GetGenericArguments().FirstOrDefault() ?? typeof(object);
+
+		// Normalize value into IEnumerable<object>
+		var values = value is System.Collections.IEnumerable e && value is not string
+			? e.Cast<object?>()
+			: new[] { value };
+
+		// Materialize into List<elemType>
+		var listType = typeof(List<>).MakeGenericType(elemType);
+		var list = (System.Collections.IList)Activator.CreateInstance(listType)!;
+
+		foreach (var v in values)
+			list.Add(ConvertToType(v, elemType)!);
+
+		// Adapt to IReadOnlyList<T>, ICollection<T>, etc.
+		if (targetType.IsAssignableFrom(listType))
+			return list;
+
+		if (targetType.IsArray)
+		{
+			var arr = Array.CreateInstance(elemType, list.Count);
+			list.CopyTo(arr, 0);
+			return arr;
+		}
+
+		return list; // caller can cast if interface
+	}
+
 	static bool IsListOfJToken(object obj)
 	{
 		if (obj == null) return false;

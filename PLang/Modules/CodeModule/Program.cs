@@ -100,7 +100,7 @@ namespace PLang.Modules.CodeModule
 			catch (Exception ex)
 			{
 				var engine = ((ServiceContainer) container).GetInstance<IEngine>();
-				var error = await CodeExceptionHandler.GetError(engine, ex, implementation, goalStep);
+				var error = await CodeExceptionHandler.GetError(engine, ex, implementation, goalStep, context);
 
 				return (null, error);
 			}

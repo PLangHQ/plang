@@ -77,7 +77,7 @@ The method user is mocking has the following information:
 ", goalStep);
 		if (error != null) return (null, error);
 
-		(var goalFound, var error2) = GoalHelper.GetGoalPath(goalStep, goalToCallAndParams.GoalToCall, goalParser.GetGoals(), new());
+		(var goalFound, var error2) = GoalHelper.GetGoalPath(goalStep, goalToCallAndParams.GoalToCall, goalParser.GetGoals(), new List<Goal>());
 		if (error != null) return (null, new BuilderError(error2) { Retry = false });
 		goalToCallAndParams.GoalToCall.Path = goalFound.RelativePrPath;
 

@@ -1,10 +1,19 @@
-﻿using PLang.Errors;
+﻿using LightInject;
+using NBitcoin;
+using Newtonsoft.Json;
+using NSec.Cryptography;
+using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.OutputStream.Transformers;
+using PLang.Utils;
+using Sprache;
 using System.Collections.Concurrent;
 using System.Text;
 using static PLang.Modules.WebserverModule.Program;
 using static PLang.Runtime.Engine;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream.Sinks;
 
@@ -14,35 +23,33 @@ namespace PLang.Services.OutputStream.Sinks;
 
 public sealed class HttpSink : IOutputSink
 {
-	readonly HttpContext _ctx;
+	readonly PLangContext context;
 	readonly WebserverProperties _props;
 	readonly ConcurrentDictionary<string, LiveConnection> _live;
 	readonly ITransformer _transformer;
 
-	string? _identity;
 	string _path;
 
 	public string Id { get; } = Guid.NewGuid().ToString();
-	public bool IsStateful => true;
-	public bool IsFlushed => _ctx.Response.HasStarted;
+	public bool IsStateful => false;
+	public bool IsFlushed => context.HttpContext?.Response.HasStarted ?? true;
 	public Dictionary<string, object?> ResponseProperties { get; set; } = new();
-	public HttpSink(HttpContext ctx, WebserverProperties props, ConcurrentDictionary<string, LiveConnection> live)
+	public HttpSink(PLangContext context, WebserverProperties props, ConcurrentDictionary<string, LiveConnection> live)
 	{
-		_ctx = ctx;
+		this.context = context;
 		_props = props;
 		_live = live;
-		_path = ctx.Request.Path.Value ?? "/";
-		_transformer = ChooseTransformer(props, ctx);
+		_path = context.HttpContext!.Request.Path.Value ?? "/";
+		_transformer = ChooseTransformer(props, context.HttpContext!);
 	}
 
-	public void SetIdentity(string identity) => _identity = identity;
 	public bool IsComplete { get; set; }
 	public ConcurrentDictionary<string, LiveConnection> LiveConnections { get { return _live; } }
 	public async Task<IError?> SendAsync(OutMessage m, CancellationToken ct = default)
 	{
 		var (response, wasFlushed, error) = GetResponse();
 		if (error != null) return error;
-		if (response is null || !response.Body.CanWrite) return null;
+		if (response is null || !response.Body.CanWrite || IsComplete) return null;
 
 		if (!wasFlushed && !response.HasStarted && response.StatusCode == 200)
 		{
@@ -58,26 +65,32 @@ public sealed class HttpSink : IOutputSink
 			}
 		}
 
-		var props = BuildResponseProperties(m);
+		m = BuildResponseProperties(m);
 
 		var writer = response.BodyWriter;
 
-		(var length, error) = await _transformer.Transform(response.HttpContext, writer, m);
+		(var length, error) = await _transformer.Transform(context, writer, m);
 		if (error != null) return error;
-
-		await writer.FlushAsync(ct);
+		try
+		{
+			if (writer.UnflushedBytes > 0)
+			{
+				await writer.FlushAsync(ct);
+			}
+		} catch (Exception ex)
+		{
+			Console.WriteLine(ex.ToString());
+		}
+		
 
 		return null;
 	}
 
 	public async Task<(object? result, IError? error)> AskAsync(AskMessage m, CancellationToken ct = default)
 	{
-		// For HTTP you said you have the round-trip solved. We just emit the ask envelope.
 		var err = await SendAsync(m, ct);
 		return (null, err);
 	}
-
-	// ---------- helpers ----------
 
 	static ITransformer ChooseTransformer(WebserverProperties props, HttpContext ctx)
 	{
@@ -91,47 +104,42 @@ public sealed class HttpSink : IOutputSink
 		return new TextTransformer(enc);
 	}
 
-	object BuildPayload(OutMessage m) =>
-		m switch
-		{
-			TextMessage t => new { kind = "text", level = m.Level, status = m.StatusCode, target = m.Target, actions = m.Actions, meta = m.Meta, content = t.Content },
-			RenderMessage r => new { kind = "render", level = m.Level, status = m.StatusCode, target = m.Target, actions = m.Actions, meta = m.Meta, content = r.Content },
-			ExecuteMessage e => new { kind = "execute", level = m.Level, status = m.StatusCode, target = m.Target, actions = m.Actions, meta = m.Meta, function = e.Function, data = e.Data },
-			AskMessage a => new { kind = "ask", level = m.Level, status = m.StatusCode, target = m.Target, actions = m.Actions, meta = m.Meta, content = a.Content },
-			_ => new { kind = "unknown" }
-		};
-
-	Dictionary<string, object?> BuildResponseProperties(OutMessage m)
+	OutMessage BuildResponseProperties(OutMessage m)
 	{
-		var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+	
+
+		if (ResponseProperties.TryGetValue("p-target", out object? target) && !string.IsNullOrWhiteSpace(target?.ToString()) && string.IsNullOrEmpty(m.Target))
 		{
-			["path"] = _path
-		};
+			m = m with { Target = target.ToString()! };
+		}
 
-		if (!string.IsNullOrWhiteSpace(m.Target)) dict["cssSelector"] = m.Target; // legacy hint
-		if (m.Actions?.Count > 0) dict["actions"] = m.Actions;
-		if (m.Meta is not null)
-			foreach (var kv in m.Meta) if (!dict.ContainsKey(kv.Key)) dict[kv.Key] = kv.Value;
 
-		// Back-compat with any existing “data-plang-*” props that your transformers understand:
-		if (!dict.ContainsKey("data-plang-cssSelector") && dict.TryGetValue("cssSelector", out var sel)) dict["data-plang-cssSelector"] = sel;
-		if (!dict.ContainsKey("data-plang-action") && dict.TryGetValue("actions", out var act)) dict["data-plang-action"] = act;
+		if (ResponseProperties.TryGetValue("p-actions", out object? actions) && !string.IsNullOrWhiteSpace(actions?.ToString()) && (m.Actions == null || m.Actions.Count == 0))
+		{
+			var actionArray = actions.ToString()?.Split(' ');
+			if (actionArray != null)
+			{
+				m = m with { Actions = actionArray.ToList() };
+			}
+		}
 
-		return dict;
+
+
+		return m;
 	}
 
 	public (HttpResponse? response, bool wasFlushed, IError? error) GetResponse()
 	{
 		try
 		{
-			if (_ctx.Response.Body.CanWrite) return (_ctx.Response, false, null);
+			if (context.HttpContext?.Response.Body.CanWrite == true) return (context.HttpContext!.Response, false, null);
 		}
 		catch { /* ignore */ }
 
 		try
 		{
-			if (_live is null || string.IsNullOrEmpty(_identity)) return (null, false, null);
-			if (!_live.TryGetValue(_identity!, out var live)) return (null, false, null);
+			if (_live is null || string.IsNullOrEmpty(context.Identity)) return (null, false, null);
+			if (!_live.TryGetValue(context.Identity, out var live)) return (null, false, null);
 			var was = live.IsFlushed;
 			live.IsFlushed = true;
 			return (live.Response, was, null);
@@ -139,7 +147,7 @@ public sealed class HttpSink : IOutputSink
 		catch (Exception ex)
 		{
 			Console.WriteLine("Live connection unavailable: " + ex);
-			_live.TryRemove(_identity!, out _);
+			_live.TryRemove(context.Identity, out _);
 			return (null, true, null);
 		}
 	}

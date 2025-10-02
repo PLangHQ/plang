@@ -38,7 +38,7 @@ namespace PLang.Modules.DbModule
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
-		private readonly PLangAppContext context;
+		private readonly PLangAppContext appContext;
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
@@ -50,17 +50,17 @@ namespace PLang.Modules.DbModule
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory,
-			ILogger logger, ITypeHelper typeHelper, PrParser prParser, MemoryStack memoryStack, VariableHelper variableHelper, IDbServiceFactory dbFactory, IAppCache appCache)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext appContext, ILlmServiceFactory llmServiceFactory,
+			ILogger logger, ITypeHelper typeHelper, PrParser prParser, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, IDbServiceFactory dbFactory, IAppCache appCache)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
-			this.context = context;
+			this.appContext = appContext;
 			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
-			this.memoryStack = memoryStack;
+			this.memoryStack = contextAccessor.Current.MemoryStack;
 			this.variableHelper = variableHelper;
 			this.dbFactory = dbFactory;
 			this.appCache = appCache;
@@ -360,7 +360,7 @@ Be concise"));
 			if (isDefault || dataSources.Count == 1)
 			{
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, typeFullName);
-				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
+				appContext.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
 			}
 			return null;
 		}
@@ -468,7 +468,7 @@ Be concise"));
 
 			if (!IsBuilder && name.Contains("%"))
 			{
-				var dataSourceDynamicName = variableHelper.LoadVariables(name);
+				var dataSourceDynamicName = memoryStack.LoadVariables(name);
 				string cacheKey = "__plang_DataSource__" + dataSourceDynamicName;
 				var obj = await appCache.Get("__plang_DataSource__" + dataSourceDynamicName);
 				if (obj != null)
@@ -488,11 +488,11 @@ Be concise"));
 
 		private async Task<(DataSource?, IError?)> InitiateDatabase(DataSource dataSource, string name, string cacheKey)
 		{
-			var dataSourceVariables = variableHelper.GetVariables(dataSource.Name);
+			var dataSourceVariables = variableHelper.GetVariables(dataSource.Name, memoryStack);
 			string localPath = dataSource.LocalPath;
 			string connectionString = dataSource.ConnectionString;
 
-			var variables = variableHelper.GetVariables(name);
+			var variables = variableHelper.GetVariables(name, memoryStack);
 			var emptyVariables = variables.Where(p => p.IsEmpty);
 			if (emptyVariables.Any())
 			{
@@ -543,7 +543,7 @@ Be concise"));
 					try
 					{
 						IDbConnection? anchorDb = null;
-						var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection>;
+						var anchors = appContext.GetOrDefault< Dictionary<string, IDbConnection>>("AnchorMemoryDb");
 						if (anchors != null && anchors.TryGetValue(dataSource.Name, out anchorDb))
 						{
 							anchorDb.Close();
@@ -872,7 +872,7 @@ where the goal CreateDataSource would create the database and table
 				dbConnection = factory.GetInstance<IDbConnection>(dataSource.TypeFullName);
 				dbConnection.ConnectionString = dataSource.ConnectionString;
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
-				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
+				appContext.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
 
 
 				return dbConnection;
@@ -888,7 +888,7 @@ where the goal CreateDataSource would create the database and table
 			{
 
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
+				appContext.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
 			}
 			return dbConnection;
 
@@ -897,11 +897,11 @@ where the goal CreateDataSource would create the database and table
 
 
 
-		public static string ConvertVariableNamesInDataSourceName(VariableHelper variableHelper, string dataSourceName)
+		public static string ConvertVariableNamesInDataSourceName(VariableHelper variableHelper, string dataSourceName, MemoryStack memoryStack)
 		{
 			if (!dataSourceName.Contains("%")) return dataSourceName.TrimStart('/');
 
-			var dataSourceVariables = variableHelper.GetVariables(dataSourceName);
+			var dataSourceVariables = variableHelper.GetVariables(dataSourceName, memoryStack);
 			for (int i = 0; i < dataSourceVariables.Count; i++)
 			{
 				if (dataSourceVariables[i].Name.Equals($"variable{i}")) continue;

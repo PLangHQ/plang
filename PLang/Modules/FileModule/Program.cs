@@ -214,7 +214,7 @@ namespace PLang.Modules.FileModule
 					var content = await reader.ReadToEndAsync();
 					if (loadVariables && !string.IsNullOrEmpty(content))
 					{
-						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound)?.ToString();
+						content = memoryStack.LoadVariables(content, emptyVariableIfNotFound)?.ToString();
 					}
 
 					if (content != null && splitOn != null)
@@ -244,7 +244,7 @@ namespace PLang.Modules.FileModule
 				return null;
 			}
 			var fileStream = fileSystem.FileStream.New(absolutePath, FileMode.OpenOrCreate, FileAccess.Read);
-			context.AddOrReplace("FileStream_" + absolutePath, fileStream);
+			appContext.AddOrReplace("FileStream_" + absolutePath, fileStream);
 			return fileStream;
 		}
 
@@ -380,7 +380,7 @@ namespace PLang.Modules.FileModule
 				}
 			} else
 			{
-				variableToWriteToCsv = variableHelper.LoadVariables(variableToWriteToCsv);
+				variableToWriteToCsv = memoryStack.LoadVariables(variableToWriteToCsv);
 			}
 
 				var absolutePath = GetPath(path);
@@ -419,7 +419,7 @@ namespace PLang.Modules.FileModule
 
 					Dictionary<string, object> parameters = new Dictionary<string, object>();
 					goalToCallOnBadData.Parameters.Add("data", data);
-					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
+					pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
 				},
 				NewLine = newLine,
 				Encoding = FileHelper.GetEncoding(encoding),
@@ -479,7 +479,7 @@ namespace PLang.Modules.FileModule
 				string content = file.Content;
 				if (loadVariables && !string.IsNullOrEmpty(content))
 				{
-					content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+					content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 				}
 				fileSystem.File.WriteAllText(file.Path, content, encoding: FileHelper.GetEncoding(encoding));
 			}
@@ -725,7 +725,7 @@ namespace PLang.Modules.FileModule
 
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
 			{
-				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
 			else if (content != null && content.ToString() == content.GetType().ToString())
 			{
@@ -748,7 +748,7 @@ namespace PLang.Modules.FileModule
 			}
 			if (loadVariables && !string.IsNullOrEmpty(content))
 			{
-				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
 			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: FileHelper.GetEncoding(encoding));
 		}
@@ -848,14 +848,14 @@ namespace PLang.Modules.FileModule
 			string key = $"FileWatcher_{fileSearchPatterns}_";
 			if (goalToCall != null) key += goalToCall;
 
-			var items = context.Where(p => p.Key.StartsWith(key));
+			var items = appContext.Where(p => p.Key.StartsWith(key));
 			foreach (var item in items)
 			{
-				var watcher = context[item.Key] as IFileSystemWatcher;
+				var watcher = appContext[item.Key] as IFileSystemWatcher;
 				if (watcher == null) continue;
 
 				watcher.EnableRaisingEvents = false;
-				context.Remove(item.Key);
+				appContext.Remove(item.Key);
 			}
 
 
@@ -956,7 +956,7 @@ namespace PLang.Modules.FileModule
 								parameters.Add(senderVariableName, sender);
 
 								goalToCall.Parameters.AddOrReplaceDict(parameters);
-								var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
+								var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 								task.Wait();
 
 							}, e.FullPath, debounceTime, Timeout.Infinite);
@@ -969,10 +969,10 @@ namespace PLang.Modules.FileModule
 				watcher.EnableRaisingEvents = true;
 
 				int counter = 0;
-				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; }
+				while (appContext.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; }
 				;
 
-				context.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
+				appContext.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
 				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
 			}
 		}
@@ -1019,7 +1019,7 @@ namespace PLang.Modules.FileModule
 				goalToCall.Parameters.AddOrReplaceDict(parameters);
 				try
 				{
-					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
+					var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 					task.Wait();
 
 					var (engine2, vars, error) = task.Result;
@@ -1053,16 +1053,16 @@ namespace PLang.Modules.FileModule
 
 		public void Dispose()
 		{
-			var fileStreams = context.Keys.Where(p => p.StartsWith("FileStream_"));
+			var fileStreams = appContext.Keys.Where(p => p.StartsWith("FileStream_"));
 			foreach (var key in fileStreams)
 			{
-				((FileStream)context[key]).Dispose();
+				((FileStream)appContext[key]).Dispose();
 			}
 
-			var fileWatchers = context.Keys.Where(p => p.StartsWith("FileWatcher_"));
+			var fileWatchers = appContext.Keys.Where(p => p.StartsWith("FileWatcher_"));
 			foreach (var key in fileWatchers)
 			{
-				var watcher = (IFileSystemWatcher)context[key];
+				var watcher = (IFileSystemWatcher)appContext[key];
 
 				watcher?.Dispose();
 			}

@@ -113,7 +113,8 @@ namespace PLang.Utils
 				prParser.ForceLoadAllGoals();
 			}
 			try
-			{
+			{			
+
 				(var engine, var vars, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{

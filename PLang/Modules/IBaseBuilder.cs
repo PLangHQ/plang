@@ -21,7 +21,7 @@ namespace PLang.Modules
 		Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildWithClassDescription(GoalStep step, ClassDescription classDescription, IBuilderError? previousBuildError = null);
 		LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null, ClassDescription? classDescription = null);
 		void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmService, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
+			MemoryStack memoryStack, PLangContext context, VariableHelper variableHelper, ILogger logger);
 		void SetStep(GoalStep step);
 	}
 }

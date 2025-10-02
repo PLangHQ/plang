@@ -7,6 +7,7 @@ using static PLang.Modules.OutputModule.Program;
 
 namespace PLang.Errors.Handlers
 {
+	/*
     public class AskUserHandler : IAskUserHandler
     {
         private readonly IOutputSystemStreamFactory outputStreamFactory;
@@ -27,5 +28,5 @@ namespace PLang.Errors.Handlers
             return await error.InvokeCallback([result]);
 
         }
-    }
+    }*/
 }

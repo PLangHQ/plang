@@ -5,6 +5,7 @@ namespace PLang.Interfaces
 {
 	public class PLangAppContext : ConcurrentDictionary<string, object?>
 	{
+
 		public new object? this[string key]
 		{
 			get
@@ -34,7 +35,7 @@ namespace PLang.Interfaces
 			this.Remove(key, out var _);
 		}
 
-		public T? GetOrDefault<T>(string key, T? defaultValue)
+		public T? GetOrDefault<T>(string key, T? defaultValue = default(T))
 		{
 			if (key == null) return defaultValue;
 

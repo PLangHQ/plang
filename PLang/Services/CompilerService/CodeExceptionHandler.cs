@@ -6,6 +6,7 @@ using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.Text;
@@ -16,7 +17,7 @@ namespace PLang.Services.CompilerService
 	public class CodeExceptionHandler
 	{
 
-		public static async Task<IError?> GetError(IEngine engine, Exception ex, ImplementationResponse? implementation, GoalStep step)
+		public static async Task<IError?> GetError(IEngine engine, Exception ex, ImplementationResponse? implementation, GoalStep step, PLangContext context)
 		{
 			if (implementation == null)
 			{
@@ -24,7 +25,7 @@ namespace PLang.Services.CompilerService
 			}
 			if (ex is MissingSettingsException mse)
 			{
-				return await MissingSettingsHelper.HandleMissingSetting(engine, mse);
+				return await MissingSettingsHelper.HandleMissingSetting(engine, context, mse);
 			}
 
 			string message = FormatMessage(ex, implementation, step);

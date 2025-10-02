@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using NBitcoin.Secp256k1;
 using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -47,14 +48,18 @@ namespace PLang
 
 		public async static Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
 		{
+			throw new NotImplementedException("This needs to be fixed, RunGoal needs to take in context. Since only one method calls this, maybe delete this method?");
+			/*
 			AppContext.SetSwitch("InternalGoalRun", true);
 			AppContext.SetSwitch("Runtime", true);
 			using (var container = new ServiceContainer())
 			{
 				container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
-
+				
 				var engine = container.GetInstance<IEngine>();
-				engine.Init(container);
+				engine.Init(container, nu);
+
+				var context = new PLangContext(container.GetInstance<MemoryStack>(), engine);
 
 				if (parameters != null)
 				{
@@ -73,10 +78,10 @@ namespace PLang
 				var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
 				if (goal == null) return (engine, null, new Error($"Goal {goalName} could not be found"));
 
-				var (vars, error) = await engine.RunGoal(goal);
+				var (vars, error) = await engine.RunGoal(goal, context);
 				AppContext.SetSwitch("InternalGoalRun", false);
 				return (engine, vars, error);
-			}
+			}*/
 		}
 
 		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
@@ -236,17 +241,26 @@ namespace PLang
 
 		public async Task Build(string[]? args)
 		{
-			
+
+			PLangContext context = null;
 			try
 			{
 				this.engine = container.GetInstance<IEngine>();
-				container.GetInstance<MemoryStack>().Clear();
+
+				var msa = container.GetInstance<IMemoryStackAccessor>();
+				var memoryStack = MemoryStack.New(container, engine);
+				msa.Current = memoryStack;
+
+				context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
+				var ca = container.GetInstance<IPLangContextAccessor>();
+				ca.Current = context;
+
 				this.engine.Init(container);
 
-				LoadArgsToMemoryStack(args);
+				LoadArgsToMemoryStack(args, memoryStack);
 
 				this.builder = container.GetInstance<IBuilder>();
-				var error = await builder.Start(container);
+				var error = await builder.Start(container, context);
 				if (error != null)
 				{
 					Console.WriteLine(error);
@@ -272,18 +286,24 @@ namespace PLang
 
 			this.engine = container.GetInstance<IEngine>();
 
-			// should create new instance of the container, but for now just clear memoryStack
-			container.GetInstance<MemoryStack>().Clear();
+			
+			var msa = container.GetInstance<IMemoryStackAccessor>();
+			var memoryStack = MemoryStack.New(container, engine);
+			msa.Current = memoryStack;
+
+			var context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
+			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
+			contextAccessor.Current = context;
 
 			this.engine.Init(container);
 
-			var goalToRun = LoadArgsToMemoryStack(args);
+			var goalToRun = LoadArgsToMemoryStack(args, memoryStack);
 
-			(var vars, var error) = await engine.Run(goalToRun);
+			(var vars, var error) = await engine.Run(goalToRun, context);
 			return (engine, vars, error);
 		}
 
-		private string LoadArgsToMemoryStack(string[]? args)
+		private string LoadArgsToMemoryStack(string[]? args, MemoryStack memoryStack)
 		{
 			string goalToRun = "Start.goal";
 			for (int i = 0; args != null && i < args.Length; i++)
@@ -291,12 +311,11 @@ namespace PLang
 				if (args[i].StartsWith("--")) continue;
 				if (args[i].Contains("="))
 				{
-					var stack = engine.GetMemoryStack();
 					var value = args[i].Split('=')[1];
 					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
 					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 
-					stack.Put(args[i].Split('=')[0].Trim(), value.Trim());
+					memoryStack.Put(args[i].Split('=')[0].Trim(), value.Trim());
 				}
 				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
 				{

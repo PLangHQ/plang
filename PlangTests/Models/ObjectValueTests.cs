@@ -79,7 +79,7 @@ namespace PLang.Runtime.Tests
 			var numbersSum = ov.Get<int>("numbers.sum");
 			Assert.AreEqual(600, numbersSum);
 
-			var memoryStack = new MemoryStack(null, null, null, null);
+			var memoryStack = new MemoryStack(null, null, null, null, null);
 			memoryStack.Put(new ObjectValue("index", 1));
 
 			var number200 = ov.Get<int>("numbers[index]", memoryStack);
@@ -151,7 +151,7 @@ namespace PLang.Runtime.Tests
 			var number9 = ov.Get<int>("numbers[2]");
 			Assert.AreEqual(9, number9);
 
-			var memoryStack = new MemoryStack(null, null, null, null);
+			var memoryStack = new MemoryStack(null, null, null, null, null);
 			memoryStack.Put(new ObjectValue("index", 1));
 
 			var number5 = ov.Get<int>("numbers[index]", memoryStack);
@@ -230,7 +230,7 @@ namespace PLang.Runtime.Tests
 			var number3 = ov.Get<List<int>>("numbers[1]");
 			Assert.AreEqual(3, number3.Count);
 
-			var memoryStack = new MemoryStack(null, null, null, null);
+			var memoryStack = new MemoryStack(null, null, null, null, null);
 			memoryStack.Put(new ObjectValue("index", 1));
 
 			var number5 = ov.Get<List<int>>("numbers[index]", memoryStack);
@@ -317,7 +317,7 @@ namespace PLang.Runtime.Tests
 			var number300 = ov.Get<int>("numbers[2]");
 			Assert.AreEqual(300, number300);
 
-			var memoryStack = new MemoryStack(null, null, null, null);
+			var memoryStack = new MemoryStack(null, null, null, null, null);
 			memoryStack.Put(new ObjectValue("index", 1));
 
 			var number200 = ov.Get<int>("numbers[index]", memoryStack);
@@ -393,7 +393,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(expected.AddDays(5), dt);
 
 
-			var memoryStack = new MemoryStack(null, null, null, null);
+			var memoryStack = new MemoryStack(null, null, null, null, null);
 			memoryStack.Put(new DynamicObjectValue("now", () => { return expected; }));
 
 			var ov = memoryStack.GetObjectValue("%now%");

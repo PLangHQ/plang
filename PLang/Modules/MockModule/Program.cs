@@ -15,9 +15,9 @@ Example
 		public record MockData(GoalToCallInfo GoalToCall, string ModuleType, string MethodName, Dictionary<string, object?>? Parameters = null);
 		public async Task<IError?> MockMethod(MockData mockData)
 		{
-			if (engine.Mocks.Contains(mockData)) return null;
+			if (context.Mocks.Contains(mockData)) return null;
 
-			engine.Mocks.Add(mockData);
+			context.Mocks.Add(mockData);
 			return null;
 		}
 

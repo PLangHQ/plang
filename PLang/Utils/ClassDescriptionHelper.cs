@@ -189,11 +189,12 @@ namespace PLang.Utils
 						}
 					}
 
+					var props = item.GetProperties().OrderBy(p => p.MetadataToken).ToArray();
 					var cd = new ComplexDescription()
 					{
 						Type = parameterInfo.ParameterType.FullNameNormalized(),
 						Name = parameterInfo.Name,
-						TypeProperties = GetPropertyInfos(method, item.GetProperties(), instance, item),
+						TypeProperties = GetPropertyInfos(method, props, instance, item),
 						Description = complexObjectDescription
 					};
 					if (cd.TypeProperties != null)
@@ -363,10 +364,11 @@ namespace PLang.Utils
 						}
 					}
 
-					string? complexObjectDescription = GetDescriptionAttribute(item);				
+									
 
 					if (item == propertyType)
 					{
+						string? complexObjectDescription = GetDescriptionAttribute(item, propertyType,  null);
 						pd = new ComplexDescription()
 						{
 							Type = propertyType.FullNameNormalized(),
@@ -378,12 +380,13 @@ namespace PLang.Utils
 					}
 					else
 					{
-
+						string? complexObjectDescription = GetDescriptionAttribute(item, propertyType, propertyInfo.Name);
+						var props = propertyType.GetProperties().OrderBy(p => p.MetadataToken).ToArray();
 						var cd = new ComplexDescription()
 						{
 							Type = propertyType.FullNameNormalized(),
 							Name = propertyInfo.Name,
-							TypeProperties = GetPropertyInfos(method, propertyType.GetProperties(), instance2, propertyType, ++depth),
+							TypeProperties = GetPropertyInfos(method, props, instance2, propertyType, ++depth),
 							IsRequired = isRequired,
 							Description = complexObjectDescription
 						};
@@ -432,15 +435,34 @@ namespace PLang.Utils
 			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
 		}
 
-		private string? GetDescriptionAttribute(Type item)
+		private string? GetDescriptionAttribute(Type item, Type propertyType, string? propertyName)
 		{
+			if (propertyName != null)
+			{
+				var prop = item.GetProperty(propertyName);
+				var attr = prop?.GetCustomAttribute<DescriptionAttribute>();
+				if (!string.IsNullOrEmpty(attr?.Description))
+				{
+					return attr?.Description;
+				}
+			}
+
 			string? complexObjectDescription = null;
 			var descriptionAttribute = item.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
 			if (descriptionAttribute != null)
 			{
 				complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));
 			}
+			
+			descriptionAttribute = propertyType.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+			if (descriptionAttribute != null)
+			{
+				complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));
+			}
+
+
 			return complexObjectDescription;
+			
 		}
 
 		private bool IsDictOrList(Type type)

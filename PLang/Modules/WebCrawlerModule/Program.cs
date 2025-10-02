@@ -32,7 +32,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private object locker = new object();
 		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
-			this.context = context;
+			this.appContext = context;
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.engine = engine;
@@ -501,9 +501,9 @@ return result;");
 		{
 			if (!string.IsNullOrEmpty(cssSelector)) return cssSelector;
 
-			if (string.IsNullOrEmpty(cssSelector) && context.ContainsKey("prevCssSelector"))
+			if (string.IsNullOrEmpty(cssSelector) && appContext.ContainsKey("prevCssSelector"))
 			{
-				cssSelector = context["prevCssSelector"]?.ToString();
+				cssSelector = appContext["prevCssSelector"]?.ToString();
 			}
 
 			if (string.IsNullOrEmpty(cssSelector))
@@ -515,7 +515,7 @@ return result;");
 		}
 		private void SetCssSelector(string? cssSelector)
 		{
-			context.AddOrReplace("prevCssSelector", cssSelector);
+			appContext.AddOrReplace("prevCssSelector", cssSelector);
 		}
 
 		[Description("Writes a text to an element")]

@@ -202,7 +202,7 @@ namespace PLang.Modules.VariableModule
 
 			foreach (var variable in variables)
 			{
-				var value = variableHelper.LoadVariables(variable);
+				var value = memoryStack.LoadVariables(variable);
 				if (value == null) continue;
 
 				List<ParameterInfo> parameters = new();
@@ -237,7 +237,7 @@ namespace PLang.Modules.VariableModule
 			var propertyVars = variables.Where(p => p.Key.StartsWith("!"));
 			foreach (var property in propertyVars)
 			{
-				var value = variableHelper.LoadVariables(property.Value);
+				var value = memoryStack.LoadVariables(property.Value);
 				if (value != null)
 				{
 					var ov = new ObjectValue(property.Key, value, value.GetType());
@@ -261,7 +261,7 @@ namespace PLang.Modules.VariableModule
 				}
 				else
 				{
-					var value = variableHelper.LoadVariables(variable.Value);
+					var value = memoryStack.LoadVariables(variable.Value);
 					if (value != null)
 					{
 						returnValues.Add(new ObjectValue(variable.Key, value, properties: properties));
@@ -313,7 +313,7 @@ namespace PLang.Modules.VariableModule
 			var content = memoryStack.Get(key);
 			if (content == null) return null;
 
-			return variableHelper.LoadVariables(content);
+			return memoryStack.LoadVariables(content);
 		}
 		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
@@ -323,7 +323,7 @@ namespace PLang.Modules.VariableModule
 			if (urlDecode) value = HttpUtility.UrlDecode(value);
 			if (htmlDecode) value = HttpUtility.HtmlDecode(value);
 
-			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
+			object? content = (doNotLoadVariablesInValue) ? value : memoryStack.LoadVariables(value);
 			memoryStack.Put(key, content, goalStep: goalStep);
 		}
 
@@ -332,7 +332,7 @@ namespace PLang.Modules.VariableModule
 		{
 			if (value == null) value = defaultValue;
 
-			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
+			object? content = (doNotLoadVariablesInValue) ? value : memoryStack.LoadVariables(value);
 			if (content == null)
 			{
 				memoryStack.Put(key, content, goalStep: goalStep);
@@ -456,7 +456,7 @@ namespace PLang.Modules.VariableModule
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
 			if (value == null) value = defaultValue;
-			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value, true, defaultValue);
+			object? content = (doNotLoadVariablesInValue) ? value : memoryStack.LoadVariables(value, true, defaultValue);
 			logger.LogDebug($"         - loaded variable - {stopwatch.ElapsedMilliseconds}");
 			if (onlyIfValueIsNot?.ToString() == "null" && value == null) return;
 			if (onlyIfValueIsNot?.ToString() == "empty" && (value == null || VariableHelper.IsEmpty(value))) return;
@@ -464,7 +464,7 @@ namespace PLang.Modules.VariableModule
 
 			if (key.Contains("%") && keyIsDynamic)
 			{
-				var newKey = variableHelper.LoadVariables(key);
+				var newKey = memoryStack.LoadVariables(key);
 				if (!string.IsNullOrWhiteSpace(newKey?.ToString()))
 				{
 					key = newKey.ToString();
@@ -564,7 +564,7 @@ Example:
 		{
 			if (value == null) return value;
 
-			value = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
+			value = (doNotLoadVariablesInValue) ? value : memoryStack.LoadVariables(value);
 
 			object? val = memoryStack.Get(key);
 			if (val != null && val is string && (value is JObject || value is JProperty || value is JValue))

@@ -32,7 +32,7 @@ namespace PLangTests.Modules.OutputModule
 		[TestMethod]
 		public async Task Write_Test()
 		{			
-			var p = new Program(outputStreamFactory, outputSystemStreamFactory, variableHelper, programFactory);
+			var p = new Program(variableHelper, programFactory);
 			await p.Write(new PLang.Services.OutputStream.Messages.TextMessage("Hello, how are your?"));
 
 			await outputStream.Received(1).SendAsync(Arg.Any<OutMessage>());

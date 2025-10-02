@@ -1,6 +1,8 @@
-﻿using Castle.DynamicProxy;
+﻿using AngleSharp.Dom;
+using Castle.DynamicProxy;
 using LightInject;
 using Microsoft.Data.Sqlite;
+using Namotion.Reflection;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
@@ -51,23 +53,31 @@ namespace PLang.Container
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine? parentEngine = null)
+			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine parentEngine)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
 			RegisterModules(container);
+			
 
-			container.RegisterSingleton<IOutputStreamFactory>(factory => { return outputStreamFactory; });
-			container.RegisterSingleton<IOutputSystemStreamFactory>(factory => { return outputSystemStreamFactory; });
 			container.RegisterSingleton<IErrorHandlerFactory>(factory => { return errorHandlerFactory; });
 			container.RegisterSingleton<IErrorSystemHandlerFactory>(factory => { return errorSystemHandlerFactory; });
 
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
+
+			var engine = container.GetInstance<IEngine>();
+
+			engine.SystemSink = parentEngine.SystemSink;
+			engine.UserSink = parentEngine.UserSink;
+		//	engine.Init(container);
+
 			RegisterEventRuntime(container);
+
+			
+
 			RegisterBaseVariables(container, parentEngine);
 		}
 
-		public static void RegisterForPLangWebserver(this ServiceContainer container, GoalStep step, IEngine parentEngine)
+		public static void RegisterForPLangWebserver(this ServiceContainer container, GoalStep step, IEngine parentEngine, PLangContext context)
 		{
 			container.RegisterBaseForPLang(step.Goal.AbsoluteAppStartupFolderPath, step.Goal.RelativeGoalFolderPath, parentEngine);
 			RegisterModules(container);
@@ -75,10 +85,6 @@ namespace PLang.Container
 
 			var engine = container.GetInstance<IEngine>();
 
-			var outputStream = parentEngine.OutputStreamFactory.CreateHandler();
-
-			container.RegisterOutputStreamFactory(engine, outputStream.GetType(), true, outputStream);
-			container.RegisterOutputSystemStreamFactory(outputStream.GetType(), true, outputStream);
 
 			container.Register<RequestHandler>(factory =>
 					new RequestHandler(step,
@@ -105,9 +111,8 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			var engine = container.GetInstance<IEngine>();
-
-			container.RegisterOutputStreamFactory(engine, typeof(AppOutputSink), true, new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm));
-			container.RegisterOutputSystemStreamFactory(typeof(AppOutputSink), true, new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm));
+			engine.SystemSink = new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm);
+			engine.UserSink = new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm);
 
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
 			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
@@ -122,8 +127,10 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
-			container.RegisterOutputStreamFactory(engine, typeof(ConsoleSink), true, new ConsoleSink());
-			container.RegisterOutputSystemStreamFactory(typeof(ConsoleSink), true, new ConsoleSink());
+
+			engine.SystemSink = new ConsoleSink();
+			engine.UserSink = new ConsoleSink();
+
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			RegisterEventRuntime(container);
@@ -139,12 +146,20 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
-			container.RegisterOutputStreamFactory(engine, typeof(ConsoleSink), true, new ConsoleSink());
-			container.RegisterOutputSystemStreamFactory(typeof(ConsoleSink), true, new ConsoleSink());
+			engine.SystemSink = new ConsoleSink();
+			engine.UserSink = new ConsoleSink();
+			
+
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 
 			RegisterEventRuntime(container, true);
+
+			engine.Init(container);
+
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			
+
 			RegisterBaseVariables(container);
 		}
 
@@ -155,11 +170,11 @@ namespace PLang.Container
 				container.RegisterInstance<IEngine>(parentEngine, "ParentEngine");
 			}
 
-			container.Register<IServiceContainerFactory, ServiceContainerFactory>();
+			//container.Register<IServiceContainerFactory, ServiceContainerFactory>();
 			container.RegisterSingleton<PLangAppContext>();
 			container.RegisterSingleton<IPLangFileSystem>(factory =>
 			{
-				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
+				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath);
 			});
 			container.RegisterSingleton<IPLangFileSystemFactory>(factory =>
 			{
@@ -183,7 +198,7 @@ namespace PLang.Container
 
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
 		{
-			var context = container.GetInstance<PLangAppContext>();
+			var appContext = container.GetInstance<PLangAppContext>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var engine = container.GetInstance<IEngine>();
 
@@ -193,20 +208,22 @@ namespace PLang.Container
 				return;
 			}
 
-
+			
 			using (var runtimeContainer = new ServiceContainer())
 			{
 
 				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath,
-					container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
-					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
+					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), engine);
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 
 				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();
 				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.SystemDirectory);
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>();
-				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
+				
+				Engine.InitPerRequest(runtimeContainer);
+
+				engine2.Init(runtimeContainer);
 
 				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
 				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
@@ -226,7 +243,7 @@ namespace PLang.Container
 			
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			context.AddOrReplace("!plang.osPath", fileSystem.SystemDirectory);
-			context.AddOrReplace("!plang.rootPath", parentEngine?.Path ?? fileSystem.RootDirectory);
+			context.AddOrReplace("!plang.rootPath", parentEngine?.FileSystem?.RootDirectory ?? fileSystem.RootDirectory);
 
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
@@ -240,7 +257,8 @@ namespace PLang.Container
 				ReferenceLoopHandling = ReferenceLoopHandling.Ignore
 			};
 
-			container.RegisterSingleton<MemoryStack>();
+			container.Register<IMemoryStackAccessor, MemoryStackAccessor>();
+			container.RegisterSingleton<IPLangContextAccessor, ContextAccessor>();
 
 
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
@@ -278,14 +296,14 @@ namespace PLang.Container
 
 			container.RegisterSingleton<IGoalParser>(factory =>
 			{
-				return new GoalParser(container, container.GetInstance<IPLangFileSystem>(), container.GetInstance<ISettings>());
+				return new GoalParser(container, container.GetInstance<IPLangFileSystem>(), container.GetInstance<ISettings>(), container.GetInstance<ILogger>());
 			});
 			container.Register<IGoalBuilder, GoalBuilder>();
 			container.Register<IStepBuilder, StepBuilder>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();
-			container.RegisterSingleton<VariableHelper, VariableHelper>();
+			container.Register<VariableHelper, VariableHelper>();
 
 			container.RegisterSingleton<MethodHelper>();
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();
@@ -460,22 +478,13 @@ namespace PLang.Container
 				return eventSourceRepo;
 			});
 
-			var memoryStack = container.GetInstance<MemoryStack>();
-			memoryStack.Put(new DynamicObjectValue("Now", () => { return SystemTime.Now(); }, typeof(DateTime), isSystemVariable: true));
-			memoryStack.Put(new DynamicObjectValue("NowUtc", () => { return SystemTime.UtcNow(); }, typeof(DateTime), isSystemVariable: true));
-
-			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.MemoryStack, () =>
-			{
-				return memoryStack.GetMemoryStackJson();
-			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
-			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.GUID, () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();
 
 			container.RegisterEncryptionFactory(typeof(Encryption), true, new Encryption(settings));
 			fileSystem.SetFileAccess(settings.GetValues<FileAccessControl>(typeof(PLangFileSystem)));
-
+			
 		}
 
 		private static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)

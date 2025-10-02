@@ -46,6 +46,7 @@ namespace PLang.Modules.BlockchainModule
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly ILogger logger;
+		private readonly IPLangContextAccessor contextAccessor;
 		private readonly ModuleSettings moduleSettings;
 
 		private StreamingWebSocketClient? client = null;
@@ -55,14 +56,14 @@ namespace PLang.Modules.BlockchainModule
 		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentRpcServer";
 
 		public Program(ISettings settings, ILlmServiceFactory llmServiceFactory, 
-			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,PLangAppContext context) : base()
+			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,IPLangContextAccessor contextAccessor) : base()
 		{
 			this.settings = settings;
 			this.llmServiceFactory = llmServiceFactory;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.logger = logger;
-			this.context = context;
+			this.contextAccessor = contextAccessor;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 
 			var rpcServer = _GetCurrentRpcServer();
@@ -178,7 +179,7 @@ namespace PLang.Modules.BlockchainModule
 						parameters.Add("__TxLog__", eventLog.Log);
 						goalToCall.Parameters.AddOrReplaceDict(parameters);
 
-						var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalToCall, goal);
+						var task = pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, goalToCall, goal);
 						task.Wait();
 					}
 				}
@@ -280,14 +281,14 @@ namespace PLang.Modules.BlockchainModule
 				
 				callGoal.Parameters.AddOrReplaceDict(parameters);
 
-				pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoal, Goal);
+				pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, callGoal, Goal);
 			});
 
 			subscription.GetUnsubscribeResponseAsObservable().Subscribe(response =>
 			{
 				if (callGoalOnUnsubscribe != null)
 				{
-					pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoalOnUnsubscribe, Goal);
+					pseudoRuntime.RunGoal(engine, contextAccessor, Goal.RelativeAppStartupFolderPath, callGoalOnUnsubscribe, Goal);
 				}
 			});
 
@@ -527,14 +528,14 @@ namespace PLang.Modules.BlockchainModule
 			var rpcServer = rpcServers.FirstOrDefault(p => p.Name.ToLower() == nameOrUrl.ToLower() || p.Url.ToLower() == nameOrUrl.ToLower());
 			if (rpcServer != null)
 			{
-				context.AddOrReplace(Program.CurrentRpcServerContextKey, rpcServer);
+				appContext.AddOrReplace(Program.CurrentRpcServerContextKey, rpcServer);
 			}
 
 		}
 		private RpcServer _GetCurrentRpcServer()
 		{
 			var rpcServers = settings.GetValues<RpcServer>(typeof(ModuleSettings)) ?? new List<RpcServer>();
-			if (context.TryGetValue(CurrentRpcServerContextKey, out object? rpcServer))
+			if (appContext.TryGetValue(CurrentRpcServerContextKey, out object? rpcServer))
 			{
 				var currentRpcServer = rpcServers.FirstOrDefault(p => p.Url == ((RpcServer)rpcServer).Url);
 				if (currentRpcServer != null) return currentRpcServer;
@@ -563,7 +564,7 @@ namespace PLang.Modules.BlockchainModule
 			var wallet = wallets.FirstOrDefault(p => p.Name.ToLower() == walletName.ToLower());
 			if (wallet != null)
 			{
-				context.AddOrReplace(CurrentWalletContextKey, wallet.Name);
+				appContext.AddOrReplace(CurrentWalletContextKey, wallet.Name);
 			}
 			else
 			{
@@ -593,8 +594,8 @@ namespace PLang.Modules.BlockchainModule
 				int idx = wallet.Addresses.FindIndex(p => p == address);
 				if (idx != -1)
 				{
-					context.AddOrReplace(CurrentAddressContextKey, idx);
-					context.AddOrReplace(CurrentWalletContextKey, wallet);
+					appContext.AddOrReplace(CurrentAddressContextKey, idx);
+					appContext.AddOrReplace(CurrentWalletContextKey, wallet);
 					return;
 				}
 			}
@@ -603,9 +604,9 @@ namespace PLang.Modules.BlockchainModule
 		private int GetCurrentAddressIndex()
 		{
 			var idx = 0;
-			if (context.ContainsKey(CurrentAddressContextKey))
+			if (appContext.ContainsKey(CurrentAddressContextKey))
 			{
-				idx = (int)context[CurrentAddressContextKey];
+				idx = (int)appContext[CurrentAddressContextKey];
 			}
 			return idx;
 		}
@@ -683,9 +684,9 @@ namespace PLang.Modules.BlockchainModule
 
 		public void Dispose()
 		{
-			context.Remove(CurrentAddressContextKey);
-			context.Remove(CurrentRpcServerContextKey);
-			context.Remove(CurrentWalletContextKey);
+			appContext.Remove(CurrentAddressContextKey);
+			appContext.Remove(CurrentRpcServerContextKey);
+			appContext.Remove(CurrentWalletContextKey);
 			client?.Dispose();
 		}
 
@@ -693,9 +694,9 @@ namespace PLang.Modules.BlockchainModule
 		private Wallet GetCurrentWallet()
 		{
 			var wallets = settings.GetValues<Wallet>(typeof(ModuleSettings)).Where(p => !p.IsArchived).ToList();
-			if (context.ContainsKey(CurrentWalletContextKey))
+			if (appContext.ContainsKey(CurrentWalletContextKey))
 			{
-				var currentWallet = wallets.FirstOrDefault(p => p.Name.ToLower() == context[CurrentWalletContextKey].ToString().ToLower());
+				var currentWallet = wallets.FirstOrDefault(p => p.Name.ToLower() == appContext[CurrentWalletContextKey].ToString().ToLower());
 				if (currentWallet != null)
 				{
 					return currentWallet;

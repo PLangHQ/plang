@@ -11,11 +11,13 @@ using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Errors.Methods;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Models;
 using PLang.Models.ObjectValueConverters;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
+using PLang.Services.SettingsService;
 using PLang.Utils.JsonConverters;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -32,18 +34,17 @@ namespace PLang.Utils;
 
 public class MethodHelper
 {
-	private readonly VariableHelper variableHelper;
 	private readonly ITypeHelper typeHelper;
 	private readonly ILogger logger;
-	private readonly MemoryStack memoryStack;
+	private readonly IPLangContextAccessor contextAccessor;
+	private readonly ISettings settings;
 	private ConcurrentDictionary<string, MethodInfo> cachedMethodInfo;
-	public MethodHelper(VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack)
+	public MethodHelper(ITypeHelper typeHelper, ILogger logger, IPLangContextAccessor contextAccessor, ISettings settings)
 	{
-		//this.goalStep = goalStep;
-		this.variableHelper = variableHelper;
 		this.typeHelper = typeHelper;
 		this.logger = logger;
-		this.memoryStack = memoryStack;
+		this.contextAccessor = contextAccessor;
+		this.settings = settings;
 		cachedMethodInfo = new();
 	}
 
@@ -82,10 +83,6 @@ public class MethodHelper
 		throw new MethodNotFoundException($"Method {function.Name} could not be found that matches with your statement. " + error);
 	}
 
-	private object? LoadVariables(object variable)
-	{
-		return variableHelper.LoadVariables(variable, true);
-	}
 
 	public record MethodNotFoundResponse(string Text);
 
@@ -169,7 +166,6 @@ public class MethodHelper
 	{
 		GroupedBuildErrors buildErrors = new();
 
-		var variablesInStep = variableHelper.GetVariables(goalStep.Text);
 		Dictionary<string, ParameterType>? parameterProperties = new();
 
 		foreach (var buildParameter in parameters ?? [])
@@ -332,6 +328,7 @@ public class MethodHelper
 
 		var step = function.Instruction.Step;
 		var goal = function.Instruction.Step.Goal;
+		var memoryStack = contextAccessor.Current.MemoryStack;
 
 		foreach (var parameter in parameters)
 		{
@@ -360,7 +357,13 @@ public class MethodHelper
 				var handlesAttribute = parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(HandlesVariableAttribute));
 				if (handlesAttribute == null && VariableHelper.IsVariable(variableValue))
 				{
-					var ov = variableHelper.GetObjectValue(variableValue.ToString(), goal: goal);
+					if (VariableHelper.IsSetting(variableValue.ToString()))
+					{
+						string setting = settings.GetOrDefault<string>(typeof(Settings), variableValue.ToString().Replace("Settings.", ""), "");
+						parameterValues.Add(parameter.Name, setting);
+						continue;
+					}
+					var ov = memoryStack.GetObjectValue(variableValue.ToString());
 					if (ov != null && ov.Value != null && parameter.ParameterType == typeof(ObjectValue))
 					{
 						parameterValues.Add(parameter.Name, ov);
@@ -382,26 +385,26 @@ public class MethodHelper
 				{
 					if (parameter.ParameterType.ToString().StartsWith("System.Collections.Generic.Dictionary`2[System.String,System.Tuple`2["))
 					{
-						SetDictionaryWithTupleParameter(parameter, variableValue, handlesAttribute, parameterValues);
+						SetDictionaryWithTupleParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 
 					}
 					else
 					{
-						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
+						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 					}
 				}
 				else if (parameter.ParameterType.Name.StartsWith("List") || parameter.ParameterType.Name.StartsWith("IList"))
 				{
-					SetListParameter(parameter, variableValue, handlesAttribute, parameterValues);
+					SetListParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 
 				}
 				else if (parameter.ParameterType.IsArray)
 				{
-					SetArrayParameter(parameter, variableValue, handlesAttribute, parameterValues);
+					SetArrayParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 				}
 				else
 				{
-					SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues);
+					SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 				}
 				logger.LogDebug($"         - Have parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
 
@@ -420,7 +423,7 @@ public class MethodHelper
 	}
 
 
-	private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+	private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues, MemoryStack memoryStack)
 	{
 
 		object? value = variableValue;
@@ -432,7 +435,7 @@ public class MethodHelper
 				if (!str.Contains("%Settings."))
 				{
 					var newJobj = jobj.DeepClone();
-					newJobj.ResolvePlaceholders(name =>
+					newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>
 					{
 						var value = memoryStack.Get(name);
 						if (value is ObjectValue ov) return ov.Value;
@@ -440,17 +443,36 @@ public class MethodHelper
 						{
 							return list.Select(p => ((ObjectValue)p).Value);
 						}
+
+						if (targetType != null)
+						{
+							return TypeHelper.ConvertToType(value, targetType, variableName: name);
+						}
+
+
 						return value;
 					});
-					var obj = newJobj.ToObject(parameter.ParameterType);
 
-					parameterValues.Add(parameter.Name!, obj);
+					int b = 0;
+					try
+					{
+						var obj = newJobj.ToObject(parameter.ParameterType);
+						parameterValues.Add(parameter.Name!, obj);
+					}
+					catch (Exception ex)
+					{
+						b = 1;
+					}
+
+
+					if (b == 1) throw new Exception("Erro");
+
+					
 					return;
-					int i = 0;
 				}
 			}
 
-			value = LoadVariables(variableValue);
+			value = memoryStack.LoadVariables(variableValue);
 		}
 
 		if (value != null)
@@ -470,7 +492,7 @@ public class MethodHelper
 
 
 
-	private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+	private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues, MemoryStack memoryStack)
 	{
 		bool variableValueIsArray = variableValue.ToString().StartsWith("[");
 		if (variableValue is string)
@@ -485,7 +507,7 @@ public class MethodHelper
 		Type elementType;
 		if (mainElementType.IsArray && variableValueIsArray)
 		{
-			var value = (handlesAttribute != null) ? variableValue : LoadVariables(variableValue);
+			var value = (handlesAttribute != null) ? variableValue : memoryStack.LoadVariables(variableValue);
 			if (value is JArray array)
 			{
 				parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
@@ -506,7 +528,7 @@ public class MethodHelper
 
 		if (!variableValueIsArray)
 		{
-			parameterValues.Add(parameter.Name, LoadVariables(variableValue));
+			parameterValues.Add(parameter.Name, memoryStack.LoadVariables(variableValue));
 			return;
 		}
 
@@ -518,7 +540,7 @@ public class MethodHelper
 
 			if (handlesAttribute == null)
 			{
-				object? obj = LoadVariables(tmp);
+				object? obj = memoryStack.LoadVariables(tmp);
 				if (obj == null)
 				{
 					continue;
@@ -528,7 +550,7 @@ public class MethodHelper
 					var item = list[0];
 					if (item is Row row)
 					{
-						obj = LoadVariables(row.Values.FirstOrDefault());
+						obj = memoryStack.LoadVariables(row.Values.FirstOrDefault());
 					}
 					else
 					{
@@ -547,7 +569,7 @@ public class MethodHelper
 		parameterValues.Add(parameter.Name, newArray);
 	}
 
-	private void SetListParameter(ParameterInfo parameter, object? obj, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+	private void SetListParameter(ParameterInfo parameter, object? obj, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues, MemoryStack memoryStack)
 	{
 		if (parameter.Name == null) return;
 		string typeName = parameter.ParameterType.Name;
@@ -558,7 +580,7 @@ public class MethodHelper
 			{
 				foreach (var item in varList)
 				{
-					var ov = variableHelper.GetObjectValue(item.ToString(), null);
+					var ov = memoryStack.GetObjectValue(item.ToString());
 					if (ov == null || !ov.Initiated) throw new ArgumentException($"{item.ToString()} has not been defined");
 
 					ovList.Add(ov);
@@ -566,7 +588,7 @@ public class MethodHelper
 			}
 			else
 			{
-				var ov = variableHelper.GetObjectValue(obj.ToString(), null);
+				var ov = memoryStack.GetObjectValue(obj.ToString());
 				if (ov == null || !ov.Initiated) throw new ArgumentException($"{obj.ToString()} has not been defined");
 				ovList.Add(ov);
 			}
@@ -577,7 +599,7 @@ public class MethodHelper
 
 		if (obj is string variableName && VariableHelper.IsVariable(variableName))
 		{
-			var value = variableHelper.GetValue(variableName, parameter.ParameterType);
+			var value = memoryStack.GetObjectValue(variableName).ValueAs(parameter.ParameterType);
 
 			parameterValues.Add(parameter.Name, value);
 			return;
@@ -654,7 +676,7 @@ public class MethodHelper
 		{
 			for (int i = 0; i < list.Count; i++)
 			{
-				list[i] = LoadVariables(list[i]);
+				list[i] = memoryStack.LoadVariables(list[i]);
 			}
 			parameterValues.Add(parameter.Name, list);
 			return;
@@ -665,7 +687,7 @@ public class MethodHelper
 
 		for (int i = 0; list != null && i < list.Count; i++)
 		{
-			object? objInstance = LoadVariables(list[i]);
+			object? objInstance = memoryStack.LoadVariables(list[i]);
 
 
 			if (objInstance != null && parameter.ParameterType.GenericTypeArguments.Count() > 0 && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
@@ -706,12 +728,12 @@ public class MethodHelper
 	}
 
 
-	private void SetDictionaryWithTupleParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+	private void SetDictionaryWithTupleParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues, MemoryStack memoryStack)
 	{
 		Dictionary<string, Tuple<object?, object?>?>? dict = null;
 		if (VariableHelper.IsVariable(variableValue))
 		{
-			var obj = LoadVariables(variableValue);
+			var obj = memoryStack.LoadVariables(variableValue);
 			if (obj is JArray jArray)
 			{
 				foreach (JObject jobject in jArray)
@@ -783,18 +805,18 @@ public class MethodHelper
 
 		foreach (var item in dict)
 		{
-			dict[item.Key] = new Tuple<object?, object?>(LoadVariables(item.Value?.Item1), LoadVariables(item.Value?.Item2));
+			dict[item.Key] = new Tuple<object?, object?>(memoryStack.LoadVariables(item.Value?.Item1), memoryStack.LoadVariables(item.Value?.Item2));
 		}
 		parameterValues.Add(parameter.Name, dict);
 
 	}
 
-	private void SetDictionaryParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+	private void SetDictionaryParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues, MemoryStack memoryStack)
 	{
 		IDictionary? dict = null;
 		if (VariableHelper.IsVariable(variableValue))
 		{
-			var obj = LoadVariables(variableValue);
+			var obj = memoryStack.LoadVariables(variableValue);
 			if (obj is JArray jArray)
 			{
 				dict = MapJArray(jArray, parameter.ParameterType);
@@ -853,7 +875,7 @@ public class MethodHelper
 
 		foreach (DictionaryEntry item in dict)
 		{
-			dict[item.Key] = LoadVariables(item.Value);
+			dict[item.Key] = memoryStack.LoadVariables(item.Value);
 		}
 		parameterValues.Add(parameter.Name, dict);
 	}

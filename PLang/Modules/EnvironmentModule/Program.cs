@@ -73,11 +73,6 @@ namespace PLang.Modules.EnvironmentModule
 			return RuntimeInformation.OSDescription;
 		}
 
-		public async Task<bool> IsInDebugMode()
-		{
-			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool result);
-			return result;
-		}
 		public async Task<bool> IsInCSharpDebugMode()
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out bool result);
@@ -92,7 +87,7 @@ namespace PLang.Modules.EnvironmentModule
 		[Description("Get active mocks on engine, used for testing")]
 		public async Task<List<MockData>> GetMocks()
 		{
-			return engine.Mocks;
+			return context.Mocks;
 		}
 
 		public async Task SetEnvironment(string name)
@@ -146,6 +141,37 @@ namespace PLang.Modules.EnvironmentModule
 		public async Task<List<PLang.Models.Setting>> GetSettings()
 		{
 			return settings.GetAllSettings().ToList();
+		}
+
+
+		public async Task SetDebugMode()
+		{
+			context.ShowErrorDetails = true;
+			context.DebugMode = true;
+		}
+
+		public async Task RemoveDebugMode()
+		{
+			context.ShowErrorDetails = false;
+			context.DebugMode = false;
+		}
+		public async Task<bool> IsInDebugMode()
+		{
+			return context.DebugMode;
+		}
+
+		public async Task ShowErrorDetails()
+		{
+			context.ShowErrorDetails = true;
+		}
+
+		public async Task HideErrorDetails()
+		{
+			context.ShowErrorDetails = false;
+		}
+		public async Task<bool> CanSeeErrorDetails()
+		{
+			return context.ShowErrorDetails;
 		}
 	}
 }

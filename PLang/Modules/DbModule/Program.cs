@@ -67,8 +67,8 @@ namespace PLang.Modules.DbModule
 		public record TableInfo(string Name, List<ColumnInfo> Columns);
 		public record ColumnInfo(string Information);
 
-		public Program(IDbServiceFactory dbFactory, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
-			IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
+		public Program(IDbServiceFactory dbFactory, PLangAppContext appContext, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
+			IEventSourceRepository eventSourceRepository, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
 		{
 			this.dbFactory = dbFactory;
 			this.fileSystem = fileSystem;
@@ -77,7 +77,7 @@ namespace PLang.Modules.DbModule
 			this.eventSourceRepository = eventSourceRepository;
 			this.logger = logger;
 			this.typeHelper = typeHelper;
-			this.context = context;
+			this.appContext = appContext;
 
 			this.dbSettings = dbSettings;
 			this.prParser = prParser;
@@ -195,7 +195,7 @@ namespace PLang.Modules.DbModule
 			goal.AddVariable(dataSource, variableName: "dataSourceTransaction");
 			goal.AddVariable(dataSource);
 
-			var dbConnection = dbFactory.CreateHandler(dataSource);
+			var dbConnection = dbFactory.CreateHandler(dataSource, memoryStack);
 			if (dbConnection.State != ConnectionState.Open)
 			{
 				dbConnection.Open();
@@ -309,7 +309,7 @@ namespace PLang.Modules.DbModule
 		}
 		internal async Task<IError?> LoadExtension(DataSource dataSource, string fileName, string? procName = null)
 		{
-			var dbConnection = dbFactory.CreateHandler(dataSource);
+			var dbConnection = dbFactory.CreateHandler(dataSource, memoryStack);
 			if (dbConnection is not SqliteConnection)
 			{
 				return new Error("Loading extension only works for Sqlite", "NotSupported");
@@ -444,7 +444,7 @@ namespace PLang.Modules.DbModule
 
 			if (connection == null)
 			{
-				connection = dbFactory.CreateHandler(dataSource);
+				connection = dbFactory.CreateHandler(dataSource, memoryStack);
 				transaction = null;
 			}
 			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
@@ -464,14 +464,14 @@ namespace PLang.Modules.DbModule
 
 					if (sqliteConnection.ConnectionString.Contains("Memory;"))
 					{
-						var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
+						var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
 						if (!anchors.ContainsKey(dataSource.Name))
 						{
-							var anchorConnection = dbFactory.CreateHandler(dataSource);
+							var anchorConnection = dbFactory.CreateHandler(dataSource, memoryStack);
 							anchorConnection.Open();
 							anchors.Add(dataSource.Name, anchorConnection);
 
-							context.AddOrReplace("AnchorMemoryDb", anchors);
+							appContext.AddOrReplace("AnchorMemoryDb", anchors);
 						}
 
 
@@ -1399,7 +1399,7 @@ namespace PLang.Modules.DbModule
 						variableName = variableName.TrimEnd('%').TrimEnd('\\');
 						postfix = "%";
 					}
-					var variableValue = variableName; // variableHelper.LoadVariables(variableName);
+					var variableValue = variableName; // memoryStack.LoadVariables(variableName);
 					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null) multipleErrors.Add(error);
 

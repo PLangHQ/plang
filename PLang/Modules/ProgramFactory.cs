@@ -32,11 +32,11 @@ namespace PLang.Modules
 			if (instruction == null) {
 				int i = 0;
 			}
-
+			var contextAccessor = _container.GetInstance<IPLangContextAccessor>();
 
 			typeof(T)
 			  .GetMethod("Init", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?
-			  .Invoke(program, new object[] { _container, goalStep.Goal, goalStep, instruction, null });
+			  .Invoke(program, new object[] { _container, goalStep.Goal, goalStep, instruction, contextAccessor });
 			
 			var ctor = typeof(T)
 				.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
@@ -49,10 +49,10 @@ namespace PLang.Modules
 
 			var ctx = _container.GetInstance<PLangAppContext>();
 			IInterceptor[] interceptor = [new ErrorHandlingInterceptor(_container.GetInstance<IEventRuntime>(), ctx)];
-			
+
 			
 			var proxy = _proxyGen.CreateClassProxyWithTarget(typeof(T), program, ctorArgs, interceptor) as BaseProgram;
-			proxy.Init(_container, goalStep.Goal, goalStep, instruction, null);
+			proxy.Init(_container, goalStep.Goal, goalStep, instruction, contextAccessor);
 
 			return (T)proxy;
 		}

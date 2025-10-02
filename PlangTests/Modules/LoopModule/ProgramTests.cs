@@ -48,7 +48,7 @@ namespace PLangTests.Modules.LoopModule
 
 			await p.RunLoop(listName, goalNameToCall);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), contextAccessor, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		public record Product(string Name, double Price);
@@ -69,7 +69,7 @@ namespace PLangTests.Modules.LoopModule
 
 			await p.RunLoop(dictName, goalNameToCall);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), contextAccessor, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		[TestMethod]
@@ -94,7 +94,7 @@ namespace PLangTests.Modules.LoopModule
 
 			await p.RunLoop(listName, goalNameToCall);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), contextAccessor, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		private bool DictionaryCheck(Dictionary<string, object> p)

@@ -33,7 +33,7 @@ namespace PLang.Repository.Tests
 			string module = "SqliteSettingsRepositoryTests";
 			var value = new DunderMifflin("Micheal");
 
-			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), context, logger);
+			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), appContext, logger);
 			settingsRepository.Init();
 
 			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.Key == key);
@@ -67,7 +67,7 @@ namespace PLang.Repository.Tests
 			string classType = "SqliteSettingsRepositoryTests";
 			var value = new DunderMifflin("Micheal");
 
-			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), context, logger);
+			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), appContext, logger);
 			settingsRepository.Init();
 
 			Assert.IsNotNull(context[Settings.SaltKey]);

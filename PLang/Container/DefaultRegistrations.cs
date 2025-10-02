@@ -51,7 +51,7 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
-
+		/*
 
 		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputSink? instance = null, bool setToContext = false)
 		{
@@ -92,6 +92,7 @@ namespace PLang.Container
 
 			}
 		}
+		*/
 		public static void RegisterEncryptionFactory(this ServiceContainer container, Type type, bool isDefault = false, IEncryption? instance = null)
 		{
 			container.Register<IEncryptionFactory>(factory =>

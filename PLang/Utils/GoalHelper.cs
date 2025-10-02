@@ -106,7 +106,7 @@ namespace PLang.Utils
 
 		}
 
-		public static (Goal?, IError?) GetGoalPath(GoalStep step, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
+		public static (Goal?, IError?) GetGoalPath(GoalStep step, GoalToCallInfo goalToCall, List<Goal> appGoals, IReadOnlyList<Goal> systemGoals)
 		{
 			Goal? goal;
 			string callingGoalRelativeFolderPath = step.Goal.RelativeGoalFolderPath;
@@ -164,7 +164,7 @@ namespace PLang.Utils
 		}
 
 
-		private static Goal? GetMatchingGoal(List<Goal> goals, GoalStep step, string goalToCallPath, string goalToCallName)
+		private static Goal? GetMatchingGoal(IReadOnlyList<Goal> goals, GoalStep step, string goalToCallPath, string goalToCallName)
 		{
 			var foundGoals = goals.Where(p => p.RelativeGoalFolderPath.Equals(goalToCallPath, StringComparison.OrdinalIgnoreCase)
 					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
@@ -182,7 +182,7 @@ namespace PLang.Utils
 		static string MergePath(string currentRelativePath, string newPath) =>
 					new Uri(new Uri($"file://{currentRelativePath}/"), newPath).AbsolutePath;
 		 
-		internal static (Goal?, IError?) GetGoal(string relativeGoalPath, string absoluteAppPath, GoalToCallInfo goalToCall, List<Goal> appGoals, List<Goal> systemGoals)
+		internal static (Goal?, IError?) GetGoal(string relativeGoalPath, string absoluteAppPath, GoalToCallInfo goalToCall, IReadOnlyList<Goal> appGoals, IReadOnlyList<Goal> systemGoals)
 		{
 			Goal? goal;
 			if (!string.IsNullOrEmpty(goalToCall.Path))

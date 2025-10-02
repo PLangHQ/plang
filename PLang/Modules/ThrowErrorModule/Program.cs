@@ -1,4 +1,5 @@
-﻿using NBitcoin.Protocol;
+﻿using Microsoft.AspNetCore.Http;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
@@ -8,6 +9,7 @@ using PLang.Errors.Types;
 using PLang.Events;
 using PLang.Models;
 using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -19,13 +21,32 @@ namespace PLang.Modules.ThrowErrorModule
 	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram
 	{
-		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly ProgramFactory programFactory;
 
-		public Program(IOutputStreamFactory outputStreamFactory, ProgramFactory programFactory)
+		public Program(ProgramFactory programFactory)
 		{
-			this.outputStreamFactory = outputStreamFactory;
 			this.programFactory = programFactory;
+		}
+
+
+		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc.")]
+		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
+		public async Task<IError?> ThrowError(ErrorMessage errorMessage)
+		{
+			var template = GetProgramModule<TemplateEngineModule.Program>();
+			string content;
+			IError? error = null;
+			if (PathHelper.IsTemplateFile(errorMessage.Content))
+			{
+				(content, error) = await template.RenderFile(errorMessage.Content);
+			} else
+			{
+				(content, error) = await template.RenderContent(errorMessage.Content);
+			}
+			if (error != null) return error;
+			errorMessage = errorMessage with { Content = content };
+
+			return new UserInputError(errorMessage.Content, goalStep, errorMessage.Key, errorMessage.StatusCode, null, errorMessage.FixSuggestion, errorMessage.HelpfullLinks, null, errorMessage);
 		}
 
 		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user. error is %!error% if user defines it")]
@@ -79,7 +100,7 @@ namespace PLang.Modules.ThrowErrorModule
 			}
 			if (endingGoal == null) endingGoal = goal;
 
-			return new EndGoal(endingGoal, goalStep, message ?? "", Levels: levels);
+			return new EndGoal(false, endingGoal, goalStep, message ?? "", Levels: levels);
 		}
 
 		[Description("Shutdown the application")]
@@ -92,9 +113,9 @@ namespace PLang.Modules.ThrowErrorModule
 		[Description("Create payment request(402)")]
 		public async Task<(PaymentContract?, IError?)> CreatePaymentRequest(string name, string description, string error, List<Dictionary<string, object>> services)
 		{
-			if (context.ContainsKey("!contract"))
+			if (appContext.ContainsKey("!contract"))
 			{
-				var strContract = context["!contract"]?.ToString();
+				var strContract = appContext["!contract"]?.ToString();
 				if (!string.IsNullOrEmpty(strContract))
 				{
 					var paymentContract = JObject.Parse(strContract).ToObject<PaymentContract>();

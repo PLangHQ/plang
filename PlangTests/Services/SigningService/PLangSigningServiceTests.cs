@@ -32,7 +32,7 @@ namespace PLang.Services.SigningService.Tests
 				return "abc";
 			};
 			
-			signingService = new PLangSigningService(appCache, identityService, context, serializer, crypto);
+			signingService = new PLangSigningService(appCache, identityService, appContext, serializer, crypto);
 
 		}
 		

@@ -30,7 +30,7 @@ namespace PLang.Building
 
 	public interface IGoalBuilder
 	{
-		Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, int errorCount = 0, int goalIndex = 0);
+		Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, PLangContext context, int errorCount = 0, int goalIndex = 0);
 		public List<IBuilderError> BuildErrors { get; init; }
 	}
 
@@ -45,7 +45,6 @@ namespace PLang.Building
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
 		private readonly ISettings settings;
-		private readonly PLangAppContext context;
 		private readonly ModuleSettings dbSettings;
 		private readonly IInstructionBuilder instructionBuilder;
 		private readonly VariableHelper variableHelper;
@@ -54,7 +53,7 @@ namespace PLang.Building
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-				PrParser prParser, ISettings settings, PLangAppContext context, Modules.DbModule.ModuleSettings dbSettings,
+				PrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
 				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
 		{
 
@@ -67,7 +66,6 @@ namespace PLang.Building
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
 			this.settings = settings;
-			this.context = context;
 			this.dbSettings = dbSettings;
 			this.instructionBuilder = instructionBuilder;
 			this.variableHelper = variableHelper;
@@ -77,7 +75,7 @@ namespace PLang.Building
 
 
 
-		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, int errorCount = 0, int goalIndex = 0)
+		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, PLangContext context, int errorCount = 0, int goalIndex = 0)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors groupedBuildErrors = new();
@@ -86,7 +84,7 @@ namespace PLang.Building
 			var validationError = await ValidateSteps(goal);
 			logger.LogDebug($" - Done validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 
-			var isBuiltResult = await GoalIsBuilt(goal, validationError, container.GetInstance<IEngine>());
+			var isBuiltResult = await GoalIsBuilt(goal, validationError, container.GetInstance<IEngine>(), context);
 			if (isBuiltResult.Error != null) return isBuiltResult.Error;
 			if (isBuiltResult.IsBuilt)
 			{
@@ -102,7 +100,7 @@ namespace PLang.Building
 				var result = await eventRuntime.RunGoalErrorEvents(goal, 0, error, true);
 				if (result.Error != null) return new GoalBuilderError(result.Error, goal, ContinueBuild: false);
 
-				return await BuildGoal(container, goal, errorCount, goalIndex);
+				return await BuildGoal(container, goal, context, errorCount, goalIndex);
 			}
 			logger.LogDebug($" - Run BuildGoal events {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
@@ -144,14 +142,14 @@ namespace PLang.Building
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}
 
-		private async Task<(bool IsBuilt, IBuilderError? Error)> GoalIsBuilt(Goal goal, GroupedBuildErrors? validationError, IEngine engine)
+		private async Task<(bool IsBuilt, IBuilderError? Error)> GoalIsBuilt(Goal goal, GroupedBuildErrors? validationError, IEngine engine, PLangContext context)
 		{
 			if (validationError == null) return (!goal.HasChanged, null);
 
 			var missingSettings = validationError.ErrorChain.Where(p => p.Exception?.GetType() == typeof(MissingSettingsException));
 			if (!missingSettings.Any()) return (!goal.HasChanged, null);
 
-			var error = await MissingSettingsHelper.Handle(engine, missingSettings);
+			var error = await MissingSettingsHelper.Handle(engine, context, missingSettings);
 			if (error != null)
 			{
 				var me = new MultipleBuildError(validationError);

@@ -127,7 +127,7 @@ public class ObjectValue
 		Created = DateTime.Now;
 		Updated = DateTime.Now;
 		Properties = properties ?? new();
-		
+
 		foreach (var prop in Properties)
 		{
 			prop.Parent = this;
@@ -191,13 +191,15 @@ public class ObjectValue
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
 	[JsonIgnore]
-	public ObjectValue? Parent { 
+	public ObjectValue? Parent
+	{
 		get { return parent; }
-		set {
+		set
+		{
 			if (value == null) throw new NullReferenceException($"setting null parent in ObjectValue is not allowed. {ErrorReporting.CreateIssueShouldNotHappen}");
 
 			parent = value;
-			
+
 			this.Path = $"{parent.Path}!{Name}";
 		}
 	}
@@ -213,7 +215,7 @@ public class ObjectValue
 	{
 		var value = Get(path, typeof(T), memoryStack);
 		if (value == null) return default;
-			
+
 		return (T?)value;
 	}
 	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
@@ -252,7 +254,11 @@ public class ObjectValue
 		if (Value == null) return default;
 		return (T?)ValueAs(this, typeof(T));
 	}
+	public virtual object? ValueAs(Type convertToType)
+	{
+		return Models.ObjectValueConverters.ObjectValueConverter.Convert(this, convertToType);
 
+	}
 	public virtual object? ValueAs(ObjectValue objectValue, Type convertToType)
 	{
 		return Models.ObjectValueConverters.ObjectValueConverter.Convert(objectValue, convertToType);

@@ -23,7 +23,7 @@ namespace PLangTests.Modules.LlmModule
 		public void Init()
 		{
 			base.Initialize();
-			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 
 		}
 
@@ -35,7 +35,7 @@ namespace PLangTests.Modules.LlmModule
 				return (response, default(IError));
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			p = new Program(llmServiceFactory, identityService, settings, logger, context);
+			p = new Program(llmServiceFactory, identityService, settings, logger, appContext);
 			p.Init(container, null, null, null, null);
 		}
 

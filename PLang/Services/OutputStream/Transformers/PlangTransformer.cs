@@ -1,5 +1,7 @@
 ﻿using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
@@ -20,25 +22,42 @@ public class PlangTransformer : JsonTransformer
 
 	public static readonly object GateKey = new();
 
-	public override async Task<(long, IError?)> Transform(HttpContext httpContext, PipeWriter writer, OutMessage data, CancellationToken ct = default)
+	public override async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage data, CancellationToken ct = default)
 	{
-		var env = TransformerHelper.BuildEnvelope(data);
+		var env = TransformerHelper.BuildEnvelope(data, context);
 
 		long length = 0;
 		SemaphoreSlim? gate = null;
 
 		try
 		{
-			using var jsonWriter = new Utf8JsonWriter(writer, _writerOptions);
+			gate = await TransformerHelper.GetGate(context.SharedItems, ct);
+			/*
+			using (var jsonWriter = new Utf8JsonWriter(writer, _writerOptions))
+			{
 
-			gate = await TransformerHelper.GetGate(httpContext, ct);
+				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
 
-			JsonSerializer.Serialize(jsonWriter, env, _opts);
-			length = jsonWriter.BytesCommitted;
+				JsonSerializer.Serialize(jsonWriter, env, _opts);
+				length = jsonWriter.BytesCommitted;
+			}
 
 			var nl = writer.GetSpan(1);
 			nl[0] = (byte)'\n';
-			writer.Advance(1);		
+			writer.Advance(1);	*/
+			var bufferWriter = new ArrayBufferWriter<byte>();
+			using (var jsonWriter = new Utf8JsonWriter(bufferWriter, _writerOptions))
+			{
+				JsonSerializer.Serialize(jsonWriter, env, _opts);
+				length = jsonWriter.BytesCommitted;
+			} 
+
+			
+			var jsonBytes = bufferWriter.WrittenSpan;
+			var span = writer.GetSpan(jsonBytes.Length + 1);
+			jsonBytes.CopyTo(span);
+			span[jsonBytes.Length] = (byte)'\n';
+			writer.Advance(jsonBytes.Length + 1);
 		}
 		catch (Exception ex)
 		{

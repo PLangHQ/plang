@@ -9,7 +9,7 @@ using PLang.Utils;
 namespace PLang.Errors.AskUser
 {
 
-	public record AskUserPrivateKeyExport(ILlmServiceFactory llmServiceFactory, ISettings settings, string PrivateKeyNamespace) : AskUserError(Message, null), IError, IBuilderError
+	public record AskUserPrivateKeyExport(ILlmServiceFactory llmServiceFactory, ISettings settings, string PrivateKeyNamespace, string Actor = "system", string Channel = "default") : AskUserError(Actor, Channel, Message, null), IError, IBuilderError
 	{
 		public static readonly new string Key = "AskUserPrivateKeyExport";
 		public static readonly string LockedKey = "LockedAskUserPrivateKeyExport";

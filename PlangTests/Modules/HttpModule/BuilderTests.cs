@@ -25,7 +25,7 @@ namespace PLang.Modules.HttpModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "OpenAiKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, llmCaching, context);
+			var llmService = new OpenAiService(settings, logger, llmCaching, appContext);
 			llmServiceFactory.CreateHandler().Returns(llmService);
 
 			builder = new GenericFunctionBuilder();

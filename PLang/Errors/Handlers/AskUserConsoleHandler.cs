@@ -5,7 +5,7 @@ using PLang.Services.OutputStream;
 
 namespace PLang.Errors.Handlers
 {
-
+	/*
     public class AskUserConsoleHandler : AskUserHandler
     {
 		public AskUserConsoleHandler(IOutputSystemStreamFactory outputStreamFactory) : base(outputStreamFactory)
@@ -19,5 +19,5 @@ namespace PLang.Errors.Handlers
             
         }
 
-    }
+    }*/
 }

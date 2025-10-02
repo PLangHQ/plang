@@ -162,14 +162,14 @@ namespace PLang.Modules.LlmModule
 					var c = message.Content[idx];
 					if (c.Text != null)
 					{
-						var obj = variableHelper.LoadVariables(c.Text);
+						var obj = memoryStack.LoadVariables(c.Text);
 						c.Text = GetObjectRepresentation(obj);
 
 					}
 
 					if (c.ImageUrl != null)
 					{
-						var imageUrls = variableHelper.LoadVariables(c.ImageUrl.Url);
+						var imageUrls = memoryStack.LoadVariables(c.ImageUrl.Url);
 						if (imageUrls is IList list)
 						{
 							c.ImageUrl.Url = list[0].ToString();

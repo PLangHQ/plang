@@ -1,6 +1,6 @@
 ﻿using LightInject;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -15,6 +15,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
@@ -267,11 +268,11 @@ namespace PLang.Modules.PlangModule
 		{
 			if (step == null) return new();
 
-			var variables = variableHelper.GetVariables(step.Text);
+			var variables = variableHelper.GetVariables(step.Text, memoryStack);
 			return variables;
 		}
 
-		public async Task<(List<GoalStep>?, IError?)> GetSteps(string goalPath)
+		public async Task<(IReadOnlyList<GoalStep>?, IError?)> GetSteps(string goalPath)
 		{
 			
 			string absoluteGoalPath = GetPath(goalPath);
@@ -335,7 +336,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Runs a plang step. No other step is executed")]
 		public async Task<(object?, IError?)> RunStep(GoalStep step, Dictionary<string, object?>? parameters = null)
 		{
-			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
+			var startingEngine = engine.GetAppContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 
 			//engine.GetContext().Remove(ReservedKeywords.IsEvent);
@@ -343,13 +344,13 @@ namespace PLang.Modules.PlangModule
 			fileAccessHandler.GiveAccess(fileSystem.SystemDirectory, fileSystem.GoalsPath);
 			if (parameters != null)
 			{
-				var ms = engine.GetMemoryStack();
+				var ms = context.MemoryStack;
 				foreach (var parameter in parameters)
 				{
 					ms.Put(parameter.Key, parameter.Value);
 				}
 			}
-			var result = await startingEngine.ProcessPrFile(step.Goal, step, step.Number);
+			var result = await startingEngine.ProcessPrFile(step.Goal, step, step.Number, context);
 			return result;
 		}
 
@@ -371,12 +372,12 @@ namespace PLang.Modules.PlangModule
 			// todo: attaching debugger and running from step does not work for http requests
 			// Run from step should also be a callback, like is done on websites (stateless)
 			// this validates that the user sending calls RunFromStep is valid
-			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
+			var startingEngine = engine.GetAppContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 
 			engine.GetEventRuntime().SetActiveEvents(new());
 
-			var result = await startingEngine.RunFromStep(absoluteFilePath);
+			var result = await startingEngine.RunFromStep(absoluteFilePath, context);
 			return result;
 		}
 
@@ -393,7 +394,7 @@ namespace PLang.Modules.PlangModule
 			}
 
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, step.Goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, context, step.Goal.AbsoluteGoalPath);
 
 			var goals = prParser.ForceLoadAllGoals();
 			var goal = goals.FirstOrDefault(p => p.AbsolutePrFilePath == step.Goal.AbsolutePrFilePath);
@@ -416,7 +417,7 @@ namespace PLang.Modules.PlangModule
 		public async Task<IError?> BuildPlangCode(Goal goal)
 		{
 			var builder = Container.GetInstance<IBuilder>();
-			var error = await builder.Start(Container, goal.AbsoluteGoalPath);
+			var error = await builder.Start(Container, context, goal.AbsoluteGoalPath);
 
 			prParser.ForceLoadAllGoals();
 			return error;
@@ -439,19 +440,6 @@ namespace PLang.Modules.PlangModule
 
 		}
 
-		public async Task ShowErrorDetails()
-		{
-			HttpContext?.Items.TryAdd("__Plang.ShowErrorDetails__", true);
-		}
-
-		public async Task HideErrorDetails()
-		{
-			HttpContext?.Items.Remove("__Plang.ShowErrorDetails__");
-		}
-		public async Task<bool> CanSeeErrorDetails()
-		{
-			return HttpContext?.Items.ContainsKey("__Plang.ShowErrorDetails__") == true;
-		}
 
 
 		public class MethodInfoDto

@@ -15,10 +15,8 @@ namespace PLang.Modules.WindowAppModule
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly IOutputStreamFactory outputStreamFactory;
-		public Program(IPseudoRuntime pseudoRuntime, IEngine engine, IOutputStreamFactory outputStreamFactory) : base()
+		public Program(IPseudoRuntime pseudoRuntime, IEngine engine) : base()
 		{
-			this.outputStreamFactory = outputStreamFactory;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 		}
@@ -27,8 +25,8 @@ namespace PLang.Modules.WindowAppModule
 		public async Task<IError?> RunWindowApp(GoalToCallInfo goalName, 
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is not AppOutputSink os)
+			var sink = context.UserSink;
+			if (sink is not AppOutputSink os)
 			{
 				return new StepError("This is not UI Output, did you run plang instead of plangw?", goalStep);
 			}
@@ -37,10 +35,10 @@ namespace PLang.Modules.WindowAppModule
 			os.IForm.SetSize(width, height);
 			if (iconPath != null) os.IForm.SetIcon(iconPath);
 			
-			var result = await pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalName, Goal);
+			var result = await pseudoRuntime.RunGoal(engine, contextAccessor, Path.DirectorySeparatorChar.ToString(), goalName, Goal);
 			//((UIOutputStream)os).IForm.Flush(result.output.Data.ToString());
 			os.IForm.Visible = true;
-			return result.error;
+			return result.Error;
 		}
 
 

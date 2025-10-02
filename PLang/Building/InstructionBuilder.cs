@@ -42,7 +42,7 @@ namespace PLang.Building
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
 		private MemoryStack memoryStack;
-		private readonly PLangAppContext context;
+		private readonly PLangContext context;
 		private readonly VariableHelper variableHelper;
 		private readonly ISettings settings;
 		private readonly ProgramFactory programFactory;
@@ -52,7 +52,7 @@ namespace PLang.Building
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings,
+			IMemoryStackAccessor memoryStackAccessor, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, ISettings settings,
 			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
 		{
 			this.typeHelper = typeHelper;
@@ -60,8 +60,8 @@ namespace PLang.Building
 			this.builderFactory = builderFactory;
 			this.logger = logger;
 			this.fileSystem = fileSystem;
-			this.memoryStack = memoryStack;
-			this.context = context;
+			this.memoryStack = memoryStackAccessor.Current;
+			this.context = contextAccessor.Current;
 			this.variableHelper = variableHelper;
 			this.settings = settings;
 			this.programFactory = programFactory;
@@ -164,7 +164,7 @@ namespace PLang.Building
 				return (build.Instruction, invalidFunctionError);
 			}
 			logger.LogDebug($"Done with function validation - putting into memory and writing to file - {stopwatch.ElapsedMilliseconds} ");
-			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, context, settings);
+			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, settings);
 			if (error != null) return (build.Instruction, error);
 
 			instruction.ModuleType = step.ModuleType;

@@ -24,7 +24,6 @@ namespace PLang.SafeFileSystem
 
 		private string rootPath;
 		List<FileAccessControl> fileAccesses = new();
-		private readonly PLangAppContext context;
 
 		public bool IsRootApp { get; private set; }
 		public string RelativeAppPath { get; set; }
@@ -64,9 +63,8 @@ namespace PLang.SafeFileSystem
 		// appName is weak validation, need to find new way
 
 		/// <inheritdoc />
-		public PLangFileSystem(string appStartupPath, string relativeAppPath, PLangAppContext context)
+		public PLangFileSystem(string appStartupPath, string relativeAppPath)
 		{
-			this.context = context;
 			this.rootPath = appStartupPath.AdjustPathToOs();
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 

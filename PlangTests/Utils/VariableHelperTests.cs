@@ -33,22 +33,22 @@ namespace PLang.Utils.Tests
 		public void LoadVariablesTest()
 		{
 
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
+			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			memoryStack.Put("name", "John");
 			memoryStack.Put("age", 12);
 			memoryStack.Put("userInfo", new { address = "Location 32", zip = 662 });
 
 			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
 
-			var helper = new VariableHelper(memoryStack, settings, logger);
+			var helper = new VariableHelper(settings, logger);
 			var text = "Hello %name%, your age is %age%, and you live at %userInfo.address% and %userInfo.zip%, is this correct?";
-			text = helper.LoadVariables(text).ToString();
+			text = helper.LoadVariables(memoryStack, text).ToString();
 
 			Assert.AreEqual("Hello John, your age is 12, and you live at Location 32 and 662, is this correct?",
 				text);
 
 			var text2 = "%name%%age%%userInfo.address%%userInfo.zip%";
-			text2 = helper.LoadVariables(text2).ToString();
+			text2 = helper.LoadVariables(memoryStack, text2).ToString();
 
 			Assert.AreEqual("John12Location 32662",
 				text2);
@@ -58,7 +58,7 @@ namespace PLang.Utils.Tests
 		public void TestVariableWithMethods()
 		{
 			// set 'name' as %Name.Trim()%
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
+			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			memoryStack.Put("TestName", " John ");
 			memoryStack.Put("name", "%TestName.Trim()%");
 
@@ -88,12 +88,13 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void LoadVariablesTest2()
 		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var variableHelper = new VariableHelper(settings, logger);
+			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 
 			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
-			var variableHelper = new VariableHelper(memoryStack, settings, logger);
+		
 
 			settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
 
@@ -101,7 +102,7 @@ namespace PLang.Utils.Tests
 			dict.Add("stuff", "Hello %text%");
 			dict.Add("stuff2", "Hello %text2%");
 			dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
-			dict = variableHelper.LoadVariables(dict);
+			dict = variableHelper.LoadVariables(memoryStack, dict);
 
 			Assert.AreEqual("Hello world", dict["stuff"]);
 			Assert.AreEqual("Hello plang", dict["stuff2"]);
@@ -110,13 +111,14 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void LoadVariables_TestContextRervedKeywords()
 		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var variableHelper = new VariableHelper(settings, logger);
+			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, variableHelper, contextAccessor);
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 
 			context.AddOrReplace(ReservedKeywords.Goal, new { GoalObject = true });
 			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
-			var variableHelper = new VariableHelper(memoryStack, settings, logger);
+		
 
 
 			settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
@@ -126,7 +128,7 @@ namespace PLang.Utils.Tests
 			dict.Add("stuff2", "Hello %text2%");
 			dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
 			dict.Add("goal", "This is %!Goal%");
-			dict = variableHelper.LoadVariables(dict);
+			dict = variableHelper.LoadVariables(memoryStack, dict);
 
 			Assert.AreEqual("Hello world", dict["stuff"]);
 			Assert.AreEqual("Hello plang", dict["stuff2"]);
@@ -146,13 +148,13 @@ namespace PLang.Utils.Tests
 
 			string content = "Hello %Now%";
 
-			var result = variableHelper.LoadVariables(content, false);
+			var result = memoryStack.LoadVariables(content, false);
 
 			Assert.AreEqual("Hello " + now.ToString(), result);
 
 			content = "Hello %Now.ToString(\"s\")%";
 
-			result = variableHelper.LoadVariables(content, false);
+			result = memoryStack.LoadVariables(content, false);
 
 			Assert.AreEqual("Hello " + now.ToString("s"), result);
 		}
@@ -176,7 +178,7 @@ namespace PLang.Utils.Tests
 				""MessageStream"": ""outbound"",
 				}}");
 
-			var result = variableHelper.LoadVariables(jobj);
+			var result = memoryStack.LoadVariables(jobj);
 
 			Assert.IsTrue(result.ToString().Contains("plang@example.org"));
 			Assert.IsTrue(result.ToString().Contains("user@example.org"));
