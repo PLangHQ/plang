@@ -193,7 +193,6 @@ namespace PLang.Container
 			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
 
-			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>());
 		}
 
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
@@ -264,6 +263,9 @@ namespace PLang.Container
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 
 			container.RegisterSingleton<IEngine, Engine>();
+
+
+			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>(), container.GetInstance<IEngine>());
 
 			/*
 			container.RegisterSingleton<EnginePool>(factory =>
@@ -507,10 +509,10 @@ namespace PLang.Container
 
 			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
 		}
-
-		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper)
+	
+		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper, IEngine engine)
 		{
-			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+			engine.AsmHandler = (sender, resolveArgs) =>
 			{
 				if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
 
@@ -600,6 +602,8 @@ namespace PLang.Container
 				}
 				return null;
 			};
+
+			AppDomain.CurrentDomain.AssemblyResolve += engine.AsmHandler;
 		}
 
 		private static void RegisterModules(ServiceContainer container)

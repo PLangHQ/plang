@@ -4,21 +4,20 @@
   "Text": "AskSystem",
   "GoalSteps": [
     {
-      "Text": "ask \"%__plang_question%\", channel=\"system\", write to %__plang_answer%",
+      "Text": "ask \"%__plang_question%\", channel=\"info\", write to %__plang_answer%",
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "ask_question_and_capture_answer",
-      "Description": "Send the content of the variable %__plang_question% as a prompt to the system channel and store the received response into the variable %__plang_answer%.",
+      "Description": "Display the content of the variable %__plang_question% as a question to the user on the 'info' channel, then capture the user's response and store it in the variable %__plang_answer%",
       "PrFileName": "01. ask_question_and_capture_answer.pr",
       "RelativePrPath": ".build\\events\\AskSystem\\01. ask_question_and_capture_answer.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\AskSystem\\01. ask_question_and_capture_answer.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
       "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-08-03T22:17:11.2075683+00:00",
+      "Generated": "2025-10-03T15:54:01.2923809+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -30,10 +29,10 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "95228fee76db838e328313c0893798b08a261d85bab8af5996f531fd3a616c3e",
+      "Hash": "fd843bef24cef6f631c3d0c30ac2e4de829505377fc006f1e1be562e2793593b",
       "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\events\\AskSystem.goal",
-      "UserIntent": "The user wants to prompt a question to the system channel and capture the response in a variable."
+      "UserIntent": "Prompt the user with a question and capture their response"
     },
     {
       "Text": "return %__plang_answer%",
@@ -43,12 +42,11 @@
       "Description": "The step returns the content of the variable %__plang_answer% to the caller or output stream, effectively ending the step with this value",
       "PrFileName": "02. return_plang_answer_variable.pr",
       "RelativePrPath": ".build\\events\\AskSystem\\02. return_plang_answer_variable.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\AskSystem\\02. return_plang_answer_variable.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-08-03T22:17:20.7016503+00:00",
       "WaitForExecution": true,
@@ -63,13 +61,13 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "390ee7ab174aa0b83bb2b037c221a2b2678ee2b5ee81f55a2678b37ca26a09db",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\AskSystem.goal",
-      "UserIntent": "Return the value stored in the variable %__plang_answer% as the output of the current step or goal"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
-  "Description": "The AskSystem goal is designed to facilitate a question-and-answer interaction within a system. It takes a question as input, sends it to a specified channel, and retrieves the answer, which is then returned as output. The question to be asked is provided through the variable \\%__plang_question\\%, and the answer is stored in the variable \\%__plang_answer\\%.",
+  "Description": "The AskSystem goal is designed to prompt a question and retrieve an answer based on the provided input. It takes a question string and sends it to a specified channel, then captures the response in a designated variable before returning that response.",
   "Visibility": 1,
   "GoalFileName": "AskSystem.goal",
   "PrFileName": "00. Goal.pr",
@@ -86,9 +84,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a3f910d04734861a771ec0c3ae08929ff548518a9d8a5fe2b0bf1888201727e3",
+  "Hash": "283faf9c72e98aa4028f4ce02e3c258728630a821e63fbd8f5670569a7f84990",
   "IncomingVariablesRequired": {
-    "__plang_question": "The question that needs to be asked to the system."
+    "__plang_question": "The question string that needs to be asked in the system.",
+    "__plang_answer": "The variable where the answer to the question will be stored."
   },
   "DataSourceName": null,
   "IsSetup": false,

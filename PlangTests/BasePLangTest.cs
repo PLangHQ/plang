@@ -43,7 +43,6 @@ namespace PLangTests
 		protected ILlmServiceFactory llmServiceFactory;
 		protected IPseudoRuntime pseudoRuntime;
 		protected IEngine engine;
-		protected EnginePool enginePool;
 		protected ISettingsRepository settingsRepository;
 		protected ISettings settings;
 		protected IEventRuntime eventRuntime;
@@ -227,7 +226,7 @@ namespace PLangTests
 			container.Register<IGoalParser, GoalParser>();
 			goalParser = container.GetInstance<IGoalParser>();
 
-			dependancyHelper = new DependancyHelper(fileSystem, logger, prParser);
+			dependancyHelper = new DependancyHelper(fileSystem, logger);
 
 			typeHelper = new TypeHelper(fileSystem, dependancyHelper);
 			container.RegisterInstance(typeHelper);

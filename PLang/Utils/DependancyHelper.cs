@@ -11,13 +11,11 @@ namespace PLang.Utils
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
-		private readonly PrParser prParser;
 
-		public DependancyHelper(IPLangFileSystem fileSystem, ILogger logger, PrParser prParser)
+		public DependancyHelper(IPLangFileSystem fileSystem, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;
-			this.prParser = prParser;
 		}
 
 
@@ -110,7 +108,7 @@ namespace PLang.Utils
 				if (error2 != null) throw new Exception(error2.ToString());
 				*/
 				DirectoryHelper.Copy(planInstallerFolder, installerFolder);
-				prParser.ForceLoadAllGoals();
+				//prParser.ForceLoadAllGoals();
 			}
 			try
 			{			

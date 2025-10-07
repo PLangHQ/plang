@@ -31,7 +31,8 @@ namespace PLang.Modules.CallGoalModule
 			{
 				return (null, new ProgramError($"Could not find goal {appToCall.Name} in {appToCall.AppName}", goalStep, function));
 			}
-			
+			throw new NotImplementedException("Run app not implemented");
+			/*
 			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appToCall.AppName + "_" + appToCall.Name);
 			var newContext = new PLangContext(memoryStack.Clone(newEngine), newEngine, ExecutionMode.Console);
 			try
@@ -65,7 +66,7 @@ namespace PLang.Modules.CallGoalModule
 			{
 				engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).Return(newEngine);
 
-			}
+			}*/
 		}
 
 

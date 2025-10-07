@@ -5,8 +5,8 @@ using PLang.Utils;
 namespace PLang.Errors.Events
 {
 
-	public record RuntimeEventError(string Message, EventBinding EventBinding, Goal? Goal = null, GoalStep? Step = null, string Key = "RuntimeEvent", Exception? Exception = null, IError? InitialError = null)
-		: Error(Message, Key, Exception: Exception), IEventError, IError
+	public record RuntimeEventError(string Message, EventBinding EventBinding, Goal? Goal = null, GoalStep? Step = null, string Key = "RuntimeEvent", int StatusCode = 400, Exception? Exception = null, IError? InitialError = null)
+		: Error(Message, Key, StatusCode, Exception: Exception), IEventError, IError
     {
         public bool IgnoreError => false;
 		public override string ToString()
@@ -22,6 +22,7 @@ namespace PLang.Errors.Events
 			string str = string.Empty;
 			if (EventBinding != null)
 			{
+
 				if (string.IsNullOrWhiteSpace(EventBinding.GoalToBindTo) && EventBinding.EventScope == EventScope.Goal)
 				{
 					str += Environment.NewLine + " Could not determine what goal to bind to";

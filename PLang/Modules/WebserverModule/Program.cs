@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using CsvHelper;
+using LightInject;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
@@ -170,20 +171,25 @@ public class Program : BaseProgram, IDisposable
 		var responseProperties = TypeHelper.SetProperties(webserverProperties.DefaultResponseProperties);
 		webserverProperties = webserverProperties with { DefaultRequestProperties = requestProperties, DefaultResponseProperties = responseProperties };
 
+		/*
 		var webserverContainer = new ServiceContainer();
 		webserverContainer.RegisterForPLangWebserver(goalStep, this.engine, context);
-
+		
 		var webserverEngine = webserverContainer.GetInstance<IEngine>();
 		webserverEngine.Init(webserverContainer);
 		webserverEngine.Name = "WebserverEngine";
 		webserverEngine.UserSink = engine.UserSink;
 		webserverEngine.SystemSink = engine.SystemSink;
-
+		*/
 		goal.AddVariable(webserverProperties);
 
-		engine.ChildEngines.Add(webserverEngine);
+		//engine.ChildEngines.Add(webserverEngine);
 
-		RequestHandler requestHandler = webserverContainer.GetInstance<RequestHandler>();
+		RequestHandler requestHandler = new RequestHandler(goalStep,
+									container.GetInstance<ILogger>(),
+									container.GetInstance<IPLangFileSystem>(),
+									container.GetInstance<Modules.IdentityModule.Program>(),
+									container.GetInstance<PrParser>());
 
 		if (webserverProperties.OnStart != null)
 		{
@@ -268,9 +274,9 @@ public class Program : BaseProgram, IDisposable
 						try
 						{
 							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
-							
-							
-							requestEngine = await webserverEngine.RentAsync(goalStep);
+
+
+							requestEngine = await engine.RentAsync(goalStep);
 							requestEngine.Name = "RequestEngine_" + httpContext.Request.Path.Value;
 
 
@@ -284,7 +290,7 @@ public class Program : BaseProgram, IDisposable
 							contextAccessor.Current = context;
 							context.HttpContext = httpContext;
 
-							var httpOutputSink = new HttpSink(context, webserverProperties, webserverEngine.LiveConnections);
+							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
 							context.UserSink = httpOutputSink;
 							context.SystemSink = engine.SystemSink;
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
@@ -315,7 +321,7 @@ public class Program : BaseProgram, IDisposable
 
 								if (error != null)
 								{
-									
+
 									try
 									{
 										string content = (context.ShowErrorDetails) ? error.ToString()! : error.Message;
@@ -326,7 +332,7 @@ public class Program : BaseProgram, IDisposable
 									{
 										//AppError had error, this is a critical thing and should not happen
 										//So we write the error to the console as last resort.	
-									 
+
 										string strError = error.ToString();
 										Console.WriteLine(" ---- Could not write error to output stream - Critical Error  ---- ");
 										Console.WriteLine(strError);
@@ -370,7 +376,7 @@ public class Program : BaseProgram, IDisposable
 						{
 							if (requestEngine != null)
 							{
-								webserverEngine.Return(requestEngine, true);
+								engine.Return(requestEngine, true);
 							}
 
 							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
@@ -379,7 +385,7 @@ public class Program : BaseProgram, IDisposable
 
 						if (poll)
 						{
-							await DoPoll(httpContext, identity, webserverEngine, webserverProperties);
+							await DoPoll(httpContext, identity, engine, webserverProperties);
 						}
 					});
 
@@ -390,7 +396,7 @@ public class Program : BaseProgram, IDisposable
 
 
 		webserverProperties.Listener = app;
-		webserverProperties.Engine = webserverEngine;
+		webserverProperties.Engine = engine;
 
 		await app.StartAsync();
 
@@ -637,7 +643,7 @@ OnStartingWebserver
 		}
 
 
-		return new EndGoal(true,topGoal, goalStep, "Redirect", StatusCode: 302, Levels: 999);
+		return new EndGoal(true, topGoal, goalStep, "Redirect", StatusCode: 302, Levels: 999);
 		/*
 		if (HttpContext == null)
 		{
@@ -757,8 +763,12 @@ Frontpage
 		if (mimeType == null) mimeType = "application/octet-stream";
 
 		var response = HttpContext.Response;
+		if (response.HasStarted) return new ProgramError("Data already sent to browser. To use this action, no data can be previously sent.");
+
+
 		response.StatusCode = StatusCodes.Status200OK;
 		response.ContentType = mimeType;
+
 
 		if (string.IsNullOrEmpty(fileName))
 		{

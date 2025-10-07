@@ -628,12 +628,12 @@ When table name is unknown at built time because it is created with variable, us
 			var newClassDescription = new ClassDescription();
 
 			var selectMethod = methodsAndTables.Methods.FirstOrDefault(p => p.Key == "Select");
-			if (selectMethod.Key != null)
+			if (selectMethod.Key != null && !methodsAndTables.Methods.ContainsKey("SelectWithMultipleDataSources"))
 			{
 				methodsAndTables.Methods.Add("SelectWithMultipleDataSources", selectMethod.Value);
 			}
 			selectMethod = methodsAndTables.Methods.FirstOrDefault(p => p.Key == "SelectOneRow");
-			if (selectMethod.Key != null)
+			if (selectMethod.Key != null && !methodsAndTables.Methods.ContainsKey("SelectOneRowWithMultipleDataSources"))
 			{
 				methodsAndTables.Methods.Add("SelectOneRowWithMultipleDataSources", selectMethod.Value);
 			}

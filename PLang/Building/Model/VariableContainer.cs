@@ -4,6 +4,7 @@ using PLang.Runtime;
 using System.Reflection.Metadata;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Building.Model
 {
@@ -25,21 +26,22 @@ namespace PLang.Building.Model
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
-		protected readonly List<Variable> _variables = new();
+		protected List<Variable> _variables = new();
 
 		[IgnoreWhenInstructed]
-		public List<Variable> Variables => _variables;
+		public List<Variable> Variables { get { return _variables; } set { _variables = value; } }
 
-	
+		
 		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
 		{
 			if (value == null) return;
 
 			if (variableName == null) variableName = typeof(T).FullName;
 
-			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+			
 			var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
 
+			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			if (variableIdx == -1)
 			{
 				_variables.Add(variable);
@@ -189,6 +191,7 @@ namespace PLang.Building.Model
 
 		public async Task DisposeVariables(MemoryStack memoryStack)
 		{
+			
 			for (int i = _variables.Count - 1; i >= 0; i--)
 			{
 				var variable = _variables[i];
@@ -197,7 +200,7 @@ namespace PLang.Building.Model
 				var parent = GetParent();
 				if (parent != null && memoryStack.ContainsObject(variable))
 				{
-					parent.AddVariable(variable);
+					//parent.AddVariable(variable);
 					continue;
 				}
 
@@ -214,6 +217,8 @@ namespace PLang.Building.Model
 				}
 			}
 			_variables.Clear();
+			_variables = new();
+
 		}
 
 	}

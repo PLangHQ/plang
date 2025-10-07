@@ -26,6 +26,7 @@ using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -745,7 +746,8 @@ namespace PLang.Modules
 		//TODO: should create a cleanup here to kill processes correctly
 		protected void KeepAlive(object instance, string key)
 		{
-			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			var appContext = engine.GetAppContext();
+			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
 			if (alives == null) alives = new List<Alive>();
 
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
@@ -758,12 +760,13 @@ namespace PLang.Modules
 			{
 				aliveType.Instances.Add(instance);
 			}
-			AppContext.SetData("KeepAlive", alives);
+
+			appContext.AddOrReplace("KeepAlive", alives);
 		}
 
 		public void RemoveKeepAlive(object instance, string key)
 		{
-			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			var alives = appContext.GetOrDefault<List<Alive>>("KeepAlive");
 			if (alives == null) return;
 
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
@@ -775,8 +778,7 @@ namespace PLang.Modules
 				{
 					alives.Remove(aliveType);
 				}
-
-				AppContext.SetData("KeepAlive", alives);
+				appContext.AddOrReplace("KeepAlive", alives);
 			}
 		}
 

@@ -1,6 +1,7 @@
 ﻿
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Events;
 using PLang.Runtime;
 using PLang.Utils;
 
@@ -10,9 +11,10 @@ namespace PLang.Errors.Events
 	{
 		bool IgnoreError { get; }
 		IError? InitialError { get; }
+		EventBinding EventBinding { get; }
 	}
 
-	public record HandledEventError(IError InitialError, int StatusCode, string Key, string Message, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : IEventError, IErrorHandled
+	public record HandledEventError(IError InitialError, int StatusCode, string Key, string Message, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : IErrorHandled
 	{
 		public string Id { get; } = Guid.NewGuid().ToString();
 		public GoalStep? Step { get; set; }

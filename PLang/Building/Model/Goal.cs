@@ -16,7 +16,6 @@ namespace PLang.Building.Model
 		Private = 0, Public = 1
 	}
 
-
 	public class Goal : VariableContainer
 	{
 		public Goal()

@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Runtime
 {
+	/*
 	public record EngineInfo(IEngine Engine, DateTime LastAccess);
 
 
@@ -37,7 +38,6 @@ namespace PLang.Runtime
 
 			_factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			_maxSize = maxSize;
-			//todo: dont really understand this SemaphoreSlim, seems to work
 
 			_ = Task.Run(async () =>
 			{
@@ -132,9 +132,11 @@ namespace PLang.Runtime
 
 		public void Return(IEngine engine, bool reset = false)
 		{
+			throw new Exception("Depricated - Return");
 			engine.Return(reset);
-
+			
 			_pool.Enqueue(new EngineInfo(engine, DateTime.Now));
+			Console.WriteLine("Return engine:" + _pool.Count);
 		}
 
 		public virtual void Dispose()
@@ -148,7 +150,7 @@ namespace PLang.Runtime
 			{
 				item.Engine.Dispose();
 			}
-
+			Console.WriteLine("Disposed engines in pool");
 			this.disposed = true;
 
 		}
@@ -160,5 +162,5 @@ namespace PLang.Runtime
 				throw new ObjectDisposedException(this.GetType().FullName);
 			}
 		}
-	}
+	}*/
 }

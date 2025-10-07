@@ -141,6 +141,11 @@ First we will give you the original error, then each error that occured will sho
 
 ";
 			}
+			string eventInfo = null;
+			if (error is IEventError ree)
+			{
+				eventInfo = $"\n⚡Error on event:\n\t [{ree.EventBinding.EventType}][{ree.EventBinding.EventScope}][{ree.EventBinding.GoalToBindTo}] - {ree.EventBinding.GoalStep.Text}\n\n";
+			}
 
 			firstLine += $@"
 🔴   ================== {error.Key}({error.StatusCode}) ==================   🔴
@@ -155,7 +160,7 @@ First we will give you the original error, then each error that occured will sho
 🕑 Time: {error.CreatedUtc}
 
 🔍   ================== Error Details ==================   🔍
-
+{eventInfo}
 📜 Code snippet that the error occured:
 	- {step.Text.Replace("\r", "").Replace("\t", "").Replace("\n", "\n\t\t").MaxLength(160)}
 		at {step.RelativeGoalPath}:{step.LineNumber}
@@ -173,7 +178,13 @@ First we will give you the original error, then each error that occured will sho
 			}
 			else if (goal != null)
 			{
-				firstLine = $@"📄 File: {goal.RelativeGoalPath}";
+				firstLine = $@"📄 File: {goal.RelativeGoalPath}
+🧩 Key:  {error.Key}
+#️⃣  StatusCode:  {error.StatusCode}
+🕑 Time: {error.CreatedUtc}
+
+🔍   ================== Error Details ==================   🔍
+{eventInfo}";
 			}
 
 			string? variables = null;

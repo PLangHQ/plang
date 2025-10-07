@@ -70,6 +70,9 @@ namespace PLang.Events
 		public Goal SourceGoal { get; internal set; }
 		[JsonIgnore]
 		public GoalStep SourceStep { get; internal set; }
+
+		[JsonIgnore]
+		public bool IsSystem{ get; internal set; }
 	}
 
 	public record EventModuleBinding(string[] Methods, EventBinding EventBinding) : EventBinding(EventBinding);

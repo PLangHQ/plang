@@ -118,7 +118,7 @@ namespace PLang.Errors
 
 	}
 
-	public interface IErrorHandled : IEventError, IError { }
+	public interface IErrorHandled : IError { }
 
 
 	public class ExceptionDto

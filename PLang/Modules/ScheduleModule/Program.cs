@@ -26,16 +26,11 @@ namespace PLang.Modules.ScheduleModule
 	[Description("Wait, Sleep and time delay. Cron scheduler")]
 	public class Program : BaseProgram
 	{
-		private readonly ISettings settings;
-		private readonly IEngine engine;
 		private readonly IPseudoRuntime pseudoRuntime;
-		private readonly ILogger logger;
-		private readonly IPLangFileSystem fileSystem;
-		private readonly IAppCache appCache;
 		private readonly ModuleSettings moduleSettings;
 		public PrParser PrParser { get; }
 
-		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime, 
+		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime,
 			ILogger logger, IPLangFileSystem fileSystem, IAppCache appCache) : base()
 		{
 			this.settings = settings;
@@ -61,7 +56,7 @@ namespace PLang.Modules.ScheduleModule
 		public record WaitIncreasignlyCounter(string Key, int Counter);
 		[Description("Waits increasingly in a key")]
 		[MethodSettings(CanBeAsync = false)]
-		public async Task<IError?> WaitIncreasingly(string key, List<int> millisecondsDelay, int timeoutInSeconds = 5*60)
+		public async Task<IError?> WaitIncreasingly(string key, List<int> millisecondsDelay, int timeoutInSeconds = 5 * 60)
 		{
 			if (string.IsNullOrEmpty(key)) return new ProgramError("Key cannot be empty");
 
@@ -73,23 +68,24 @@ namespace PLang.Modules.ScheduleModule
 			if (millisecondsDelay.Count <= request.Counter)
 			{
 				waitFor = millisecondsDelay.LastOrDefault();
-			} else
+			}
+			else
 			{
 				waitFor = millisecondsDelay[request.Counter];
 			}
-			request = request with { Counter = request.Counter+1 };
+			request = request with { Counter = request.Counter + 1 };
 
 			await appCache.Set(cacheKey, request, TimeSpan.FromSeconds(timeoutInSeconds));
-			
+
 			//make sure we always wait for execution
 			goalStep.WaitForExecution = true;
 
 			if (waitFor == 0) return null;
-			
+
 			logger.LogWarning($"Waiting {waitFor} (counter:{request.Counter}) because of key:{key} - ");
 			await Task.Delay(waitFor);
-			
-			
+
+
 			return null;
 		}
 
@@ -113,7 +109,7 @@ namespace PLang.Modules.ScheduleModule
 
 				await Task.Delay(100);
 			}
-			
+
 			var result = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, goalToCall);
 
 			return result.Error;
@@ -146,7 +142,6 @@ namespace PLang.Modules.ScheduleModule
 
 			settings.SetList(typeof(ModuleSettings), cronJobs);
 
-			KeepAlive(this, "Scheduler");
 		}
 
 		public async Task StartScheduler()
@@ -163,28 +158,35 @@ namespace PLang.Modules.ScheduleModule
 			if (context.SystemSink is not AppOutputSink)
 			{
 				logger.LogDebug("Initiate new engine for scheduler");
-				using (var containerForScheduler = new ServiceContainer())
-				{
-					containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), null, null, parentEngine: engine);
+				var containerForScheduler = new ServiceContainer();
 
-					engine = containerForScheduler.GetInstance<IEngine>();
-					engine.Init(containerForScheduler);
-					settings = containerForScheduler.GetInstance<ISettings>();
-					prParser = containerForScheduler.GetInstance<PrParser>();
-					logger = containerForScheduler.GetInstance<ILogger>();
-					pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
-					fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
 
-					Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
-				}
+				containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), null, null, parentEngine: engine);
+
+				engine = containerForScheduler.GetInstance<IEngine>();
+				engine.Init(containerForScheduler);
+				settings = containerForScheduler.GetInstance<ISettings>();
+				prParser = containerForScheduler.GetInstance<PrParser>();
+				logger = containerForScheduler.GetInstance<ILogger>();
+				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
+				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
+				engine.Name = "Scheduler";
+				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+
+
+				KeepAlive(containerForScheduler, "Scheduler");
+
 			}
 			else
 			{
 
 
 				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+
+
+				KeepAlive(engine, "Scheduler");
 			}
-			
+
 		}
 
 
@@ -230,7 +232,7 @@ namespace PLang.Modules.ScheduleModule
 
 				while (true)
 				{
-					
+
 					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
 					//run every 1 min
@@ -274,7 +276,7 @@ namespace PLang.Modules.ScheduleModule
 				for (int i = 0; i < list.Count; i++)
 				{
 					item = list[i];
-					
+
 					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, appCache);
 					var schedule = CrontabSchedule.Parse(item.CronCommand);
 

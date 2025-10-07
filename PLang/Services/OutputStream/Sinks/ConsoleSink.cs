@@ -123,8 +123,5 @@ public sealed class ConsoleSink : IOutputSink
 
 	static string Trunc(string s, int max) => s.Length <= max ? s : s[..max] + "…";
 
-	Task<(object? result, IError? error)> IOutputSink.AskAsync(AskMessage message, CancellationToken ct)
-	{
-		throw new NotImplementedException();
-	}
+
 }

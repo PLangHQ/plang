@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
@@ -49,7 +50,10 @@ namespace PLang.Models.ObjectValueExtractors
 				return extractor.Extract(segment, memoryStack);
 			}
 
-			throw new Exception($"KeyValuePairExtractor is only implemented for Dictionary. {ErrorReporting.CreateIssueNotImplemented}");
+			throw new Exception($@"KeyValuePairExtractor is only implemented for Dictionary. {ErrorReporting.CreateIssueNotImplemented}.
+This is the value that is being extracted:
+Type: {value?.GetType()}
+Value:{JsonConvert.SerializeObject(value)}");
 			
 		}
 	}

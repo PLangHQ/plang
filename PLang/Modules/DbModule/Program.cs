@@ -256,7 +256,7 @@ namespace PLang.Modules.DbModule
 
 			var transaction = goal.GetVariable<IDbTransaction>();
 			if (transaction == null) return new ProgramError("No transaction found");
-			
+
 			try
 			{
 
@@ -363,7 +363,7 @@ namespace PLang.Modules.DbModule
 
 			return await GetDatabaseStructure(dataSource, tables);
 		}
-			
+
 		internal async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(DataSource dataSource, List<string>? tables = null)
 		{
 
@@ -503,7 +503,7 @@ namespace PLang.Modules.DbModule
 
 			return await ExecuteSqlFile(dataSource, fileName, tableAllowList);
 		}
-			
+
 		internal async Task<(long, IError?)> ExecuteSqlFile(DataSource dataSource, string fileName, List<string> tableAllowList)
 		{
 			var file = GetProgramModule<Modules.FileModule.Program>();
@@ -537,7 +537,7 @@ namespace PLang.Modules.DbModule
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
 
-		
+
 		internal async Task<(long RowsAffected, IError? Error)> Execute(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			/*
@@ -641,7 +641,7 @@ namespace PLang.Modules.DbModule
 
 				dataSources.Add(dataSource);
 			}
-			
+
 
 			return await SelectOneRow(dataSources, sql, sqlParameters);
 		}
@@ -717,21 +717,18 @@ namespace PLang.Modules.DbModule
 			Properties properties = new();
 			properties.Add(new ObjectValue("DataSources", dataSources));
 			properties.Add(new ObjectValue("MainDataSource", dataSources[0]));
-
 			properties.Add(new ObjectValue("MethodParameters", new { Sql = sql, SqlParameters = sqlParameters }));
 
-
-			
-				if (prep.error != null)
-				{
-					return (null, prep.error, properties);
-				}
-				logger.LogDebug($"Sql: {prep.sql} - Parameters:{prep.param}");
+			if (prep.error != null)
+			{
+				return (null, prep.error, properties);
+			}
+			logger.LogDebug($"Sql: {prep.sql} - Parameters:{prep.param}");
 
 			var con = (DbConnection)prep.connection;
 			try
 			{
-				
+
 				await using var cmd = con.CreateCommand();
 
 				if (prep.transaction != null)
@@ -750,12 +747,13 @@ namespace PLang.Modules.DbModule
 					dataSources[0].AttachedDbs.Add(dataSources[i].Name);
 
 					cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {dataSources[i].Name};\n";
+					await cmd.ExecuteNonQueryAsync();
 				}
-				
 
-					cmd.CommandText += prep.sql;
 
-				
+				cmd.CommandText = prep.sql;
+
+
 
 				// Add parameters if any:
 				if (sqlParameters is not null)
@@ -768,22 +766,15 @@ namespace PLang.Modules.DbModule
 
 						cmd.Parameters.Add(param);
 					}
-					
+
 				}
 
 				properties.Add(new ObjectValue("Parameters", cmd.Parameters));
-				if (dataSources.Count > 1)
-				{
-					for (int i = 1; i < dataSources.Count; i++)
-					{
-						cmd.CommandText += $";\nDETACH DATABASE \"{dataSources[i].Name}\";";
-					}
-				}
+				
 				properties.Add(new ObjectValue("CommandText", cmd.CommandText));
 
 				using var reader = await cmd.ExecuteReaderAsync();
 
-				
 
 				var cols = Enumerable.Range(0, reader.FieldCount)
 					.Select(reader.GetName)
@@ -808,6 +799,17 @@ namespace PLang.Modules.DbModule
 
 					table.Add(row);
 				}
+				await reader.CloseAsync();
+
+				if (dataSources[0].AttachedDbs.Count > 0)
+				{
+					cmd.CommandText = "";
+					for (int i = 0; i < dataSources[0].AttachedDbs.Count; i++)
+					{
+						cmd.CommandText += $";\nDETACH DATABASE \"{dataSources[0].AttachedDbs[i]}\";";
+					}
+					await cmd.ExecuteNonQueryAsync();
+				}
 
 				properties.Add(new ObjectValue("Columns", cols));
 				properties.Add(new ObjectValue("RowCount", table.Count));
@@ -829,8 +831,7 @@ namespace PLang.Modules.DbModule
 				{
 					detachCommand.CommandText += $"DETACH DATABASE \"{dataSources[i].Name}\";";
 				}
-				detachCommand.ExecuteNonQuery();
-
+				await detachCommand.ExecuteNonQueryAsync();
 
 				return (null, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex), properties);
 			}
@@ -999,11 +1000,11 @@ namespace PLang.Modules.DbModule
 					return (rowsAffected, null);
 				}
 				Console.WriteLine(ex.Message);
-				
+
 
 				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
-			finally 
+			finally
 			{
 				Done(prepare.connection);
 			}
@@ -1122,7 +1123,7 @@ namespace PLang.Modules.DbModule
 
 			return await InsertBulk(dataSource, tableName, itemsToInsert, columnMapping, ignoreContraintOnInsert);
 		}
-			
+
 		internal async Task<(long, IError?)> InsertBulk(DataSource dataSource, string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);

@@ -147,7 +147,7 @@ namespace PLang.Events
 					if (eventBinding != null) continue;
 
 					bool isLocal = goal.AbsolutePrFolderPath.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));
-					var binding = step.EventBinding with { Goal = goal, GoalStep = step, IsOnStep = false, IsLocal = isLocal };
+					var binding = step.EventBinding with { Goal = goal, GoalStep = step, IsOnStep = false, IsLocal = isLocal, IsSystem = goal.IsSystem };
 					events.Add(binding);
 				}
 
@@ -240,9 +240,14 @@ namespace PLang.Events
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
+				bool disableSystemGoals = false;
+				if (!eve.IncludeOsGoals && !eve.IsSystem)
+				{
+					disableSystemGoals = true;
+				}
 
 				//var task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal, isEvent: true);
-				var task = pseudoRuntime.RunGoal(engine, contextAccessor, "", eve.GoalToCall, goal, eve.WaitForExecution, 0, 0, 0, false, false, eve.IncludeOsGoals, true);
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, "", eve.GoalToCall, goal, eve.WaitForExecution, 0, 0, 0, false, false, disableSystemGoals, true);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -601,7 +606,7 @@ namespace PLang.Events
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Error, error);
-
+				contextAccessor.Current.AddOrReplace(ReservedKeywords.Event, eve);
 				/*
 				//todo: hack, we should not be modifying the goal name. 
 				if (eve.IsOnStep) {
@@ -626,8 +631,15 @@ namespace PLang.Events
 				}
 				else
 				{
+					bool disableSystemGoals = false;
+					if (!eve.IncludeOsGoals && !eve.IsSystem)
+					{
+						disableSystemGoals = true;
+					}
+
+
 					//	task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal, isEvent: true);
-					task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", eve.GoalToCall, sourceGoal, eve.WaitForExecution, 0, 0, 0, false, !eve.IsLocal, !eve.IncludeOsGoals, true);
+					task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", eve.GoalToCall, sourceGoal, eve.WaitForExecution, 0, 0, 0, false, !eve.IsLocal, disableSystemGoals, true);
 				}
 
 				if (eve.WaitForExecution)
@@ -689,9 +701,9 @@ namespace PLang.Events
 
 				if (isBuilder)
 				{
-					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, InitialError: result.Error));
+					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, InitialError: result.Error));
 				}
-				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, InitialError: result.Error));
+				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, InitialError: result.Error));
 			}
 			catch (Exception ex)
 			{

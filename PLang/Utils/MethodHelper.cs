@@ -129,7 +129,7 @@ public class MethodHelper
 
 				if (parameterErrors.Count == 0)
 				{
-
+					step.Instruction.Function = function;
 					if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 					{
 						foreach (var returnValue in function.ReturnValues)
@@ -162,7 +162,7 @@ public class MethodHelper
 
 	bool IsNullableType(Type t) => Nullable.GetUnderlyingType(t) != null;
 
-	public (Dictionary<string, ParameterType>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo methodInfo, IReadOnlyList<Parameter> parameters, GoalStep goalStep)
+	public (Dictionary<string, ParameterType>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo methodInfo, List<Parameter> parameters, GoalStep goalStep)
 	{
 		GroupedBuildErrors buildErrors = new();
 
@@ -246,6 +246,18 @@ public class MethodHelper
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
 						$"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").", goalStep));
+				}
+				
+				// sometimes llm does "["\name\"]" as string for list and dict, it should just be ["name"]
+				if (TypeHelper.IsList(builderType) && builderParameter.Value is string str && !VariableHelper.IsVariable(str))
+				{
+					var idx = parameters.FindIndex(x => x.Name == methodParameter.Name);
+					
+					parameters[idx] = builderParameter with { Value = JArray.Parse(str) };
+					int i = 0;
+
+					/*buildErrors.Add(new InvalidParameterError(methodInfo.Name,
+						$"{methodParameter.Name} is string, the property Value cannot start and end with quote(\"). The type is {builderType.Name}", goalStep));*/
 				}
 
 				// check if variable is in step, just incase LLM invents a new variable

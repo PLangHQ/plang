@@ -8,9 +8,9 @@ namespace PLang.Errors.Events
 {
 
 	public record BuilderEventError(string Message, EventBinding? EventBinding = null, Goal? Goal = null, GoalStep? Step = null,
-		string Key = "BuilderEvent", bool ContinueBuild = true,
+		string Key = "BuilderEvent", int StatusCode = 400, bool ContinueBuild = true,
 		Exception? Exception = null, IError? InitialError = null,
-		string? FixSuggestion = null, string? HelpfulLinks = null) : Error(Message, Key, Exception: Exception, FixSuggestion: FixSuggestion, HelpfulLinks: HelpfulLinks), IEventError, IBuilderError
+		string? FixSuggestion = null, string? HelpfulLinks = null) : Error(Message, Key, StatusCode, Exception: Exception, FixSuggestion: FixSuggestion, HelpfulLinks: HelpfulLinks), IEventError, IBuilderError
 	{
 		public bool IgnoreError => true;
 		public bool Retry => false;

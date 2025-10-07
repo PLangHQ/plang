@@ -15,9 +15,9 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-08-16T22:51:05.7458824+00:00",
+      "Generated": "2025-10-03T09:33:04.0504503+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -29,10 +29,10 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "4fe1c02dcca2e06de00544c1377c8a4793ccb70b3f9980f9a555fa75d94ecda8",
+      "Hash": "d7b90ebea6a69ec76572ebdc235f3202c799f516da3ab01b8bbaf5efc5c9de7a",
       "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal",
-      "UserIntent": "Output the current system error message to the user or output stream"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -53,7 +53,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "65ea94267012244f3595565e5cf782435bfc748bc8e5d31b9748e114593aaf04",
+  "Hash": "69aa6fc58b9dac4f2a98c2cd605b1f3851720b23f45a24237943e34d840af6a7",
   "IncomingVariablesRequired": {
     "%!error%": "This variable holds the system error message that needs to be written out."
   },

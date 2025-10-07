@@ -14,6 +14,7 @@ using PLang.Models;
 using PLang.SafeFileSystem;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -223,7 +224,7 @@ namespace PLang.Runtime
 
 		private static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
 		{
-			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			var alives = engine.GetAppContext().GetOrDefault<List<Alive>>("KeepAlive");
 			if (alives == null) alives = new List<Alive>();
 
 			var aliveType = alives.FirstOrDefault(p => p.Type == task.GetType() && p.Key == "WaitForExecution");
@@ -232,7 +233,7 @@ namespace PLang.Runtime
 				aliveType = new Alive(task.GetType(), "WaitForExecution", [new EngineWait(task, engine)]);
 				alives.Add(aliveType);
 
-				AppContext.SetData("KeepAlive", alives);
+				engine.GetAppContext().AddOrReplace("KeepAlive", alives);
 			}
 			else
 			{

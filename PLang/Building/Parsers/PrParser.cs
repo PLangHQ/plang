@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -41,7 +42,7 @@ namespace PLang.Building.Parsers
 
 			goals = GetGoals();
 			systemGoals = GetSystemGoals();
-
+			
 			builderEventsGoals = GetEventsFiles(true);
 			runtimeEventsGoals = GetEventsFiles(false);
 
@@ -144,6 +145,13 @@ namespace PLang.Building.Parsers
 			AdjustPathsToOS(goal);
 			goal.IsSystem = absolutePrFilePath.Contains(fileSystem.SystemDirectory);
 
+			/* save memory */
+			goal.Description = null;
+			if (goal.BuilderVersion != null)
+			{
+				goal.BuilderVersion = string.IsInterned(goal.BuilderVersion) ?? string.Intern(goal.BuilderVersion);
+			}
+
 
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
@@ -152,11 +160,29 @@ namespace PLang.Building.Parsers
 				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
 				goal.GoalSteps[i].Index = i;
+				
 
 				//remove from memory uneeded data for runtime
 				goal.GoalSteps[i].Goal = goal;
 				goal.GoalSteps[i].LlmRequest = null;
 				goal.GoalSteps[i].PrFile = null;
+				goal.GoalSteps[i].Description = null;
+				goal.GoalSteps[i].UserIntent = null;
+				goal.GoalSteps[i].Confidence = null;
+
+				// testing to reduce memory of repeated strings
+				if (goal.GoalSteps[i].ModuleType != null)
+				{
+					goal.GoalSteps[i].ModuleType = string.IsInterned(goal.GoalSteps[i].ModuleType) ?? string.Intern(goal.GoalSteps[i].ModuleType);
+				}
+				if (goal.GoalSteps[i].BuilderVersion != null)
+				{
+					goal.GoalSteps[i].BuilderVersion = string.IsInterned(goal.GoalSteps[i].BuilderVersion) ?? string.Intern(goal.GoalSteps[i].BuilderVersion);
+				}
+				if (goal.GoalSteps[i].PrFileName != null)
+				{
+					goal.GoalSteps[i].PrFileName = string.IsInterned(goal.GoalSteps[i].PrFileName) ?? string.Intern(goal.GoalSteps[i].PrFileName);
+				}
 			}
 
 			return goal;
@@ -197,6 +223,7 @@ namespace PLang.Building.Parsers
 			{
 				instructions.TryAdd(step.AbsolutePrFilePath, instruction);
 			}
+			instruction.LlmRequest = null;
 			return instruction;
 
 		}
@@ -576,7 +603,11 @@ namespace PLang.Building.Parsers
 					{
 						goals[i].Variables[b]?.DisposeFunc()?.Wait();
 					}
+					
 				}
+				
+				goals[i].Variables.Clear();
+				goals[i].Variables = new();
 				for (int b = 0; b < goals[i].GoalSteps.Count; b++)
 				{
 					for (int c = 0; c < goals[i].GoalSteps[b].Variables.Count; c++)
@@ -586,6 +617,9 @@ namespace PLang.Building.Parsers
 							goals[i].GoalSteps[b].Variables[c]?.DisposeFunc()?.Wait();
 						}
 					}
+
+					goals[i].GoalSteps[b].Variables.Clear();
+					goals[i].GoalSteps[b].Variables = new();
 				}
 			}
 

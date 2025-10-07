@@ -549,7 +549,7 @@ public class TypeHelper : ITypeHelper
 			return jArray2.ToString();
 		}
 
-		if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+		if (IsDictionaryType(targetType))
 		{
 			return ConvertToDictionary(targetType, value, variableName);
 		}
@@ -975,10 +975,26 @@ public class TypeHelper : ITypeHelper
 
 		return toStringMethod;
 	}
+	public static bool IsListOrDict(Type? type)
+	{
+		if (type == null)
+			return false;
 
+		return typeof(IList).IsAssignableFrom(type) ||
+			   typeof(IDictionary).IsAssignableFrom(type) ||
+			   typeof(ITuple).IsAssignableFrom(type);
+	}
 	public static bool IsListOrDict(object? obj)
 	{
 		return (obj is IList || obj is IDictionary || obj is ITuple);
+	}
+
+	internal static bool IsList(Type type)
+	{
+		if (type == null)
+			return false;
+
+		return typeof(IList).IsAssignableFrom(type);
 	}
 
 	public static bool ImplementsDict(object? obj, out IDictionary? dict)
@@ -1031,7 +1047,27 @@ public class TypeHelper : ITypeHelper
 		return result;
 	}
 
+	private static bool IsDictionaryType(Type type)
+	{
+		if (!type.IsGenericType)
+			return false;
 
+		var genericTypeDef = type.GetGenericTypeDefinition();
+
+		// Check direct types
+		if (genericTypeDef == typeof(Dictionary<,>) ||
+			genericTypeDef == typeof(IDictionary<,>) ||
+			genericTypeDef == typeof(IReadOnlyDictionary<,>))
+		{
+			return true;
+		}
+
+		// Check if implements IDictionary<,> or IReadOnlyDictionary<,>
+		return type.GetInterfaces().Any(i =>
+			i.IsGenericType &&
+			(i.GetGenericTypeDefinition() == typeof(IDictionary<,>) ||
+			 i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)));
+	}
 
 	public static string? GetAsString(object? obj, string format = "text")
 	{
@@ -1094,5 +1130,7 @@ public class TypeHelper : ITypeHelper
 
 	private static object? GetDefault(Type t) =>
 		t.IsValueType ? Activator.CreateInstance(t) : null;
+
+	
 }
 
