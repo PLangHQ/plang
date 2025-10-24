@@ -272,7 +272,11 @@ defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 			IError? error = (throwErrorOnEmptyResult) ? new NotFoundError() : null;
 
 
-			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return (null, error);
+			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString()))
+			{
+				return (null, ErrorOnEmpty(throwErrorOnEmptyResult, "variableToExtractFrom is empty"));
+			}
+
 			if (valueToFilterBy == "null") valueToFilterBy = null;
 
 
@@ -297,7 +301,7 @@ defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 				var variableModule = GetProgramModule<VariableModule.Program>();
 				var trimmedObject = await variableModule.TrimForLlm(ov.Value, 2, 3, null, 1, 2, 2000, true);
 
-				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'",
+				return (null, new ProgramError($"'{propertyToFilterOn}' does not exists in {ov.PathAsVariable}(Count:{ov.Get("count")}). Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'",
 					FixSuggestion: $"The object that is being filtered on looks like this: {trimmedObject}"));
 			}
 
@@ -338,17 +342,37 @@ defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 				}
 			}
 
-			if (filteredList == null || filteredList.Count == 0) return (defaultValue, error);
+			if (filteredList == null || filteredList.Count == 0)
+			{
+				return (defaultValue, ErrorOnEmpty(throwErrorOnEmptyResult, "Could not find any items matching your query"));
+			}
 
-			if (retrieveOneItem == "first") return (filteredList.FirstOrDefault() ?? defaultValue, error);
-			if (retrieveOneItem == "last") return (filteredList.LastOrDefault() ?? defaultValue, error);
+			if (retrieveOneItem == "first")
+			{
+				var result = filteredList.FirstOrDefault();
+				if (result != null) return (result, null);
+
+				return (defaultValue, ErrorOnEmpty(throwErrorOnEmptyResult, "Could not find any items matching your query"));
+			}
+			if (retrieveOneItem == "last")
+			{
+				var result = filteredList.LastOrDefault();
+				if (result != null) return (result, null);
+
+				return (defaultValue, ErrorOnEmpty(throwErrorOnEmptyResult, "Could not find any items matching your query"));
+			}
 			if (int.TryParse(retrieveOneItem, out int idx))
 			{
-				if (filteredList.Count > idx && idx >= 0) return (filteredList[idx], error);
-				return (defaultValue, error);
+				if (filteredList.Count > idx && idx >= 0) return (filteredList[idx], null);
+				return (defaultValue, ErrorOnEmpty(throwErrorOnEmptyResult, $"Could not find index {idx}. Size of list is {filteredList.Count}"));
 			}
-			return (filteredList, error);
+			return (filteredList, null);
 
+		}
+
+		private NotFoundError? ErrorOnEmpty(bool throwErrorOnEmptyResult, string message)
+		{
+			return (throwErrorOnEmptyResult) ? new NotFoundError(message) : null;
 		}
 
 		private object? GetExtractedItem(object item, string? propertyToExtract)

@@ -1,4 +1,5 @@
-﻿using CsvHelper;
+﻿using AngleSharp.Io;
+using CsvHelper;
 using LightInject;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -15,6 +16,7 @@ using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Messages;
@@ -22,6 +24,7 @@ using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using System.Net.WebSockets;
@@ -29,46 +32,51 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 
 namespace PLang.Modules.WebserverModule;
 
 [Description("Start webserver, add route, set certificate, read/write to Header, Cookie, send file to client")]
 public class Program : BaseProgram, IDisposable
 {
-	private readonly ILogger logger;
 	private readonly IEventRuntime eventRuntime;
-	private readonly IPLangFileSystem fileSystem;
-	private readonly ISettings settings;
 	private readonly PrParser prParser;
 	private readonly IPseudoRuntime pseudoRuntime;
-	private readonly IEngine engine;
 	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
 
 
-	public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
-		, ISettings settings, PrParser prParser,
-		IPseudoRuntime pseudoRuntime, IEngine engine, Modules.ProgramFactory programFactory) : base()
+	public Program(IEventRuntime eventRuntime, PrParser prParser,
+		IPseudoRuntime pseudoRuntime, Modules.ProgramFactory programFactory) : base()
 	{
-		this.logger = logger;
 		this.eventRuntime = eventRuntime;
-		this.fileSystem = fileSystem;
-		this.settings = settings;
 		this.prParser = prParser;
 		this.pseudoRuntime = pseudoRuntime;
-		this.engine = engine;
 		this.programFactory = programFactory;
 
 	}
 
 
 
-	public async Task<long> GetNumberOfLiveConnections()
+	public async Task<long> GetNumberOfLiveConnections(int lastUpdatedInSeconds = 0)
 	{
 		if (listeners.Count == 0) return 0;
 
-		return listeners.Sum(p => p.Engine.LiveConnections.Count);
+		if (lastUpdatedInSeconds <= 0)
+		{
+			return listeners.Sum(p => p.Engine.LiveConnections.Count);
+		}
+
+		int count = 0;
+		foreach (var listener in listeners)
+		{
+			var conns = listener.Engine.LiveConnections.Where(a => a.Value.Updated > DateTime.Now.AddSeconds(-1 * lastUpdatedInSeconds));
+			count += conns.Count();
+		}
+
+		return count;
+
 
 	}
 
@@ -118,7 +126,7 @@ public class Program : BaseProgram, IDisposable
 
 
 	[Description("Default Methods=[\"GET\"]")]
-	public record RequestProperties(List<string> Methods, long MaxContentLengthInBytes = 1024 * 8, bool SignedRequestRequired = false)
+	public record RequestProperties(List<string> Methods, long MaxContentLengthInBytes = 1024 * 16, bool SignedRequestRequired = false)
 	{
 		public RequestProperties() : this(["GET"]) { }
 	}
@@ -185,11 +193,7 @@ public class Program : BaseProgram, IDisposable
 
 		//engine.ChildEngines.Add(webserverEngine);
 
-		RequestHandler requestHandler = new RequestHandler(goalStep,
-									container.GetInstance<ILogger>(),
-									container.GetInstance<IPLangFileSystem>(),
-									container.GetInstance<Modules.IdentityModule.Program>(),
-									container.GetInstance<PrParser>());
+		RequestHandler requestHandler = new RequestHandler(goalStep, logger, fileSystem, container.GetInstance<Modules.IdentityModule.Program>(), prParser);
 
 		if (webserverProperties.OnStart != null)
 		{
@@ -750,7 +754,96 @@ Frontpage
 		return null;
 	}
 
-	public async Task<IError?> SendFileToClient(string path, string? fileName = null)
+	public async Task<IError?> StreamFile(StreamMessage streamMessage, long startByte = 0, long? endByte = null)
+	{
+		var absolutePath = GetPath(streamMessage.FileName);
+		if (!fileSystem.File.Exists(absolutePath))
+		{
+			return new NotFoundError("File not found");
+		}
+
+		var streamId = Guid.NewGuid().ToString();
+		const int chunkSize = 64 * 1024; // 64KB chunks
+
+		await using var stream = fileSystem.File.OpenRead(absolutePath);
+		var fileLength = stream.Length;
+
+		// Validate and adjust byte ranges
+		if (startByte < 0 || startByte >= fileLength)
+		{
+			return new ProgramError($"Invalid start byte: {startByte}. File length is {fileLength}");
+		}
+
+		var actualEndByte = endByte.HasValue ? Math.Min(endByte.Value, fileLength - 1) : fileLength - 1;
+
+		if (actualEndByte < startByte)
+		{
+			return new ProgramError($"End byte ({actualEndByte}) cannot be less than start byte ({startByte})");
+		}
+
+		// Seek to start position
+		stream.Seek(startByte, SeekOrigin.Begin);
+
+		var totalBytesToSend = actualEndByte - startByte + 1;
+		var bytesSent = 0L;
+
+		var sink = context.GetSink(streamMessage.Actor);
+		var response = HttpContext.Response;
+
+		// Send Start message with range info
+		var meta = new Dictionary<string, object?>
+		{
+			["startByte"] = startByte,
+			["endByte"] = actualEndByte,
+			["totalBytes"] = fileLength,
+			["rangeBytes"] = totalBytesToSend
+		};
+
+		await sink.SendAsync(new StreamMessage(
+			StreamId: streamId,
+			Phase: StreamPhase.Start,
+			Actions: new[] { "stream" },
+			ContentType: streamMessage.ContentType,
+			FileName: streamMessage.FileName,
+			Channel: streamMessage.Channel,
+			Target: streamMessage.Target,
+			Meta: meta
+		));
+
+		// Send file in chunks
+		var buffer = new byte[chunkSize];
+		int bytesRead;
+
+		while (bytesSent < totalBytesToSend &&
+			   (bytesRead = await stream.ReadAsync(buffer, 0,
+				   (int)Math.Min(chunkSize, totalBytesToSend - bytesSent),
+				   response.HttpContext.RequestAborted)) > 0)
+		{
+			await sink.SendAsync(new StreamMessage(
+				StreamId: streamId,
+				Phase: StreamPhase.Chunk,
+				Bytes: new ReadOnlyMemory<byte>(buffer, 0, bytesRead),
+				ContentType: streamMessage.ContentType,
+				FileName: streamMessage.FileName,
+				Channel: streamMessage.Channel
+			));
+
+			bytesSent += bytesRead;
+		}
+
+		// Send End message
+		await sink.SendAsync(new StreamMessage(
+			StreamId: streamId,
+			Phase: StreamPhase.End,
+			ContentType: streamMessage.ContentType,
+			FileName: streamMessage.FileName,
+			Channel: streamMessage.Channel
+		));
+
+		return null;
+	}
+
+	public async Task<IError?> SendFileToClient(string path, string? fileName = null, string actor = "user", string channel = "default")
 	{
 		var absolutePath = GetPath(path);
 
@@ -762,12 +855,30 @@ Frontpage
 		var mimeType = RequestHandler.GetMimeType(path);
 		if (mimeType == null) mimeType = "application/octet-stream";
 
+		if (string.IsNullOrEmpty(fileName))
+		{
+			var fileInfo = fileSystem.FileInfo.New(absolutePath);
+			fileName = fileInfo.Name;
+		}
+
 		var response = HttpContext.Response;
-		if (response.HasStarted) return new ProgramError("Data already sent to browser. To use this action, no data can be previously sent.");
+		if (!response.HasStarted)
+		{
+			response.StatusCode = StatusCodes.Status200OK;
+			response.ContentType = mimeType;
+
+			var cd = new ContentDispositionHeaderValue("attachment");
+			cd.SetHttpFileName(fileName);
+			response.Headers[Microsoft.Net.Http.Headers.HeaderNames.ContentDisposition] = cd.ToString();
+
+			await using var s = fileSystem.File.OpenRead(absolutePath);
+			response.ContentLength = s.Length;
+			await s.CopyToAsync(response.Body, response.HttpContext.RequestAborted);
+			await response.Body.FlushAsync(response.HttpContext.RequestAborted);
 
 
-		response.StatusCode = StatusCodes.Status200OK;
-		response.ContentType = mimeType;
+			return null;
+		}
 
 
 		if (string.IsNullOrEmpty(fileName))
@@ -776,16 +887,46 @@ Frontpage
 			fileName = fileInfo.Name;
 		}
 
+		var streamId = Guid.NewGuid().ToString();
+		const int chunkSize = 64 * 1024; // 64KB chunks
 
-		var cd = new ContentDispositionHeaderValue("attachment");
-		cd.SetHttpFileName(fileName);
-		response.Headers[HeaderNames.ContentDisposition] = cd.ToString();
+		await using var stream = fileSystem.File.OpenRead(absolutePath);
 
-		await using var s = fileSystem.File.OpenRead(absolutePath);
-		response.ContentLength = s.Length;
-		await s.CopyToAsync(response.Body, response.HttpContext.RequestAborted);
-		await response.Body.FlushAsync(response.HttpContext.RequestAborted);
+		var sink = context.GetSink(actor);
+		// Send Start message
+		await sink.SendAsync(new StreamMessage(
+			StreamId: streamId,
+			Phase: StreamPhase.Start,
+			ContentType: mimeType,
+			FileName: fileName,
+			Actions: new[] { "download" },
+			Channel: channel
 
+		));
+
+		// Send file in chunks
+		var buffer = new byte[chunkSize];
+		int bytesRead;
+		while ((bytesRead = await stream.ReadAsync(buffer, response.HttpContext.RequestAborted)) > 0)
+		{
+			await sink.SendAsync(new StreamMessage(
+				StreamId: streamId,
+				Phase: StreamPhase.Chunk,
+				Bytes: new ReadOnlyMemory<byte>(buffer, 0, bytesRead),
+				ContentType: mimeType,
+				FileName: fileName,
+				Channel: channel
+			));
+		}
+
+		// Send End message
+		await sink.SendAsync(new StreamMessage(
+			StreamId: streamId,
+			Phase: StreamPhase.End,
+			ContentType: mimeType,
+			FileName: fileName,
+			Channel: channel
+		));
 
 		return null;
 	}

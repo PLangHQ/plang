@@ -1,4 +1,6 @@
-﻿using PLang.Interfaces;
+﻿using Newtonsoft.Json;
+using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -27,104 +29,131 @@ namespace PLang.Services.OutputStream.Transformers
 		}
 
 
-		public static object BuildEnvelope(OutMessage m, Interfaces.PLangContext context)
+		public static (object?, IError?) BuildEnvelope(OutMessage m, Interfaces.PLangContext context)
 		{
-			var envelope = m switch
+			try
 			{
-				TextMessage t => new Dictionary<string, object?>
+				var envelope = m switch
 				{
-					["id"] = context.Id,
-					["kind"] = "text",
-					["channel"] = m.Channel,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["content"] = t.Content,
-				},
-				RenderMessage r => new Dictionary<string, object?>
-				{
-					["id"] = context.Id,
-					["kind"] = "render",
-					["channel"] = m.Channel,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["content"] = r.Content,
-				},
-				ExecuteMessage e => new Dictionary<string, object?>
-				{
-					["id"] = context.Id,
-					["kind"] = "execute",
-					["channel"] = m.Channel,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["function"] = e.Function,
-					["data"] = e.Data
-				},
-				AskMessage a => new Dictionary<string, object?>
-				{
-					["id"] = context.Id,
-					["kind"] = "ask",
-					["channel"] = m.Channel,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["content"] = a.Content,
-					["callback"] = a.Callback
-				},
+					TextMessage t => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "text",
+						["channel"] = m.Channel,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["content"] = t.Content,
+					},
+					RenderMessage r => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "render",
+						["channel"] = m.Channel,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["content"] = r.Content,
+					},
+					ExecuteMessage e => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "execute",
+						["channel"] = m.Channel,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["function"] = e.Function,
+						["data"] = e.Data
+					},
+					AskMessage a => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "ask",
+						["channel"] = m.Channel,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["content"] = a.Content,
+						["callback"] = a.Callback
+					},
 
-				ErrorMessage a => new Dictionary<string, object?>
+					ErrorMessage a => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "error",
+						["channel"] = m.Channel,
+						["key"] = a.Key,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["content"] = a.Content,
+						["fixSuggestion"] = a.FixSuggestion,
+						["helpfullLinks"] = a.HelpfullLinks,
+						["callback"] = a.Callback
+					},
+
+					StreamMessage s => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "stream",
+						["channel"] = m.Channel,
+						["level"] = m.Level,
+						["status"] = m.StatusCode,
+						["target"] = m.Target,
+						["actions"] = m.Actions,
+						["meta"] = m.Properties,
+						["streamId"] = s.StreamId,
+						["phase"] = s.Phase.ToString().ToLowerInvariant(),
+						["text"] = s.Text,
+						["hasBinary"] = s.HasBinary,
+						["bytes"] = s.Bytes,
+						["fileName"] = s.FileName,
+						["contentType"] = s.ContentType,
+					},
+					_ => new Dictionary<string, object?>
+					{
+						["id"] = context.Id,
+						["kind"] = "unknown",
+						["level"] = m.Level,
+						["status"] = m.StatusCode
+					}
+				};
+
+				if (context.DebugMode)
+				{
+					envelope["debug"] = GetDebugInfo(context);
+				}
+
+				return (envelope, null);
+			}
+			catch (Exception ex)
+			{
+				var envelope = new Dictionary<string, object?>
 				{
 					["id"] = context.Id,
 					["kind"] = "error",
-					["channel"] = m.Channel,
-					["key"] = a.Key,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["content"] = a.Content,
-					["fixSuggestion"] = a.FixSuggestion,
-					["helpfullLinks"] = a.HelpfullLinks,
-					["callback"] = a.Callback
-				},
+					["channel"] = "default",
+					["key"] = "CriticalError",
+					["level"] = "error",
+					["status"] = 500,
+					["content"] = $"",
+				};
 
-				StreamMessage s => new Dictionary<string, object?>
+				if (context.DebugMode)
 				{
-					["id"] = context.Id,
-					["kind"] = "stream",
-					["channel"] = m.Channel,
-					["level"] = m.Level,
-					["status"] = m.StatusCode,
-					["target"] = m.Target,
-					["actions"] = m.Actions,
-					["meta"] = m.Properties,
-					["streamId"] = s.StreamId,
-					["phase"] = s.Phase.ToString().ToLowerInvariant(),
-					["text"] = s.Text,
-					["hasBinary"] = s.HasBinary,
-					["contentType"] = s.ContentType,
-				},
-				_ => new Dictionary<string, object?>
-				{
-					["id"] = context.Id,
-					["kind"] = "unknown",
-					["level"] = m.Level,
-					["status"] = m.StatusCode
+					envelope["debug"] = GetDebugInfo(context);
 				}
-			};
 
-			if (context.DebugMode)
-			{
-				envelope["debug"] = GetDebugInfo(context);
+				return (null, new Error($"Message:{ex.Message}\nOutputMessage:{JsonConvert.SerializeObject(m)}\nException:{ex}"));
 			}
 
-			return envelope;
+			
 		}
 
 		private static object? GetDebugInfo(PLangContext context)

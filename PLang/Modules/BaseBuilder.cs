@@ -84,7 +84,10 @@ namespace PLang.Modules
 		{
 			this.contentExtractor = contentExtractor;
 		}
-
+		protected string GetPath(string? path, Goal goal)
+		{
+			return PathHelper.GetPath(path, fileSystem, goal);
+		}
 
 		public async Task<(T?, IBuilderError? Error)> LlmRequest<T>(string system, GoalStep step)
 		{
@@ -224,6 +227,13 @@ Make sure to use the information in <error> to return valid JSON response"
 			[LlmIgnore]
 			[Newtonsoft.Json.JsonIgnore]
 			public Instruction Instruction { get; set; }
+
+			public T? GetParameter<T>(string name, T? defaultValue)
+			{
+				var item = GetParameter<T>(name);
+				if (item == null || (item is string str && string.IsNullOrEmpty(str))) return defaultValue;
+				return item;
+			}
 
 			public T? GetParameter<T>(string name)
 			{

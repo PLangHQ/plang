@@ -75,6 +75,9 @@ namespace PLang.Models.ObjectValueExtractors
 				return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
 			}
 
+			object opResult2 = DoOp(list, segment);
+			return new ObjectValue(segment.Value, opResult2, parent: parent, properties: parent.Properties);
+
 			throw new Exception($"Could not figure out how to calculate {segment.Value} in {parent.PathAsVariable}");
 		}
 

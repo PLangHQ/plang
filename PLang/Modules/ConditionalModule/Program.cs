@@ -261,16 +261,28 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return result;
 
 		}
-
+		public async Task<(object? Result, IError? Error)> IsNotEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var result = !IsEqualInternal(item1, item2, ignoreCase);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
 		[Description(@"Check if item equals(==) another object. 
-`if %id% == 100 then IsEqual, else IsNotEqual....` => IsEqual is goalToCallIfTrue, IsNotEqual is goalToCallIfFalse
+`if %id% == 100 then call IsCorrectNumber, else DoSomeThingElse....` => IsCorrectNumber is goalToCallIfTrue, DoSomeThingElse is goalToCallIfFalse
 `if %name% is 'john'....`
 `if %zip equals 123....
 ")]
 		public async Task<(object? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
-			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
+		ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
+			var result = IsEqualInternal(item1, item2, ignoreCase);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
+		
+		
+		internal bool IsEqualInternal(object? item1, object? item2, bool ignoreCase = true) {
 			bool? result = null;
 			if (item1 == item2) result = true;
 			if (result == null && item1 != null && item1.Equals(item2)) result = true;
@@ -313,7 +325,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 				}
 			}
 
-			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return result.Value;
 
 		}
 

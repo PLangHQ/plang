@@ -16,6 +16,7 @@ using System.Diagnostics.Contracts;
 
 namespace PLang.Modules.ThrowErrorModule
 {
+	[Description("statusCode default is 400")]
 	public record ErrorInfo(string? errorMessage = null, string type = "error", int statusCode = 400);
 
 	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
@@ -56,7 +57,8 @@ namespace PLang.Modules.ThrowErrorModule
 			if (message is IError) return message as IError;
 
 			string errorMessage = (message == null) ? "UserDefinedError" : message.ToString() ?? "UserDefinedError";
-			return new UserInputError(errorMessage, goalStep, key, statusCode, null, fixSuggestion, helpfullLinks);
+			var em = new ErrorMessage(errorMessage, key, "error", statusCode, FixSuggestion: fixSuggestion, HelpfullLinks: helpfullLinks);
+			return new UserInputError(errorMessage, goalStep, key, statusCode, null, fixSuggestion, helpfullLinks, ErrorMessage: em);
 			
 		}
 		 

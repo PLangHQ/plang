@@ -1,17 +1,18 @@
-﻿using Newtonsoft.Json;
-using System.Text.RegularExpressions;
-using PLang.Building.Model;
-using System.Text;
-using PLang.Utils;
+﻿using Jil;
 using LightInject;
-using System.IO.Abstractions;
-using PLang.Interfaces;
-using System.Text.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NJsonSchema;
+using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Modules.DbModule;
+using PLang.Utils;
+using System.IO.Abstractions;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace PLang.Utils
 {
@@ -115,11 +116,12 @@ namespace PLang.Utils
 		}
 
 
-		public static async Task<(bool IsValid, IError? Error)> ValidateSchemaAsync(string schemaJson)
+		public static (bool IsValid, IError? Error) ValidateJson(string schemaJson)
 		{
 			try
 			{
-				var schema = await JsonSchema.FromJsonAsync(schemaJson);
+				JsonDocument.Parse(schemaJson);
+				//var schema = await JsonSchema.FromJsonAsync(schemaJson);
 				return (true, null);
 			}
 			catch (Exception ex)

@@ -226,11 +226,11 @@ namespace PLang.Utils
 			} 
 
 			goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
-										&& p.GoalName.Equals(goalName));
+										&& p.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return (goal, null);
 
 			goal = systemGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
-										&& p.GoalName.Equals(goalName));
+										&& p.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return (goal, null);
 
 			return (null, new BuilderError($"Could not find {goalToCall.Name}", Retry: false, Key: "GoalNotFound", StatusCode: 404));

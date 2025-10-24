@@ -53,7 +53,8 @@ namespace PLang.Models.ObjectValueExtractors
 
 			if (newList.Count == 1)
 			{
-				return new ObjectValue(segment.Value, newList[0], parent: parent, properties: parent?.Properties);
+				var itemParent = ((ObjectValue)newList[0]).Parent;
+				return new ObjectValue(segment.Value, newList[0], parent: itemParent, properties: itemParent?.Properties);
 			}
 			return new ObjectValue(segment.Value, newList, parent: parent, properties: parent?.Properties);
 		}

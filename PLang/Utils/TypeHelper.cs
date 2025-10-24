@@ -658,19 +658,46 @@ public class TypeHelper : ITypeHelper
 
 		if (value is IDictionary<string, object?> dict)
 		{
-			var result = (System.Collections.IDictionary)Activator.CreateInstance(targetType)!;
+			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
+
+			var result = (System.Collections.IDictionary)Activator.CreateInstance(concreteType)!;
 			foreach (var kvp in dict)
 				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
 			return result;
 		} else if (variableName != null)
 		{
-			var result = (System.Collections.IDictionary)Activator.CreateInstance(targetType)!;
+			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
+
+			var result = (System.Collections.IDictionary)Activator.CreateInstance(concreteType)!;
 			result.Add(variableName, value);
 			return result;
 		}
 
 		throw new Exception("Not sure what todo?");
 	}
+
+	private static Type GetConcreteDictionaryType(Type targetType, Type keyType, Type valType)
+	{
+		// If it's already a concrete type, use it
+		if (!targetType.IsInterface && !targetType.IsAbstract)
+			return targetType;
+
+		// Map common dictionary interfaces to concrete types
+		if (targetType.IsGenericType)
+		{
+			var genericTypeDef = targetType.GetGenericTypeDefinition();
+
+			if (genericTypeDef == typeof(IDictionary<,>) ||
+				genericTypeDef == typeof(IReadOnlyDictionary<,>))
+			{
+				return typeof(Dictionary<,>).MakeGenericType(keyType, valType);
+			}
+		}
+
+		// Default fallback
+		return typeof(Dictionary<,>).MakeGenericType(keyType, valType);
+	}
+
 	public static IList ConvertToList(Type targetType, object value)
 	{
 		// Figure out the element type
@@ -748,6 +775,9 @@ public class TypeHelper : ITypeHelper
 
 	public static (object? item1, object? item2) TryConvertToMatchingType(object? item1, object? item2)
 	{
+		if (item1 is ObjectValue ov) item1 = ov.Value;
+		if (item2 is ObjectValue ov2) item2 = ov2.Value;
+
 		if (item1 == null || item2 == null) return (item1, item2);
 
 		var type1 = item1.GetType();

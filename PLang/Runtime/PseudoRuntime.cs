@@ -1,4 +1,6 @@
-﻿using LightInject;
+﻿using Force.DeepCloner;
+using LightInject;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -17,6 +19,7 @@ using PLang.Utils;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.Intrinsics.Arm;
 using System.Threading.Tasks;
 using static PLang.Modules.BaseBuilder;
 
@@ -86,7 +89,6 @@ namespace PLang.Runtime
 
 			try
 			{
-				context.CallStack.EnterGoal(goalToRun);
 
 				// todo: (Decision) The idea behind isolation is when you call a external app, that app should not have access
 				// to the memory of the calling app, and only get the parameters that are sent
@@ -153,20 +155,49 @@ namespace PLang.Runtime
 				}
 				else
 				{
+					var newMemoryStack = MemoryStack.New(runtimeEngine.Container, runtimeEngine);
+					foreach (var item in memoryStack.GetMemoryStack())
+					{
+						try
+						{
+							
+							newMemoryStack.Put(new ObjectValue(item.Name, item.Value.DeepClone()));
+
+							
+						}
+						catch (Exception ex)
+						{
+							throw;
+						}
+					}
+					
 					task = Task.Run(async () =>
 					{
 						try
 						{
-
 							var newContext = context.Clone(runtimeEngine);
 							newContext.IsAsync = true;
 							newContext.HttpContext = null;
 							contextAccessor.Current = newContext;
+							
+							var msa = runtimeEngine.Container.GetInstance<IMemoryStackAccessor>();
+							msa.Current = newMemoryStack;
 
 							var result = await runtimeEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
 							if (result.Error != null)
 							{
+
 								Console.WriteLine("Error running async goal:" + result.Error.ToString());
+
+								Console.WriteLine($"waitForExecution:{waitForExecution}");
+
+								Console.WriteLine("Exception:" + result.Error.Exception);
+								var eve = contextAccessor.Current.GetOrDefault<EventBinding>(ReservedKeywords.Event, null);
+								if (eve != null)
+								{
+									Console.WriteLine("EventBinding:" + JsonConvert.SerializeObject(eve));
+								}
+
 							}
 							return result;
 						} finally
@@ -178,7 +209,7 @@ namespace PLang.Runtime
 						}
 						
 					});
-					
+				
 					KeepAlive(runtimeEngine, task);
 
 					return (runtimeEngine, task, null);
@@ -218,7 +249,6 @@ namespace PLang.Runtime
 				{
 					engine.Return(runtimeEngine);
 				}
-				context.CallStack.ExitGoal();
 			}
 		}
 

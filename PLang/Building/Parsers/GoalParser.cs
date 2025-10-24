@@ -315,7 +315,7 @@ namespace PLang.Building.Parsers
 				{
 					if (Path.Join(basePrFolder, goal.GoalName) == basePrGoalFolder)
 					{
-						throw new Exception($"The goal {goal.GoalName} is named the same the the goal file {goal.GoalFileName}. This is not allowed");
+						throw new Exception($"The goal {goal.GoalName} is named the same the the goal file {goal.RelativeGoalPath}. {goal.GoalName} MUST be the first goal in the file. Either rename goal file or goal.");
 					}
 				}
 				if (injections.Count > 0)

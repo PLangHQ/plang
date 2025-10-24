@@ -43,10 +43,12 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
+		private readonly IPLangContextAccessor contextAccessor;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
 		private readonly IDbServiceFactory dbFactory;
 		private readonly IAppCache appCache;
+		private readonly PLangContext context;
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
@@ -60,11 +62,12 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
+			this.contextAccessor = contextAccessor;
 			this.memoryStack = contextAccessor.Current.MemoryStack;
 			this.variableHelper = variableHelper;
 			this.dbFactory = dbFactory;
 			this.appCache = appCache;
-
+			context = contextAccessor.Current;
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
 			UseInMemoryDataSource = inMemory;
 		}
@@ -78,10 +81,29 @@ namespace PLang.Modules.DbModule
 			public bool KeepHistory { get; set; } = KeepHistory;
 			[LlmIgnore]
 			public string NameInStep { get; set; }
-			
+
 			[System.Text.Json.Serialization.JsonIgnore]
 			[Newtonsoft.Json.JsonIgnore]
 			public List<string> AttachedDbs { get; set; } = new();
+			[System.Text.Json.Serialization.JsonIgnore]
+			[Newtonsoft.Json.JsonIgnore]
+			public bool IsInTransaction { get { return _transaction != null; } }
+			[System.Text.Json.Serialization.JsonIgnore]
+			[Newtonsoft.Json.JsonIgnore]
+			public string? TransactionStartGoal { get; set; }
+
+			[System.Text.Json.Serialization.JsonIgnore]
+			[Newtonsoft.Json.JsonIgnore]
+			public IDbTransaction? Transaction
+			{
+				get { return _transaction; }
+				set
+				{
+					_transaction = value;
+					if (value == null) TransactionStartGoal = null;
+				}
+			}
+			private IDbTransaction? _transaction;
 		}
 
 		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -420,17 +442,16 @@ Be concise"));
 			return dataSources;
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> GetCurrentDataSource(GoalStep? goalStep = null)
+		public async Task<(DataSource? DataSource, IError? Error)> GetDataSourceOrDefault()
 		{
-			// first check if datasource is on goalStep
-			if (goalStep != null)
+			// first check if datasource is on context
+			if (context.TryGetValue(Program.CurrentDataSourceKey, out DataSource? dataSource) && dataSource != null)
 			{
-				var ds = goalStep.GetVariable<DataSource>();
-				if (ds != null) return (ds, null);
+				return (dataSource, null);
 			}
 
 			var dataSources = await GetAllDataSources();
-			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+			dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
 
 			if (dataSource == null)
 			{
@@ -441,24 +462,34 @@ Be concise"));
 			return await ProcessDataSource(dataSource);
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? name, GoalStep? step = null)
+		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? name, GoalStep? step = null, bool transactionDependant = true)
 		{
+			DataSource? dataSource;
 			if (string.IsNullOrEmpty(name))
 			{
+				if (context.TryGetValue(Program.CurrentDataSourceKey, out dataSource) && dataSource != null)
+				{
+					return (dataSource, null);
+				}
+
 				return (null, new ProgramError("You need to provide a data source name", step));
 			}
 			if (name.StartsWith("/"))
 			{
 				name = name.TrimStart('/');
 			}
-			if (step != null)
+			if (context.TryGetValue(Program.CurrentDataSourceKey, out dataSource) && dataSource != null)
 			{
-				var stepDataSource = step.Goal.GetVariable<DataSource>();
-				if (stepDataSource?.Name == name) return (stepDataSource, null);
+				if (dataSource.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return (dataSource, null);
+				if (transactionDependant && dataSource.AttachedDbs.FirstOrDefault(p => p.Equals(name, StringComparison.OrdinalIgnoreCase)) != null)
+				{
+					return (dataSource, null);
+				}
 			}
+
 			var dataSources = await GetAllDataSources();
 			var dsNameAndPath = GetNameAndPathByVariable(name, null);
-			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
+			dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
 
 			if (dataSource == null)
 			{
@@ -466,6 +497,7 @@ Be concise"));
 				if (dataSource == null) return (null, error);
 			}
 
+			dataSource = dataSource with { NameInStep = name };
 			if (!IsBuilder && name.Contains("%"))
 			{
 				var dataSourceDynamicName = memoryStack.LoadVariables(name);
@@ -521,17 +553,18 @@ Be concise"));
 			if (!fileSystem.File.Exists(localPath))
 			{
 				var error = await CreateDatabase(localPath, connectionString, dataSource.Name);
-				if (error != null) return (null, error);
+				if (error != null) return (dataSource, error);
 			}
 			else
 			{
-				
+
 				var connection = new SqliteConnection(connectionString);
 				await connection.OpenAsync();
 				var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable='SetupHash'");
 				if (result == null)
 				{
-					return (null, new Error("SetupHash is missing from __Variables__"));
+					if (dataSource.IsDefault) return (dataSource, null);
+					return (dataSource, new Error("SetupHash is missing from __Variables__"));
 				}
 
 				var setupHashKey = "__plang_SetupHash_" + dataSource.Name;
@@ -543,7 +576,7 @@ Be concise"));
 					try
 					{
 						IDbConnection? anchorDb = null;
-						var anchors = appContext.GetOrDefault< Dictionary<string, IDbConnection>>("AnchorMemoryDb");
+						var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb");
 						if (anchors != null && anchors.TryGetValue(dataSource.Name, out anchorDb))
 						{
 							anchorDb.Close();
@@ -553,7 +586,8 @@ Be concise"));
 						{
 							await transaction.RollbackAsync();
 							return (null, error);
-						} else
+						}
+						else
 						{
 							await transaction.CommitAsync();
 
@@ -573,7 +607,7 @@ Be concise"));
 						await connection.CloseAsync();
 					}
 
-					
+
 				}
 			}
 
@@ -656,7 +690,8 @@ Be concise"));
 					int i = 0;
 					// Error code 1 = "table already exists" in most cases
 					// Ignore and continue
-				} catch (Exception ex)
+				}
+				catch (Exception ex)
 				{
 					return new StepError(ex.Message, step, Exception: ex);
 				}
@@ -681,7 +716,7 @@ Be concise"));
 
 			if (dataSource.TypeFullName != typeof(SqliteConnection).FullName) return (dataSource, null);
 
-			if (UseInMemoryDataSource)
+			if (UseInMemoryDataSource || IsBuilder)
 			{
 				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;" };
 				return (dataSource, null);
@@ -710,7 +745,7 @@ Be concise"));
 
 		public async Task<(DataSource?, IError?)> GetDataSourceNotFoundError(string? name = null, GoalStep? step = null)
 		{
-			
+
 			var dataSources = await GetAllDataSources();
 			logger.LogDebug("Datasources: {0}", JsonConvert.SerializeObject(dataSources));
 
@@ -741,7 +776,7 @@ Be concise"));
 					var keepHistoryEventSourcing = gf.GetParameter<bool?>("keepHistoryEventSourcing") ?? false;
 
 					(var ds, var error) = await CreateDataSource(dsName, dsDataType, setAsDefaultForApp, keepHistoryEventSourcing);
-					
+
 					if (ds != null) return (ds, null);
 				}
 			}
@@ -897,18 +932,5 @@ where the goal CreateDataSource would create the database and table
 
 
 
-		public static string ConvertVariableNamesInDataSourceName(VariableHelper variableHelper, string dataSourceName, MemoryStack memoryStack)
-		{
-			if (!dataSourceName.Contains("%")) return dataSourceName.TrimStart('/');
-
-			var dataSourceVariables = variableHelper.GetVariables(dataSourceName, memoryStack);
-			for (int i = 0; i < dataSourceVariables.Count; i++)
-			{
-				if (dataSourceVariables[i].Name.Equals($"variable{i}")) continue;
-
-				dataSourceName = dataSourceName.Replace(dataSourceVariables[i].PathAsVariable, $"%variable{i}%");
-			}
-			return dataSourceName.TrimStart('/');
-		}
 	}
 }

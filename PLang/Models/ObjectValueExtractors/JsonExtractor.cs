@@ -48,7 +48,7 @@ namespace PLang.Models.ObjectValueExtractors
 
 					if (jArray.Count > index)
 					{
-						return new ObjectValue(segment.Value, jArray[index], parent: parent, properties: parent.Properties);
+						return new ObjectValue($"[{index}]", jArray[index], parent: parent, properties: parent.Properties);
 					}
 					return null;
 				}

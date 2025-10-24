@@ -86,6 +86,7 @@ Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
 					if (value is string str) return string.IsNullOrWhiteSpace(str);
 					if (value is IList list) return list.Count == 0;
 					if (value is IDictionary dict) return dict.Count == 0;
+					if (TypeHelper.IsConsideredPrimitive(value.GetType())) return string.IsNullOrEmpty(value.ToString());
 				}
 
 				return true;

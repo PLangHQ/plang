@@ -17,6 +17,7 @@ namespace PLang.Errors.Builder
 
 		public StepBuilderError(IError error, GoalStep Step, bool ContinueBuild = true) : base(error, Step.Goal, ContinueBuild)
 		{
+			base.Id = error.Id;
 			this.Step = Step;
 			this.Goal = Step.Goal;
 		}

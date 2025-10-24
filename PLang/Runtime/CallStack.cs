@@ -1,4 +1,7 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Modules;
+using System.Collections.Concurrent;
 using System.Text;
 
 public class CallStack
@@ -8,6 +11,7 @@ public class CallStack
 	public CallStackFrame CurrentFrame => _frames.Count > 0 ? _frames.Peek() : null;
 	public Goal CurrentGoal => CurrentFrame?.Goal;
 	public GoalStep CurrentStep => CurrentFrame?.CurrentStep;
+	
 	public ExecutionPhase CurrentPhase => CurrentFrame?.Phase ?? ExecutionPhase.None;
 	public string EventScope => CurrentFrame?.EventScope;
 	public string EventType => CurrentFrame?.EventType;
@@ -19,6 +23,8 @@ public class CallStack
 
 	public void ExitGoal()
 	{
+		DisposeOfDisposables();
+
 		if (_frames.Count > 0)
 			_frames.Pop();
 	}
@@ -38,6 +44,31 @@ public class CallStack
 		{
 			CurrentFrame.Phase = phase;
 		}
+	}
+
+	public void AddDisposable(IDisposable disposable)
+	{
+		CurrentFrame.Disposables.Add(disposable);
+	}
+
+	public void AddError(IError error)
+	{
+		CurrentFrame.Errors.Add(error);
+	}
+
+	public void DisposeOfDisposables()
+	{
+		if (CurrentFrame.Disposables.Count == 0) return;
+
+		foreach (var disposable in CurrentFrame.Disposables)
+		{
+			if (CurrentFrame.Errors.Count > 0)
+			{
+				((BaseProgram) disposable).HasError = true;
+			}
+			disposable.Dispose();
+		}
+		CurrentFrame.Disposables.Clear();
 	}
 
 	public int Depth => _frames.Count;
@@ -93,18 +124,21 @@ public class CallStackFrame
 	public ExecutionPhase Phase { get; set; }
 
 	// Event information
-	public string EventScope { get; }  // Goal, Step, Module, StartOfApp, etc.
-	public string EventType { get; }   // Before, After, OnCreate, OnChange, etc.
+	public string? EventScope { get; }  // Goal, Step, Module, StartOfApp, etc.
+	public string? EventType { get; }   // Before, After, OnCreate, OnChange, etc.
 
 	public Dictionary<string, object> LocalVariables { get; }
-
-	public CallStackFrame(Goal goal, string eventScope = null, string eventType = null)
+	public ConcurrentBag<IDisposable> Disposables { get; }
+	public List<IError> Errors { get; set; }
+	public CallStackFrame(Goal goal, string? eventScope = null, string? eventType = null)
 	{
 		Goal = goal;
 		EventScope = eventScope;
 		EventType = eventType;
 		Phase = ExecutionPhase.None;
 		LocalVariables = new Dictionary<string, object>();
+		Disposables = new();
+		Errors = new();
 	}
 }
 

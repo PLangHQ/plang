@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Sinks;
@@ -79,8 +80,9 @@ namespace PLang.Interfaces
 			Id = Guid.NewGuid().ToString();
 		}
 
+		
 
-		public new object? this[string key]
+		public object? this[string key]
 		{
 			get
 			{
@@ -109,6 +111,30 @@ namespace PLang.Interfaces
 			Items.Remove(key, out var _);
 		}
 
+		public bool TryGetValue<T>(string key, out T? objInstance)
+		{
+			var obj = this[key];
+			if (obj == null)
+			{
+				objInstance = default(T);
+				return false;
+			}
+			objInstance = (T)obj;
+			return true;
+		}
+		public (T?, IError?) Get<T>(string key)
+		{
+			if (key == null) return (default, new Error("key was empty"));
+
+			if (TryGetValue(key, out T? obj))
+			{
+				return ((T?)obj, null);
+			}
+			else
+			{
+				return (default, new Error("Key not found"));
+			}
+		}
 		public T? GetOrDefault<T>(string key, T? defaultValue)
 		{
 			if (key == null) return defaultValue;

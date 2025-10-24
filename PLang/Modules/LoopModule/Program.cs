@@ -64,13 +64,13 @@ namespace PLang.Modules.LoopModule
 		public async Task<IError?> Repeat(int repeatCounter, [HandlesVariableAttribute] GoalToCallInfo goalToCall, int startIndex = 0)
 		{
 			var groupedErrors = new GroupedErrors("RepeatErrors");
-			for (int i= startIndex;i<repeatCounter;i++)
+			for (int i = startIndex; i < repeatCounter; i++)
 			{
 				(var returnEngine, var variables, var error) = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, goal);
 				if (error != null) return error;
 			}
 			return null;
-		} 
+		}
 
 		public IEnumerable<IReadOnlyList<object>> Split(IEnumerable source, int size) =>
 			Split(source.Cast<object>(), size);
@@ -134,34 +134,68 @@ namespace PLang.Modules.LoopModule
 			{
 				return null;
 			}
-			else if (obj is IEnumerable enumerables)
+
+			if (obj is not IEnumerable enumerables)
 			{
-				bool hasEntry = enumerables.AsQueryable().Any();
-				if (!hasEntry && (obj is JValue || obj is JObject))
-				{
-					var list = new List<object>();
-					list.Add(obj);
-					enumerables = list;
-					hasEntry = true;
-				}
+				return new ProgramError($"{variableToLoopThrough} is not list of items");
+			}
 
-				if (linqOptions != null && linqOptions.Split > 0)
-				{
-					enumerables = Split(enumerables, linqOptions.Split);
-				}
+			bool hasEntry = enumerables.AsQueryable().Any();
+			if (!hasEntry && (obj is JValue || obj is JObject))
+			{
+				var list = new List<object>();
+				list.Add(obj);
+				enumerables = list;
+				hasEntry = true;
+			}
 
-				int idx = 0;
-				if (effectiveThreads == 1)
+			if (linqOptions != null && linqOptions.Split > 0)
+			{
+				enumerables = Split(enumerables, linqOptions.Split);
+			}
+
+			int idx = 0;
+			if (effectiveThreads == 1)
+			{
+				foreach (var param in goalToCall.Parameters)
 				{
-					foreach (var param in goalToCall.Parameters)
+					goalToCall.Parameters.AddOrReplace(param.Key, memoryStack.LoadVariables(param.Value));
+				}
+				var items = enumerables.ToDynamicList();
+				for (int i = 0;i<items.Count;i++) 
+				{
+					goalToCall.Parameters.AddOrReplace(listName.ToString()!, items);
+					var item = items[i] as object;
+
+					if (item is ObjectValue ov)
 					{
-						goalToCall.Parameters.AddOrReplace(param.Key, memoryStack.LoadVariables(param.Value));
+						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
 					}
+					else
+					{
+						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+					}
+					goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 
-					foreach (var item in enumerables)
+					var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
+					if (result.Error != null && result.Error is not IErrorHandled) return result.Error;
+
+				}
+			}
+			else
+			{
+
+				using var semaphore = new SemaphoreSlim(effectiveThreads);
+				using var cts = new CancellationTokenSource();
+
+				CancellationToken token = cts?.Token ?? CancellationToken.None;
+
+				var tasks = enumerables.Cast<object>().Select(async item =>
+				{
+					await semaphore.WaitAsync(token);
+					try
 					{
 						goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
-
 						if (item is ObjectValue ov)
 						{
 							goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
@@ -172,86 +206,57 @@ namespace PLang.Modules.LoopModule
 						}
 						goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 
-						var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
-						if (result.Error != null && result.Error is not IErrorHandled) return result.Error;
-
-					}
-				}
-				else
-				{
-
-					using var semaphore = new SemaphoreSlim(effectiveThreads);
-					using var cts = new CancellationTokenSource();
-
-					CancellationToken token = cts?.Token ?? CancellationToken.None;
-
-					var tasks = enumerables.Cast<object>().Select(async item =>
-					{
-						await semaphore.WaitAsync(token);
-						try
+						Task<(IEngine engine, object? Variables, IError? error)> task;
+						if (multiThreaded.GoalToCallBeforeItemIsProcessed != null)
 						{
-							goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
-							if (item is ObjectValue ov)
+							multiThreaded.GoalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+							task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallBeforeItemIsProcessed, Goal, isolated: true);
+							await task;
+						}
+
+						task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal, isolated: true);
+						var result = await task;
+						if (result.error != null)
+						{
+							if (multiThreaded.FailFast)
 							{
-								goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
+								cts?.Cancel();
+								return result.error;
 							}
 							else
 							{
-								goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+								groupedErrors.Add(result.error);
 							}
-							goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
-
-							Task<(IEngine engine, object? Variables, IError? error)> task;
-							if (multiThreaded.GoalToCallBeforeItemIsProcessed != null)
-							{
-								multiThreaded.GoalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-								task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallBeforeItemIsProcessed, Goal, isolated: true);
-								await task;
-							}
-
-							task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal, isolated: true);
-							var result = await task;
-							if (result.error != null)
-							{
-								if (multiThreaded.FailFast)
-								{
-									cts?.Cancel();
-									return result.error;
-								}
-								else
-								{
-									groupedErrors.Add(result.error);
-								}
-							}
-
-							if (multiThreaded.GoalToCallAfterItemIsProcessed != null)
-							{
-								multiThreaded.GoalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-								task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallAfterItemIsProcessed, Goal, isolated: true);
-								await task;
-							}
-
 						}
-						finally
+
+						if (multiThreaded.GoalToCallAfterItemIsProcessed != null)
 						{
-							semaphore.Release();
+							multiThreaded.GoalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+							task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallAfterItemIsProcessed, Goal, isolated: true);
+							await task;
 						}
-						return null;
-					});
 
-					try
-					{
-						var results = await Task.WhenAll(tasks);
-						var result = results.FirstOrDefault(e => e != null);
-						return result;
 					}
-					catch (OperationCanceledException)
+					finally
 					{
-						var result = tasks.FirstOrDefault(t => t.IsCompletedSuccessfully && t.Result != null)?.Result;
-						return result;
+						semaphore.Release();
 					}
+					return null;
+				});
+
+				try
+				{
+					var results = await Task.WhenAll(tasks);
+					var result = results.FirstOrDefault(e => e != null);
+					return result;
+				}
+				catch (OperationCanceledException)
+				{
+					var result = tasks.FirstOrDefault(t => t.IsCompletedSuccessfully && t.Result != null)?.Result;
+					return result;
 				}
 			}
+
 
 
 			memoryStack.Put("item", prevItem);

@@ -16,9 +16,16 @@ public static class JObjectVarResolver
 				var properties = ((JObject)token).Properties();
 				foreach (var prop in properties)
 				{
-					var propInfo = targetType?.GetProperty(prop.Name);
-					var propType = propInfo?.PropertyType ?? typeof(object);
-					ResolvePlaceholders(prop.Value, propType ?? targetType, resolve);
+					try
+					{
+						var propInfo = targetType?.GetProperty(prop.Name);
+						var propType = propInfo?.PropertyType ?? typeof(object);
+						ResolvePlaceholders(prop.Value, propType ?? targetType, resolve);
+					} catch (Exception ex)
+					{
+						Console.WriteLine($"Modified collection: {prop.Name} | {prop.Value}");
+						throw;
+					}
 				}
 
 				break;

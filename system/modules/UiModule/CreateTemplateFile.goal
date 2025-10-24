@@ -1,0 +1,20 @@
+CreateTemplateFile
+- ask user "Give me a description of the template you need for %fileName%", write to %user%
+- call goal ProcessAnswer continue=false
+
+ProcessAnswer
+- read file llm/CreateTemplateFileSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+        user: %user%
+        model: 'gpt-4o'
+        continue prev: %continue%
+        scheme: {ask:string|null, templateContent:string}
+        write to %result%
+- if %result.ask% is not empty then call AskUser ask=%result.ask%, else SaveTemplate
+
+AskUser
+- ask user %ask%, write to %user%
+- call goal ProcessAnswer continue=true
+
+SaveTemplate
+- save %result.templateContent% to %goal.AbsoluteGoalFolderPath%/%fileName%

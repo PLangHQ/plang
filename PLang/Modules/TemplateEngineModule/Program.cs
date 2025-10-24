@@ -353,15 +353,49 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			(_, exists) = ContainsVariable("render", templateContext);
 			if (!exists)
 			{
-				globals.Import("render2", new Func<string, Dictionary<string, object>?, Task<string>>(async (path, vars) =>
+				globals.Import("render4", new Func<TemplateContext, ScriptNode, ScriptArray, Task<string>>(async (context, node, arguments) =>
 				{
+					// More advanced: manually handle arguments
+					
 					return "hello";
 				}));
 
-				globals.Import("render", new Func<string, object[]?, Task<string>>(async (path, vars) =>
+
+				globals.Import("render3", new Func<string, IScriptObject?, Task<string>>(async (path, vars) =>
+				{
+					return "hello";
+				}));
+				globals.Import("render2", new Func<TemplateContext, string, object?, Task<string>>(async (context, path, vars) =>
+				{
+					return "hello";
+				})); 
+
+				globals.Import("render", new Func<TemplateContext, string, object[]?, Task<string>>(async (context, path, vars) =>
 				{
 					var modelDict = new Dictionary<string, object?>();
 
+					var arguments = ((ScriptFunctionCall)context.CurrentNode).Arguments.Skip(1);
+					foreach (var argument in arguments)
+					{
+						if (argument is ScriptVariableGlobal svg)
+						{
+
+							var value = svg.Evaluate(context);
+							modelDict.AddOrReplace(svg.Name, value);
+						} else if (argument is ScriptNamedArgument sna)
+						{
+							var value = context.Evaluate(sna.Value);
+							modelDict.AddOrReplace(sna.Name.ToString(), value);
+						}
+							
+					}
+
+					var forLoop = context.GetValue(new ScriptVariableGlobal("for"));
+					if (forLoop != null)
+					{
+						modelDict.AddOrReplace("for", forLoop);
+					}
+					/*
 					if (vars != null && vars.Length > 0)
 					{
 						foreach (var variable in vars)
@@ -378,7 +412,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 							}
 						}
 
-					}
+					}*/
 					var result = await RenderFile(path, modelDict, writeToOutputStream: false);
 					if (result.Item2 != null)
 					{

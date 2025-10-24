@@ -19,4 +19,4 @@ public sealed record ErrorMessage(
 	[param: LlmIgnore] Callback? Callback = null,
 	[param: LlmIgnore] 
 	IReadOnlyDictionary<string, object?>? Properties = null)
-	: OutMessage(MessageKind.Error, Level, StatusCode, Target, Actions ?? new[] { "notify" }, Channel, Actor, Properties);
+	: OutMessage(MessageKind.Error, Level, StatusCode, Target, Actions, Channel, Actor, Properties);

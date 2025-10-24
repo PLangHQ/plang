@@ -258,6 +258,11 @@ public class MethodHelper
 
 					/*buildErrors.Add(new InvalidParameterError(methodInfo.Name,
 						$"{methodParameter.Name} is string, the property Value cannot start and end with quote(\"). The type is {builderType.Name}", goalStep));*/
+				} else if (builderParameter.Value is string str2 && !TypeHelper.IsConsideredPrimitive(builderType) && !VariableHelper.IsVariable(str2))
+				{
+					var idx = parameters.FindIndex(x => x.Name == methodParameter.Name);
+
+					parameters[idx] = builderParameter with { Value = JObject.Parse(str2) };
 				}
 
 				// check if variable is in step, just incase LLM invents a new variable
@@ -425,6 +430,11 @@ public class MethodHelper
 			catch (Exception ex)
 			{
 				if (ex is AskUserError) throw;
+
+				if (ex is InvalidOperationException)
+				{
+					return (parameterValues, new Error(ex.Message, StatusCode: 500, Exception: ex));
+				}
 
 				return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", step, Exception: ex));
 			}

@@ -116,8 +116,8 @@ namespace PLang.Modules.UiModule
 			Event,          // click, change, …
 		}
 
-		[Description(@"Member should match case sensitive the javascript member attribute, e.g. innerHTML
-
+		[Description(@"Member is the action that should be executed. Available actions are 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, showDialog, hideDialog, showModal, hideModal, notify, alert, vibrate, navigate, replaceState, reload, open, close'
+User can define a customer action.
 Attribute: Member is the key in the SetAttribute js method
 ")]
 		public record UiInstruction(string Selector, string Member, object? Value, UiFacet Kind = UiFacet.Property);

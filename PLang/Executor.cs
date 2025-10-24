@@ -315,7 +315,9 @@ namespace PLang
 					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
 					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 
-					memoryStack.Put(args[i].Split('=')[0].Trim(), value.Trim());
+					var valueAsType = GetValueAsType(value);
+
+					memoryStack.Put(args[i].Split('=')[0].Trim(), valueAsType);
 				}
 				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
 				{
@@ -323,6 +325,30 @@ namespace PLang
 				}
 			}
 			return goalToRun;
+		}
+
+		private object GetValueAsType(string value)
+		{
+			if (int.TryParse(value, out int i))
+			{
+				return i;
+			}
+
+			if (long.TryParse(value, out long l))
+			{
+				return l;
+			}
+			if (double.TryParse(value, out double d))
+			{
+				return d;
+			}
+
+			if (bool.TryParse(value, out bool b))
+			{
+				return b;
+			}
+
+			return value;
 		}
 	}
 

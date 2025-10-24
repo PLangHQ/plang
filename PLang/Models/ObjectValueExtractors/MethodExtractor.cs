@@ -268,7 +268,8 @@ namespace PLang.Models.ObjectValueExtractors
 						}
 						else if (memoryStack != null)
 						{
-							var value = memoryStack.Get(paramValues[i].ToString());
+							object? value = (VariableHelper.IsVariable(paramValues[i])) ? memoryStack.Get(paramValues[i].ToString()) : paramValues[i];
+							
 							if (value != null)
 							{
 								convertedParams[i] = TypeHelper.ConvertToType(value, paramType);

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
@@ -185,10 +186,16 @@ or url
 					}
 
 
-					var validateResult = await JsonHelper.ValidateSchemaAsync(validScheme);
+					var validateResult = JsonHelper.ValidateJson(validScheme);
 					if (validateResult.Error != null) return (instruction, new BuilderError(validateResult.Error));
 
-					instruction.Properties.AddOrReplace("ReturnScheme", JObject.Parse(validScheme));
+					if (scheme == null) {
+						return (null, new StepBuilderError("scheme cannot be null", step));
+					}
+
+					scheme = scheme with { Value = JsonConvert.DeserializeObject(validScheme) };
+					
+					instruction.Properties.AddOrReplace("ReturnScheme", scheme.Value);
 				}
 
 				if (scheme != null && scheme.Value != null && !VariableHelper.IsVariable(scheme.Value) && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))

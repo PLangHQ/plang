@@ -18,7 +18,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.ValidateModule
 {
-	[Description("Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. This does NOT replace if statements")]
+	[Description("DO NOT USE for if statements. Validates a variable, make sure it's not empty, follows a pattern, is a number, etc. ")]
 	public class Program : BaseProgram
 	{
 		public Program()
@@ -44,7 +44,7 @@ namespace PLang.Modules.ValidateModule
 			{
 				if (variable.IsEmpty)
 				{
-					multiError.Add(new ProgramError($"{variable.PathAsVariable} is empty", goalStep, StatusCode: statusCode));
+					multiError.Add(new ProgramError(errorMessage, goalStep, StatusCode: statusCode, FixSuggestion: $"{variable.PathAsVariable} is empty and it must not be empty."));
 					continue;
 				}
 			}

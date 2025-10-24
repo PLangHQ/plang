@@ -695,15 +695,15 @@ namespace PLang.Events
 				if (result.Error is IErrorHandled eh) return (Variables, eh);
 				if (result.Error is IUserInputError ude)
 				{
-					return (Variables, (IEventError)ude);
+					return (Variables, ude);
 				}
 				if (result.Error == error) return (Variables, error);
 
 				if (isBuilder)
 				{
-					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, InitialError: result.Error));
+					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, true, result.Error.Exception, InitialError: result.Error));
 				}
-				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, InitialError: result.Error));
+				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, result.Error.Exception, InitialError: result.Error));
 			}
 			catch (Exception ex)
 			{

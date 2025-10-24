@@ -58,7 +58,7 @@ public sealed class HttpSink : IOutputSink
 
 			if (_transformer is PlangTransformer)
 			{
-				response.Headers.CacheControl = "no-cache";
+				response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
 				response.Headers.Pragma = "no-cache";
 				response.Headers.Expires = "0";
 				response.Headers["X-Accel-Buffering"] = "no";
@@ -132,17 +132,15 @@ public sealed class HttpSink : IOutputSink
 	{
 		try
 		{
-			if (context.HttpContext?.Response.Body.CanWrite == true) return (context.HttpContext!.Response, false, null);
+			UpdateLiveConnection(false);
+			if (!context.IsAsync && context.HttpContext?.Response.Body.CanWrite == true) return (context.HttpContext!.Response, false, null);
 		}
 		catch { /* ignore */ }
 
 		try
 		{
-			if (_live is null || string.IsNullOrEmpty(context.Identity)) return (null, false, null);
-			if (!_live.TryGetValue(context.Identity, out var live)) return (null, false, null);
-			var was = live.IsFlushed;
-			live.IsFlushed = true;
-			return (live.Response, was, null);
+			var (response, was) = UpdateLiveConnection(true);			
+			return (response, was, null);
 		}
 		catch (Exception ex)
 		{
@@ -150,5 +148,22 @@ public sealed class HttpSink : IOutputSink
 			_live.TryRemove(context.Identity, out _);
 			return (null, true, null);
 		}
+	}
+
+	private (HttpResponse?, bool WasFlushed) UpdateLiveConnection(bool isFlushing)
+	{
+		if (_live is null || string.IsNullOrEmpty(context.Identity)) return (null, false);
+		if (!_live.TryGetValue(context.Identity, out var live) || live == null) return (null, false);
+
+		bool wasFlushed = live.IsFlushed;
+		if (isFlushing)
+		{
+			live.IsFlushed = isFlushing;
+		}
+		live.Updated = DateTime.Now;
+
+		_live.AddOrReplace(context.Identity, live);
+
+		return (live.Response, wasFlushed);
 	}
 }

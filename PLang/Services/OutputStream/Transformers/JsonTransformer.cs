@@ -2,6 +2,7 @@
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Transformers.Converters;
 using System.IO.Pipelines;
 using System.Text;
 using System.Text.Json;
@@ -19,19 +20,21 @@ public class JsonTransformer : ITransformer
 	{
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 		WriteIndented = false,
+		IncludeFields = true,
 		Converters = { new JsonStringEnumConverter(), new ObjectValueConverter() }
 	};
 
 	protected readonly JsonWriterOptions _writerOptions = new()
 	{
-
 	};
 
 	public JsonTransformer(Encoding enc) => Encoding = enc;
 
 	public virtual async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage m, CancellationToken ct = default)
 	{
-		var env = TransformerHelper.BuildEnvelope(m, context);
+		var (env, error) = TransformerHelper.BuildEnvelope(m, context);
+		if (error != null) return (0, error);
+
 		SemaphoreSlim? gate = null;
 		try
 		{

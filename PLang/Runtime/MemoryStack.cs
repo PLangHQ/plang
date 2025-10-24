@@ -25,6 +25,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
+using System.Reactive.Joins;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -43,12 +44,8 @@ namespace PLang.Runtime
 		public MemoryStackPathNotFoundException(string message) : base(message) { }
 	}
 
-	public record VariableEvent(string EventType, GoalToCallInfo GoalToCall, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50, string hash = null)
+	public record VariableEvent(string EventType, GoalToCallInfo GoalToCall, bool WaitForResponse = true, int DelayWhenNotWaitingInMilliseconds = 50, string? Hash = null)
 	{
-
-		public bool WaitForResponse { get; set; } = waitForResponse;
-		public int DelayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
-
 		public Goal Goal { get; set; }
 		public GoalStep Step { get; set; }
 	};
@@ -349,7 +346,33 @@ namespace PLang.Runtime
 			objectValue = GetFromContext(keyPath);
 			if (objectValue != null) return objectValue;
 
-			return ObjectValue.Nullable(variableName, initiate);
+			if (string.IsNullOrEmpty(keyPath.Path))
+			{
+				return ObjectValue.Nullable(keyPath.VariableName, initiate);
+			}
+			else
+			{
+				return GetNullObjectValueByKeyPath(keyPath);
+			}
+
+
+		}
+
+		private ObjectValue GetNullObjectValueByKeyPath(KeyPath keyPath)
+		{
+			var topObject = ObjectValue.Nullable(keyPath.VariableName);
+			string[] parts = keyPath.Path.Split('.', StringSplitOptions.RemoveEmptyEntries);
+			if (parts.Length == 0) return topObject;
+
+			ObjectValue lastObject = null;
+			foreach (var part in parts)
+			{
+				lastObject = new ObjectValue(part, null, parent: (lastObject == null) ? topObject : lastObject, Initiated: false);
+
+			}
+			return lastObject;
+
+
 		}
 
 		private ObjectValue? GetFromContext(KeyPath keyPath)
@@ -374,7 +397,7 @@ namespace PLang.Runtime
 					return ObjectValue.Nullable(keyPath.FullPath);
 				}
 			}
-			
+
 			var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
 			return new ObjectValue(keyPath.VariableName, contextObject.Value, type, null, true);
 		}
@@ -414,41 +437,21 @@ namespace PLang.Runtime
 			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || (i == 0 && variableName[i] == '!') || variableName[i] == ' '))
 				i++;
 
+			KeyPath keyPath;
 			if (i >= 0 && i != variableName.Length)
 			{
-				return new KeyPath(variableName[..i], variableName, variableName[i..], variableName[i].ToString());
+				keyPath = new KeyPath(variableName[..i], variableName, variableName[i..], variableName[i].ToString());
 			}
-			return new KeyPath(variableName, variableName, null, type);
-
-			/*
-			if (variableName.Contains("."))
+			else
 			{
-				key = variableName.Substring(0, variableName.IndexOf("."));
-				path = variableName.Substring(variableName.IndexOf(".") + 1);
-			}
-			else if (!variableName.StartsWith("!") && variableName.Contains("!"))
-			{
-				key = variableName.Substring(0, variableName.IndexOf("!"));
-				path = variableName.Substring(variableName.IndexOf("!") + 1);
-				type = "!";
+				keyPath = new KeyPath(variableName, variableName, null, type);
 			}
 
-			
-			if (path == null)
+			if (string.IsNullOrEmpty(keyPath.VariableName))
 			{
-				foreach (var mathOperator in MathExtractor.MathOperators)
-				{
-					if (variableName.Contains(mathOperator))
-					{
-						key = variableName.Substring(0, variableName.IndexOf(mathOperator));
-						path = variableName.Substring(variableName.IndexOf(mathOperator));
-						type = mathOperator;
-						break;
-					}
-				}
+				throw new Exception($"Variable name({fullPath} is null on keyPath. ");
 			}
-
-			return new KeyPath(key, fullPath, path, type);*/
+			return keyPath;
 		}
 		private ObjectValue? GetFromVariables(KeyPath keyPath)
 		{
@@ -485,7 +488,7 @@ namespace PLang.Runtime
 
 			//sub variable, e.g. %user.name%, %now+5days%
 			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath, variable.Value.Initiated);
-			
+
 			return ov;
 
 
@@ -1004,6 +1007,8 @@ namespace PLang.Runtime
 			if (string.IsNullOrEmpty(originalKey)) return;
 			string key = Clean(originalKey);
 
+
+
 			if (key.ToLower() == "!memorystack")
 			{
 				throw new Exception($"{key} is reserved. You must choose another variable name");
@@ -1036,6 +1041,8 @@ namespace PLang.Runtime
 				}
 			}
 
+
+
 			if (value is string str && VariableHelper.IsVariable(str))
 			{
 				var plan = GetVariableExecutionPlan(originalKey, str, staticVariable);
@@ -1054,6 +1061,14 @@ namespace PLang.Runtime
 				value = variableValue.Value;
 			}
 
+			var ov = GetObjectValue(originalKey);
+			ov.Value = value;
+
+			AddOrReplaceObjectValue(variables, ov, goalStep, disableEvent);
+
+
+			return;
+			/*
 			if (!key.Contains("."))
 			{
 				var type = (value == null) ? null : value.GetType();
@@ -1250,26 +1265,27 @@ namespace PLang.Runtime
 							}
 						}
 					}
+		
+		}
 
-				}
-
-				if (keyPlan.JsonPath != null && keyPlan.Target is JObject jobj && !string.IsNullOrEmpty(value?.ToString()))
+				if (keyPlan.JsonPath != null && keyPlan.Target is JToken jToken)
 				{
-					SetJsonValue(jobj, keyPlan.JsonPath, value);
+					SetJsonValue(jToken, keyPlan.JsonPath, value);
 				}
 
 				AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep, disableEvent);
-			}
+				
+			}	*/
 
 
 		}
 
-		public static void SetJsonValue(JObject jObject, string jsonPath, Object value)
+		public static void SetJsonValue(JToken jToken, string jsonPath, Object value)
 		{
 			// Remove the root ($) and split the path
 			var tokens = jsonPath.TrimStart('$', '.').Split('.');
 
-			JToken current = jObject;
+			JToken current = jToken;
 			for (int i = 0; i < tokens.Length; i++)
 			{
 				var token = tokens[i];
@@ -1280,16 +1296,57 @@ namespace PLang.Runtime
 				}
 				else
 				{
-					// Navigate to or create the next node
-					if (current[token] == null)
+					if (current is JProperty && token == "[0]")
 					{
-						current[token] = new JObject();
+						//we are at the location, do nothing
 					}
-					current = current[token];
+					else
+					{
+						// Navigate to or create the next node
+						if (current[token] == null)
+						{
+							current[token] = new JObject();
+						}
+						current = current[token];
+					}
 				}
 			}
 		}
+		private void AddOrReplaceObjectValue(ConcurrentDictionary<string, ObjectValue> variables, ObjectValue objectValue, GoalStep? goalStep = null, bool disableEvent = false)
+		{
 
+			if (variables.ContainsKey(objectValue.Name))
+			{
+				variables[objectValue.Name] = objectValue;
+				return;
+			}
+
+			if (objectValue.Parent == null)
+			{
+				variables.AddOrUpdate(objectValue.Name, objectValue, (key, oldValue) => objectValue);
+				return;
+			}
+
+			var objectValueToSet = objectValue.Parent;
+
+			var parentObjectValue = objectValueToSet;
+			while (parentObjectValue != null)
+			{
+				if (variables.ContainsKey(parentObjectValue.Name))
+				{
+					variables[parentObjectValue.Name] = parentObjectValue;
+				}
+				if (parentObjectValue.Parent != null)
+				{
+					objectValueToSet = parentObjectValue.Parent;
+				}
+
+				parentObjectValue = parentObjectValue.Parent;
+			}
+
+			variables.AddOrUpdate(objectValueToSet.Name, objectValueToSet, (key, oldValue) => objectValueToSet);
+
+		}
 		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null, bool disableEvent = false)
 		{
 			string? eventType = null;
@@ -1307,12 +1364,13 @@ namespace PLang.Runtime
 				{
 					string childPath = key;
 					var ovToSet = objectValue;
-					
+
 					(key, objectValue) = GetTopObjectValueAndKey(childObjectValue);
 					prevObjectValue = objectValue;
-					
+
 					objectValue.Set(childObjectValue.PathAsVariable, ovToSet);
-				} else
+				}
+				else
 				{
 					prevObjectValue = childObjectValue;
 				}
@@ -2000,9 +2058,16 @@ namespace PLang.Runtime
 			var existingEvent = objectValue.Events.FirstOrDefault(p => p.EventType == eventType && p.GoalToCall.Name == goalName.Name);
 			if (existingEvent != null)
 			{
-				existingEvent.GoalToCall.Parameters = goalName.Parameters;
-				existingEvent.WaitForResponse = waitForResponse;
-				existingEvent.DelayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
+				var goalToCall = existingEvent.GoalToCall;
+				goalToCall.Parameters = goalName.Parameters;
+
+				existingEvent = existingEvent with
+				{
+					WaitForResponse = waitForResponse,
+					DelayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds,
+					GoalToCall = goalToCall
+				};
+
 			}
 			else
 			{

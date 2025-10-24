@@ -1,4 +1,5 @@
-﻿using PLang.Attributes;
+﻿using Microsoft.AspNetCore.Routing.Constraints;
+using PLang.Attributes;
 
 namespace PLang.Services.OutputStream.Messages;
 
@@ -15,6 +16,7 @@ public sealed record StreamMessage(
 	string? Target = null,
 	IReadOnlyList<string>? Actions = null,       
 	string Channel = "default", string Actor = "user",
+	string FileName = "",
 	IReadOnlyDictionary<string, object?>? Meta = null)
 	: OutMessage(MessageKind.Stream, Level, StatusCode, Target, Actions ?? new[] { "stream" }, Channel, Actor, Meta)
 {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Model;
@@ -7,6 +8,7 @@ using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
+using System.Collections;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -60,7 +62,7 @@ namespace PLang.Errors
 			this.HelpfulLinks = HelpfulLinks;
 		}
 		//public Error(IErrorReporting error)
-		public string Id { get; } = Guid.NewGuid().ToString();
+		public string Id { get; set; } = Guid.NewGuid().ToString();
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
 		public string? FixSuggestion { get; set; }
@@ -87,6 +89,9 @@ namespace PLang.Errors
 		public ExceptionDto? ExceptionInfo => ExceptionDto.FromException(Exception);
 		[IgnoreWhenInstructed]
 		public bool Handled { get; set; }
+
+		[System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+		[Newtonsoft.Json.JsonIgnore]
 		public string MessageOrDetail {
 			get
 			{
@@ -149,36 +154,8 @@ namespace PLang.Errors
 
 		public IError? InitialError { get; } = null;
 	}
-	public class ObjectValueConverter : System.Text.Json.Serialization.JsonConverter<ObjectValue>
-	{
-		public override ObjectValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-			=> throw new NotImplementedException();
+	
+	
 
-		public override void Write(Utf8JsonWriter writer, ObjectValue value, JsonSerializerOptions options)
-		{
-			System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
-		}
-	}
-	public class IErrorConverter : System.Text.Json.Serialization.JsonConverter<IError>
-	{
-		public override IError Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-			=> throw new NotImplementedException();
-
-		public override void Write(Utf8JsonWriter writer, IError value, JsonSerializerOptions options)
-		{
-			writer.WriteStartObject();
-			writer.WriteString("message", value.Message);
-			writer.WriteString("details", ErrorHelper.ToFormat("text", value).ToString());
-			writer.WriteString("key", value.Key);
-			writer.WriteString("type", value.GetType().Name);
-			if (value is UserInputError uie)
-			{
-				writer.WriteString("callback", JsonConvert.SerializeObject(uie.Callback).ToBase64());
-
-			}
-			writer.WriteString("statusCode", value.StatusCode.ToString());
-			writer.WriteEndObject();
-		}
-	}
 
 }

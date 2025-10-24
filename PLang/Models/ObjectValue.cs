@@ -168,7 +168,13 @@ public class ObjectValue
 		{
 			this.value = value;
 			Updated = DateTime.Now;
+			if (!this.Initiated) this.Created = DateTime.Now;
 
+			this.Initiated = true;
+			this.Type = (value != null) ? value.GetType() : typeof(Nullable);
+			
+
+			if (Parent != null) SetParent(value);
 			if (Properties == null || Properties.Count == 0) return;
 
 			var disposableProperties = Properties.Where(p => p is IDisposable).ToList();
@@ -187,6 +193,48 @@ public class ObjectValue
 			}
 
 		}
+	}
+	private JToken GetJToken(object? value) => value switch
+		{
+			null => JValue.CreateNull(),
+			JToken jt => jt,
+			_ => JToken.FromObject(value)
+		};
+	
+	private void SetParent(object? value) {
+		var parentValue = Parent!.Value;
+		if (parentValue is JObject jobj)
+		{
+			var property = jobj.Properties().FirstOrDefault(p => p.Name.Equals(Name, StringComparison.OrdinalIgnoreCase));
+			JToken jToken = (value is JToken jt) ? jt : GetJToken(value);
+
+			if (property == null)
+			{
+				jobj.Add(Name, jToken);
+			} else
+			{
+				property.Value = jToken;
+			}
+			Parent.Value = jobj;
+		} else if (parentValue is JArray jArray)
+		{
+			var index = int.Parse(Name.Trim('[').Trim(']'));
+			JToken jToken = (value is JToken jt) ? jt : GetJToken(value); ;
+			jArray[index] = jToken;
+			Parent.Value = jArray;
+		} else if (parentValue == null)
+		{
+			JToken jToken = (value is JToken jt) ? jt : GetJToken(value);
+			JObject newObj = new JObject();
+			newObj[Name] = jToken;
+
+			Parent!.Value = newObj;
+
+		} else
+		{
+			throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
+		}
+
 	}
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
@@ -292,14 +340,14 @@ public class ObjectValue
 		if (Value == null) return false;
 		if (Value is string str)
 		{
-			var str2 = obj as string;
+			var str2 = Convert.ToString(obj);
 			return string.Equals(str, str2, stringComparison ?? StringComparison.OrdinalIgnoreCase);
 		}
 		if (Value is JValue jValue)
 		{
 			if (jValue.Value is string valueStr)
 			{
-				var str2 = obj.ToString();
+				var str2 = Convert.ToString(obj);
 				return string.Equals(valueStr, str2, stringComparison ?? StringComparison.OrdinalIgnoreCase);
 			}
 			return jValue.Value?.Equals(obj) == true;

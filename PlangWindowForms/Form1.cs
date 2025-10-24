@@ -71,7 +71,7 @@ namespace PlangWindowForms
 			outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			pLang = new Executor(container);
 
-			Engine.InitPerRequest(container);
+			//Engine.InitPerRequest(container);
 
 			contextAccessor = container.GetInstance<IPLangContextAccessor>();
 

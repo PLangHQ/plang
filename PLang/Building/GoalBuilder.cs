@@ -91,7 +91,7 @@ namespace PLang.Building
 				return null;
 			}
 
-			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath} - {goal.HasChanged}");
+			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}:{goal.GoalSteps.FirstOrDefault()?.LineNumber} - {goal.HasChanged}");
 
 			// Generate description and other properties for goal			
 			(goal, var error) = await LoadMethodAndDescription(goal);

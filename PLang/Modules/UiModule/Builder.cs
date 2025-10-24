@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Nethereum.Contracts.Standards.ERC721.ContractDefinition;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
@@ -8,6 +9,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
+using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.Collections.Generic;
 using System.IO.Abstractions;
@@ -99,6 +101,25 @@ Response with only the function name you would choose");
 			if (string.IsNullOrEmpty(renderOption.RenderMessage.Content))
 			{
 				return (instruction, new StepBuilderError("FileName or html needs to be defined", step));
+			}
+
+			if (PathHelper.IsTemplateFile(renderOption.RenderMessage.Content))
+			{
+				var filePath = GetPath(renderOption.RenderMessage.Content, step.Goal);
+				if (!fileSystem.File.Exists(filePath) && !filePath.Contains("%"))
+				{
+					Dictionary<string, object?> parameters = new();
+					parameters.Add("step", step);
+					parameters.Add("goal", step.Goal);
+					parameters.Add("instruction", instruction);
+					parameters.Add("fileName", renderOption.RenderMessage.Content);
+
+					GoalToCallInfo goalToCallInfo = new GoalToCallInfo("/modules/UiModule/CreateTemplateFile", parameters);
+
+					var program = programFactory.GetProgram<CallGoalModule.Program>(step);
+					var result = await program.RunGoal(goalToCallInfo);
+					if (result.Error != null) return (instruction, new BuilderError(result.Error));
+				}
 			}
 			
 			var events = gf.GetParameter<List<Event>?>("events");

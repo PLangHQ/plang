@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Json;
@@ -38,21 +39,9 @@ namespace PLang.Modules.VariableModule
 
 		private async Task<(DataSource?, IError?)> GetDataSource(string? dataSourceName)
 		{
-			DataSource? dataSource = null;
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
-			if (dataSourceName != null)
-			{
-				(dataSource, var error) = await db.GetDataSource(dataSourceName);
-				if (error != null) return (null, error);
-
-			}
-			else
-			{
-				dataSource = (await db.GetDataSources()).FirstOrDefault(p => p.IsDefault);
-			}
-			if (dataSource == null) return (null, new ProgramError($"Could not find data source(dataSourceName:'{dataSourceName}')", goalStep));
-
-			return (dataSource, null);
+			return await db.GetDataSource(dataSourceName);
+			
 		}
 
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, string? dataSourceName = null)
@@ -87,7 +76,7 @@ namespace PLang.Modules.VariableModule
 			foreach (var variable in variablesWithDefaultValue)
 			{
 				List<ParameterInfo> parameters = new();
-				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key));
+				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key.Trim('%')));
 				try
 				{
 					var result = await db.Select([dataSource], "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
@@ -171,7 +160,16 @@ namespace PLang.Modules.VariableModule
 			List<string> vars = new();
 			foreach (var variable in variables)
 			{
-				memoryStack.Put(variable.Key, variable.Value);
+				object value = variable.Value;
+				if (VariableHelper.IsVariable(variable.Value))
+				{
+					value = memoryStack.Get(variable.Value.ToString());
+				} else if (VariableHelper.ContainsVariable(variable.Value))
+				{
+					value = memoryStack.LoadVariables(variable.Value);
+				}
+
+				memoryStack.Put(variable.Key, value);
 				vars.Add(variable.Key);
 			}
 			return await Store(vars, dataSource!);
@@ -188,28 +186,22 @@ namespace PLang.Modules.VariableModule
 
 		internal async Task<IError?> Store([HandlesVariable] List<string> variables, DataSource dataSource)
 		{
-			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
-			var datasource = goalStep.GetVariable<DataSource>();
-			if (datasource == null)
-			{
-				(datasource, var error) = await db.GetDataSource();
-				if (error != null) return error;
-			}
-			if (datasource!.TypeFullName != typeof(SqliteConnection).FullName)
+			if (dataSource!.TypeFullName != typeof(SqliteConnection).FullName)
 			{
 				return new ProgramError("Only sqlite is supported");
 			}
 
+			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 			foreach (var variable in variables)
 			{
-				var value = memoryStack.LoadVariables(variable);
+				var value = memoryStack.Get(variable);
 				if (value == null) continue;
 
 				List<ParameterInfo> parameters = new();
 				parameters.Add(new ParameterInfo("System.String", "variable", variable));
 				parameters.Add(new ParameterInfo("System.String", "value", JsonConvert.SerializeObject(value)));
 
-				var (rowsAffected, error) = await db.Insert(datasource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
+				var (rowsAffected, error) = await db.Insert(dataSource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
 				
 				if (error != null)
 				{
@@ -218,7 +210,7 @@ namespace PLang.Modules.VariableModule
 						var createTableResult = await CreateVariablesTable(db, dataSource);
 						if (createTableResult.Error != null) return createTableResult.Error;
 
-						return await Store(variables, datasource);
+						return await Store(variables, dataSource);
 					}
 					return error;
 				}
@@ -448,6 +440,17 @@ namespace PLang.Modules.VariableModule
 		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null, bool? defaultValue = null)
 		{
 			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
+		}
+
+		[Description(@"Set variable by calcuation, e.g. `set %total% = %quantity% * %price%`. Uses NCalc.Expression method, make sure it is valid NCalc expression. Capitalize any functions called like sqrt() into Sqrt()")]
+		public async Task<IError?> SetVariableWithCalculation([HandlesVariable] string key, string expression, int decimalRound = 3, MidpointRounding? midpointRounding = null)
+		{
+			var program = GetProgramModule<MathModule.Program>();
+			var (result, error) = await program.SolveExpression(expression, decimalRound, midpointRounding);
+			if (error != null) return error;
+
+			await SetVariable(key, result);
+			return error;
 		}
 
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]

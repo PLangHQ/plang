@@ -48,7 +48,14 @@ namespace PLang.Building.Model
 			}
 			else
 			{
-				_variables[variableIdx] = variable;
+				try
+				{
+					_variables[variableIdx] = variable;
+				} catch (Exception ex)
+				{
+					Console.WriteLine($"Exception - AddVariable:{ex.Message} - variableIdx:{variableIdx}");
+					_variables.Add(variable);
+				}
 			}
 			SetVariableOnEvent(variable);
 

@@ -95,7 +95,9 @@ namespace PLang.Modules.CodeModule
 				logger.LogTrace("Parameters:{0}", args);
 				object? result = method.Invoke(null, args);
 
-				return (result, null);
+
+
+				return (MapReturn(result), null);
 			}
 			catch (Exception ex)
 			{
@@ -107,6 +109,51 @@ namespace PLang.Modules.CodeModule
 
 		}
 
+		private object? MapReturn(object? result)
+		{
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return result;
+
+			Type resultType = result.GetType();
+
+			// Check if the type is a tuple (ValueTuple or Tuple)
+			if (resultType.IsGenericType &&
+				(resultType.FullName?.StartsWith("System.ValueTuple`") == true ||
+				 resultType.FullName?.StartsWith("System.Tuple`") == true))
+			{
+				var tupleItems = new List<ObjectValue>();
+				int counter = 0;
+				// Get all fields/properties from the tuple
+				if (resultType.FullName.StartsWith("System.ValueTuple`"))
+				{
+					// ValueTuple uses fields (Item1, Item2, etc.)
+					foreach (var field in resultType.GetFields())
+					{
+						var value = field.GetValue(result);
+						if (value != null)
+						{
+							var rv = function.ReturnValues[counter++];
+							tupleItems.Add(new ObjectValue(rv.VariableName, value));
+						}
+					}
+				}
+				else
+				{
+					// Tuple uses properties (Item1, Item2, etc.)
+					foreach (var property in resultType.GetProperties())
+					{
+						var value = property.GetValue(result);
+						if (value != null)
+						{
+							var rv = function.ReturnValues[counter++];
+							tupleItems.Add(new ObjectValue(rv.VariableName, value));
+						}
+					}
+				}
+
+				result = tupleItems;
+			}
+			return result;
+		}
 
 		public async Task<(object?, IError?)> RunFileCode([HandlesVariable] FileCodeImplementationResponse implementation)
 		{

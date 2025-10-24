@@ -116,7 +116,7 @@ namespace PLang.Modules
 
 		public IServiceContainer Container { get { return container; } }
 
-
+		public bool HasError { get; set; }
 		public virtual async Task<(object? ReturnValue, IError? Error)> Run()
 		{
 			instruction.Function.Instruction = instruction;
@@ -141,6 +141,15 @@ namespace PLang.Modules
 		}
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(IGenericFunction function)
 		{
+			var result = await RunFunctionInternal(function);
+			if (result.Error != null)
+			{
+				context.CallStack.AddError(result.Error);
+			}
+			return result;
+		}
+
+		public async Task<(object? ReturnValue, IError? Error)> RunFunctionInternal(IGenericFunction function) { 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
@@ -247,11 +256,7 @@ namespace PLang.Modules
 
 					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex, Key: ex.GetType().FullName ?? "ProgramError");
 
-					if (this is IDisposable disposable)
-					{
-						//logger.LogDebug($"Calling Dispose for {this}");
-						disposable.Dispose();
-					}
+					
 					return (null, pe);
 				}
 

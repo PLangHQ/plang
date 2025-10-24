@@ -75,39 +75,9 @@ namespace PLang.Modules.OutputModule
 			User = 0, System = 1
 		}
 
-		[Description(@"QuestionOrTemplateFile either the question or points to a file for custom rendering. 
-When key is not defined for call back data, the key is same as variable.
-Target is what to target in the UI, e.g. CssSelector for html, or name of Javascript function
-Action=set|overwrite|append|prepend|before|after|execute   (execute only applies to javascript)
-")]
-		/*public record AskOptions(string QuestionOrTemplateFile, int StatusCode = 202,
-			Dictionary<string, object?>? CallbackData = null, GoalToCallInfo? OnCallback = null,
-			string? Target = null, string? Action = null,
-			UserOrSystemEnum? UserOrSystem = UserOrSystemEnum.User, string? Channel = "default")
 
-		{
-			[LlmIgnore]
-			public bool IsTemplateFile
-			{
-				get
-				{
-					if (QuestionOrTemplateFile == null) return false;
-					if (QuestionOrTemplateFile.Contains("\n") || QuestionOrTemplateFile.Contains("\r") || QuestionOrTemplateFile.Contains("\r")) return false;
-					string ext = Path.GetExtension(QuestionOrTemplateFile);
-					return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
-				}
-			}
-		}
-			;*/
 
-		private bool IsTemplateFile(string content)
-		{
-			if (content == null) return false;
-			if (content.Contains("\n") || content.Contains("\r") || content.Contains("\r")) return false;
-			string ext = Path.GetExtension(content);
-			return (!string.IsNullOrEmpty(ext) && ext.Length < 10);
-
-		}
+	
 
 		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
 		public async Task<(object?, IError?)> Ask(AskMessage askMessage)
@@ -143,6 +113,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 				if (error != null && error is UserInputError uie2)
 				{
 					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+					
 					var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };
 					uie2 = uie2 with { Callback = newCallBack, ErrorMessage = errorMessage };
 
@@ -182,7 +153,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 			parameters.AddOrReplace("error", error);
 
 			string? content = null;
-			if (IsTemplateFile(askMessage.Content))
+			if (PathHelper.IsTemplateFile(askMessage.Content))
 			{
 				var templateEngine = GetProgramModule<Modules.TemplateEngineModule.Program>();
 				(content, var renderError) = await templateEngine.RenderFile(askMessage.Content, parameters);
@@ -331,7 +302,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 
 			if (answers.Count == 0)
 			{
-				return (null, new UserInputError("No answer provided", goalStep));
+				return (null, new UserInputError("No answer provided", goalStep, ErrorMessage: new ErrorMessage("No answer provided")));
 			}
 
 			return (answers, null);
@@ -417,7 +388,7 @@ Action=set|overwrite|append|prepend|before|after|execute   (execute only applies
 			return null;
 		}*/
 
-		[Description("Write to the output. . statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
+		[Description("Write appends by default a text message to the target. User can define different actions, but when it is not defined set as 'append'. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
 			

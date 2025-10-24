@@ -221,9 +221,10 @@ namespace PLang.Building.Parsers
 			instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
 			if (instruction != null)
 			{
+				instruction.LlmRequest = null;
 				instructions.TryAdd(step.AbsolutePrFilePath, instruction);
 			}
-			instruction.LlmRequest = null;
+			
 			return instruction;
 
 		}

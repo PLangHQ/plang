@@ -220,7 +220,7 @@ namespace PLang.Container
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>();
 				
-				Engine.InitPerRequest(runtimeContainer);
+				//Engine.InitPerRequest(runtimeContainer);
 
 				engine2.Init(runtimeContainer);
 
@@ -460,7 +460,7 @@ namespace PLang.Container
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
 				}
 
-				(var dataSource, var error) = moduleSettings.GetCurrentDataSource().Result;
+				(var dataSource, var error) = moduleSettings.GetDataSourceOrDefault().Result;
 				if (error != null) throw new ExceptionWrapper(error);
 
 				if (!dataSource.KeepHistory)

@@ -1,6 +1,11 @@
-﻿using PLang.Errors;
+﻿using NBitcoin.Protocol;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
+using PLang.Services.OutputStream.Transformers.Converters;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
@@ -22,9 +27,17 @@ public class PlangTransformer : JsonTransformer
 
 	public static readonly object GateKey = new();
 
+	JsonSerializerSettings _newtonsoftSettings = new JsonSerializerSettings
+	{
+		ContractResolver = new CamelCasePropertyNamesContractResolver(),
+		Formatting = Formatting.None,
+		Converters = { new StringEnumConverter(), new NewtonsoftObjectValueConverter() }
+	};
+
 	public override async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage data, CancellationToken ct = default)
 	{
-		var env = TransformerHelper.BuildEnvelope(data, context);
+		var (env, error) = TransformerHelper.BuildEnvelope(data, context);
+		if (error != null) return (0, error);
 
 		long length = 0;
 		SemaphoreSlim? gate = null;
@@ -32,28 +45,12 @@ public class PlangTransformer : JsonTransformer
 		try
 		{
 			gate = await TransformerHelper.GetGate(context.SharedItems, ct);
-			/*
-			using (var jsonWriter = new Utf8JsonWriter(writer, _writerOptions))
-			{
 
-				gate = await TransformerHelper.GetGate(context.SharedItems, ct);
-
-				JsonSerializer.Serialize(jsonWriter, env, _opts);
-				length = jsonWriter.BytesCommitted;
-			}
-
-			var nl = writer.GetSpan(1);
-			nl[0] = (byte)'\n';
-			writer.Advance(1);	*/
-			var bufferWriter = new ArrayBufferWriter<byte>();
-			using (var jsonWriter = new Utf8JsonWriter(bufferWriter, _writerOptions))
-			{
-				JsonSerializer.Serialize(jsonWriter, env, _opts);
-				length = jsonWriter.BytesCommitted;
-			} 
-
-			
-			var jsonBytes = bufferWriter.WrittenSpan;
+			var json = JsonConvert.SerializeObject(env, _newtonsoftSettings);
+			var jsonBytes = Encoding.UTF8.GetBytes(json);
+			length = jsonBytes.Length;
+			 
+			// Write to PipeWriter
 			var span = writer.GetSpan(jsonBytes.Length + 1);
 			jsonBytes.CopyTo(span);
 			span[jsonBytes.Length] = (byte)'\n';

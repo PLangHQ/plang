@@ -52,6 +52,7 @@ namespace PLang.Runtime
 		void SetParentEngine(IEngine engine);
 		IEngine? ParentEngine { get; }
 		string Path { get; }
+		bool IsInPool { get; set; }
 		public DateTime LastAccess { get; set; }
 
 		public static readonly string DefaultEnvironment = "production";
@@ -59,13 +60,15 @@ namespace PLang.Runtime
 		IPLangFileSystem FileSystem { get; }
 		PrParser PrParser { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
-		
+
 		IServiceContainer Container { get; }
 		List<IEngine> ChildEngines { get; set; }
 		IAppCache AppCache { get; }
 		IOutputSink UserSink { get; set; }
 		IOutputSink SystemSink { get; set; }
 		ResolveEventHandler AsmHandler { get; set; }
+		ConcurrentQueue<IEngine> Pool { get; }
+		EnginePool EnginePool { get; set; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetAppContext();
@@ -142,6 +145,8 @@ namespace PLang.Runtime
 		public ConcurrentDictionary<string, LiveConnection> LiveConnections { get; set; } = new();
 		public record LiveConnection(Microsoft.AspNetCore.Http.HttpResponse Response, bool IsFlushed)
 		{
+			public DateTime Created { get; set; } = DateTime.Now;
+			public DateTime Updated { get; set; } = DateTime.Now;
 			public bool IsFlushed { get; set; } = IsFlushed;
 		};
 
@@ -151,20 +156,21 @@ namespace PLang.Runtime
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public ResolveEventHandler AsmHandler { get; set; }
 
-		private List<IDisposable> listOfDisposables = new();
 
 		ConcurrentQueue<IEngine> pool = new();
-
-
-
+		public bool IsInPool { get; set; }
+		public ConcurrentQueue<IEngine> Pool { get { return pool; } }
+		public EnginePool EnginePool { get; set; }
 		public Engine()
 		{
 			Id = Guid.NewGuid().ToString();
+
 			AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
 			{
 				Console.WriteLine($"Unhandled exception: {args.ExceptionObject}");
 			};
 			LastAccess = DateTime.Now;
+
 
 		}
 
@@ -183,6 +189,8 @@ namespace PLang.Runtime
 			logger.LogDebug($" ---------- Init on Engine  ---------- {stopwatch.ElapsedMilliseconds}");
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.contextAccessor = container.GetInstance<IPLangContextAccessor>();
+
+			EnginePool = new EnginePool(container.GetInstance<IEngine>());
 
 			this.prParser = container.GetInstance<PrParser>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
@@ -213,36 +221,66 @@ namespace PLang.Runtime
 			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
+		/*
+		(IEngine, ConcurrentQueue<IEngine>) GetPoolEngine(IEngine engine)
+		{
+			var pool = this.pool;
+			var parentEngine = this._parentEngine;
+			IEngine poolEngine = this;
+			while (parentEngine != null)
+			{
+				poolEngine = parentEngine;
+				pool = parentEngine.Pool;
+				parentEngine = parentEngine.ParentEngine;
+			}
 
-
-
+			return (poolEngine, pool);
+		}
+		*/
 		public async Task<IEngine> RentAsync(GoalStep callingStep)
 		{
+			return await EnginePool.RentAsync(callingStep);
+			/*
+			var (poolEngine, pool) = GetPoolEngine(this);
+
+			Console.WriteLine($"RentAsync called - pool size BEFORE: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) - {callingStep.Text.ReplaceLineEndings(" ").MaxLength(35)}");
+
 			if (pool.TryDequeue(out var engine))
 			{
+				Console.WriteLine($"Reusing engine from pool({pool.Count}) - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
+
 				InitPerRequest(container, engine);
 				return engine;
 			}
 
-			
+			Console.WriteLine($"Pool was empty, creating new engine");
 			engine = CreateEngine(this.Path);
 
 			Process currentProcess = Process.GetCurrentProcess();
 			long privateMemory = currentProcess.PrivateMemorySize64;
-			Console.WriteLine($"After Create engine({engine.Name}) - Private Memory: {privateMemory / 1024 / 1024} MB");
+			Console.WriteLine($"After Create engine - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id}) - Private Memory: {privateMemory / 1024 / 1024} MB");
 
 			return engine;
-
-			/*var enginePool = GetEnginePool(Path);
-			return await enginePool.RentAsync(this, callingStep, Path);*/
+			*/
 		}
 		public void Return(IEngine engine, bool reset = false)
 		{
-			engine.Reset(true);
-			
-			pool.Enqueue(engine);
+			EnginePool.Return(engine, reset);
+			/*
+			var (poolEngine, pool) = GetPoolEngine(this);
+			Console.WriteLine($"Return called - pool size BEFORE: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
 
-			Console.WriteLine($"Returned - pool size:{pool.Count} - Name:{Name} - ReturnEngine:{engine.Name}");
+			engine.Reset(true);
+			if (engine.FileSystem != null)
+			{
+				pool.Enqueue(engine);
+				Console.WriteLine($"Returned - pool size AFTER: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
+			} else
+			{
+				Console.WriteLine($"File system null not returning: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
+			}*/
+
+
 
 			/*
 			var enginePool = GetEnginePool(Path);
@@ -258,13 +296,24 @@ namespace PLang.Runtime
 			}
 			LastAccess = DateTime.Now;
 			appContext = ParentEngine.GetAppContext();
-			fileSystem.ClearFileAccess();
-			this.eventRuntime.GetActiveEvents().Clear();
-			foreach (var item in listOfDisposables)
+			if (fileSystem == null)
 			{
-				item.Dispose();
+				Console.WriteLine($"???????????? - fileSystem is null???????????? - {Name}");
 			}
-			listOfDisposables.Clear();
+			else
+			{
+				fileSystem.ClearFileAccess();
+			}
+			this.eventRuntime.GetActiveEvents().Clear();
+			/*
+			foreach (var listofDisp in listOfDisposables)
+			{
+				foreach (var disposable in listofDisp.Value)
+				{
+					disposable.Dispose();
+				}
+			}
+			listOfDisposables.Clear();*/
 			contextAccessor.Current = null;
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			msa.Current = null;
@@ -276,8 +325,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		//ConcurrentDictionary<string, EnginePool> enginePools = new();
-
+		/*
 		public static void InitPerRequest(IServiceContainer container, IEngine? engine = null)
 		{
 			engine ??= container.GetInstance<IEngine>();
@@ -312,7 +360,7 @@ namespace PLang.Runtime
 			engine.UserSink = this.UserSink;
 
 			return engine;
-		}
+		}*/
 		/*
 		public EnginePool GetEnginePool(string rootPath)
 		{
@@ -451,24 +499,27 @@ namespace PLang.Runtime
 			return (ov, error);
 		}
 
-		
+
 		private static CancellationTokenSource debounceTokenSource;
 		private static readonly object debounceLock = new object();
 		private IFileSystemWatcher? fileWatcher = null;
 
 		public virtual void Dispose()
 		{
-			
+
 			if (this.disposed)
 			{
 				return;
 			}
 			fileWatcher?.Dispose();
-
-			foreach (var item in listOfDisposables)
+			/*
+			foreach (var listOfDisp in listOfDisposables)
 			{
-				item.Dispose();
-			}
+				foreach (var item in listOfDisp.Value)
+				{
+					item.Dispose();
+				}
+			}*/
 
 			foreach (var child in ChildEngines)
 			{
@@ -501,7 +552,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		
+
 
 		private async Task<(bool, IError?)> HandleFileAccessError(FileAccessRequestError fare, PLangContext context)
 		{
@@ -595,8 +646,6 @@ namespace PLang.Runtime
 				//if (await CachedGoal(goal)) return null;
 				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, context, 0);
 
-				await DisposeGoal(goal);
-
 				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
 				//await CacheGoal(goal);
 				logger.LogDebug($" - Steps done, running After events - {goal.Stopwatch.ElapsedMilliseconds}");
@@ -630,7 +679,7 @@ namespace PLang.Runtime
 
 		private async Task DisposeGoal(Goal goal)
 		{
-
+			
 		}
 
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, PLangContext context, int stepIndex = 0)
@@ -641,7 +690,7 @@ namespace PLang.Runtime
 			logger.LogDebug($"  - Goal {goal.GoalName} starts - {stopwatch.ElapsedMilliseconds}");
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 			{
-				
+
 				Stopwatch stepWatch = Stopwatch.StartNew();
 				logger.LogDebug($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
 
@@ -653,7 +702,7 @@ namespace PLang.Runtime
 					{
 						continue;
 					}
-					
+
 					logger.LogDebug($"   - Step has callback info - {stepWatch.ElapsedMilliseconds}");
 				}
 				logger.LogDebug("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
@@ -962,7 +1011,7 @@ namespace PLang.Runtime
 				{
 					if (classInstance is IDisposable disposable)
 					{
-						listOfDisposables.Add(disposable);
+						context.CallStack.AddDisposable(disposable);
 					}
 					logger.LogDebug($"     - Calling Run instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 
@@ -1020,6 +1069,8 @@ namespace PLang.Runtime
 			var instruction = prParser.ParseInstructionFile(step);
 			if (instruction == null)
 			{
+				var goals = prParser.LoadAllGoals(true);
+				
 				return new StepError($"Instruction file could not be loaded for {step.RelativePrPath}", step, Key: "InstructionFileNotLoaded");
 			}
 			step.Instruction = instruction;
@@ -1080,52 +1131,15 @@ namespace PLang.Runtime
 
 					}
 
-					CleanupEngines();
+					EnginePool.CleanupEngines();
 
 				}
 
-			
+
 			}
 		}
 
-		private void CleanupEngines()
-		{
-			if (pool.Count <= 5) return;
 
-			int atStart = pool.Count;
-			var itemsToKeep = new List<IEngine>();
-			bool disposed = false;
-			while (pool.TryDequeue(out var item))
-			{
-				if (itemsToKeep.Count >= 5 && item.LastAccess < DateTime.Now.AddSeconds(-60))
-				{
-					disposed = true;
-					
-					// Item is expired, don't add it back
-					// Optionally dispose or clean up the item here
-					item.Container.Dispose();
-					item.Dispose();
-				}
-				else
-				{
-					// Item is still valid, keep it
-					itemsToKeep.Add(item);
-				}
-			}
-
-			// Re-enqueue the items we want to keep
-			foreach (var item in itemsToKeep)
-			{
-				pool.Enqueue(item);
-			}
-
-			if (disposed)
-			{
-				Console.WriteLine($"Cleanup - Started with pool size:{atStart} - now:{itemsToKeep.Count} - engine:{Name}");
-
-				GC.Collect();
-			}
-		}
 
 		private void WatchForRebuild()
 		{

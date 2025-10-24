@@ -11,6 +11,7 @@ namespace PLang.Errors.Builder
 		public BuilderError(IError error, bool ContinueBuild = true)
 		: this(error.Message, error.Key, error.StatusCode, ContinueBuild, error.Exception, error.FixSuggestion, error.HelpfulLinks)
 		{
+			base.Id = error.Id;
 			if (error is IBuilderError be && ContinueBuild)
 			{
 				this.ContinueBuild = be.ContinueBuild;

@@ -411,7 +411,15 @@ namespace PLang.Modules.WebserverModule
 				response.Headers.Add("Cache-Control", "no-cache");
 			}
 
-			outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(httpContext.Response, true));
+			if (liveResponse != null)
+			{
+				liveResponse.IsFlushed = true;
+				outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, liveResponse);
+			} else
+			{
+				outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(httpContext.Response, true));
+			}
+
 
 			if (props.OnPollStart != null)
 			{
