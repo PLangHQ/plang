@@ -1,6 +1,7 @@
 ﻿using Epiforge.Extensions.Components;
 using IdGen;
 using LightInject;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -121,6 +122,7 @@ namespace PLang.Modules
 		{
 			instruction.Function.Instruction = instruction;
 			instruction.Step = goalStep;
+			this.function = instruction.Function;
 			return await RunFunction(instruction.Function);
 
 		}
@@ -148,15 +150,30 @@ namespace PLang.Modules
 			}
 			return result;
 		}
+		public async Task<(object? ReturnValue, IError? Error)> RunInstructionInternal(Instruction instruction)
+		{
+			var module = typeHelper.GetRuntimeType(instruction.ModuleType);
+			if (string.IsNullOrEmpty(instruction.StepHash))
+			{
+				return (null, new ProgramError("Step hash is missing. Rebuild code", goalStep, Key: "InvalidInstructionFile"));
+			}
+			var goal = context.Goals.FirstOrDefault(p => p.GoalSteps.FirstOrDefault(w => w.Hash == instruction.StepHash) != null);
+			instruction.Step = goal.GoalSteps[0];
+			
+			return await RunFunctionInternal(instruction.Function, module);
 
-		public async Task<(object? ReturnValue, IError? Error)> RunFunctionInternal(IGenericFunction function) { 
+		}
+		public async Task<(object? ReturnValue, IError? Error)> RunFunctionInternal(IGenericFunction function, Type? module = null) { 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			Dictionary<string, object?>? parameterValues = null;
-			this.function = function; // this is to give sub classes access to current function running.
+			if (module == null) module = this.GetType();
+
+			context.Function = function;
+			//this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
 				logger.LogDebug($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
-				MethodInfo? method = await methodHelper.GetMethod(this, function);
+				MethodInfo? method = await methodHelper.GetMethod(module, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
@@ -412,102 +429,7 @@ namespace PLang.Modules
 
 		private (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)
 		{
-
-			Type taskType = task.GetType();
-			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
-			if (returnArguments == null) return (null, null, null);
-
-			if (returnArguments == typeof(IError))
-			{
-				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result, null);
-			}
-			if (returnArguments == typeof(Properties))
-			{
-				var resultTask = task as Task<Properties?>;
-				return (null, null, resultTask?.Result);
-			}
-
-			object? value = null;
-			IError? error = null;
-			Properties? properties = null;
-
-			var resultProperty = taskType.GetProperty("Result");
-			if (resultProperty == null)
-			{
-				throw new Exception("This should not happen trying to get Result");
-			}
-
-
-			var rawResult = resultProperty.GetValue(task);
-			if (rawResult == null)
-			{
-				return (null, null, null);
-			}
-			if (rawResult is IError resultError) return (null, resultError, null);
-			if (rawResult is Properties resultProperties) return (null, null, resultProperties);
-
-			var result = (dynamic?)rawResult;
-			if (!result?.GetType().ToString().Contains("ValueTuple"))
-			{
-				if (returnArguments is IError)
-				{
-					error = result as IError;
-				}
-				else if (returnArguments is Properties)
-				{
-					properties = result as Properties;
-				}
-				else
-				{
-					if (result is Return @return)
-					{
-						value = @return.Variables;
-					}
-					else
-					{
-						value = result;
-					}
-				}
-
-			}
-			else
-			{
-
-				var fields = returnArguments.GetFields();
-				if (fields.Length == 0) throw new Exception("This should not happen, fields is 0 length from Task<,,>");
-
-				foreach (var field in fields)
-				{
-					var fieldValue = field.GetValue(result);
-					if (field.FieldType == typeof(IError))
-					{
-						error = fieldValue as IError;
-						if (error is Return r)
-						{
-							if (r.ReturnVariables.Count == 1)
-							{
-								value = r.ReturnVariables[0];
-							}
-							else
-							{
-								value = r.ReturnVariables;
-							}
-							error = null;
-						}
-					}
-					else if (field.FieldType == typeof(Properties))
-					{
-						properties = fieldValue as Properties;
-					}
-					else
-					{
-						value = fieldValue;
-					}
-
-				}
-			}
-			return (value, error, properties);
+			return MethodHelper.GetValuesFromTask(task);
 		}
 
 		private void SetReturnValue(IGenericFunction function, object? result, Properties? properties)

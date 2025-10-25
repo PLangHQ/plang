@@ -118,6 +118,14 @@ public class StepBuilder : IStepBuilder
 			step.BuilderVersion = assembly.GetName().Version.ToString();
 			step.RelativeGoalPath = goal.RelativeGoalPath;
 
+			Dictionary<string, object> parameters = new();
+			parameters.Add("variable", step);
+			parameters.Add("useSalt", false);
+
+			var (hash, hashError, _) = await engine.RunModule("PLang.Modules.CryptographicModule.Program", "Hash", parameters);
+			if (hashError != null) return new BuilderError(hashError);
+			step.Hash = hash.ToString();
+
 			var result = await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 			return result.Error;
 		}
@@ -301,7 +309,8 @@ public class StepBuilder : IStepBuilder
 
 	private async Task<(GoalStep Step, IBuilderError? Error)> BuildStepInformation(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, IBuilderError? prevError = null)
 	{
-		LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules, prevError);
+		var llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules, prevError);
+		context.AddOrReplace("llmQuestion", llmQuestion);
 
 		logger.Value.LogInformation($"{step.LineNumber}: Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 

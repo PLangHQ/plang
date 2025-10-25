@@ -171,6 +171,7 @@ namespace PLang.Building
 			//write properties of objects to instruction file
 			instruction.Properties.AddOrReplace("Parameters", parameterProperties);
 			instruction.Properties.AddOrReplace("ReturnValues", returnObjectsProperties);
+			instruction.StepHash = step.Hash;
 
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);

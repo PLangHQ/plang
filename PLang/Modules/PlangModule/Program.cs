@@ -153,11 +153,18 @@ namespace PLang.Modules.PlangModule
 			return classDescriptionHelper.GetClassDescription(programType);
 			
 		}
-
+		/*
 		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
 		{
 			return (null, null);
 			//return genericFunction.Run(@namespace, @class, method, Parameters);
+		}*/
+
+
+		[Description("Example: `run %instruction%, write to %result%`, `RunInstruction %instr%, write to %result%`")]
+		public async Task<(object?, IError?)> RunInstruction(Building.Model.Instruction instruction)
+		{
+			return await RunInstructionInternal(instruction);
 		}
 
 		public async Task<string> GetMethodMappingScheme()

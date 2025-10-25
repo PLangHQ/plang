@@ -48,8 +48,138 @@ public class MethodHelper
 		cachedMethodInfo = new();
 	}
 
-	public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
+
+	public static (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)
 	{
+		Type taskType = task.GetType();
+		var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
+		if (returnArguments == null) return (null, null, null);
+
+		if (returnArguments == typeof(IError))
+		{
+			var resultTask = task as Task<IError?>;
+			return (null, resultTask?.Result, null);
+		}
+		if (returnArguments == typeof(Properties))
+		{
+			var resultTask = task as Task<Properties?>;
+			return (null, null, resultTask?.Result);
+		}
+
+		object? value = null;
+		IError? error = null;
+		Properties? properties = null;
+
+		var resultProperty = taskType.GetProperty("Result");
+		if (resultProperty == null)
+		{
+			throw new Exception("This should not happen trying to get Result");
+		}
+
+
+		var rawResult = resultProperty.GetValue(task);
+		if (rawResult == null)
+		{
+			return (null, null, null);
+		}
+		if (rawResult is IError resultError) return (null, resultError, null);
+		if (rawResult is Properties resultProperties) return (null, null, resultProperties);
+
+		var result = (dynamic?)rawResult;
+		if (!result?.GetType().ToString().Contains("ValueTuple"))
+		{
+			if (returnArguments is IError)
+			{
+				error = result as IError;
+			}
+			else if (returnArguments is Properties)
+			{
+				properties = result as Properties;
+			}
+			else
+			{
+				if (result is Return @return)
+				{
+					value = @return.Variables;
+				}
+				else
+				{
+					value = result;
+				}
+			}
+
+		}
+		else
+		{
+
+			var fields = returnArguments.GetFields();
+			if (fields.Length == 0) throw new Exception("This should not happen, fields is 0 length from Task<,,>");
+
+			foreach (var field in fields)
+			{
+				var fieldValue = field.GetValue(result);
+				if (field.FieldType == typeof(IError))
+				{
+					error = fieldValue as IError;
+					if (error is Return r)
+					{
+						if (r.ReturnVariables.Count == 1)
+						{
+							value = r.ReturnVariables[0];
+						}
+						else
+						{
+							value = r.ReturnVariables;
+						}
+						error = null;
+					}
+				}
+				else if (field.FieldType == typeof(Properties))
+				{
+					properties = fieldValue as Properties;
+				}
+				else
+				{
+					value = fieldValue;
+				}
+
+			}
+		}
+		return (value, error, properties);
+	}
+
+	public static async Task<MethodInfo?> GetMethod(object callingInstance, string methodName, Dictionary<string, object?> parameters)
+	{
+		Type callingType = (callingInstance is Type type) ? type : callingInstance.GetType();
+		var methods = callingType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
+
+		GroupedBuildErrors? error = null;
+		var method = methods.FirstOrDefault(p =>
+		{
+			if (p.Name == methodName)
+			{
+				var methodParameters = p.GetParameters();
+				foreach (var parameter in parameters)
+				{
+					var parameterInfo = methodParameters.FirstOrDefault(p => p.Name?.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase) == true);
+					if (parameterInfo == null)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+
+			return false;
+		});
+
+		return method;
+	}
+
+public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
+	{
+
+
 		string cacheKey = function.Instruction.ModuleType + "_" + function.Name;
 		if (function.Parameters != null)
 		{
@@ -60,7 +190,9 @@ public class MethodHelper
 			return methodInfo;
 		}
 
-		var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+		var callingType = (callingInstance is Type type) ? type : callingInstance.GetType();
+
+		var methods = callingType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
 		GroupedBuildErrors? error = null;
 		var method = methods.FirstOrDefault(p =>

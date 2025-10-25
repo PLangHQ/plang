@@ -126,17 +126,17 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Hash input. Salt is provided by language when user does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
-		public async Task<(object?, IError?)> Hash(object? variable, bool? useSalt = null, string? salt = null, string type = "keccak256")
+		public async Task<(object?, IError?)> Hash(object? variable, bool useSalt = false, string? salt = null, string type = "keccak256")
 		{
 			return await Hash(variable, true, useSalt, salt, type);
 		}
 
 		
-		internal async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
+		internal async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool useSalt = false, string? salt = null, string type = "keccak256")
 		{
 			if (variable is string)
 			{
-				return await HashInput(variable, useSalt ?? false, salt, type);
+				return await HashInput(variable, useSalt, salt, type);
 			}
 
 			byte[]? bytes = variable as byte[];

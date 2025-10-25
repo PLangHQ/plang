@@ -146,6 +146,8 @@ namespace PLang.Building.Model
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public Stopwatch Stopwatch { get; set; }
+		public string StepHash { get; internal set; }
+
 		BuilderError invalidInstructionFileError = new BuilderError("The .pr file seem to be invalid", Key: "InvalidInstructionFile");
 		public IBuilderError? ValidateGenericFunction(GenericFunction[]? gfs)
 		{

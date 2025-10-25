@@ -1,5 +1,7 @@
 ﻿using AngleSharp.Dom;
+using Epiforge.Extensions.Components;
 using LightInject;
+using Microsoft.AspNetCore.Components;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Secp256k1;
@@ -86,6 +88,7 @@ namespace PLang.Runtime
 		Task<IEngine> RentAsync(GoalStep callingStep);
 		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
+		Task<(object? ReturnValue, IError? Error, Properties? Properties)> RunModule(string v1, string v2, Dictionary<string, object> parameters);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -219,6 +222,23 @@ namespace PLang.Runtime
 
 			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents();
 			this.eventRuntime.SetActiveEvents(activeEvents);
+		}
+
+
+
+		public async Task<(object? ReturnValue, IError? Error, Properties? Properties)> RunModule(string moduleType, string methodName, Dictionary<string, object> parameters)
+		{
+			var runtimeType = typeHelper.GetRuntimeType(moduleType);
+			MethodInfo? method = await MethodHelper.GetMethod(runtimeType, methodName, parameters);
+
+			Task task = null;
+			
+				if (task == null)
+				{
+					task = method.FastInvoke(runtimeType, parameters) as Task;
+				}
+			
+			return MethodHelper.GetValuesFromTask(task);
 		}
 
 		/*

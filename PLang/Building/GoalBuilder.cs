@@ -234,6 +234,7 @@ namespace PLang.Building
 			bool stepsNotBuilt = false;
 			foreach (var step in goal.GoalSteps)
 			{
+				
 				logger.LogDebug($"   - Validating step {step.Text.MaxLength(10)} - {stopwatch.ElapsedMilliseconds}");
 				var functionResult = step.GetFunction(fileSystem);
 				if (functionResult.Function == null)
@@ -295,6 +296,14 @@ namespace PLang.Building
 					step.Reload = false;
 					continue;
 				}
+
+				if (string.IsNullOrEmpty(step.Instruction.StepHash))
+				{
+					step.IsValid = false;
+					step.Reload = false;
+					continue;
+				}
+
 				step.IsValid = true;
 
 			}

@@ -2,6 +2,7 @@
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
+using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
@@ -41,6 +42,8 @@ namespace PLang.Interfaces
 
 	public class PLangContext
 	{
+		public List<Goal> Goals { get; set; }
+
 		public string Id { get; set; }
 		public bool IsAsync { get; set; }
 		public bool ShowErrorDetails { get; set; }
@@ -59,6 +62,8 @@ namespace PLang.Interfaces
 		public IOutputSink SystemSink { get; set; }
 		public CallStack CallStack {get;set;}
 		public ExecutionMode ExecutionMode { get; set; }
+		public BaseBuilder.IGenericFunction Function { get; internal set; }
+
 		public IOutputSink GetSink(string actor) {
 			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
 

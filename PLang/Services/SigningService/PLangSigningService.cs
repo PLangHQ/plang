@@ -150,7 +150,7 @@ namespace PLang.Services.SigningService
 			if (data != null)
 			{
 				var bytes = await serialier.Serialize(data, "json");
-				(var hash, var error) = await hasher.Hash(bytes, true, type: "Keccak256");
+				(var hash, var error) = await hasher.Hash(bytes, true, null, type: "Keccak256");
 				signature.Data = new HashedData("Keccak256", "json", hash.ToString());
 			}
 
@@ -250,7 +250,7 @@ namespace PLang.Services.SigningService
 				{
 					bytes = await serialier.Serialize(data, clientSignedMessage.Data.Format);
 				}
-				(var hash, var error) = await hasher.Hash(bytes, true, type: clientSignedMessage.Data.Type);
+				(var hash, var error) = await hasher.Hash(bytes, true, null, type: clientSignedMessage.Data.Type);
 
 				string? value = clientSignedMessage.Data?.Hash.ToString();
 				if (value == null || !value.Equals(hash))

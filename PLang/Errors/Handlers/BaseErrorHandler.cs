@@ -13,6 +13,8 @@ namespace PLang.Errors.Handlers
 		}
 		public async Task<(bool, IError?)> Handle(IError error)
 		{
+			Console.WriteLine(error.MessageOrDetail);
+
 			throw new NotImplementedException();
 			/*
 			if (error is not AskUser.AskUserError aue) return (false, error);
