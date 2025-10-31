@@ -1,0 +1,3 @@
+Diff
+- read diff.ps, write to %diffs%
+- run ps %diffs%, write to %diffs%

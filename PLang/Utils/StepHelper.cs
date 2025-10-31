@@ -49,7 +49,10 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(string Path, Dictionary<string, object?>? CallbackData, CallbackInfo CallbackInfo, SignedMessage Signature);
+		public record Callback(string Path, Dictionary<string, object?>? CallbackData, CallbackInfo CallbackInfo, SignedMessage Signature) { 
+			public string Hash { get; set; }
+			public string? PreviousHash { get; set; }
+		}
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
 		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, 
 			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false)
@@ -129,7 +132,10 @@ namespace PLang.Utils
 				}
 			}
 			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callBackInfo, skipNonce : skipNonce);
-			return new Callback(path, callbackData, callBackInfo, signed);
+			var callBack = new Callback(path, callbackData, callBackInfo, signed);
+			var hash = HashHelper.Hash(callBack);
+			callBack.Hash = hash;
+			return callBack;
 		}
 	}
 }

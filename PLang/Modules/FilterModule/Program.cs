@@ -255,6 +255,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 throwErrorOnEmptyResult: set to true when user defines retrieveOneItem and on error for key:NotFound og status code: 404 or when user defines so
 defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 <example>
+- filter %files% where ""name"" contains "".txt"", write to %filteredFiles% => variableToExtractFrom=%files%, propertyToFilterOn=""name"", valueToFilterBy="".txt"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""=""
 - filter %json% where property starts with ""%item%/"" and has ""John"" as value, get parent object, write to %libraries% => variableToExtractFrom=""%json%"", 
 	propertyToFilterOn=""%item%/"", valueToFilterBy=""John"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""startswith"", propertyToExtract=""parent""
 	operatorToFilterOnValueComparer=""insensitive""

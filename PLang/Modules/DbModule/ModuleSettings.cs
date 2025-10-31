@@ -250,6 +250,22 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			return await ProcessDataSource(dataSource);
 		}
 
+		public static string? ConvertDataSourceNameInStep(string? dataSourceNameInStep)
+		{
+			if (string.IsNullOrEmpty(dataSourceNameInStep) || !dataSourceNameInStep.Contains("%")) return dataSourceNameInStep;
+
+			var matches = Regex.Matches(dataSourceNameInStep, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%", RegexOptions.Compiled);
+			if (matches.Count == 0) return dataSourceNameInStep;
+
+			int count = 0;
+			foreach (Match match in matches)
+			{
+				dataSourceNameInStep = dataSourceNameInStep.Replace(match.Value, $"%variable{count++}%");
+			}
+
+			return dataSourceNameInStep;
+		}
+
 		public (string dataSourceName, string? dataSourcePath) GetNameAndPathByVariable(string dataSourceName, string? dataSourcePath)
 		{
 			if (!dataSourceName.Contains("%")) return (dataSourceName, dataSourcePath);
@@ -258,20 +274,10 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			if (ov.Initiated) return (ov.ValueAs<string>()!, dataSourcePath);
 
 			var varToMatch = dataSourceName ?? dataSourcePath;
-			if (varToMatch == null) return (dataSourceName, dataSourcePath);
 
-			var matches = Regex.Matches(varToMatch, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%");
-			if (matches.Count == 0) return (dataSourceName, dataSourcePath);
-
-			int count = 0;
-			foreach (Match match in matches)
-			{
-				dataSourceName = dataSourceName?.Replace(match.Value, $"%variable{count}%");
-				dataSourcePath = dataSourcePath?.Replace(match.Value, $"%variable{count}%");
-
-				count++;
-			}
-
+			dataSourceName = ConvertDataSourceNameInStep(dataSourceName);
+			dataSourcePath = ConvertDataSourceNameInStep(dataSourcePath);
+			
 			return (dataSourceName, dataSourcePath);
 		}
 		private SqlStatement GetSqliteDbInfoStatement()

@@ -508,7 +508,7 @@ OnStartingWebserver
 	public record ParamInfo(string Name, string VariableOrValue, string Type, string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
 	public record GoalToCallWithParamInfo(string Name, List<ParamInfo> Parameters);
 	public record Routing(string Path, Route Route, RequestProperties RequestProperties, ResponseProperties ResponseProperties);
-	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal);
+	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal, List<ParamInfo> ParamInfos);
 
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
@@ -590,7 +590,7 @@ AddRoutes
 		return new Program.Route(new Regex(regex.ToString(),
 								   RegexOptions.Compiled | RegexOptions.IgnoreCase),
 						 queryMap.Count == 0 ? null : queryMap,
-						 goal);
+						 goal, paramInfos);
 	}
 
 	public record CertInfo(string FileName, string Password);
@@ -843,7 +843,9 @@ Frontpage
 		return null;
 	}
 
-	public async Task<IError?> SendFileToClient(string path, string? fileName = null, string actor = "user", string channel = "default")
+	[Example("send 'file.pdf' to user", "path=file.pdf")]
+	[Example(@"send 'document.docx', name=""custom file.docx""", @"path=document.docx, fileName=""custom file.docx""")]
+	public async Task<IError?> SendFileToUser(string path, string? fileName = null, string actor = "user", string channel = "default")
 	{
 		var absolutePath = GetPath(path);
 

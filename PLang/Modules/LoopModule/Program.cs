@@ -61,6 +61,7 @@ namespace PLang.Modules.LoopModule
 			foreach (var chunk in source.Chunk(size)) yield return chunk;
 		}
 
+		[Description("Repeat a call to a function number of time. Great for pagination, where repeatCount is page count and startIndex is page number. startIndex starts at 0")]
 		public async Task<IError?> Repeat(int repeatCounter, [HandlesVariableAttribute] GoalToCallInfo goalToCall, int startIndex = 0)
 		{
 			var groupedErrors = new GroupedErrors("RepeatErrors");

@@ -314,6 +314,7 @@ namespace PLang.Runtime
 				}
 			}
 			listOfDisposables.Clear();*/
+
 			contextAccessor.Current = null;
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			msa.Current = null;
@@ -688,6 +689,17 @@ namespace PLang.Runtime
 			object? returnValues = null;
 			IError? error = null;
 			logger.LogDebug($"  - Goal {goal.GoalName} starts - {stopwatch.ElapsedMilliseconds}");
+
+			if (context.Callback?.CallbackInfo.GoalHash == goal.Hash)
+			{
+				stepIndex = context.Callback.CallbackInfo.StepIndex;
+				if (stepIndex > goal.GoalSteps.Count - 1)
+				{
+					return (null, stepIndex, new Error("stepIndex is higher than steps in goal"));
+				}
+				goal.GoalSteps[stepIndex].Execute = true;
+			}
+
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 			{
 
@@ -696,15 +708,6 @@ namespace PLang.Runtime
 
 				context.CallStack.SetCurrentStep(goal.GoalSteps[stepIndex], stepIndex);
 
-				if (context.CallbackInfo != null && context.CallbackInfo.GoalHash == goal.Hash)
-				{
-					if (stepIndex < context.CallbackInfo.StepIndex)
-					{
-						continue;
-					}
-
-					logger.LogDebug($"   - Step has callback info - {stepWatch.ElapsedMilliseconds}");
-				}
 				logger.LogDebug("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
 				(returnValues, error) = await RunStep(goal, stepIndex, context);
 				logger.LogDebug("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);

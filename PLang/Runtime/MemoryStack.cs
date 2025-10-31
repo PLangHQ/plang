@@ -1,6 +1,7 @@
 ﻿
 using LightInject;
 using Microsoft.IdentityModel.Tokens;
+using NBitcoin;
 using Nethereum.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -184,7 +185,7 @@ namespace PLang.Runtime
 
 					if (!ov.Initiated)
 					{
-						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is empty");
+						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is not initiated");
 					}
 					ov.Order = i;
 					var index = ms.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
@@ -194,7 +195,7 @@ namespace PLang.Runtime
 					}
 					else
 					{
-						var newObjectValue = new ObjectValue(ov.PathAsVariable.Replace("%", ""), ov.Value, properties: ov.Properties);
+						var newObjectValue = new ObjectValue(ov.PathAsVariable.Replace("%", ""), ov.Value, ov.Type, ov.Parent, ov.Initiated, ov.Properties, ov.IsProperty, ov.IsSystemVariable);
 						newMs.Add(newObjectValue);
 					}
 
@@ -1312,18 +1313,45 @@ namespace PLang.Runtime
 				}
 			}
 		}
+
+		private void ObjectValueChange(ObjectValue objectValue, ObjectValue? prevObjectValue, GoalStep? goalStep = null, bool disableEvent = false)
+		{
+			string? eventType = null;
+			if (prevObjectValue != null)
+			{
+				if (prevObjectValue.Initiated)
+				{
+					eventType = VariableEventType.OnChange;
+				}
+				else
+				{
+					eventType = VariableEventType.OnCreate;
+				}
+			}
+
+			if (!disableEvent && eventType != null)
+			{
+				CallEvent(eventType, objectValue, goalStep);
+			}
+		}
+
 		private void AddOrReplaceObjectValue(ConcurrentDictionary<string, ObjectValue> variables, ObjectValue objectValue, GoalStep? goalStep = null, bool disableEvent = false)
 		{
 
-			if (variables.ContainsKey(objectValue.Name))
+			if (variables.TryGetValue(objectValue.Name, out var prevObjectValue))
 			{
+				objectValue.Events = prevObjectValue.Events;
 				variables[objectValue.Name] = objectValue;
+				ObjectValueChange(objectValue, prevObjectValue, goalStep, disableEvent);
+
 				return;
 			}
 
 			if (objectValue.Parent == null)
 			{
 				variables.AddOrUpdate(objectValue.Name, objectValue, (key, oldValue) => objectValue);
+
+				ObjectValueChange(objectValue, null, goalStep, disableEvent);
 				return;
 			}
 
@@ -1344,11 +1372,21 @@ namespace PLang.Runtime
 				parentObjectValue = parentObjectValue.Parent;
 			}
 
-			variables.AddOrUpdate(objectValueToSet.Name, objectValueToSet, (key, oldValue) => objectValueToSet);
+			ObjectValue? pvObjectValue = null;
+			variables.AddOrUpdate(objectValueToSet.Name, objectValueToSet, (key, oldValue) => {
+				pvObjectValue = oldValue;
+				return objectValueToSet;
+			});
+			ObjectValueChange(objectValueToSet, pvObjectValue, goalStep, disableEvent);
+
 
 		}
 		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null, bool disableEvent = false)
 		{
+
+			AddOrReplaceObjectValue(variables, objectValue, goalStep, disableEvent);
+			return;
+
 			string? eventType = null;
 			key = Clean(key).ToLower();
 			if (key.Contains("!goal") || key.Contains("!step") || key.Contains("!event"))

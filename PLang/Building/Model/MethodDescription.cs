@@ -11,6 +11,8 @@ public class ClassDescription
 		SupportingObjects = new();
 	}
 
+	public string Information { get; set; }
+
 	public List<MethodDescription> Methods { get; set; }
 	public List<ComplexDescription> SupportingObjects { get; set; }
 }
@@ -20,6 +22,7 @@ public class MethodDescription
 	public string MethodName { get; set; }
 	public List<IPropertyDescription>? Parameters { get; set; }
 	public ReturnValue ReturnValue { get; set; }
+	public List<string>? Examples { get; set; } = null;
 }
 
 public interface IPropertyDescription

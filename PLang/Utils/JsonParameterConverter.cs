@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using NBitcoin;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ReverseMarkdown.Converters;
 using System;
 using System.Text;
@@ -7,7 +9,15 @@ using System.Text.RegularExpressions;
 public static class JObjectVarResolver
 {
 	static readonly Regex Placeholder = new("%(?<name>[^%]+)%", RegexOptions.Compiled);
-
+	static JsonSerializerSettings settings = new JsonSerializerSettings
+	{
+		Error = (sender, args) =>
+		{
+			// Set the property to null and continue
+			args.ErrorContext.Handled = true;
+		},
+		ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+	};
 	public static void ResolvePlaceholders(this JToken token, Type targetType, Func<string, Type?, object?> resolve)
 	{
 		switch (token.Type)
@@ -50,15 +60,25 @@ public static class JObjectVarResolver
 
 				if (matches.Count == 1 && matches[0].Value == s)
 				{
-					var name = matches[0].Groups["name"].Value;
-					var value = resolve(name, targetType);
-					JToken newTok = value switch
+					string? name = null;
+					object? value = null;
+					try
 					{
-						null => JValue.CreateNull(),
-						JToken jt => jt,
-						_ => JToken.FromObject(value)
-					};
-					token.Replace(newTok);
+						name = matches[0].Groups["name"].Value;
+						value = resolve(name, targetType);
+						JToken newTok = value switch
+						{
+							null => JValue.CreateNull(),
+							JToken jt => jt,
+							_ => JToken.FromObject(value, JsonSerializer.Create(settings))
+						};
+						token.Replace(newTok);
+					} catch (Exception ex)
+					{
+						int i = 0;
+						Console.WriteLine($"JsonResolve on '{name}' - value:{value} - error:{ex.Message}");
+						
+					}
 				}
 				else
 				{

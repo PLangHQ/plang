@@ -113,7 +113,7 @@ namespace PLang.Modules.LlmModule
 		}
 
 
-		[Description("When user intent is to write the result into a %variable%, make sure to respond with ReturnValues")]
+		[Description("When user intent is to write the result into a %variable% it MUST have ReturnValues, e.g. `... write to %result% => ReturnValues should contain the %result%")]
 		public async Task<(object?, IError?, Properties?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,

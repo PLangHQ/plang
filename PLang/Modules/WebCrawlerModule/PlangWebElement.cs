@@ -25,6 +25,7 @@ namespace PLang.Modules.WebCrawlerModule
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public IElementHandle WebElement { get; set; }
+		public string InnerText { get; internal set; }
 	}
 
 	// Coordinates class

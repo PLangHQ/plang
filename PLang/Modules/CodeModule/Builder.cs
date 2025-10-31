@@ -118,7 +118,7 @@ return file name with path or null");
 				methodName = method.Identifier.ToString();
 
 				inputParameters = method.ParameterList.Parameters
-					.Select(p => p.Type.ToString())
+					.Select(p => p.ToString())
 					.ToArray();
 				outParameters = new[] { method.ReturnType.ToString() };
 			}

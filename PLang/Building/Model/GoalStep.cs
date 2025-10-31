@@ -219,7 +219,6 @@ namespace PLang.Building.Model
 
 		public string UserIntent { get; internal set; }
 
-
 		public (IGenericFunction? Function, IError? Error) GetFunction(IPLangFileSystem fileSystem)
 		{
 			var result = InstructionCreator.Create(AbsolutePrFilePath, fileSystem);

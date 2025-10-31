@@ -373,7 +373,7 @@ namespace PLang.Events
 			{
 				if (!HasAppBinding(eve, error)) continue;
 
-				var step = context.CallingStep;
+				var step = (context != null) ? context.CallingStep : error.Step;
 
 				var result = await Run(eve, error.Goal, step, error);
 				

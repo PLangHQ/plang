@@ -2,6 +2,7 @@
 using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
+using PLang.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using static PLang.Utils.StepHelper;
@@ -112,7 +113,7 @@ namespace PLang.Services.OutputStream.Transformers
 						["phase"] = s.Phase.ToString().ToLowerInvariant(),
 						["text"] = s.Text,
 						["hasBinary"] = s.HasBinary,
-						["bytes"] = s.Bytes,
+						["bytes"] = s.Bytes != null ? Convert.ToBase64String(s.Bytes.Value.Span) : null,
 						["fileName"] = s.FileName,
 						["contentType"] = s.ContentType,
 					},
@@ -124,7 +125,7 @@ namespace PLang.Services.OutputStream.Transformers
 						["status"] = m.StatusCode
 					}
 				};
-
+				
 				if (context.DebugMode)
 				{
 					envelope["debug"] = GetDebugInfo(context);

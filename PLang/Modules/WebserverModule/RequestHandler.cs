@@ -244,7 +244,7 @@ namespace PLang.Modules.WebserverModule
 
 			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
 
-			(var callbackInfo, goal, error) = await GetCallbackInfos(request, goal);
+			(var callback, goal, error) = await GetCallbackInfos(request, goal);
 			if (error != null) return error;
 			if (goal == null) return new ProgramError("Server code has changed. New request needs to be made", step, StatusCode: 503);
 
@@ -254,7 +254,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				context.MemoryStack.Put(requestObjectValue, step);
 			}
-			context!.CallbackInfo = callbackInfo;
+			context!.Callback = callback;
 			if (slugVariables != null)
 			{
 				foreach (var item in slugVariables)
@@ -272,7 +272,7 @@ namespace PLang.Modules.WebserverModule
 			return error;
 		}
 
-		private async Task<(CallbackInfo? CallbackInfo, Goal? goal, IError? Error)> GetCallbackInfos(HttpRequest request, Goal goal)
+		private async Task<(Callback? Callback, Goal? goal, IError? Error)> GetCallbackInfos(HttpRequest request, Goal goal)
 		{
 			string? callbackValue = null;
 			if (request.Headers.TryGetValue("X-Callback", out var headerValue))
@@ -297,7 +297,7 @@ namespace PLang.Modules.WebserverModule
 			var callbackInfo = callback.CallbackInfo;
 			goal = prParser.GetAllGoals().FirstOrDefault(p => p.Hash == callbackInfo.GoalHash);
 
-			return (callbackInfo, goal, null);
+			return (callback, goal, null);
 		}
 
 
@@ -700,7 +700,21 @@ namespace PLang.Modules.WebserverModule
 			if (route == null) return (false, null, null);
 
 			var m = route.PathRegex.Match(path);
-			if (!m.Success) return (false, null, null);
+			if (!m.Success)
+			{
+				foreach (var paramInfo in routing.Route.ParamInfos)
+				{
+					if (paramInfo.DefaultValue != null && !string.IsNullOrEmpty(paramInfo.DefaultValue.ToString()))
+					{
+						path += $"/{paramInfo.DefaultValue.ToString()}";
+					}
+				}
+				m = route.PathRegex.Match(path);
+				if (!m.Success)
+				{
+					return (false, null, null);
+				}
+			}
 
 			var methods = routing.RequestProperties.Methods ?? ["GET"];
 

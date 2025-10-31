@@ -1,0 +1,112 @@
+BuildGuid
+- get goal file "../VisitSources.goal", write to %goal%
+- call goal TableInformation
+- call goal PrepareStructure
+- call goal GenerateCode
+
+TableInformation
+- set %askCounter% = 0 if empty
+- read config/gui.config, write to %gui%
+- read llm/tables.llm, write to %tablesSystem%
+- [llm] system: %tablesSystem%
+        user: "
+            askCounter: %askCounter%
+            path:%goal.RelativeGoalPath%
+            goal:%goal.Text%
+            %answers%
+            "
+        scheme: {
+            description:string, gui:string, ask:string, 
+            tables:[{
+            name:string, datasource:string,
+            foreignKeys: [{
+                column:string, reference:{table:string, column:string}
+            }]
+        }]}
+        write to %tableInfo%    
+- if %tableInfo.ask% is not empty then
+    - ask user %tableInfo.ask%, write to %answer%
+    - append to %answers% = "\nQuestion: %tableInfo.ask%\nAnswer: %answer%"
+    - call goal TableInformation askCounter=%askCounter++%
+    - end goal
+- set %tableInfo.gui% = { name: %askInfo.gui%, description:%gui[askInfo.gui]% }
+- foreach %tableInfo.tables% call GetTableInfo item=%table%
+
+GetTableInfo
+- [db] (GetDatabaseStructure) get table info %table.name%, datasource=%table.datasource%, write to %tableInfo%
+- append to %tableInfos% = %tableInfo%
+
+
+PrepareStructure
+- read llm/prepare.llm, write to %system%
+- [system] system:%system%
+            user: "
+                <goal>%goal.Text%</goal>
+                <generalInfo>%tableInfo%</generalInfo>
+                <tableInfos>%tableInfos%</tableInfos>
+            "
+            scheme: {introduction:string, queries:[{name:string, description:string}]}
+        write to %specs%
+- write %specs%, to file "specs.json"
+
+GenerateCode
+- read llm/generateCode.llm, write to %system%
+- [llm] system: %system%
+        user: "
+                <goal>%goal.Text%</goal>
+                <generalInfo>%tableInfo%</generalInfo>
+                <tableInfos>%tableInfos%</tableInfos>
+                <specs>%specs%</specs>
+        " 
+        scheme: [name:string, relativeGoalPath:string, steps:[{type:"query|chart|code", code:string, filePath:string, specName:string}]]
+        write to %goals%
+- foreach %goals% call WriteGoal item=%goal%
+- filter %goals% where type="query", write to %queries%
+- foreach %queries%, call goal GenerateSql item=%query%
+- filter %goals% where type="render", write to %renders%
+- foreach %renders%, call goal GenerateHtml item=%render%
+
+WriteGoal
+- write %goal.name%\n%items.steps.code%, to %goal.relativeGoalPath%
+
+
+GenerateSql
+- filter %specs% where name=%query.specName%, write to %spec%
+- read llm/generateSql.llm, write to %system%
+- [llm] system: %system%
+        user: "
+            Plang code: %query%
+            Spec: %spec%
+            "
+        scheme: [{relativePath:string, sql:string}]
+        write to %sqls%
+- call goal WriteSql
+
+WriteSql
+- write %item.sql% to %item.relativePath%
+
+GenerateHtml
+- remove %chartExample%
+- filter %specs% where name=%render.specName%, write to %spec%
+- read sql/%render.filePath.Replace("html", "sql)%, write to %sql%
+- if %render.type% == 'chart' then call LoadChartType 
+- read llm/generateHtml.llm, write to %system%
+- [llm] system: %system%
+        user: "
+        <plang_code>%render.code%</plang_code>
+        <sql>%sql%</sql>
+        <spec>%spec%</spec>
+        %chartExample%"
+        scheme: [{relativePath:string, html:string}]
+        write to %render%
+- write %render.html% to %render.relativePath%
+
+LoadChartType
+- read llm/chooseChartType.llm, write to %system%
+- get file infos from "templates/chart/*", write to %chartExampleFiles%
+- [llm] system: %system%
+        user: %chartExampleFiles.path%
+        scheme: {useChart:string}
+        write to %chartSelected%
+- read file %chartSelected.useChart%, write to %chartExample%
+- set %chartExample% = "<chartExample>%chartExample%</chartExample>"

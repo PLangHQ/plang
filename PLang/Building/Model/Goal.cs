@@ -36,7 +36,16 @@ namespace PLang.Building.Model
 
 		public string GoalName { get; set; }
 		public string? Comment { get; set; }
-		public string Text { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public string Text { get
+			{
+				return GetGoalAsString();
+			}
+		}
+
 		public List<GoalStep> GoalSteps { get; set; }
 		public List<string> SubGoals { get; set; }
 		public string? Description { get; set; }

@@ -374,6 +374,11 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				{
 					var modelDict = new Dictionary<string, object?>();
 
+					foreach (var item in memoryStack.GetMemoryStack())
+					{
+						modelDict.AddOrReplace(item.Name, item.Value);
+					}
+
 					var arguments = ((ScriptFunctionCall)context.CurrentNode).Arguments.Skip(1);
 					foreach (var argument in arguments)
 					{

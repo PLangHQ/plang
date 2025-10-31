@@ -1,0 +1,6 @@
+ <div class="uk-margin-medium">
+    {{ for section in sections }}
+        <a class="uk-label uk-padding-small"
+        href="javascript:window.plang.callGoal('{{ section.url }}', {action:'{{ section.action }}'}, {target: 'section.target'})">{{ section.title }}</a>
+    {{ end }}
+ </div>

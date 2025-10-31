@@ -3,6 +3,7 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using NBitcoin;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -13,14 +14,29 @@ using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace PLang.Modules.WebCrawlerModule
 {
+
+	public class BrowserModuleData
+	{
+		public BrowserInstance? BrowserInstance { get; set; }
+		public string Url { get; set; }
+		public string CssSelector { get; set; }
+		public Microsoft.Playwright.IResponse? Response { get; internal set; }
+		public Microsoft.Playwright.IRequest Request { get; internal set; }
+		public IConsoleMessage Console { get; internal set; }
+		public List<IDialog>? Dialogs { get; internal set; }
+		public IFileChooser FileChooser { get; internal set; }
+		public IDownload Download { get; internal set; }
+	}
+
 	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
-	public class Program : BaseProgram
+	public class Program : BaseProgram, IAsyncConstructor
 	{
 
 		private readonly IPLangFileSystem fileSystem;
@@ -28,23 +44,29 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime runtime;
 		private readonly ProgramFactory programFactory;
+		private BrowserModuleData data;
 
 		private object locker = new object();
-		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
+		public Program(IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
-			this.appContext = context;
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.engine = engine;
 			this.runtime = runtime;
-			this.programFactory = programFactory;
+			this.programFactory = programFactory;			
+		}
+
+		public async Task<IError?> AsyncConstructor()
+		{
+			data = context.GetModuleData<BrowserModuleData>();
+			return null;
 		}
 
 		public async Task<BrowserInstance> GetBrowserInstance(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
 		{
-			return Goal.GetVariable<BrowserInstance>() ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
+			return data.BrowserInstance ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
 				hideTestingMode, onRequest, onResponse);
 		}
 
@@ -74,7 +96,7 @@ namespace PLang.Modules.WebCrawlerModule
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
 		{
-			var browserInstance = Goal.GetVariable<BrowserInstance>();
+			var browserInstance = data.BrowserInstance;
 			if (browserInstance != null)
 			{
 				return browserInstance;
@@ -86,7 +108,7 @@ namespace PLang.Modules.WebCrawlerModule
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
 
 			browserInstance = new BrowserInstance(playwright, browser);
-			Goal.AddVariable(browserInstance, async () => { await browserInstance.Dispose(); });
+			data.BrowserInstance = browserInstance;
 
 			await browser.RouteAsync("*/**", async route =>
 			{
@@ -213,40 +235,79 @@ namespace PLang.Modules.WebCrawlerModule
 			return await StartBrowser(browserType, headless, userSessionPath, kioskMode, argumentOptions, timeoutInSeconds);
 		}
 
-
-		public async Task<(PlangWebElement?, IError?)> GetElement(string? cssSelector = null)
+		[Description("Get elements from page by cssSelector, when cssSelector is null it uses that last element accessed. parentElement is either cssSelector or an PlangWebElement being references")]
+		public async Task<(List<PlangWebElement>?, IError?)> GetElements(string? cssSelector = null, object? parentElement = null)
 		{
-			var result = await GetWebElement(cssSelector);
-			if (result.Error != null) return (null, result.Error);
+			var plangParentElement = parentElement as PlangWebElement;
+			if (parentElement != null && plangParentElement == null)
+			{
+				(plangParentElement, var error) = await GetElement(parentElement.ToString());
+				if (error != null) return (null, error);
+			}
 
-			return (await GetPlangWebElement(result.Element), null);
+			
+			var result = await GetWebElements(cssSelector, plangParentElement);
+			if (result.Error != null) return (null, result.Error);
+			if (result.Elements == null || result.Elements.Count == 0) return (new(), null);
+
+			List<PlangWebElement> elements = new();
+			foreach (var element in result.Elements)
+			{
+				var plangElement = await GetPlangWebElement(element);
+				if (plangElement != null) elements.Add(plangElement);
+			}
+			return (elements, null);
 		}
 
-		private async Task<(IElementHandle? Element, IError? Error)> GetWebElement(string? cssSelector = null, string? shadowDomCssSelector = null)
+		[Description("Gets one element from the dom by cssSelector, when cssSelector is null it uses that last element accessed. parentElement is either cssSelector or an PlangWebElement being references. position=null|first|last|idx|%variable%, idx is a number")]
+		public async Task<(PlangWebElement?, IError?)> GetElement(string? cssSelector = null, object? parentElement = null, string? position = null)
+		{
+			var result = await GetWebElements(cssSelector);
+			if (result.Error != null) return (null, result.Error);
+
+			IElementHandle element = result.Elements.FirstOrDefault();
+			if (position != null)
+			{
+				if (position.Equals("last", StringComparison.OrdinalIgnoreCase))
+				{
+					element = result.Elements.LastOrDefault();
+				}
+				else if (int.TryParse(position, out int idx))
+				{
+					element = result.Elements.ElementAt(idx);
+				}
+			}
+			
+
+
+			return (await GetPlangWebElement(element), null);
+		}
+
+		private async Task<(IReadOnlyList<IElementHandle>? Elements, IError? Error)> GetWebElements(string cssSelector, PlangWebElement? parentElement = null)
 		{
 			if (cssSelector == null) cssSelector = await GetCssSelector();
 
 			var page = await GetPage();
 
-			var element = await page.QuerySelectorAsync(cssSelector);
-			if (element == null) return (null, new ProgramError($"Element {cssSelector} does not exist.", goalStep, function));
+			var elements = await page.QuerySelectorAllAsync(cssSelector);
+			if (elements == null) return (null, new ProgramError($"Element {cssSelector} does not exist.", goalStep, function));
 
 			SetCssSelector(cssSelector);
 
-			return (element, null);
+			return (elements, null);
 
 
 		}
 
 		public async Task CloseBrowser()
 		{
-			var browser = goal.GetVariable<BrowserInstance>();
-			if (browser != null)
-			{
-				await browser.Browser.CloseAsync();
-			}
+			var browser = data.BrowserInstance;
+			if (browser == null) return;
 
-			goal.RemoveVariable<BrowserInstance>();
+			await browser.Browser.CloseAsync();
+			data.BrowserInstance = null;
+			
+			
 		}
 
 
@@ -262,22 +323,6 @@ namespace PLang.Modules.WebCrawlerModule
 			var browserInstance = await GetBrowserInstance();
 			return await browserInstance.GetCurrentPage(idx);
 		}
-		/*
-		private async Task<(IPage? Page, IError? Error)> GetPage(string? url = null, int idx = -1, int? timeoutInSeconds = null)
-		{
-			var browserInstance = Goal.GetVariable<BrowserInstance>();
-			if (browserInstance == null) return (null, new ProgramError("No browser exists", FixSuggestion: "Add a step before this step, `- open browser`"));
-
-			var page = await browserInstance.GetCurrentPage(idx);			
-			page.Dialog += (object? sender, IDialog e) =>
-			{
-				List<IDialog> dialogs = goal.GetVariable<List<IDialog>>() ?? new();
-				dialogs.Add(e);
-				goal.AddVariable(dialogs);
-			};
-
-			return (page, null);
-		}*/
 
 
 		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
@@ -316,7 +361,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 
 			var response = await page.GotoAsync(url, pageGotoOptions);
-			Goal.AddVariable(response);
+			data.Response = response;
 
 			var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
 			memoryStack.Put(goal.GoalName + ".response", wrappedResponse, goalStep: goalStep);
@@ -460,7 +505,7 @@ return result;");
 		public async Task<string?> AcceptAlert()
 		{
 			var page = await GetPage();
-			List<IDialog>? dialogs = goal.GetVariable<List<IDialog>>() ?? new();
+			List<IDialog>? dialogs = data.Dialogs;
 			if (dialogs.Count == 0) return null;
 
 			string message = "";
@@ -471,7 +516,8 @@ return result;");
 				dialogs.Remove(dialog);
 			}
 
-			goal.RemoveVariable<List<IDialog>>();
+			data.Dialogs = null;
+
 			return message;
 		}
 
@@ -501,9 +547,9 @@ return result;");
 		{
 			if (!string.IsNullOrEmpty(cssSelector)) return cssSelector;
 
-			if (string.IsNullOrEmpty(cssSelector) && appContext.ContainsKey("prevCssSelector"))
+			if (string.IsNullOrEmpty(cssSelector) && context.ContainsKey("prevCssSelector"))
 			{
-				cssSelector = appContext["prevCssSelector"]?.ToString();
+				cssSelector = context["prevCssSelector"]?.ToString();
 			}
 
 			if (string.IsNullOrEmpty(cssSelector))
@@ -602,11 +648,12 @@ return result;");
 		{
 			if (element == null) return null;
 			var plangWebElement = new PlangWebElement();
-			plangWebElement.Text = await element.InnerTextAsync();
+			plangWebElement.Text = await element.TextContentAsync();
 
 			plangWebElement.TagName = (await element.EvaluateAsync<string>("el => el.tagName")).ToLower();
 			plangWebElement.WebElement = element;
 			plangWebElement.InnerHtml = await element.InnerHTMLAsync();
+			plangWebElement.InnerText = await element.InnerTextAsync();
 
 			return plangWebElement;
 		}
@@ -732,10 +779,10 @@ return result;");
 		}
 
 		[Description("keys of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
-		public async Task<(Dictionary<string, string>?, IError?)> GetRequestHeaders(string[]? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
+		public async Task<(object?, IError?)> GetRequestHeaders(List<string>? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			Dictionary<string, string> headers;
-			var request = Goal.GetVariable<Microsoft.Playwright.IRequest>();
+			var request = data.Request;
 
 			if (request == null)
 			{
@@ -743,14 +790,20 @@ return result;");
 			}
 
 			headers = request.Headers;
-			return (OperatorHelper.ApplyOperator(headers, keys, keyOperator, value, valueOperator), null);
+			var dict = OperatorHelper.ApplyOperator(headers, keys, keyOperator, value, valueOperator);
+			if (keys != null && keys.Count == 1 && dict != null && dict.Count == 1)
+			{
+				return (dict.FirstOrDefault().Value, null);
+			}
+			return (dict, null);
+
 		}
 
 		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
-		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string[]? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
+		public async Task<(object?, IError?)> GetResponseHeaders(List<string>? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			Dictionary<string, string> headers;
-			var response = Goal.GetVariable<Microsoft.Playwright.IResponse>();
+			var response = data.Response;
 
 			if (response == null)
 			{
@@ -758,6 +811,9 @@ return result;");
 			}
 
 			var dict = OperatorHelper.ApplyOperator(response.Headers, keys, keyOperator, value, valueOperator);
+			if (keys != null && keys.Count == 1 && dict != null && dict.Count == 1) {
+				return (dict.FirstOrDefault().Value, null);
+			}
 			return (dict, null);
 		}
 
@@ -1072,7 +1128,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					goal.AddVariable<IConsoleMessage>(e);
+					data.Console = e;
 				}
 				if (onConsoleOutput != null)
 				{
@@ -1092,7 +1148,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Url))
 				{
-					Goal.AddVariable(e);
+					data.Request = e;
 				}
 
 				if (onRequest != null)
@@ -1114,7 +1170,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Url))
 				{
-					Goal.AddVariable(e);
+					data.Response = e;
 				}
 
 				if (onResponse != null)
@@ -1195,9 +1251,9 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					var dialogs = goal.GetVariable<List<IDialog>>() ?? new();
+					var dialogs = data.Dialogs ?? new();
 					dialogs.Add(e);
-					goal.AddVariable<IDialog>(e);
+					data.Dialogs = dialogs;
 				}
 				if (onDialog != null)
 				{
@@ -1250,7 +1306,7 @@ return result;");
 
 				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
-					goal.AddVariable(e);
+					data.FileChooser = e;
 				}
 
 				if (onFileChooser != null)
@@ -1286,7 +1342,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
-					goal.AddVariable(e);
+					data.Download = e;
 				}
 				if (onDownload != null)
 				{
@@ -1303,5 +1359,7 @@ return result;");
 			};
 
 		}
+
+		
 	}
 }

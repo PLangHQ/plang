@@ -229,10 +229,10 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 
 			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);
-
+			
 			(instruction, var error) = await ValidateGoalToCall(step, instruction);
 			if (error != null) return (instruction, new BuilderError(error) { Retry = false });
-
+			
 			return (instruction, null);
 		}
 		public bool HasNoValidation()
@@ -255,17 +255,31 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			if (builder == null || gf == null) return (instruction, null);
 
 			logger.LogDebug($"    - Have builder type '{goalStep.ModuleType}' - {stopwatch.ElapsedMilliseconds}");
-
+			
+			var isValidatedMethod = builder.GetMethod("IsValidated");			
 			var defaultValidate = builder.GetMethod("BuilderValidate");
-
 			var method = builder.GetMethod("Builder" + gf.Name);
-			if (method == null && defaultValidate == null) return (instruction, null);
+
+			if (method == null && defaultValidate == null && isValidatedMethod == null) return (instruction, null);
 
 			logger.LogDebug($"    - Create instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 			var classInstance = builderFactory.Create(goalStep.ModuleType);
 			logger.LogDebug($"    - Have instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 
 			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+
+			if (isValidatedMethod != null)
+			{
+				var method2 = classInstance.GetType().GetMethod("IsValidated");
+				if (method2 != null)
+				{
+					var result = method2.Invoke(classInstance, [goalStep, instruction!, gf]);
+					if (result is bool b && b)
+					{
+						return (instruction, null);
+					}
+				}
+			}
 
 			logger.LogDebug($"    - Loaded '{goalStep.ModuleType}' - {stopwatch.ElapsedMilliseconds}");
 			if (method != null)
@@ -297,10 +311,30 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 				logger.LogDebug($"    - Done 'BuilderValidate' - {stopwatch.ElapsedMilliseconds}");
 			}
 
+
+			var setAsValidatedMethod = builder.GetMethod("SetAsValidated");
+			if (setAsValidatedMethod != null)
+			{
+				logger.LogDebug($"    - Running 'SetAsValidated' - {stopwatch.ElapsedMilliseconds}");
+				var method2 = classInstance.GetType().GetMethod("SetAsValidated");
+				if (method2 != null)
+				{
+					var result = await InvokeMethod(classInstance, method2, goalStep, instruction!, gf);
+					if (result.Error != null) return result;
+
+					instruction = result.Instruction;
+					if (instruction != null)
+					{
+						WriteInstructionFile(goalStep, instruction);
+					}
+				}
+				logger.LogDebug($"    - Done 'SetAsValidated' - {stopwatch.ElapsedMilliseconds}");
+			}
+			/*
 			(instruction, var error) = await ValidateGoalToCall(goalStep, instruction);
 			if (error != null) return (instruction, new BuilderError(error) { Retry = false });
-
-			return (instruction, null);
+			*/
+				return (instruction, null);
 		}
 
 		public async Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction)

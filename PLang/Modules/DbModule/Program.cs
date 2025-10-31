@@ -271,7 +271,7 @@ namespace PLang.Modules.DbModule
 			}
 			try
 			{
-				if (datasource != null && transaction.Connection != null && datasource.AttachedDbs.Count > 1)
+				if (datasource != null && transaction.Connection != null && datasource.AttachedDbs.Count > 0)
 				{
 					var cmd = transaction.Connection.CreateCommand();
 					await DetachDb(datasource, cmd);
@@ -534,8 +534,26 @@ namespace PLang.Modules.DbModule
 			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		[Description("Query sql statement (SELECT) that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
+		[Description("Query the database with a sql file")]
+		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] string dataSourceName, string fileName, List<string> tableAllowList)
+		{
+			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
+			if (error != null) return (0, error, null);
 
+			return await QuerySqlFile(dataSource, fileName, tableAllowList);
+		}
+
+		internal async Task<(object?, IError?, Properties?)> QuerySqlFile(DataSource dataSource, string fileName, List<string> tableAllowList)
+		{
+			var file = GetProgramModule<Modules.FileModule.Program>();
+			var readResult = await file.ReadTextFile(fileName);
+			if (readResult.Error != null) return (0, readResult.Error, null);
+
+			return await Select([dataSource], readResult.Content.ToString());
+
+		}
+
+		[Description("Query sql statement (SELECT) that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
 		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -845,7 +863,7 @@ namespace PLang.Modules.DbModule
 
 				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSources[i].LocalPath);
 				dataSources[0].AttachedDbs.Add(alias);
-				Console.WriteLine($"Attaching {alias} - step:{goalStep.RelativeGoalPath}:{goalStep.LineNumber}");
+				
 				cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};\n";
 				
 			}
@@ -864,7 +882,6 @@ namespace PLang.Modules.DbModule
 
 				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 				{
-					Console.WriteLine($"Detach {dataSource.AttachedDbs[i]} - step:{goalStep.RelativeGoalPath}:{goalStep.LineNumber}");
 					cmd.CommandText += $";\nDETACH DATABASE \"{dataSource.AttachedDbs[i]}\";";
 				}
 				dataSource.AttachedDbs.Clear();

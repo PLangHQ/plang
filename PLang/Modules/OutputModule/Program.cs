@@ -1,5 +1,7 @@
-﻿using NBitcoin;
+﻿using Microsoft.AspNetCore.SignalR.Protocol;
+using NBitcoin;
 using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -77,9 +79,11 @@ namespace PLang.Modules.OutputModule
 
 
 
-	
+
 
 		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
+		[Example("ask user template.html, open modal, validate ValidateData, call back data: %id%, write to %result%", 
+			@"Content=""template.html"", Actor=""user"", Channel=""default"", Actions:[""showModal""], CallbackData:{id:""%id""} ")]
 		public async Task<(object?, IError?)> Ask(AskMessage askMessage)
 		{
 			var result = await AskInternal(askMessage);
@@ -105,21 +109,12 @@ namespace PLang.Modules.OutputModule
 			List<ObjectValue>? answers = new();
 			IOutputSink outputStream = context.GetSink(askMessage.Actor);
 
-			if (context.CallbackInfo != null)
+			if (context.Callback != null)
 			{
-				(answers, error) = await ProcessCallbackAnswer(askMessage, error);
-				context.CallbackInfo = null;
+				(answers, error) = await ProcessCallbackAnswer(askMessage, context.Callback, error);
 
-				if (error != null && error is UserInputError uie2)
-				{
-					var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
-					
-					var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };
-					uie2 = uie2 with { Callback = newCallBack, ErrorMessage = errorMessage };
 
-					return (answers, uie2);
-
-				}
+				
 				return (answers, error);
 			}
 			Dictionary<string, object?> parameters = new();
@@ -129,10 +124,10 @@ namespace PLang.Modules.OutputModule
 				var path = GetCallbackPath();
 				var url = (HttpContext?.Request.Path.Value ?? "/");
 				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory);
-				
+
 				askMessage = askMessage with { Callback = callback };
 
-				parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());				
+				parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());
 				parameters.Add("url", url);
 
 				if (context.DebugMode)
@@ -199,51 +194,51 @@ namespace PLang.Modules.OutputModule
 		}
 
 
-		private async Task<(List<ObjectValue>? Answers, IError? Error)> ProcessCallbackAnswer(AskMessage askOptions, IError? error = null)
+		private async Task<(List<ObjectValue>? Answers, IError? Error)> ProcessCallbackAnswer(AskMessage askMessage, Callback callback, IError? error = null)
 		{
 			if (HttpContext == null || !HttpContext.Request.HasFormContentType)
 			{
 				return (null, new ProgramError("Request no longer available", goalStep));
 			}
 
-			string? callbackBase64 = null;
-			if (HttpContext != null && HttpContext.Request.Headers.TryGetValue("X-Callback", out var headerValue))
-			{
-				callbackBase64 = headerValue.ToString();
-			}
-
-			if (string.IsNullOrEmpty(callbackBase64))
-			{
-				callbackBase64 = memoryStack.Get<string>("request.body.callback");
-
-				if (string.IsNullOrEmpty(callbackBase64))
-				{
-					return (null, new ProgramError("callback was empty", goalStep));
-				}
-			}
-
-			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
-			if ((callback?.CallbackData != null && callback?.CallbackData?.Count > 0))
+			if (callback.CallbackData != null && callback.CallbackData?.Count > 0)
 			{
-				foreach (var item in callback?.CallbackData ?? [])
+				foreach (var item in callback.CallbackData ?? [])
 				{
 					string? value = item.Value?.ToString();
 					if (string.IsNullOrEmpty(value)) continue;
 
 					var decryptedValue = await encryption.Decrypt(value);
 					memoryStack.Put(item.Key, decryptedValue);
-					if (askOptions.CallbackData?.ContainsKey(item.Key) == true)
+					if (askMessage.CallbackData?.ContainsKey(item.Key) == true)
 					{
-						askOptions.CallbackData[item.Key] = decryptedValue;
+						askMessage.CallbackData[item.Key] = decryptedValue;
 					}
 				}
 			}
 
-			(List<ObjectValue>? answers, error) = GetStatelessAnswers(askOptions.CallbackData);
+			(List<ObjectValue>? answers, error) = GetStatelessAnswers(askMessage.CallbackData);
 			if (error != null) return (null, error);
 
-			return await ValidateAnswers(answers!, askOptions);
+			(answers, error) = await ValidateAnswers(answers!, askMessage);
+
+			if (error != null && error is UserInputError uie2)
+			{
+				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				newCallBack.PreviousHash = context.Callback.Hash;
+
+				var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };
+				uie2 = uie2 with { Callback = newCallBack, ErrorMessage = errorMessage };
+				
+				context.Callback = null;
+
+				return (answers, uie2);
+
+			}
+
+			context.Callback = null;
+			return (answers, error);
 		}
 
 		private async Task<(List<ObjectValue> Answers, IError? Error)> ValidateAnswers(List<ObjectValue> answers, AskMessage askMessage)
@@ -279,10 +274,9 @@ namespace PLang.Modules.OutputModule
 					FixSuggestion: @$"add `write to %answer%` to you step, e.g. `- {goalStep.Text}, write into %answer%"));
 			}
 
-
-
-			foreach (var rv in function.ReturnValues)
+			if (function.ReturnValues.Count == 1)
 			{
+				var rv = function.ReturnValues[0];
 				var variableName = rv.VariableName.Replace("%", "");
 				var result = memoryStack.Get("request.body." + variableName);
 				if (result == null)
@@ -290,15 +284,33 @@ namespace PLang.Modules.OutputModule
 					var dict = memoryStack.Get<Dictionary<string, object?>>("request.body");
 					if (dict != null && dict.Count > 0)
 					{
-						var newDict = dict.Where(p => p.Key != "callback").ToDictionary();
+						var newDict = dict.Where(p => p.Key != "__plang_callback_hash").ToDictionary();
 						answers.Add(new ObjectValue(variableName, newDict));
 					}
 				}
 				else
 				{
+
 					answers.Add(new ObjectValue(variableName, result));
 				}
 			}
+			else
+			{
+				foreach (var rv in function.ReturnValues)
+				{
+					var variableName = rv.VariableName.Replace("%", "");
+					var result = memoryStack.Get("request.body." + variableName);
+					if (result == null)
+					{
+						answers.Add(ObjectValue.Nullable(variableName));
+					}
+					else
+					{
+						answers.Add(new ObjectValue(variableName, result));
+					}
+				}
+			}
+
 
 			if (answers.Count == 0)
 			{
@@ -308,7 +320,7 @@ namespace PLang.Modules.OutputModule
 			return (answers, null);
 		}
 
-		
+
 
 		public record JsonOptions(NullValueHandling NullValueHandling = NullValueHandling.Include, DateFormatHandling DateFormatHandling = DateFormatHandling.IsoDateFormat,
 			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
@@ -391,7 +403,7 @@ namespace PLang.Modules.OutputModule
 		[Description("Write appends by default a text message to the target. User can define different actions, but when it is not defined set as 'append'. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
-			
+
 
 			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
 			textMessage = textMessage with { Path = stepPath };

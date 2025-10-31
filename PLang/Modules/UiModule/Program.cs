@@ -108,6 +108,14 @@ namespace PLang.Modules.UiModule
 		}
 
 
+		public record DialogCommand(bool CloseAll = false, string Type = "dialogCommand", string Actor = "user", string Channel = "default");
+		public async Task<IError?> CloseWindow(DialogCommand dialogCommand)
+		{
+			var executeMessage = new ExecuteMessage("dialogCommand", dialogCommand, Channel: dialogCommand.Channel, Actor: dialogCommand.Actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
+
+			var sink = context.GetSink(dialogCommand.Actor);
+			return await sink.SendAsync(executeMessage);
+		}
 		public enum UiFacet
 		{
 			Property,      // innerHTML, className, etc.

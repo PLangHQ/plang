@@ -56,7 +56,11 @@ namespace PLang.Utils
 					classDescription.Methods.Add(desc);
 				}
 
+			}
 
+			if (classDescription.Methods.Any(p => p.Examples != null && p.Examples.Any()))
+			{
+				classDescription.Information = @"Examples with methods first define an example plang code and then(=>) how it is mapped to parameters";
 			}
 
 			return (classDescription, (errors.Count > 0) ? errors : null);
@@ -88,6 +92,8 @@ namespace PLang.Utils
 				methodDescription = descAttribute.ConstructorArguments[0].Value as string;
 			}
 
+			
+
 			var parameters = method.GetParameters();
 
 			var paramsDesc = GetParameterDescriptions(method, parameters);
@@ -102,6 +108,17 @@ namespace PLang.Utils
 				Parameters = paramsDesc.ParameterDescriptions!,
 				ReturnValue = returnValueInfo,
 			};
+
+			var exampleAttributes =
+				method.CustomAttributes.Where(p => p.AttributeType.Name == "ExampleAttribute");
+			foreach (var exampleAttribute in exampleAttributes)
+			{
+				if (md.Examples == null) md.Examples = new();
+
+				md.Examples.Add(exampleAttribute.ConstructorArguments[0].Value + " => " + exampleAttribute.ConstructorArguments[1].Value);
+			}
+
+
 			return (md, null);
 		}
 

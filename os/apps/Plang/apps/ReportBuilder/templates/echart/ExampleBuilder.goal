@@ -1,0 +1,17 @@
+ExampleBuilder
+- open https://echarts.apache.org/examples/en/index.html
+- get elements '.example-list-panel > div', write to %sections%
+- foreach %sections% call ParseSection item=%section%
+
+ParseSection
+- [web] get element '#chart-type-line > span'(text) from %section%, write to %type%
+- [web] get element '.example-list-item' from %section%, write to %examples%
+- foreach %examples% call BrowseExample item=%example%
+
+BrowseExample
+- [web] get element "a" from %example%, write to %anchor%
+- [web] get element ".example-title" from %example%, write to %title%
+- navigate to %anchor.href%
+- click on "#tab-full-code"
+- [web] get element '.ace_content[1]', write to %exampleCode%
+- write %exampleCode% to "examples/%type.Text%/%title.Text%.html"

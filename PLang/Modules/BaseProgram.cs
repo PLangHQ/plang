@@ -31,6 +31,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using static PLang.Modules.BaseBuilder;
@@ -822,12 +823,36 @@ namespace PLang.Modules
 
 			return task.Result.error;
 		}
-
+		public async Task<(T?, IError?)> GetProgramModuleAsync<T>() where T : BaseProgram
+		{
+			var program = container.GetInstance<T>();
+			program.Init(container, goal, goalStep, instruction, contextAccessor);
+			if (program is IAsyncConstructor constructor)
+			{
+				var error = await constructor.AsyncConstructor();
+				if (error != null)
+				{
+					return (null, error);
+				}
+			}
+			return (program, null);
+		}
 		public T GetProgramModule<T>() where T : BaseProgram
 		{
 			var program = container.GetInstance<T>();
 			program.Init(container, goal, goalStep, instruction, contextAccessor);
+			if (program is IAsyncConstructor constructor)
+			{
+				throw new Exception("Must use GetProductModuleAsync");
+			}
 			return program;
+		}
+
+
+		public static void NotEmpty(string? value, [CallerArgumentExpression("value")] string? paramName = null)
+		{
+			if (string.IsNullOrWhiteSpace(value))
+				throw new ArgumentException($"{paramName} cannot be null or empty.", paramName);
 		}
 		/*
 		public T? GetVariable<T>(string? variableName = null) where T : class

@@ -219,13 +219,13 @@ namespace PLang.Building.Parsers
 					}
 					else
 					{
-						currentGoal.Text += ('\n' + line).TrimEnd();
+						//currentGoal.Text += ('\n' + line).TrimEnd();
 					}
 				}
 
 				currentGoal = goalParser.Parse(line);
 				currentGoal.Comment = uncertainComment ?? goalComment;
-				currentGoal.Text = line;
+				//currentGoal.Text = line;
 				goalComment = null;
 				uncertainComment = null;
 				stepNr = 0;
@@ -277,6 +277,7 @@ namespace PLang.Building.Parsers
 				}
 				goal.AppName = "/apps/" + appName;
 				goal.AbsoluteAppStartupFolderPath = rootPath;
+				goal.Hash = goal.GetGoalAsString().ComputeKeccack();
 
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
@@ -340,7 +341,9 @@ namespace PLang.Building.Parsers
 					goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
 					goal.DataSourceName = prevBuildGoal.DataSourceName;
 					goal.IsSystem = isSystem;
-					goal.HasChanged = prevBuildGoal.GetGoalAsString() != goal.GetGoalAsString();
+					goal.HasChanged = prevBuildGoal.Hash != goal.Hash;
+					
+
 					foreach (var injection in prevBuildGoal.Injections)
 					{
 						if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)

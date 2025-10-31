@@ -6,6 +6,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenAI.Assistants;
 using Org.BouncyCastle.Crypto.Prng;
 using PLang.Attributes;
@@ -28,6 +29,7 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 using static PLang.Modules.UiModule.Program;
@@ -46,12 +48,12 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly VariableHelper variableHelper;
 		private ModuleSettings dbSettings;
-		private readonly PrParser prParser;
+		private readonly IGoalParser goalParser;
 		private readonly ProgramFactory programFactory;
 
 		public Builder(IPLangFileSystem fileSystem, IDbServiceFactory dbFactory, ISettings settings, PLangAppContext appContext,
 			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger,
-			VariableHelper variableHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
+			VariableHelper variableHelper, ModuleSettings dbSettings, IGoalParser goalParser, ProgramFactory programFactory) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.dbFactory = dbFactory;
@@ -62,7 +64,7 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.variableHelper = variableHelper;
 			this.dbSettings = dbSettings;
-			this.prParser = prParser;
+			this.goalParser = goalParser;
 			this.programFactory = programFactory;
 
 			this.dbSettings.UseInMemoryDataSource = true;
@@ -94,7 +96,7 @@ namespace PLang.Modules.DbModule
 				{
 					if (!string.IsNullOrEmpty(dsName))
 					{
-						(var ds, var error2) = await dbSettings.GetDataSource(dsName);
+						(var ds, var error2) = await dbSettings.GetDataSource(dsName, goalStep, false);
 						if (error2 != null) return (null, new BuilderError(error2));
 						if (dataSource != null && dataSource.NameInStep == null && ds?.Name == dataSource.Name)
 						{
@@ -209,6 +211,19 @@ Rules:
 
 
 			}
+
+			if (methodsAndTables.ContainsMethod("multipledatas"))
+			{
+				system += $@"
+sql statement contains multiple datasource. The first datasource is referenced as 'main' in the sql statement and MUST contain the original name({methodsAndTables.DataSource.NameInStep}) in dataSourceNames
+<select_example>
+`select main.title, analytics.hits from main.products p join analytics.hits h on p.id=h.productId` => main MUST contain the original datasource name in dataSourceNames but MUST keep main in sql statement 
+</select_example>
+
+DO NOT CHANGE main. prefix
+";
+			}
+
 			if (methodsAndTables.ContainsMethod("ExecuteDynamicSql"))
 			{
 				system += @"
@@ -325,7 +340,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 			}
 			if (dataSourceNameParam?.Contains("%") == true && !VariableHelper.IsVariable(dataSourceNameParam))
 			{
-				var dsResult = await dbSettings.GetDataSource(dataSourceNameParam);
+				var dsResult = await dbSettings.GetDataSource(dataSourceNameParam, goalStep, false);
 				if (dsResult.Error != null) return (null, new BuilderError(dsResult.Error));
 			}
 			else if (string.IsNullOrEmpty(dataSourceNameParam))
@@ -347,7 +362,7 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 				{
 					foreach (var dsName in dsNames)
 					{
-						(_, var error2) = await dbSettings.GetDataSource(dsName);
+						(_, var error2) = await dbSettings.GetDataSource(dsName, goalStep, false);
 						if (error2 != null) return (null, new BuilderError($"Datasource '{dsName}' does not exist. Use the original names of the data sources provided. The dataSourceName that belonds to '{dsName}' should come first in your response"));
 					}
 
@@ -470,7 +485,7 @@ When table name is unknown at built time because it is created with variable, us
 
 			if (stepDataSource == null && step.Goal.IsSetup && step.Goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
 			{
-				var dataSourceResult = await dbSettings.GetDataSource("data");
+				var dataSourceResult = await dbSettings.GetDataSource("data", step, false);
 				if (dataSourceResult.Error != null) return (null, new BuilderError(dataSourceResult.Error));
 				if (dataSourceResult.DataSource == null)
 				{
@@ -800,6 +815,92 @@ When table name is unknown at built time because it is created with variable, us
 			return null;
 		}
 
+		public bool IsValidated(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			if (step.Goal.IsSetup) return false;
+
+			if (instruction.Properties.TryGetValue("IsValidSql", out object? prop))
+			{
+				if (prop is JObject jObj)
+				{
+					var isValidSql = jObj.ToObject<ValidSql>();
+					if (isValidSql == null) return false;
+
+					var setupGoal = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.RelativePrPath == isValidSql.SetupRelativePrPath);
+					if (setupGoal != null)
+					{
+						if (setupGoal.Hash == isValidSql.SetupHash) return true;
+					}
+				}
+				else if (prop is JArray jArray)
+				{
+					var validSqls = jArray.ToObject<List<ValidSql>>();
+					if (validSqls == null || validSqls.Count == 0) return false;
+
+					foreach (var validSql in validSqls)
+					{
+						var setupGoal = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.RelativePrPath == validSql.SetupRelativePrPath);
+						if (setupGoal != null)
+						{
+							if (setupGoal.Hash != validSql.SetupHash) return false;
+						}
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public (Instruction?, IError?) SetAsValidated(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			if (step.Goal.IsSetup)
+			{
+				return (null, null);
+			}
+
+			var	dataSourceName = gf.GetParameter<string>("dataSourceName");
+			dataSourceName = ModuleSettings.ConvertDataSourceNameInStep(dataSourceName);
+			var	setupGoal = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));			
+
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				
+				if (setupGoal == null)
+				{
+					return (null, new StepBuilderError($"Could not find setup file for data source '{dataSourceName}'", step));
+				}
+
+				var isValidSql = new ValidSql(setupGoal.Hash, setupGoal.RelativePrPath, dataSourceName, DateTime.Now);
+				bool writeInstruction = !instruction.Properties.ContainsKey("IsValidSql");
+
+				instruction.Properties.AddOrReplace("IsValidSql", isValidSql);
+			}
+			else
+			{
+				List<ValidSql> validSqls = new();
+				var dataSourceNames = gf.GetParameter<List<string>>("dataSourceNames");
+				if (dataSourceNames == null || dataSourceNames.Count == 0) return (instruction, null);
+
+				foreach (var dsNameVar in dataSourceNames)
+				{
+					var dsName = ModuleSettings.ConvertDataSourceNameInStep(dsNameVar);
+
+					setupGoal = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName.Equals(dsName, StringComparison.OrdinalIgnoreCase));
+					if (setupGoal == null)
+					{
+						return (null, new StepBuilderError($"Could not find setup file for data source '{dsName}'", step));
+					}
+
+					validSqls.Add(new ValidSql(setupGoal.Hash, setupGoal.RelativePrPath, dsName, DateTime.Now));
+
+				}
+
+				instruction.Properties.AddOrReplace("IsValidSql", validSqls);
+			}
+			return (instruction, null);
+		}
+
+		public record ValidSql(string SetupHash, string SetupRelativePrPath, string DataSourceName, DateTime Updated);
 		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, DbGenericFunction gf)
 		{
 			var (dataSource, error) = await GetDataSource(step, gf);
@@ -873,6 +974,12 @@ When table name is unknown at built time because it is created with variable, us
 
 				logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 
+				var setupFile = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName == dataSource.Name);
+				if (setupFile == null)
+				{
+					return (instruction, new StepBuilderError($"Could not find setup file matching data source: '{dataSource.Name}'", step));
+				}
+
 				return (instruction, null);
 			}
 
@@ -924,7 +1031,7 @@ Reason:{error.Message}", step,
 				if (error.StatusCode == 409)
 				{
 					logger.LogWarning("  - ⚠️ Transaction not commited in code. It will be automatically commited. Good practice to add `- end transaction` step to you code.");
-				
+
 					error = await program.EndTransaction(true);
 					if (error != null) return new StepBuilderError(error, step);
 
@@ -974,7 +1081,8 @@ Reason:{error.Message}", step,
 		{
 			if (context.TryGetValue(CurrentDataSourceKey, out DataSource? ds) && ds != null)
 			{
-				if (ds.Transaction != null) { 
+				if (ds.Transaction != null)
+				{
 					ds.Transaction.Commit();
 					ds.Transaction.Connection?.Close();
 					ds.Transaction = null;
@@ -1162,8 +1270,10 @@ Reason:{error.Message}", step,
 			return false;
 		}
 
+
 		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, DataSource dataSource, GoalStep step)
 		{
+
 
 
 			var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
@@ -1191,8 +1301,8 @@ Reason:{error.Message}", step,
 
 			try
 			{
-				using var cmd = (dataSource.Transaction != null) ? 
-					dataSource.Transaction.Connection?.CreateCommand() : 
+				using var cmd = (dataSource.Transaction != null) ?
+					dataSource.Transaction.Connection?.CreateCommand() :
 					anchor.Value.CreateCommand();
 				cmd.CommandText = sql;
 				cmd.Prepare();

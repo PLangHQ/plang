@@ -28,7 +28,8 @@ public class DynamicObjectValue : ObjectValue
 
 	public override object Value
 	{
-		get { 
+		get
+		{
 			var value = func();
 
 			if (value is ObjectValue ov) return ov.Value;
@@ -172,7 +173,7 @@ public class ObjectValue
 
 			this.Initiated = true;
 			this.Type = (value != null) ? value.GetType() : typeof(Nullable);
-			
+
 
 			if (Parent != null) SetParent(value);
 			if (Properties == null || Properties.Count == 0) return;
@@ -195,13 +196,14 @@ public class ObjectValue
 		}
 	}
 	private JToken GetJToken(object? value) => value switch
-		{
-			null => JValue.CreateNull(),
-			JToken jt => jt,
-			_ => JToken.FromObject(value)
-		};
-	
-	private void SetParent(object? value) {
+	{
+		null => JValue.CreateNull(),
+		JToken jt => jt,
+		_ => JToken.FromObject(value)
+	};
+
+	private void SetParent(object? value)
+	{
 		var parentValue = Parent!.Value;
 		if (parentValue is JObject jobj)
 		{
@@ -211,18 +213,21 @@ public class ObjectValue
 			if (property == null)
 			{
 				jobj.Add(Name, jToken);
-			} else
+			}
+			else
 			{
 				property.Value = jToken;
 			}
 			Parent.Value = jobj;
-		} else if (parentValue is JArray jArray)
+		}
+		else if (parentValue is JArray jArray)
 		{
 			var index = int.Parse(Name.Trim('[').Trim(']'));
 			JToken jToken = (value is JToken jt) ? jt : GetJToken(value); ;
 			jArray[index] = jToken;
 			Parent.Value = jArray;
-		} else if (parentValue == null)
+		}
+		else if (parentValue == null)
 		{
 			JToken jToken = (value is JToken jt) ? jt : GetJToken(value);
 			JObject newObj = new JObject();
@@ -230,9 +235,33 @@ public class ObjectValue
 
 			Parent!.Value = newObj;
 
-		} else
+		}
+		else
 		{
-			throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
+			object? parentReference = Parent;
+			if (Parent is ObjectValue ov)
+			{
+				parentReference = ov.Value;
+			}
+
+			if (TypeHelper.ImplementsDict(parentReference, out var dict))
+			{
+				if (dict.Contains(Name))
+				{
+					dict[Name] = value;
+				}
+				else
+				{
+					dict.Add(Name, value);
+				}
+
+				Parent.Value = dict;
+			}
+			else
+			{
+
+				throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
+			}
 		}
 
 	}

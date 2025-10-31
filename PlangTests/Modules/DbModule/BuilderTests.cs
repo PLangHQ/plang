@@ -37,7 +37,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			var db = new SqliteConnection("DataSource=In memory;Version=3");
 
-			builder = new Builder(fileSystem, dbFactory, settings, appContext, llmServiceFactory, typeHelper, logger, variableHelper, null, prParser, programFactory);
+			builder = new Builder(fileSystem, dbFactory, settings, appContext, llmServiceFactory, typeHelper, logger, variableHelper, null, goalParser, programFactory);
 			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
@@ -59,7 +59,7 @@ namespace PLang.Modules.DbModule.Tests
 			dataSources.Add(new DataSource("data", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
-			builder = new Builder(fileSystem, dbFactory, settings, appContext, llmServiceFactory, typeHelper, logger, variableHelper, null, prParser, programFactory);
+			builder = new Builder(fileSystem, dbFactory, settings, appContext, llmServiceFactory, typeHelper, logger, variableHelper, null, goalParser, programFactory);
 			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 

@@ -1,9 +1,12 @@
 ﻿using Markdig;
+using Microsoft.Playwright;
+using Namotion.Reflection;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Utils;
 using ReverseMarkdown;
 using System.ComponentModel;
+using UglyToad.PdfPig.Graphics;
 
 namespace PLang.Modules.ConvertModule
 {
@@ -13,6 +16,54 @@ namespace PLang.Modules.ConvertModule
 
 		public Program()
 		{
+		}
+
+		public record ConvertHtmlToPdfInstruction(string Html, PagePdfOptions Options);
+
+
+		[Description("converts html to pdf, returns byte array of file if no path is defined")]
+		public async Task<IError?> ConvertHtmlToPdf(ConvertHtmlToPdfInstruction options)
+		{
+			NotEmpty(options.Html);
+			NotEmpty(options.Options.Path);
+			if (!options.Html.Contains("<base", StringComparison.OrdinalIgnoreCase))
+			{
+				string basePath = "file:///" + fileSystem.RootDirectory.Replace(" ", "%20").Replace("\\", "/") + "/";
+
+			if (options.Html.Contains("<head>", StringComparison.OrdinalIgnoreCase))
+				{
+					options = options with { Html = options.Html.Replace("<head>", @$"<head><base href=""{basePath}"" />") };
+				} else if (options.Html.Contains("<body>", StringComparison.OrdinalIgnoreCase))
+				{
+					options = options with { Html = options.Html.Replace("<body>", @$"<base href=""{basePath}"" /><body>") };
+				}
+				else
+				{
+					options = options with { Html = options.Html + @$"\n<base href=""{basePath}"" /><body>" };
+				}
+			}
+
+			options.Options.Path = GetPath(options.Options.Path);
+			options.Options.PrintBackground = true;
+
+			string htmlFileName = options.Options.Path + ".html";
+			await fileSystem.File.WriteAllTextAsync(htmlFileName, options.Html);
+
+			var (browser, error) = await GetProgramModuleAsync<WebCrawlerModule.Program>();
+			if (error != null) return error;
+			if (browser == null)
+			{
+				return new ProgramError("Browser object is null. Could not create instance of the browser");
+			}
+			await browser.StartBrowser(headless: true);
+			var page = await browser.GetPage();
+			await page.GotoAsync("file://" + htmlFileName, new() { WaitUntil = WaitUntilState.NetworkIdle });
+			await page.PdfAsync(options.Options);
+			await browser.CloseBrowser();
+
+			fileSystem.File.Delete(htmlFileName);
+
+			return null;
 		}
 
 		public async Task<string?> ConvertMdToHtml(string content, bool useAdvancedExtension = true, List<string>? markdownPipelineExtensions = null)

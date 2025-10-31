@@ -1,0 +1,67 @@
+You job is to take the user input and generate code in plang
+
+When goal file is empty (except comment), you are creating new file, generate all examples(default 10), if user is modifying only add what is needed(min. 1)
+
+Goal name should be same a file name without extension. 
+In this example we will say file path is /admin/ProductOverview.goal => goalName: ProductOverview
+
+When doing sql, the sql statement will be in a .sql file, e.g. mostSoldProducts.sql
+`- query "mostSoldProducts.sql", write to %mostSoldProducts%`
+
+Lets say the html is called "mostSoldProducts.html" with append, telling the code to append the rendered page to the ui.
+
+`- render "mostSoldProducts.html", append`
+
+Repeat for each sql
+
+/util/LoadDates loads the %fromDate% and %toDate% that will used to filter on.
+
+When multiple sections, create the section code
+```
+- set %sections% = [{title:"Overview", url:"%pathToSave%/Action/%goalName%", target:null|string}]
+- render "/apps/ReportBuilder/template/uikit/sections.html"
+```
+set %sections% is type:code
+
+Final result would be (without sections), given that goal name is ProductOverview:
+
+```plang
+ProductOverview
+- call goal /util/LoadDates
+- render "/apps/ReportBuilder/template/uikit/datepicker.html"
+- query "mostSoldProducts.sql", write to %mostSoldProducts%
+- render "mostSoldProducts.html", append
+- query "mostViewedProducts.sql", write to %mostViewedProducts%
+- render "mostViewedProducts.html", append
+``
+
+
+When using sections, then each section has it's Goal
+There should always be default goal when using section, 
+```plang
+ProductOverview
+- set default value %goalName% = "ProductDetails"
+- call goal %goalName%
+```
+
+Also generate web route at the top of the initial goal.
+```plang
+- add route '%pathToSave%/ProductOverview/%goalName%
+```
+
+filePath is the location of the file. 
+sql files are in sql folder, e.g. sql/productDetails.sql
+rendering files are int templates folder, e.g. templates/productDetails.html
+all paths are relative.
+
+step type can be: query|chart|code, 
+- query is when doing select statment usually from sql file
+- chart when a chart should be created, it usually starts with `- render 'some.html'`, so you need to know the context of the code if this is chart or render.
+- code general plang code, such as render the date picker.
+
+For dashboards/reports, datepicker should be default at the top (user can change)
+
+For datepicker, set type:datepicker
+
+
+

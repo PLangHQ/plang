@@ -49,11 +49,12 @@ namespace PLang.Interfaces
 		public SignedMessage? SignedMessage { get; set; }
 		public HttpContext? HttpContext { get; set; }
 		public MemoryStack MemoryStack { get; }
-		public CallbackInfo? CallbackInfo { get; set; }
+		public Callback? Callback { get; set; }
 		public GoalStep? CallingStep { get; set; }
 		public List<MockData> Mocks { get; init; }
 		public ConcurrentDictionary<string, object?> Items { get; init; }
 		public ConcurrentDictionary<string, object?> SharedItems { get; set; }
+
 		public IEngine Engine { get; }
 		public IOutputSink UserSink { get; set; }
 		public IOutputSink SystemSink { get; set; }
@@ -174,6 +175,27 @@ namespace PLang.Interfaces
 			return true;
 		}
 
+		private readonly Dictionary<string, object> _moduleData = new();
+
+		public T GetModuleData<T>(string key = null) where T : class, new()
+		{
+			string moduleKey = key ?? typeof(T).Name;
+
+			if (!_moduleData.ContainsKey(moduleKey))
+			{
+				_moduleData[moduleKey] = new T();
+			}
+
+			return _moduleData[moduleKey] as T;
+		}
+
+		public void SetModuleData<T>(T data, string key = null) where T : class
+		{
+			string moduleKey = key ?? typeof(T).Name;
+			_moduleData[moduleKey] = data;
+		}
+
+
 		public Dictionary<string, object?> GetReserverdKeywords()
 		{
 			var dict = new Dictionary<string, object?>();
@@ -204,7 +226,7 @@ namespace PLang.Interfaces
 			}
 			context.SharedItems = this.SharedItems;
 			context.HttpContext = this.HttpContext;	
-			context.CallbackInfo = this.CallbackInfo;
+			context.Callback = this.Callback;
 			context.DebugMode = this.DebugMode;
 			context.ShowErrorDetails = this.ShowErrorDetails;
 			context.SystemSink = this.SystemSink;

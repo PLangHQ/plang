@@ -51,7 +51,58 @@ namespace PLang.Modules.ValidateModule
 			return (multiError.Count > 0) ? multiError : null;
 		}
 
-		[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]
+		[Description("compairer:==|<|>|<=|>=|!=")]
+		public async Task<IError?> IsLength([HandlesVariable] string variableName, int length, string compairer, string errorMessage, int statusCode = 400)
+		{
+
+			var variable = memoryStack.GetObjectValue(variableName);
+			if (string.IsNullOrEmpty(errorMessage))
+			{
+				errorMessage = $"{variable.Name} is not {compairer} than {length}";
+			}
+
+
+			int varLength = 0;
+
+			
+			var value = variable.Value;
+			if (value is int || value is long)
+			{
+				varLength = (int)value;
+			} else
+			{
+				varLength = variable.ToString().Length;
+			}
+
+			if (compairer.Equals("==") && varLength != length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+			if (compairer.Equals("!=") && varLength == length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+			if (compairer.Equals(">") && varLength <= length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+			if (compairer.Equals("<") && varLength >= length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+			if (compairer.Equals("<=") && varLength > length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+
+			if (compairer.Equals(">=") && varLength < length)
+			{
+				return new ProgramError(errorMessage, goalStep);
+			}
+			return null;
+		}
+
+			[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]
 		public async Task<IError?> HasPattern([HandlesVariable] string[]? variables, string pattern, string errorMessage, int statusCode = 400)
 		{
 			if (variables == null) return new ProgramError("Variables are empty", goalStep);

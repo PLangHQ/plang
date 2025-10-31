@@ -43,10 +43,12 @@ namespace PLang.Modules.TerminalModule
 			throw new NotImplementedException("Read is not implemented");
 		}
 
-		[Description("Run a executable. Parameters string should not be escaped. onDataStreamVariable and onErrorStreamVariable need to be defined by the user, this is not same as returning a variable (write to %variable%)")]
+		[Description("Run a executable. Parameters string should not be escaped. variableNameForDeltaOnStandardStream and variableNameForDeltaOnErrorStream must to be defined by the user, this is not same as returning a variable (write to %variable%)")]
+		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", ReturnValues should be %output%")]
+		[Example("terminal ffmpeg -i input.mp4 output.avi, %delta%, %errorDelta%, write to %data%", @"appExecutableName=ffmpeg, parameters=""-i"",""input.mp4"",""output.avi"", variableNameForDeltaOnStandardStream=%delta%, variableNameForDeltaOnErrorStream=%errorDelta%, ReturnValues should be %data%")]
 		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? onDataStreamVariable = null, [HandlesVariable] string? onErrorStreamVariable = null,
+			[HandlesVariable] string? variableNameForDeltaOnStandardStream = null, [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
 			bool hideTerminal = false
 			)
 		{
@@ -155,14 +157,14 @@ namespace PLang.Modules.TerminalModule
 			StringBuilder? dataOutput = new();
 			StringBuilder? errorOutput = new();
 
-			process.OutputDataReceived += async (sender, e) =>
+			process.OutputDataReceived += (sender, e) =>
 			{
 				//logger.LogInformation(e.Data);
 				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(onDataStreamVariable))
+				if (!string.IsNullOrEmpty(variableNameForDeltaOnStandardStream))
 				{
-					memoryStack.Put(onDataStreamVariable, e.Data, goalStep: goalStep);
+					memoryStack.Put(variableNameForDeltaOnStandardStream, e.Data, goalStep: goalStep);
 				}
 
 				dataOutput.Append(e.Data + Environment.NewLine);
@@ -171,13 +173,13 @@ namespace PLang.Modules.TerminalModule
 			};
 
 
-			process.ErrorDataReceived += async (sender, e) =>
+			process.ErrorDataReceived += (sender, e) =>
 			{
 				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(onErrorStreamVariable))
+				if (!string.IsNullOrEmpty(variableNameForDeltaOnErrorStream))
 				{
-					memoryStack.Put(onErrorStreamVariable, e.Data, goalStep: goalStep);
+					memoryStack.Put(variableNameForDeltaOnErrorStream, e.Data, goalStep: goalStep);
 				}
 				errorOutput.Append(e.Data + Environment.NewLine);
 
@@ -201,11 +203,12 @@ namespace PLang.Modules.TerminalModule
 			// Write the command to run the application with parameters
 
 			//sw.WriteLine(command);
-
-			sw.Close(); // Close the input stream to signal completion
+			sw.Close();
+			// Close the input stream to signal completion
 			if (goalStep.WaitForExecution)
 			{
 				await process.WaitForExitAsync();
+				
 			}
 			else
 			{

@@ -205,7 +205,7 @@ namespace PLang.Modules.CodeModule
 						return (null, new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, function, StatusCode: 500));
 					}
 
-					var outParameter = returnValues.FirstOrDefault(p => p.VariableName == parameters[i].Name);
+					var outParameter = returnValues.FirstOrDefault(p => p.VariableName.Trim('%').Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase));
 					if (outParameter == null)
 					{
 						return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));
@@ -231,7 +231,7 @@ namespace PLang.Modules.CodeModule
 					}
 					else
 					{
-						var inParameter = inputParameters.FirstOrDefault(p => p.Name == parameters[i].Name);
+						var inParameter = inputParameters.FirstOrDefault(p => p.Name.Trim('%').Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase));
 						if (inParameter == null)
 						{
 							return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));

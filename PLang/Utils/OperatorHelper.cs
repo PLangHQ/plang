@@ -9,7 +9,7 @@ namespace PLang.Utils
 	public class OperatorHelper
 	{
 
-		public static Dictionary<string, string>? ApplyOperator(Dictionary<string, string>? dict, string[]? keys = null, string? keyOperator = "equals", string? value = null, string? valueOperator = "contains")
+		public static Dictionary<string, string>? ApplyOperator(Dictionary<string, string>? dict, List<string>? keys = null, string? keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			if (dict == null) return null;
 

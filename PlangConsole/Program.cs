@@ -53,7 +53,7 @@ if (runtime)
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 	var engine = container.GetInstance<IEngine>();
 	engine.Name = "Console";
-
+	
 	var pLanguage = new Executor(container);
 	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
 	if (result.Error != null)
