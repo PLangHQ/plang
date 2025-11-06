@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "call GenerateHtml user=%componentDocs%",
   "ModuleType": "PLang.Modules.CallGoalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -83,5 +81,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

@@ -1,7 +1,6 @@
 {
   "GoalName": "BuildPlatform",
   "Comment": null,
-  "Text": "BuildPlatform",
   "GoalSteps": [
     {
       "Text": "write out 'Publish %platform%'",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "0b390234c4cc02943494a6775d2634106860f5c1addbb86365055d1beff7ca78",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
     },
@@ -79,7 +78,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-08-03T21:13:39.5326166+00:00",
+      "Generated": "2025-11-04T15:50:50.718245+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -91,7 +90,7 @@
       "LineNumber": 16,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "637abc249038b2e5fa183c9a81b4d34860937b7fbd09e703cef065202df0a6e9",
+      "Hash": "db494a1671d9f2645effe9cf8bb5d3d243fa4a4475ebb1ac09f18b59e9ca176b",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
@@ -141,7 +140,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-08-03T23:04:07.2481777+00:00",
+      "Generated": "2025-11-04T15:50:56.9501343+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -153,7 +152,7 @@
       "LineNumber": 20,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ab286f0b123ba6740f320525be92680be764a6d15c08703408e13c1cfc473cb9",
+      "Hash": "f137ba6161d679e2faf7699e064e94e3a8ab708bcd1b4f4e22d068c5a4476349",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
@@ -247,7 +246,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "eb6d025855ab8ba88a0fce1ba8a929304044717c937ea6ceb11ad89cd7e90b28",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
     },
@@ -340,7 +339,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "ba6889697a193fbe5c74a4165387288f255ab1329cb2ab79624d342d3aa8b05f",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
     }
@@ -354,16 +353,12 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\BuildPlatform\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish\\BuildPlatform",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\Publish.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\BuildPlatform\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\BuildPlatform",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d03016aaeb0a6c97d95966ef72dd62bac116a0bccc61eff3bb8db2f68f6ebd51",
+  "Hash": "febe93ab3acfada7c284bb10a55cba408b34bc4081735adf8570eacf21c26662",
   "IncomingVariablesRequired": {
     "%platform%": "The target platform for the build, e.g., 'win-x64'.",
     "%version%": "The version number to be used in the build process.",

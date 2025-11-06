@@ -1,7 +1,6 @@
 {
   "GoalName": "Nuget",
   "Comment": null,
-  "Text": "Nuget",
   "GoalSteps": [
     {
       "Text": "read \"version.txt\", into %version%",
@@ -61,7 +60,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "357433687bdd5613efc36962aeec93b55f7058127d0a9cb514cda063d3d46fae",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Nuget.goal",
       "UserIntent": null
     },
@@ -110,7 +109,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-08-03T21:13:27.4631917+00:00",
+      "Generated": "2025-11-04T15:50:09.7255377+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -122,7 +121,7 @@
       "LineNumber": 5,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f91138ebfb616d597865ec91a0924c8b104572cc79c36a94fe57c053aef95c07",
+      "Hash": "d7f26e7149b7a8d8c43848f061c8e54ac2e8b738423850dceae4b1106fd1391a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Nuget.goal",
       "UserIntent": null
@@ -234,7 +233,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-24T08:33:27.2656646+00:00",
+      "Generated": "2025-11-04T15:50:18.4143717+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -246,7 +245,7 @@
       "LineNumber": 10,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "aa2da62f57cb69a3fc112580eecda16203122cab9bd3c0447cbcf7e55223501d",
+      "Hash": "b7d8853d1085caeef85851efb7b9045332aab12a8b924dffc03b2078beded6d7",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Nuget.goal",
       "UserIntent": null
@@ -340,7 +339,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "8982962d24e2fced873b77f2981e4466208dc7922cb5d692ab568b6abe2a4fbf",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Nuget.goal",
       "UserIntent": null
     }
@@ -354,12 +353,8 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Nuget\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Nuget",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\Nuget.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Nuget\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Nuget",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": {
     "GoalApiInfo": {
       "Method": "POST",
@@ -374,7 +369,7 @@
   },
   "Injections": [],
   "Signature": null,
-  "Hash": "57513593f9131077a8ddfb93dcdfcc751e40299a4a2dafe1a65b3e9a0778075c",
+  "Hash": "6a6c0a8b7048e3c4b62d9027cca35a6e2c9a1f4a151fbbc985034e7bbc2bb109",
   "IncomingVariablesRequired": {
     "Settings.NugetApiKey": "The API key required to authenticate with the NuGet repository."
   },

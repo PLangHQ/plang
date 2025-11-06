@@ -46,6 +46,7 @@ namespace PLang.Services.OutputStream.Transformers
 						["target"] = m.Target,
 						["actions"] = m.Actions,
 						["content"] = t.Content,
+						["skipNewLine"] = t.SkipNewline,
 					},
 					RenderMessage r => new Dictionary<string, object?>
 					{

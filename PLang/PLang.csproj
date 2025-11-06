@@ -147,5 +147,15 @@
     <None Remove="Goals\**" />
     <None Remove="Modules\NewFolder1\**" />
   </ItemGroup>
+	
+	<Target Name="SetVersionFromFile" BeforeTargets="BeforeBuild;GetAssemblyVersion;GenerateAssemblyInfo">
+		<PropertyGroup>
+			<Version>$([System.IO.File]::ReadAllText('$(ProjectDir)version.txt').Trim())</Version>
+			<AssemblyVersion>$(Version)</AssemblyVersion>
+			<FileVersion>$(Version)</FileVersion>
+			<InformationalVersion>$(Version)</InformationalVersion>
+		</PropertyGroup>
 
+		<Message Text="Building version: $(Version)" Importance="high" />
+	</Target>
 </Project>

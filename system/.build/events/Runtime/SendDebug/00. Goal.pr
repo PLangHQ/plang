@@ -1,7 +1,6 @@
 {
   "GoalName": "SendDebug",
   "Comment": null,
-  "Text": "SendDebug",
   "GoalSteps": [
     {
       "Text": "set default value %plang.debugPort% = 60877",
@@ -11,7 +10,6 @@
       "Description": "Assign the default value 60877 to the variable %plang.debugPort%, ensuring that if it is not already set, it will have this value for use in subsequent steps.",
       "PrFileName": "01. set_default_value_plang_debugport.pr",
       "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\01. set_default_value_plang_debugport.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\SendDebug\\01. set_default_value_plang_debugport.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -43,7 +41,6 @@
       "Description": "Perform an HTTP POST request to the URL http://localhost with a dynamic port from %plang.debugPort%. The request body contains JSON data with the current step line number and absolute goal path. The request has a timeout of 30 minutes. The response from the server is stored in the variable %debugResponse%.",
       "PrFileName": "02. post_debug_info_to_localhost.pr",
       "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\02. post_debug_info_to_localhost.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\SendDebug\\02. post_debug_info_to_localhost.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -75,7 +72,6 @@
       "Description": "Check if the variable %debugResponse.continue% is true or truthy, and if so, invoke the goal named SendDebugInfo to perform its defined actions",
       "PrFileName": "03. conditional_call_send_debug_info.pr",
       "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\03. conditional_call_send_debug_info.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\SendDebug\\03. conditional_call_send_debug_info.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -114,16 +110,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\SendDebug",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\SendDebug.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\SendDebug\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\SendDebug",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "88b1c9361ba3e7e65096035ddfc65680585cd3de4c41aed07af614f275a00823",
+  "Hash": "53169d48f34cd8f5d03df3abff8814ad2948a8517d9e5b87a513e92b986df1ed",
   "IncomingVariablesRequired": {
     "plang.debugPort": "The port number used for debugging, default is set to 60877.",
     "debugResponse": "The response received from the POST request, which determines if the process should continue."

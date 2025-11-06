@@ -148,7 +148,7 @@ namespace PLang.Modules.OutputModule
 			parameters.AddOrReplace("error", error);
 
 			string? content = null;
-			if (PathHelper.IsTemplateFile(askMessage.Content))
+			if (askMessage.IsTemplateFile == true || (askMessage.IsTemplateFile == null && PathHelper.IsTemplateFile(askMessage.Content)))
 			{
 				var templateEngine = GetProgramModule<Modules.TemplateEngineModule.Program>();
 				(content, var renderError) = await templateEngine.RenderFile(askMessage.Content, parameters);

@@ -1,7 +1,6 @@
 {
   "GoalName": "InstallUrl",
   "Comment": null,
-  "Text": "InstallUrl",
   "GoalSteps": [
     {
       "Text": "validate %request% is not empty\n    on error call AskForUrl",
@@ -231,7 +230,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "b60635546ee92c624c56ffc347a3a5adfc24e9361d7bcbc7013718918d4364b1",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\InstallModule\\InstallUrl.goal",
       "UserIntent": null
     },
@@ -373,16 +372,12 @@
   "RelativeGoalFolderPath": "\\modules\\InstallModule",
   "RelativePrPath": ".build\\modules\\InstallModule\\InstallUrl\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\InstallModule\\InstallUrl",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\InstallModule\\InstallUrl.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\InstallModule\\InstallUrl\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\InstallModule\\InstallUrl",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b0f31f4d44048836f5dc33c698ba401e77119a57503057c57c6d42b0abb080bd",
+  "Hash": "c91f2b002539e1bec75fc452ae9c3b3f59e087e55480e0801817eaad3cd37914",
   "IncomingVariablesRequired": {
     "request": "The URL request that needs to be validated and processed for installation.",
     "name": "The name of the installation package or software.",

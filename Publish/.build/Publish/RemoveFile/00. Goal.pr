@@ -1,7 +1,6 @@
 {
   "GoalName": "RemoveFile",
   "Comment": null,
-  "Text": "RemoveFile",
   "GoalSteps": [
     {
       "Text": "delete file %item%",
@@ -11,7 +10,6 @@
       "Description": "Perform a delete operation on the file path or file reference stored in the variable %item%, removing the file from the file system.",
       "PrFileName": "01. delete_file.pr",
       "RelativePrPath": ".build\\Publish\\RemoveFile\\01. delete_file.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\RemoveFile\\01. delete_file.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -45,16 +43,12 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\RemoveFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish\\RemoveFile",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\Publish.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\RemoveFile\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\RemoveFile",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3fe1e6e86598418df3e16af7d3a10498979218c6991a364ad7b7567345749444",
+  "Hash": "f081db0bb70732e8a65a15d56d02795958e27f0082981632116104712ce02b65",
   "IncomingVariablesRequired": {
     "item": "The name of the file that needs to be deleted."
   },

@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "if %parameter.Value% does not contains \"%\" then, call SearchFor",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -97,5 +95,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

@@ -1,7 +1,6 @@
 {
   "GoalName": "Build",
   "Comment": null,
-  "Text": "Build",
   "GoalSteps": [
     {
       "Text": "write out \"build db module\"",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "89eb7c331f682f95e555b2e74f79fe8bdfd2026dad4aec2af236edb2d18be273",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Build.goal",
       "UserIntent": null
     }
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\modules\\DbModule\\Builder",
   "RelativePrPath": ".build\\modules\\DbModule\\Builder\\Build\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\DbModule\\Builder\\Build",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\DbModule\\Builder\\Build.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\DbModule\\Builder\\Build\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\DbModule\\Builder\\Build",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6d3174f808e8517fa170f1ba965ea552c06abbc0765337b04619e09d38f13ef4",
+  "Hash": "7b03c49d007c259e9a9cbc750a697d8f82872ba08a825a3be43a387ca7f4b118",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,

@@ -321,7 +321,7 @@ namespace PLang.Modules
 							isMatch = true;
 						} else if (parameter.Value?.ToString() != null && 
 								parameter.Value.ToString()?.EndsWith("*") == true && 
-								parameterValues[parameter.Key]?.ToString()?.StartsWith(parameter.Value.ToString()) == true)
+								parameterValues[parameter.Key]?.ToString()?.StartsWith(parameter.Value.ToString().TrimEnd('*')) == true)
 						{
 							isMatch = true;
 						}

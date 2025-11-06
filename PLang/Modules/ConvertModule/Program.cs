@@ -60,7 +60,10 @@ namespace PLang.Modules.ConvertModule
 			await page.GotoAsync("file://" + htmlFileName, new() { WaitUntil = WaitUntilState.NetworkIdle });
 			await page.PdfAsync(options.Options);
 			await browser.CloseBrowser();
-
+			if (browser is IDisposable disp)
+			{
+				disp.Dispose();
+			}
 			fileSystem.File.Delete(htmlFileName);
 
 			return null;

@@ -1,7 +1,6 @@
 {
   "GoalName": "AskSystem",
   "Comment": null,
-  "Text": "AskSystem",
   "GoalSteps": [
     {
       "Text": "ask \"%__plang_question%\", channel=\"info\", write to %__plang_answer%",
@@ -15,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-10-03T15:54:01.2923809+00:00",
       "WaitForExecution": true,
@@ -30,9 +29,9 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "fd843bef24cef6f631c3d0c30ac2e4de829505377fc006f1e1be562e2793593b",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\AskSystem.goal",
-      "UserIntent": "Prompt the user with a question and capture their response"
+      "UserIntent": null
     },
     {
       "Text": "return %__plang_answer%",
@@ -75,16 +74,12 @@
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\AskSystem\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\AskSystem",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\AskSystem.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\AskSystem\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\AskSystem",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "283faf9c72e98aa4028f4ce02e3c258728630a821e63fbd8f5670569a7f84990",
+  "Hash": "496bc52b0b25317cefe8108221efd052d87c553e528389adea8db570f2e75755",
   "IncomingVariablesRequired": {
     "__plang_question": "The question string that needs to be asked in the system.",
     "__plang_answer": "The variable where the answer to the question will be stored."

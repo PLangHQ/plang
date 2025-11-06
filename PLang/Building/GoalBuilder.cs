@@ -228,7 +228,6 @@ namespace PLang.Building
 			// example of that, steps that creates table but is not build,
 			// step after that insert into table will fail
 
-
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors errors = new();
 			bool stepsNotBuilt = false;
@@ -368,8 +367,7 @@ namespace PLang.Building
 			var error = LoadInjections(goal);
 			if (error != null) return error;
 
-			var assembly = Assembly.GetAssembly(this.GetType());
-			goal.BuilderVersion = assembly.GetName().Version.ToString();
+			goal.BuilderVersion = PlangHelper.GetVersion();
 			goal.Hash = "";
 
 			var json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);

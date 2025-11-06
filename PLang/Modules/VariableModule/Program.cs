@@ -443,6 +443,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set variable by calcuation, e.g. `set %total% = %quantity% * %price%`. Uses NCalc.Expression method, make sure it is valid NCalc expression. Capitalize any functions called like sqrt() into Sqrt()")]
+		[Example("set %total% = 5 * %item.amount%, round 2", @"key=""%total%"", expression=""5 * %item.amount%, decimalRound=2")]
 		public async Task<IError?> SetVariableWithCalculation([HandlesVariable] string key, string expression, int decimalRound = 3, MidpointRounding? midpointRounding = null)
 		{
 			var program = GetProgramModule<MathModule.Program>();

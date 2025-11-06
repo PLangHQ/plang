@@ -71,18 +71,23 @@ namespace PLang.Building.Model
 		public string RelativePrFolderPath { get; set; }
 		
 		[LlmIgnore]
+		[IgnoreWhenInstructed]
 		public string AbsoluteGoalPath { get; set; }
 
+		[LlmIgnore]
 		[IgnoreWhenInstructed]
 		public string AbsoluteGoalFolderPath { get; set; }
 
 		[LlmIgnore]
+		[IgnoreWhenInstructed]
 		public string AbsolutePrFilePath { get; set; }
 
 		[LlmIgnore]
+		[IgnoreWhenInstructed]
 		public string AbsolutePrFolderPath { get; set; }
 
 		[LlmIgnore]
+		[IgnoreWhenInstructed]
 		public string AbsoluteAppStartupFolderPath { get; set; }
 
 		[LlmIgnore]
@@ -198,6 +203,7 @@ namespace PLang.Building.Model
 				return new Goal("Builder", new());
 			}
 		}
+
 	}
 
 	

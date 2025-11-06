@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "if %result.folder% is empty, then AskWhichTemplate",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -86,5 +84,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

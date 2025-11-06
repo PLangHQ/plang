@@ -27,6 +27,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using static PLang.Modules.DbModule.Builder;
@@ -87,6 +88,7 @@ namespace PLang.Modules.DbModule
 			if (dataSource == null && goalStep.Goal.IsSetup && goalStep.Goal.GoalName.Equals("Setup"))
 			{
 				dataSource = (await dbSettings.GetAllDataSources()).FirstOrDefault(p => p.IsDefault);
+				goalStep.Goal.DataSourceName = dataSource.Name;
 			}
 
 			List<DataSource> dataSources = new();
@@ -108,7 +110,7 @@ namespace PLang.Modules.DbModule
 			}
 
 
-			if (dataSources.Count == 0)
+			if (dataSource == null && dataSources.Count == 0)
 			{
 				(dataSource, var runtimeError) = context.Get<DataSource>(Program.CurrentDataSourceKey);
 				if (runtimeError != null) return (null, new BuilderError(runtimeError));
@@ -480,19 +482,19 @@ When table name is unknown at built time because it is created with variable, us
 			bool methodHasDataSourceName = classDescResult.HasDataSourceName;
 			methodsAndTables.ClassDescription = classDescResult.ClassDescription;
 
-			(var stepDataSource, var runtimeError) = context.Get<DataSource>(Program.CurrentDataSourceKey);
-			if (runtimeError != null) return (null, new BuilderError(runtimeError));
-
+			(var stepDataSource, _) = context.Get<DataSource>(Program.CurrentDataSourceKey);
 			if (stepDataSource == null && step.Goal.IsSetup && step.Goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
 			{
 				var dataSourceResult = await dbSettings.GetDataSource("data", step, false);
-				if (dataSourceResult.Error != null) return (null, new BuilderError(dataSourceResult.Error));
+				if (dataSourceResult.Error != null && dataSourceResult.Error.StatusCode != 404) return (null, new BuilderError(dataSourceResult.Error));
 				if (dataSourceResult.DataSource == null)
 				{
 					var createDataSourceResult = await dbSettings.CreateDataSource("data", "sqlite", true, true);
 					if (createDataSourceResult.Error != null) return (null, new BuilderError(createDataSourceResult.Error));
 
 					stepDataSource = createDataSourceResult.DataSource;
+					context.AddOrReplace(Program.CurrentDataSourceKey, stepDataSource);
+					step.Goal.DataSourceName = stepDataSource.Name;
 				}
 			}
 
@@ -569,7 +571,7 @@ When table name is unknown at built time because it is created with variable, us
 					string prefixName = prefix.Substring(0, prefix.IndexOf("."));
 					if (prefixName == "main")
 					{
-						(var dataSource, runtimeError) = context.Get<DataSource>(Program.CurrentDataSourceKey);
+						(var dataSource, _) = context.Get<DataSource>(Program.CurrentDataSourceKey);
 						preferedNames = dataSource.AttachedDbs;
 					}
 					else
@@ -851,11 +853,11 @@ When table name is unknown at built time because it is created with variable, us
 			return false;
 		}
 
-		public (Instruction?, IError?) SetAsValidated(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		public async Task<(Instruction?, IBuilderError?)> SetAsValidated(GoalStep step, Instruction instruction, DbGenericFunction gf)
 		{
 			if (step.Goal.IsSetup)
 			{
-				return (null, null);
+				return (instruction, null);
 			}
 
 			var	dataSourceName = gf.GetParameter<string>("dataSourceName");
@@ -867,7 +869,8 @@ When table name is unknown at built time because it is created with variable, us
 				
 				if (setupGoal == null)
 				{
-					return (null, new StepBuilderError($"Could not find setup file for data source '{dataSourceName}'", step));
+					logger.LogWarning($"  - ℹ️ Could not find setup file for data source '{dataSourceName}' - {step.RelativeGoalPath}:{step.LineNumber}", step);
+					return (instruction, null);
 				}
 
 				var isValidSql = new ValidSql(setupGoal.Hash, setupGoal.RelativePrPath, dataSourceName, DateTime.Now);
@@ -888,7 +891,8 @@ When table name is unknown at built time because it is created with variable, us
 					setupGoal = goalParser.GetGoals().FirstOrDefault(p => p.IsSetup && p.DataSourceName.Equals(dsName, StringComparison.OrdinalIgnoreCase));
 					if (setupGoal == null)
 					{
-						return (null, new StepBuilderError($"Could not find setup file for data source '{dsName}'", step));
+						logger.LogWarning($"  - ℹ️ Could not find setup file for data source '{dsName}' - {step.RelativeGoalPath}:{step.LineNumber}", step);
+						return (instruction, null);
 					}
 
 					validSqls.Add(new ValidSql(setupGoal.Hash, setupGoal.RelativePrPath, dsName, DateTime.Now));
@@ -1143,7 +1147,7 @@ Reason:{error.Message}", step,
 			}
 			var sql = gf.GetParameter<string>("sql");
 
-			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id") != null && sql.Contains("@id");
+			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id") != null && Regex.IsMatch(sql, @"@id\b");
 			if (hasId || parameterInfos.Count == 0) return (instruction, null);
 
 			return (instruction, new StepBuilderError($"No @id provided in either sqlParameters or sql statement. @id MUST be provided in both. This is required for this datasource: {dataSource.Name}", step,
@@ -1180,7 +1184,7 @@ Reason:{error.Message}", step,
 				prevStep = prevStep.PreviousStep;
 			}
 
-			var (dataSource, error) = await GetDataSource(step, gf);
+			var (dataSource, error) = await GetDataSource(step, gf, "name");
 			if (error != null && error.StatusCode != 404) return (instruction, error);
 
 			var dataSources = await dbSettings.GetAllDataSources();

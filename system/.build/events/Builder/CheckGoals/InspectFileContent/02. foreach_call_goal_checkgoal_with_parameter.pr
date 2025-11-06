@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -98,5 +96,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

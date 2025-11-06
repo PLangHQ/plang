@@ -1,7 +1,6 @@
 {
   "GoalName": "AskUserLlm",
   "Comment": null,
-  "Text": "AskUserLlm",
   "GoalSteps": [
     {
       "Text": "validate %developerInstructionForResult%, %text%, %options% is not empty",
@@ -123,7 +122,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "59dab2748efa0c7078324a76142d6338f489d5ac9c8b1dc98aadf4b8a66da0af",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal",
       "UserIntent": null
     },
@@ -261,16 +260,12 @@
   "RelativeGoalFolderPath": "\\modules\\OutputModule",
   "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\OutputModule\\AskUserLlm",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\OutputModule\\AskUserLlm.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\OutputModule\\AskUserLlm\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\OutputModule\\AskUserLlm",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "682a01aadd143b76087676a0fe391a69187b4a12940a114126472f9420a0e032",
+  "Hash": "55e115499a1d67cd4f657bbe49d134cfbaf2338bf528dac21145d07de1006270",
   "IncomingVariablesRequired": {
     "developerInstructionForResult": "Instructions provided by the developer that guide the expected outcome.",
     "text": "The text input that will be processed or queried.",

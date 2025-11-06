@@ -31,10 +31,12 @@ namespace PLang.Models.ObjectValueExtractors
 			ObjectValue? objectToExtractFrom = objectValue;
 			foreach (var segement in segments)
 			{
+				var nextParent = objectToExtractFrom;
 				if (objectToExtractFrom.Value == null)
 				{
 					string name = GetObjectValueName(segement, memoryStack);					
 					objectToExtractFrom = new ObjectValue(name, null, typeof(Nullable), objectToExtractFrom, false, objectToExtractFrom.Properties);
+					if (objectToExtractFrom.Parent == null) objectToExtractFrom.Parent = nextParent;
 					continue;
 				}
 
@@ -49,7 +51,9 @@ namespace PLang.Models.ObjectValueExtractors
 				} else
 				{
 					objectToExtractFrom = extractedObjectValue;
+					
 				}
+				if (objectToExtractFrom.Parent == null) objectToExtractFrom.Parent = nextParent;
 			}		
 			
 			return objectToExtractFrom;

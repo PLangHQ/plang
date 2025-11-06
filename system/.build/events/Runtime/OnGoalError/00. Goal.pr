@@ -1,7 +1,6 @@
 {
   "GoalName": "OnGoalError",
   "Comment": null,
-  "Text": "OnGoalError",
   "GoalSteps": [
     {
       "Text": "write out system error %!error%",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "6fb15541b0c24eaf09c7779f10d1bace3504ddec11e8426f0f7594906cb375c2",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnGoalError.goal",
       "UserIntent": null
     }
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\OnGoalError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\OnGoalError",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\OnGoalError.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnGoalError\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnGoalError",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d94303977e0023bb591b3f371e01d0a3bc4347f1239cc6fc487092fb11bb4c9d",
+  "Hash": "491fbd821e8c855d4eb22ad8f1a9fcf8d44e9e045a13820170e04f4b4d886a21",
   "IncomingVariablesRequired": {
     "!error": "The system error message that needs to be logged or displayed."
   },

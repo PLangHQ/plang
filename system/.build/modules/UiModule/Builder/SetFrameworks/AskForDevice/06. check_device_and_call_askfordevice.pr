@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "if %device% is null then call AskForDevice error=\"You can only choose between console and website\"",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -88,5 +86,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

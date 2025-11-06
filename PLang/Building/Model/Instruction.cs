@@ -92,12 +92,7 @@ namespace PLang.Building.Model
 			get; set;
 		}
 
-		[LlmIgnore]
-		public string Hash { get; set; }
-
-		[LlmIgnore]
-		public SignedMessage SignedMessage { get; set; }
-
+		
 
 		IGenericFunction function;
 		[Newtonsoft.Json.JsonIgnore]
@@ -138,8 +133,22 @@ namespace PLang.Building.Model
 		[JsonProperty(Order = 6)]
 		[LlmIgnore]
 		public Dictionary<string, object?> Properties { get; set; } = new();
+		
+		[JsonProperty(Order = 7)]
+		[LlmIgnore]
+		public string BuilderVersion { get; set; }
 
-		[JsonProperty(Order = 6)]
+		[JsonProperty(Order = 8)]
+		[LlmIgnore]
+		public string Hash { get; set; }
+
+		[JsonProperty(Order = 9)]
+		[LlmIgnore]
+		public SignedMessage SignedMessage { get; set; }
+
+
+
+		[JsonProperty(Order = 10)]
 		[LlmIgnore]
 		public List<LlmRequest> LlmRequest { get; set; } = new();
 

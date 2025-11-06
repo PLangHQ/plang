@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "if %result.ask% is not empty then call AskUser ask=%result.ask%, else SaveTemplate",
   "ModuleType": "PLang.Modules.ConditionalModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -53,6 +51,9 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": [
     {
       "temperature": 0.0,

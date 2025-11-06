@@ -145,6 +145,7 @@ namespace PLang.Building
 			}
 
 			var instruction = build.Instruction;
+			instruction.BuilderVersion = PlangHelper.GetVersion();
 			step.Instruction = instruction;
 
 			logger.LogDebug($"Done with instruction - running Builder methods - {stopwatch.ElapsedMilliseconds} ");
@@ -388,7 +389,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 				var result = method.Invoke(classInstance, [goalStep, instruction, gf]);
 				if (result is not Task task)
 				{
-					return (instruction, null);
+					return (instruction, new BuilderError($"Method {method.Name} must be async"));
 				}
 
 				await task;

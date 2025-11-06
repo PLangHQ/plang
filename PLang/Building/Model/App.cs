@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Building.Model
 {
+	// used by prParser
 	public class RuntimeApp : App
 	{
 		public RuntimeApp(IPLangFileSystem fileSystem) : base(fileSystem)
@@ -14,6 +15,7 @@ namespace PLang.Building.Model
 		}
 	}
 
+	// Used by goal parser
 	public class BuilderApp : App
 	{
 		public BuilderApp(IPLangFileSystem fileSystem) : base(fileSystem)
@@ -29,9 +31,12 @@ namespace PLang.Building.Model
 		public App(IPLangFileSystem fileSystem)
 		{
 			this.fileSystem = fileSystem;
+			Goals = new();
 		}
 
 		public string Name { get; set; }
+		public string RelativePath { get; set; }
+		public string AbsolutePath { get; set; }
 		public List<Goal> Goals { get; set; }
 		public IEnumerable<Goal> SetupGoals
 		{

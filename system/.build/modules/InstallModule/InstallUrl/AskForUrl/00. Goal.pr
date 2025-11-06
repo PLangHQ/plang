@@ -1,7 +1,6 @@
 {
   "GoalName": "AskForUrl",
   "Comment": null,
-  "Text": "AskForUrl",
   "GoalSteps": [
     {
       "Text": "ask user \"What is the url?\", write to %url%",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "eb9bf3d9e79c9217342ca7a0dcc2c4da546f0184a6e99756576d37de05bf2eed",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\InstallModule\\InstallUrl.goal",
       "UserIntent": null
     },
@@ -75,16 +74,12 @@
   "RelativeGoalFolderPath": "\\modules\\InstallModule",
   "RelativePrPath": ".build\\modules\\InstallModule\\InstallUrl\\AskForUrl\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\InstallModule\\InstallUrl\\AskForUrl",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\InstallModule\\InstallUrl.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\InstallModule\\InstallUrl\\AskForUrl\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\InstallModule\\InstallUrl\\AskForUrl",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8d2a5a6ed913ff282c0b531531e82b85df9297f0cc7048ebba276a1e57271e6e",
+  "Hash": "baad4aed7b60a8b8d4cee05dd78cb6b37b1013dce1fc168b6d5fc9af3fd395f6",
   "IncomingVariablesRequired": {
     "url": "The URL input provided by the user.",
     "request.url": "The property of the request object that will hold the URL."

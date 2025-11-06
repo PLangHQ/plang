@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
@@ -41,12 +42,15 @@ public class StepBuilder : IStepBuilder
 	private readonly PLangContext context;
 	private readonly ISettings settings;
 	private readonly IEngine engine;
+	private readonly PrParser prParser;
+	private readonly IGoalParser goalParser;
 	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
-				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine)
+				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
+				PrParser prParser, IGoalParser goalParser)
 	{
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
@@ -61,7 +65,8 @@ public class StepBuilder : IStepBuilder
 		this.context = contextAccessor.Current;
 		this.settings = settings;
 		this.engine = engine;
-
+		this.prParser = prParser;
+		this.goalParser = goalParser;
 		this.memoryStackAccessor = memoryStackAccessor;
 	}
 
@@ -113,9 +118,6 @@ public class StepBuilder : IStepBuilder
 			//Set reload to false after Build Instruction
 			step.Reload = false;
 			step.Generated = DateTime.Now;
-
-			var assembly = Assembly.GetAssembly(this.GetType());
-			step.BuilderVersion = assembly.GetName().Version.ToString();
 			step.RelativeGoalPath = goal.RelativeGoalPath;
 
 			var result = await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
@@ -398,6 +400,8 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));
 
 		if (stepProperties == null) return (step, new StepBuilderError($"Could not get answer from LLM.", step));
+		(stepProperties, var error) = ValidateGoalPaths(stepProperties, step);
+		if (error != null) return (step, error);
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
@@ -407,6 +411,26 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		step.CacheHandler = (canBeCached) ? stepProperties.CachingHandler : null;
 
 		return (step, null);
+	}
+
+	private (StepProperties, IBuilderError?) ValidateGoalPaths(StepProperties stepProperties, GoalStep step)
+	{
+		for (int i =0;i<stepProperties.ErrorHandlers?.Count;i++)
+		{
+			var errorHandler = stepProperties.ErrorHandlers[i];
+			
+			if (errorHandler.GoalToCall == null) continue;	
+
+			(var goalFound, var error) = GoalHelper.GetGoalPath(step, errorHandler.GoalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
+			if (error != null) return (stepProperties, new BuilderError(error, false));
+
+			if (goalFound != null)
+			{
+				errorHandler.GoalToCall.Path = goalFound.RelativePrPath;
+				stepProperties.ErrorHandlers[i] = errorHandler;
+			}
+		}
+		return (stepProperties, null);
 	}
 
 	private string? GetLoggerLevel(string? loggerLevel)

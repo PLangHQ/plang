@@ -25,7 +25,7 @@ public class Program : BaseProgram
 
 		Dictionary<string, object?> parameters = new();
 		parameters.Add("EmailMessage", emailMessage);
-		var caller = GetProgramModule<CallGoalModule.Program>();
+		var caller = GetProgramModule<AppModule.Program>();
 		var result = await caller.RunApp(new Models.AppToCallInfo("Email", "SendEmail", parameters));
 
 		return result;

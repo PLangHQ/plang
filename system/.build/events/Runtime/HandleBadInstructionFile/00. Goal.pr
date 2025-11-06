@@ -1,7 +1,6 @@
 {
   "GoalName": "HandleBadInstructionFile",
   "Comment": null,
-  "Text": "HandleBadInstructionFile",
   "GoalSteps": [
     {
       "Text": "write out error(500) to system, \"Error: %!error.Message%\", properties: %!error%",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "8f78385171ba0c3a6ad1d8cccd79d7798b6a786898437631b694f3152ab318c8",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
     },
@@ -61,7 +60,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "7bdd24a8f800ce20f060ba346e82f9eb46d76632910646338ebc875582034abf",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
     },
@@ -230,16 +229,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\HandleBadInstructionFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\HandleBadInstructionFile",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\HandleBadInstructionFile.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\HandleBadInstructionFile\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\HandleBadInstructionFile",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2b61495d767d38bf1862a9c7b05f350b79db45bd827768e8d497de8afd6c240b",
+  "Hash": "f6fa577cb5b914bd42c0e202e0215a50fa215a2a5830f672f7628c0c033b5a54",
   "IncomingVariablesRequired": {
     "error": "An object containing details about the error, including a message and the step that caused the error.",
     "answer": "A string variable to capture the user's response to the rebuild prompt."

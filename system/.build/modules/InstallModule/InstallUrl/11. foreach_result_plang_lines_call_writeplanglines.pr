@@ -1,6 +1,4 @@
 {
-  "Hash": null,
-  "SignedMessage": null,
   "Text": "foreach %result.plang_lines%, call WritePlangLines %plangCode%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
@@ -98,5 +96,8 @@
     },
     "ReturnValues": {}
   },
+  "BuilderVersion": null,
+  "Hash": null,
+  "SignedMessage": null,
   "LlmRequest": []
 }

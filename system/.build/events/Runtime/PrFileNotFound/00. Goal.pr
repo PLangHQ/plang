@@ -1,7 +1,6 @@
 {
   "GoalName": "PrFileNotFound",
   "Comment": null,
-  "Text": "PrFileNotFound",
   "GoalSteps": [
     {
       "Text": "write out error(404) to system \"Could not find PR File: %!error.Step.PrFileName%\"\n    properties: %!error%",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "ba8cadde39aa648eb0767f10dd688b489178c7fcc4b630d115cd18edeb6fa21a",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\PrFileNotFound.goal",
       "UserIntent": null
     },
@@ -61,7 +60,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "fe8e5505645b45bbc4cd6eb7324f137aceb0ede64418fd3e76536e2c9bbfe231",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\PrFileNotFound.goal",
       "UserIntent": null
     },
@@ -261,16 +260,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\PrFileNotFound\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\PrFileNotFound",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\PrFileNotFound.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\PrFileNotFound\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\PrFileNotFound",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "fd739ae7202172bc7ff71929921e59df41e6677a2c435d40a2fde01ce6de5a54",
+  "Hash": "cd016e3cc664f0ca7cf43e4de831660593343668ce0e8835b017801e23275a05",
   "IncomingVariablesRequired": {
     "!error": "An object containing error details, including the missing file name and goal name.",
     "!error.Step.PrFileName": "The name of the PR file that could not be found.",

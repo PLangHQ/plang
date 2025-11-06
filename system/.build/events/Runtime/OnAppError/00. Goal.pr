@@ -1,7 +1,6 @@
 {
   "GoalName": "OnAppError",
   "Comment": null,
-  "Text": "OnAppError",
   "GoalSteps": [
     {
       "Text": "write out system error \"%!error%\"",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "d7b90ebea6a69ec76572ebdc235f3202c799f516da3ab01b8bbaf5efc5c9de7a",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal",
       "UserIntent": null
     }
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\OnAppError",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\OnAppError.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnAppError\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnAppError",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "69aa6fc58b9dac4f2a98c2cd605b1f3851720b23f45a24237943e34d840af6a7",
+  "Hash": "c6849f647c38088cd24b6f9c4f9be1903ef404118978a70c4753611c3750ef78",
   "IncomingVariablesRequired": {
     "%!error%": "This variable holds the system error message that needs to be written out."
   },

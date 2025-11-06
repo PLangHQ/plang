@@ -125,8 +125,8 @@ namespace PLang.Modules.UiModule
 		}
 
 		[Description(@"Member is the action that should be executed. Available actions are 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, showDialog, hideDialog, showModal, hideModal, notify, alert, vibrate, navigate, replaceState, reload, open, close'
-User can define a customer action.
-Attribute: Member is the key in the SetAttribute js method
+User can define a custom action.
+Attribute: Member is the key in the SetAttribute js method, make sure to convert to valid js name, e.g. Member class must be className
 ")]
 		public record UiInstruction(string Selector, string Member, object? Value, UiFacet Kind = UiFacet.Property);
 		public async Task<IError?> SetElement(List<UiInstruction> uiInstructions, string actor = "user", string channel = "default")
@@ -182,11 +182,13 @@ Attribute: Member is the key in the SetAttribute js method
 
 
 		public record RenderTemplateOptions(RenderMessage RenderMessage, bool ReRender = true, string LayoutName = "default", 
-			bool RenderToOutputstream = false, bool DontRenderMainLayout = false)
+			bool RenderToOutputstream = false, bool DontRenderMainLayout = false,
+			[property: Description("set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
+			bool? IsTemplateFile = null)
 		{
 
 			[LlmIgnore]
-			public bool IsTemplateFile
+			public bool GuessIfTemplateFile
 			{
 				get
 				{
@@ -208,8 +210,9 @@ Attribute: Member is the key in the SetAttribute js method
 
 		[Description(@" Examples:
 ```plang
-- render product.html => renderToOutputstream = true
-- render frontpage.html, write to %html% => renderToOutputstream = false
+- render product.html => isTemplateFile=true, renderToOutputstream = true
+- render frontpage.html, write to %html% => isTemplateFile=true, renderToOutputstream = false
+- render ""Is this correct file content.html"" => isTemplateFile = false, renderToOutputstream = true
 - render product.html to #main => renderToOutputstream = true, ReRender=true, Target=""#main""
 - replace #main with template.html => Target=#main, actions=[""replace""], ReRender=true, FileName=template.html, renderToOutputStream= true
 - set html of #product to product.html => Target=#product, actions=[""replace""], ReRender=true, FileName=product.html, renderToOutputStream= true
@@ -219,11 +222,12 @@ Target can be null when not defined by user.
 Actions: list of action to preform, the default is 'replace'(innerHTML).
 ReRender: default is true. normal behaviour is to re-render the content, like user browsing a website
 When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it.
+IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
 			string html;
-			if (options.IsTemplateFile)
+			if (options.IsTemplateFile == true || (options.IsTemplateFile == null && options.GuessIfTemplateFile))
 			{
 				var filePath = GetPath(options.RenderMessage.Content);
 				if (!fileSystem.File.Exists(filePath))

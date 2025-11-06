@@ -61,45 +61,6 @@ call app /Builder/DbModule %content%, write to %result% => function name:RunApp,
 
 		private static List<Goal>? allGoals = null;
 
-		public async Task<(Instruction?, IBuilderError?)> BuilderRunApp(GoalStep step, Instruction instruction, GenericFunction gf)
-		{
-			var appName = GenericFunctionHelper.GetParameterValueAsString(gf, "appToCall", "");			
-			var goalName = GenericFunctionHelper.GetParameterValueAsString(gf, "goalName", "Start");
-
-			//todo: need to fix this valiation
-			return (instruction, null);
-
-
-			if (goalName.Contains("%") || appName.Contains("%")) return (instruction, null);
-
-			var app = goalParser.GetAllApps().Where(p => p.AppName == appName);
-			var goal = app.FirstOrDefault(p => p.GoalName == goalName);
-			if (goal == null)
-			{
-				return (null, new StepBuilderError($"Could not find {appName}/{goalName}", step, "GoalNotFound"));
-			}
-
-			SetSystem(@$"Map the user statement. 
-You are provided with a <function>, you should adjust the parameters in the <function> according to <parameters>. 
-Read the user statement, use your best guess to match <parameters> and modify <function> and return back
-
-Following are the input <parameters> that should match with user statement
-The parameters provided in <function> might not be correct, these are the legal parameters. Adjust <function> as needed
-
-<parameters>
-{JsonConvert.SerializeObject(goal.IncomingVariablesRequired)}
-<parameters>
-
-");
-			SetAssistant(@$"
-
-<function>
-{JsonConvert.SerializeObject(gf)}
-<function>
-");
-			var build = await base.Build(step);
-			return build;
-		}
 		public async Task<(Instruction?, IBuilderError?)> BuilderRunGoal(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();

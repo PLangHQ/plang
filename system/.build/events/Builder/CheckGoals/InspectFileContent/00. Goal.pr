@@ -1,7 +1,6 @@
 {
   "GoalName": "InspectFileContent",
   "Comment": null,
-  "Text": "InspectFileContent",
   "GoalSteps": [
     {
       "Text": "filter from %file.Content% where \"Type\" equals \"GoalToCall\", get parent obj, write to %stepThatCallGoal%",
@@ -11,7 +10,6 @@
       "Description": "From the variable %file.Content%, filter all items where the 'Type' property equals 'GoalToCall'. For each matching item, retrieve its parent object and store the collection of these parent objects into the variable %stepThatCallGoal%.",
       "PrFileName": "01. filter_goal_to_call_parent_objects.pr",
       "RelativePrPath": ".build\\events\\Builder\\CheckGoals\\InspectFileContent\\01. filter_goal_to_call_parent_objects.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Builder\\CheckGoals\\InspectFileContent\\01. filter_goal_to_call_parent_objects.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -43,7 +41,6 @@
       "Description": "For each element in the variable %stepThatCallGoal%, invoke the goal named CheckGoal, passing the current element as the item parameter to that goal",
       "PrFileName": "02. foreach_call_goal_checkgoal_with_parameter.pr",
       "RelativePrPath": ".build\\events\\Builder\\CheckGoals\\InspectFileContent\\02. foreach_call_goal_checkgoal_with_parameter.pr",
-      "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Builder\\CheckGoals\\InspectFileContent\\02. foreach_call_goal_checkgoal_with_parameter.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
@@ -77,16 +74,12 @@
   "RelativeGoalFolderPath": "\\events\\Builder",
   "RelativePrPath": ".build\\events\\Builder\\CheckGoals\\InspectFileContent\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Builder\\CheckGoals\\InspectFileContent",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Builder\\CheckGoals.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Builder\\CheckGoals\\InspectFileContent\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Builder\\CheckGoals\\InspectFileContent",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6a7da046c1c72f083c454b1c9d02ccc98be712f979d80b0c084f4afb60be198c",
+  "Hash": "5a0d04343d16195cd63ea21650af58f4edf9c5a8ba88de612d6552d6c76769e7",
   "IncomingVariablesRequired": {
     "file": "An object representing the file whose content is to be inspected."
   },

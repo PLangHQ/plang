@@ -1,7 +1,6 @@
 {
   "GoalName": "AskWhichTemplate",
   "Comment": null,
-  "Text": "AskWhichTemplate",
   "GoalSteps": [
     {
       "Text": "get all folder names from \"/ui/template/\", include system, write to %folders%",
@@ -61,7 +60,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "9710cbc64633625b5aac6bd4e86b2621de22467c1e6bdf9275622e4e2689d7e2",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\Builder\\SetLayout.goal",
       "UserIntent": null
     },
@@ -323,16 +322,12 @@
   "RelativeGoalFolderPath": "\\modules\\UiModule\\Builder",
   "RelativePrPath": ".build\\modules\\UiModule\\Builder\\SetLayout\\AskWhichTemplate\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\Builder\\SetLayout\\AskWhichTemplate",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\UiModule\\Builder\\SetLayout.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\Builder\\SetLayout\\AskWhichTemplate\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\Builder\\SetLayout\\AskWhichTemplate",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "caf456e35ddd2686547e0904413481096a4e680c5cc48b99146b4b14829f11b6",
+  "Hash": "b6ed326f7dbebc4748868e2393821b470228478e0c372e99e267a7bfaac38faa",
   "IncomingVariablesRequired": {
     "folders": "A list of folder names retrieved from the '/ui/template/' directory."
   },

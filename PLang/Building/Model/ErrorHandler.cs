@@ -20,9 +20,7 @@ namespace PLang.Building.Model
 
 		[DefaultValueAttribute(null)]
 		public GoalToCallInfo? GoalToCall { get; set; }
-		[DefaultValueAttribute(null)]
-		public Dictionary<string, object?>? GoalToCallParameters { get; set; }
-
+		
 		[DefaultValueAttribute(null)]
 		public RetryHandler? RetryHandler { get; set; }
 		[DefaultValueAttribute(false)]

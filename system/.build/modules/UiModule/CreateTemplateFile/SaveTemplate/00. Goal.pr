@@ -1,7 +1,6 @@
 {
   "GoalName": "SaveTemplate",
   "Comment": null,
-  "Text": "SaveTemplate",
   "GoalSteps": [
     {
       "Text": "save %result.templateContent% to %goal.AbsoluteGoalFolderPath%/%fileName%",
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\modules\\UiModule",
   "RelativePrPath": ".build\\modules\\UiModule\\CreateTemplateFile\\SaveTemplate\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\CreateTemplateFile\\SaveTemplate",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\UiModule\\CreateTemplateFile.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\CreateTemplateFile\\SaveTemplate\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\CreateTemplateFile\\SaveTemplate",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ed5736449bb0a01dee9d67bceaa7bf7e7f63c0a9b38c03c46aef5b66f7aa80a0",
+  "Hash": "07e1412e341cb50aacd726475707b7fd0df5c4dffd034c78dc11b94db1d265b8",
   "IncomingVariablesRequired": {
     "result.templateContent": "The content of the template that needs to be saved.",
     "goal.AbsoluteGoalFolderPath": "The absolute path of the folder where the file will be saved.",

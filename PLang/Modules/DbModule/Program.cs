@@ -553,7 +553,8 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		[Description("Query sql statement (SELECT) that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
+		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
+		[Example(@"execute query %sql%, ds: %dataSource%, tables: users, products, write to %result%", @"sql=%sql%, dataSouceName=%dataSource%, tableAllowList=[""users"", ""products""]")]
 		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -723,7 +724,9 @@ namespace PLang.Modules.DbModule
 
 
 		}
+
 		[Description("Doing SELECT/WITH on multiple datasources")]
+		[Example("select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results%", @"sql=""select * from main.users u join users.orders o on o.userId=u.id where u.id=%id%"", sqlParameters=[""id"", ""%id""], dataSourceName=[""data"", ""users/%user.id%""], ReturnValues=[""%results%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> SelectWithMultipleDataSources([HandlesVariable] List<string> dataSourceNames, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			List<DataSource> dataSources = new();
@@ -740,6 +743,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Doing SELECT/WITH on one datasource")]
+		[Example("select * from orders where id=%id%, ds: users/%user.id%, write to %orders%", @"sql=""select * from orders where id=@id"", sqlParameters=[""id"", ""%id""], dataSourceName=""users/%user.id%"", ReturnValues=[""%orders%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> Select([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);

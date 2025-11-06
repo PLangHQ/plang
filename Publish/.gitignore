@@ -1,1 +1,5 @@
 plang
+.build
+.db
+.plang-win-x64
+plang-linux-x64

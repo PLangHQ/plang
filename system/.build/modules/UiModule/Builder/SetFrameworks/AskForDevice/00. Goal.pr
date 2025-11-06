@@ -1,7 +1,6 @@
 {
   "GoalName": "AskForDevice",
   "Comment": null,
-  "Text": "AskForDevice",
   "GoalSteps": [
     {
       "Text": "ask user \"What kind of device is this app for, (console, website) - not supported yet(desktop, mobile, tv, watch, home assistant)\"\n    write to %answer%",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "fd5ce1a6ef8164b50ae74f7d7fb2f6df1ae22c88354dd54f7ac6862848656305",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\Builder\\SetFrameworks.goal",
       "UserIntent": null
     },
@@ -245,16 +244,12 @@
   "RelativeGoalFolderPath": "\\modules\\UiModule\\Builder",
   "RelativePrPath": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\AskForDevice\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\AskForDevice",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\UiModule\\Builder\\SetFrameworks.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\Builder\\SetFrameworks\\AskForDevice\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\Builder\\SetFrameworks\\AskForDevice",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0f0cf6c72cb8c1cd0f2636a221fba27547e13b9e59beec64d8f0d165007656e2",
+  "Hash": "957a59d36eafdf53dbb59491cd4b39865b033abf71a03306a4cd4a95b6bd538d",
   "IncomingVariablesRequired": {
     "answer": "The user's response indicating the type of device (console, website, or null)."
   },

@@ -1,7 +1,6 @@
 {
   "GoalName": "DebugErrorInIde",
   "Comment": null,
-  "Text": "DebugErrorInIde",
   "GoalSteps": [
     {
       "Text": "call goal SendDebugInfo",
@@ -46,7 +45,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-09-02T17:55:16.8496623+00:00",
       "WaitForExecution": true,
@@ -61,9 +60,9 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "4e1879997867c1378301c6ea0c74bcbae5880b42517285acdf083f1d6e2adb36",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\DebugErrorInIde.goal",
-      "UserIntent": "The user wants to throw an error using the error stored in the variable %!error%"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -75,16 +74,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\DebugErrorInIde\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\DebugErrorInIde",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\DebugErrorInIde.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\DebugErrorInIde\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\DebugErrorInIde",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b8ea8e7ce6a6a9a6d65e476f1109dd2dca77dfe378cebf16947423f36c474ecb",
+  "Hash": "51fb16deac500a5a060aaf5a4d1ea59fdb2c45936a07c41c46ae6c6866137e35",
   "IncomingVariablesRequired": {
     "%!error%": "This variable represents the error information that will be thrown when the goal is executed."
   },

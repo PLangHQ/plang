@@ -67,7 +67,6 @@ namespace PLang.Runtime
 		IOutputSink UserSink { get; set; }
 		IOutputSink SystemSink { get; set; }
 		ResolveEventHandler AsmHandler { get; set; }
-		ConcurrentQueue<IEngine> Pool { get; }
 		EnginePool EnginePool { get; set; }
 
 		void AddContext(string key, object value);
@@ -1175,9 +1174,10 @@ namespace PLang.Runtime
 									Console.WriteLine(error);
 								}
 
-								foreach (var item in pool)
+								foreach (var item in EnginePool.Pool)
 								{
 									item.ReloadGoals();
+									item.GetEventRuntime().Reload();
 								}
 
 

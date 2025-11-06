@@ -258,7 +258,7 @@ First we will give you the original error, then each error that occured will sho
 					returnStr = "\nThe results will be written into ";
 					foreach (var returnValue in genericFunction.ReturnValues)
 					{
-						returnStr += $"\t- %{returnValue.VariableName}%\n";
+						returnStr += $"\t- {returnValue.VariableName}\n";
 					}
 				}
 				string? paramInfo = null;

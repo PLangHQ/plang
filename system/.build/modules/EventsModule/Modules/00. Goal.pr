@@ -1,7 +1,6 @@
 {
   "GoalName": "Modules",
   "Comment": null,
-  "Text": "Modules",
   "GoalSteps": [
     {
       "Text": "write out \"Modules\"",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "56774bace60024bf9e5e2e9ca4fa5365ad707220fdd4a5ac258036887896bf20",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\EventsModule\\Modules.goal",
       "UserIntent": null
     }
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\modules\\EventsModule",
   "RelativePrPath": ".build\\modules\\EventsModule\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\EventsModule\\Modules",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\EventsModule\\Modules.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\EventsModule\\Modules\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\EventsModule\\Modules",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5f3462ce3dd644a37e67302209a4d1604c5b7b5a680ddd668fbbca5532342b65",
+  "Hash": "b3b2baeab3f8fb069e537175f7330d3df4351345920474041a93a0a64600e988",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,

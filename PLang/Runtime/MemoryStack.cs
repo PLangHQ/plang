@@ -1064,6 +1064,9 @@ namespace PLang.Runtime
 
 			var ov = GetObjectValue(originalKey);
 			ov.Value = value;
+			if (properties != null) { 
+				ov.Properties = properties;
+			}
 
 			AddOrReplaceObjectValue(variables, ov, goalStep, disableEvent);
 

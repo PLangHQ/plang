@@ -1,7 +1,6 @@
 {
   "GoalName": "OnStepError",
   "Comment": null,
-  "Text": "OnStepError",
   "GoalSteps": [
     {
       "Text": "write out system error \"%!error%\"",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "5ca3a7a6fbfa47927a0039b26ab76af3c633777f6c3bf0ff3b0ad6c7f8057fca",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal",
       "UserIntent": null
     }
@@ -44,16 +43,12 @@
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\OnStepError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\OnStepError",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\events\\Runtime\\OnStepError.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnStepError\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\events\\Runtime\\OnStepError",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d3bf1086c487840196130ba7c473e520b40b32f82616695d8bd0c2c4989a3e42",
+  "Hash": "f76a342641907b2241dd74dc061b591e44cd4b42b36d8c2fb5ac0d2e1eb3995f",
   "IncomingVariablesRequired": {
     "error": "The specific error message that needs to be logged."
   },

@@ -170,7 +170,7 @@ public class MethodHelper
 
 		foreach (var buildParameter in parameters ?? [])
 		{
-			var typeFound = methodInfo.GetParameters().FirstOrDefault(p => IsTypeMatching(p.ParameterType.FullNameNormalized(), buildParameter.Type));
+			var typeFound = methodInfo.GetParameters().FirstOrDefault(p => p.Name.Equals(buildParameter.Name) && IsTypeMatching(p.ParameterType.FullNameNormalized(), buildParameter.Type));
 			if (typeFound == null)
 			{
 				buildErrors.Add(new InvalidParameterError(goalStep.Instruction?.Function.Name, $"{buildParameter.Type} {buildParameter.Name} is not of the correct type.", goalStep,

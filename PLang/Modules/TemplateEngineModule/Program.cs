@@ -322,7 +322,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					parameters.Add(ReservedKeywords.Step, goalStep);
 					parameters.Add(ReservedKeywords.Instruction, goalStep.Instruction);
 
-					var caller = GetProgramModule<CallGoalModule.Program>();
+					var caller = GetProgramModule<AppModule.Program>();
 					(appName, var goalName, var error) = AppToCallInfo.GetAppAndGoalName(appName);
 					if (error != null) return error.ToString();
 

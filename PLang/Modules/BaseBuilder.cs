@@ -402,7 +402,7 @@ If there is some api key, settings, config replace it with %Settings.NameOfApiKe
 Dictionary<T1, T2> value is {{key: value, ... }} => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => {{ key: ""userId"", value:""%userId%""}}
 Variable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(""yyyy-MM-dd"")% then type of %updated% is System.DateTime 
 List, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array
-
+When you see t%variable% or t""this is text"", set the Type to Plang.TString. This is for translation
 <Example>
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""

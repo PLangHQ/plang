@@ -1,7 +1,6 @@
 {
   "GoalName": "AskUser",
   "Comment": null,
-  "Text": "AskUser",
   "GoalSteps": [
     {
       "Text": "ask user %ask%, write to %user%",
@@ -86,16 +85,12 @@
   "RelativeGoalFolderPath": "\\modules\\UiModule",
   "RelativePrPath": ".build\\modules\\UiModule\\CreateTemplateFile\\AskUser\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\CreateTemplateFile\\AskUser",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\modules\\UiModule\\CreateTemplateFile.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\CreateTemplateFile\\AskUser\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system\\.build\\modules\\UiModule\\CreateTemplateFile\\AskUser",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\system",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9bfa0075166e5f7d1a4361cbe4f85974e464ea602e8b9ff9819cd02409cc7c7a",
+  "Hash": "39f17ab24e5d85569909c8133c5c90d5a87d249864287bfa985394e228c0c600",
   "IncomingVariablesRequired": {
     "\\%ask\\%": "The question that will be presented to the user."
   },

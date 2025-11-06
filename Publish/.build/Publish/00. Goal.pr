@@ -1,7 +1,6 @@
 {
   "GoalName": "Publish",
   "Comment": null,
-  "Text": "Publish",
   "GoalSteps": [
     {
       "Text": "write out \"Starting at %Now%\"",
@@ -30,7 +29,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "2dfeff45891b154bb888a6cf5bcabe8f2d1c670244b0bd8b0ad43fe8bd806258",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
     },
@@ -92,7 +91,7 @@
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "1a7c6bd32bac343589dd389aa307b505c4692837db96fef0c7fd061850bc8c19",
-      "BuilderVersion": "1.0.0.0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
     },
@@ -141,7 +140,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-24T08:34:19.874651+00:00",
+      "Generated": "2025-11-04T15:50:32.7997799+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -153,7 +152,7 @@
       "LineNumber": 6,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b76559f3e33f8276f3946efeae65b6668a52c610c92d9a8111927162e49beb07",
+      "Hash": "e8041d455cdf4410ea95232308d4a6d577491cad07f6bf35c3cd6eb49cb3c076",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
       "UserIntent": null
@@ -296,16 +295,12 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish",
-  "AbsoluteGoalPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\Publish.goal",
-  "AbsolutePrFilePath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish\\00. Goal.pr",
-  "AbsolutePrFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish\\.build\\Publish",
-  "AbsoluteAppStartupFolderPath": "C:\\Users\\Ingi Gauti\\source\\repos\\plang\\Publish",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": "0.1.18.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d9be3be5ec2f484888bcb526d7510cb7ccbb74c915703971ec0b1f25bedebc66",
+  "Hash": "a878f899081e886c21ea18a17cd206b0026d79b987508cfe5a7ca66d2f5ee98e",
   "IncomingVariablesRequired": {
     "buildVar": "A variable to capture the output of the build process.",
     "version": "The version of the project read from 'version.txt'.",

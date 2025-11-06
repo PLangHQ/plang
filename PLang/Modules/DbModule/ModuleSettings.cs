@@ -680,7 +680,19 @@ Be concise"));
 				if (gf == null) return new Error($"Could not load generice function from instruction: {step.AbsolutePrFilePath}");
 
 				var sql = gf.GetParameter<string>("sql");
-				if (string.IsNullOrEmpty(sql)) continue;
+				
+				if (string.IsNullOrEmpty(sql))
+				{
+					if (gf.Name == "ExecuteSqlFile")
+					{
+						var fileName = gf.GetParameter<string>("fileName");
+						sql = fileSystem.File.ReadAllText(Path.Join(step.Goal.AbsoluteGoalFolderPath, fileName));
+					}
+					else
+					{
+						continue;
+					}
+				}
 				try
 				{
 					await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
@@ -788,7 +800,7 @@ Be concise"));
 			}
 
 
-			return (null, new BuilderError($"Datasource '{name}' does not exists", Key: "DataSourceNotFound",
+			return (null, new BuilderError($"Datasource '{name}' does not exists", StatusCode: 404, Key: "DataSourceNotFound",
 						FixSuggestion: $@"{existingDatasources}
 
 Create a step that creates a new Data source, e.g.

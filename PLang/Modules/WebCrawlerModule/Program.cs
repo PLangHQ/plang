@@ -36,7 +36,7 @@ namespace PLang.Modules.WebCrawlerModule
 	}
 
 	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
-	public class Program : BaseProgram, IAsyncConstructor
+	public sealed class Program : BaseProgram, IAsyncConstructor, IDisposable
 	{
 
 		private readonly IPLangFileSystem fileSystem;
@@ -47,6 +47,8 @@ namespace PLang.Modules.WebCrawlerModule
 		private BrowserModuleData data;
 
 		private object locker = new object();
+		private bool disposed;
+
 		public Program(IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
 			this.fileSystem = fileSystem;
@@ -68,6 +70,21 @@ namespace PLang.Modules.WebCrawlerModule
 		{
 			return data.BrowserInstance ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
 				hideTestingMode, onRequest, onResponse);
+		}
+
+		public void Dispose()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+			data = context.GetModuleData<BrowserModuleData>();
+			if (data != null && data.BrowserInstance != null)
+			{
+				data.BrowserInstance.Dispose().Wait();
+			}
+
+			this.disposed = true;
 		}
 
 		private string GetChromeUserDataDir()
@@ -302,9 +319,10 @@ namespace PLang.Modules.WebCrawlerModule
 		public async Task CloseBrowser()
 		{
 			var browser = data.BrowserInstance;
-			if (browser == null) return;
+			if (browser == null || data.BrowserInstance == null) return;
 
-			await browser.Browser.CloseAsync();
+			await data.BrowserInstance.Dispose();
+
 			data.BrowserInstance = null;
 			
 			
@@ -1360,6 +1378,12 @@ return result;");
 
 		}
 
-		
+		private void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
+		}
 	}
 }
