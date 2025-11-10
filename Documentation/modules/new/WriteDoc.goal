@@ -1,0 +1,29 @@
+WriteDoc
+- read config.json, throw if not found, write to %config%
+    on error 404 call AskUserForPath
+- if %programs.count% is 0 then 
+    - get list of files in %path%, filter on "Program.cs", write to %programs%
+- foreach %programs%, call goal CopyFile item=%file%
+- call goal CreateForExpert
+
+CopyFile
+- copy %file% to src/%file.ParentDirectory.Name%/%file.Name%
+
+AskUserForPath
+- ask user "What is the path to plang project/Modules?%error%", write to %path%
+- get list of files in %path%, filter on "Program.cs", write to %programs%
+- if %programs.count% == 0 then AskUserForPath error=" - ERROR: No Program.cs found, check path"
+- set %config% = {path:%path%}
+- save %config% to file "config.json"
+- retry step
+
+CreateForExpert
+- foreach %programs%, call goal DocumentExpertModule item=%file%
+
+DocumentExpertModule
+- read llm/expertSystem.llm, write to %system%
+- [llm] system: %system%
+        user: %file.Content%
+        format: ".md"
+        write to %documentation%
+- write %documentation% to src/%file.ParentDirectory.Name%/%file.Name.Replace(".cs", ".md")%

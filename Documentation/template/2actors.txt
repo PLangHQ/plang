@@ -1,0 +1,16 @@
+# 2 Actors in plang
+
+There are 2 actors in plang, system and user. the 3rd one comes later, but let focus on those 2
+
+system, this is your computer, or where ever the code live, in the cloud, on your phone, etc.
+user is you. The person that is using the system. 
+
+So as you can see, these two actors need to communicate. 
+
+This means in you app there is a user and a system. 
+
+So we have
+- userContext
+- systemContext
+- userOutput
+- systemOutput

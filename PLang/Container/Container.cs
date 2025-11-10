@@ -486,7 +486,9 @@ namespace PLang.Container
 
 			container.RegisterEncryptionFactory(typeof(Encryption), true, new Encryption(settings));
 			fileSystem.SetFileAccess(settings.GetValues<FileAccessControl>(typeof(PLangFileSystem)));
-			
+
+
+
 		}
 
 		private static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)

@@ -6,6 +6,7 @@ using PLang.Runtime;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.Collections.Concurrent;
+using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.MockModule.Program;
 using static PLang.Utils.StepHelper;
 
@@ -60,6 +61,10 @@ namespace PLang.Interfaces
 		public IOutputSink SystemSink { get; set; }
 		public CallStack CallStack {get;set;}
 		public ExecutionMode ExecutionMode { get; set; }
+		public IPLangFileSystem FileSystem { get; internal set; }
+		public DataSource DataSource { get; internal set; }
+		public DataSource SystemDataSource { get; internal set; }
+
 		public IOutputSink GetSink(string actor) {
 			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
 
@@ -125,7 +130,7 @@ namespace PLang.Interfaces
 		}
 		public (T?, IError?) Get<T>(string key)
 		{
-			if (key == null) return (default, new Error("key was empty"));
+			if (key == null) return (default, new Error($"Key ({key}) was empty, searching in context"));
 
 			if (TryGetValue(key, out T? obj))
 			{
@@ -133,7 +138,7 @@ namespace PLang.Interfaces
 			}
 			else
 			{
-				return (default, new Error("Key not found"));
+				return (default, new Error($"Key ({key}) not found in context"));
 			}
 		}
 		public T? GetOrDefault<T>(string key, T? defaultValue)

@@ -30,7 +30,6 @@
             "Name": "WriteToConsole",
             "Parameters": {}
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         },
@@ -44,7 +43,6 @@
             "Name": "WriteOutError",
             "Parameters": {}
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -263,7 +261,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6e9952b597474d16bffcc7e6311682478096d21901f8cba1edddccf007f7bb23",
+  "Hash": "8a31fd79a3c98a14e411a5172fe5abd92ccce519782e95a0499973307d728f73",
   "IncomingVariablesRequired": {
     "plang.debugPort": "The port number for the debug server to which the information will be sent.",
     "context": "The current context in which the goal is being executed.",

@@ -222,9 +222,23 @@ public class ObjectValue
 		}
 		else if (parentValue is JArray jArray)
 		{
-			var index = int.Parse(Name.Trim('[').Trim(']'));
 			JToken jToken = (value is JToken jt) ? jt : GetJToken(value); ;
-			jArray[index] = jToken;
+
+			if (Name.Contains("[") && Name.Contains("]"))
+			{
+				if (int.TryParse(Name.Trim('[').Trim(']'), out int index))
+				{
+					jArray[index] = jToken;
+				} else
+				{
+					throw new Exception($"{Name} is not supported on index. {ErrorReporting.CreateIssueNotImplemented}");
+				}
+			}
+			else
+			{
+				jArray[Name] = jToken;
+			}
+
 			Parent.Value = jArray;
 		}
 		else if (parentValue == null)

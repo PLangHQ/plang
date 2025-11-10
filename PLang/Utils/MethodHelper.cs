@@ -223,7 +223,7 @@ public class MethodHelper
 				}
 
 				// lets load the type from the build, if it fails, something is not correct from LLM
-				Type? builderType = Type.GetType(builderParameter.Type, false);
+				Type? builderType = TypeHelper.GetType(builderParameter.Type);
 				if (builderType == null)
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
@@ -304,7 +304,7 @@ public class MethodHelper
 
 	private bool IsTypeMatching(string methodParameterType, string buildParamType)
 	{
-		bool isSame = methodParameterType == buildParamType;
+		bool isSame = methodParameterType.Equals(buildParamType, StringComparison.OrdinalIgnoreCase);
 		if (isSame) return true;
 
 		return false;

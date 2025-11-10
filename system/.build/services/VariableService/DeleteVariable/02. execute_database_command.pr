@@ -1,0 +1,89 @@
+{
+  "Text": "db.Execute(%sql%, %sqlParameters%)",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": null,
+    "AffectedColumns": null,
+    "Warning": null,
+    "Reasoning": "The user intends to execute a database command or query using the provided SQL statement and parameters. The ExecutePlang function matches this intent as it takes a SQL string and a list of parameters to execute the command.",
+    "Name": "ExecutePlang",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "%sql%"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]",
+        "Name": "parameters",
+        "Value": "%sqlParameters%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "sql": {
+        "Name": "sql",
+        "FullTypeName": "System.String"
+      },
+      "parameters": {
+        "Name": "parameters",
+        "FullTypeName": "System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\n\r\nAdditional json Response explaination:\r\n- Datasource(s) to available: \r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n\r\nRules:\r\n- You MUST generate valid sql statement for sqlite\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\r\n- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. \r\n- Do not assume or include all columns from the table schema unless the user requests it. "
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nExecute a database command or query using provided SQL and parameters\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Reference as db.Execute(%sql%, %parameters%)\",\"MethodName\":\"ExecutePlang\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\"Name\":\"parameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Boolean\",\"Name\":\"IsSystemVariable\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Value\",\"IsRequired\":false},{\"Type\":\"System.Type\",\"Name\":\"Type\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"Initiated\",\"IsRequired\":true},{\"Type\":\"PLang.Models.Properties\",\"Name\":\"Properties\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Created\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Updated\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nsql (type:object), sqlParameters (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "db.Execute(%sql%, %sqlParameters%)"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user intends to execute a database command or query using the provided SQL statement and parameters. The ExecutePlang function matches this intent as it takes a SQL string and a list of parameters to execute the command.\",\n  \"Name\": \"ExecutePlang\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"%sql%\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\n      \"Name\": \"parameters\",\n      \"Value\": \"%sqlParameters%\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"TableNames\": null,\n  \"AffectedColumns\": null,\n  \"Warning\": null\n}"
+    }
+  ]
+}

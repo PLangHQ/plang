@@ -8,6 +8,7 @@ using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
+using PLang.Utils.JsonConverters;
 using System.Collections;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -25,7 +26,11 @@ namespace PLang.Errors
 		public string Message { get; }
 		public string? FixSuggestion { get; }
 		public string? HelpfulLinks { get; }
+
+		
 		public GoalStep? Step { get; set; }
+
+		[Newtonsoft.Json.JsonConverter(typeof(GoalSummaryConverter))]
 		public Goal? Goal { get; set; }
 		public DateTime CreatedUtc { get; init; }
 		public Exception? Exception { get; }

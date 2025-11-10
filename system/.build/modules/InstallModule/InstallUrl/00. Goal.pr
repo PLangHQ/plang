@@ -30,7 +30,6 @@
             "Name": "AskForUrl",
             "Parameters": {}
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -377,7 +376,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c91f2b002539e1bec75fc452ae9c3b3f59e087e55480e0801817eaad3cd37914",
+  "Hash": "71f2d3a22a54eaf528095bc400f8b4414beaaa743bce2389440a1c158a879aac",
   "IncomingVariablesRequired": {
     "request": "The URL request that needs to be validated and processed for installation.",
     "name": "The name of the installation package or software.",

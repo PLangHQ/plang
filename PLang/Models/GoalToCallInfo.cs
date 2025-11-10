@@ -1,7 +1,10 @@
 ﻿using AngleSharp.Attributes;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -10,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Models
 {
@@ -94,7 +98,7 @@ namespace PLang.Models
 	{
 		private string name;
 		private Dictionary<string, object?> parameters;
-
+		private GenericFunction? function = null;
 		public GoalToCallInfo(string name, Dictionary<string, object?>? parameters = null)
 		{
 			if (string.IsNullOrWhiteSpace(name))
@@ -128,7 +132,15 @@ namespace PLang.Models
 		}
 		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
 
+		public IGenericFunction GetFunction(PLangContext context)
+		{
 
+			if (function != null) return function;
+
+			var instruction = JsonHelper.ParseFilePath<Instruction>(context.FileSystem, Path);
+			return instruction.Function;
+
+		}
 
 		public override string? ToString() => Name;
 

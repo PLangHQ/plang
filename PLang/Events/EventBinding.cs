@@ -2,6 +2,7 @@
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Models;
+using PLang.Utils.JsonConverters;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
@@ -55,6 +56,7 @@ namespace PLang.Events
 		public string UniqueId { get { return Guid.NewGuid().ToString(); } }
 		[JsonIgnore]
 		[IgnoreWhenInstructed]
+		[Newtonsoft.Json.JsonConverter(typeof(GoalSummaryConverter))]
 		public Goal? Goal { get; set; }
 		[JsonIgnore]
 		[IgnoreWhenInstructed]

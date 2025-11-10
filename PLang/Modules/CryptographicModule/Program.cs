@@ -44,6 +44,7 @@ namespace PLang.Modules.CryptographicModule
 
 		public async Task<(string?, IError?)> GetPrivateKey()
 		{
+			// Will ask the user 3 questions, then uses llm to determine if the user is being scammed.
 			// This should be handled by the AskUserPrivateKeyExport, this Program.cs should not know about it.
 			var lockTimeout = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), LockedKey, DateTime.MinValue);
 			if (lockTimeout != DateTime.MinValue && lockTimeout > SystemTime.UtcNow().AddDays(-1))

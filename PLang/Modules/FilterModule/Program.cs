@@ -19,12 +19,14 @@ using System.ComponentModel;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.RegularExpressions;
+using UglyToad.PdfPig.Tokenization;
 
 namespace PLang.Modules.FilterModule
 {
 	[Description("Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{
+
 		[Description("Parses an input that is wrapped with markdown code format and return text inside those code blocks")]
 		public async Task<object?> ExtractMarkdownWrapping(string input, string[]? format = null)
 		{
@@ -68,6 +70,7 @@ namespace PLang.Modules.FilterModule
 			}
 			return htmlElements;
 		}
+
 
 
 		[Description("matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]

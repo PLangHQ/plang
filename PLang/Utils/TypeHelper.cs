@@ -11,6 +11,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.WebserverModule;
 using PLang.Runtime;
+using PLang.Services.CompilerService;
 using PLang.Utils.JsonConverters;
 using Sprache;
 using System;
@@ -22,6 +23,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.Numerics;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.Linq;
@@ -480,6 +482,17 @@ public class TypeHelper : ITypeHelper
 			   type == typeof(Version) ||
 			   type == typeof(JToken);
 	}
+
+	public static Type? GetType(string str)
+	{
+		Type? type = Type.GetType(str, false, ignoreCase: true);
+		if (type != null) return type;
+
+		
+		return type;
+	}
+
+
 	public static T? ConvertToType<T>(object? value)
 	{
 		if (value == null) return default;

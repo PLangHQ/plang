@@ -26,6 +26,7 @@ using PLang.Services.SettingsService;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -155,9 +156,9 @@ namespace PLang.Modules.DbModule
 			(var dataSource, var error) = await dbSettings.GetDataSource(name, goalStep);
 			if (error != null) return (null, error);
 
-			if (context.TryGetValue<DataSource>(CurrentDataSourceKey, out DataSource? currentDataSource) && currentDataSource != null)
+			if (context.DataSource != null)
 			{
-				if (currentDataSource.IsInTransaction) return (null, new ProgramError("You cannot set a new datasource while in a transaction.", FixSuggestion: $"Include the data source '{name}' in the original begin transaction, e.g. `- begin transaction 'data', '{name}'`"));
+				if (context.DataSource.IsInTransaction) return (null, new ProgramError("You cannot set a new datasource while in a transaction.", FixSuggestion: $"Include the data source '{name}' in the original begin transaction, e.g. `- begin transaction 'data', '{name}'`"));
 			}
 			
 			error = AddDataSourceToContext(dataSource);
@@ -226,9 +227,9 @@ namespace PLang.Modules.DbModule
 
 		private IError? AddDataSourceToContext(DataSource main)
 		{
-			if (context.TryGetValue(CurrentDataSourceKey, out DataSource? ds) && ds != null)
+			if (context.DataSource != null)
 			{
-				
+				var ds = context.DataSource;
 
 				if (ds.Transaction != null)
 				{
@@ -250,7 +251,7 @@ namespace PLang.Modules.DbModule
 					}
 				}
 			}
-			context.AddOrReplace(CurrentDataSourceKey, main);
+			context.DataSource = main;
 			return null;
 		}
 
@@ -576,6 +577,20 @@ namespace PLang.Modules.DbModule
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
 
+		[Description("Reference as db.Execute(%sql%, %parameters%)")]
+		public async Task<(long RowsAffected, IError? Error)> ExecutePlang(string sql, List<ObjectValue>? parameters = null)
+		{
+			List<ParameterInfo>? sqlParameters = null;
+			if (parameters != null) {
+				sqlParameters = new();
+				foreach (var parameter in parameters)
+				{
+					sqlParameters.Add(new ParameterInfo(parameter.Type.FullName, parameter.Name, parameter.Value));
+				}
+			}
+
+			return await ExecuteRaw(context.DataSource, sql, sqlParameters);
+		}
 
 		internal async Task<(long RowsAffected, IError? Error)> Execute(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{

@@ -1,0 +1,4 @@
+DeleteVariable
+- if %data.BeforeDelete% is not empty, call goal %data.BeforeDelete%
+- db.Execute(%sql%, %sqlParameters%)
+- if %data.BeforeDelete% is not empty, call goal %data.AfterDelete%

@@ -1,0 +1,4 @@
+UpdateVariable
+- if %data.BeforeUpdate% is not empty, call goal %data.BeforeUpdate%
+- db.Execute(%sql%, %sqlParameters%)
+- if %data.BeforeUpdate% is not empty, call goal %data.AfterUpdate%

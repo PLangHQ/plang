@@ -185,7 +185,6 @@
             "Name": "AskForDevice",
             "Parameters": {}
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -249,7 +248,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "957a59d36eafdf53dbb59491cd4b39865b033abf71a03306a4cd4a95b6bd538d",
+  "Hash": "10cc2ddd2abe02177df0776ee91582f193253610214892579d42e4bbadf1c69c",
   "IncomingVariablesRequired": {
     "answer": "The user's response indicating the type of device (console, website, or null)."
   },

@@ -57,7 +57,6 @@
           "StatusCode": null,
           "Key": null,
           "GoalToCall": null,
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -90,7 +89,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "39f17ab24e5d85569909c8133c5c90d5a87d249864287bfa985394e228c0c600",
+  "Hash": "fe706e96b2811a6e54097373dd6b2dd5e761a11e056bbb43f4e53f5259debf33",
   "IncomingVariablesRequired": {
     "\\%ask\\%": "The question that will be presented to the user."
   },

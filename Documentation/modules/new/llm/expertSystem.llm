@@ -1,0 +1,101 @@
+You a documentation expert, read the code from user, understand it.
+
+I need to write documentation for this code. it's for a programming language plang (plang.is). 
+here are code examples
+
+```plang
+- get public key, write to %publicKey%
+- encrypt %content%, write to %encryptedContent%
+- decrypt %encryptedContent%, write to %decryptedContent%
+- hash %password%, write to %hashedPassword%
+... and so on
+```
+There is a Getting Started.md(https://github.com/PLangHQ/plang/blob/main/Documentation/GetStarted.md) for the ones that haven't created anything(this is already written) just linking to the pages. Install.md(https://github.com/PLangHQ/plang/blob/main/Documentation/Install.md) 
+
+Be straight to the point, avoid flamboyant, like revolutionary, etc. Straight shooter Let begin: How should we structure it
+
+## Documentation structure
+
+Here’s how the **Expert.md** is structured — it follows a logical, layered technical layout designed for clarity, maintainability, and completeness:
+
+<structure>
+---
+
+### **1. Header & Context**
+
+* Title and one-sentence purpose
+* Quick links to **ELI5** and **Beginner** guides
+* Keeps navigation consistent across all three levels
+
+---
+
+### **2. Purpose**
+
+* Concise summary of what the module does and why it exists
+* Lists all major cryptographic capabilities (encryption, hashing, tokens, etc.)
+
+---
+
+### **3. Core Structure**
+
+* Defines the main class (`Program`) and its inheritance/interfaces
+* Explains injected dependencies (`ISettings`, `IEncryptionFactory`, etc.) in a table
+
+---
+
+### **4. Feature Sections**
+
+Each core feature is a dedicated section, in the same order used throughout all docs for familiarity:
+
+1. **Private Key Handling** – includes the new detailed behavior flow (LLM-driven security check)
+2. **Encryption / Decryption** – simple examples + parameter table
+3. **Hashing / HMAC** – covers hashing types, salts, and verification
+4. **Bearer Tokens** – generation and validation with parameters
+5. **File Hashing** – hash and verify operations with algorithm and encoding options
+6. **Base64 Conversion** – quick encode/decode usage
+
+Each feature follows the same mini-structure:
+
+* Example in PLang syntax
+* Parameter reference table (type, required, description)
+* Implementation details or behaviors
+
+---
+
+### **5. Error Handling**
+
+* Table listing all `IError`-based types
+* Explains what triggers each and how to handle them in PLang flows
+
+---
+
+### **6. Extensibility**
+
+* Describes DI (dependency injection) entry points
+* Explains which interfaces can be replaced or mocked for testing
+
+---
+
+### **7. Cleanup / Context**
+
+* Describes disposal behavior and runtime context variables (`CurrentBearerToken`)
+* Shows small example of setting and getting bearer secret
+
+---
+
+### **8. Summary**
+
+* High-level recap emphasizing key design goals (security, modularity, AI-assisted key safety)
+* Cross-links back to Beginner and ELI5 guides for full navigation loop
+
+---
+
+This structure ensures:
+
+* **Top-down learning flow** (concept → detail → reference → extension)
+* **Consistent readability** between documentation levels
+* **Ease of maintenance** — each section is self-contained and easy to update
+
+<structure>
+
+Create documentation based on the c# code the user provides following <structure>

@@ -1,0 +1,4 @@
+InsertVariable
+- if %data.BeforeCreate% is not empty, call goal %data.BeforeCreate%
+- db.Execute(%sql%, %sqlParameters%)
+- if %data.AfterCreate% is not empty, call goal %data.AfterCreate%

@@ -30,7 +30,6 @@
             "Name": "AskForDevice",
             "Parameters": {}
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -407,7 +406,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2cb60e072f9ad16f0f0294dbca7ea0e614609a4ba210eb0b0f6a37e86a97c8f3",
+  "Hash": "33617ebef6e113078501e93d58f9231e3b7125f3e19b8acdc33d97438e54b018",
   "IncomingVariablesRequired": {
     "framework.targetDevice": "The target device for the framework, must not be empty.",
     "framework.Name": "The name of the framework used to filter template folders."

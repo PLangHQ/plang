@@ -64,7 +64,6 @@
               "Content": "No UI has been created"
             }
           },
-          "GoalToCallParameters": null,
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
         }
@@ -255,7 +254,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4df17f5f0cf85ea0af986bcc8de70635f2c6606ae9137acce0b82848a8224b3e",
+  "Hash": "599d1c47dd1ddc9464b74cdfbd65ae42dfdec6db6b620c36d2bb98cd25920c90",
   "IncomingVariablesRequired": {
     "Settings.Templates.name.first": "The first name of the template to be used.",
     "options.OutputFile": "The output file path that needs to be checked for existence.",

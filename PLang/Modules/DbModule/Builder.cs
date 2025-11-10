@@ -112,9 +112,8 @@ namespace PLang.Modules.DbModule
 
 			if (dataSource == null && dataSources.Count == 0)
 			{
-				(dataSource, var runtimeError) = context.Get<DataSource>(Program.CurrentDataSourceKey);
-				if (runtimeError != null) return (null, new BuilderError(runtimeError));
-
+				dataSource = context.DataSource;
+				
 				if (dataSource != null)
 				{
 					dataSource = dataSource with { NameInStep = dataSource.Name };
@@ -320,7 +319,12 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 
 			if (gf == null || gf.Name == "N/A")
 			{
-				return (null, new StepBuilderError("Could not mappe step to a function", goalStep, Retry: false));
+				return (null, new StepBuilderError("Could not map step to a function", goalStep, Retry: false));
+			}
+
+			if (gf.Name == "ExecutePlang")
+			{
+				return buildResult;
 			}
 
 			var dataSourceNameParam = gf.GetParameter<string>("dataSourceName");
@@ -482,7 +486,7 @@ When table name is unknown at built time because it is created with variable, us
 			bool methodHasDataSourceName = classDescResult.HasDataSourceName;
 			methodsAndTables.ClassDescription = classDescResult.ClassDescription;
 
-			(var stepDataSource, _) = context.Get<DataSource>(Program.CurrentDataSourceKey);
+			var stepDataSource = context.DataSource;
 			if (stepDataSource == null && step.Goal.IsSetup && step.Goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
 			{
 				var dataSourceResult = await dbSettings.GetDataSource("data", step, false);
@@ -501,8 +505,8 @@ When table name is unknown at built time because it is created with variable, us
 			// todo: hack with execute sql file
 			if (methodsAndTables.ContainsMethod("ExecuteSqlFile") ||
 				methodsAndTables.ContainsMethod("ExecuteDynamicSql") ||
-				methodsAndTables.ContainsMethod("QueryDynamicSql")
-
+				methodsAndTables.ContainsMethod("QueryDynamicSql") ||
+				methodsAndTables.ContainsMethod("ExecutePlang")
 				|| (methodsAndTables.TableNames.Count > 0 && methodsAndTables.TableNames[0] == "ExecuteDynamicSql"))
 			{
 				if (stepDataSource != null) methodsAndTables.DataSource = stepDataSource;
@@ -571,7 +575,8 @@ When table name is unknown at built time because it is created with variable, us
 					string prefixName = prefix.Substring(0, prefix.IndexOf("."));
 					if (prefixName == "main")
 					{
-						(var dataSource, _) = context.Get<DataSource>(Program.CurrentDataSourceKey);
+						var dataSource = context.DataSource;
+;
 						preferedNames = dataSource.AttachedDbs;
 					}
 					else

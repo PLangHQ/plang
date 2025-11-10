@@ -78,7 +78,7 @@ The method user is mocking has the following information:
 		if (error != null) return (null, error);
 
 		(var goalFound, var error2) = GoalHelper.GetGoalPath(goalStep, goalToCallAndParams.GoalToCall, goalParser.GetGoals(), new List<Goal>());
-		if (error != null) return (null, new BuilderError(error2) { Retry = false });
+		if (error2 != null) return (null, new BuilderError(error2) { Retry = false });
 		goalToCallAndParams.GoalToCall.Path = goalFound.RelativePrPath;
 
 		var mockData = new MockData(goalToCallAndParams.GoalToCall, moduleType.FullName, method.Name, goalToCallAndParams.Parameters);

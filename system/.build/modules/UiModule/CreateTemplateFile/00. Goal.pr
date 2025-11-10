@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-11-04T14:08:40.4435927+00:00",
       "WaitForExecution": true,
@@ -31,7 +31,7 @@
       "Hash": "6baa52d51c068e6af81c7d98441470b366ab53f863d0419e37d7b1ebae3f2ce6",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\CreateTemplateFile.goal",
-      "UserIntent": "Prompt the user to provide a description of the template they need for a specific file and store their response."
+      "UserIntent": null
     },
     {
       "Text": "call goal ProcessAnswer continue=false",
@@ -83,7 +83,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "7512e001416ade2bd184965186aac342b0857e21c50bcd65c482e016f537aa61",
+  "Hash": "d0b80e47d879ddb6bbd0e355689532f9ae29d8642133f58ba5e71cbef501caa3",
   "IncomingVariablesRequired": {
     "fileName": "The name of the file for which the template is being created."
   },

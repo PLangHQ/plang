@@ -67,8 +67,8 @@ namespace PLang.Models.ObjectValueExtractors
 						tokens.Add(token);
 					} else
 					{					
-						var parentOfToken = new ObjectValue($"{parent.Name}[{counter}]", item, parent: parent, properties: parent.Properties);
-						return new ObjectValue(segment.Value, token, parent: parentOfToken, properties: parentOfToken.Properties);
+						//var parentOfToken = new ObjectValue($"{parent.Name}[{counter}]", item, parent: parent, properties: parent.Properties);
+						return new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
 					}
 					counter++;
 

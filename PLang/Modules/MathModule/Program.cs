@@ -35,7 +35,7 @@ namespace PLang.Modules.MathModule
 			if (string.IsNullOrEmpty(expression))
 				return (null, new ProgramError("Could not use empty variable", goalStep, function, FixSuggestion: $"The variable value is: '{expression}' (without quotes)"));
 
-			var solveFor = new NCalc.Expression(expression);
+			var solveFor = new NCalc.Expression(expression, ExpressionOptions.IgnoreCaseAtBuiltInFunctions);
 			return EvaluateCustomExpressions(solveFor, decimalRound, midpointRounding);
 		}
 
@@ -125,9 +125,9 @@ namespace PLang.Modules.MathModule
 						return (result, null);
 				}
 			}
-			catch (EvaluateException e)
+			catch (Exception e)
 			{
-				return (null, new ProgramError(e.Message, goalStep, function, FixSuggestion: $"The variable value is: {expression}"));
+				return (null, new ProgramError(e.Message, goalStep, function, FixSuggestion: $"The expression value is: {expression}", Exception: e));
 			}
 		}
 	}
