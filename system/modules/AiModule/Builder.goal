@@ -1,0 +1,22 @@
+Builder
+- read llm/searchSystem.llm, write to %system%
+- [llm] system: %system%    
+        user: %step.Text%
+        scheme: {search:string}
+- get ai.plang.io/search, {search: %search%}, write to %result%
+- if %result.models.count% = 1 then call BuildAiExecution model=%result.models[0]%, else call ChooseModel
+
+BuildAiExecution
+- get ai.plang.io/model/%model.model%, write to %modelInfo%
+- set %example% = %modelInfo.default_example.input%
+- set %scheme% = %modelInfo.latest_version.openapi_schema.components.schemas%
+- read llm/createScheme.llm, load vars, write to %system%
+- [llm] system: %system%
+        user: %step.Text%
+        scheme: { reason:string, config:object }
+        write to %function%
+- set %function.url% = "https://ai.plang.io/%model.model%"
+- return %function%
+
+ChooseModel
+- write out %result.models%
