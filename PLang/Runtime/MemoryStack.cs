@@ -1015,7 +1015,7 @@ namespace PLang.Runtime
 				throw new Exception($"{key} is reserved. You must choose another variable name");
 			}
 
-			if (value == null)
+			if (value == null && !key.Contains("."))
 			{
 				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize, properties), goalStep, disableEvent);
 				return;

@@ -144,6 +144,17 @@ namespace PLang.Building
 				return (null, new StepBuilderError($"Could not map {step.Text} to function. Refine your text", step));
 			}
 
+			/*
+			 * map variables and put into instruction file
+			var parameters = new Dictionary<string, object?>();
+			parameters.Add("parameters", build.Instruction.Function.Parameters);
+
+			var goalInfo = new GoalToCallInfo("MapVariables") { Path = ".build/modules/MapVariables/00. Goal.pr", Parameters = parameters };
+			var callGoal = programFactory.GetProgram<Modules.CallGoalModule.Program>(step);
+			var result = await callGoal.RunGoal(goalInfo);
+			*/
+
+
 			var instruction = build.Instruction;
 			instruction.BuilderVersion = PlangHelper.GetVersion();
 			step.Instruction = instruction;
@@ -421,7 +432,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			catch (Exception ex)
 			{
 				return (instruction, new InstructionBuilderError($"Failed to invoke validation method: {goalStep.ModuleType}.{method.Name}", goalStep, instruction,
-					"ValidationInvokeFailed", Exception: ex, FixSuggestion: $"Try rebuilding the .pr file: {goalStep.RelativePrPath}"));
+					"ValidationInvokeFailed", Exception: ex, FixSuggestion: $"Try rebuilding the .pr file: {goalStep.RelativePrPath}", Retry: false));
 			}
 		}
 	}

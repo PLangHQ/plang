@@ -436,7 +436,7 @@ public class MethodHelper
 					return (parameterValues, new Error(ex.Message, StatusCode: 500, Exception: ex));
 				}
 
-				return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", step, Exception: ex));
+				return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert '{inputParameter?.Value}' to {parameter.ParameterType} on parameter '{parameter.Name}' for method {method.Name} - value:'{variableValue}'", step, Exception: ex));
 			}
 
 		}

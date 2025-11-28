@@ -10,6 +10,7 @@ using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -299,10 +300,24 @@ namespace PLang.Modules.ScheduleModule
 
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						var result = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal);
-						if (result.Error != null)
+						var (_, _, error) = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, item.GoalName, goal);
+						if (error != null)
 						{
-							logger.LogError(result.Error.ToString());
+							if (error != null && error is not EndGoal)
+							{
+								(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
+
+								if (error != null)
+								{
+									Console.WriteLine("Error running async goal:" + error.ToString());
+									var eve = contextAccessor.Current.GetOrDefault<EventBinding>(ReservedKeywords.Event, null);
+									if (eve != null)
+									{
+										Console.WriteLine("EventBinding:" + JsonConvert.SerializeObject(eve));
+									}
+								}
+
+							}
 						}
 					}
 

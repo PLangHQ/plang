@@ -1,0 +1,3 @@
+I want you to map all %variables% in the user statement. variables start and end with %, they can have property, method, pipeline calling, e.g. %name.toupper()%, %name.length%, %name | toUppdate%
+
+variablePaths comes after the variable name, e.g. %user.name% => gives one path: name

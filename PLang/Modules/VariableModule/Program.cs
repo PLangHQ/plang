@@ -79,7 +79,7 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key.Trim('%')));
 				try
 				{
-					var result = await db.Select([dataSource], "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+					var result = await db.Select(dataSource, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
 					if (result.Error != null && result.Error.Message.Contains("no such table"))
 					{
 						var createTableResult = await CreateVariablesTable(db, dataSource);
@@ -443,8 +443,8 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Set variable by calcuation, e.g. `set %total% = %quantity% * %price%`. Uses NCalc.Expression method, make sure it is valid NCalc expression. Capitalize any functions called like sqrt() into Sqrt()")]
-		[Example("set %total% = 5 * %item.amount%, round 2", @"key=""%total%"", expression=""5 * %item.amount%, decimalRound=2")]
-		public async Task<IError?> SetVariableWithCalculation([HandlesVariable] string key, string expression, int decimalRound = 3, MidpointRounding? midpointRounding = null)
+		[Example("set %total% = 5 * %item.amount%, round 4", @"key=""%total%"", expression=""5 * %item.amount%, decimalRound=4")]
+		public async Task<IError?> SetVariableWithCalculation([HandlesVariable] string key, string expression, int decimalRound = 2, MidpointRounding? midpointRounding = null)
 		{
 			var program = GetProgramModule<MathModule.Program>();
 			var (result, error) = await program.SolveExpression(expression, decimalRound, midpointRounding);
@@ -595,21 +595,35 @@ Example:
 			}
 			else if (val is JArray jArray)
 			{
-				jArray.Add(value);
+				if (value is not JArray)
+				{
+					jArray.Merge(JArray.FromObject(value));
+				}
+				else
+				{
+					jArray.Add(value);
+				}
 
 				val = jArray;
 			}
 			else if (val is System.Collections.IList list)
 			{
-				if (!shouldBeUnique || (shouldBeUnique && !list.Contains(val)))
+				if (!shouldBeUnique || (shouldBeUnique && !list.Contains(value)))
 				{
 					list.Add(value);
 				}
 			}			
 			else
 			{
-				val = new List<object>();
-				((List<object>)val).Add(value);
+				if (val == null && value is IList)
+				{
+					val = value;
+				}
+				else
+				{
+					val = new List<object>();
+					((List<object>)val).Add(value);
+				}
 				//throw new Exception("Cannot append to an object");
 			}
 			memoryStack.Put(key, val, goalStep: goalStep);

@@ -74,7 +74,7 @@ namespace PLang.Modules.DbModule
 
 		public bool UseInMemoryDataSource { get; set; } = false;
 		public bool IsBuilder { get; internal set; }
-
+		public record AttachedDb(string Alias, string Path);
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
@@ -84,7 +84,7 @@ namespace PLang.Modules.DbModule
 
 			[System.Text.Json.Serialization.JsonIgnore]
 			[Newtonsoft.Json.JsonIgnore]
-			public List<string> AttachedDbs { get; set; } = new();
+			public List<AttachedDb> AttachedDbs { get; set; } = new();
 			[System.Text.Json.Serialization.JsonIgnore]
 			[Newtonsoft.Json.JsonIgnore]
 			public bool IsInTransaction { get { return _transaction != null; } }
@@ -441,7 +441,7 @@ Be concise"));
 			}
 			return dataSources;
 		}
-
+	
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
 			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
@@ -451,13 +451,13 @@ Be concise"));
 		public async Task<(DataSource? DataSource, IError? Error)> GetDataSourceOrDefault()
 		{
 			// first check if datasource is on context
-			if (context.TryGetValue(Program.CurrentDataSourceKey, out DataSource? dataSource) && dataSource != null)
+			if (context.DataSource != null)
 			{
-				return (dataSource, null);
+				return (context.DataSource, null);
 			}
 
 			var dataSources = await GetAllDataSources();
-			dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
 
 			if (dataSource == null)
 			{
@@ -470,12 +470,12 @@ Be concise"));
 
 		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? name, GoalStep? step = null, bool transactionDependant = true)
 		{
-			DataSource? dataSource;
+			
 			if (string.IsNullOrEmpty(name))
 			{
-				if (context.TryGetValue(Program.CurrentDataSourceKey, out dataSource) && dataSource != null)
+				if (context.DataSource != null)
 				{
-					return (dataSource, null);
+					return (context.DataSource, null);
 				}
 
 				return (null, new ProgramError("You need to provide a data source name", step));
@@ -484,18 +484,19 @@ Be concise"));
 			{
 				name = name.TrimStart('/');
 			}
-			if (context.TryGetValue(Program.CurrentDataSourceKey, out dataSource) && dataSource != null)
+
+			if (context.DataSource != null)
 			{
-				if (dataSource.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return (dataSource, null);
-				if (transactionDependant && dataSource.AttachedDbs.FirstOrDefault(p => p.Equals(name, StringComparison.OrdinalIgnoreCase)) != null)
+				if (context.DataSource.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return (context.DataSource, null);
+				if (transactionDependant && context.DataSource.AttachedDbs.FirstOrDefault(p => p.Alias.Equals(name, StringComparison.OrdinalIgnoreCase)) != null)
 				{
-					return (dataSource, null);
+					return (context.DataSource, null);	
 				}
 			}
 
 			var dataSources = await GetAllDataSources();
 			var dsNameAndPath = GetNameAndPathByVariable(name, null);
-			dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
+			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
 
 			if (dataSource == null)
 			{
@@ -702,7 +703,7 @@ Be concise"));
 					List<string> ignoreErrorMessages = ["already exists", "duplicate column name"];
 					if (!ignoreErrorMessages.Any(p => ex.Message.Contains(p)))
 					{
-						return new StepError(ex.Message, step, Exception: ex);
+						return new StepError(ex.Message + @$" while running {sql.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
 					}
 
 					int i = 0;

@@ -703,18 +703,21 @@ namespace PLang.Utils
 			var settingsObjects = GetSettingObjectsValue(content);
 			variables.AddRange(settingsObjects);
 		}
+
+		public static readonly string VariablePattern = @"%[\p{L}\p{N}#'+-\[\]_\.\+\(\)\*\<\>\!\s\""\\]*%";
+
 		public static bool ContainsVariable(object? variable)
 		{
 			if (variable is not string str) return false;
 			if (variable == null || string.IsNullOrEmpty(str)) return false;
-			return Regex.IsMatch(str, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%");
+			return Regex.IsMatch(str, VariablePattern, RegexOptions.Compiled);
 		}
 		public static bool IsVariable(object? variable)
 		{
 			if (variable is not string str) return false;
 
 			if (str == null || string.IsNullOrEmpty(str)) return false;
-			return Regex.IsMatch(str, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$", RegexOptions.Compiled);
+			return Regex.IsMatch(str, $"^{VariablePattern}$", RegexOptions.Compiled);
 		}
 
 		public static bool IsSetting(string variableName)

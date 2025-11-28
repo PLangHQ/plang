@@ -177,6 +177,11 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 		}
 
+		[Description("Target defines where in the UI to write the content, e.g. a cssSelector when ui is html")]
+		public async Task SetTargetArea(string? target)
+		{
+			context.UiOutputProperties.Target = target;
+		}
 
 		public record Event(string EventType, string CssSelectorOrVariable, GoalToCallInfo GoalToCall);
 

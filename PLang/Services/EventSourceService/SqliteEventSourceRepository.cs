@@ -3,6 +3,7 @@ using IdGen;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Data;
@@ -74,10 +75,15 @@ namespace PLang.Services.EventSourceService
 
 			try
 			{
-				while (!(await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction)))
+				bool success = false;
+				while (!success)
 				{
+					(success, var error) = await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction);
+					if (error != null) throw new ExceptionWrapper(error);
+
 					++eventId;
 				}
+
 				if (returnId)
 				{
 					var result = await dbConnection.QuerySingleOrDefaultAsync<long>(sql, parameters, transaction);
@@ -99,18 +105,19 @@ namespace PLang.Services.EventSourceService
 
 		}
 
-		private async Task<bool> InsertIntoEvent(IDbConnection dbConnection, long eventId, string encryptedData, string pkey, IDbTransaction? transaction)
+		private async Task<(bool, IError?)> InsertIntoEvent(IDbConnection dbConnection, long eventId, string encryptedData, string pkey, IDbTransaction? transaction)
 		{
 			try
 			{
-				await dbConnection.ExecuteAsync("INSERT INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1)",
+				int affectedRows = await dbConnection.ExecuteAsync("INSERT INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1)",
 					new { id = eventId, data = encryptedData, key_hash = pkey }, transaction);
-				return true;
+				if (affectedRows > 0) return (true, null);
+				return (false, new ServiceError("Nothing inserted into __Events__ table. This is unexpected.", GetType()));
 			} catch (Exception ex)
 			{
 				if (ex.Message.Contains("UNIQUE constraint failed: __Events__.id"))
 				{
-					return false;
+					return (false, null);
 				}
 				throw;
 			}

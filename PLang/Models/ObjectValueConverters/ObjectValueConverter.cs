@@ -30,8 +30,11 @@ namespace PLang.Models.ObjectValueConverters
 			if (objectValue.Value is IList && (type.Name.StartsWith("List`") || type.Name.StartsWith("IList")))
 			{
 				return ListConverter.GetList(objectValue.Value as IList, type);
+			} else if (type.Name.StartsWith("List`") || type.Name.StartsWith("IList"))
+			{
+				return ListConverter.ConvertToList(objectValue.Value, type);
 			}
-			
+
 			if (objectValue.Value is IList list && list.Count > 0 && !type.Name.StartsWith("List`") && !type.Name.StartsWith("IList"))
 			{
 				if (list[0] is ObjectValue ov)

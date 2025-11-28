@@ -134,14 +134,6 @@ namespace PLang.Modules.OutputModule
 				{
 					parameters.Add("prFile", goalStep.PrFileName);
 				}
-
-				if (outputStream is HttpSink httpOutputStream)
-				{
-					foreach (var rp in httpOutputStream.ResponseProperties)
-					{
-						parameters.AddOrReplace(rp.Key, rp.Value);
-					}
-				}
 			}
 
 			parameters.AddOrReplace("askMessage", askMessage);

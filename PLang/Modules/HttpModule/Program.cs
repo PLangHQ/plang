@@ -533,14 +533,17 @@ namespace PLang.Modules.HttpModule
 				}
 
 				var charsets = UtfUnknown.CharsetDetector.DetectFromBytes(bytes);
-				var enc = charsets.Detected?.Encoding ?? Encoding.UTF8;
-
-				List<string> charsetProp = new();
-				foreach (var charset in charsets.Details)
+				var enc = charsets.Detected?.Encoding ?? Encoding.UTF8;				
+				if (charsets != null && charsets.Details != null)
 				{
-					charsetProp.Add($"EncodingName:{charset.EncodingName} - Confidence:{charset.Confidence} - Log:{charset.StatusLog}");
+					List<string> charsetProp = new();
+					foreach (var charset in charsets.Details)
+					{
+						charsetProp.Add($"EncodingName:{charset.EncodingName} - Confidence:{charset.Confidence} - Log:{charset.StatusLog}");
+					}
+
+					properties.Add(new ObjectValue("charsets", charsetProp));
 				}
-				properties.Add(new ObjectValue("charsets", charsetProp));
 
 				// Ensure non-UTF encodings are available
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);

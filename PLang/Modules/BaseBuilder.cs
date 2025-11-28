@@ -164,6 +164,7 @@ namespace PLang.Modules
 
 				var instruction = InstructionCreator.Create(result, responseType, step, question);
 
+				
 
 				//cleanup for next time
 				appendedSystemCommand.Clear();

@@ -5,6 +5,7 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream.Messages;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
@@ -25,7 +26,32 @@ namespace PLang.Modules.ValidateModule
 		{
 		}
 
-		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
+		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
+		public async Task<IError?> IsNotEmpty([HandlesVariable] List<ObjectValue> variables, ErrorMessage errorMessage)
+		{
+			if (string.IsNullOrEmpty(errorMessage.Content)) errorMessage = errorMessage with { Content = "Variables are empty" };
+			if (variables == null)
+			{
+				return new UserInputError(errorMessage.Content, goalStep, errorMessage.Key, errorMessage.StatusCode, null, errorMessage.FixSuggestion, errorMessage.HelpfullLinks, null, errorMessage);
+			}
+			if (variables.Count == 0)
+			{
+				return new UserInputError(errorMessage.Content, goalStep, errorMessage.Key, errorMessage.StatusCode, null, errorMessage.FixSuggestion, errorMessage.HelpfullLinks, null, errorMessage);
+			}
+
+			var multiError = new GroupedErrors("ValidateModule.IsNotEmpty");
+
+			foreach (var variable in variables)
+			{
+				if (variable.IsEmpty)
+				{
+					return new UserInputError(errorMessage.Content, goalStep, errorMessage.Key, errorMessage.StatusCode, null, errorMessage.FixSuggestion, errorMessage.HelpfullLinks, null, errorMessage);
+				}
+			}
+			return (multiError.Count > 0) ? multiError : null;
+		}
+
+		[Description("[Depricated] Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
 		public async Task<IError?> IsNotEmpty([HandlesVariable] List<ObjectValue> variables, string errorMessage, int statusCode = 400)
 		{
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";

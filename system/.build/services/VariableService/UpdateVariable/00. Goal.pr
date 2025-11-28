@@ -45,7 +45,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-11-08T16:01:14.8198235+00:00",
       "WaitForExecution": true,
@@ -62,7 +62,7 @@
       "Hash": "af0b41a3e24bb53c06d89ed2abd4930ee2e498a5f5a0c939bef882f43046edd8",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\services\\VariableService\\UpdateVariable.goal",
-      "UserIntent": "Execute a database command or query using provided SQL and parameters"
+      "UserIntent": null
     },
     {
       "Text": "if %data.BeforeUpdate% is not empty, call goal %data.AfterUpdate%",
@@ -110,7 +110,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a4024990a5ad7ff5f78d338b7000b6d5ef68148e8d8b7b56d247962061b9530a",
+  "Hash": "f263b746a1ef290761491ddd52cc6c2c72b636deb040d7ff43c199bc5454da10",
   "IncomingVariablesRequired": {
     "%data.BeforeUpdate%": "A goal to be called before the update operation, if not empty.",
     "%data.AfterUpdate%": "A goal to be called after the update operation, if not empty.",

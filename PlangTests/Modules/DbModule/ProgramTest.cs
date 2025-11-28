@@ -47,7 +47,7 @@ namespace PLangTests.Modules.DbModule
 
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
-			await p.SetDataSourceName("MainDb");
+			await p.SetDataSourceNames(["MainDb"]);
 
 			var dataSource = context[ReservedKeywords.CurrentDataSource] as DataSource;
 			Assert.AreEqual("MainDb", dataSource.Name);

@@ -571,7 +571,7 @@ namespace PLang.Events
 			string stepText = "";
 			if (step != null)
 			{
-				stepText = $" at {step.Text.ReplaceLineEndings("").MaxLength(20, "...")}:{step.LineNumber}";
+				stepText = $" at {step.Text.ReplaceLineEndings("").MaxLength(20, "...")} - {step.RelativeGoalPath}:{step.LineNumber}";
 			}
 			string goalText = "Error";
 			if (goal != null)
@@ -701,9 +701,9 @@ namespace PLang.Events
 
 				if (isBuilder)
 				{
-					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, true, result.Error.Exception, InitialError: result.Error));
+					return (Variables, new BuilderEventError(result.Error.Message, eve, result.Error.Goal, result.Error.Step, result.Error.Key, result.Error.StatusCode, true, result.Error.Exception, InitialError: result.Error));
 				}
-				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, result.Error.Key, result.Error.StatusCode, result.Error.Exception, InitialError: result.Error));
+				return (Variables, new RuntimeEventError(result.Error.Message, eve, result.Error.Goal, result.Error.Step, result.Error.Key, result.Error.StatusCode, result.Error.Exception, InitialError: result.Error));
 			}
 			catch (Exception ex)
 			{

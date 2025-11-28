@@ -13,7 +13,9 @@ namespace PLang.Errors.Handlers
 
 		public async Task<(bool, IError?)> Handle(IError error)
 		{
-			return await base.Handle(error);
+			Console.WriteLine(error.ToString());
+			return (true, null);
+			
 		}
 
 		public async Task ShowError(IError error, GoalStep? step)

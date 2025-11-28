@@ -183,23 +183,23 @@ namespace PLang.Runtime
 							var msa = runtimeEngine.Container.GetInstance<IMemoryStackAccessor>();
 							msa.Current = newMemoryStack;
 
-							var result = await runtimeEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
-							if (result.Error != null)
+							var (variables, error) = await runtimeEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
+							if (error != null && error is not EndGoal)
 							{
+								(_, error) = await runtimeEngine.GetEventRuntime().AppErrorEvents(error);
 
-								Console.WriteLine("Error running async goal:" + result.Error.ToString());
-
-								Console.WriteLine($"waitForExecution:{waitForExecution}");
-
-								Console.WriteLine("Exception:" + result.Error.Exception);
-								var eve = contextAccessor.Current.GetOrDefault<EventBinding>(ReservedKeywords.Event, null);
-								if (eve != null)
+								if (error != null)
 								{
-									Console.WriteLine("EventBinding:" + JsonConvert.SerializeObject(eve));
+									Console.WriteLine("Error running async goal:" + error.ToString());					
+									var eve = contextAccessor.Current.GetOrDefault<EventBinding>(ReservedKeywords.Event, null);
+									if (eve != null)
+									{
+										Console.WriteLine("EventBinding:" + JsonConvert.SerializeObject(eve));
+									}
 								}
 
 							}
-							return result;
+							return (variables, error);
 						} finally
 						{
 							if (isRented)
@@ -210,7 +210,7 @@ namespace PLang.Runtime
 						
 					});
 				
-					KeepAlive(runtimeEngine, task);
+					KeepAlive(engine, task);
 
 					return (runtimeEngine, task, null);
 				}

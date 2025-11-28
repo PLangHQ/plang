@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Io;
 using CsvHelper;
 using LightInject;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
@@ -261,6 +262,11 @@ public class Program : BaseProgram, IDisposable
 
 				web.Configure(app =>
 				{
+					app.Use(async (ctx, next) =>
+					{
+						//Console.WriteLine("Request accepted:" + ctx.Request.Path.Value);
+						await next();
+					});
 					app.UseForwardedHeaders();
 					if (webserverProperties.Certificate != null)
 					{

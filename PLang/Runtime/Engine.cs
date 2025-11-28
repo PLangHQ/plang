@@ -525,7 +525,7 @@ namespace PLang.Runtime
 			{
 				child.Container.Dispose();
 			}
-			this.prParser.ClearVariables();
+			if (this.prParser != null) this.prParser.ClearVariables();
 			AppDomain.CurrentDomain.AssemblyResolve -= AsmHandler;
 			AsmHandler = null;
 

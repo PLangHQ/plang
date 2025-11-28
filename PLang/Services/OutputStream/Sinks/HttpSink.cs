@@ -32,8 +32,19 @@ public sealed class HttpSink : IOutputSink
 
 	public string Id { get; } = Guid.NewGuid().ToString();
 	public bool IsStateful => false;
-	public bool IsFlushed => context.HttpContext?.Response.HasStarted ?? true;
-	public Dictionary<string, object?> ResponseProperties { get; set; } = new();
+	public bool IsFlushed
+	{
+		get
+		{
+			try
+			{
+				return context.HttpContext?.Response.HasStarted ?? true;
+			} catch
+			{
+				return true;
+			}
+		}
+	}
 	public HttpSink(PLangContext context, WebserverProperties props, ConcurrentDictionary<string, LiveConnection> live)
 	{
 		this.context = context;
@@ -106,24 +117,22 @@ public sealed class HttpSink : IOutputSink
 
 	OutMessage BuildResponseProperties(OutMessage m)
 	{
-	
+		var ui = context.UiOutputProperties;
+		if (ui == null) return m;
 
-		if (ResponseProperties.TryGetValue("p-target", out object? target) && !string.IsNullOrWhiteSpace(target?.ToString()) && string.IsNullOrEmpty(m.Target))
-		{
-			m = m with { Target = target.ToString()! };
+		if (!string.IsNullOrEmpty(ui.Target)) { 
+			m = m with { Target = ui.Target };
 		}
 
-
-		if (ResponseProperties.TryGetValue("p-actions", out object? actions) && !string.IsNullOrWhiteSpace(actions?.ToString()) && (m.Actions == null || m.Actions.Count == 0))
+		if (m is ErrorMessage)
 		{
-			var actionArray = actions.ToString()?.Split(' ');
-			if (actionArray != null)
-			{
-				m = m with { Actions = actionArray.ToList() };
-			}
+			m = m with { Target = ui.ErrorTarget };
 		}
 
-
+		if (ui.Actions != null && ui.Actions.Count > 0)
+		{
+			m = m with { Actions = ui.Actions.ToList() };
+		}
 
 		return m;
 	}

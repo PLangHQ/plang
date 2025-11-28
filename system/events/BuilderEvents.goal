@@ -1,3 +1,2 @@
 BuildEvents
-- before builder ends, call goal Builder/CheckGoals
 - on step error, key:"InvalidInstructionFile", include os, call /events/Runtime/HandleBadInstructionFile

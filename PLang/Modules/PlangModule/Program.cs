@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using Force.DeepCloner;
+using LightInject;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
@@ -52,26 +53,41 @@ namespace PLang.Modules.PlangModule
 		{
 			List<Goal> goals = new List<Goal>();
 			string path = GetPath(fileOrFolderPath);
-			if (path.EndsWith(".goal"))
+
+			if (!path.StartsWith(fileSystem.RootDirectory))
 			{
-				goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalPath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
-			} else if (path.EndsWith(".pr"))
-			{
-				goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFilePath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
-			}
-			else if (fileSystem.Directory.Exists(fileOrFolderPath))
-			{
-				if (fileOrFolderPath.Contains(".build"))
+				var fileProgram = GetProgramModule<FileModule.Program>();
+				var files = await fileProgram.GetFilePathsInDirectory(path, includeSubfolders: true, searchPattern:"*.goal");
+				foreach (var file in files)
 				{
-					goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+					goals.AddRange(goalParser.ParseGoalFile(file.AbsolutePath));
+				}
+			}
+			else
+			{
+				if (path.EndsWith(".goal"))
+				{
+					goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalPath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
+				}
+				else if (path.EndsWith(".pr"))
+				{
+					goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFilePath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
+				}
+				else if (fileSystem.Directory.Exists(fileOrFolderPath))
+				{
+					if (fileOrFolderPath.Contains(".build"))
+					{
+						goals = prParser.GetAllGoals().Where(p => p.AbsolutePrFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+					}
+					else
+					{
+						goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+					}
 				}
 				else
 				{
-					goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+					return (null, new ProgramError($"The path {fileOrFolderPath} could not be found, searched for it at {path}"));
 				}
-			} else
-			{
-				return (null, new ProgramError($"The path {fileOrFolderPath} could not be found, searched for it at {path}"));
 			}
 
 			if (visibility == "public")
@@ -122,7 +138,7 @@ namespace PLang.Modules.PlangModule
 			var result = await GetGoals(appPath, visibility, propertiesToExtract);
 			if (result.Error != null) return (null, result.Error);
 
-			var goals = (List<Goal>) result.Goals;
+			var goals = (List<Goal>)result.Goals;
 			return (goals.Where(p => p.IsSetup).ToList(), null);
 		}
 
@@ -151,7 +167,7 @@ namespace PLang.Modules.PlangModule
 
 			var classDescriptionHelper = new ClassDescriptionHelper();
 			return classDescriptionHelper.GetClassDescription(programType);
-			
+
 		}
 
 		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
@@ -274,7 +290,7 @@ namespace PLang.Modules.PlangModule
 
 		public async Task<(IReadOnlyList<GoalStep>?, IError?)> GetSteps(string goalPath)
 		{
-			
+
 			string absoluteGoalPath = GetPath(goalPath);
 			string ext = fileSystem.Path.GetExtension(absoluteGoalPath);
 			if (string.IsNullOrEmpty(ext))
@@ -298,7 +314,7 @@ namespace PLang.Modules.PlangModule
 			}
 			return (goal.GoalSteps, null);
 		}
-		
+
 		public async Task<(GoalStep?, IError?)> GetStep(string goalPrPath, string stepPrFile)
 		{
 			string absoluteGoalPath = GetPath(goalPrPath);
@@ -357,7 +373,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Run from a specific step and the following steps")]
 		public async Task<(object?, IError?)> RunFromStep(string prFileName)
 		{
-			
+
 			if (string.IsNullOrEmpty(prFileName))
 			{
 				return (null, new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
@@ -407,9 +423,9 @@ namespace PLang.Modules.PlangModule
 			{
 				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step, StatusCode: 404));
 			}
-			
+
 			newStep.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);
-			
+
 			return (newStep, error);
 		}
 
@@ -426,7 +442,7 @@ namespace PLang.Modules.PlangModule
 		public async Task StartCSharpDebugger()
 		{
 			if (Debugger.IsAttached) return;
-			
+
 			Debugger.Launch();
 			AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
 			AppContext.SetSwitch(ReservedKeywords.DetailedError, true);

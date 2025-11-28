@@ -96,10 +96,11 @@ public class ObjectValue
 	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false)
 	{
 		name = VariableHelper.Clean(name);
-		if (name.Contains("!") && !name.StartsWith("!"))
+		if (string.IsNullOrEmpty(name) && value.ToString().Equals(""))
 		{
-			int i = 0;
+			name = "EmptyString";
 		}
+
 		Name = name;
 		if (isProperty)
 		{

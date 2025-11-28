@@ -42,7 +42,7 @@ namespace PLang.Models.ObjectValueExtractors
 			var methodName = methodDescription.Substring(0, methodDescription.IndexOf("("));
 			var paramString = methodDescription.Substring(methodName.Length + 1, methodDescription.Length - methodName.Length - 2).TrimEnd(')');
 
-			var splitParams = paramString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+			var splitParams = SplitParameters(paramString); //.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 			List<object> paramValues = new List<object>();
 			splitParams.ForEach(p => paramValues.Add(p));
 
@@ -104,6 +104,48 @@ namespace PLang.Models.ObjectValueExtractors
 			throw new NotImplementedException($"Could not find method '{methodDescription}' on %{parent.Name}.{methodDescription}%");
 			
 		}
+
+		private static List<string> SplitParameters(string parameters)
+		{
+			var result = new List<string>();
+			var current = new StringBuilder();
+			bool inQuotes = false;
+			char quoteChar = '\0';
+
+			foreach (char c in parameters)
+			{
+				if ((c == '"' || c == '\'') && (current.Length == 0 || current[current.Length - 1] != '\\'))
+				{
+					if (!inQuotes)
+					{
+						inQuotes = true;
+						quoteChar = c;
+					}
+					else if (c == quoteChar)
+					{
+						inQuotes = false;
+					}
+					current.Append(c);
+				}
+				else if (c == ',' && !inQuotes)
+				{
+					result.Add(current.ToString().Trim());
+					current.Clear();
+				}
+				else
+				{
+					current.Append(c);
+				}
+			}
+
+			if (current.Length > 0)
+			{
+				result.Add(current.ToString().Trim());
+			}
+
+			return result.Where(s => !string.IsNullOrEmpty(s)).ToList();
+		}
+
 
 		private (IEnumerable<MethodInfo>, object? obj) GetMethodsOnDifferentType(object obj, string methodName, List<object> paramValues)
 		{

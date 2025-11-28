@@ -39,6 +39,13 @@ namespace PLang.Interfaces
 		Test
 	}
 
+	public record UiOutputProperties(string Path)
+	{
+		public string? Target { get; set; }
+		public string? ErrorTarget { get; set; }
+		public List<string>? Actions { get; set; }
+	};
+
 
 	public class PLangContext
 	{
@@ -56,6 +63,7 @@ namespace PLang.Interfaces
 		public ConcurrentDictionary<string, object?> Items { get; init; }
 		public ConcurrentDictionary<string, object?> SharedItems { get; set; }
 
+		public UiOutputProperties UiOutputProperties { get; set; }
 		public IEngine Engine { get; }
 		public IOutputSink UserSink { get; set; }
 		public IOutputSink SystemSink { get; set; }

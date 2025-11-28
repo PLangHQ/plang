@@ -7,6 +7,47 @@ namespace PLang.Models.ObjectValueConverters
 {
 	internal class ListConverter
 	{
+		public static object ConvertToList(object value, Type listType)
+		{
+			// Extract the element type from List<T>
+			if (!listType.IsGenericType || listType.GetGenericTypeDefinition() != typeof(List<>))
+			{
+				throw new ArgumentException("convertToType must be a List<T> type");
+			}
+
+			Type elementType = listType.GetGenericArguments()[0];
+
+			// Create an instance of List<T>
+			var list = Activator.CreateInstance(listType);
+
+			// Get the Add method
+			var addMethod = listType.GetMethod("Add");
+
+			// Handle different input types
+			if (value is IEnumerable enumerable && !(value is string))
+			{
+				foreach (var item in enumerable)
+				{
+					// Convert each item to the target element type if needed
+					var convertedItem = item != null && item.GetType() != elementType
+						? Convert.ChangeType(item, elementType)
+						: item;
+
+					addMethod.Invoke(list, new[] { convertedItem });
+				}
+			}
+			else
+			{
+				// Single value - convert and add
+				var convertedValue = value != null
+					? Convert.ChangeType(value, elementType)
+					: null;
+
+				addMethod.Invoke(list, new[] { convertedValue });
+			}
+
+			return list;
+		}
 
 		public static IList? GetList(IList? list, Type typeTo)
 		{
@@ -63,7 +104,21 @@ namespace PLang.Models.ObjectValueConverters
 					}
 					else
 					{
-						obj = Convert.ChangeType(list[i], baseType);
+						if (baseType == typeof(object))
+						{
+							obj = list[i];
+						}
+						else
+						{
+							try
+							{
+								obj = Convert.ChangeType(list[i], baseType);
+							}
+							catch (Exception ex)
+							{
+								throw new InvalidCastException(ex.Message + $" - baseType:{baseType} on {list[i]} (type:{list[i].GetType()}");
+							}
+						}
 					}
 				}
 

@@ -563,27 +563,34 @@ namespace PLang.Modules.WebserverModule
 
 		}
 
-		string[] supportedHeaders = ["p-target", "p-actions", "p-before-actions", "p-after-actions"];
+		string[] supportedHeaders = ["p-target", "p-actions"];
 
-		private void ParseHeaders(HttpContext ctx, IOutputSink outputStream)
+		private void ParseHeaders(PLangContext context, IOutputSink outputStream)
 		{
-			var headers = ctx.Request.Headers;
+			var httpContext = context.HttpContext;
+			var headers = httpContext.Request.Headers;
 
+			context.UiOutputProperties = new UiOutputProperties(httpContext.Request.Path.ToString());
 
-			Dictionary<string, object?> responseProperties = new();
-			foreach (var supportedHeader in supportedHeaders)
+			var target = headers.FirstOrDefault(p => p.Key.Equals("p-target", StringComparison.OrdinalIgnoreCase));
+			if (!string.IsNullOrEmpty(target.Value.FirstOrDefault()))
 			{
-				var keyValue = headers.FirstOrDefault(p => p.Key.Equals(supportedHeader, StringComparison.OrdinalIgnoreCase));
-				if (!string.IsNullOrEmpty(keyValue.Value.FirstOrDefault()))
-				{
-					responseProperties.AddOrReplace(supportedHeader, keyValue.Value.FirstOrDefault());
-				}
+				context.UiOutputProperties.Target = target.Value.FirstOrDefault();
 			}
-			responseProperties.AddOrReplace("Path", ctx.Request.Path.ToString());
-
-			if (responseProperties.Count > 0 && outputStream is HttpSink rp)
+			var errorTarget = headers.FirstOrDefault(p => p.Key.Equals("p-error-target", StringComparison.OrdinalIgnoreCase));
+			if (!string.IsNullOrEmpty(errorTarget.Value.FirstOrDefault()))
 			{
-				rp.ResponseProperties = responseProperties;
+				context.UiOutputProperties.ErrorTarget = errorTarget.Value.FirstOrDefault();
+			}
+			var actions = headers.FirstOrDefault(p => p.Key.Equals("p-actions", StringComparison.OrdinalIgnoreCase));
+			if (!string.IsNullOrEmpty(actions.Value.FirstOrDefault()))
+			{
+				context.UiOutputProperties.Actions = new();
+				foreach (var item in actions.Value)
+				{
+					if (item == null) continue;
+					context.UiOutputProperties.Actions.Add(item);
+				}
 			}
 		}
 
@@ -603,7 +610,7 @@ namespace PLang.Modules.WebserverModule
 
 			ObjectValue objectValue;
 			logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
-			ParseHeaders(httpContext, context.UserSink);
+			ParseHeaders(context, context.UserSink);
 			logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
 			var properties = GetRequestProperties(httpContext);
 			logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");

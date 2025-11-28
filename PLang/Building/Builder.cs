@@ -283,24 +283,7 @@ namespace PLang.Building
 					fileSystem.Directory.Delete(goal.AbsolutePrFolderPath, true);
 				}
 			}
-			/*
-			 * var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
-
-			foreach (var goal in goals)
-			{
-				dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
-				dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
-			}
-
-			foreach (var dir in dirs)
-			{
-				var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
-				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
-				{
-					fileSystem.Directory.Delete(dir, true);
-				}
-			}
-			*/
+			
 			var prGoalFiles = prParser.ForceLoadAllGoals();
 			int i = 0;
 

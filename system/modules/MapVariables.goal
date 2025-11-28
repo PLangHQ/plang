@@ -1,0 +1,9 @@
+MapVariables
+- read file MapVariablesSystem.llm, write to %system%
+- [llm] system: %system%
+        user: %parameters%
+        scheme: [{ variableSyntax:string, type:parameter|return, name:string, 
+                    variablePaths:[{name:string, pipeline:[{action:string, parameters:object}]]
+                }]
+    write to %mappedVariables%
+- return %mappedVariables%

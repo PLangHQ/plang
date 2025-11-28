@@ -1,0 +1,141 @@
+{
+  "Text": "get ai.plang.io/model/%model.model%, write to %modelInfo%",
+  "ModuleType": "PLang.Modules.HttpModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to get information about a specific AI model from the ai.plang.io API and store the response in the variable %modelInfo%. The appropriate function for this is the 'Get' method, which performs an HTTP GET request to the specified URL. The URL includes the model identifier %model.model%. The response will be stored in %modelInfo%.",
+    "Name": "Get",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "url",
+        "Value": "ai.plang.io/model/%model.model%"
+      },
+      {
+        "Type": "System.Object",
+        "Name": "data",
+        "Value": null
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "doNotSignRequest",
+        "Value": false
+      },
+      {
+        "Type": "System.Collections.Generic.Dictionary`2[System.String,System.Object]",
+        "Name": "headers",
+        "Value": null
+      },
+      {
+        "Type": "System.String",
+        "Name": "encoding",
+        "Value": "utf-8"
+      },
+      {
+        "Type": "System.String",
+        "Name": "contentType",
+        "Value": "application/json"
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "timeoutInSeconds",
+        "Value": 30
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%modelInfo%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "url": {
+        "Name": "url",
+        "FullTypeName": "System.String"
+      },
+      "data": {
+        "Name": "data",
+        "FullTypeName": "System.Object"
+      },
+      "doNotSignRequest": {
+        "Name": "doNotSignRequest",
+        "FullTypeName": "System.Boolean"
+      },
+      "headers": {
+        "Name": "headers",
+        "FullTypeName": "System.Collections.Generic.Dictionary`2[System.String,System.Object]"
+      },
+      "encoding": {
+        "Name": "encoding",
+        "FullTypeName": "System.String"
+      },
+      "contentType": {
+        "Name": "contentType",
+        "FullTypeName": "System.String"
+      },
+      "timeoutInSeconds": {
+        "Name": "timeoutInSeconds",
+        "FullTypeName": "System.Int32"
+      }
+    },
+    "ReturnValues": {
+      "%modelInfo%": {
+        "Name": "%modelInfo%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRetrieve information about a specific AI model from the ai.plang.io API and store the response in a variable\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"DownloadFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pathToSaveTo\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteFile\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"createPathToSaveTo\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotDownloadIfFileExists\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"Request\",\"Parameters\":[{\"Type\":\"PLang.Modules.HttpModule.Program+HttpRequest\",\"Name\":\"request\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Post\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Patch\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Get\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Option\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Head\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Put\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Delete\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader\",\"MethodName\":\"SendBinaryOfFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"filePath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"httpMethod\",\"DefaultValue\":\"POST\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"requestHeaders\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"contentHeaders\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type\",\"MethodName\":\"PostMultipartFormData\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"httpMethod\",\"DefaultValue\":\"POST\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Request\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"method\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Modules.HttpModule.Program+HttpRequest\",\"Name\":\"request\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Url\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Method\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Data\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Encoding\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ContentType\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"TimeoutInSeconds\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"SignRequest\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nmodel.model (type:object), modelInfo (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "get ai.plang.io/model/%model.model%, write to %modelInfo%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to get information about a specific AI model from the ai.plang.io API and store the response in the variable %modelInfo%. The appropriate function for this is the 'Get' method, which performs an HTTP GET request to the specified URL. The URL includes the model identifier %model.model%. The response will be stored in %modelInfo%.\",\n  \"Name\": \"Get\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"url\",\n      \"Value\": \"ai.plang.io/model/%model.model%\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"data\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"doNotSignRequest\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\n      \"Name\": \"headers\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"encoding\",\n      \"Value\": \"utf-8\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"contentType\",\n      \"Value\": \"application/json\"\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"timeoutInSeconds\",\n      \"Value\": 30\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%modelInfo%\"\n    }\n  ]\n}"
+    }
+  ]
+}

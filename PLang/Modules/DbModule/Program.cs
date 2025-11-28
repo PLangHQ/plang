@@ -3,12 +3,14 @@ using IdGen;
 using Markdig.Extensions.TaskLists;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Protocol;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pqc.Crypto.Hqc;
 using PLang.Attributes;
 using PLang.Building.Parsers;
@@ -50,7 +52,7 @@ namespace PLang.Modules.DbModule
 	{
 		//public static string DbConnectionContextKey = "DbConnection";
 		//public static string DbTransactionContextKey = "DbTransaction";
-		public static string CurrentDataSourceKey = "PLang.Modules.DbModule.CurrentDataSourceKey";
+		//public static string CurrentDataSourceKey = "PLang.Modules.DbModule.CurrentDataSourceKey";
 
 		private record DbConnectionSupported(string Key, string Name, Type Type);
 
@@ -113,6 +115,7 @@ namespace PLang.Modules.DbModule
 		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite",
 			bool? setAsDefaultForApp = null, bool? keepHistoryEventSourcing = null)
 		{
+
 			if (!goal.IsSetup) return (null, new ProgramError("Create data source can only be in a setup file",
 				FixSuggestion: $"Create setup.goal file or a goal file in a setup folder. Only one create data source can be in each setup file"));
 
@@ -138,7 +141,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		[Description("gets the current datasource or by name")]
+		[Description("gets the current datasource by name")]
 		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource([HandlesVariable] string? name = null)
 		{
 			var (dataSource, error) = await dbSettings.GetDataSource(name, goalStep);
@@ -149,18 +152,19 @@ namespace PLang.Modules.DbModule
 			return (dataSource, null);
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string name)
+		[Description("set the current datasource by name(s). This could be one datasource or many")]
+		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceNames([HandlesVariable] List<string> dataSourceNames)
 		{
-			if (string.IsNullOrEmpty(name)) return (null, new ProgramError("datasource name cannot be empty", goalStep));
+			if (dataSourceNames.Count == 0) return (null, new ProgramError("datasource name cannot be empty", goalStep));
 
-			(var dataSource, var error) = await dbSettings.GetDataSource(name, goalStep);
+			(var dataSource, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (null, error);
 
-			if (context.DataSource != null)
+			if (context.DataSource != null && context.DataSource.LocalPath != dataSource.LocalPath)
 			{
-				if (context.DataSource.IsInTransaction) return (null, new ProgramError("You cannot set a new datasource while in a transaction.", FixSuggestion: $"Include the data source '{name}' in the original begin transaction, e.g. `- begin transaction 'data', '{name}'`"));
+				if (context.DataSource.IsInTransaction) return (null, new ProgramError("You cannot set a new datasource while in a transaction.", FixSuggestion: $"Include the data source '{dataSourceNames[0]}' in the original begin transaction, e.g. `- begin transaction 'data', '{dataSourceNames[0]}'`"));
 			}
-			
+
 			error = AddDataSourceToContext(dataSource);
 			if (error != null) return (null, error);
 			
@@ -171,29 +175,26 @@ namespace PLang.Modules.DbModule
 		public async Task<IError?> BeginTransaction([HandlesVariable] List<string>? dataSourceNames = null, GoalToCallInfo? onRollback = null)
 		{
 
-			var (dataSources, error) = await GetDataSourcesByNames(dataSourceNames);
+			var (dataSource, error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return error;
 
-			return await BeginTransaction(dataSources, onRollback);
+			return await BeginTransaction(dataSource, onRollback);
 		}
 
-		internal async Task<IError?> BeginTransaction(List<DataSource>? dataSources = null, GoalToCallInfo? onRollback = null)
+		internal async Task<IError?> BeginTransaction(DataSource? dataSource = null, GoalToCallInfo? onRollback = null)
 		{
 			IError? error;
-			DataSource? main;
-			if (dataSources == null || dataSources.Count == 0)
+
+			if (dataSource == null)
 			{
-				(main, error) = await dbSettings.GetDataSourceOrDefault();
+				(dataSource, error) = await dbSettings.GetDataSourceOrDefault();
 				if (error != null) return error;
 
-			} else
-			{
-				main = dataSources[0];
 			}
 
-			if (main!.IsInTransaction) return new ProgramError("Datasource is already in a transaction", StatusCode: 409, FixSuggestion: "Either dont call begin transaction, or catch this error and ignore it, e.g. `- begin transaction, on error 'already in transaction' ignore error");
+			if (dataSource!.IsInTransaction) return new ProgramError("Datasource is already in a transaction", StatusCode: 409, FixSuggestion: "Either dont call begin transaction, or catch this error and ignore it, e.g. `- begin transaction, on error 'already in transaction' ignore error");
 
-			var dbConnection = dbFactory.CreateHandler(main, memoryStack);
+			var dbConnection = dbFactory.CreateHandler(dataSource, memoryStack);
 			if (dbConnection.State != ConnectionState.Open)
 			{
 				dbConnection.Open();
@@ -210,16 +211,16 @@ namespace PLang.Modules.DbModule
 				
 			}
 
-			main.Transaction = transaction;
-			main.TransactionStartGoal = goal.RelativePrPath;
+			dataSource.Transaction = transaction;
+			dataSource.TransactionStartGoal = goal.RelativePrPath;
 
-			if (dataSources != null && dataSources.Count > 1)
+			if (dataSource.AttachedDbs.Count > 0)
 			{
 				using var attachCommand = transaction.Connection.CreateCommand();
-				await AttachDb(dataSources, (DbCommand)attachCommand);
+				await AttachDb(dataSource, (DbCommand)attachCommand);
 			}
 
-			error = AddDataSourceToContext(main);
+			error = AddDataSourceToContext(dataSource);
 			if (error != null) return error;
 
 			return null;
@@ -257,11 +258,8 @@ namespace PLang.Modules.DbModule
 
 		internal async Task<IError?> EndTransaction(bool force = false)
 		{
-			var (datasource, error) = await dbSettings.GetDataSourceOrDefault();
-			if (error != null) return error;
-			if (datasource == null) return new ProgramError("Could not find datasource");
-
-			if (datasource.Transaction == null) return null;
+			var datasource = context.DataSource;
+			if (datasource == null || datasource.Transaction == null) return null;
 			if (!force && datasource.TransactionStartGoal != goal.RelativePrPath) return null;
 
 			var transaction = datasource.Transaction;
@@ -360,7 +358,7 @@ namespace PLang.Modules.DbModule
 		}
 		internal async Task<(List<string>? Scheme, IError? Error)> GetDbScheme(DataSource dataSource)
 		{
-			var result = await Select([dataSource], dataSource.SelectTablesAndViews);
+			var result = await Select(dataSource, dataSource.SelectTablesAndViews);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
@@ -391,7 +389,7 @@ namespace PLang.Modules.DbModule
 		internal async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(DataSource dataSource, List<string>? tables = null)
 		{
 
-			var result = await Select([dataSource], dataSource.SelectTablesAndViews);
+			var result = await Select(dataSource, dataSource.SelectTablesAndViews);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
@@ -422,7 +420,7 @@ namespace PLang.Modules.DbModule
 
 				var sql = await dbSettings.FormatSelectColumnsStatement(dataSource, row.Get<string>("name"));
 
-				var selectResult = await Select([dataSource], sql);
+				var selectResult = await Select(dataSource, sql);
 				if (selectResult.Error != null) return (null, selectResult.Error);
 
 				List<ColumnInfo> columns = new();
@@ -535,33 +533,44 @@ namespace PLang.Modules.DbModule
 			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		[Description("Query the database with a sql file")]
-		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] string dataSourceName, string fileName, List<string> tableAllowList)
+		[Description("Execute sql by connection string")]
+		public async Task<(long, IError?)> ExecuteSqlByConnectionString([HandlesVariable] string pathToSql, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
-			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
-			if (error != null) return (0, error, null);
-
-			return await QuerySqlFile(dataSource, fileName, tableAllowList);
+			pathToSql = memoryStack.LoadVariables(pathToSql).ToString();
+			var absolutePath = GetPath(pathToSql);
+			var dataSource = new DataSource(pathToSql, typeof(SqliteConnection).FullName, $"Data Source={pathToSql};", "data", "", "", false, false, absolutePath);
+			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		internal async Task<(object?, IError?, Properties?)> QuerySqlFile(DataSource dataSource, string fileName, List<string> tableAllowList)
+		[Description("Query the database with a sql file")]
+		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		{
+			(var dataSource, var error) = await GetDataSourcesByNames(dataSourceNames);
+			if (error != null) return (0, error, null);
+
+			return await QuerySqlFile(dataSource, fileName, tableAllowList, parameters);
+		}
+
+		internal async Task<(object?, IError?, Properties?)> QuerySqlFile(DataSource dataSource, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			var file = GetProgramModule<Modules.FileModule.Program>();
 			var readResult = await file.ReadTextFile(fileName);
 			if (readResult.Error != null) return (0, readResult.Error, null);
 
-			return await Select([dataSource], readResult.Content.ToString());
+			return await Select(dataSource, readResult.Content.ToString(), parameters);
 
 		}
 
 		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
 		[Example(@"execute query %sql%, ds: %dataSource%, tables: users, products, write to %result%", @"sql=%sql%, dataSouceName=%dataSource%, tableAllowList=[""users"", ""products""]")]
-		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		public async Task<(Table?, IError?, Properties?)> QueryDynamicSql([HandlesVariable] List<string> dataSourceNames, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
-			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
+
+
+			(var dataSources, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (null, error, null);
 
-			return await Select([dataSource], sql, parameters);
+			return await Select(dataSources, sql, parameters);
 		}
 		
 		internal async Task<(long, IError?)> ExecuteDynamicSql(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
@@ -683,21 +692,16 @@ namespace PLang.Modules.DbModule
 
 		}
 
+	
+
 		[Description("When SELECT/WITH should return 1 row (limit 1) on multiple data source")]
 		public async Task<(object?, IError? errors, Properties? Properties)> SelectOneRowWithMultipleDataSources([HandlesVariable] List<string> dataSourceNames, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			List<DataSource> dataSources = new();
-			foreach (var dataSourceName in dataSourceNames)
-			{
 
-				(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
-				if (error != null) return (null, error, null);
+			var (dataSource, error) = await GetDataSourcesByNames(dataSourceNames);
+			if (error != null) return (null, error, null);
 
-				dataSources.Add(dataSource);
-			}
-
-
-			return await SelectOneRow(dataSources, sql, sqlParameters);
+			return await SelectOneRow(dataSource, sql, sqlParameters);
 		}
 
 		[Description("When SELECT/WITH should return 1 row (limit 1)")]
@@ -706,11 +710,11 @@ namespace PLang.Modules.DbModule
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (null, error, null);
 
-			return await SelectOneRow([dataSource], sql, sqlParameters);
+			return await SelectOneRow(dataSource, sql, sqlParameters);
 		}
-		internal async Task<(object?, IError? errors, Properties? Properties)> SelectOneRow(List<DataSource> dataSources, string sql, List<ParameterInfo>? sqlParameters = null)
+		internal async Task<(object?, IError? errors, Properties? Properties)> SelectOneRow(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			var result = await Select(dataSources, sql, sqlParameters);
+			var result = await Select(dataSource, sql, sqlParameters);
 			if (result.Error != null)
 			{
 				return (null, result.Error, result.Properties);
@@ -744,17 +748,10 @@ namespace PLang.Modules.DbModule
 		[Example("select * from main.users u, join users.orders o on o.userId=u.id where u.id=%id%, ds: data, users/%user.id%, write to %results%", @"sql=""select * from main.users u join users.orders o on o.userId=u.id where u.id=%id%"", sqlParameters=[""id"", ""%id""], dataSourceName=[""data"", ""users/%user.id%""], ReturnValues=[""%results%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> SelectWithMultipleDataSources([HandlesVariable] List<string> dataSourceNames, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			List<DataSource> dataSources = new();
-			foreach (var dataSourceName in dataSourceNames)
-			{
+			var (dataSource, error) = await GetDataSourcesByNames(dataSourceNames);
+			if (error != null) return (null, error, null);
 
-				(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
-				if (error != null) return (null, error, null);
-
-				dataSources.Add(dataSource);
-			}
-
-			return await Select(dataSources, sql, sqlParameters);
+			return await Select(dataSource, sql, sqlParameters);
 		}
 
 		[Description("Doing SELECT/WITH on one datasource")]
@@ -764,16 +761,15 @@ namespace PLang.Modules.DbModule
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (null, error, null);
 
-			return await Select([dataSource], sql, sqlParameters);
+			return await Select(dataSource, sql, sqlParameters);
 		}
 
-		internal async Task<(Table? Table, IError? Error, Properties? Properties)> Select(List<DataSource> dataSources, string sql, List<ParameterInfo>? sqlParameters = null)
+		internal async Task<(Table? Table, IError? Error, Properties? Properties)> Select(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			var prep = Prepare(dataSources[0], sql, sqlParameters);
+			var prep = Prepare(dataSource, sql, sqlParameters);
 
 			Properties properties = new();
-			properties.Add(new ObjectValue("DataSources", dataSources));
-			properties.Add(new ObjectValue("MainDataSource", dataSources[0]));
+			properties.Add(new ObjectValue("DataSource", dataSource));
 			properties.Add(new ObjectValue("MethodParameters", new { Sql = sql, SqlParameters = sqlParameters }));
 
 			if (prep.error != null)
@@ -791,13 +787,13 @@ namespace PLang.Modules.DbModule
 				{
 					cmd.Transaction = (DbTransaction)prep.transaction;
 				}
-				else if (dataSources.Count > 1)
+				else if (dataSource.AttachedDbs.Count > 0)
 				{
-					await AttachDb(dataSources, cmd);
+					await AttachDb(dataSource, cmd);
 				}
 
-				cmd.CommandText = prep.sql;
 
+				bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
 
 
 				// Add parameters if any:
@@ -805,15 +801,49 @@ namespace PLang.Modules.DbModule
 				{
 					foreach (var prop in sqlParameters)
 					{
-						var param = cmd.CreateParameter();
-						param.ParameterName = prop.ParameterName;
-						param.Value = ConvertToType(prop.VariableNameOrValue, prop.TypeFullName) ?? DBNull.Value;
+						
+						if (prop.TypeFullName == typeof(System.Array).FullName)
+						{
+							if (prop.VariableNameOrValue == null || string.IsNullOrEmpty(prop.VariableNameOrValue.ToString()))
+							{
+								return (null, new ProgramError($"{prop.ParameterName} is emtpy. It cannot be empty", goalStep), null);
+							}
 
-						cmd.Parameters.Add(param);
+							if (prop.VariableNameOrValue is not IList list)
+							{
+								list = new List<object>();
+								list.Add(prop.VariableNameOrValue);
+							}
+
+							var ids = Enumerable.Range(0, list.Count).ToArray();
+
+							var paramNames = ids.Select((_, i) => $"@__plang_id{i}").ToArray();
+							prep.sql = prep.sql.Replace(prop.ParameterName, string.Join(", ", paramNames));
+							foreach (var id in ids)
+							{
+								var param = cmd.CreateParameter();
+								param.ParameterName = $"@__plang_id{id}";
+								param.Value = list[id].ToString();
+
+								cmd.Parameters.Add(param);
+							}
+						}
+						else
+						{
+							var param = cmd.CreateParameter();
+							param.ParameterName = prop.ParameterName;
+							var (value, error) = ConvertObjectToType(prop.VariableNameOrValue, prop.TypeFullName, prop.ParameterName, prop.VariableNameOrValue, isSqlite);
+							if (error != null) return (null, error, properties);
+
+							param.Value = value;
+							cmd.Parameters.Add(param);
+						}
+
+						
 					}
 
 				}
-
+				cmd.CommandText = prep.sql;
 				properties.Add(new ObjectValue("CommandText", cmd.CommandText));
 
 				using var reader = await cmd.ExecuteReaderAsync();
@@ -859,29 +889,27 @@ namespace PLang.Modules.DbModule
 			}
 			finally
 			{
-				if (prep.transaction == null && dataSources.Count > 1)
+				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
 				{
-					await DetachDb(dataSources[0], cmd);
+					await DetachDb(dataSource, cmd);
 				}
 				Done(prep.connection, prep.transaction);
 			}
 		}
 
-		private async Task AttachDb(List<DataSource> dataSources, DbCommand cmd)
+		private async Task AttachDb(DataSource dataSource, DbCommand cmd)
 		{
-			if (dataSources.Count < 2) return;
+			if (dataSource.AttachedDbs.Count == 0) return;
 
-			for (int i = 1; i < dataSources.Count; i++)
+			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 			{
-				var alias = dataSources[i].Name;
-				if (dataSources[0].AttachedDbs.Contains(alias)) continue;
+				var alias = dataSource.AttachedDbs[i].Alias;
 
 				if (string.Equals(alias, "main", StringComparison.OrdinalIgnoreCase) ||
 					string.Equals(alias, "temp", StringComparison.OrdinalIgnoreCase))
 					throw new InvalidOperationException($"Invalid alias: {alias}");
 
-				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSources[i].LocalPath);
-				dataSources[0].AttachedDbs.Add(alias);
+				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSource.AttachedDbs[i].Path);
 				
 				cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};\n";
 				
@@ -901,9 +929,8 @@ namespace PLang.Modules.DbModule
 
 				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 				{
-					cmd.CommandText += $";\nDETACH DATABASE \"{dataSource.AttachedDbs[i]}\";";
+					cmd.CommandText += $";\nDETACH DATABASE \"{dataSource.AttachedDbs[i].Alias}\";";
 				}
-				dataSource.AttachedDbs.Clear();
 				cmd.ExecuteNonQuery();
 
 				dataSource.AttachedDbs.Clear();
@@ -913,21 +940,6 @@ namespace PLang.Modules.DbModule
 			}
 			return null;
 
-		}
-
-		private object? ConvertToType(object? variableNameOrValue, string fullType)
-		{
-			if (variableNameOrValue is JToken token)
-			{
-				variableNameOrValue = token.ToString();
-			}
-			var type = MapType(fullType) ?? Type.GetType(fullType);
-			if (type == null)
-			{
-				throw new Exception($"Type {fullType} is unknown");
-			}
-
-			return TypeHelper.ConvertToType(variableNameOrValue, type);
 		}
 
 		private object? GetDefaultValue(string strType)
@@ -982,14 +994,14 @@ Clearly define which columns are allowed to be updated.
 		}
 
 
-		public async Task<(long, IError?)> Update([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		public async Task<(long, IError?)> Update([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
-			return await Update(dataSource, sql, sqlParameters);
+			return await Update(dataSource, sql, sqlParameters, validateAffectedRows);
 		}
-		internal async Task<(long, IError?)> Update(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
+		internal async Task<(long, IError?)> Update(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 
 			var prepare = Prepare(dataSource, sql, sqlParameters);
@@ -1008,6 +1020,14 @@ Clearly define which columns are allowed to be updated.
 				else
 				{
 					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
+				}
+
+				if (validateAffectedRows && result == 0)
+				{
+					return (result, new ProgramError("0 Rows affected. This was not expected.", goalStep, FixSuggestion: $@"If this is expected, include that you dont want to validate affected rows in your step.
+For example:
+`- {goalStep.Text}, dont validate affected rows`
+"));
 				}
 				return (result, null);
 			}
@@ -1249,7 +1269,7 @@ Clearly define which columns are allowed to be updated.
 			if (columnMapping == null)
 			{
 				var sqlSelectColumns = await dbSettings.FormatSelectColumnsStatement(dataSource, tableName);
-				var result = await Select([dataSource], sqlSelectColumns);
+				var result = await Select(dataSource, sqlSelectColumns);
 				if (result.Error != null)
 				{
 					return (0, result.Error);
@@ -1281,7 +1301,7 @@ Clearly define which columns are allowed to be updated.
 			IDbTransaction? transaction = dataSource.Transaction;
 			if (transaction == null)
 			{
-				error = await BeginTransaction([dataSource]);
+				error = await BeginTransaction(dataSource);
 				if (error != null) return (0, error);
 			}
 
@@ -1532,8 +1552,7 @@ Clearly define which columns are allowed to be updated.
 					{
 						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 						{
-							(var dataSource, var contextError) = context.Get<DataSource>(CurrentDataSourceKey);
-							if (contextError != null) return (param, contextError);
+							var dataSource = context.DataSource;
 
 							multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
 						}
@@ -1563,7 +1582,24 @@ Clearly define which columns are allowed to be updated.
 			}
 			return variableName;
 		}
+		/*
 
+		private object? ConvertToType(object? variableNameOrValue, string fullType)
+		{
+			if (variableNameOrValue is JToken token)
+			{
+				variableNameOrValue = token.ToString();
+			}
+			var type = MapType(fullType) ?? Type.GetType(fullType);
+			if (type == null)
+			{
+				throw new Exception($"Type {fullType} is unknown");
+			}
+
+			return TypeHelper.ConvertToType(variableNameOrValue, type);
+		}
+
+		*/
 		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue, bool isSqlite)
 		{
 			// TODO: because of bad structure in building, can be removed when fix
@@ -1717,28 +1753,32 @@ Clearly define which columns are allowed to be updated.
 
 
 
-		private async Task<(List<DataSource>?, IError?)> GetDataSourcesByNames(List<string>? dataSourceNames = null)
+		private async Task<(DataSource? DataSource, IError? Error)> GetDataSourcesByNames(List<string>? dataSourceNames = null)
 		{
-			List<DataSource> dataSources = new();
-			if (dataSourceNames == null)
+			
+			if (dataSourceNames == null || dataSourceNames.Count == 0)
 			{
-				var (dataSource, error) = await dbSettings.GetDataSourceOrDefault();
-				if (error != null) return (null, error);
-
-				dataSources.Add(dataSource!);
+				return await dbSettings.GetDataSourceOrDefault();				
 			}
-			else
+
+
+			var main = dataSourceNames[0];
+			var (dataSource, error) = await dbSettings.GetDataSource(main, goalStep);
+			if (error != null) return (null, error);
+
+			if (dataSourceNames.Count > 1)
 			{
-				foreach (var dataSourceName in dataSourceNames)
+				foreach (var dataSourceName in dataSourceNames[1..])
 				{
 
-					(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
+					(var ds, error) = await dbSettings.GetDataSource(dataSourceName, goalStep, false);
 					if (error != null) return (null, error);
 
-					dataSources.Add(dataSource!);
+					dataSource.AttachedDbs.Add(new AttachedDb(ds.Name, ds.LocalPath));
 				}
 			}
-			return (dataSources, null);
+
+			return (dataSource, null);
 		}
 
 		/*

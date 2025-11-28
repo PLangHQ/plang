@@ -1,0 +1,2 @@
+You should create a search string from the user input, this will be used to search list of services. 
+Ignore any 'write to' (or similar) text

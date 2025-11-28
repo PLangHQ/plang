@@ -34,20 +34,20 @@
       "UserIntent": null
     },
     {
-      "Text": "read \"version.txt\", into %version%",
+      "Text": "read \"../plang/version.txt\", into %version%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
-      "Name": "read_version_txt_into_version_variable",
-      "Description": "Open the file 'version.txt', read its entire content as text, and assign that content to the variable named %version% for further use in the program.",
-      "PrFileName": "02. read_version_txt_into_version_variable.pr",
-      "RelativePrPath": ".build\\Publish\\02. read_version_txt_into_version_variable.pr",
+      "Name": "read_version_file_into_variable",
+      "Description": "Read the contents of the file located at '../plang/version.txt' and store the entire content into the variable named %version%.",
+      "PrFileName": "02. read_version_file_into_variable.pr",
+      "RelativePrPath": ".build\\Publish\\02. read_version_file_into_variable.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-06-24T08:33:50.7173677+00:00",
+      "Generated": "2025-11-17T14:43:44.5748259+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -59,10 +59,10 @@
       "LineNumber": 3,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "1bd9378d4bb4333ce7fa1b94bf6a5e7281d8f1833a29f520e007d36a437e1926",
+      "Hash": "8e43456158a71fb295529b33fb8f8db1346b1b97739c26b1cda94ce3e731a0fa",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Publish.goal",
-      "UserIntent": null
+      "UserIntent": "Read the contents of a text file and store it into a variable"
     },
     {
       "Text": "write out 'Building project - Version:%version%'",
@@ -287,7 +287,7 @@
     ".build\\Publish\\RemoveFile\\00. Goal.pr",
     ".build\\Publish\\ConsoleOutPut\\00. Goal.pr"
   ],
-  "Description": "The Publish goal initiates the publishing process by first logging the current time, reading the version from a file, and then building the project with the specified version. It listens for build output, collects zip file paths, removes those files, and finally builds the project for various platforms.",
+  "Description": "The Publish goal is designed to automate the process of building a project and managing its output files. It starts by logging the current time, reads the project version from a file, and then builds the project using the specified version. The build process streams output data to a variable, collects all .zip files in the current directory, and removes them. Finally, it prepares a list of target platforms and builds the project for each platform.",
   "Visibility": 1,
   "GoalFileName": "Publish.goal",
   "PrFileName": "00. Goal.pr",
@@ -300,12 +300,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a878f899081e886c21ea18a17cd206b0026d79b987508cfe5a7ca66d2f5ee98e",
+  "Hash": "a95fe1ff9d815fef4a81106367f7ab8e4a1b217070d3b1396255c36a0e9e727e",
   "IncomingVariablesRequired": {
-    "buildVar": "A variable to capture the output of the build process.",
-    "version": "The version of the project read from 'version.txt'.",
-    "zipFiles": "A list of zip file paths found in the current directory.",
-    "platforms": "A list of target platforms for building the project."
+    "%Now%": "The current timestamp to log when the publish process starts.",
+    "%version%": "The version of the project read from the version.txt file.",
+    "%buildVar%": "A variable to capture the output stream from the build process.",
+    "%zipFiles%": "A list of .zip file paths collected from the current directory.",
+    "%platforms%": "A list of target platforms for which the project will be built."
   },
   "DataSourceName": null,
   "IsSetup": false,

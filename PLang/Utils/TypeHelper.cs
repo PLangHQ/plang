@@ -517,6 +517,10 @@ public class TypeHelper : ITypeHelper
 		{
 			return value.ToString();
 		}
+		if (targetType.Name == "Char" && value is string str && str.StartsWith("'") && str.EndsWith("'"))
+		{
+			return str.Trim("'")[0];
+		}
 
 		if (targetType == null)
 			throw new ArgumentNullException(nameof(targetType));
@@ -539,7 +543,12 @@ public class TypeHelper : ITypeHelper
 		if (value is JValue jValue)
 		{
 			if (jValue.Value == null) return null;
+			if (targetType == typeof(System.Array) && IsConsideredPrimitive(jValue.Value.GetType()))
+			{
+				var array = ConvertToList(targetType, jValue.Value);
+				return array;
 
+			}
 			return Convert.ChangeType(jValue.Value, targetType, CultureInfo.InvariantCulture);
 		}
 

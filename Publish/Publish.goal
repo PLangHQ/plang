@@ -1,6 +1,6 @@
 Publish
 - write out "Starting at %Now%"
-- read "version.txt", into %version%
+- read "../plang/version.txt", into %version%
 - write out 'Building project - Version:%version%'
 - listen to %buildVar%, call ConsoleOutPut
 - dotnet build Plang.sln -c Release -p:Version=%version%,  working dir ../

@@ -1079,6 +1079,8 @@ namespace PLang.Modules.FileModule
 		private static readonly Dictionary<string, string> typeMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 		{
 			// video
+			[".goal"] = "plang",
+			// video
 			[".mp4"] = "video",
 			[".webm"] = "video",
 			[".mkv"] = "video",

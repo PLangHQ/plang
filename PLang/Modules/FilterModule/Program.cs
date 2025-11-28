@@ -305,7 +305,11 @@ defaultValue: when defaultValue is defined, the throwErrorOnEmptyResult=false
 				var variableModule = GetProgramModule<VariableModule.Program>();
 				var trimmedObject = await variableModule.TrimForLlm(ov.Value, 2, 3, null, 1, 2, 2000, true);
 
-				return (null, new ProgramError($"'{propertyToFilterOn}' does not exists in {ov.PathAsVariable}(Count:{ov.Get("count")}). Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'",
+				return (null, new ProgramError($@"'{propertyToFilterOn}' does not exists in {ov.PathAsVariable}. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'
+
+Trying to match this content: 
+{trimmedObject}
+",
 					FixSuggestion: $"The object that is being filtered on looks like this: {trimmedObject}"));
 			}
 

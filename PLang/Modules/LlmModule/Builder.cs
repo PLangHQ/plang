@@ -30,12 +30,10 @@ When user defines a scheme then use json for llmResponseType, unless user define
 
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role
-if user does not define model, set model to ""gpt-4o-mini"" if content type is image_url
-model is default gpt-4o-mini
+if user does not define model, set model to ""gpt-4.1-mini"" if content type is image_url
+model is default gpt-4.1-mini
 the json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} 
 the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
-
-make sure to return value if user wants to write the result into a variable.
 
 ## examples ##
 system: %system%
@@ -148,6 +146,9 @@ or url
 
 
 ## examples ##
+
+
+make sure to return value if user wants to write the result into a variable.
 ");
 
 

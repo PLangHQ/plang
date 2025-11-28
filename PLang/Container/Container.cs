@@ -57,7 +57,7 @@ namespace PLang.Container
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
 			RegisterModules(container);
-			
+
 
 			container.RegisterSingleton<IErrorHandlerFactory>(factory => { return errorHandlerFactory; });
 			container.RegisterSingleton<IErrorSystemHandlerFactory>(factory => { return errorSystemHandlerFactory; });
@@ -68,11 +68,11 @@ namespace PLang.Container
 
 			engine.SystemSink = parentEngine.SystemSink;
 			engine.UserSink = parentEngine.UserSink;
-		//	engine.Init(container);
+			//	engine.Init(container);
 
 			RegisterEventRuntime(container);
 
-			
+
 
 			RegisterBaseVariables(container, parentEngine);
 		}
@@ -148,7 +148,7 @@ namespace PLang.Container
 			var engine = container.GetInstance<IEngine>();
 			engine.SystemSink = new ConsoleSink();
 			engine.UserSink = new ConsoleSink();
-			
+
 
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
@@ -158,7 +158,7 @@ namespace PLang.Container
 			engine.Init(container);
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			
+
 
 			RegisterBaseVariables(container);
 		}
@@ -207,9 +207,12 @@ namespace PLang.Container
 				return;
 			}
 
-			
-			using (var runtimeContainer = new ServiceContainer())
+
+			container.RegisterSingleton<IEventRuntime>(factory =>
 			{
+
+				var runtimeContainer = new ServiceContainer();
+
 
 				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath,
 					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), engine);
@@ -219,14 +222,17 @@ namespace PLang.Container
 				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.SystemDirectory);
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>();
-				
+
 				//Engine.InitPerRequest(runtimeContainer);
 
 				engine2.Init(runtimeContainer);
 
+
+
 				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
-				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
-			}
+				return eventRuntime;
+			});
+
 
 		}
 
@@ -239,7 +245,7 @@ namespace PLang.Container
 			});
 
 			var context = container.GetInstance<PLangAppContext>();
-			
+
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			context.AddOrReplace("!plang.osPath", fileSystem.SystemDirectory);
 			context.AddOrReplace("!plang.rootPath", parentEngine?.FileSystem?.RootDirectory ?? fileSystem.RootDirectory);
@@ -511,7 +517,7 @@ namespace PLang.Container
 
 			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
 		}
-	
+
 		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper, IEngine engine)
 		{
 			engine.AsmHandler = (sender, resolveArgs) =>
