@@ -20,7 +20,7 @@ using static System.Net.WebRequestMethods;
 
 namespace PLang.Modules.HttpModule
 {
-	[Description("Make Http request")]
+	[Description("Make Http request. Mare sure to format Bearer authentication correctly in headers variable")]
 	public class Program(IPLangFileSystem fileSystem, IHttpClientFactory httpClientFactory,
 		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
 	{

@@ -24,29 +24,7 @@ namespace PLang.Building.Events.Tests
 			base.Initialize();
 		}
 
-		[TestMethod()]
-		public void GetEventGoalFilesTest()
-		{
-			
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
-			string content = @"Events";
-
-			
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "events", "Events.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "events", "BuilderEvents.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", "events", "Events.goal"), new MockFileData(content));
-
-			var eventBuilder = container.GetInstance<EventBuilder>();
-			var files = eventBuilder.GetEventGoalFiles();
-			Assert.IsNotNull(files);
-			Assert.AreEqual(2, files.Item1.Count);
-			Assert.AreEqual(files.Item1[0], Path.Join(fileSystem.GoalsPath, "events", "Events.goal"));
-
-			//var result = eventBuilder.BuildEventsPr().Wait();
-		
-		}
 
 		[TestMethod()]
 		public void BuildEventsPr_No_Steps_Found_Test()
@@ -104,10 +82,9 @@ namespace PLang.Building.Events.Tests
 			prParser.ParsePrFile(Arg.Any<string>()).Returns(new Goal());
 
 			var eventBuilder = container.GetInstance<EventBuilder>();
-			(var result, var error) = await eventBuilder.BuildEventsPr();
+			var error = await eventBuilder.BuildEventsPr();
 
 			Assert.IsNotNull(error);
-			Assert.AreEqual(0, result.Count);
 			//Assert.ThrowsAsync<BuilderStepException>(() => eventBuilder.BuildEventsPr());
 		}
 

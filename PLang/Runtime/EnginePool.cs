@@ -12,7 +12,7 @@ namespace PLang.Runtime
 
 	public class EnginePool
 	{
-		public List<string> engineIds = new();
+		public ConcurrentDictionary<string, byte> engineIds = new();
 		private ConcurrentStack<IEngine> _pool = new();
 		private IEngine rootEngine;
 		public ConcurrentStack<IEngine> Pool { get { return _pool; } }
@@ -44,9 +44,9 @@ namespace PLang.Runtime
 			if (pool.TryPop(out var engine))
 			{
 				engine.IsInPool = false;
-				if (enginePool.engineIds.Contains(engine.Id))
+				if (!enginePool.engineIds.TryRemove(engine.Id, out _))
 				{
-					enginePool.engineIds.Remove(engine.Id);
+					throw new Exception($"Could not remove engineId ({engine.Id}) when renting engine");
 				}
 				
 				InitPerRequest(rootEngine.Container, engine);
@@ -69,7 +69,7 @@ namespace PLang.Runtime
 			}
 			engine.IsInPool = true;
 
-			if (enginePool.engineIds.Contains(engine.Id))
+			if (enginePool.engineIds.ContainsKey(engine.Id))
 			{
 				Console.WriteLine($"RETURNING existing id: {engine.Id}");
 				return;
@@ -78,7 +78,7 @@ namespace PLang.Runtime
 			engine.Reset(true);
 			
 			pool.Push(engine);
-			enginePool.engineIds.Add(engine.Id);
+			enginePool.engineIds.TryAdd(engine.Id, 1);
 
 			
 		}

@@ -415,7 +415,7 @@ Name: Name of the function to use from list of functions, if no function matches
 Parameters: List of parameters that are needed according to the user intent.
 - Type: the object type in c#
 - Name: name of the variable
-- Value: ""%variable%"" or hardcode string that should be used
+- Value: ""%variable%"", hardcode string that should be used, null, or json array/object
 ReturnValue rules
 - Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable
 - If no %variable% is defined then set as null.

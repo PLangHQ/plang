@@ -167,7 +167,7 @@ namespace PLang.Modules.DbModule
 
 			error = AddDataSourceToContext(dataSource);
 			if (error != null) return (null, error);
-			
+
 			return (dataSource, null);
 		}
 
@@ -204,11 +204,11 @@ namespace PLang.Modules.DbModule
 
 			if (dbConnection is SqliteConnection)
 			{
-				
+
 				using var command = transaction.Connection.CreateCommand();
 				command.CommandText = "PRAGMA foreign_keys = ON;";
 				command.ExecuteNonQuery();
-				
+
 			}
 
 			dataSource.Transaction = transaction;
@@ -449,7 +449,9 @@ namespace PLang.Modules.DbModule
 			if (transaction != null)
 			{
 				connection = transaction.Connection;
-			} else {
+			}
+			else
+			{
 				connection = dbFactory.CreateHandler(dataSource, memoryStack);
 			}
 			if (connection == null) return (null, null, null, sql, new ProgramError("Connection to db could not be created"));
@@ -468,12 +470,12 @@ namespace PLang.Modules.DbModule
 			connection.Open();
 			if (connection is SqliteConnection sqliteConnection)
 			{
-				
+
 				using var command = connection.CreateCommand();
 				command.Transaction = transaction;
 				command.CommandText = "PRAGMA foreign_keys = ON;";
 				command.ExecuteNonQuery();
-				
+
 				if (sqliteConnection.ConnectionString.Contains("Memory;"))
 				{
 					var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new(StringComparer.OrdinalIgnoreCase)) ?? new(StringComparer.OrdinalIgnoreCase);
@@ -482,12 +484,12 @@ namespace PLang.Modules.DbModule
 						var anchorConnection = dbFactory.CreateHandler(dataSource, memoryStack);
 						anchorConnection.Open();
 						anchors.Add(dataSource.Name, anchorConnection);
-						
+
 						appContext.AddOrReplace("AnchorMemoryDb", anchors);
 					}
 				}
 			}
-			
+
 
 			return (connection, transaction, paramResult.DynamicParameters, sql, paramResult.Error);
 
@@ -572,7 +574,7 @@ namespace PLang.Modules.DbModule
 
 			return await Select(dataSources, sql, parameters);
 		}
-		
+
 		internal async Task<(long, IError?)> ExecuteDynamicSql(DataSource dataSource, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			return await Execute(dataSource, sql, tableAllowList, parameters);
@@ -590,7 +592,8 @@ namespace PLang.Modules.DbModule
 		public async Task<(long RowsAffected, IError? Error)> ExecutePlang(string sql, List<ObjectValue>? parameters = null)
 		{
 			List<ParameterInfo>? sqlParameters = null;
-			if (parameters != null) {
+			if (parameters != null)
+			{
 				sqlParameters = new();
 				foreach (var parameter in parameters)
 				{
@@ -692,7 +695,7 @@ namespace PLang.Modules.DbModule
 
 		}
 
-	
+
 
 		[Description("When SELECT/WITH should return 1 row (limit 1) on multiple data source")]
 		public async Task<(object?, IError? errors, Properties? Properties)> SelectOneRowWithMultipleDataSources([HandlesVariable] List<string> dataSourceNames, string sql, List<ParameterInfo>? sqlParameters = null)
@@ -731,7 +734,14 @@ namespace PLang.Modules.DbModule
 			if (result.Table.ColumnNames.Count == 1)
 			{
 				var columnName = result.Table.ColumnNames[0];
-				return (new ObjectValue(columnName, result.Table[columnName]), null, result.Properties);
+				if (function.ReturnValues == null || function.ReturnValues.Count == 0 || function.ReturnValues[0].VariableName.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+				{
+					return (new ObjectValue(columnName, result.Table[columnName]), null, result.Properties);
+				}
+				else
+				{
+					return (result.Table[0], null, result.Properties);
+				}
 			}
 			foreach (var columnName in result.Table.ColumnNames)
 			{
@@ -801,7 +811,7 @@ namespace PLang.Modules.DbModule
 				{
 					foreach (var prop in sqlParameters)
 					{
-						
+
 						if (prop.TypeFullName == typeof(System.Array).FullName)
 						{
 							if (prop.VariableNameOrValue == null || string.IsNullOrEmpty(prop.VariableNameOrValue.ToString()))
@@ -839,7 +849,7 @@ namespace PLang.Modules.DbModule
 							cmd.Parameters.Add(param);
 						}
 
-						
+
 					}
 
 				}
@@ -900,6 +910,7 @@ namespace PLang.Modules.DbModule
 		private async Task AttachDb(DataSource dataSource, DbCommand cmd)
 		{
 			if (dataSource.AttachedDbs.Count == 0) return;
+			if (dataSource.AttachedDbs.FirstOrDefault(p => !p.IsAttached) == null) return;
 
 			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 			{
@@ -910,11 +921,14 @@ namespace PLang.Modules.DbModule
 					throw new InvalidOperationException($"Invalid alias: {alias}");
 
 				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSource.AttachedDbs[i].Path);
-				
+
 				cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};\n";
-				
 			}
 			await cmd.ExecuteNonQueryAsync();
+			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+			{
+				dataSource.AttachedDbs[i].IsAttached = true;
+			}
 			cmd.CommandText = "";
 		}
 
@@ -932,9 +946,15 @@ namespace PLang.Modules.DbModule
 					cmd.CommandText += $";\nDETACH DATABASE \"{dataSource.AttachedDbs[i].Alias}\";";
 				}
 				cmd.ExecuteNonQuery();
+				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+				{
+					dataSource.AttachedDbs[i].IsAttached = false;
+				}
 
 				dataSource.AttachedDbs.Clear();
-			} catch (Exception ex)
+				
+			}
+			catch (Exception ex)
 			{
 				return new ProgramError(ex.Message, Exception: ex);
 			}
@@ -1041,14 +1061,14 @@ For example:
 			}
 
 		}
-		public async Task<(long, IError?)> Delete([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		public async Task<(long, IError?)> Delete([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
-			return await Delete(dataSource, sql, sqlParameters);
+			return await Delete(dataSource, sql, sqlParameters, validateAffectedRows);
 		}
-		internal async Task<(long, IError?)> Delete(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
+		internal async Task<(long, IError?)> Delete(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			long rowsAffected;
 			var prepare = Prepare(dataSource, sql, sqlParameters);
@@ -1069,6 +1089,13 @@ For example:
 					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 
+				if (validateAffectedRows && rowsAffected == 0)
+				{
+					return (rowsAffected, new ProgramError("0 Rows affected. This was not expected.", goalStep, FixSuggestion: $@"If this is expected, include that you dont want to validate affected rows in your step.
+For example:
+`- {goalStep.Text}, dont validate affected rows`
+"));
+				}
 				return (rowsAffected, null);
 			}
 			catch (Exception ex)
@@ -1082,33 +1109,26 @@ For example:
 		}
 
 		[Description("Insert or update table(Upsert). Will return affected row count. Choose when user doesn't write result into %variable%")]
-		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
-			return await Insert(dataSource, sql, sqlParameters);
+			return await Insert(dataSource, sql, sqlParameters, validateAffectedRows);
 		}
 
-		[Description("Insert or update table(Upsert). Will return the id/primary key of the affected row. Used when user intends to write into a %id%")]
-		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
-		{
-			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
-			if (error != null) return (0, error);
 
-			return await InsertAndSelectIdOfInsertedRow(dataSource, sql, sqlParameters);
-		}
 
 		[Description("Insert into table. Will return affected row count. Choose when user doesn't write result into %variable%")]
-		public async Task<(long rowsAffected, IError? error)> Insert([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		public async Task<(long rowsAffected, IError? error)> Insert([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
 
-			return await Insert(dataSource, sql, sqlParameters);
+			return await Insert(dataSource, sql, sqlParameters, validateAffectedRows);
 		}
 
-		internal async Task<(long rowsAffected, IError? error)> Insert(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
+		internal async Task<(long rowsAffected, IError? error)> Insert(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			long rowsAffected = 0;
 			var prepare = Prepare(dataSource, sql, sqlParameters, true);
@@ -1118,7 +1138,6 @@ For example:
 			}
 			try
 			{
-
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
 					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
@@ -1126,6 +1145,14 @@ For example:
 				else
 				{
 					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
+				}
+
+				if (validateAffectedRows && rowsAffected == 0)
+				{
+					return (rowsAffected, new ProgramError("0 Rows affected. This was not expected.", goalStep, FixSuggestion: $@"If this is expected, include that you dont want to validate affected rows in your step.
+For example:
+`- {goalStep.Text}, dont validate affected rows`
+"));
 				}
 			}
 			catch (Exception ex)
@@ -1148,8 +1175,17 @@ For example:
 
 		}
 
+		[Description("Insert or update table(Upsert). Will return the id/primary key of the affected row. Used when user intends to write into a %id%")]
+		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		{
+			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
+			if (error != null) return (0, error);
+
+			return await InsertAndSelectIdOfInsertedRow(dataSource, sql, sqlParameters);
+		}
+
 		[Description("Insert statement that will return the id of the inserted row.  Used when user intends to write into a %id%")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null, bool validateAffectedRows = true)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (null, error);
@@ -1471,7 +1507,7 @@ For example:
 
 			(var connection, var transaction, var par, _, error) = Prepare(dataSource, "", parameters);
 			if (error != null) return (string.Empty, error);
-			
+
 			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par, transaction);
 
 
@@ -1744,7 +1780,7 @@ For example:
 		}
 
 		private void Done(IDbConnection connection, IDbTransaction? transaction)
-		{			
+		{
 			if (transaction == null && connection != null)
 			{
 				connection.Close();
@@ -1755,10 +1791,10 @@ For example:
 
 		private async Task<(DataSource? DataSource, IError? Error)> GetDataSourcesByNames(List<string>? dataSourceNames = null)
 		{
-			
+
 			if (dataSourceNames == null || dataSourceNames.Count == 0)
 			{
-				return await dbSettings.GetDataSourceOrDefault();				
+				return await dbSettings.GetDataSourceOrDefault();
 			}
 
 
@@ -1774,7 +1810,7 @@ For example:
 					(var ds, error) = await dbSettings.GetDataSource(dataSourceName, goalStep, false);
 					if (error != null) return (null, error);
 
-					dataSource.AttachedDbs.Add(new AttachedDb(ds.Name, ds.LocalPath));
+					dataSource.Attach(ds.Name, ds.LocalPath);
 				}
 			}
 

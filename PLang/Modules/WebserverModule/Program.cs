@@ -305,7 +305,7 @@ public class Program : BaseProgram, IDisposable
 							context.SystemSink = engine.SystemSink;
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
 
-							if (error != null && error is not EndGoal)
+							if (error != null && error is not IErrorHandled)
 							{
 								if (!httpContext.Response.HasStarted)
 								{

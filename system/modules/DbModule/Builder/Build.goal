@@ -1,6 +1,30 @@
 Build
-- write out "build db module"
-/*Build
+/*
+- set %step.ModuleType% = "PLang.Modules.DbModule.Program"
+- set %user% = "select su.userId, u.email from segmentUsers su join data.users u on u.id = su.userId where su.segmentId = \%segmentId\% order by su.userId desc limit 100 datasource: "marketing", "data" write to \%users\%"
+- get all methods in %step.ModuleType%, write to %methods%
+- read llm/MethodSelectionSystem.txt, load vars, write to %system%
+- [llm] system: %system%
+        user: %user%
+        scheme: {methods:string[], needsDataSource:bool}
+        write to %response%
+- if %response.needsDataSource% then FigureOutDataSource
+
+FigureOutDataSource
+- get all datasources, write to %datasources%
+- [llm] system: which datasource fits with user intent
+        user: %datasources%
+        scheme: {dataSources:[{name:string, tables:string[]}], error:string|null}
+        write to %result%
+- validate %result.error% is empty
+- foreach %result.dataSources% call LoadTableInfos
+- 
+
+LoadTableInfos
+- get db structure on %item.name%, %item.tables%, write to %ti%
+- append %it% to %tableInfos%
+
+Build
 - call goal GetDataSourceForStep, write to %dataSourceResult%
 - get all methods in %step.ModuleType%, write to %methods%
 - read llm/BuildSystem.txt, load vars, write to %system%

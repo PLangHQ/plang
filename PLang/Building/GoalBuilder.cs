@@ -227,6 +227,7 @@ namespace PLang.Building
 			// steps that come after as they can be affected by previous steps. 
 			// example of that, steps that creates table but is not build,
 			// step after that insert into table will fail
+			if (goal.HasChanged) return null;
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors errors = new();
@@ -298,10 +299,8 @@ namespace PLang.Building
 
 			}
 
-			if (goal.GoalSteps.Any(p => !p.IsValid))
-			{
-				goal.HasChanged = true;
-			}
+			goal.IsValid = !goal.GoalSteps.Any(p => !p.IsValid);
+			
 
 			return (errors.Count > 0) ? errors : null;
 		}

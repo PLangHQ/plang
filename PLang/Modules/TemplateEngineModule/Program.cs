@@ -277,10 +277,10 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				}));
 			}
 
-			(_, exists) = ContainsVariable("goalToCall", templateContext);
+			(_, exists) = ContainsVariable("callGoal", templateContext);
 			if (!exists)
 			{
-				globals.Import("goalToCall", new Func<object, string, Task<object?>>(async (data, goalName) =>
+				globals.Import("callGoal", new Func<TemplateContext, string, object[]?, Task<object?>>(async (context, goalName, data) =>
 				{
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add("data", data);
@@ -294,10 +294,10 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 					if (result.Return is IList<ObjectValue> list)
 					{
-						if (list.Count == 0) return data;
+						if (list.Count == 0) return null;
 						if (list.Count == 1) return list[0].Value;
 
-						return GetScriptObject(list);
+						return GetScriptObject(list); 
 
 					}
 					else if (result.Return is ObjectValue ov)
@@ -305,16 +305,16 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 						return ov.Value;
 					}
 
-					return result.Return ?? data;
+					return result.Return;
 
 				}));
 			}
 
 
-			(_, exists) = ContainsVariable("appToCall", templateContext);
+			(_, exists) = ContainsVariable("callApp", templateContext);
 			if (!exists)
 			{
-				globals.Import("appToCall", new Func<object, string, Task<object?>>(async (data, appName) =>
+				globals.Import("callApp", new Func<object, string, Task<object?>>(async (data, appName) =>
 				{
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add("data", data);
@@ -334,9 +334,6 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 						if (list.Count == 0) return data;
 						if (list.Count == 1) return list[0].Value;
 
-						if (list.Count == 0) return data;
-						if (list.Count == 1) return list[0].Value;
-
 						return GetScriptObject(list);
 
 					}
@@ -345,7 +342,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 						return ov.Value;
 					}
 
-					return result.Variables ?? data;
+					return result.Variables;
 
 				}));
 			}
@@ -353,23 +350,6 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 			(_, exists) = ContainsVariable("render", templateContext);
 			if (!exists)
 			{
-				globals.Import("render4", new Func<TemplateContext, ScriptNode, ScriptArray, Task<string>>(async (context, node, arguments) =>
-				{
-					// More advanced: manually handle arguments
-					
-					return "hello";
-				}));
-
-
-				globals.Import("render3", new Func<string, IScriptObject?, Task<string>>(async (path, vars) =>
-				{
-					return "hello";
-				}));
-				globals.Import("render2", new Func<TemplateContext, string, object?, Task<string>>(async (context, path, vars) =>
-				{
-					return "hello";
-				})); 
-
 				globals.Import("render", new Func<TemplateContext, string, object[]?, Task<string>>(async (context, path, vars) =>
 				{
 					var modelDict = new Dictionary<string, object?>();

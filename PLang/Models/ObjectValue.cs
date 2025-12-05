@@ -237,7 +237,18 @@ public class ObjectValue
 			}
 			else
 			{
-				jArray[Name] = jToken;
+				try
+				{
+					foreach (var item in jArray.OfType<JObject>())
+					{
+						if (item[Name] == null) continue;
+						item[Name] = null;
+					}
+				} catch (Exception ex)
+				{
+					Console.WriteLine($"Name:{Name} | JToken:{jToken}");
+					Console.WriteLine(ex);
+				}
 			}
 
 			Parent.Value = jArray;

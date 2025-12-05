@@ -96,6 +96,7 @@ namespace PLang
 			}
 
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
+			var validate = args.FirstOrDefault(p => p == "--validate") != null;
 			var test = args.FirstOrDefault(p => p == "--test") != null;
 			var watch = args.FirstOrDefault(p => p == "watch") != null;
 
@@ -109,6 +110,7 @@ namespace PLang
 
 			AppContext.SetSwitch("Builder", (executeType == ExecuteType.Builder));
 			AppContext.SetSwitch("Runtime", (executeType == ExecuteType.Runtime));
+			AppContext.SetSwitch("Validate", validate);
 
 			if (executeType == ExecuteType.Builder)
 			{

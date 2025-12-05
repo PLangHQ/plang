@@ -195,7 +195,7 @@ namespace PLang.Utils
 			}
 
 			var dirName = Path.GetDirectoryName(relativeGoalPath);
-			var goalName = goalToCall.Name.AdjustPathToOs();
+			var goalName = goalToCall.Name.AdjustPathToOs().Replace(".goal", "");
 
 			var goalPath = (goalName.StartsWith(Path.DirectorySeparatorChar)) ? Path.DirectorySeparatorChar.ToString() : "";
 			if (goalName.Contains(Path.DirectorySeparatorChar))

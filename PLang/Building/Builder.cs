@@ -101,7 +101,7 @@ namespace PLang.Building
 					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
 				}
 				logger.LogDebug($"Start building BuildEvents - {stopwatch.ElapsedMilliseconds}");
-				(_, error) = await eventBuilder.BuildEventsPr();
+				error = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
 				logger.LogDebug($"Done building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 
@@ -111,8 +111,12 @@ namespace PLang.Building
 					return eventError;
 				}
 				
-				goals = goals.Where(p => !p.IsSetup && !p.IsEvent).ToList();
-				foreach (var goalToBuild in goals)
+				var goalsToBuild = goals.Where(p => !p.IsSetup && !p.IsEvent);
+				if (AppContext.TryGetSwitch("Validate", out bool isEnabled) && !isEnabled)
+				{
+					goalsToBuild = goalsToBuild.Where(p => p.HasChanged);
+				}
+				foreach (var goalToBuild in goalsToBuild)
 				{
 					Stopwatch buildGoalTime = Stopwatch.StartNew();
 					logger.LogDebug($"Building goal {goalToBuild.GoalName} - {stopwatch.ElapsedMilliseconds}");

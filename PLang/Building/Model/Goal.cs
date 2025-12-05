@@ -60,6 +60,12 @@ namespace PLang.Building.Model
 
 		[LlmIgnore]
 		public string PrFileName { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		[LlmIgnore]
+		public string Path { get { return RelativeGoalPath; } }
 		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
 		[LlmIgnore]
@@ -108,6 +114,11 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool HasChanged { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool? IsValid { get; set; } = null;
 
 		[LlmIgnore]
 		public string Hash { get; set; }

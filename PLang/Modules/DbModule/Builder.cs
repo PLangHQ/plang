@@ -25,6 +25,7 @@ using PLang.Utils;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
@@ -90,15 +91,15 @@ namespace PLang.Modules.DbModule
 				dataSource = (await dbSettings.GetAllDataSources()).FirstOrDefault(p => p.IsDefault);
 				goalStep.Goal.DataSourceName = dataSource.Name;
 			}
-
+			/*
 			List<DataSource> dataSources = new();
 			if (methodsAndTables.DataSourceWithTableInfos.Count > 0)
 			{
 				foreach (var dsName in methodsAndTables.DataSourceWithTableInfos.Keys)
 				{
-					if (!string.IsNullOrEmpty(dsName))
+					if (!string.IsNullOrEmpty(dsName.Name))
 					{
-						(var ds, var error2) = await dbSettings.GetDataSource(dsName, goalStep, false);
+						(var ds, var error2) = await dbSettings.GetDataSource(dsName.Name, goalStep, false);
 						if (error2 != null) return (null, new BuilderError(error2));
 						if (dataSource != null && dataSource.NameInStep == null && ds?.Name == dataSource.Name)
 						{
@@ -108,51 +109,41 @@ namespace PLang.Modules.DbModule
 					}
 				}
 			}
+			*/
 
-
-			if (dataSource == null && dataSources.Count == 0)
+			if (dataSource == null)
 			{
 				dataSource = context.DataSource;
 
-				if (dataSource != null)
-				{
-					dataSource = dataSource with { NameInStep = dataSource.Name };
-				}
 			}
 
 			string sqlType = "sqlite";
-			string autoIncremental = "";
-			string insertAppend = "";
 			string system = "";
 			if (dataSource != null)
 			{
 				sqlType = dataSource.TypeFullName;
-				autoIncremental = (dataSource!.KeepHistory) ? "(NO auto increment)" : "auto incremental";
-
-				// todo: this will fail with different type of dbs
-
 			}
 
-			string dataSourceName;
-			if (methodsAndTables.DataSourceWithTableInfos.Count > 0)
+			if (methodsAndTables.Tables.Count > 0)
 			{
 				system += @$"
-<dataSourceAndTableInfos>
-{JsonConvert.SerializeObject(methodsAndTables.DataSourceWithTableInfos)}
 <dataSourceAndTableInfos>";
-
-				dataSourceName = string.Join(", ", methodsAndTables.DataSourceWithTableInfos.Select(p => p.Key));
-				dataSourceName += $"\n- The first data source: '{methodsAndTables.DataSourceWithTableInfos.First().Key}' is the main. main should only be used in sql statement, but data source name is '{methodsAndTables.DataSourceWithTableInfos.First().Key}'";
-			}
-			else
-			{
-				dataSourceName = (dataSource != null) ? $"(\"{dataSource.NameInStep ?? dataSource.Name}\")" : "";
+				foreach (var table in methodsAndTables.Tables)
+				{
+					system += $@"
+DataSource name: {table.DataSource.NameInStep}
+Table name: {table.Name}
+Columns: {JsonConvert.SerializeObject(table.Columns)}
+----
+";
+				}
+				system += "</dataSourceAndTableInfos>";
 			}
 
 			system += @$"
 
 Additional json Response explaination:
-- Datasource(s) to available: {dataSourceName}
+- Datasource(s) to available: {dataSource.NameInStep}
 - TableNames: List of tables defined in sql statement
 - AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'
 - for `IN (@parameter)` statements => The parameter type should be System.Array
@@ -163,153 +154,52 @@ Rules:
 - Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime
 - string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.";
 
-			if (methodsAndTables.ContainsMethod("insert"))
-			{
-				system += "\n- when user defines to write into come sort of %id%, then choose the method which select id of row back";
-				if (dataSource?.KeepHistory == true)
-				{
-					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response";
-					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
-					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
-					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";
-				}
-				else
-				{
-					system += "\n- When user want to do InsertAndSelectIdOfInsertedRow, include the select statment to get the id of inserted row";
-				}
-			}
-			else
-			{
-				if (!methodsAndTables.ContainsMethod("CreateTable"))
-				{
-					system += @"
-- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. 
-- Do not assume or include all columns from the table schema unless the user requests it. ";
-				}
-			}
-			if (methodsAndTables.ContainsMethod("CreateTable"))
-			{
-				system += $"\n- On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long";
-			}
-			if (methodsAndTables.ContainsMethod("update") || methodsAndTables.ContainsMethod("delete"))
-			{
-				system += $"\n- When sql statement is missing WHERE statement, give a Warning";
-			}
-			if (methodsAndTables.ContainsMethod("select"))
-			{
-				system += @$"
-- when user defines select * from XXX, keep the * in sql
-- You MUST generate ReturnValues for the select statement, see <select_example>
-- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
-- when user defines, write to %variable%, then result is an object
-
-<select_example>
-`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
-`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
-`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders
-
-<select_example>
-";
-
-
-			}
-
-			if (methodsAndTables.ContainsMethod("multipledatas"))
-			{
-				system += $@"
-sql statement contains multiple datasource. The first datasource is referenced as 'main' in the sql statement and MUST contain the original name({methodsAndTables.DataSource.NameInStep}) in dataSourceNames
-<select_example>
-`select main.title, analytics.hits from main.products p join analytics.hits h on p.id=h.productId` => main MUST contain the original datasource name in dataSourceNames but MUST keep main in sql statement 
-</select_example>
-
-DO NOT CHANGE main. prefix
-";
-			}
-
-			if (methodsAndTables.ContainsMethod("ExecuteDynamicSql"))
-			{
-				system += @"
-- for dynamic sql, keep dynamic table and columns names in sql statement, e.g. select * from %type%Options, then keep %type% for in the sql statement
-";
-			}
-
-			if (methodsAndTables.ContainsMethod("SelectOneRow"))
-			{
-				system += $@"
-- when user defines select * from XXX, keep the * in sql
-- select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'
-- user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid
-- Returning 1 mean user want only one row to be returned (limit 1)
-
-<select_example>
-`select id from users where id=%id%` => ReturnValues => VariableName:  id
-`select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice
-`select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
-<select_example>
-";
-			}
-			if (methodsAndTables.DataSourceWithTableInfos.Count > 0)
+			system += AppendSystemDependingOnMethod(methodsAndTables, dataSource);
+			
+			if (methodsAndTables.Tables.Count > 0)
 			{
 				system += $@"
 - Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)
 - use <dataSourceAndTableInfos> to build a valid sql for {sqlType}
 ";
-				if (methodsAndTables.DataSourceWithTableInfos.Count > 1)
-				{
-					system += @"
-- Make sure to sort the dataSourceNames in your response so that the table marked as main comes first. For example:
-	let say there are 2 data sources, 'marketing' and 'data'
-	`select * from main.products p join marketing.hits h on p.id=h.productId`
-	then use <dataSourceAndTableInfos> to determine what dataSourceName the products table belongs and sort it as first in dataSourceNames";
-
-
-
-				}
 
 			}
 			if (dataSource != null)
 			{
 				system += $@"
-- The main dataSourceName for database operations is: ""{dataSource.NameInStep ?? dataSource.Name}"". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.
-- Id columns: {autoIncremental}
+- The main dataSourceName for database operations is: ""{dataSource.NameInStep}"". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.
 
 The dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.
 ";
-			}
 
-			if (dataSources != null && dataSources.Count > 1)
-			{
-				List<string> aliases = ["main"];
-				aliases.AddRange(dataSources.Skip(1).Select(p =>
+				if (dataSource.AttachedDbs.Count > 0)
 				{
-					if (p.Name.Contains("/"))
+					system += @"
+- Make sure to sort the dataSourceNames in your response so that the table marked as main comes first. For example:
+	let say there are 2 data sources, 'marketing' and 'data'
+	`select * from main.products p join marketing.hits h on p.id=h.productId`
+	then use <dataSourceAndTableInfos> to determine what dataSourceName the products table belongs and sort it as first in dataSourceNames OR as user intends it to be";
+
+					List<string> aliases = ["main"];
+					aliases.AddRange(dataSource.AttachedDbs.Select(p =>
 					{
-						return p.Name.Substring(0, p.Name.IndexOf('/'));
-					}
-					return p.Name;
-				}));
+						return p.Alias;
+					}));
 
-				string strDataSources = string.Join("\", \"", aliases);
-				system += $@"
-These databases use ATTACH in sqlite: ""{strDataSources}"". 
-'main' data source should always be listed first in dataSourceNames
-That means sql statements MUST be prefixed, e.g. `select * from data.orders`, keep the prefix in sql statement.
-<prefix_examples>";
-				foreach (var alias in aliases)
-				{
+					string strDataSources = string.Join("\", \"", aliases);
 					system += $@"
-`select * from {alias}.products` => sql = ""select * from {alias}.products""
-`update {alias}.variants set title=%title%` => sql = ""update {alias}.variants set title=@title""
-`delete {alias}.users where %id%` => sql = ""delete {alias}.users where id=@id""
+This sql statement will ATTACH in sqlite: ""{strDataSources}"". That means tables in sql statements MUST be prefixed.
+'main.' data source should always be listed first in dataSourceNames Parameters (in this case it is '{dataSource.NameInStep}')
+
+<prefix_examples>
+`select * from products p join analytics a on p.id=a.productId` => sql = ""SELECT * FROM {aliases[0]}.products p JOIN {aliases[1]}.analytics a ON p.id=a.productId""
+</prefix_example>
+In this example above we assume 'products' table belongs to the dataSource '{dataSource.NameInStep}' which is referenced as '{aliases[0]}.', and 'analytics.' belongs to the datasource {aliases[1]}.
+Use <dataSourceAndTableInfos> to construct the valid sql
 ";
 
 				}
-				system += $@"
-<prefix_example>
-";
-
 			}
-
 
 
 			AppendToSystemCommand(system);
@@ -425,18 +315,121 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 			return buildResult;
 		}
 
-		[Description("Methods is dictionary(key:value). Key is method name, Value is confidents level(low|medium|high). DataSourceName can contain variables, e.g. /user/%user.id%")]
-		public record MethodsAndTables(string Reasoning, Dictionary<string, string> Methods, List<string> TableNames, string? DataSourceName = null)
+		private string AppendSystemDependingOnMethod(MethodsAndTables methodsAndTables, DataSource dataSource)
+		{
+			string system = "";
+			if (methodsAndTables.ContainsMethod("insert"))
+			{
+				system += @"\n- when user defines to write into come sort of %id%, then choose the method which select id of row back
+- ignore on duplicate should set validateAffectedRows=false";
+				if (dataSource?.KeepHistory == true)
+				{
+					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response";
+					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
+					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
+					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";
+				}
+				else
+				{
+					system += "\n- When user want to do InsertAndSelectIdOfInsertedRow, include the select statment to get the id of inserted row";
+				}
+			}
+			else
+			{
+				if (!methodsAndTables.ContainsMethod("CreateTable"))
+				{
+					system += @"
+- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. 
+- Do not assume or include all columns from the table schema unless the user requests it. ";
+				}
+			}
+			if (methodsAndTables.ContainsMethod("CreateTable"))
+			{
+				string autoIncremental = (dataSource.KeepHistory) ? "(NO auto increment)" : "auto incremental";
+				system += $"\n- On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long";
+			}
+			if (methodsAndTables.ContainsMethod("update") || methodsAndTables.ContainsMethod("delete"))
+			{
+				system += $"\n- When sql statement is missing WHERE statement, give a Warning";
+			}
+			if (methodsAndTables.ContainsMethod("select"))
+			{
+				system += @$"
+- when user defines select * from XXX, keep the * in sql
+- You MUST generate ReturnValues for the select statement, see <select_example>
+- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
+- when user defines, write to %variable%, then result is an object
+
+<select_example>
+`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
+`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
+`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders
+`select id as %productId% from products` => sql=""select id as productId from products"", ReturnValues => VariableName: productId
+<select_example>
+";
+
+
+			}
+
+			if (methodsAndTables.DataSource?.AttachedDbs.Count > 0)
+			{
+				system += $@"
+sql statement contains multiple datasource. The first datasource is referenced as 'main' in the sql statement and MUST contain the original name({methodsAndTables.DataSource.NameInStep}) in dataSourceNames
+<select_example>
+`select main.title, analytics.hits from main.products p join analytics.hits h on p.id=h.productId` => main MUST contain the original datasource name in dataSourceNames but MUST keep main in sql statement 
+</select_example>
+
+DO NOT CHANGE main. prefix
+";
+			}
+
+			if (methodsAndTables.ContainsMethod("ExecuteDynamicSql"))
+			{
+				system += @"
+- for dynamic sql, keep dynamic table and columns names in sql statement, e.g. select * from %type%Options, then keep %type% for in the sql statement
+";
+			}
+
+			if (methodsAndTables.ContainsMethod("SelectOneRow"))
+			{
+				system += $@"
+- when user defines select * from XXX, keep the * in sql
+- select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'
+- user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid
+- Returning 1 mean user want only one row to be returned (limit 1)
+
+<select_example>
+`select id from users where id=%id%` => ReturnValues => VariableName:  id
+`select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice
+`select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
+<select_example>
+";
+			}
+			return system;
+		}
+
+		[Description("DataSource Name can contain variables, e.g. /user/%user.id%, then IsDynamic=true or it can be something string such as 'data', 'analytics', etc. then IsDynamic=false")]
+		public record DataSourceName(string Name, bool IsDynamic);
+
+		public record Table(string Name)
+		{
+			[LlmIgnore]
+			public DataSource DataSource { get; set; }
+			public string DataSourceName { get; set; }
+			public List<ColumnInfo> Columns { get; internal set; }
+		}
+		[Description("Methods is dictionary(key:value). Key is method name, Value is confidents level(low|medium|high).  Tables that are in the sql statement. DataSourceNames defined by the user.")]
+		public record MethodsAndTables(string Reasoning, Dictionary<string, string> Methods, List<Table> Tables, List<DataSourceName>? DataSourceNames = null)
 		{
 			[LlmIgnore]
 			public DataSource? DataSource { get; set; }
 
 			[LlmIgnore]
 			public ClassDescription ClassDescription { get; set; }
-
-			[LlmIgnore]
-			public OrderedDictionary<string, List<TableInfo>> DataSourceWithTableInfos { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-
+			/*
+						[LlmIgnore]
+						public OrderedDictionary<DataSourceName, List<TableInfo>> DataSourceWithTableInfos { get; set; } = new();
+			*/
 			public bool ContainsMethod(string name)
 			{
 				return Methods.FirstOrDefault(p => p.Key.Contains(name, StringComparison.OrdinalIgnoreCase) && p.Value == "high").Key != null;
@@ -448,13 +441,14 @@ That means sql statements MUST be prefixed, e.g. `select * from data.orders`, ke
 			string system = @"Determine which <methods> fit best with the user intent for this DbModule. 
 This is pre-processing to choose selection of possible <methods>, so you can suggest multiple methods. 
 For Select, Insert, Update, Delete, CreateTable and Execute methods, list out the table names that are affected
-When a direct method is not provided for the user intentented sql statement, use Execute(when sql is know) or ExecuteDynamicSql(when sql cannot be determined)
+When a you cannot determine method for the user intentented sql statement, use Execute(when sql is know) or ExecuteDynamicSql(when sql cannot be determined)
 When table name is unknown at built time because it is created with variable, use ExecuteDynamicSql, e.g. select * from %tableName%, or select * from %type%Options
 
 ## Scheme explained: 
 - Reasoning: explain why you chose method(s)
 - Methods: dictionary(key:value). Key is method name, Value is confidents level(low|medium|high)
 - TableNames: List of tables that are used in user sql pseudo code
+- DataSourceNames: list of datasource names defined by the user. Can be null
 ";
 
 			var programType = typeHelper.GetRuntimeType(step.ModuleType);
@@ -510,24 +504,32 @@ When table name is unknown at built time because it is created with variable, us
 				methodsAndTables.ContainsMethod("ExecuteDynamicSql") ||
 				methodsAndTables.ContainsMethod("QueryDynamicSql") ||
 				methodsAndTables.ContainsMethod("ExecutePlang")
-				|| (methodsAndTables.TableNames.Count > 0 && methodsAndTables.TableNames[0] == "ExecuteDynamicSql"))
+				|| (methodsAndTables.Tables.Count > 0 && methodsAndTables.Tables[0].Name == "ExecuteDynamicSql"))
 			{
-				if (stepDataSource != null) methodsAndTables.DataSource = stepDataSource;
-				return (methodsAndTables, null);
+				if (stepDataSource != null)
+				{
+					methodsAndTables.DataSource = stepDataSource;
+					methodsAndTables.Tables.ForEach(p => p.DataSource = stepDataSource);
+				}
+					return (methodsAndTables, null);
 			}
 
 
 
 			if (!methodHasDataSourceName)
 			{
-				if (stepDataSource != null) methodsAndTables.DataSource = stepDataSource;
+				if (stepDataSource != null)
+				{
+					methodsAndTables.DataSource = stepDataSource;
+					methodsAndTables.Tables.ForEach(p => p.DataSource = stepDataSource);
+				}
 				return (methodsAndTables, null);
 			}
 
 
 
 			// tables names are only needed for select, update, delete, insert, etc.
-			if (methodsAndTables.TableNames == null || methodsAndTables.TableNames.Count == 0)
+			if (methodsAndTables.Tables == null || methodsAndTables.Tables.Count == 0)
 			{
 				if (!methodsAndTables.ContainsMethod("Execute"))
 				{
@@ -535,136 +537,90 @@ When table name is unknown at built time because it is created with variable, us
 				}
 			}
 
+
+			List<DataSource> dataSources = new();
 			var program = GetProgram(step);
-			if (!string.IsNullOrEmpty(methodsAndTables.DataSourceName))
+			if (methodsAndTables.DataSourceNames?.Count > 0)
 			{
-				(var dataSource, var dsError) = await dbSettings.GetDataSource(methodsAndTables.DataSourceName);
-				if (dsError != null) return (null, new BuilderError(dsError));
-
-				(var tableInfos, dsError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.TableNames);
-				if (dsError != null && dsError.StatusCode != 404) return (null, new BuilderError(dsError));
-
-
-				methodsAndTables.DataSource = dataSource;
-				methodsAndTables.DataSourceWithTableInfos.Add(dataSource.NameInStep, tableInfos);
-				return (methodsAndTables, null);
-			}
-
-
-			var dataSources = await dbSettings.GetAllDataSources();
-			if (dataSources == null || dataSources.Count == 0)
-			{
-				return (null, new StepBuilderError("Data source has not been created.", step, Retry: false,
-						FixSuggestion: @"Create a Setup.goal file and add steps creating tables, e.g. `Setup
-- create table users, columns: 
-	name(string, not null), created(datetime, default now)"));
-			}
-
-			HashSet<string> stepDataSourcesNames = new();
-			if (stepDataSource != null)
-			{
-				stepDataSourcesNames.Add(stepDataSource.Name);
-				dataSources = dataSources.OrderBy(ds => ds.Name != stepDataSource.Name).ToList();
-			}
-
-			DataSource? selectedDataSource = null;
-
-			List<string> preferedNames = new();
-			var prefixedTables = methodsAndTables.TableNames.Where(p => p.Contains("."));
-			if (prefixedTables.Count() > 0)
-			{
-				foreach (var prefix in prefixedTables)
+				foreach (var dsName in methodsAndTables.DataSourceNames)
 				{
-					string prefixName = prefix.Substring(0, prefix.IndexOf("."));
-					if (prefixName == "main" && context.DataSource != null)
-					{
-						var dataSource = context.DataSource;
+					(var dataSource, var dsError) = await dbSettings.GetDataSource(dsName.Name);
+					if (dsError != null) return (null, new StepBuilderError(dsError, step));
 
-						//preferedNames = dataSource.AttachedDbs;
-					}
-					else
-					{
-						preferedNames.Add(prefixName);
-					}
+					dataSources.Add(dataSource);
 				}
 			}
-			IError? rError;
-
-			foreach (var dataSource in dataSources)
+			else
 			{
+				dataSources = await dbSettings.GetAllDataSources();
+			}
 
-				(var tableInfos, rError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.TableNames);
-				if (rError != null && rError.StatusCode != 404) return (null, new BuilderError(rError));
-
-				if (tableInfos == null || tableInfos.Count == 0) continue;
-
-				if (selectedDataSource != null)
+			if (methodsAndTables.Tables != null)
+			{
+				foreach (var dataSource in dataSources)
 				{
-					if (preferedNames.Count > 0 && preferedNames.Any(p => dataSource.Name.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
-					{
-						selectedDataSource = dataSource;
+					(var tableInfos, var dsError) = await program.GetDatabaseStructure(dataSource, methodsAndTables.Tables.Select(p => p.Name).ToList());
+					if (dsError?.StatusCode == 404) continue;
+					if (dsError != null) return (null, new StepBuilderError(dsError, step));
 
-					}
-
-					if (preferedNames.Count == 0)
+					foreach (var tableInfo in tableInfos)
 					{
-
-						if (stepDataSourcesNames == null || stepDataSourcesNames.Contains(dataSource.Name))
+						var table = methodsAndTables.Tables.FirstOrDefault(p => p.Name == tableInfo.Name);
+						if (table != null)
 						{
-							return (null, new StepBuilderError($"Multiple datasource detected with table(s) {string.Join(",", methodsAndTables.TableNames)}. You must defined datasource in statement", step, Retry: false));
+							if (table.DataSource != null)
+							{
+								return (null, new StepBuilderError($"At least two datasources have the table '{table.Name}'. They are '{table.DataSource.Name}' and '{dataSource.Name}'", step,
+									FixSuggestion: $"Define the datasource you want to use in your step, e.g. {step.Text}, datasource: {dataSource.Name}", Retry: false));
+							}
+							table.DataSource = dataSource;
+							table.DataSourceName = dataSource.NameInStep;
+							table.Columns = tableInfo.Columns;
+							if (methodsAndTables.DataSource == null)
+							{
+								methodsAndTables.DataSource = dataSource;
+							}
+							else if (methodsAndTables.DataSource.LocalPath != dataSource.LocalPath)
+							{
+								methodsAndTables.DataSource.Attach(dataSource.NameInStep, dataSource.LocalPath);
+							}
 						}
-						else
-						{
-							methodsAndTables.DataSourceWithTableInfos.Add(dataSource.NameInStep ?? dataSource.Name, tableInfos);
-						}
-					}
-					else
-					{
-						bool isMain = false;
-						var tableNameInMain = (methodsAndTables.TableNames.FirstOrDefault(p => p.StartsWith("main.")) ?? "").Replace("main.", "");
-						if (tableInfos.FirstOrDefault(p => p.Name.Equals(tableNameInMain, StringComparison.OrdinalIgnoreCase)) != null)
-						{
-							isMain = true;
-						}
-
-						if (isMain)
-						{
-							methodsAndTables.DataSourceWithTableInfos.Insert(0, dataSource.NameInStep ?? dataSource.Name, tableInfos);
-						}
-						else
-						{
-							methodsAndTables.DataSourceWithTableInfos.Add(dataSource.NameInStep ?? dataSource.Name, tableInfos);
-						}
-					}
-
-				}
-				else
-				{
-					selectedDataSource = dataSource;
-					if (methodsAndTables.DataSourceWithTableInfos.TryGetValue(dataSource.NameInStep ?? dataSource.Name, out var tableInfos1))
-					{
-						tableInfos1.AddRange(tableInfos);
-					}
-					else
-					{
-						methodsAndTables.DataSourceWithTableInfos.Add(dataSource.NameInStep ?? dataSource.Name, tableInfos);
 					}
 				}
 
+				var tablesWithMissingDataSource = methodsAndTables.Tables.Where(p => p.DataSource == null).ToList();
+				if (tablesWithMissingDataSource.Count > 0)
+				{
+					string tableSuggestions = await GetTableSuggestions(tablesWithMissingDataSource);
+					return (null, new StepBuilderError($"Could not find datasource for table(s): {string.Join(",", tablesWithMissingDataSource.Select(p => p.Name))}. Is there a typo in the sql?"
+						, step, FixSuggestion: tableSuggestions, Retry: false));
+				}
 			}
-
-
-
-			if (selectedDataSource == null)
-			{
-				return (null, new StepBuilderError($"Table {string.Join(",", methodsAndTables.TableNames.Select(p => p))} couldn't be found in any data source", step, Retry: false,
-					FixSuggestion: "Either create the table in you Setup file or remove the Step"
-					));
-
-			}
-
-			methodsAndTables.DataSource = selectedDataSource;
 			return (methodsAndTables, null);
+		}
+
+		private async Task<string> GetTableSuggestions(List<Table> tablesWithMissingDataSource)
+		{
+			var program = GetProgram(GoalStep);
+			var dataSources = await dbSettings.GetAllDataSources();
+			string suggestions = "";
+			foreach (var table in tablesWithMissingDataSource)
+			{
+				foreach (var dataSource in dataSources)
+				{
+					var schemas = await program.GetDbScheme(dataSource);
+					if (schemas.Scheme == null) continue;
+
+					var tables = schemas.Scheme.Where(p => p.StartsWith(table.Name, StringComparison.OrdinalIgnoreCase));
+					suggestions += string.Join("\n", tables.Select(p => $" - {p} (DataSource: {dataSource.NameInStep})\n"));
+				}
+			}
+
+			if (suggestions != "")
+			{
+				suggestions = "Here are table suggestions:\n" + suggestions;
+			}
+			return suggestions;
 		}
 
 		private (ClassDescription? ClassDescription, bool HasDataSourceName, IBuilderError? Error) GetNewClassDescription(GoalStep step, ClassDescription classDescription, MethodsAndTables? methodsAndTables)
@@ -703,7 +659,14 @@ When table name is unknown at built time because it is created with variable, us
 				if (methodInfo.Parameters == null) continue;
 
 				var dataSourceName = methodInfo.Parameters.FirstOrDefault(p => p.Name.Equals("dataSourceName"));
-				if (dataSourceName == null) continue;
+				if (dataSourceName == null)
+				{
+					dataSourceName = methodInfo.Parameters.FirstOrDefault(p => p.Name.Equals("dataSourceNames"));
+					if (dataSourceName == null)
+					{
+						continue;
+					}
+				}
 				methodHasDataSourceName = true;
 			}
 
@@ -713,6 +676,10 @@ When table name is unknown at built time because it is created with variable, us
 		private async Task<(DataSource? DataSource, IBuilderError? Error)> GetDataSource(GoalStep step, DbGenericFunction gf, string keyName = "dataSourceName")
 		{
 			var dataSourceNames = gf.GetParameter<List<string>>(keyName);
+			if (dataSourceNames == null)
+			{
+				dataSourceNames = gf.GetParameter<List<string>>(keyName + "s");
+			}
 			List<AttachedDb> attachedDbs = new();
 			string? dataSourceName = null;
 			if (dataSourceNames != null)
@@ -725,7 +692,10 @@ When table name is unknown at built time because it is created with variable, us
 						var result = await dbSettings.GetDataSource(name, step, false);
 						if (result.Error != null) return (null, new BuilderError(result.Error));
 
-						attachedDbs.AddRange(new AttachedDb(result.DataSource.Name, result.DataSource.LocalPath));
+						if (result.DataSource != null && !attachedDbs.Any(p => p.Path == result.DataSource.LocalPath))
+						{
+							attachedDbs.AddRange(new AttachedDb(result.DataSource.Name, result.DataSource.LocalPath));
+						}
 					}
 				}
 			}
@@ -755,7 +725,11 @@ When table name is unknown at built time because it is created with variable, us
 			var (dataSource, error) = await dbSettings.GetDataSource(dataSourceName, step, false);
 			if (error != null) return (null, new StepBuilderError(error, step));
 
-			dataSource.AttachedDbs.AddRange(attachedDbs);
+			foreach (var attachDb in attachedDbs)
+			{
+				dataSource.Attach(attachDb.Alias, attachDb.Path);
+			}
+			
 			return (dataSource, null);
 		}
 
@@ -822,7 +796,7 @@ When table name is unknown at built time because it is created with variable, us
 			}
 
 			var tableAllowList = gf.GetParameter<List<string>>("tableAllowList");
-			var parameters = gf.GetParameter<List<ParameterInfo>>("parameters");
+			var parameters = gf.GetParameter<List<ParameterInfo>?>("parameters");
 
 			using var program = GetProgram(step);
 			var result = await program.Execute(dataSource, sql, tableAllowList, parameters);
@@ -836,7 +810,7 @@ When table name is unknown at built time because it is created with variable, us
 
 		public bool IsValidated(GoalStep step, Instruction instruction, DbGenericFunction gf)
 		{
-			if (step.Goal.IsSetup) return false;
+			if (step.Goal.IsSetup || (AppContext.TryGetSwitch("Validate", out bool validate) && validate)) return false;
 			if (gf.GetParameter<string>("sql") == null && gf.GetParameter<string>("fileName") == null) return false;
 
 			if (instruction.Properties.TryGetValue("IsValidSql", out object? prop))
@@ -939,7 +913,7 @@ When table name is unknown at built time because it is created with variable, us
 				return (instruction, null);
 			}
 
-			List<string> MethodsToValidate = ["Select", "SelectOneRow", "Update", "InsertOrUpdate", "InsertOrUpdateAndSelectIdOfRow", "Insert", "InsertAndSelectIdOfInsertedRow", "Delete"];
+			List<string> MethodsToValidate = ["Select", "SelectOneRow", "SelectWithMultipleDataSources", "SelectOneRowWithMultipleDataSources", "Update", "InsertOrUpdate", "InsertOrUpdateAndSelectIdOfRow", "Insert", "InsertAndSelectIdOfInsertedRow", "Delete"];
 			if (!MethodsToValidate.Contains(gf.Name)) return (instruction, null);
 
 			var dataSourceName = gf.GetParameter<string?>("dataSourceName");
@@ -1337,13 +1311,22 @@ Reason:{error.Message}", step,
 				return (false, dataSource.Name, new StepBuilderError($"Could not find data source {dataSource.Name} to validate sql", step));
 			}
 
+
+			IDbConnection connection = (dataSource.Transaction != null) ?
+					dataSource.Transaction.Connection :
+					anchor.Value;
+			
+
 			try
 			{
-				using var cmd = (dataSource.Transaction != null) ?
-					dataSource.Transaction.Connection?.CreateCommand() :
-					anchor.Value.CreateCommand();
+				
+
+				AttachDb(connection, dataSource, step);
+
+				var cmd = connection.CreateCommand();
+
 				cmd.CommandText = sql;
-				cmd.Prepare();
+				cmd.Prepare();				
 
 				return (true, anchor.Key, null);
 			}
@@ -1352,12 +1335,71 @@ Reason:{error.Message}", step,
 				string errorInfo = "Error(s) while trying to valid the sql.\n";
 				errorInfo += $"\tDataSource: {anchor.Key} - Error Message:{ex.Message}\n";
 
-				return (false, dataSource.Name, new StepBuilderError(errorInfo, Step: step, Retry: false));
+				return (false, dataSource.Name, new StepBuilderError(errorInfo, Step: step));
+			} finally
+			{
+				try
+				{
+					DetachDb(connection, dataSource, step);
+				} catch (Exception ex)
+				{
+					int i = 0;
+				}
 			}
 
 		}
 
 
+		private void AttachDb(IDbConnection connection, DataSource dataSource, GoalStep step)
+		{
+			if (dataSource.AttachedDbs.Count == 0) return;
+			if (dataSource.AttachedDbs.FirstOrDefault(p => !p.IsAttached) == null) return;
+
+			string attach = "";
+			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+			{
+				if (dataSource.AttachedDbs[i].IsAttached) continue;
+
+				var alias = dataSource.AttachedDbs[i].Alias;
+				
+				if (string.Equals(alias, "main", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(alias, "temp", StringComparison.OrdinalIgnoreCase))
+					throw new InvalidOperationException($"Invalid alias: {alias}");
+
+			
+				attach +=  $"ATTACH DATABASE '{dataSource.AttachedDbs[i].Path}' AS {alias};\n";
+				dataSource.AttachedDbs[i].IsAttached = true;
+			}
+			var cmd = connection.CreateCommand();
+			cmd.CommandText = attach;
+			cmd.ExecuteNonQuery();
+
+		}
+
+		private void DetachDb(IDbConnection connection, DataSource dataSource, GoalStep step)
+		{
+			if (dataSource.AttachedDbs.Count == 0 || dataSource.IsInTransaction) return;
+
+			string detach = "";
+			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
+			{
+				var alias = dataSource.AttachedDbs[i].Alias;
+
+				if (string.Equals(alias, "main", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(alias, "temp", StringComparison.OrdinalIgnoreCase))
+					throw new InvalidOperationException($"Invalid alias: {alias}");
+
+				detach += $";\nDETACH DATABASE \"{alias}\";";
+				dataSource.AttachedDbs[i].IsAttached = false;
+
+			}
+			var cmd = connection.CreateCommand();
+			cmd.CommandText = detach;
+			cmd.ExecuteNonQuery();
+
+			dataSource.AttachedDbs.Clear();
+			
+		}
 
 
 

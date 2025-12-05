@@ -6,6 +6,7 @@ using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.OutputStream.Transformers.Converters;
+using PLang.Utils.JsonConverters;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
@@ -31,7 +32,7 @@ public class PlangTransformer : JsonTransformer
 	{
 		ContractResolver = new CamelCasePropertyNamesContractResolver(),
 		Formatting = Formatting.None,
-		Converters = { new StringEnumConverter(), new NewtonsoftObjectValueConverter() }
+		Converters = { new StringEnumConverter(), new NewtonsoftObjectValueConverter(), new LongAsStringConverter() }
 	};
 
 	public override async Task<(long, IError?)> Transform(PLangContext context, PipeWriter writer, OutMessage data, CancellationToken ct = default)

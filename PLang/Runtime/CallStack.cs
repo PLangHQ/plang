@@ -58,7 +58,7 @@ public class CallStack
 
 	public void DisposeOfDisposables()
 	{
-		if (CurrentFrame.Disposables.Count == 0) return;
+		if (CurrentFrame == null || CurrentFrame.Disposables.Count == 0) return;
 
 		foreach (var disposable in CurrentFrame.Disposables)
 		{

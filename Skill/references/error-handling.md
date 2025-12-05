@@ -39,6 +39,45 @@ ValidateProduct
 - make sure %category% in ["Electronics", "Clothing", "Food"]
 ```
 
+### Validation with Full Options
+
+Validation can include message, status code, key, and level:
+
+```plang
+/ Full syntax: make sure <condition>, "<message>", <statusCode>, key: "<key>", level: <level>
+
+- make sure %name% is not empty, "Name cannot be empty", 400, key: "EmptyName", level: error
+- make sure %email% contains @, "Invalid email format", 400, key: "InvalidEmail", level: error
+- make sure %age% >= 18, "Must be 18 or older", 403, key: "Underage", level: warning
+```
+
+**Options explained:**
+- **message**: User-friendly error message
+- **statusCode**: HTTP status code (400, 401, 403, etc.)
+- **key**: Identifier for client-side error handling or i18n
+- **level**: `error`, `warning`, `info`
+
+**Practical example:**
+```plang
+ValidateRegistration
+- make sure %email% is not empty, "Email is required", 400, key: "EmailRequired", level: error
+- make sure %email% contains @, "Please enter a valid email", 400, key: "InvalidEmail", level: error
+- make sure %password% length >= 8, "Password must be at least 8 characters", 400, key: "WeakPassword", level: error
+- make sure %terms% is true, "You must accept the terms", 400, key: "TermsNotAccepted", level: error
+```
+
+**Partial options** (you can use just what you need):
+```plang
+/ Just message
+- make sure %name% is not empty, "Name is required"
+
+/ Message and status code
+- make sure %token% is not empty, "Unauthorized", 401
+
+/ Message with key (for i18n)
+- make sure %name% is not empty, "Name is required", key: "NameRequired"
+```
+
 ### Validation Patterns
 
 **Pattern 1: Validate First**
@@ -189,6 +228,127 @@ ValidateAge
 - if %age% < 18, throw 403 "Access denied"
 ```
 
+## Goal Termination
+
+### End Goal
+
+Use `end goal` to stop the current goal's execution:
+
+```plang
+ShowProduct
+- select * from products where id=%productId%, return 1, write to %product%
+- if %product% is empty then
+    - [ui] render "404.html", navigate
+    - end goal
+/ This only runs if product exists
+- [ui] render "product.html", navigate
+```
+
+### End Goal and Parent Goals
+
+When a goal is called from another goal, `end goal` only stops the current goal. The parent goal continues. To stop parent goals too:
+
+```plang
+/ Stop current goal only
+- end goal
+
+/ Stop current goal AND the goal that called it
+- end goal and previous
+
+/ Stop current goal and multiple levels up
+- end goal and 2 levels up
+
+/ Stop ALL goal execution (full termination)
+- end goal and terminate
+```
+
+**Example - API returning 404:**
+```plang
+/ api/GetProduct.goal
+GetProduct
+- call goal /product/LoadProduct
+- [ui] render "product.html"   / This should NOT run if product not found
+
+/ product/LoadProduct.goal
+LoadProduct
+- select * from products where id=%productId%, return 1, write to %product%
+- if %product% is empty then
+    - [ui] render "404.html", navigate
+    - end goal and previous    / Stops LoadProduct AND GetProduct
+```
+
+### Throw vs End Goal
+
+Both can stop execution, but they serve different purposes:
+
+```plang
+/ Throw - signals an error, can be caught by error handlers
+- throw "Product not found", 404
+
+/ End goal - graceful exit, no error, just stops execution
+- end goal
+```
+
+**When to use throw:**
+- Error condition that should be logged
+- Need to return HTTP status code
+- Want error handlers to catch it
+- Abnormal termination
+
+**When to use end goal:**
+- Normal early exit (e.g., already rendered response)
+- Conditional branching that doesn't continue
+- After rendering error pages to user
+- Graceful termination
+
+**Combined pattern:**
+```plang
+ShowProduct
+- select * from products where id=%productId%, return 1, write to %product%
+- if %product% is empty then
+    - throw "Product not found", 404   / Returns 404 status to browser
+/ Execution stops here if throw happened
+- [ui] render "product.html", navigate
+```
+
+**Note:** When you render a template like "404.html" and the filename contains a status code pattern, PLang automatically returns that status code to the browser.
+
+## The Error Object (%!error%)
+
+`%!error%` is a reserved keyword containing error details:
+
+```plang
+HandleError
+- write out %!error%                    / Writes full error info
+- write out %!error.Message%            / Just the message
+- write out %!error.StatusCode%         / HTTP status code
+- write out %!error.Level%              / error, warning, info
+- write out %!error.Key%                / Error key for i18n
+- write out %!error.Exception%          / Full exception details (debug mode)
+```
+
+### Debug Mode
+
+Enable debug mode for detailed error output (useful for developers):
+
+```plang
+OnRequest
+- select * from users where identity=%Identity%, return 1, write to %user%
+- if %user.role% contains "admin" then call EnableDebug
+
+EnableDebug
+- set debug mode
+```
+
+When debug mode is enabled, `write out %!error%` includes full exception details, stack traces, and internal information helpful for debugging.
+
+```plang
+HandleError
+/ In debug mode, this shows detailed error info
+/ In normal mode, shows user-friendly message only
+- write out %!error%
+```
+
 ## Error Callbacks
 
 ### On Error Handlers
@@ -218,7 +378,109 @@ ProcessOrder
 // HandlePaymentError.goal
 HandlePaymentError
 - log error "Payment failed: %!error%"
-- write out %!error%"
+- write out %!error%
+```
+
+### Conditional Error Handling
+
+Match specific error conditions using partial string matching (case-insensitive):
+
+```plang
+FetchData
+- get https://api.example.com/data
+    on error 'timeout', call HandleTimeout
+    on error 'connection refused', call HandleConnectionError
+    on error 'unauthorized', call HandleAuth
+    on error call HandleGenericError
+    write to %data%
+```
+
+### Retry on Error
+
+Automatically retry on specific errors:
+
+```plang
+/ Retry on timeout - 5 attempts over 30 seconds
+- get https://api.example.com/data
+    on error 'timeout', retry 5 times over 30 seconds
+    write to %data%
+
+/ Retry on any error
+- get https://api.unreliable.com/data
+    retry 3 times over 1 minute
+    write to %data%
+
+/ Retry with specific status codes
+- post https://api.example.com/process
+    on error status code 503, retry 5 times over 2 minutes
+    write to %result%
+```
+
+### Fix and Retry Step
+
+Handle an error, fix the problem, then retry the same step:
+
+```plang
+ReadConfig
+- read config.txt, write to %config%
+    on error call CreateDefaultConfig
+
+CreateDefaultConfig
+- write '{"setting": "default"}' to config.txt
+- retry step   / Retries the read operation
+```
+
+**Example - ensure file exists:**
+```plang
+LoadData
+- read data.json, write to %data%
+    on error 'not found', call CreateDataFile
+
+CreateDataFile
+- write '[]' to data.json
+- retry step
+```
+
+### Error Handler Termination
+
+Control execution flow from error handlers:
+
+```plang
+ProcessRequest
+- get https://api.example.com/data
+    on error call HandleError
+- process %data%   / Only runs if HandleError doesn't terminate
+
+HandleError
+/ Check status code and decide what to do
+- if %!error.StatusCode% == 401 then
+    - [ui] render "login.html", navigate
+    - end goal and previous    / Stop HandleError AND ProcessRequest
+
+- if %!error.StatusCode% == 403 then
+    - [ui] render "forbidden.html", navigate
+    - end goal and previous
+
+- if %!error.StatusCode% == 503 then
+    - retry step               / Retry the HTTP request
+
+/ For other errors, log and continue
+- log error "API error: %!error.Message%"
+```
+
+**Termination levels:**
+```plang
+/ Stop only the error handler goal
+- end goal
+
+/ Stop error handler AND the goal that triggered the error
+- end goal and previous
+
+/ Stop multiple levels up (e.g., nested goal calls)
+- end goal, 4 levels up
+
+/ Stop all execution completely
+- end goal and terminate
 ```
 
 ### Try-Catch Pattern via Events
@@ -247,57 +509,6 @@ HandleApiError
 Events
 - on error in CreateUser call HandleUserCreationError
 - on error in ProcessPayment call HandlePaymentError
-```
-
-## Retry Logic
-
-### Basic Retry
-
-**Retry HTTP requests**:
-```plang
-// Retry 5 times over 10 minutes
-- get https://api.unreliable.com/data
-    retry 5 times over 10 minute period
-    write to %data%
-```
-
-**Retry with exponential backoff** (implicit):
-```plang
-// Plang automatically spaces retries
-- get %externalApi%
-    retry 3 times
-    write to %result%
-```
-
-### Retry Step After Error
-
-**Retry current step**:
-```plang
-GetData
-- get https://api.example.com/data
-    on error call RetryHandler
-    write to %data%
-
-RetryHandler
-- wait 5 seconds
-- retry step
-```
-
-**Limited retries**:
-```plang
-ProcessPayment
-- set %retries% = 0
-- call goal Charge %amount%, %card%
-    on error HandleError
-
-HandleError
-- set %retries% = %retries% + 1
-- if %retries% < 3
-    - wait 2 seconds
-    - retry step
-- else
-    - throw error "Payment failed after 3 attempts"
-        
 ```
 
 ## Validation Strategies

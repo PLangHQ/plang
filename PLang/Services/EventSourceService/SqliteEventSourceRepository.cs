@@ -93,8 +93,7 @@ namespace PLang.Services.EventSourceService
 				else
 				{
 					var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
-
-					return result;
+					return result; 
 				}
 
 			}

@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using AngleSharp.Browser.Dom;
+using Dapper;
 using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.Common;
 using System.IO.Abstractions;
@@ -74,7 +76,10 @@ namespace PLang.Modules.DbModule
 
 		public bool UseInMemoryDataSource { get; set; } = false;
 		public bool IsBuilder { get; internal set; }
-		public record AttachedDb(string Alias, string Path);
+		public record AttachedDb(string Alias, string Path)
+		{
+			public bool IsAttached { get; set; } = false;
+		};
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
@@ -104,6 +109,13 @@ namespace PLang.Modules.DbModule
 				}
 			}
 			private IDbTransaction? _transaction;
+
+			public void Attach(string alias, string path)
+			{
+				if (AttachedDbs.Any(p => p.Alias == alias)) return;
+
+				AttachedDbs.Add(new AttachedDb(alias, path));
+			}
 		}
 
 		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -395,6 +407,7 @@ Be concise"));
 
 		private async Task<List<DataSource>> AddDataSourceToSettings(DataSource dataSource)
 		{
+			
 			// todo: This needs to move to its own table, Datasource table, to expensive to load all datasources using json when thousands of datasources are avialable
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
@@ -416,6 +429,7 @@ Be concise"));
 				dataSources.Add(dataSource);
 			}
 
+			if (IsBuilder || UseInMemoryDataSource) return dataSources;
 
 			settings.SetList(this.GetType(), dataSources);
 			return dataSources;
@@ -431,20 +445,16 @@ Be concise"));
 			}
 			settings.SetList(typeof(ModuleSettings), dataSources);
 		}
-
-		public async Task<List<DataSource>> GetAllDataSourcesForBuilder()
-		{
-			var dataSources = settings.GetValues<DataSource>(this.GetType()).ToList();
-			for (int i = 0; i < dataSources.Count; i++)
-			{
-				(dataSources[i], _) = await ProcessDataSource(dataSources[i]);
-			}
-			return dataSources;
-		}
 	
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
 			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
+			for (int i=0;i<dataSources.Count;i++) 
+			{
+				var (dataSource, error) = await ProcessDataSource(dataSources[i]);
+				dataSources[i] = dataSource!;
+			}
+
 			return dataSources;
 		}
 
@@ -468,10 +478,10 @@ Be concise"));
 			return await ProcessDataSource(dataSource);
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? name, GoalStep? step = null, bool transactionDependant = true)
+		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? nameInStep, GoalStep? step = null, bool transactionDependant = true)
 		{
 			
-			if (string.IsNullOrEmpty(name))
+			if (string.IsNullOrEmpty(nameInStep))
 			{
 				if (context.DataSource != null)
 				{
@@ -480,22 +490,22 @@ Be concise"));
 
 				return (null, new ProgramError("You need to provide a data source name", step));
 			}
-			if (name.StartsWith("/"))
+			if (nameInStep.StartsWith("/"))
 			{
-				name = name.TrimStart('/');
+				nameInStep = nameInStep.TrimStart('/');
 			}
 
 			if (context.DataSource != null)
 			{
-				if (context.DataSource.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return (context.DataSource, null);
-				if (transactionDependant && context.DataSource.AttachedDbs.FirstOrDefault(p => p.Alias.Equals(name, StringComparison.OrdinalIgnoreCase)) != null)
+				if (context.DataSource.Name.Equals(nameInStep, StringComparison.OrdinalIgnoreCase)) return (context.DataSource, null);
+				if (transactionDependant && context.DataSource.AttachedDbs.FirstOrDefault(p => p.Alias.Equals(nameInStep, StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					return (context.DataSource, null);	
 				}
 			}
 
 			var dataSources = await GetAllDataSources();
-			var dsNameAndPath = GetNameAndPathByVariable(name, null);
+			var dsNameAndPath = GetNameAndPathByVariable(nameInStep, null);
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
 
 			if (dataSource == null)
@@ -504,10 +514,10 @@ Be concise"));
 				if (dataSource == null) return (null, error);
 			}
 
-			dataSource = dataSource with { NameInStep = name };
-			if (!IsBuilder && name.Contains("%"))
+			dataSource = dataSource with { NameInStep = nameInStep };
+			if (!IsBuilder && nameInStep.Contains("%"))
 			{
-				var dataSourceDynamicName = memoryStack.LoadVariables(name);
+				var dataSourceDynamicName = memoryStack.LoadVariables(nameInStep);
 				string cacheKey = "__plang_DataSource__" + dataSourceDynamicName;
 				var obj = await appCache.Get("__plang_DataSource__" + dataSourceDynamicName);
 				if (obj != null)
@@ -516,11 +526,10 @@ Be concise"));
 				}
 				else
 				{
-					(dataSource, var error) = await InitiateDatabase(dataSource, name, cacheKey);
+					(dataSource, var error) = await InitiateDatabase(dataSource, nameInStep, cacheKey);
 					if (error != null) return (dataSource, error);
 				}
 			}
-
 			return await ProcessDataSource(dataSource);
 
 		}
@@ -696,7 +705,9 @@ Be concise"));
 				}
 				try
 				{
-					await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
+					var result = await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
+
+					int i = 0;
 				}
 				catch (Microsoft.Data.Sqlite.SqliteException ex)
 				{
@@ -737,7 +748,14 @@ Be concise"));
 
 			if (UseInMemoryDataSource || IsBuilder)
 			{
-				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;" };
+				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;", LocalPath = $"file:{dataSource.Name}?mode=memory&cache=shared" };
+				if (string.IsNullOrEmpty(dataSource.NameInStep))
+				{
+					dataSource = dataSource with
+					{
+						NameInStep = dataSource.Name
+					};
+				}
 				return (dataSource, null);
 			}
 
@@ -785,18 +803,34 @@ Be concise"));
 			{
 				var createDataSourceStep = setupGoal.GoalSteps[0];
 				var instruction = JsonHelper.ParseFilePath<Building.Model.Instruction>(fileSystem, createDataSourceStep.AbsolutePrFilePath);
+				if (instruction == null)
+				{
+					if (step?.Goal.IsSetup == true && step.Index == 0)
+					{
+						instruction = step.Instruction;
+					} 
+
+					if (instruction == null)
+					{
+						return (null, new BuilderError($"Could not load instructions {step?.AbsolutePrFilePath}", Retry: false));
+					}
+
+				}
 				var gf = instruction.Function as DbGenericFunction;
 
 				if (gf != null && gf.Name == "CreateDataSource")
 				{
 					var dsName = gf.GetParameter<string>("name");
-					var dsDataType = gf.GetParameter<string>("databaseType");
+					var dsDataType = gf.GetParameter<string>("databaseType", "sqlite");
 					var setAsDefaultForApp = gf.GetParameter<bool?>("setAsDefaultForApp") ?? false;
 					var keepHistoryEventSourcing = gf.GetParameter<bool?>("keepHistoryEventSourcing") ?? false;
 
-					(var ds, var error) = await CreateDataSource(dsName, dsDataType, setAsDefaultForApp, keepHistoryEventSourcing);
+					return await CreateDataSource(dsName, dsDataType, setAsDefaultForApp, keepHistoryEventSourcing);
 
-					if (ds != null) return (ds, null);
+				} else if ((name ?? "data").Equals("data", StringComparison.OrdinalIgnoreCase) && setupGoal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				{
+					return await CreateDataSource("data", "sqlite", true, true);
+					
 				}
 			}
 

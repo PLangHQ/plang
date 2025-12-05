@@ -261,7 +261,7 @@ public class StepBuilder : IStepBuilder
 
 		if (instruction!.Function == null || string.IsNullOrEmpty(instruction.Function.Name)) return (false, null);
 
-		bool doReload = (step.Reload || instruction.Reload && step.Text != instruction.Text);
+		bool doReload = (step.Reload || instruction.Reload || step.Text != instruction.Text);
 		step.Reload = doReload;
 		if (step.Reload) return (!step.Reload, null);
 

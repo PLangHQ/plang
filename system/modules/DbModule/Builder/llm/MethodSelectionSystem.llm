@@ -1,0 +1,10 @@
+Match the best <method(s)> that fits best with user intent
+
+<methods>
+%methods%
+</methods>
+
+ feel free to return multiple methods 
+ 
+ 
+ return json {methods:string[]}

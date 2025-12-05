@@ -339,6 +339,10 @@ namespace PLang.Building.Parsers
 
 				goal.IsSetup = GoalHelper.IsSetup(goal);
 				goal.IsEvent = GoalHelper.IsEvent(goal);
+				if (!goal.IsEvent)
+				{
+					goal.HasChanged = true;
+				}
 
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
 				if (prevBuildGoal != null)
@@ -349,7 +353,7 @@ namespace PLang.Building.Parsers
 					goal.DataSourceName = prevBuildGoal.DataSourceName;
 					goal.IsSystem = isSystem;
 					goal.BuilderVersion = prevBuildGoal.BuilderVersion;
-					goal.HasChanged = prevBuildGoal.Hash != goal.Hash;
+					goal.HasChanged = prevBuildGoal.Text != goal.Text;
 
 					foreach (var injection in prevBuildGoal.Injections)
 					{
@@ -366,6 +370,7 @@ namespace PLang.Building.Parsers
 					goals[i].GoalSteps[b].Number = b + 1;
 					goals[i].GoalSteps[b].RelativeGoalPath = goal.RelativeGoalPath;
 					goals[i].GoalSteps[b].IsEvent = goal.IsEvent;
+					goals[i].GoalSteps[b].HasChanged = true;
 
 					if (prevBuildGoal == null) continue;
 
@@ -378,13 +383,22 @@ namespace PLang.Building.Parsers
 
 
 					goals[i].GoalSteps[b].EventBinding = prevStep.EventBinding;
-					goals[i].GoalSteps[b].IsEvent = goal.IsEvent;
 					goals[i].GoalSteps[b].Generated = prevStep.Generated;
 
 					var absolutePrStepFilePath = fileSystem.Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
 					var instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, absolutePrStepFilePath);
 
-					if (instruction == null) continue;
+					if (instruction == null)
+					{
+						// since events are different than regular steps 
+						// there is this if statement, events system should be standard like steps, future TODO
+						if (!goals[i].GoalSteps[b].IsEvent)
+						{							
+							goals[i].IsValid = false;
+							goals[i].HasChanged = true;
+						}
+						continue;
+					}
 
 					// todo: this HasChange is not good enough, function might have change
 					// should validate hash of file and the signature also.

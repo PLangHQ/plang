@@ -569,7 +569,7 @@ namespace PLang.Runtime
 
 		private async Task<(object? Variables, IError?)> RunSetup(Goal startGoal, PLangContext context)
 		{
-			var setupGoals = prParser.GetAllGoals().Where(p => p.IsSetup);
+			var setupGoals = prParser.GetAllGoals().Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)); //Setup should come first
 			if (!setupGoals.Any())
 			{
 				return (null, null);
@@ -592,6 +592,17 @@ namespace PLang.Runtime
 					vars.Add(result.Variables);
 				}
 				if (result.Error != null) return (ov, result.Error);
+
+				var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+				if (dict == null) dict = new();
+
+				foreach (var step in goal.GoalSteps)
+				{
+					if (step.Executed == null) return (null, new Error($"{step.RelativeGoalPath} was not executed"));
+					dict.TryAdd(step.RelativePrPath, step.Executed.Value);
+				}
+
+				settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
 			}
 			return (ov, null);
 		}
@@ -1030,13 +1041,10 @@ namespace PLang.Runtime
 						if (result.Error.Step == null) result.Error.Step = step;
 						return result;
 					}
-					if (step.RunOnce)
-					{
-						var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
-						if (dict == null) dict = new();
 
-						dict.TryAdd(step.RelativePrPath, DateTime.UtcNow);
-						settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
+					if (step.RunOnce && step.Executed == null)
+					{
+						step.Executed = DateTime.UtcNow;
 					}
 
 					logger.LogDebug($"     - Done running instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");

@@ -29,8 +29,16 @@ namespace PLang.Models.ObjectValueExtractors
 				var token = jObject.Properties()
 					   .FirstOrDefault(p => string.Equals(p.Name, segment.Value, StringComparison.OrdinalIgnoreCase))
 					   ?.Value;
-				if (token == null) return null;
-			
+				if (token == null)
+				{
+					return new ObjectValue(segment.Value, null, Initiated: false, parent: parent, properties: parent.Properties);
+				}
+
+				if (token is JValue jValue)
+				{
+					return new ObjectValue(segment.Value, jValue.Value, Initiated: true, parent: parent, properties: parent.Properties);
+				}
+
 				var ov = new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
 				return ov;
 			}

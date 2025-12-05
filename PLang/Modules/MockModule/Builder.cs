@@ -88,6 +88,7 @@ The method user is mocking has the following information:
 
 		var instruction = new Instruction();
 		instruction.Function = gf;
+		instruction.Text = goalStep.Text;
 		return (instruction, null);
 
 

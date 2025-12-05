@@ -22,8 +22,7 @@ namespace PLang.Events
 
     public interface IEventBuilder
     {
-        Task<(List<string>, IError?)> BuildEventsPr();
-		(List<string>, IError?) GetEventGoalFiles();
+        Task<IError?> BuildEventsPr();
     }
     public class EventBuilder : IEventBuilder
     {
@@ -49,32 +48,25 @@ namespace PLang.Events
 			this.typeHelper = typeHelper;
 		}
 
-        public virtual async Task<(List<string>, IError?)> BuildEventsPr()
+        public virtual async Task<IError?> BuildEventsPr()
         {
-            (var goalFiles, var error) = GetEventGoalFiles();
-			
-            if (error != null) return (goalFiles, error);
-			if (goalFiles.Count == 0) return (new(), null);
+			var goals = goalParser.GetGoals().Where(p => p.IsEvent && (p.HasChanged || !(p.IsValid ?? true)));
+			if (!goals.Any())
+			{
+				return null;
+			}
 
-			logger.LogInformation($"Building {goalFiles.Count} event file(s)");
+			logger.LogInformation($"Building {goals.Count()} event file(s)");
             var validGoalFiles = new List<string>();
-            foreach (var filePath in goalFiles)
+            foreach (var goal in goals)
             {
-                var goals = goalParser.ParseGoalFile(filePath);
-                var goal = goals.FirstOrDefault();
-
-
-                if (goal == null)
-                {
-                    logger.LogWarning($"No Events goal found for {filePath}");
-                    continue;
-                }
                 if (goal.GoalSteps.Count == 0)
                 {
-                    logger.LogWarning($"No steps found in {goal.GoalName} in file {filePath}");
+                    logger.LogWarning($"No steps found in {goal.GoalName} in file {goal.RelativeGoalPath}");
                     continue;
                 }
 
+				if (!goal.HasChanged) continue;
                
 
                 for (int i = 0; i < goal.GoalSteps.Count; i++)
@@ -90,21 +82,21 @@ namespace PLang.Events
                     var eventTypeScheme = TypeHelper.GetJsonSchema(typeof(EventType));
                     var eventScope = TypeHelper.GetJsonSchema(typeof(EventScope));
 
-                    promptMessage.Add(new LlmMessage("system", GetSystemPrompt(filePath.EndsWith("BuildEvents.goal"))));
+                    promptMessage.Add(new LlmMessage("system", GetSystemPrompt(goal.GoalFileName.EndsWith("BuildEvents.goal"))));
                  
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
                     var llmRequest = new LlmRequest("Events", promptMessage);
                     (var eventBinding, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
-                    if (queryError != null) return ([], queryError);
+                    if (queryError != null) return queryError;
                     if (eventBinding == null)
                     {
-                       return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", eventBinding, Step: step, Goal: step.Goal));
+                       return new BuilderEventError($"Could not build an events from step {step.Text} in {goal.GoalFileName}. LLM didn't give any response. Try to rewriting the event.", eventBinding, Step: step, Goal: step.Goal);
                     }
 
 
-					(var foundGoal, error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, eventBinding.GoalToCall, goalParser.GetGoals(), new List<Goal>());
-					if (error != null) return (new(), new BuilderError(error));
+					(var foundGoal, var error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, eventBinding.GoalToCall, goalParser.GetGoals(), new List<Goal>());
+					if (error != null) return new BuilderError(error);
 
 					eventBinding.GoalToCall.Path = foundGoal.RelativePrPath;
 
@@ -149,7 +141,7 @@ namespace PLang.Events
                     if (eventBinding != null)
                     {
                         error = validateEventModel(eventBinding, step);
-                        if (error != null) return (new(), error);
+                        if (error != null) return error;
 
                         step.EventBinding = eventBinding;
                         step.IsEvent = true;
@@ -163,7 +155,7 @@ namespace PLang.Events
                 validGoalFiles.Add(goal.AbsoluteGoalPath);
                 fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
             }
-            return (validGoalFiles, null);
+            return null;
         }
 
 		public static string GetSystemPrompt(bool isBuildEvents)
@@ -239,33 +231,6 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
         }
 
 
-        public (List<string>, IError?) GetEventGoalFiles()
-        {
-            var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
-            if (fileSystem.File.Exists(eventsPath + ".goal"))
-            {
-                return (new(), new Error("Events.goal file must be located in the 'events' folder."));
-            }
-            if (fileSystem.File.Exists(eventsPath + "build.goal"))
-            {
-				return (new(), new Error("EventsBuild.goal file must be located in the 'events' folder."));
-            }
-
-			List<string> files = new();
-			
-			if (fileSystem.Directory.Exists(eventsPath))
-			{
-				files = fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
-				.Where(file =>
-				{
-					var isMatch = Regex.IsMatch(Path.GetFileName(file).ToLower(), @"(events|eventsbuild)\.goal$");
-					return isMatch;
-				}).ToList();
-			}
-
-
-			return (files, null);
-        }
     }
 
 }
