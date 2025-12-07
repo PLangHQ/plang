@@ -326,14 +326,7 @@ CheckAdmin
 ```plang
 SendEmail
 - render "email_template.html", write to %body%
-- post %Settings.EmailApiUrl%/send
-    X-Api-Token: %Settings.EmailApiKey%
-    data: {
-        "from": "noreply@example.com",
-        "to": "%recipient%",
-        "subject": "%subject%",
-        "html": "%body%"
-    }
+- send email %recipient%, %subject%, %body%
     write to %result%
 ```
 
@@ -362,6 +355,8 @@ SyncData
 ## Testing Patterns
 
 ### Mock Setup
+
+Mock will map to any module, then method and then parameter for that method.
 
 ```plang
 SetupMocks

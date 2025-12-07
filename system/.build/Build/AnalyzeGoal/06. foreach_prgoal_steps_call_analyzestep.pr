@@ -1,0 +1,110 @@
+{
+  "Text": "foreach %prGoal.steps% call goal AnalyzeStep item=%step%",
+  "ModuleType": "PLang.Modules.LoopModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to iterate over each element in the collection %prGoal.steps% and call the goal 'AnalyzeStep' for each element, passing the current element as the 'item' parameter. This matches the functionality of the 'RunLoop' function which is designed to loop through a variable collection and call a goal for each item.",
+    "Name": "RunLoop",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "variableToLoopThrough",
+        "Value": "%prGoal.steps%"
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalToCall",
+        "Value": {
+          "Path": ".build\\Build\\AnalyzeStep\\00. Goal.pr",
+          "Name": "AnalyzeStep",
+          "Parameters": {
+            "item": "%step%"
+          }
+        }
+      },
+      {
+        "Type": "PLang.Modules.LoopModule.Program+MultiThreaded",
+        "Name": "multiThreaded",
+        "Value": null
+      },
+      {
+        "Type": "PLang.Modules.LoopModule.Program+LinqOptions",
+        "Name": "linqOptions",
+        "Value": null
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "variableToLoopThrough": {
+        "Name": "variableToLoopThrough",
+        "FullTypeName": "System.String"
+      },
+      "goalToCall": {
+        "Name": "goalToCall",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "multiThreaded": {
+        "Name": "multiThreaded",
+        "FullTypeName": "PLang.Modules.LoopModule.Program+MultiThreaded"
+      },
+      "linqOptions": {
+        "Name": "linqOptions",
+        "FullTypeName": "PLang.Modules.LoopModule.Program+LinqOptions"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nIterate over each step in the prGoal.steps collection and call the AnalyzeStep goal for each step, passing the current step as an item parameter\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Repeat a call to a function number of time. Great for pagination, where repeatCount is page count and startIndex is page number. startIndex starts at 0\",\"MethodName\":\"Repeat\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"repeatCounter\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"startIndex\",\"DefaultValue\":0,\"IsRequired\":false}]},{\"Description\":\"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is \\\"item\\\" and value is \\\"%product%\\\". cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"ThreadCount\",\"IsRequired\":true},{\"Type\":\"System.Double\",\"Name\":\"CpuUsage\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"FailFast\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallBeforeItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallAfterItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Split\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nprGoal.steps (type:object), step (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "foreach %prGoal.steps% call goal AnalyzeStep item=%step%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each element in the collection %prGoal.steps% and call the goal 'AnalyzeStep' for each element, passing the current element as the 'item' parameter. This matches the functionality of the 'RunLoop' function which is designed to loop through a variable collection and call a goal for each item.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%prGoal.steps%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AnalyzeStep\",\n        \"Parameters\": {\n          \"item\": \"%step%\"\n        }\n      }\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+MultiThreaded\",\n      \"Name\": \"multiThreaded\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+LinqOptions\",\n      \"Name\": \"linqOptions\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

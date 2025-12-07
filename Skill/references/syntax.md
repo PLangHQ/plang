@@ -52,13 +52,14 @@ GoalName
 - `%Now.ticks%` - Current timestamp
 - `%Identity%` - User identity
 - `%user.id%` - User ID
-- `%user.email%` - User email
 - `%user.role%` - User role
 - `%request.query.*%` - Query parameters
 - `%request.body.*%` - POST body data
 - `%request.form.*%` - Form data
 - `%!error.*%` - Error information
 - `%!event.*%` - Event metadata
+- `%!step.*%` - Step metadata
+- `%!goal.*%` - Goal metadata
 
 ### Time Operations
 

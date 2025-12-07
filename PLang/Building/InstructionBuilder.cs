@@ -15,12 +15,14 @@ using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using PLang.Utils.JsonConverters;
 using RazorEngineCore;
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using static PLang.Modules.BaseBuilder;
 
 
@@ -353,6 +355,14 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 		{
 			var token = instruction.FunctionJson;
 
+			var settings = new JsonSerializerSettings();
+			
+				settings.Converters.Add(new PlaceholderPrimitiveConverter());
+				settings.Converters.Add(new PlaceholderCollectionConverter());
+			
+			var serializer = Newtonsoft.Json.JsonSerializer.Create(settings);
+
+
 			var nodes = JsonHelper.FindTokens(token, "Type", "PLang.Models.GoalToCallInfo", true);
 			if (!nodes.Any()) return (instruction, null);
 			foreach (var jsonNode in nodes)
@@ -362,7 +372,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 					continue;
 				}
 
-				var goalToCall = jsonNode["Value"]!.ToObject<GoalToCallInfo>();
+				var goalToCall = jsonNode["Value"]!.ToObject<GoalToCallInfo>(serializer);
 				if (goalToCall == null)
 				{
 					throw new Exception($"Expected value to be GoalToCallInfo. {ErrorReporting.CreateIssueShouldNotHappen}");

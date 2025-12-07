@@ -1,0 +1,12 @@
+{
+    description:string, 
+    steps: [{
+        text:string, 
+        reasoning:string, 
+        module:string, 
+        second_module:string|null,
+        indents:number(usually 0, 4 for each if indent),
+        error:string // explains why you could map a module
+        }
+    ]
+}

@@ -77,7 +77,7 @@ This is the #1 confusion point for new Plang developers:
 - Each step runs ONCE (tracked in system.sqlite)
 
 **Start.goal / Start/** = Application ENTRY POINT
-- Runs EVERY TIME app starts
+- Default entry point when goal file is not defined
 - Start webserver
 - Start UI
 - Listen to message queues
@@ -112,7 +112,7 @@ Plang's signature feature for security:
 ```plang
 // Server-side authentication
 AuthenticateUser
-- select user_id from users where identity=%Identity%, write to %userId%
+- select id from users where identity=%Identity%, write to %userId%
 - if %userId% is empty, throw 401 "Unauthorized"
 ```
 
@@ -133,7 +133,7 @@ Automatic for SQLite databases:
 // CreateUser is a Goal
 CreateUser
 - make sure %email% is not empty           // Step 1
-- hash %password%, write to %hashed%       // Step 2
+- hash %data%, write to %hashed%           // Step 2
 - insert into users, %email%, %hashed%     // Step 3
 ```
 
@@ -145,7 +145,6 @@ MyApp/
 ├── Start.goal              # Entry point (required)
 ├── Setup.goal              # One-time init (optional)
 ├── Events.goal             # Event bindings (optional)
-├── api/                    # REST endpoints
 ├── .build/                 # Generated code (don't edit)
 └── .db/                    # Databases (auto-generated)
     ├── system.sqlite       # Settings, keys
@@ -163,7 +162,7 @@ MyApp/
 **Variable syntax**:
 ```plang
 - read file.txt into %content%
-- hash %password%, write to %hashed%
+- hash %data%, write to %hashed%
 ```
 
 **Validation**:
@@ -175,10 +174,13 @@ MyApp/
 **Error handling**:
 ```plang
 - if %user% is empty, throw 404 "User not found"
-- on error call !HandleError %error%
+- get https://...
+    on error call !HandleError %error%
 ```
 
 **Module hints**:
+Any module containing the content between [] will be sent to llm to match
+
 ```plang
 - [file] read data.txt
 - [db] select * from users
@@ -220,10 +222,10 @@ A: Use %Identity%, not passwords. See security.md
 A: Goal = function, Step = line in that function. See syntax.md
 
 **Q: How do I call another goal?**
-A: `call !GoalName %parameters%` (note the ! prefix). See conventions.md
+A: `call goal GoalName %parameters%`. See conventions.md
 
 **Q: Where should my API endpoints go?**
-A: In api/ folder. They auto-map to URLs. See project-structure.md
+A: You can place it where you like. You need to register each endpoint. See conventions.md
 
 **Q: How do I handle errors?**
 A: Multiple ways - validate inputs, throw errors, use Events.goal. See error-handling.md
@@ -238,7 +240,7 @@ A: It's a unique, signed identifier for each user. See security.md
 
 ```
 Creating database tables?
-└─> Use Setup.goal or Setup/CreateTables.goal
+└─> Use Setup.goal or Setup/Setup.goal, Setup/UserSetup.goal
 
 Starting webserver or listening to queues?
 └─> Use Start.goal
@@ -246,44 +248,28 @@ Starting webserver or listening to queues?
 Need to authenticate all API calls?
 └─> Use Events.goal with "on all goals in api/*"
 
-Creating REST API endpoints?
-└─> Create goals in api/ folder
-
-User interface goals?
-└─> Create goals in ui/ folder
-
-Shared business logic?
-└─> Create goals in services/ or lib/ folder
-
-Custom C# code?
-└─> Create module in modules/ folder
-
-Third-party Plang apps?
-└─> They go in apps/ folder (auto-generated)
 ```
 
 ## Best Practices Summary
 
 1. ✅ **Setup.goal** for ONE-TIME initialization
-2. ✅ **Start.goal** for application entry point
+2. ✅ **Start.goal** default application entry point
 3. ✅ Use `%variable%` syntax consistently
-4. ✅ Prefix goal calls with `!`
-5. ✅ Validate inputs before processing
-6. ✅ Use %Identity% instead of passwords
-7. ✅ Keep steps simple (one operation per step)
-8. ✅ Use Events.goal for cross-cutting concerns
-9. ✅ Cache expensive operations
-10. ✅ Always hash passwords
+4. ✅ Validate inputs before processing
+5. ✅ Use %Identity% instead of passwords
+6. ✅ Keep steps simple (one operation per step)
+7. ✅ Use Events.goal for cross-cutting concerns
+8. ✅ Cache expensive operations
+9. ✅ Use %Settings.KeyName% for keys/secrets
 
 ## Anti-Patterns to Avoid
 
-1. ❌ Creating tables in Start.goal
+1. ❌ Creating tables in Start.goal (illegal)
 2. ❌ Not using %variable% syntax
-3. ❌ Forgetting ! prefix on goal calls
-4. ❌ Hard-coding API keys/secrets
+3. ❌ Hard-coding API keys/secrets
 5. ❌ Using "create" instead of "insert" for records
 6. ❌ Not validating inputs
-7. ❌ Storing plain passwords
+7. ❌ Storing plain passwords (avoid passwords)
 8. ❌ Complex multi-part steps
 9. ❌ Ignoring error handling
 10. ❌ Not using %Identity% for auth
@@ -310,6 +296,5 @@ To improve this skill:
 This skill is based on:
 - Plang version: 0.1.18 (November 2025)
 - White paper: "Programming 3.0 - Theory"
-- Some features described may not be fully implemented yet
 
 Check plang.is for latest updates and changes.

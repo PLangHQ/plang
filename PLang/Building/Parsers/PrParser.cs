@@ -367,7 +367,15 @@ namespace PLang.Building.Parsers
 			if (!string.IsNullOrEmpty(goalToCall.Path))
 			{
 				var goal = goals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
-				if (goal == null) return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {goalToCall.Path}", "GoalNotFound"));
+				if (goal == null)
+				{
+					var systemGoals = GetSystemGoals();
+					goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
+					if (goal == null)
+					{
+						return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {goalToCall.Path}", "GoalNotFound"));
+					}
+				}
 				return (goal, null);
 			}
 

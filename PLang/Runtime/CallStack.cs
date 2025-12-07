@@ -53,6 +53,8 @@ public class CallStack
 
 	public void AddError(IError error)
 	{
+		if (CurrentFrame == null) return;
+
 		CurrentFrame.Errors.Add(error);
 	}
 

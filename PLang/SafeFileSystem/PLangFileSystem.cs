@@ -240,10 +240,20 @@ Your answer:
 
 			if (!IsPlangRooted(path) && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
 			{
-				var osPath = Path.Join(AppContext.BaseDirectory, "os", path);
-				if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
+				var relativePath = path.Replace(rootPath, "");
+				
+				var osPath = Path.Join(AppContext.BaseDirectory, relativePath);
+				if (System.IO.File.Exists(osPath) || System.IO.Directory.Exists(path))
 				{
 					path = osPath;
+				}
+				else
+				{
+					var systemPath = Path.Join(AppContext.BaseDirectory, relativePath);
+					if (System.IO.File.Exists(systemPath) || System.IO.Directory.Exists(systemPath))
+					{
+						path = systemPath;
+					}
 				}
 			}
 			

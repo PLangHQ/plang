@@ -4,7 +4,7 @@
 
 ```
 MyPlangApp/                    # Root directory
-├── Start.goal                 # Application entry point (REQUIRED)
+├── Start.goal                 # Application entry point
 ├── Setup.goal                 # One-time initialization (OPTIONAL)
 │
 ├── .build/                    # Generated build artifacts (AUTO-GENERATED)
@@ -16,14 +16,10 @@ MyPlangApp/                    # Root directory
 │   ├── system.sqlite          # System settings, API keys, private keys
 │   └── data.sqlite            # Application data
 │
-├── api/                       # REST API endpoints
-│   ├── CreateUser.goal
-│   ├── GetUser.goal
-│   └── UpdateUser.goal
-│
-├── ui/                        # User interface goals
-│   ├── Login.goal
-│   └── Dashboard.goal
+├── user/                       
+│   ├── Create.goal
+│   ├── Get.goal
+│   └── Update.goal
 │
 ├── events/                    # Event handler goals (alternative to Events.goal)
 │   ├── Events.goal
@@ -61,7 +57,7 @@ MyPlangApp/                    # Root directory
 - Starting UI/window app
 - Listening to message queues
 - Scheduling recurring tasks
-- Setting up caching
+- Setting up injection of overriding modules
 - Initial application configuration
 
 **Example**:
@@ -146,8 +142,8 @@ Setup/
 ```
 
 **Execution order**:
-1. All individual .goal files in Setup/ folder (alphabetically)
-2. Setup.goal (if it exists) runs LAST
+1. Setup.goal (if it exists) runs FIRST
+2. All individual .goal files in Setup/ folder (alphabetically)
 
 ### Events/ Folder (Alternative to Events.goal)
 Use when you have many event handlers.
@@ -336,48 +332,18 @@ MyComplexApp/
 │   ├── SeedData.goal
 │   └── Configuration.goal
 │
-├── api/
+├── user/
 │   ├── users/
+│   │   ├── templates/
+│   │   │   ├── create.html
+│   │   │   ├── view.html
 │   │   ├── Create.goal
-│   │   └── Get.goal
+│   │   └── View.goal
 │   └── products/
+│   │   ├── templates/
+│   │   │   ├── list.html
 │       └── List.goal
-│
-├── ui/
-│   ├── Dashboard.goal
-│   └── Settings.goal
-│
-├── services/
-│   └── EmailService.goal
-│
-└── modules/
-    └── CustomAuth/
-        ├── Builder.cs
-        └── Program.cs
-```
 
-### Pattern 4: Microservices
-```
-OrderService/
-├── Start.goal              # Listen to message queue
-├── Setup.goal
-├── ProcessOrder.goal
-├── ValidateOrder.goal
-└── api/
-    └── GetOrderStatus.goal
-
-PaymentService/
-├── Start.goal              # Listen to message queue  
-├── Setup.goal
-├── ProcessPayment.goal
-└── RefundPayment.goal
-
-UserService/
-├── Start.goal              # Webserver
-├── Setup.goal
-└── api/
-    ├── CreateUser.goal
-    └── GetUser.goal
 ```
 
 ## Best Practices
@@ -430,10 +396,10 @@ MyApp/
 └── external/           # Third-party integrations
 ```
 
-### 4. Use Descriptive Names
+### 4. Use Descriptive Names, Folder structure helps
 ```
-✅ api/users/CreateUser.goal
-✅ api/products/ListProducts.goal
+✅ users/Create.goal
+✅ products/Products.goal
 ✅ services/EmailService.goal
 
 ❌ api/Create.goal         # Create what?
@@ -491,13 +457,12 @@ MyApp/
 MyApp/
 ├── Start.goal
 ├── Setup.goal
-├── api/
-│   ├── users/
-│   │   ├── CreateUser.goal
-│   │   └── GetUser.goal
-│   └── products/
-│       ├── CreateProduct.goal
-│       └── GetProduct.goal
+├── users/
+│   ├── CreateUser.goal
+│   └── GetUser.goal
+└── products/
+│   ├── CreateProduct.goal
+│   └── GetProduct.goal
 └── services/
     ├── EmailService.goal
     └── PaymentService.goal
@@ -508,8 +473,6 @@ MyApp/
 - ✅ **Start.goal**: Entry point, runs every time a goal file is not defined
 - ✅ **Setup.goal**: One-time initialization
 - ✅ **Events.goal**: Global event bindings
-- ✅ **api/**: REST endpoints
-- ✅ **ui/**: User interface goals
 - ✅ **modules/**: Custom C# code
 - ✅ **services/**: Dependency injection DLLs
 - ✅ **apps/**: Third-party Plang apps

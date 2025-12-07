@@ -1,7 +1,0 @@
-BuildEvents
-- before builder ends, call goal Builder/CheckGoals
-- on module error status 402, include private,  call /apps/Wallet/PaymentRequest  contract=%!error.Contract%, callback=%!error.Callback%
-- on step error, key:"InvalidInstructionFile", include os, call /events/Runtime/HandleBadInstructionFile
-
-
-

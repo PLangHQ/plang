@@ -324,7 +324,7 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 - ignore on duplicate should set validateAffectedRows=false";
 				if (dataSource?.KeepHistory == true)
 				{
-					system += "\n- For any type of Insert/Upsert statement, you MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response";
+					system += "\n- YOU MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response AND modify the sql to include that column and parameter";
 					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
 					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
 					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";

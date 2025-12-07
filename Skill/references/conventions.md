@@ -4,7 +4,17 @@
 
 ### Setup vs Start - ONE-TIME vs ENTRY POINT
 
-**CRITICAL RULE**: Setup is for ONE-TIME initialization, Start is for the application ENTRY POINT.
+**CRITICAL RULE**: Setup is for ONE-TIME initialization, Start is for the application ENTRY POINT when no goal file is defined.
+
+```bash
+plang
+```
+This will run Start.goal
+
+```bash
+plang Send
+```
+This will run Send.goal
 
 #### ❌ INCORRECT: Creating data/schema in Start.goal
 ```plang
@@ -15,7 +25,7 @@ Start
 - start webserver on port 8080
 ```
 
-**Problem**: Database creation runs EVERY TIME the app starts, causing errors or data loss.
+**Problem**: Plang will throw build and runtime error when create table is executed in a non setup file
 
 #### ✅ CORRECT: Separate Setup from Start
 ```plang
@@ -35,7 +45,22 @@ Start
 webserver default port is 8080
 
 ### Variable Naming Conventions
-See variables.md
+
+#### ❌ INCORRECT: Inconsistent variable naming
+```plang
+- read file.txt into data
+- hash data write to hashedData
+- get user from db, id=%userId%, write %User%
+```
+
+#### ✅ CORRECT: Consistent %variable% syntax
+```plang
+- read file.txt into %data%
+- hash %data%, write to %hashedData%
+- select * from users where id=%userId%, return 1, write to %user%
+```
+
+**Rule**: ALWAYS use `%variableName%` syntax for variables.
 
 ### Database Operations
 
@@ -77,16 +102,18 @@ CreateUser
 - insert into users, %email%, %hashedPassword%
 ```
 
+See validation.md
+
 ### Module Hints
 
 #### ❌ INCORRECT: Ambiguous step causing wrong module selection
 ```plang
-- get the current time and write it
+- generate list and write it
 ```
 
 #### ✅ CORRECT: Use module hints with []
 ```plang
-- [code] get current time, write to %now%
+- [code] generate list of number from 1 to 10, write to %numbers%
 ```
 
 **Available hints**: `[file]`, `[db]`, `[http]`, `[llm]`, `[message]`, `[code]`, `[crypto]`, and more
@@ -111,9 +138,12 @@ ProcessOrder
 
 #### ✅ CORRECT: Explicit paths or current directory
 ```plang
+// read data.json located in a sub folder config
 - read config/data.json into %config%
 // OR
 - read %fileName% into %data%
+// OR read data.json from config located in root of app
+- read /config/data.json into %config%
 ```
 
 ### Caching
@@ -137,18 +167,7 @@ GetWeather
 
 plang uses Scriban template engine. Use Scriban syntax for UI (html)
 
-### Webserver setup
-
-call a goal on webserver startup to map routes
-```plang
-Start
-- start webserver, on start call AddRoutes
-
-AddRoutes
-- add /user, call goal /user/Info
-- add /user/save, POST, call goal /user/Save
-- add /product/%slug%, POST, call goal /product/Product
-```
+See user-interface.md
 
 ## Anti-Patterns to Avoid
 
@@ -184,7 +203,8 @@ ProcessUser
 **Better**: Use Settings
 ```plang
 - get %Settings.ApiUrl%/data
-- connect to database %Settings.ConnectionString%
+- post http://..
+    Bearer %Settings.ServiceNameBearerToken%
 ```
 
 ### 3. Not Using %Identity% for Authentication
@@ -197,24 +217,37 @@ Login
 ```
 
 **Better**: Use %Identity% for authentication
+
+A good convention is to create a users table in Setup.goal, with a column identity. it can then be used to register user or check if he is allowed
+
+Here is only registered users are allowed
+
 ```plang
 AuthenticateUser
-- select id from users where identity=%Identity%, write to %userId%
-- if %userId% is empty, throw 401 "Unauthorized"
+- select * from users where identity=%Identity%, return 1, write to %user%
+- if %user.id% is empty, throw 401 "Unauthorized"
 ```
 
-### 4. Ignoring Event Sourcing
+Here we register user if he does not exists
 
-**Anti-pattern**: Complex sync logic
 ```plang
-// Trying to manually sync data between devices
+AuthenticateUser
+- select * from users where identity=%Identity%, return 1, write to %user%
+- if %user.id% is empty then
+    - insert into users, identity=%Identity%, write to %userId%
+    - select * from users where identity=%Identity%, return 1, write to %user%
 ```
 
-**Better**: Let Plang's event sourcing handle it
+### 4. Simple Authentication
+
+create role column in users table, with the content ["user"] or ["user", "admin"]
+
 ```plang
-// Event sourcing is automatic for SQLite
-// Just use normal insert/update/delete
+AuthorizeUser
+- select * from users where identity=%Identity%, return 1, write to %user%
+- if %user.role% contains "admin" then call goal IsAdmin
 ```
+
 
 ### 5. Over-using LLM Module
 
@@ -230,35 +263,6 @@ AuthenticateUser
 
 **Rule**: Use [llm] only for abstract/complex parsing. Use [code] for simple transformations.
 
-## Migration Patterns
-
-### Refactoring: Moving Data Creation to Setup
-
-**Before**:
-```plang
-// Start.goal
-Start
-- create table products, columns: id, name, price
-- start webserver
-```
-
-**After**:
-```plang
-// Setup/Database.goal
-CreateTables
-- create table products, columns: id(int, pk), name(string, not null), price(decimal)
-
-// Start.goal  
-Start
-- start webserver
-```
-
-**Migration steps**:
-1. Create Setup folder if it doesn't exist
-2. Move table creation to Setup/Database.goal
-3. Remove creation from Start.goal
-4. Run `plang exec Setup` to create tables
-5. Run `plang exec` to start normally
 
 ### Refactoring: Breaking Up Large Goals
 
@@ -288,7 +292,8 @@ ProcessOrder
 
 ### 1. Keep Steps Simple
 
-**Wrong And will not work**: Complex multi-part steps
+**Wrong And will not work**: Complex multi-part steps will NOT work and fails at build time.
+
 ```plang
 - get user from db, calculate their age, check if over 18, and send email if true
 ```
@@ -337,6 +342,7 @@ CreateUser
 - make sure %email% contains @
 - make sure %password% length > 8
 ```
+See validation.md
 
 ### 2. Use %Identity% Not Passwords
 
@@ -398,10 +404,9 @@ CreateUser
 1. ✅ **Setup.goal** = ONE-TIME initialization (tables, config)
 2. ✅ **Start.goal** = Application ENTRY POINT (webserver, listeners)
 3. ✅ Always use `%variable%` syntax
-4. ✅ Prefix goal calls with `!` 
-5. ✅ Use `insert` not `create` for database records
-6. ✅ Validate inputs before processing
-7. ✅ Use `don't wait` for slow operations
-8. ✅ Cache expensive operations
-9. ✅ Use %Identity% for authentication
-10. ✅ Keep steps simple (one operation per step)
+4. ✅ Use `insert` not `create` for database records
+5. ✅ Validate inputs before processing
+6. ✅ Use `don't wait` for slow operations
+7. ✅ Cache expensive operations
+8. ✅ Use %Identity% for authentication
+9. ✅ Keep steps simple (one operation per step)

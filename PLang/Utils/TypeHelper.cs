@@ -532,7 +532,11 @@ public class TypeHelper : ITypeHelper
 			return value;
 
 		var settings = new JsonSerializerSettings();
-		if (jsonConverter != null) settings.Converters.Add(jsonConverter);
+		if (jsonConverter != null)
+		{
+			settings.Converters.Add(jsonConverter);
+			settings.Converters.Add(new PlaceholderCollectionConverter());
+		}
 		var serializer = JsonSerializer.Create(settings);
 
 		if (value is JObject jobj)
@@ -678,7 +682,7 @@ public class TypeHelper : ITypeHelper
 		var keyType = targetType.GetGenericArguments()[0];
 		var valType = targetType.GetGenericArguments()[1];
 
-		if (value is IDictionary<string, object?> dict)
+		if (value is IDictionary<string, object> dict)
 		{
 			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
 
@@ -686,6 +690,15 @@ public class TypeHelper : ITypeHelper
 			foreach (var kvp in dict)
 				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
 			return result;
+		} else if (targetType.Name.StartsWith("Dict"))
+		{
+			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
+			var result = (System.Collections.IDictionary)Activator.CreateInstance(concreteType)!;
+			var dict2 = value as IDictionary;
+			foreach (DictionaryEntry kvp in dict2)
+				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
+			return result;
+
 		} else if (variableName != null)
 		{
 			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);

@@ -1,0 +1,50 @@
+{
+    fileName:string, // must be formatted "%position.ToString().PadLeft("0", 3)%. {file_name}.pr", e.g. "01. start_webserver.pr"
+    description:string, 
+    reasoning:string,
+    methods:[{
+        name:string, 
+        parameters:dict<string, object>
+    }], 
+    variables: [{
+        // variable can contain periods, method calling, but the name is always the first part, e.g. %user.id% => name: "user"
+        "name":string,
+        "type":string, // FullType, e.g. PLang.Runtime.ObjectValue, or List<string, PLang.Runtime.ObjectValue>,
+        // use your c# knowledge to map the best pipes methods
+        // examples:
+        // - set %NAME% = %user.name | lower | upper% => pipes: [{ type: "string", method: "ToLower"}, { type:"string", method: "ToUpper" }]
+        // - set %zip% = %user.zip make it always 3 length with 00 in front% => pipes : [{ type:"string", method: "PadLeft", parameters: {3, '0'} }]
+        "pipes": {
+type:string, 
+method: string, parameters: {3, '0'} }
+        }
+    }]
+    onerror: null|[{
+        // examples: on error code = 404, call ShowError, retry 3 times for 1 min
+        //      => onerror { When : { StatusCode : 404 }, 
+        //                  GoalToCall : { Name: "ShowError", Parameters: { "id" : %value% }}
+        //                  Retries: { counts: 3, waitBetweenInMs: 32000 }
+        when: {
+            Message:string(contains),
+            StatusCode:number,
+            Level:error|warning|info|debug|trace
+        }
+        goalToCall : { Name:string, Parameters: dict<string, object>}
+        retries: {
+            counts:number,
+            waitBetweenInMs: [number] (default [50])
+        }
+        
+        
+        }]
+    indents:number(usually 0, 4 for each if indent)
+    async : boolean(false), // run and forget or don't wait, ...
+    caching: null|{
+        // cache for 10 min  => { key: "SomethingGenerated", timeInMs: 10*60*1000, type : "absolute"}
+        key:string,
+        timeInMs:number,
+        type:absolute|sliding (absolute is default)
+    },
+    oncancel : GoalToCall { Name:string, Parameters: dict<string, object>},
+    stepReWritten:string // with you knowledge, rewrite the step to be as correct as possible
+}]}

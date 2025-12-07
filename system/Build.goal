@@ -1,0 +1,65 @@
+Build
+- call goal BuildCode
+
+BuildCode
+- get all goal at /, include private files, use goal parser, write to %goals%
+- read scheme/goal.json, write to %goalScheme%
+- read scheme/step.json, write to %stepScheme%
+- read scheme/method.json, write to %methodScheme%
+/- filter %goals% where "HasChanged" is true, write to %goals%
+- foreach %goals% call goal AnalyzeGoal item=%goal%
+
+AnalyzeGoal
+- write out "Analyzing goal %goal.goalName% ..."
+- [plang] get all modules (GetAllModules2), format:"md", write to %modules%
+- read llm/goalSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+    user: %goal.Text%
+    scheme: %goalScheme%
+    write to %prGoal%
+- [plang] validate and load %prGoal%
+    on error call FixGoal retry 3 times
+- foreach %prGoal.steps% call goal AnalyzeStep item=%step%
+- [plang] save %prGoal% to %goal.PrPath%
+- write out "%goal.GoalName% has been built - time: %!goal.Stopwatch.ToString()%"
+
+AnalyzeStep
+- write out "Analyzing step: `- %step.Text%` "
+- [plang] get all methods from %step.module% and %step.second_module%, write to %methods%
+- read llm/stepSchemeInfo.llm, write to %stepScheme%
+- read llm/stepSystem.llm, load vars, write to %system%
+- [llm] system: %system%, 
+    user: %step.Text%
+    scheme: %methodScheme%
+    write to %prMethod%
+- [plang] validate and load %step%, %prMethod.method%, 
+    on error FixStep retry 3 times
+- [plang] save %prMethod% to %prMethod.PrPath%
+
+FixGoal
+- read llm/fixGoalSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+    user: Goal:
+            %!prGoal%
+            <error>
+            %!error%
+            </error>
+    scheme: %goalScheme% 
+    write to %prGoal%
+- [plang] validate and load %prGoal%
+
+
+FixStep
+- read llm/fixStepSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+    user: "
+        user: %step.Text%
+        <method>
+            %functionResponse.method%
+            </method>
+            <error>
+            %!error%
+            </error>"
+    scheme: %methodScheme%
+    write to %methodResponse%
+- [plang] validate and load %methodResponse%

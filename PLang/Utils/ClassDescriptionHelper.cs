@@ -37,7 +37,12 @@ namespace PLang.Utils
 			{
 				methods = type.GetMethods().Where(p => p.Name == methodName);
 			}
-
+			var descAttribute =
+				type.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+			if (descAttribute != null)
+			{
+				classDescription.Description = descAttribute.ConstructorArguments[0].Value as string;
+			}
 
 			GroupedBuildErrors errors = new GroupedBuildErrors();
 
@@ -60,7 +65,7 @@ namespace PLang.Utils
 
 			if (classDescription.Methods.Any(p => p.Examples != null && p.Examples.Any()))
 			{
-				classDescription.Information = @"Examples with methods first define an example plang code and then(=>) how it is mapped to parameters";
+				classDescription.ExampleInformation = @"Examples with methods first define an example plang code and then(=>) how it is mapped to parameters";
 			}
 
 			return (classDescription, (errors.Count > 0) ? errors : null);

@@ -100,12 +100,12 @@ Main                ✗ Not descriptive
 
 ### 4. Structure Complex Goals Properly
 
-For complex operations, break into sub-goals:
+For complex operations, break into sub-goals with option of parameters:
 
 ```plang
 ProcessOrder
 - call goal ValidateOrder
-- call goal CalculateTotal
+- call goal CalculateTotal id=%contractId%
 - call goal CreateTransaction
 - call goal SendConfirmation
 ```
@@ -236,16 +236,27 @@ Events
 ### Multi-Datasource Pattern
 
 ```plang
+/ Setup.goal - 'data' datasource created automatically
 Setup
-- create datasource "main"
+- create table.....
+
+/ Analytics.goal
+Analytics
 - create datasource "analytics"
+- create table.....
+
+/ UserSetup.goal
+UserSetup
 - create datasource "users/%userId%"
+- create table.....
 
 Query
-- select * from orders o join analysis a on a.orderId=o.id
-    datasource: "main", "analytics"
+- select * from main.orders o join analytics.analysis a on a.orderId=o.id
+    datasource: "data", "analytics"
     write to %results%
 ```
+
+Note: For sqlite, attaching two datasource, the first datasource uses main. prefix
 
 ## Reference Files
 
@@ -304,7 +315,7 @@ CreateOrder
 - validate %user.id% is not empty, "User must be logged in"
 - validate %cart% is not empty, "Cart cannot be empty"
 - begin transaction "users/%user.id%"
-- insert into orders, userId=%user.id%, status='pending', 
+- insert into orders, status='pending', 
     amount=%cartTotal%, created=%now%
     write to %orderId%
 - foreach %cart% call CreateOrderItem item=%cartItem%

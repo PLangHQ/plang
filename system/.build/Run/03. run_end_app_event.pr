@@ -1,0 +1,100 @@
+{
+  "Text": "run end app event",
+  "ModuleType": "PLang.Modules.EventModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to run an event at the end of the application. According to the definitions, this corresponds to EventScope = EndOfApp. EventType is required; since the user did not specify before or after, default to After. GoalToBindTo is required; no specific goal was mentioned, so use wildcard pattern '*' which translates to regex '.*'. GoalToCall is required but not specified by user, so we must assume a placeholder or require user input. For this example, we will set GoalToCall.Name as 'endAppGoal' with no parameters. Other fields are set to defaults or false as not specified.",
+    "Name": "BindEvent",
+    "Parameters": [
+      {
+        "Type": "PLang.Events.EventBinding",
+        "Name": "eventBinding",
+        "Value": {
+          "EventType": "After",
+          "EventScope": "EndOfApp",
+          "GoalToBindTo": {
+            "Name": ".*"
+          },
+          "GoalToCall": {
+            "Name": "endAppGoal",
+            "Parameters": {}
+          },
+          "IncludePrivate": false,
+          "StepNumber": null,
+          "StepText": null,
+          "WaitForExecution": true,
+          "RunOnlyOnStartParameter": null,
+          "OnErrorContinueNextStep": true,
+          "ErrorKey": null,
+          "ErrorMessage": null,
+          "StatusCode": null,
+          "ExceptionType": null,
+          "IsLocal": true,
+          "IncludeOsGoals": false,
+          "IsOnStep": false
+        }
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "eventBinding": {
+        "Name": "eventBinding",
+        "FullTypeName": "PLang.Events.EventBinding"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "\r\nUser will provide event binding, you will be provided with c# model to map the code to. \r\n\r\n\r\nEventType is required, Error defaults to 'After' EventType if not defined by user.\r\nEventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.\r\nGoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Any pattern from user must be translated to regex version without ^ and $, e.g. user defines folder matching pattern such as /ui/*, it should then be the regex version of that: /ui/.*\r\nGoalToCall is required. This should be a specific goal, keep path as user defines  \r\nGoalToCallParameters parameters that user wants to sent to goal\r\nStepNumber & StepText reference a specific step that the user wants to bind to\r\nIncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true\r\nWaitForExecution: indicates if goal should by run and forget\r\nRunOnlyOnStartParameter: parameters at the startup of the application, it should start with --, for example --debug\r\nErrorKey: is key of the error message (case insensitive)\r\nErrorMessage: checks if error.Message contains a message  (case insensitive)\r\nErrorStatusCode: matches the status code of the error message\r\nMap correct number to EventType and EventScope\r\nInclude OS goals must be defined by user when set to true\r\n\r\nEventType { Before , After }\r\nEventScope { StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, GoalError, StepError, ModuleError }\r\n\r\n\r\n<examples>\r\n- before goal end ... => EventType = After, EventScope = Goal  //indicates that this should run just before it end or after it has runned\r\n<examples>\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nTrigger the event that runs when the application ends\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"BindEvent\",\"Parameters\":[{\"Type\":\"PLang.Events.EventBinding\",\"Name\":\"eventBinding\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToBindTo\",\"Name\":\"GoalToBindTo\",\"Description\":\"Name of goal to bind to, name can be * to bind to all, name can be regex\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Events.EventBinding\",\"Name\":\"eventBinding\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"EventType\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"EventScope\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToBindTo\",\"Name\":\"GoalToBindTo\",\"Description\":\"(see PLang.Models.GoalToBindTo type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCall\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"IncludePrivate\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"StepNumber\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"StepText\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"WaitForExecution\",\"IsRequired\":true},{\"Type\":\"System.String[]\",\"Name\":\"RunOnlyOnStartParameter\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"OnErrorContinueNextStep\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ErrorKey\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"ErrorMessage\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"StatusCode\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"ExceptionType\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"IsLocal\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"IncludeOsGoals\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"IsOnStep\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "run end app event"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.EventModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to run an event at the end of the application. According to the definitions, this corresponds to EventScope = EndOfApp. EventType is required; since the user did not specify before or after, default to After. GoalToBindTo is required; no specific goal was mentioned, so use wildcard pattern '*' which translates to regex '.*'. GoalToCall is required but not specified by user, so we must assume a placeholder or require user input. For this example, we will set GoalToCall.Name as 'endAppGoal' with no parameters. Other fields are set to defaults or false as not specified.\",\n  \"Name\": \"BindEvent\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Events.EventBinding\",\n      \"Name\": \"eventBinding\",\n      \"Value\": {\n        \"EventType\": \"After\",\n        \"EventScope\": \"EndOfApp\",\n        \"GoalToBindTo\": {\n          \"Name\": \".*\"\n        },\n        \"GoalToCall\": {\n          \"Name\": \"endAppGoal\",\n          \"Parameters\": {}\n        },\n        \"IncludePrivate\": false,\n        \"StepNumber\": null,\n        \"StepText\": null,\n        \"WaitForExecution\": true,\n        \"RunOnlyOnStartParameter\": null,\n        \"OnErrorContinueNextStep\": true,\n        \"ErrorKey\": null,\n        \"ErrorMessage\": null,\n        \"StatusCode\": null,\n        \"ExceptionType\": null,\n        \"IsLocal\": true,\n        \"IncludeOsGoals\": false,\n        \"IsOnStep\": false\n      }\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

@@ -21,7 +21,7 @@ namespace PLang.Utils
 		{
 			return obj.ToString(Newtonsoft.Json.Formatting.None);
 		}
-
+		
 		public static Dictionary<string, object?> ToDictionary(this JObject obj)
 		{
 			Dictionary<string, object?> dict = new();

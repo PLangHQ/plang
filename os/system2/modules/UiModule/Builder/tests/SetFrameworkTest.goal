@@ -1,2 +1,0 @@
-SetFrameworkTest
-- call goal ../SetFramework framework={Name:"uikit"}

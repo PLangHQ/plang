@@ -1,0 +1,7 @@
+SetupApp
+/- set default llm model "gpt-4o" 
+- if %!debug% then
+    - set as developer
+    - add event on before each step, include private goals, call Runtime/SendDebug
+    - before goal ends, include private goals, call Runtime/SendDebug
+    - on step error, call /events/Runtime/DebugErrorInIde

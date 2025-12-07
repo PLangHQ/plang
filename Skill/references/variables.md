@@ -1,4 +1,18 @@
 
+## Usage
+
+variables are wrapped with %, e.g. %name%
+It can contain any type of object and it's sub properties are accessible, e.g. %user.name%
+Underlying object is c#, which mean you can use c# properties and methods on the object, they are case insensitive, e.g. %now.AddDays(1).ToString("g")%, %user.name.toupper()% 
+
+### Clever usage
+
+User can select from database and write straight into a sub property if a variables.
+
+```plang
+- select * from orders where id=%id%, return 1, write to %order%
+- select * from orderItems where orderId=%id%, write to %order.items%
+```
 
 
 ## Common Mistakes and How to Fix Them

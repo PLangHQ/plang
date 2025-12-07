@@ -1,0 +1,4 @@
+Run
+- run before app start event
+- call goal %goalName% %parameters%
+- run end app event

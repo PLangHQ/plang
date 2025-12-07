@@ -14,7 +14,7 @@ namespace PLang.Modules.AiModule
 
 	public record AiInfo(string model, object config);
 	
-	[Description("Call an App. When the user has the word 'app' in his statement, this should be called. ")]
+	[Description("")]
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }

@@ -26,9 +26,9 @@ Plang is designed to be the most secure programming language through:
 ```plang
 // api/CreateOrder.goal
 CreateOrder
-- select user_id from users where identity=%Identity%, write to %userId%
-- if %userId% is empty, throw 401 "Unauthorized"
-- insert into orders, user_id=%userId%, amount=%amount%
+- select * from users where identity=%Identity%, return 1, write to %userId%
+- if %user.id% is empty, throw 401 "Unauthorized"
+- insert into orders, user_id=%user.id%, amount=%amount%
 ```
 
 **User registration (first time)**:
@@ -60,8 +60,6 @@ LoadUser
 / /events/IsAdmin.goal
 IsAdmin
 - if %user.role% does not contain 'admin' then "Not an admin"
-
-
 ```
 
 ### Benefits of %Identity%
@@ -177,7 +175,7 @@ GetPublicKey
 - Encrypted with app's private key
 
 ### Password Hashing
-Password should not be needed when using plang, but if needed
+Password should NOT be needed when using plang, but if needed
 
 **ALWAYS hash passwords**:
 ```plang
@@ -326,11 +324,11 @@ Your Computer
 // Only provide what's necessary
 Register
 // Service doesn't need your email
-- connect with %Identity%
+// user is registered using only %Identity%
 
 OrderProduct
 // Service needs shipping address (obviously)
-- create order with %Identity%, address=%shippingAddress%
+- insert into orders, %Identity%, address=%shippingAddress%
 ```
 
 ### Anonymous Analytics
@@ -397,6 +395,8 @@ CreateUser
 ```
 
 ### 3. Secure Settings Storage
+
+On first usage of a %Settings.% key, plang will ask the system for the information.
 
 ```plang
 // Store API keys in Settings (system.sqlite)

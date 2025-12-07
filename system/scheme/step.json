@@ -1,0 +1,7 @@
+{
+    reasoning:string, 
+    method: [{
+      name:string, 
+      parameters:dict<string, object>  
+    }]
+}

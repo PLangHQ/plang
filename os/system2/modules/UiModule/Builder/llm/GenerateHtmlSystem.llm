@@ -1,4 +1,0 @@
-Generating ONLY html. 
-When you need more information from a component, add comment 
-<!-- Need {component}.md for more context  -->
-And list it out as a component you need in components.

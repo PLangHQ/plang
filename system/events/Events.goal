@@ -15,3 +15,6 @@ Events
 - on step error key:"PrFileNotFound", include os, call /events/Runtime/PrFileNotFound
 - on step error, call /events/Runtime/DebugErrorInIde, start args --debug
 - on app error, call /events/Runtime/OnAppError
+- on app start, call SetupApp
+
+

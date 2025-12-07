@@ -11,7 +11,8 @@ public class ClassDescription
 		SupportingObjects = new();
 	}
 
-	public string Information { get; set; }
+	public string Description { get; set; }
+	public string ExampleInformation { get; set; }
 
 	public List<MethodDescription> Methods { get; set; }
 	public List<ComplexDescription> SupportingObjects { get; set; }

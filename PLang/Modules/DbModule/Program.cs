@@ -579,7 +579,7 @@ namespace PLang.Modules.DbModule
 		{
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
-		[Description("Executes a sql statement that defined by user. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		[Description("Executes a sql statement that defined by user, such as `create index ..`, `drop ..`. Preferable not for select,update,insert statements. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
 		public async Task<(long RowsAffected, IError? Error)> Execute([HandlesVariable] string dataSourceName, string sql, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -734,15 +734,9 @@ namespace PLang.Modules.DbModule
 			if (result.Table.ColumnNames.Count == 1)
 			{
 				var columnName = result.Table.ColumnNames[0];
-				if (function.ReturnValues == null || function.ReturnValues.Count == 0 || function.ReturnValues[0].VariableName.Equals(columnName, StringComparison.OrdinalIgnoreCase))
-				{
-					return (new ObjectValue(columnName, result.Table[columnName]), null, result.Properties);
-				}
-				else
-				{
-					return (result.Table[0], null, result.Properties);
-				}
+				return (new ObjectValue(columnName, result.Table[columnName]), null, result.Properties);
 			}
+
 			foreach (var columnName in result.Table.ColumnNames)
 			{
 				returnValues.Add(new ObjectValue(columnName, result.Table[columnName]));

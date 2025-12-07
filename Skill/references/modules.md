@@ -42,7 +42,7 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
 - what is balance of 0x123... on eth, write to %ethBalance%
 
 // Listen for events
-- listen for transfer event on contract 0x123.., call !ProcessTransfer
+- listen for transfer event on contract 0x123.., call ProcessTransfer
 
 // Smart contract interaction
 - call function 'mint' on contract 0x456.., with amount=%amount%
@@ -65,23 +65,22 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
 **Examples**:
 ```plang
 // Basic goal call
-- call !ProcessUser %userData%
+- call ProcessUser %userData%
 
 // Call with return value
-- call !CalculateTotal %items%, write to %total%
+- call CalculateTotal %items%, write to %total%
 
 // Call goal in another app
-- call !GoogleSearch.Search %query%, write to %results%
+- call GoogleSearch.Search %query%, write to %results%
 
 // Call in folder
-- call !api/users/GetUser %userId%, write to %user%
+- call api/users/GetUser %userId%, write to %user%
 
 // Don't wait for completion
-- call !SendAnalytics %data%, don't wait
+- call SendAnalytics %data%, don't wait
 ```
 
 **Rules**:
-- Always prefix goal names with `!`
 - Parameters passed automatically if variable names match
 - Use `write to %variable%` to capture return values
 
@@ -141,7 +140,7 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
     - allow access
 
 // If-else (single line)
-- if %user.isAdmin% then call !AdminPanel, else call !UserPanel
+- if %user.isAdmin% then call AdminPanel, else call UserPanel
 
 // Validation with throw
 - make sure %email% is not empty
@@ -154,8 +153,8 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
 
 // Multiple conditions (indent for grouping)
 - if %user.role% is "admin"
-    - call !ShowAdminMenu
-    - call !LoadAdminData
+    - call ShowAdminMenu
+    - call LoadAdminData
     - enable admin features
 
 // Comparison operators
@@ -363,7 +362,7 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
 
 // Error handling
 - get %apiUrl%
-    on error call !HandleApiError
+    on error call HandleApiError
     write to %result%
 ```
 
@@ -443,16 +442,16 @@ Plang comes with 40+ built-in modules that wrap C# functionality. Each module pr
 **Examples**:
 ```plang
 // Basic loop
-- go through %users%, call !ProcessUser
+- go through %users%, call ProcessUser
 
 // Loop with custom variable names
-- go through %products%, call !UpdateProduct product=%item%
+- go through %products%, call UpdateProduct product=%item%
 
 // Nested loops
-- go through %orders%, call !ProcessOrder
+- go through %orders%, call ProcessOrder
   
 ProcessOrder
-- go through %order.items%, call !ProcessItem
+- go through %order.items%, call ProcessItem
 ```
 
 **Automatic variables**:
@@ -488,7 +487,7 @@ ProcessUser
 
 // Listen for messages (in Start.goal)
 Start
-- listen for new message, call !HandleMessage
+- listen for new message, call HandleMessage
 
 // Handle received message
 HandleMessage
@@ -579,14 +578,14 @@ print(json.dumps(result))
 ```plang
 // In Start.goal
 Start
-- every 60 seconds call !CheckStatus
-- every 5 minutes call !SyncData
-- every day at 09:00 call !SendDailyReport
-- every monday at 08:00 call !SendWeeklyReport
+- every 60 seconds call CheckStatus
+- every 5 minutes call SyncData
+- every day at 09:00 call SendDailyReport
+- every monday at 08:00 call SendWeeklyReport
 
 // Complex schedules (cron)
-- at 13:23 every day except sundays, call !ProcessOrders
-- every 1st of month at 00:00, call !MonthlyCleanup
+- at 13:23 every day except sundays, call ProcessOrders
+- every 1st of month at 00:00, call MonthlyCleanup
 ```
 
 **Cron conversion**:
