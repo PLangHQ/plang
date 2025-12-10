@@ -16,10 +16,15 @@ using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace PLang.Utils
 {
-	public class ClassDescriptionHelper
+	public interface IClassDescriptionHelper
+	{
+		(ClassDescription? ClassDescription, IBuilderError? Error) GetClassDescription(Type type, List<string>? methodNames = null);
+	}
+	public class ClassDescriptionHelper : IClassDescriptionHelper
 	{
 
 		ClassDescription classDescription = new();
@@ -27,18 +32,28 @@ namespace PLang.Utils
 		{
 		}
 
-		public (ClassDescription? ClassDescription, IBuilderError? Error) GetClassDescription(Type type, string? methodName = null)
+		public (ClassDescription? ClassDescription, IBuilderError? Error) GetClassDescription(Type type, List<string>? methodNames = null)
 		{
 
 			if (type == null) return (new(), new BuilderError("Type is null"));
 
-			var methods = type.GetMethods().Where(p => p.DeclaringType?.Name == "Program");
-			if (methodName != null)
+			IEnumerable<MethodInfo> methods;
+			if (methodNames != null && methodNames.Count > 0)
 			{
-				methods = type.GetMethods().Where(p => p.Name == methodName);
+				var list = new List<MethodInfo>();
+				foreach (var name in methodNames)
+				{
+					var methodInfos = type.GetMethods().Where(p => p.Name == name);
+					if (methodInfos == null || !methodInfos.Any()) return (null, new BuilderError($"{name} could not be found in {type.Name}"));
+					list.AddRange(methodInfos.ToList());
+				}
+				methods = list;
+			} else
+			{
+				methods = type.GetMethods().Where(p => p.DeclaringType?.Name == "Program");
 			}
-			var descAttribute =
-				type.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+				var descAttribute =
+					type.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
 			if (descAttribute != null)
 			{
 				classDescription.Description = descAttribute.ConstructorArguments[0].Value as string;
@@ -308,6 +323,7 @@ namespace PLang.Utils
 					null) continue;
 				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
 				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
+				if (propertyInfo.PropertyType.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
 
 				var propertyType = propertyInfo.PropertyType;
 				if (propertyInfo.PropertyType.Name.StartsWith("Nullable`1"))
@@ -315,6 +331,10 @@ namespace PLang.Utils
 					propertyType = propertyInfo.PropertyType.GenericTypeArguments[0];
 				}
 				bool isRequired = propertyInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
+				if (isRequired)
+				{
+					isRequired = propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name.StartsWith("Nullable")) == null;
+				}
 				if (isRequired)
 				{
 					var ctx = new NullabilityInfoContext();
@@ -470,13 +490,8 @@ namespace PLang.Utils
 			}
 
 			string? complexObjectDescription = null;
-			var descriptionAttribute = item.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
-			if (descriptionAttribute != null)
-			{
-				complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));
-			}
 			
-			descriptionAttribute = propertyType.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+			var descriptionAttribute = propertyType.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
 			if (descriptionAttribute != null)
 			{
 				complexObjectDescription += string.Join("\n", descriptionAttribute.ConstructorArguments.Select(p => p.Value));

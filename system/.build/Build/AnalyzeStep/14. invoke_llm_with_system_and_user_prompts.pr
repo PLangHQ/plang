@@ -1,0 +1,153 @@
+{
+  "Text": "[llm] system:  %methodSystem%\n        user: %step.Text%\n                %prStep%\n        scheme: typeof(plang.prFunction)\n        write to %prFunction%",
+  "ModuleType": "PLang.Modules.LlmModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user intends to invoke a language model to process the given system and user prompts and produce a structured output according to a specified scheme. The scheme is defined as 'typeof(plang.prFunction)', and the result should be written to the variable %prFunction%.",
+    "Name": "AskLlm",
+    "Parameters": [
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Models.LlmMessage]",
+        "Name": "promptMessages",
+        "Value": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "%methodSystem%"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "%step.Text%\n%prStep%"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Type": "System.String",
+        "Name": "scheme",
+        "Value": "typeof(plang.prFunction)"
+      },
+      {
+        "Type": "System.String",
+        "Name": "llmResponseType",
+        "Value": "json"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%prFunction%",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "ReturnScheme": {
+      "type": "object",
+      "properties": {
+        "plang": {
+          "type": "object",
+          "properties": {
+            "prFunction": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "prFunction"
+          ]
+        }
+      },
+      "required": [
+        "plang"
+      ]
+    },
+    "Parameters": {
+      "promptMessages": {
+        "Name": "promptMessages",
+        "FullTypeName": "System.Collections.Generic.List`1[PLang.Models.LlmMessage]"
+      },
+      "scheme": {
+        "Name": "scheme",
+        "FullTypeName": "System.String"
+      },
+      "llmResponseType": {
+        "Name": "llmResponseType",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {
+      "%prFunction%": {
+        "Name": "%prFunction%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\nThe following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. \r\nWhen user defines a scheme then use json for llmResponseType, unless user defines otherwise\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4.1-mini\" if content type is image_url\r\nmodel is default gpt-4.1-mini\r\nthe json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} \r\nthe json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} \r\n\r\nfor scheme: \r\n- it can be json5 type of json, make it strict and valid json. \r\n- it can be type and MUST be formatted typeof=path.to.type, list<plang.PrGoal> makes it a list of T. \r\n\texamples are:\ttype is list of string => scheme=\"typeof=List<string>\"\r\n\t\t\t\t\ttype=MyCompany.Data.User => scheme=\"typeof=MyCompany.Data.User\"\r\n\t\t\t\t\ttypeof(module.Data). path that is only two sections, e.g. plang.PrGoal, or file.FileInfo, that points to T=\"PLang.Modules.PlangModule.Data.PrGoal\", =>scheme=\"typeof=PLang.Modules.PlangModule.Data.PrGoal\"\r\n## examples ##\r\nsystem: %system%\r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.\r\nonly \"user\" role can send image\r\n\r\n\"role\": \"user\",\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"role\": \"user\",\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n\r\n\r\nmake sure to return value if user wants to write the result into a variable.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInvoke a language model (LLM) to process the given system and user prompts and produce a structured output according to a specified scheme.\n## functions available starts ##\r\n{\"Description\":\"Ask LLM a question and recieve and answer\",\"Methods\":[{\"MethodName\":\"AppendToSystem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"system\",\"IsRequired\":true}]},{\"MethodName\":\"AppendToAssistant\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"assistant\",\"IsRequired\":true}]},{\"MethodName\":\"AppendToUser\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"user\",\"IsRequired\":true}]},{\"Description\":\"Retrieves all previous messages\",\"MethodName\":\"GetPreviousMessages\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Models.LlmMessage\"}},{\"Description\":\"When user intent is to write the result into a %variable% it MUST have ReturnValues, e.g. `... write to %result% => ReturnValues should contain the %result%\",\"MethodName\":\"AskLlm\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\"Name\":\"promptMessages\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"scheme\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"model\",\"DefaultValue\":\"gpt-4.1-mini\",\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"temperature\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"topP\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"frequencyPenalty\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"presencePenalty\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"maxLength\",\"DefaultValue\":4000,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"cacheResponse\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"llmResponseType\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"continuePrevConversation\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"UseSharedIdentity\",\"Parameters\":[{\"Type\":\"System.Boolean\",\"Name\":\"useSharedIdentity\",\"DefaultValue\":true,\"IsRequired\":false}]},{\"MethodName\":\"GetLlmIdentity\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.ImageUrl\",\"Name\":\"ImageUrl\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Url\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\"Name\":\"promptMessages\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Role\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmContent]\",\"Name\":\"Content\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nmethodSystem (type:object), step.Text (type:object), prStep (type:object), prFunction (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "[llm] system:  %methodSystem%\n        user: %step.Text%\n                %prStep%\n        scheme: typeof(plang.prFunction)\n        write to %prFunction%"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Previous LLM request caused following <error>, try to fix it.\r\n<error>\nError Message: \nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text\n\n</error>"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.LlmModule.Builder",
+      "caching": true,
+      "RawResponse": "```json\n{\n    \"Reasoning\": \"The user intends to invoke a language model to process the given system and user prompts and produce a structured output according to a specified scheme. The scheme is defined as 'typeof(plang.prFunction)', and the result should be written to the variable %prFunction%.\",\n    \"Name\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%methodSystem%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%step.Text%\\n%prStep%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"System.String\",\n            \"Name\": \"scheme\",\n            \"Value\": \"typeof(plang.prFunction)\"\n        },\n        {\n            \"Type\": \"System.String\",\n            \"Name\": \"llmResponseType\",\n            \"Value\": \"json\"\n        }\n    ],\n    \"ReturnValues\": [\n        {\n            \"Type\": \"System.Object\",\n            \"VariableName\": \"%prFunction%\",\n            \"Value\": null\n        }\n    ]\n}\n```"
+    }
+  ]
+}

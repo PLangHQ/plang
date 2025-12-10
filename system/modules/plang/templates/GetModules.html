@@ -1,9 +1,9 @@
 # Modules
 
-{{~ for module in runtime.Modules ~}}
+{{~ for module in modules ~}}
 Module: {{ module.Type.FullName }}
 {{~ module.ClassDescription.Description }}
 Example of methods: {{ for method in module.ClassDescription.Methods limit:5 }}{{ method.MethodName }}{{ if !for.last }}, {{ end }}{{ end }}
 
 {{~ end ~}}
-```
+

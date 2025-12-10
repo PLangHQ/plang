@@ -70,7 +70,7 @@
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.2" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.2" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
@@ -118,6 +118,7 @@
     <PackageReference Include="UTF.Unknown" Version="2.6.0" />
   </ItemGroup>
 
+	
   <ItemGroup>
     <Compile Update="Resources\InternalApps.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -152,7 +153,7 @@
 		<PropertyGroup>
 			<Version>$([System.IO.File]::ReadAllText('$(ProjectDir)version.txt').Trim())</Version>
 			<AssemblyVersion>$(Version)</AssemblyVersion>
-			<FileVersion>$(Version)</FileVersion>
+			<FileVersion>$(Version)</FileVersion>n
 			<InformationalVersion>$(Version)</InformationalVersion>
 		</PropertyGroup>
 

@@ -3,6 +3,7 @@ using Microsoft.Playwright;
 using Namotion.Reflection;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Runtime;
 using PLang.Utils;
 using ReverseMarkdown;
 using System.ComponentModel;
@@ -19,8 +20,23 @@ namespace PLang.Modules.ConvertModule
 		}
 
 		public record ConvertHtmlToPdfInstruction(string Html, PagePdfOptions Options);
+		/*
+		 * 
+		 *can you give me the c# code, and give me properties that I would need to run it in Roslyn, with all the settings, so I could say Roslyn.Run(code) (- or close enough)
 
+type(mycustom.data), c# { colums:name,id,address,zip, first is header }, write to %users%
+		you make me c# code for the class conversion, so
 
+ convert %csv% to type(mycustom.data), c# {
+     colums:name,id,address,zip, first is header
+    }, write to %users%
+Convert.To(ObjectValue value (this is %csv$), and T targetType), those columns are properties, so it means to return a a list of something with those fiels, and return the list
+		 * 
+		 * 
+		 * 
+		public record CSharpCode()
+		public async Task<IError?> Convert(ObjectValue objectValue, CSharpCode : code)
+		*/
 		[Description("converts html to pdf, returns byte array of file if no path is defined")]
 		public async Task<IError?> ConvertHtmlToPdf(ConvertHtmlToPdfInstruction options)
 		{

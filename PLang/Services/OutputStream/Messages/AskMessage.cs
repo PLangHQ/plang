@@ -23,7 +23,7 @@ public sealed record AskMessage(
 	[property: Description("set as true when Content looks like a fileName, e.g. %fileName%, %template%, etc. If Content is clearly a text, set as false")]
 	bool? IsTemplateFile = null,
 	string? Target = null,
-	[property: Description("List of action(s) to take, e.g. append, replace, prepend, navigate, etc...")]
+	[param: Description("List of action(s) to take, e.g. append, replace, prepend, navigate, etc...")]
 	IReadOnlyList<string>? Actions = null,
 	string Level = "info",
 	int StatusCode = 200,

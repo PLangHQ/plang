@@ -107,10 +107,10 @@ namespace PLang.Modules.CompressionModule
 				List<string> patterns = new();
 				foreach (var excludePattern in excludePatterns)
 				{
-					patterns.Add("^" + Regex.Escape(excludePattern)
+					patterns.Add(Regex.Escape(excludePattern)
 									.Replace(@"\*", ".*")    // Convert '*' to '.*'
 									.Replace(@"\?", ".")      // Convert '?' to '.'
-						  + "$");
+						  );
 				}
 				
 

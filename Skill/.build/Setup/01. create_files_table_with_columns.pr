@@ -1,0 +1,89 @@
+{
+  "Text": "create table files, columns:\n    path(string, unique), title(string), hash(string), created(datetime, default now), updated(datetime, default now)",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": [
+      "files"
+    ],
+    "AffectedColumns": {
+      "id": "create",
+      "path": "create",
+      "title": "create",
+      "hash": "create",
+      "created": "create",
+      "updated": "create"
+    },
+    "Warning": null,
+    "Reasoning": "The user wants to create a new table named 'files' with specific columns and constraints including unique and default values. The CreateTable function is suitable for this operation as it allows executing a SQL create table statement with the required schema.",
+    "Name": "CreateTable",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "CREATE TABLE files (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, path TEXT UNIQUE, title TEXT, hash TEXT, created DATETIME DEFAULT (datetime('now')), updated DATETIME DEFAULT (datetime('now')))"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "sql": {
+        "Name": "sql",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\n<dataSourceAndTableInfos>\r\nDataSource name: \r\nTable name: files\r\nColumns: null\r\n----\r\n</dataSourceAndTableInfos>\r\n\r\nAdditional json Response explaination:\r\n- Datasource(s) to available: \r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n- for `IN (@parameter)` statements => The parameter type should be System.Array\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\n- On CreateTable, include primary key, id, not null, (NO auto increment) when not defined by user. It must be long\r\n- Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)\r\n- use <dataSourceAndTableInfos> to build a valid sql for Microsoft.Data.Sqlite.SqliteConnection\r\n\r\n- The main dataSourceName for database operations is: \"\". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.\r\n\r\nThe dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nCreate a new database table named 'files' with specified columns and constraints\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment. When renaming a table and dropping, include  PRAGMA foreign_keys=OFF; at start and PRAGMA foreign_keys=ON; PRAGMA foreign_key_check; at the end\",\"MethodName\":\"CreateTable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Int64\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "create table files, columns:\n    path(string, unique), title(string), hash(string), created(datetime, default now), updated(datetime, default now)"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to create a new table named 'files' with specific columns and constraints including unique and default values. The CreateTable function is suitable for this operation as it allows executing a SQL create table statement with the required schema.\",\n  \"Name\": \"CreateTable\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"CREATE TABLE files (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, path TEXT UNIQUE, title TEXT, hash TEXT, created DATETIME DEFAULT (datetime('now')), updated DATETIME DEFAULT (datetime('now')))\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"TableNames\": [\n    \"files\"\n  ],\n  \"AffectedColumns\": {\n    \"id\": \"create\",\n    \"path\": \"create\",\n    \"title\": \"create\",\n    \"hash\": \"create\",\n    \"created\": \"create\",\n    \"updated\": \"create\"\n  },\n  \"Warning\": null\n}"
+    }
+  ]
+}

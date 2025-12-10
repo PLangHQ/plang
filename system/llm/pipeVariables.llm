@@ -1,0 +1,14 @@
+
+<pipe_variables>
+%name to upper% => %name | string | toupper()%
+set %name% = %data%(encrypt) => %data | encrypt%
+</pipe_variables>
+
+Rewrite the step to be more formalized by mapping user intent to parameters matching the method. 
+Pipe %variables% that need to be piped according to <pipe_variables>
+See <formalized_examples>
+
+<formalized_examples>
+`- read file.txt into %content%` => `- read path:"file.txt", into return value: {type:string, %content%}`
+`- write out %name as uppercase% => `- write out content:%name | string | ToUpper()%`
+</formalized_examples>

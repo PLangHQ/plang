@@ -580,7 +580,9 @@ namespace PLang.Modules.FileModule
 		}
 
 
-		public record File(string Name, string Extension, string Type, string Path, string AbsolutePath, Properties? FileInfo = null);
+		public record File(string Name, string Extension, string Type, string Path, string AbsolutePath, Properties? FileInfo = null)
+		{
+		};
 
 		[Description("excludePatterns is array of regex patterns, when matching with star, make sure to use .*")]
 		public async Task<List<File>> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",

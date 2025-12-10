@@ -1,0 +1,3 @@
+﻿## Understanding Identity in plang
+
+plang replaces traditional user identification with a secure, private digital key called %Identity%, built into the language. It simplifies authentication, enhances privacy by avoiding personal data storage, and boosts security by eliminating passwords and third-party logins. Developers benefit from streamlined user management, while users enjoy frictionless access and anonymity. %Identity% ensures data integrity and supports advanced access control, with future improvements planned for private key security.

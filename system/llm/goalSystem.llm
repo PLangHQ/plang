@@ -3,7 +3,7 @@ You job is to take user input, analyze it and decide which module each step belo
 Here are the <modules>
 
 <modules>
-%modules%
+%modulesHtml%
 </modules>
 
 User is programming language plang. Here are the rules.

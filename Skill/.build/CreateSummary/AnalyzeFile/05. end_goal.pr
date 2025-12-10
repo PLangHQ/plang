@@ -1,0 +1,86 @@
+{
+  "Text": "end goal",
+  "ModuleType": "PLang.Modules.ThrowErrorModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to terminate the current goal execution immediately without error. The EndGoalExecution function is designed to stop the running goal, which matches the user's intent.",
+    "Name": "EndGoalExecution",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "message",
+        "Value": null
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "levels",
+        "Value": 0
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "message": {
+        "Name": "message",
+        "FullTypeName": "System.String"
+      },
+      "levels": {
+        "Name": "levels",
+        "FullTypeName": "System.Int32"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nTerminate the current goal execution immediately\n## functions available starts ##\r\n{\"Description\":\"Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)\",\"Methods\":[{\"Description\":\"When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc.\",\"MethodName\":\"ThrowError\",\"Parameters\":[{\"Type\":\"PLang.Services.OutputStream.Messages.ErrorMessage\",\"Name\":\"errorMessage\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}]},{\"Description\":\"When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user. error is %!error% if user defines it\",\"MethodName\":\"Throw\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"message\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"key\",\"DefaultValue\":\"UserDefinedError\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"fixSuggestion\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"helpfullLinks\",\"IsRequired\":false}]},{\"Description\":\"Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided\",\"MethodName\":\"Retry\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"maxRetries\",\"DefaultValue\":1,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"maxRetriesReachedMesage\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"key\",\"DefaultValue\":\"MaxRetries\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"fixSuggestion\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"helpfullLinks\",\"IsRequired\":false}]},{\"Description\":\"When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1\",\"MethodName\":\"EndGoalExecution\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"levels\",\"DefaultValue\":0,\"IsRequired\":false}]},{\"Description\":\"Shutdown the application\",\"MethodName\":\"EndApp\",\"Parameters\":[]},{\"Description\":\"Create payment request(402)\",\"MethodName\":\"CreatePaymentRequest\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"description\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"error\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Collections.Generic.Dictionary`2[System.String,System.Object]]\",\"Name\":\"services\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Errors.Types.PaymentContract\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Services.OutputStream.Messages.ErrorMessage\",\"Name\":\"errorMessage\",\"Description\":\"Content can be a filename or a text that will be written to stream. \\r\\nTarget defines where in the UI to write the content, this can be null and will be controlled by external system\\r\\nActions are actions executed on the content, built in actions are: 'replace, replaceSelf, append, prepend, appendOrReplace, prependOrReplace, scrollToTop, scrollIntoView, focus, highlight, show, hide, notify, alert, vibrate, navigate, replaceState, reload, open, close'. \\r\\nA user can define multiple actions, user:`render 'product.html' to #main, replace the content, navigate and scroll into view => Actions:[\\\"replace\\\", \\\"navigate\\\", \\\"scrollIntoView\\\"]\\r\\nLevel: trace|debug|info(default)|warning|error|critical. info is default. when user defines a level without a channel, assume channel=log\\r\\nChannel: default|log|audit|security|metric or custom defined by user\\r\\nActor: user|system => user is the default actor when Channel=default, for other channels use system as actor unless defined by user.\\r\\n\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Content\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Key\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"FixSuggestion\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"HelpfullLinks\",\"IsRequired\":false},{\"Type\":\"PLang.Services.OutputStream.Messages.MessageKind\",\"Name\":\"Kind\",\"AvailableValues\":\"Text|Render|Error|Execute|Ask|Stream\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Level\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"StatusCode\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Target\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.IReadOnlyList`1[System.String]\",\"Name\":\"Actions\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Channel\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Actor\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.IReadOnlyDictionary`2[System.String,System.Object]\",\"Name\":\"Properties\",\"IsRequired\":false}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "end goal"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to terminate the current goal execution immediately without error. The EndGoalExecution function is designed to stop the running goal, which matches the user's intent.\",\n  \"Name\": \"EndGoalExecution\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"message\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"levels\",\n      \"Value\": 0\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

@@ -337,7 +337,14 @@ public class TypeHelper : ITypeHelper
 
 			if (prop.PropertyType.IsClass && prop.PropertyType.Namespace.StartsWith("PLang"))
 			{
-				json += $@"{propName}: " + GetJsonSchema(prop.PropertyType);
+				if (prop.PropertyType.Name.Equals(type.Name))
+				{
+					json += $@"{propName}: " + prop.PropertyType.Name;
+				}
+				else
+				{
+					json += $@"{propName}: " + GetJsonSchema(prop.PropertyType);
+				}
 				/*
 				json += $@"""{prop.Name}:"" {{";
 				var properties = prop.PropertyType.GetProperties();

@@ -1,7 +1,9 @@
 {
+    name: string,
     description:string, 
     steps: [{
         text:string, 
+        line:number,
         reasoning:string, 
         module:string, 
         second_module:string|null,

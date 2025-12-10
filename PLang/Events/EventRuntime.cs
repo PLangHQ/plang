@@ -234,9 +234,9 @@ namespace PLang.Events
 
 				eve.SourceGoal = goal;
 				var parameters = new Dictionary<string, object?>();
-				eve.GoalToCall.Parameters.Add(ReservedKeywords.Event, eve);
-				eve.GoalToCall.Parameters.Add(ReservedKeywords.IsEvent, true);
-				eve.GoalToCall.Parameters.Add("!plang", new { EventUniqueId = Guid.NewGuid().ToString() });
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+				eve.GoalToCall.Parameters.AddOrReplace("!plang", new { EventUniqueId = Guid.NewGuid().ToString() });
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);

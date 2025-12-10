@@ -130,6 +130,8 @@ namespace PLang.Modules.DbModule
 <dataSourceAndTableInfos>";
 				foreach (var table in methodsAndTables.Tables)
 				{
+					if (table.DataSource == null) table.DataSource = dataSource;
+
 					system += $@"
 DataSource name: {table.DataSource.NameInStep}
 Table name: {table.Name}
@@ -468,7 +470,15 @@ When table name is unknown at built time because it is created with variable, us
 				});
 			}
 
+			var dss = await dbSettings.GetAllDataSources();
+
+			if (error != null) return (null, new BuilderError(error));
+			var strDataSources = string.Join(',', dss.Select(p => p.Name));
+			if (String.IsNullOrEmpty(strDataSources)) strDataSources = "data";
+
 			system += $"\n<methods>\n{JsonConvert.SerializeObject(methodList)}\n</methods>";
+			system += $"\n<datasources>\n{strDataSources}\n</datasources>";
+
 			if (previousBuildError != null)
 			{
 				system += $"\n\nAdjust your response as last llm request gave this error: {previousBuildError.Message}";

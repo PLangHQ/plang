@@ -1,0 +1,14 @@
+
+## {{ moduleName }}
+{{~ for method in module.Methods ~}}
+Name: {{ method.MethodName }}
+Description: {{ method.Description }}
+Parameters: {{ method.Parameters }}
+ReturnValues: {{ method.ReturnValues }}
+{{ if method.Examples }}
+Examples:
+```plang
+{{ method.Examples }}
+```
+{{ end }}
+{{~ end ~}}

@@ -429,7 +429,12 @@ Be concise"));
 				dataSources.Add(dataSource);
 			}
 
-			if (IsBuilder || UseInMemoryDataSource) return dataSources;
+			if (IsBuilder || UseInMemoryDataSource)
+			{
+				context.Items.AddOrReplace("db.datasources", dataSources);
+				return dataSources;
+
+			}
 
 			settings.SetList(this.GetType(), dataSources);
 			return dataSources;
@@ -448,6 +453,12 @@ Be concise"));
 	
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
+			if (IsBuilder || UseInMemoryDataSource)
+			{
+				if (context.Items.ContainsKey("db.datasources"))
+					return context.Items["db.datasources"] as List<DataSource> ?? new();
+				return new();
+			}
 			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
 			for (int i=0;i<dataSources.Count;i++) 
 			{

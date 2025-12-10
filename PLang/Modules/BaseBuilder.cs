@@ -219,7 +219,7 @@ Make sure to use the information in <error> to return valid JSON response"
 		[Property]
 		public record Parameter(string Type, string Name, object? Value);
 		[Property]
-		public record ReturnValue(string Type, string VariableName);
+		public record ReturnValue(string Type, string VariableName, object? Value = null);
 		[Property]
 		public record ComplexReturnValue(string Type, string VariableName, List<ReturnValue> Properties) : ReturnValue(Type, VariableName);
 		[Property]
@@ -252,6 +252,7 @@ Make sure to use the information in <error> to return valid JSON response"
 
 				return this;
 			}
+
 		}
 
 		public interface IGenericFunction
@@ -259,7 +260,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			string Reasoning { get; }
 			string Name { get; }
 			List<Parameter>? Parameters { get; }
-			List<ReturnValue>? ReturnValues { get; }
+			List<ReturnValue>? ReturnValues { get;  }
 
 			[LlmIgnore]
 			[Newtonsoft.Json.JsonIgnore]

@@ -196,6 +196,22 @@ namespace PLang.Modules.LlmModule
 				AppendToMessage(message);
 			}
 
+			if (scheme?.StartsWith("typeof=") == true)
+			{
+				llmResponseType = "json";
+				string fullClassName = scheme.Replace("typeof=", "", StringComparison.OrdinalIgnoreCase);
+				var type = Type.GetType(fullClassName, false);
+				if (type == null)
+				{
+					return (null, new ProgramError($"Could not find {fullClassName}", goalStep), null);
+				}
+
+				var helper = new ClassDescriptionHelper();
+				var (classDec, error) = helper.GetClassDescription(type);
+				if (error != null) return (null, error, null);
+
+				scheme = TypeHelper.GetJsonSchema(type);
+			}
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
 			llmQuestion.maxLength = maxLength;

@@ -1,0 +1,90 @@
+{
+  "Text": "call goal AnalyzeStep\n    on error WriteOut",
+  "ModuleType": "PLang.Modules.CallGoalModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to call a goal named 'AnalyzeStep' without any parameters and handle errors by writing out error information. The appropriate function is RunGoal with the goal name 'AnalyzeStep'.",
+    "Name": "RunGoal",
+    "Parameters": [
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalInfo",
+        "Value": {
+          "Path": ".build\\Build\\AnalyzeStep\\00. Goal.pr",
+          "Name": "AnalyzeStep",
+          "Parameters": {}
+        }
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "waitForExecution",
+        "Value": true
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "goalInfo": {
+        "Name": "goalInfo",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "waitForExecution": {
+        "Name": "waitForExecution",
+        "FullTypeName": "System.Boolean"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\nOnly choose RunApp if user specifically defines it as app\r\nRespect user intent on path to goal\r\nGoals/Apps can be dynamically called, e.g. call goal HandleType%type.Name%\r\n\r\nUse <examples> to understand user intent\r\n\r\n<examples>\r\ncall goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.\r\ncall ../ParseText => function name:RunGoal, goalName: ../ParseText, no parameters\r\ncall goal HandleType%type.Name% doStuff=1 => function: RunGoal, goalName: \"HandleType%type.Name%\", parameters is doStuff=1\r\nrun Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%\r\nexecute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%\r\nset %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value\r\n%user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%\r\ncall goal Action%Type% => function: RunGoal, goalName: \"Action%Type%\", parameters is null\r\n\r\ncall app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters\r\ncall app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%\r\n<examples>\r\n\""
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nThe user wants to execute a predefined goal named 'AnalyzeStep' and handle any errors by writing out an error message or information.\n## functions available starts ##\r\n{\"Description\":\"Call a Goal, e.g. `call goal Process`, `call Visits`\",\"ExampleInformation\":\"Examples with methods first define an example plang code and then(=>) how it is mapped to parameters\",\"Methods\":[{\"Description\":\"Call/Runs a goal. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"disableSystemGoals\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isEvent\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"},\"Examples\":[\"call goal Process %name% => GoalToCallInfo.Name=Process, GoalToCallInfo.Parameters={\\\"name\\\":\\\"%name%\\\"}\"]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "call goal AnalyzeStep\n    on error WriteOut"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.CallGoalModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a goal named 'AnalyzeStep' without any parameters and handle errors by writing out error information. The appropriate function is RunGoal with the goal name 'AnalyzeStep'.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"AnalyzeStep\",\n        \"Parameters\": null\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

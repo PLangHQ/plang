@@ -7,6 +7,7 @@ using System;
 using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Runtime.Serialization;
+using System.Text;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Building.Model
@@ -45,7 +46,15 @@ namespace PLang.Building.Model
 				return GetGoalAsString();
 			}
 		}
-
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public string TextWithLineNumber
+		{ get
+			{
+				return GetGoalAsString(true);
+			}
+		}
 		public List<GoalStep> GoalSteps { get; set; }
 		public List<string> SubGoals { get; set; }
 		public string? Description { get; set; }
@@ -147,17 +156,26 @@ namespace PLang.Building.Model
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public int CurrentStepIndex { get; set; }
-		public string GetGoalAsString()
+		public string GetGoalAsString(bool includeStepIndex = false)
 		{
-			string goal = "";
-			if (!string.IsNullOrWhiteSpace(Comment)) goal = $"/ {this.Comment}\n";
-			goal += this.GoalName + "\n";
+			int stepIndex = 0;
+			StringBuilder sb = new();
+
+			if (!string.IsNullOrWhiteSpace(Comment)) AppendLine(sb, $"/ {this.Comment}\n");
+			AppendLine(sb, this.GoalName);
+
 			foreach (var step in GoalSteps)
 			{
-				if (!string.IsNullOrWhiteSpace(step.Comment)) goal += $"/ {step.Comment}\n";
-				goal += "- ".PadLeft(step.Indent, ' ') + step.Text + "\n";
+				if (!string.IsNullOrWhiteSpace(step.Comment)) AppendLine(sb, $"/ {step.Comment}");
+				AppendLine(sb, "- ".PadLeft(step.Indent, ' ') + step.Text, stepIndex++);
 			}
-			return goal;
+			return sb.ToString();
+		}
+
+		public void AppendLine(StringBuilder sb, string txt, int? index = null)
+		{
+			if (index != null) sb.Append($"{index}.");
+			sb.AppendLine(txt);
 		}
 		protected override GoalStep? GetStep()
 		{

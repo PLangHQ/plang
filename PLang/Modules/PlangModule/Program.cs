@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema.Generation;
 using PLang.Attributes;
 using PLang.Building;
 using PLang.Building.Model;
@@ -13,6 +14,7 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Modules.PlangModule.Data;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -48,9 +50,14 @@ namespace PLang.Modules.PlangModule
 			this.fileAccessHandler = fileAccessHandler;
 		}
 
-		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private. parser=pr|goal")]
+		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private. parser=pr|pr2|goal|goal2")]
 		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", List<string>? propertiesToExtract = null, string parser = "pr")
 		{
+			if (parser == "pr2" || parser == "goal2")
+			{
+				return GetGoals2(fileOrFolderPath, visibility, propertiesToExtract);
+			}
+
 			List<Goal> goals = new List<Goal>();
 			string path = GetPath(fileOrFolderPath);
 
@@ -85,7 +92,8 @@ namespace PLang.Modules.PlangModule
 					return (null, new ProgramError($"The path {fileOrFolderPath} could not be found, searched for it at {path}"));
 				}
 
-			} else if (parser == "goal")
+			}
+			else if (parser == "goal")
 			{
 				var fileProgram = GetProgramModule<FileModule.Program>();
 				var files = await fileProgram.GetFilePathsInDirectory(path, includeSubfolders: true, searchPattern: "*.goal");
@@ -135,6 +143,12 @@ namespace PLang.Modules.PlangModule
 
 			return (array, null);
 		}
+
+		private (object? Goals, IError? Error) GetGoals2(string fileOrFolderPath, string visibility, List<string>? propertiesToExtract)
+		{
+			throw new NotImplementedException();
+		}
+
 		[Description("Get all setup goals. visibility=public|private|public_and_private. propertiesToExtract define what properties from the goal should be extracted")]
 		public async Task<(List<Goal>?, IError?)> GetSetupGoals(string? appPath = null, string visibility = "public", List<string>? propertiesToExtract = null)
 		{
@@ -150,34 +164,20 @@ namespace PLang.Modules.PlangModule
 		public record Runtime(List<Module> Modules);
 		public record Module(Type Type, ClassDescription ClassDescription);
 
-		public async Task<(object?, IError?)> GetModules2(string? format = null)
+		public async Task<(List<Module>?, IError?)> GetModules2()
 		{
-			var runtime = new Runtime(new());
-
-			
-			var modules = typeHelper.GetRuntimeModules();
-			
-			foreach (var module in modules)
+			var runtimeModules = typeHelper.GetRuntimeModules();
+			List<Module> modules = new();
+			foreach (var module in runtimeModules)
 			{
 				var classDescriptionHelper = new ClassDescriptionHelper();
 				var (classDescription, error) = classDescriptionHelper.GetClassDescription(module);
 				if (error != null) return (null, error);
 
-				runtime.Modules.Add(new Module(module, classDescription));
+				modules.Add(new Module(module, classDescription));
 			}
 
-			if (format?.Equals("md", StringComparison.OrdinalIgnoreCase) == true)
-			{
-				var template = GetProgramModule<TemplateEngineModule.Program>();
-
-				var parameters = new Dictionary<string, object?>();
-				parameters.Add("runtime", runtime);
-
-				return await template.RenderFile("/system/modules/plang/templates/GetModules.html", parameters);
-				
-			}
-
-			return (runtime, null);
+			return (modules, null);
 
 		}
 
@@ -191,17 +191,84 @@ namespace PLang.Modules.PlangModule
 			int i = 0;
 			return (null, null);
 		}
-		public async Task<(object?, IError?)> GetMethods(List<string> modules, string? format = null)
+
+		public async Task<(ClassDescription?, IError?)> GetClassDescription(string module, string? format = "null|llm")
 		{
-			int i = 0;
-			return (null, null);
+			if (string.IsNullOrWhiteSpace(module)) return (null, null);
+
+			var type = Type.GetType(module, false);
+			if (type == null)
+			{
+				return (null, new ProgramError($"Could not load module '{module}'", goalStep));
+			}
+			var helper = GetImplementation<IClassDescriptionHelper>("IClassDescriptionHelper", typeof(ClassDescriptionHelper));
+			return helper.GetClassDescription(type);
 		}
 
-		public async Task<(object?, IError?)> ValidateGoal(Goal goal)
+		protected T GetImplementation<T>(string name, Type defaultType)
 		{
-			int i = 0;
-			return (null, null);
+			if (context.Items.TryGetValue(GetType().FullName + "." + name, out object? value) && value != null)
+			{
+				return (T)value;
+			}
+			return SetImplementation<T>(name, defaultType);
 		}
+		protected T SetImplementation<T>(string name, Type type)
+		{
+			var instance = Activator.CreateInstance(type);
+			context.Items.AddOrReplace(GetType().FullName + "." + name, instance);
+			return (T)instance;
+		}
+
+		public async Task<(List<ObjectValue>?, IError?)> ValidateGoal(PrGoal goal, PrGoal prGoal)
+		{
+			var (steps, error) = ConvertToGoalSteps(goal, prGoal.Steps);
+			if (error != null) return (null, error);
+			goal.Steps = steps;
+
+			prGoal.Comment = goal.Comment;
+
+			prGoal.Path = goal.RelativeGoalPath;
+			prGoal.FolderPath = goal.RelativeGoalFolderPath;
+			prGoal.AbsolutePath = goal.AbsoluteGoalPath;
+
+			prGoal.PrFolderPath = fileSystem.Path.Join(prGoal.FolderPath, ".build");
+			prGoal.PrPath = fileSystem.Path.Join(prGoal.PrFolderPath, prGoal.PrFileName);
+
+			prGoal.IsEvent = goal.IsEvent;
+			prGoal.IsSetup = goal.IsSetup;
+
+			var list = new List<ObjectValue>();
+
+
+			list.Add(new ObjectValue("goal", goal));
+			list.Add(new ObjectValue("prGoal", prGoal));
+
+			return (list, null);
+		}
+
+		private (List<GoalStep>?, IError) ConvertToGoalSteps(PrGoal goal, IReadOnlyList<Data.PrStep> prSteps)
+		{
+			foreach (var prStep in prSteps)
+			{
+				var step = goal.Steps.FirstOrDefault(p => p.Index == prStep.Index);
+				if (step == null) return (null, new Error($"Step index {prStep.Index} could not be found in {goal.Name} at {goal.Path}"));
+
+				step.Module = prStep.Module;
+				step.Indents = prStep.Indents;
+				step. = prStep.Reasoning;
+			}
+			/*
+			foreach (var prStep in goalSteps)
+			{
+				goalSteps.Add(GetAsGoalStep(prStep));
+			}
+
+			goal.GoalSteps = goalSteps;
+			*/
+			return new();
+		}
+
 
 		public async Task<(object?, IError?)> ValidateMethod(GoalStep step, object function)
 		{
@@ -230,13 +297,20 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Returns the class description with methods in a module")]
-		public async Task<(ClassDescription?, IError?)> GetClassDescription(string moduleName)
+		public async Task<(ClassDescription?, IError?)> GetClassDescription(string moduleName, List<string>? methodNames = null)
 		{
 			var programType = typeHelper.GetRuntimeType(moduleName);
 
 			var classDescriptionHelper = new ClassDescriptionHelper();
-			return classDescriptionHelper.GetClassDescription(programType);
+			return classDescriptionHelper.GetClassDescription(programType, methodNames);
 
+		}
+
+		public async Task<(string, IError?)> GetSCharpCode(string solutionPath, string type)
+		{
+
+
+			return (null, null);
 		}
 
 		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
@@ -445,7 +519,7 @@ namespace PLang.Modules.PlangModule
 			var result = await startingEngine.ProcessPrFile(step.Goal, step, step.Number, context);
 			return result;
 		}
-	
+
 
 		[Description("Run from a specific step and the following steps")]
 		public async Task<(object?, IError?)> RunFromStep(string prFileName)
@@ -529,7 +603,7 @@ namespace PLang.Modules.PlangModule
 		public async Task<(ClassDescription?, IError?)> GetMehodInfo(string type, string methodName)
 		{
 			var cdh = new ClassDescriptionHelper();
-			return cdh.GetClassDescription(Type.GetType(type + ".Program"), methodName);
+			return cdh.GetClassDescription(Type.GetType(type + ".Program"), [methodName]);
 
 		}
 

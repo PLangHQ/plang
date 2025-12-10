@@ -1,0 +1,4 @@
+Start
+- copy ../Documentation, "md" files, override existing, include sub folder to "full_doc" folder
+- zip ./ to ../skill.zip, exclude ".build", ".db", override file
+- move ../skill.zip to skill.zip, override file

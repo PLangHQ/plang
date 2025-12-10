@@ -3,20 +3,20 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "write out system error \"%!error%\"",
+      "Text": "throw %!error%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "write_out_system_error",
-      "Description": "Take the system error stored in the variable %!error% and write it out to the output stream, likely to inform the user or log the error message.",
-      "PrFileName": "01. write_out_system_error.pr",
-      "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\01. write_out_system_error.pr",
+      "ModuleType": "PLang.Modules.ThrowErrorModule",
+      "Name": "throw_error_variable",
+      "Description": "Throw an error using the value stored in the variable %!error%, which will interrupt the current process or goal execution and propagate the error accordingly.",
+      "PrFileName": "01. throw_error_variable.pr",
+      "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\01. throw_error_variable.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-10-03T09:33:04.0504503+00:00",
+      "Generated": "2025-12-09T13:15:32.439014+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,14 +28,14 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d7b90ebea6a69ec76572ebdc235f3202c799f516da3ab01b8bbaf5efc5c9de7a",
+      "Hash": "33089078383c69d3e632bd65bd83f263c6c668746a08b07d3cfc3a1f9076b187",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal",
-      "UserIntent": null
+      "UserIntent": "The user wants to throw an error or exception using the error variable %!error%"
     }
   ],
   "SubGoals": [],
-  "Description": "The OnAppError goal is designed to handle system errors by writing out the specific error message. It captures the error message and outputs it for further analysis or logging.",
+  "Description": "The OnAppError goal is designed to handle application errors by throwing an error object. When this goal is invoked, it will throw an error represented by the variable \\%!error\\%. This allows the application to manage error states effectively.",
   "Visibility": 1,
   "GoalFileName": "OnAppError.goal",
   "PrFileName": "00. Goal.pr",
@@ -48,9 +48,9 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c6849f647c38088cd24b6f9c4f9be1903ef404118978a70c4753611c3750ef78",
+  "Hash": "55b2916fd64b06dc41c38968ea353383a7e32897c450fd0cb12a0b3bba4469cf",
   "IncomingVariablesRequired": {
-    "%!error%": "This variable holds the system error message that needs to be written out."
+    "%!error%": "An error object that needs to be thrown when an application error occurs."
   },
   "DataSourceName": null,
   "IsSetup": false,

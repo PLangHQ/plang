@@ -2,39 +2,67 @@ Build
 - call goal BuildCode
 
 BuildCode
-- get all goal at /, include private files, use goal parser, write to %goals%
+- set default value %path% = "/", %actor% = "system" (SetDefaultValueOnVariables)
+- get all goals at %path%, include private files, use goal2 parser, write to %goals%
 - read scheme/goal.json, write to %goalScheme%
 - read scheme/step.json, write to %stepScheme%
 - read scheme/method.json, write to %methodScheme%
 /- filter %goals% where "HasChanged" is true, write to %goals%
-- foreach %goals% call goal AnalyzeGoal item=%goal%
+- foreach %goals% call goal AnalyzeGoalErrorHandler item=%goal%
+
+AnalyzeGoalErrorHandler
+- call AnalyzeGoal
 
 AnalyzeGoal
-- write out "Analyzing goal %goal.goalName% ..."
-- [plang] get all modules (GetAllModules2), format:"md", write to %modules%
+- write out "Analyzing goal \n%goal.TextWithLineNumber% ..."
+- [plang] get all modules (GetAllModules2), write to %modules%
+- render template "/system/modules/plang/templates/GetModules.html", write to %modulesHtml%
 - read llm/goalSystem.llm, load vars, write to %system%
 - [llm] system: %system%
-    user: %goal.Text%
-    scheme: %goalScheme%
+    user: %goal.TextWithLineNumber%
+    scheme:typeof = plang.PrGoal 
     write to %prGoal%
-- [plang] validate and load %prGoal%
+/- write out "prgoal: %prGoal%"
+/ check if name, description is empty, if steps match to goal
+- [plang] validate and load prGoal=%prGoal%, goal=%goal%
     on error call FixGoal retry 3 times
-- foreach %prGoal.steps% call goal AnalyzeStep item=%step%
+/- write out "goal: %goal%\nprGoal:%prGoal%"
+- foreach %prGoal.steps% call goal AnalyzeStepErrorHandler item=%step%
 - [plang] save %prGoal% to %goal.PrPath%
 - write out "%goal.GoalName% has been built - time: %!goal.Stopwatch.ToString()%"
 
+AnalyzeStepErrorHandler
+- validate %step.Module% is not empty
+- call goal AnalyzeStep
+    on error WriteOut
+
 AnalyzeStep
 - write out "Analyzing step: `- %step.Text%` "
-- [plang] get all methods from %step.module% and %step.second_module%, write to %methods%
-- read llm/stepSchemeInfo.llm, write to %stepScheme%
+- [plang] get class description from %step.Module%, write to %module%
+- [plang] get class description from %step.SecondModule%, write to %secondModule%
+- render template "/system/modules/plang/templates/MethodsInModules.html", write to %modulesAndMethods%
+- save %modulesAndMethods% to "modulesAndMethods.md"
+/- write out "\n==== methods ==== %modulesAndMethods%\n==== methods ===="
+- read llm/stepRules.llm, write to %rules%
+- read llm/pipeVariables.llm, write to %pipeVariables%
 - read llm/stepSystem.llm, load vars, write to %system%
+- write out "\n==== system ==== %system%\n==== system ====\nstep.Text: %step.Text%"
 - [llm] system: %system%, 
     user: %step.Text%
-    scheme: %methodScheme%
-    write to %prMethod%
-- [plang] validate and load %step%, %prMethod.method%, 
+    on complete: ValidateOutput
+    write to %prStep%
+- write out "\n\nprMethod: %prStep%"
+- [plang] get class description from %prStep.module%, %prStep.methods%, write to %methods%
+- read llm/methodSchemeInfo.llm, write to %methodScheme%
+- read llm/methodSchemeInfo.llm, load vars, write to %methodSystem%
+- [llm] system:  %methodSystem%
+        user: %step.Text%
+                %prStep%
+        scheme: typeof(plang.prFunction)
+        write to %prFunction%
+- [plang] validate and load %step%, %prFunction%, 
     on error FixStep retry 3 times
-- [plang] save %prMethod% to %prMethod.PrPath%
+- [plang] save %prFunction% to %prMethod.PrPath%
 
 FixGoal
 - read llm/fixGoalSystem.llm, load vars, write to %system%
@@ -63,3 +91,15 @@ FixStep
     scheme: %methodScheme%
     write to %methodResponse%
 - [plang] validate and load %methodResponse%
+
+
+ValidateLlmResponse
+- if %step.retryCount% > 2 throw "Could not validate step"
+- validate %prMethod% is valid json, write to %error%
+- if %error% is empty then return
+- append llm 'user': %error%
+- retry step
+
+WriteOut
+- write out %!error%, level:error, actor:%actor%
+- append %!error% to %errorList%

@@ -1,6 +1,7 @@
 ﻿using NBitcoin.Protocol;
 using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
 using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
@@ -49,10 +50,12 @@ namespace PLang.Utils
 			return null;
 		}
 
+		[LlmIgnore]
 		public record Callback(string Path, Dictionary<string, object?>? CallbackData, CallbackInfo CallbackInfo, SignedMessage Signature) { 
 			public string Hash { get; set; }
 			public string? PreviousHash { get; set; }
 		}
+		[LlmIgnore]
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
 		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, 
 			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false)

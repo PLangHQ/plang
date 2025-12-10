@@ -1,0 +1,17 @@
+CreateSummary
+- get all files in "full_doc", write to %files%
+- foreach %files% call AnalyzeFile item=%file%
+
+AnalyzeFile
+- read %file.path%, write to %content%
+- hash %content%, write to %file.Hash%
+- select count(*) as %count% from files where path=%file.path% and hash=%file.hash%, ds: 'data', return 1
+- if %count% is 1 then 
+    - end goal
+- read system.llm, write to %system%
+- [llm] system:%system% 
+    user: %content%
+    scheme: {title:string, summary:string}
+    write to %response%
+- upsert files path=%file.Path%(unique), title=%file.title%, hash=%file.Hash%, updated=%now%
+- write "## %response.title%\n\n%response.summary%" to /summaries/%file.Name%

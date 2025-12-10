@@ -1,0 +1,3 @@
+Setup
+- create table files, columns:
+    path(string, unique), title(string), hash(string), created(datetime, default now), updated(datetime, default now)

@@ -1,0 +1,134 @@
+{
+  "Text": "zip ./ to ../skill.zip, exclude \".build\", \".db\", override file",
+  "ModuleType": "PLang.Modules.CompressionModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to create a zip archive of the current directory (./) to ../skill.zip, excluding certain folders (.build, .db), and wants to overwrite the existing zip file if it exists. The CompressDirectory method supports specifying the source directory, destination archive file, exclusion patterns, and overwrite option, which matches the user's intent.",
+    "Name": "CompressDirectory",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "sourceDirectoryName",
+        "Value": "./"
+      },
+      {
+        "Type": "System.String",
+        "Name": "destinationArchiveFileName",
+        "Value": "../skill.zip"
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "compressionLevel",
+        "Value": 0
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "includeBaseDirectory",
+        "Value": true
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "createDestinationDirectory",
+        "Value": true
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "overwriteDestinationFile",
+        "Value": true
+      },
+      {
+        "Type": "System.String[]",
+        "Name": "excludePatterns",
+        "Value": [
+          ".build",
+          ".db"
+        ]
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "sourceDirectoryName": {
+        "Name": "sourceDirectoryName",
+        "FullTypeName": "System.String"
+      },
+      "destinationArchiveFileName": {
+        "Name": "destinationArchiveFileName",
+        "FullTypeName": "System.String"
+      },
+      "compressionLevel": {
+        "Name": "compressionLevel",
+        "FullTypeName": "System.Int32"
+      },
+      "includeBaseDirectory": {
+        "Name": "includeBaseDirectory",
+        "FullTypeName": "System.Boolean"
+      },
+      "createDestinationDirectory": {
+        "Name": "createDestinationDirectory",
+        "FullTypeName": "System.Boolean"
+      },
+      "overwriteDestinationFile": {
+        "Name": "overwriteDestinationFile",
+        "FullTypeName": "System.Boolean"
+      },
+      "excludePatterns": {
+        "Name": "excludePatterns",
+        "FullTypeName": "System.String[]"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nCreate a zip archive of the current directory excluding certain folders and overwrite the existing zip file if it exists\n## functions available starts ##\r\n{\"Description\":\"compress and decompress(extract) a file or folder. This can be various of file formats, zip, gz, or other custom formats. Example usage: `zip file.txt to file.zip`, or `unzip file.zip to file.txt`\",\"Methods\":[{\"Description\":\"compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression)\",\"MethodName\":\"CompressFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"filePath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"saveToPath\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"compressionLevel\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"CompressFiles\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"filePaths\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"saveToPath\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"compressionLevel\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"DecompressFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sourceArchiveFileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"destinationDirectoryName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"CompressDirectory\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sourceDirectoryName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"destinationArchiveFileName\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"compressionLevel\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeBaseDirectory\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"createDestinationDirectory\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteDestinationFile\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"excludePatterns\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "zip ./ to ../skill.zip, exclude \".build\", \".db\", override file"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to create a zip archive of the current directory (./) to ../skill.zip, excluding certain folders (.build, .db), and wants to overwrite the existing zip file if it exists. The CompressDirectory method supports specifying the source directory, destination archive file, exclusion patterns, and overwrite option, which matches the user's intent.\",\n  \"Name\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"./\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"../skill.zip\"\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"System.String[]\",\n      \"Name\": \"excludePatterns\",\n      \"Value\": [\".build\", \".db\"]\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

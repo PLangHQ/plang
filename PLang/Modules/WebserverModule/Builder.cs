@@ -42,7 +42,7 @@ namespace PLang.Modules.WebserverModule
 			var variables = GetVariablesInStep(step).Replace("%", "");
 
 			var classDescriptionHelper = new ClassDescriptionHelper();
-			var (classDescription, error) = classDescriptionHelper.GetClassDescription(programType, instruction.Function.Name);
+			var (classDescription, error) = classDescriptionHelper.GetClassDescription(programType, [instruction.Function.Name]);
 			if (error != null) return (null, error);
 
 			

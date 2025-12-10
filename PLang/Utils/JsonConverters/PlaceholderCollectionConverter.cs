@@ -47,8 +47,7 @@ public sealed class PlaceholderCollectionConverter : JsonConverter
 			}
 		}
 
-		try { return token.ToObject(objectType, serializer); }
-		catch { return CreateInstance(objectType); }
+		return CreateInstance(objectType);
 	}
 
 	public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)

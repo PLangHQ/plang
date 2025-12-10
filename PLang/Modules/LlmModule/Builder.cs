@@ -35,6 +35,12 @@ model is default gpt-4.1-mini
 the json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} 
 the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
 
+for scheme: 
+- it can be json5 type of json, make it strict and valid json. 
+- it can be type and MUST be formatted typeof=path.to.type, list<plang.PrGoal> makes it a list of T. 
+	examples are:	type is list of string => scheme=""typeof=List<string>""
+					type=MyCompany.Data.User => scheme=""typeof=MyCompany.Data.User""
+					typeof(module.Data). path that is only two sections, e.g. plang.PrGoal, or file.FileInfo, that points to T=""PLang.Modules.PlangModule.Data.PrGoal"", =>scheme=""typeof=PLang.Modules.PlangModule.Data.PrGoal""
 ## examples ##
 system: %system%
 [

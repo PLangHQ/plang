@@ -208,50 +208,12 @@ public class ObjectValue
 		var parentValue = Parent!.Value;
 		if (parentValue is JObject jobj)
 		{
-			var property = jobj.Properties().FirstOrDefault(p => p.Name.Equals(Name, StringComparison.OrdinalIgnoreCase));
-			JToken jToken = (value is JToken jt) ? jt : GetJToken(value);
-
-			if (property == null)
-			{
-				jobj.Add(Name, jToken);
-			}
-			else
-			{
-				property.Value = jToken;
-			}
-			Parent.Value = jobj;
+			AddOrUpdateJObjectProperty(jobj, value);
+			
 		}
 		else if (parentValue is JArray jArray)
 		{
-			JToken jToken = (value is JToken jt) ? jt : GetJToken(value); ;
-
-			if (Name.Contains("[") && Name.Contains("]"))
-			{
-				if (int.TryParse(Name.Trim('[').Trim(']'), out int index))
-				{
-					jArray[index] = jToken;
-				} else
-				{
-					throw new Exception($"{Name} is not supported on index. {ErrorReporting.CreateIssueNotImplemented}");
-				}
-			}
-			else
-			{
-				try
-				{
-					foreach (var item in jArray.OfType<JObject>())
-					{
-						if (item[Name] == null) continue;
-						item[Name] = null;
-					}
-				} catch (Exception ex)
-				{
-					Console.WriteLine($"Name:{Name} | JToken:{jToken}");
-					Console.WriteLine(ex);
-				}
-			}
-
-			Parent.Value = jArray;
+			AddOrUpdateJArrayProperty(jArray, value);			
 		}
 		else if (parentValue == null)
 		{
@@ -285,12 +247,78 @@ public class ObjectValue
 			}
 			else
 			{
+				var json = JsonConvert.SerializeObject(parentReference);
+				var jvalue = JsonConvert.DeserializeObject(json);
+				if (jvalue is JObject jobj2)
+				{
+					AddOrUpdateJObjectProperty(jobj2, value);
+					return;
+				}
+
+				if (jvalue is JArray jarray2)
+				{
+					AddOrUpdateJArrayProperty(jarray2, value);
+					return;
+				}
+
 
 				throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
 			}
 		}
 
 	}
+
+	private void AddOrUpdateJArrayProperty(JArray jArray, object? value)
+	{
+		JToken jToken = (value is JToken jt) ? jt : GetJToken(value); ;
+
+		if (Name.Contains("[") && Name.Contains("]"))
+		{
+			if (int.TryParse(Name.Trim('[').Trim(']'), out int index))
+			{
+				jArray[index] = jToken;
+			}
+			else
+			{
+				throw new Exception($"{Name} is not supported on index. {ErrorReporting.CreateIssueNotImplemented}");
+			}
+		}
+		else
+		{
+			try
+			{
+				foreach (var item in jArray.OfType<JObject>())
+				{
+					if (item[Name] == null) continue;
+					item[Name] = null;
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Name:{Name} | JToken:{jToken}");
+				Console.WriteLine(ex);
+			}
+		}
+
+		Parent.Value = jArray;
+	}
+
+	private void AddOrUpdateJObjectProperty(JObject jobj, object? value)
+	{
+		var property = jobj.Properties().FirstOrDefault(p => p.Name.Equals(Name, StringComparison.OrdinalIgnoreCase));
+		JToken jToken = (value is JToken jt) ? jt : GetJToken(value);
+
+		if (property == null)
+		{
+			jobj.Add(Name, jToken);
+		}
+		else
+		{
+			property.Value = jToken;
+		}
+		Parent.Value = jobj;
+	}
+
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
 	[JsonIgnore]

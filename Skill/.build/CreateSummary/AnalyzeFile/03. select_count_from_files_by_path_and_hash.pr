@@ -1,0 +1,131 @@
+{
+  "Text": "select count(*) as %count% from files where path=%file.path% and hash=%file.hash%, ds: 'data', return 1",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": [
+      "files"
+    ],
+    "AffectedColumns": {
+      "path": "where",
+      "hash": "where"
+    },
+    "Warning": null,
+    "Reasoning": "The user wants to get the count of records from the 'files' table in the 'data' datasource where the path and hash match the given variables. The query returns a single row with the count, so SelectOneRow is appropriate.",
+    "Name": "SelectOneRow",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "dataSourceName",
+        "Value": "data"
+      },
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "select count(*) as count from files where path=@path and hash=@hash"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]",
+        "Name": "sqlParameters",
+        "Value": [
+          {
+            "TypeFullName": "System.String",
+            "ParameterName": "@path",
+            "VariableNameOrValue": "%file.path%"
+          },
+          {
+            "TypeFullName": "System.String",
+            "ParameterName": "@hash",
+            "VariableNameOrValue": "%file.hash%"
+          }
+        ]
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "count",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "IsValidSql": {
+      "SetupHash": "e876e6bc36c36e953cb000d3a879b28fab103cd67b641a799d551d80b434f090",
+      "SetupRelativePrPath": ".build\\Setup\\00. Goal.pr",
+      "DataSourceName": "data",
+      "Updated": "2025-12-09T14:00:20.2817687+00:00"
+    },
+    "Parameters": {
+      "dataSourceName": {
+        "Name": "dataSourceName",
+        "FullTypeName": "System.String"
+      },
+      "sql": {
+        "Name": "sql",
+        "FullTypeName": "System.String"
+      },
+      "sqlParameters": {
+        "Name": "sqlParameters",
+        "FullTypeName": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]"
+      }
+    },
+    "ReturnValues": {
+      "count": {
+        "Name": "count",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\n<dataSourceAndTableInfos>\r\nDataSource name: data\r\nTable name: files\r\nColumns: [{\"Information\":\"{\\\"name\\\":\\\"id\\\",\\\"type\\\":\\\"INTEGER\\\",\\\"isnotnull\\\":1,\\\"isprimarykey\\\":1,\\\"default_value\\\":null}\"},{\"Information\":\"{\\\"name\\\":\\\"path\\\",\\\"type\\\":\\\"TEXT\\\",\\\"isnotnull\\\":0,\\\"isprimarykey\\\":0,\\\"default_value\\\":null}\"},{\"Information\":\"{\\\"name\\\":\\\"hash\\\",\\\"type\\\":\\\"TEXT\\\",\\\"isnotnull\\\":0,\\\"isprimarykey\\\":0,\\\"default_value\\\":null}\"},{\"Information\":\"{\\\"name\\\":\\\"created\\\",\\\"type\\\":\\\"DATETIME\\\",\\\"isnotnull\\\":0,\\\"isprimarykey\\\":0,\\\"default_value\\\":\\\"datetime('now')\\\"}\"},{\"Information\":\"{\\\"name\\\":\\\"updated\\\",\\\"type\\\":\\\"DATETIME\\\",\\\"isnotnull\\\":0,\\\"isprimarykey\\\":0,\\\"default_value\\\":\\\"datetime('now')\\\"}\"}]\r\n----\r\n</dataSourceAndTableInfos>\r\n\r\nAdditional json Response explaination:\r\n- Datasource(s) to available: data\r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n- for `IN (@parameter)` statements => The parameter type should be System.Array\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\r\n- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. \r\n- Do not assume or include all columns from the table schema unless the user requests it. \r\n- when user defines select * from XXX, keep the * in sql\r\n- You MUST generate ReturnValues for the select statement, see <select_example>\r\n- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.\r\n- when user defines, write to %variable%, then result is an object\r\n\r\n<select_example>\r\n`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address\r\n`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user\r\n`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders\r\n`select id as %productId% from products` => sql=\"select id as productId from products\", ReturnValues => VariableName: productId\r\n<select_example>\r\n\r\n- when user defines select * from XXX, keep the * in sql\r\n- select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'\r\n- user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid\r\n- Returning 1 mean user want only one row to be returned (limit 1)\r\n\r\n<select_example>\r\n`select id from users where id=%id%` => ReturnValues => VariableName:  id\r\n`select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice\r\n`select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip\r\n<select_example>\r\n\r\n- Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)\r\n- use <dataSourceAndTableInfos> to build a valid sql for Microsoft.Data.Sqlite.SqliteConnection\r\n\r\n- The main dataSourceName for database operations is: \"data\". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.\r\n\r\nThe dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRetrieve the count of records from the 'files' table in the 'data' datasource where the path and hash match the given file path and hash variables\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"When SELECT/WITH should return 1 row (limit 1)\",\"MethodName\":\"SelectOneRow\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"When SELECT/WITH should return 1 row (limit 1) on multiple data source\",\"MethodName\":\"SelectOneRowWithMultipleDataSources\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"dataSourceNames\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"parameters\",\"Description\":\"ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"TypeFullName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ParameterName\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"VariableNameOrValue\",\"IsRequired\":false}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\ncount (type:object), file.path (type:object), file.hash (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "select count(*) as %count% from files where path=%file.path% and hash=%file.hash%, ds: 'data', return 1"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to get the count of records from the 'files' table in the 'data' datasource where the path and hash match the given variables. The query returns a single row with the count, so SelectOneRow is appropriate.\",\n  \"Name\": \"SelectOneRow\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"dataSourceName\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"select count(*) as count from files where path=@path and hash=@hash\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\n      \"Name\": \"sqlParameters\",\n      \"Value\": [\n        {\n          \"TypeFullName\": \"System.String\",\n          \"ParameterName\": \"@path\",\n          \"VariableNameOrValue\": \"%file.path%\"\n        },\n        {\n          \"TypeFullName\": \"System.String\",\n          \"ParameterName\": \"@hash\",\n          \"VariableNameOrValue\": \"%file.hash%\"\n        }\n      ]\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"count\",\n      \"Value\": null\n    }\n  ],\n  \"TableNames\": [\n    \"files\"\n  ],\n  \"AffectedColumns\": {\n    \"path\": \"where\",\n    \"hash\": \"where\"\n  },\n  \"Warning\": null\n}"
+    }
+  ]
+}
