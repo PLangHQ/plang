@@ -86,7 +86,12 @@ namespace PLang.Services.LlmService
 				if (cache == null) return null;
 
 				connection.Execute("UPDATE LlmCache SET LastUsed=CURRENT_TIMESTAMP WHERE Id=@id", new { id = cache.Id });
-				return JsonConvert.DeserializeObject<LlmRequest>(cache.LlmQuestion);
+				var llmRequest = JsonConvert.DeserializeObject<LlmRequest>(cache.LlmQuestion);
+				if (string.IsNullOrEmpty(llmRequest.CacheKey))
+				{
+					llmRequest.CacheKey = hash;
+				}
+				return llmRequest;
 			}
 		}
 		public void SetLlmRequestCache(string appId, string hash, LlmRequest llmQuestion)
@@ -97,7 +102,7 @@ namespace PLang.Services.LlmService
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
 				if (cache != null) return;
-
+				llmQuestion.CacheKey = hash;
 				connection.Execute("INSERT INTO LlmCache (Hash, LlmQuestion) VALUES (@hash, @llmQuestion)",
 						new { hash, llmQuestion = JsonConvert.SerializeObject(llmQuestion) });
 			}

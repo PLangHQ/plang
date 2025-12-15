@@ -1,6 +1,7 @@
 ﻿using Force.DeepCloner;
 using LightInject;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -117,15 +118,22 @@ namespace PLang.Runtime
 				{
 					foreach (var param in parameters ?? [])
 					{
-						object? value = (param.Value is ObjectValue ov) ? ov.Value : param.Value;
+						//object? value = (param.Value is ObjectValue ov) ? ov.Value : param.Value;
 						if (param.Key.StartsWith("!"))
 						{
-							goalToRun.AddVariable(value, variableName: param.Key);
+							goalToRun.AddVariable(param.Value, variableName: param.Key);
 						}
 						else
 						{
-													
-							memoryStack.Put(param.Key, value, goalStep: context.CallingStep, disableEvent: true);
+							if (param.Value is ObjectValue ov)
+							{
+								ov.SetAsVariable = true;
+								memoryStack.Put(ov, goalStep: context.CallingStep, disableEvent: true);
+							} else
+							{
+								memoryStack.Put(param.Key, param.Value, goalStep: context.CallingStep, disableEvent: true);
+							}
+							//
 						}
 					}
 				}

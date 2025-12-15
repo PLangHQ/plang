@@ -6,6 +6,7 @@ using PLang.Models.ObjectTypes;
 using PLangTests;
 using System.Xml.Linq;
 using static PLang.Runtime.Tests.ObjectValueTests;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Runtime.Tests
 {

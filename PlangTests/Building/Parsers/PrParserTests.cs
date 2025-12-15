@@ -12,6 +12,7 @@ using PLangTests.Helpers;
 using PLangTests.Mocks;
 using System.IO.Abstractions.TestingHelpers;
 using System.Reflection;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Building.Parsers.Tests
 {

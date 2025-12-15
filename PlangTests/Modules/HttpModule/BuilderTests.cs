@@ -11,6 +11,7 @@ using PLangTests;
 using PLangTests.Utils;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.HttpModule.Tests
 {

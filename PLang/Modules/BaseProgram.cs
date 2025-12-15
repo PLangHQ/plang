@@ -305,8 +305,7 @@ namespace PLang.Modules
 
 			foreach (var mockMethod in mockMethods)
 			{
-				if (mockMethod.Parameters == null) continue;
-				if (mockMethod.Parameters.Count == 0)
+				if (mockMethod.Parameters == null || mockMethod.Parameters.Count == 0)
 				{
 					mockMethod.GoalToCall.Parameters.AddOrReplace(parameterValues);
 					return engine.RunGoal(mockMethod.GoalToCall, goal, context);

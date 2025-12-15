@@ -106,9 +106,9 @@ namespace PLang.Modules.LoopModule
 				effectiveThreads = Math.Max(effectiveThreads, 1);
 			}
 
+			var loopVariable = memoryStack.GetObjectValue(variableToLoopThrough);
 
-
-			var obj = memoryStack.Get(variableToLoopThrough);
+			var obj = loopVariable.Value;
 			if (obj == null)
 			{
 				logger.LogDebug($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
@@ -158,10 +158,11 @@ namespace PLang.Modules.LoopModule
 			int idx = 0;
 			if (effectiveThreads == 1)
 			{
+				/*
 				foreach (var param in goalToCall.Parameters)
 				{
 					goalToCall.Parameters.AddOrReplace(param.Key, memoryStack.LoadVariables(param.Value));
-				}
+				}*/
 				var items = enumerables.ToDynamicList();
 				for (int i = 0;i<items.Count;i++) 
 				{
@@ -170,11 +171,11 @@ namespace PLang.Modules.LoopModule
 
 					if (item is ObjectValue ov)
 					{
-						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov.Value);
+						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov);
 					}
 					else
 					{
-						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, new ObjectValue(itemName, item, parent: new ObjectValue($"{loopVariable.Path}[{i}]", loopVariable)));
 					}
 					goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 

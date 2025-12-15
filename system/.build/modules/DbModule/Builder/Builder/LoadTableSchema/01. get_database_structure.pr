@@ -1,0 +1,105 @@
+{
+  "Text": "[db] get database structure %tableRef.datasource%, tables: [%tableRef.table%], write to %tableStructure%\n    on error call HandleTableNotFound",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": [
+      "%tableRef.table%"
+    ],
+    "AffectedColumns": null,
+    "Warning": null,
+    "Reasoning": "The user wants to get the structure of a specific table from a given datasource and write the result to a variable. The function GetDatabaseStructure matches this intent as it returns the tables and views in the database with column descriptions. The parameters are set accordingly with the datasource and table name, and the return value is assigned to the specified variable.",
+    "Name": "GetDatabaseStructure",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "dataSourceName",
+        "Value": "%tableRef.datasource%"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[System.String]",
+        "Name": "tables",
+        "Value": [
+          "%tableRef.table%"
+        ]
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Collections.Generic.List`1[TableInfo]",
+        "VariableName": "%tableStructure%",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "dataSourceName": {
+        "Name": "dataSourceName",
+        "FullTypeName": "System.String"
+      },
+      "tables": {
+        "Name": "tables",
+        "FullTypeName": "System.Collections.Generic.List`1[System.String]"
+      }
+    },
+    "ReturnValues": {
+      "%tableStructure%": {
+        "Name": "%tableStructure%",
+        "FullTypeName": "System.Collections.Generic.List`1[TableInfo]"
+      }
+    }
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\n<dataSourceAndTableInfos>\r\nDataSource name: data\r\nTable name: %tableRef.table%\r\nColumns: null\r\n----\r\n</dataSourceAndTableInfos>\r\n\r\nAdditional json Response explaination:\r\n- Datasource(s) to available: data\r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n- for `IN (@parameter)` statements => The parameter type should be System.Array\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\r\n- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. \r\n- Do not assume or include all columns from the table schema unless the user requests it. \r\n- Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)\r\n- use <dataSourceAndTableInfos> to build a valid sql for Microsoft.Data.Sqlite.SqliteConnection\r\n\r\n- The main dataSourceName for database operations is: \"data\". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.\r\n\r\nThe dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRetrieve the structure of a specified database table from a given datasource and handle errors if the table is not found\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Returns tables and views in database with the columns description\",\"MethodName\":\"GetDatabaseStructure\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"tables\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.String]? tables\"}],\"ReturnValue\":{\"Type\":\"List<TableInfo>\",\"ReturnValueSignature\":\"List<TableInfo>\"},\"Examples\":[],\"MethodSignature\":\"GetDatabaseStructure(System.String dataSourceName, System.Collections.Generic.List`1[System.String]? tables) : List<TableInfo>\"}],\"SupportingObjects\":[],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ntableRef.datasource (type:object), tableRef.table (type:object), tableStructure (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "[db] get database structure %tableRef.datasource%, tables: [%tableRef.table%], write to %tableStructure%\n    on error call HandleTableNotFound"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "CacheKey": "19b6935eebabf86f8f3c3eccc1e3305da35a8fcd9749ca9faf0d82917f3a2cf9",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to get the structure of a specific table from a given datasource and write the result to a variable. The function GetDatabaseStructure matches this intent as it returns the tables and views in the database with column descriptions. The parameters are set accordingly with the datasource and table name, and the return value is assigned to the specified variable.\",\n  \"Name\": \"GetDatabaseStructure\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"dataSourceName\",\n      \"Value\": \"%tableRef.datasource%\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.String]\",\n      \"Name\": \"tables\",\n      \"Value\": [\n        \"%tableRef.table%\"\n      ]\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Collections.Generic.List`1[TableInfo]\",\n      \"VariableName\": \"%tableStructure%\",\n      \"Value\": null\n    }\n  ],\n  \"TableNames\": [\n    \"%tableRef.table%\"\n  ],\n  \"AffectedColumns\": null,\n  \"Warning\": null\n}"
+    }
+  ]
+}

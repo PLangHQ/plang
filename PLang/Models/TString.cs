@@ -68,6 +68,10 @@ public class TString : IComparable, IComparable<string>, IConvertible,
 		return result;
 	}
 
+	public ReadOnlySpan<char> AsSpan() => ToString().AsSpan();
+	public ReadOnlySpan<char> AsSpan(int start) => ToString().AsSpan(start);
+	public ReadOnlySpan<char> AsSpan(int start, int length) => ToString().AsSpan(start, length);
+
 	// String-like properties
 	public int Length => ToString().Length;
 	public char this[int index] => ToString()[index];
@@ -76,7 +80,7 @@ public class TString : IComparable, IComparable<string>, IConvertible,
 	public static implicit operator string(TString tstring) => tstring?.ToString();
 
 	// Explicit conversion from string
-	public static explicit operator TString(string str) =>
+	public static implicit operator TString(string str) =>
 		new TString(str);
 
 	// String comparison methods
@@ -161,5 +165,8 @@ public class TString : IComparable, IComparable<string>, IConvertible,
 	public static bool operator !=(TString a, string b) => !(a == b);
 
 	public static TString operator +(TString a, string b) =>
-		new TString(a.ToString());
+		new TString(a.ToString() + b);
+
+	public static TString operator +(string a, TString b) =>
+	   new TString(a + b.ToString());
 }

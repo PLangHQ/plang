@@ -393,6 +393,7 @@ Your job is:
 ## Rules
 %variable% in plang is defined with starting and ending percentage sign (%)
 %variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+\%variable\% is escaped variable, leave it as is, it is text not a variable.
 leave %variable% as is and do not change text to a variable
 null is used to represent no value, e.g. {{ ""name"": null }}
 Variables MUST not be changed, they can include dot(.) and parentheses()
@@ -412,7 +413,7 @@ write out 'Hello world' => Value: ""Hello world""
 
 ## JSON scheme information
 Reasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.
-Name: Name of the function to use from list of functions, if no function matches set as ""N/A""
+Name: Name of the function to use from list of functions. ONLY function name, e.g. ""Save"". if no function matches set as ""N/A""
 Parameters: List of parameters that are needed according to the user intent.
 - Type: the object type in c#
 - Name: name of the variable

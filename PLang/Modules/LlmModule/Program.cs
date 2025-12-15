@@ -200,6 +200,12 @@ namespace PLang.Modules.LlmModule
 			{
 				llmResponseType = "json";
 				string fullClassName = scheme.Replace("typeof=", "", StringComparison.OrdinalIgnoreCase);
+				bool isList = false;
+				if (fullClassName.StartsWith("list", StringComparison.OrdinalIgnoreCase))
+				{
+					fullClassName = fullClassName.Replace("list<", "", StringComparison.OrdinalIgnoreCase).Replace(">", "");
+					isList = true;
+				}
 				var type = Type.GetType(fullClassName, false);
 				if (type == null)
 				{
@@ -211,6 +217,10 @@ namespace PLang.Modules.LlmModule
 				if (error != null) return (null, error, null);
 
 				scheme = TypeHelper.GetJsonSchema(type);
+				if (isList)
+				{
+					scheme = "[" + scheme + "]";
+				}
 			}
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
@@ -225,6 +235,7 @@ namespace PLang.Modules.LlmModule
 			var properties = new Properties();
 			properties.Add(new ObjectValue("Llm", llmQuestion));
 
+
 			(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
 
 			if (queryError != null) return (null, queryError, properties);
@@ -234,8 +245,11 @@ namespace PLang.Modules.LlmModule
 			goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
 			goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
 
+			
+
 			if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 			{
+				
 				return (response, null, properties);
 			}
 

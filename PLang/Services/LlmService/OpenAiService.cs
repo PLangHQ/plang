@@ -81,6 +81,7 @@ namespace PLang.Services.OpenAi
 			}
 			
 			string data = $@"{{
+		""prompt_cache_key"": ""{question.CacheKey}"",
 		""model"":""{question.model}"",
 		""temperature"":{question.temperature},
 		""max_tokens"":{question.maxLength},

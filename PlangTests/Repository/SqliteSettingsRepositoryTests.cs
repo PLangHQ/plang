@@ -7,6 +7,7 @@ using PLang.SafeFileSystem;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Repository.Tests
 {

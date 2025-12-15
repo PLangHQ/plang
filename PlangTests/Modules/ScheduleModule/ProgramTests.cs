@@ -6,6 +6,7 @@ using PLang.Modules.ScheduleModule;
 using PLang.Utils;
 using System.Diagnostics;
 using static PLang.Modules.ScheduleModule.Program;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.ScheduleModule
 {

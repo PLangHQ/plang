@@ -1,0 +1,15 @@
+
+
+<pipe_rules>
+- try to make your best judgement when determining piping on variables
+- %variable% without any addition text is just variable as is
+- %variable%(dostuff) with parathensies can be construded as piped variable
+- create valid json for the variable piping
+<pipe_rules>
+
+<pipe_example>
+- %name to upper% => %name | string | toupper()%
+- set %name% = %data%(encrypt) => %data | encrypt%
+
+</pipe_examples>
+

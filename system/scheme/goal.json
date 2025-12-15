@@ -1,14 +1,10 @@
 {
-    name: string,
     description:string, 
     steps: [{
-        text:string, 
-        line:number,
+        name:string // follow snake_case for naming, e.g. 'get_folder_for_tools'
         reasoning:string, 
         module:string, 
-        second_module:string|null,
-        indents:number(usually 0, 4 for each if indent),
-        error:string // explains why you could map a module
-        }
-    ]
+        error:string // explains why you could not map a module
+        warning:string // when you want to warn the developer, this can be typo in variable, etc.
+    }]
 }

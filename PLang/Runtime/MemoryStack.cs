@@ -1350,7 +1350,7 @@ namespace PLang.Runtime
 				return;
 			}
 
-			if (objectValue.Parent == null)
+			if (objectValue.SetAsVariable || objectValue.Parent == null)
 			{
 				variables.AddOrUpdate(objectValue.Name, objectValue, (key, oldValue) => objectValue);
 
@@ -1389,7 +1389,7 @@ namespace PLang.Runtime
 
 			AddOrReplaceObjectValue(variables, objectValue, goalStep, disableEvent);
 			return;
-
+			/*
 			string? eventType = null;
 			key = Clean(key).ToLower();
 			if (key.Contains("!goal") || key.Contains("!step") || key.Contains("!event"))
@@ -1440,7 +1440,7 @@ namespace PLang.Runtime
 			{
 				CallEvent(eventType, objectValue, goalStep);
 			}
-
+			*/
 		}
 
 		private (string key, ObjectValue objectValue) GetTopObjectValueAndKey(ObjectValue prevObjectValue)

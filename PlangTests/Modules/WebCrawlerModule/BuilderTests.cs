@@ -7,6 +7,7 @@ using PLang.Services.OpenAi;
 using PLang.Utils;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.WebCrawlerModule
 {

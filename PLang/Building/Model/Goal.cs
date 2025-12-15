@@ -38,6 +38,8 @@ namespace PLang.Building.Model
 		public string GoalName { get; set; }
 		public string? Comment { get; set; }
 
+		public int Version { get; set; } = 1;
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -75,10 +77,16 @@ namespace PLang.Building.Model
 		[System.Text.Json.Serialization.JsonIgnore]
 		[LlmIgnore]
 		public string Path { get { return RelativeGoalPath; } }
+
+		[LlmIgnore]
+		public string PrPath { get { return RelativePrPath; } }
+
 		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
 		[LlmIgnore]
 		public string RelativeGoalFolderPath { get; set; }
+
+
 		[LlmIgnore]
 		public string RelativePrPath { get; set; }
 		
@@ -214,7 +222,8 @@ namespace PLang.Building.Model
 		public bool IsSetup { get; set; }
 		[LlmIgnore]
 		public bool IsEvent { get; set; }
-
+		[LlmIgnore]
+		public bool IsStart { get; set; }
 		[LlmIgnore]
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }

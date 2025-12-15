@@ -5,6 +5,7 @@ using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Security.Policy;
 using static PLang.Modules.CryptographicModule.ModuleSettings;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.CryptographicModule
 {

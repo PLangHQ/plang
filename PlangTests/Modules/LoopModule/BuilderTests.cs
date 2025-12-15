@@ -10,6 +10,7 @@ using PLang.Utils;
 using PLangTests;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.LoopModule.Tests
 {

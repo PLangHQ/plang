@@ -11,6 +11,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Reflection;
 using static PLang.Modules.BaseBuilder;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.LlmModule
 {

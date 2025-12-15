@@ -1,15 +1,15 @@
 {
-  "Text": "foreach %goals% call goal AnalyzeGoalErrorHandler item=%goal%",
+  "Text": "foreach %app.goals% call goal AnalyzeGoalErrorHandler item=%goal%",
   "ModuleType": "PLang.Modules.LoopModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to iterate over each item in the %goals% list and call the goal AnalyzeGoalErrorHandler for each item, passing the current item as %goal%. The RunLoop function is designed for this purpose, allowing looping over a collection and calling a goal with parameters for each item.",
+    "Reasoning": "The user wants to iterate over each goal in the %app.goals% list and call the goal AnalyzeGoalErrorHandler for each item, passing the current goal as the parameter 'item'. The RunLoop function is designed for this purpose, allowing looping through a list and calling a goal with parameters.",
     "Name": "RunLoop",
     "Parameters": [
       {
         "Type": "System.String",
         "Name": "variableToLoopThrough",
-        "Value": "%goals%"
+        "Value": "%app.goals%"
       },
       {
         "Type": "PLang.Models.GoalToCallInfo",
@@ -19,7 +19,10 @@
           "Name": "AnalyzeGoalErrorHandler",
           "Parameters": {
             "item": "%goal%"
-          }
+          },
+          "IsAsync": false,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
         }
       },
       {
@@ -56,7 +59,7 @@
     },
     "ReturnValues": {}
   },
-  "BuilderVersion": "0.1.18.1",
+  "BuilderVersion": "1.0.0.0",
   "Hash": null,
   "SignedMessage": null,
   "LlmRequest": [
@@ -88,7 +91,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nIterate over each item in the %goals% list and call the AnalyzeGoalErrorHandler goal for each individual goal item\n## functions available starts ##\r\n{\"Description\":\"While, for, foreach, loops, repeat, go through a list and call a goal\",\"Methods\":[{\"Description\":\"Repeat a call to a function number of time. Great for pagination, where repeatCount is page count and startIndex is page number. startIndex starts at 0\",\"MethodName\":\"Repeat\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"repeatCounter\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"startIndex\",\"DefaultValue\":0,\"IsRequired\":false}]},{\"Description\":\"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is \\\"item\\\" and value is \\\"%product%\\\". cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"ThreadCount\",\"IsRequired\":true},{\"Type\":\"System.Double\",\"Name\":\"CpuUsage\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"FailFast\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallBeforeItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallAfterItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Split\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\ngoals (type:object), goal (type:object), \r\n## defined variables ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nIterate over each goal in the app's goals list and call the AnalyzeGoalErrorHandler goal for each individual goal item\n## functions available starts ##\r\n{\"Description\":\"While, for, foreach, loops, repeat, go through a list and call a goal\",\"Methods\":[{\"Description\":\"Repeat a call to a function number of time. Great for pagination, where repeatCount is page count and startIndex is page number. startIndex starts at 0\",\"MethodName\":\"Repeat\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"repeatCounter\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"startIndex\",\"DefaultValue\":0,\"IsRequired\":false}]},{\"Description\":\"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is \\\"item\\\" and value is \\\"%product%\\\". cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"IsAsync\",\"Description\":\"Doesn't wait for goal response(run and forget)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WaitBeforeExecutingInMs\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"AfterExecution\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[],\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+MultiThreaded\",\"Name\":\"multiThreaded\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"ThreadCount\",\"IsRequired\":true},{\"Type\":\"System.Double\",\"Name\":\"CpuUsage\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"FailFast\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallBeforeItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallAfterItemIsProcessed\",\"Description\":\"(see PLang.Models.GoalToCallInfo type information in SupportingObjects)\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.LoopModule.Program+LinqOptions\",\"Name\":\"linqOptions\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Split\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\napp.goals (type:object), goal (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -97,14 +100,15 @@
           "content": [
             {
               "type": "text",
-              "text": "foreach %goals% call goal AnalyzeGoalErrorHandler item=%goal%"
+              "text": "foreach %app.goals% call goal AnalyzeGoalErrorHandler item=%goal%"
             }
           ]
         }
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each item in the %goals% list and call the goal AnalyzeGoalErrorHandler for each item, passing the current item as %goal%. The RunLoop function is designed for this purpose, allowing looping over a collection and calling a goal with parameters for each item.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%goals%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AnalyzeGoalErrorHandler\",\n        \"Parameters\": {\n          \"item\": \"%goal%\"\n        }\n      }\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+MultiThreaded\",\n      \"Name\": \"multiThreaded\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+LinqOptions\",\n      \"Name\": \"linqOptions\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": null\n}"
+      "CacheKey": null,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each goal in the %app.goals% list and call the goal AnalyzeGoalErrorHandler for each item, passing the current goal as the parameter 'item'. The RunLoop function is designed for this purpose, allowing looping through a list and calling a goal with parameters.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%app.goals%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AnalyzeGoalErrorHandler\",\n        \"Parameters\": {\n          \"item\": \"%goal%\"\n        },\n        \"IsAsync\": false,\n        \"WaitBeforeExecutingInMs\": 0\n      }\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+MultiThreaded\",\n      \"Name\": \"multiThreaded\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Modules.LoopModule.Program+LinqOptions\",\n      \"Name\": \"linqOptions\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": null\n}"
     }
   ]
 }

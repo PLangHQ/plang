@@ -20,11 +20,8 @@ using System.Xml.Linq;
 
 namespace PLang.Utils
 {
-	public interface IClassDescriptionHelper
-	{
-		(ClassDescription? ClassDescription, IBuilderError? Error) GetClassDescription(Type type, List<string>? methodNames = null);
-	}
-	public class ClassDescriptionHelper : IClassDescriptionHelper
+
+	public class ClassDescriptionHelper
 	{
 
 		ClassDescription classDescription = new();
@@ -34,8 +31,10 @@ namespace PLang.Utils
 
 		public (ClassDescription? ClassDescription, IBuilderError? Error) GetClassDescription(Type type, List<string>? methodNames = null)
 		{
-
+			
 			if (type == null) return (new(), new BuilderError("Type is null"));
+
+			classDescription.Name = type.FullNameNormalized();
 
 			IEnumerable<MethodInfo> methods;
 			if (methodNames != null && methodNames.Count > 0)
@@ -135,7 +134,7 @@ namespace PLang.Utils
 			{
 				if (md.Examples == null) md.Examples = new();
 
-				md.Examples.Add(exampleAttribute.ConstructorArguments[0].Value + " => " + exampleAttribute.ConstructorArguments[1].Value);
+				md.Examples.Add(new PlangExample(exampleAttribute.ConstructorArguments[0].Value.ToString(), exampleAttribute.ConstructorArguments[1].Value.ToString()));
 			}
 
 
@@ -199,6 +198,11 @@ namespace PLang.Utils
 						IsRequired = isRequired,
 						Description = parameterDescription
 					};
+
+					if (classDescription.SupportingEnums.FirstOrDefault(p => p.Type == pd.Type) == null)
+					{
+						classDescription.SupportingEnums.Add(pd as EnumDescription);
+					}
 				}
 				else
 				{
@@ -242,7 +246,7 @@ namespace PLang.Utils
 						{
 							Type = parameterInfo.ParameterType.FullNameNormalized(),
 							Name = parameterInfo.Name,
-							Description = (parameterDescription + " (see Type information in SupportingObjects)").Trim(),
+							Description = $"see {parameterInfo.ParameterType.FullNameNormalized()} information in SupportingObjects)",
 							IsRequired = isRequired,
 							
 						};
@@ -392,6 +396,11 @@ namespace PLang.Utils
 						IsRequired = isRequired,
 						Description = propertyDescription
 					};
+
+					if (classDescription.SupportingEnums.FirstOrDefault(p => p.Type == pd.Type) == null)
+					{
+						classDescription.SupportingEnums.Add(pd as EnumDescription);
+					}
 				}
 				else
 				{
@@ -439,7 +448,7 @@ namespace PLang.Utils
 							{
 								Type = propertyType.FullNameNormalized(),
 								Name = propertyInfo.Name,
-								Description = ($" (see {propertyType.FullNameNormalized()} type information in SupportingObjects)").Trim(),
+								Description = $"see {propertyType.FullNameNormalized()} information in SupportingObjects)",
 								IsRequired = isRequired
 							};
 						}

@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.DbModule.Tests
 {

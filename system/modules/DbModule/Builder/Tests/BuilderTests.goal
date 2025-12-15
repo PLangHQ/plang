@@ -1,0 +1,25 @@
+BuilderTests
+- mock db get all datasources, call GetAllDataSources
+- mock db get current datasource, call GetCurrentDataSource
+- mock db GetDatabaseStructure, call GetDatabaseStructure
+- call goal TestSelect
+- call goal TestUpdate
+
+TestSelect
+- call goal ../Builder step.Text="select everything from users"
+- assert %assistant% is not empty
+- assert %assistant% contains "select * from users"
+
+TestUpdate
+- call goal ../Builder step.Text="update users set \%name\% where \%id\%"
+- assert %assistant% is not empty
+- assert %assistant% contains "update users set name=\%name\% where id=\%id\%"
+
+GetAllDataSources
+- [var] return [{name:"data", TypeFullName:"sqlite"}, {name:"analytics", TypeFullName:"sqlite"}, {name:"users/%variable0%", TypeFullName:"sqlite"}]
+
+GetCurrentDataSource
+- return [{name:"data", TypeFullName:"sqlite"}]
+
+GetDatabaseStructure
+- return "tableName: users. Columns: {id(number, pk), name(string)}"

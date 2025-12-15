@@ -1,9 +1,12 @@
 ﻿using LightInject;
+using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Modules.PlangModule.Data;
 using PLang.Runtime;
 using PLang.Utils;
 using Sprache;
@@ -18,6 +21,7 @@ namespace PLang.Building.Parsers
 		List<Goal> GetGoalFilesToBuild(bool force = false);
 		List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false);
 		List<App> GetApps(bool includeOs = true);
+		(PrApp? PrApp, IError? Error) GetPrApp();
 	}
 
 	public class GoalParser : IGoalParser
@@ -38,6 +42,42 @@ namespace PLang.Building.Parsers
 
 			this.builderVersion = PlangHelper.GetVersion();
 			this.goals = GetGoals();
+		}
+
+		public (PrApp? PrApp, IError? Error) GetPrApp()
+		{
+			PrApp? app = null;
+			string appPath = "/.build2/app.pr".AdjustPathToOs();
+			if (fileSystem.File.Exists(appPath))
+			{
+				app = JsonHelper.ParseFilePath<PrApp>(fileSystem, appPath);
+			}
+
+			if (app == null)
+			{
+				var appName = fileSystem.DirectoryInfo.New(fileSystem.RootDirectory).Name;
+				app = new PrApp(appName, Guid.NewGuid().ToString());
+			}
+			app.PrPath = appPath;
+
+			app.Goals = ParseGoalFiles(appPath);
+
+
+			return (app, null);
+		}
+
+		public List<PrGoal> ParseGoalFiles(string appPath)
+		{
+			List<PrGoal> goals = new();
+			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal", SearchOption.AllDirectories);
+			foreach (var file in files)
+			{
+				if (file.Contains(Path.DirectorySeparatorChar + ".")) continue;
+				if (file.Contains(Path.Join(fileSystem.GoalsPath, "apps"))) continue;
+
+				goals.AddRange(ParseGoalFileV2(file));
+			}
+			return goals;
 		}
 
 		public List<Goal> GetGoals(bool force = false)
@@ -64,7 +104,37 @@ namespace PLang.Building.Parsers
 		{
 			return goals.Where(p => p.IsEvent).ToList();
 		}
+		public List<PrGoal> ParseGoalFileV2(string goalFileAbsolutePath)
+		{
+			List<PrGoal> prGoals = new();
+			var goals = ParseGoalFile(goalFileAbsolutePath);
 
+			foreach (var goal in goals)
+			{
+				List<PrStep> prSteps = new();
+				foreach (var step in goal.GoalSteps)
+				{
+					var prStep = new PrStep(step.Text, null, step.Index, null, step.ModuleType, null, step.Indent, step.Comment, null, null, null, null, null);
+					prSteps.Add(prStep);
+				}
+
+				string prFolderPath = fileSystem.Path.Join(goal.RelativeGoalFolderPath, ".build2");
+				string prPath = fileSystem.Path.Join(goal.RelativeGoalFolderPath, ".build2", goal.GoalFileName.Replace(".goal", ".pr")).ToLower();
+				prGoals.Add(new PrGoal(goal.GoalName.ToLower(), prSteps)
+				{
+					Path = goal.RelativeGoalPath.AdjustPathToOs(),
+					AbsolutePath = goal.AbsoluteGoalPath.AdjustPathToOs(),
+					PrFolderPath = prFolderPath,
+					PrPath = prPath,
+					IsSetup = goal.IsSetup,
+					DeveloperComment = goal.Comment,
+
+				});
+			}
+
+
+			return prGoals;
+		}
 		public List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isSystem = false)
 		{
 			if (fileSystem.Path.GetExtension(goalFileAbsolutePath) != ".goal")
@@ -111,7 +181,6 @@ namespace PLang.Building.Parsers
 			{
 				throw new Exception("not qualitfied .build");
 			}
-			(content, var injections) = HandleInjections(content, true);
 
 			var stepParser = from indent in Parse.WhiteSpace.Many()
 							 from dash in Parse.Char('-').Once()
@@ -273,19 +342,18 @@ namespace PLang.Building.Parsers
 
 				if (i == 0)
 				{
-					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath, rootPath, rootBuildPath), ISettings.GoalFileName);
+					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath, rootPath, rootBuildPath, goal), ISettings.GoalFileName);
 					goal.Visibility = Visibility.Public;
 				}
 				else
 				{
-					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath, rootPath, rootBuildPath), goals[i].GoalName, ISettings.GoalFileName);
+					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath, rootPath, rootBuildPath, goal), goals[i].GoalName, ISettings.GoalFileName);
 					goal.Visibility = Visibility.Private;
 
 				}
 				goal.AppName = "/apps/" + appName;
 				goal.AbsoluteAppStartupFolderPath = rootPath;
 				goal.Hash = goal.GetGoalAsString().ComputeKeccack();
-
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
 				goal.AbsoluteGoalPath = goalFileAbsolutePath;
@@ -297,7 +365,10 @@ namespace PLang.Building.Parsers
 				goal.AbsolutePrFolderPath = Path.GetDirectoryName(prFileAbsolutePath);
 				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(rootBuildPath, ""));
 				goal.RelativePrFolderPath = Path.GetDirectoryName(goal.RelativePrPath);
-
+				if (goal.RelativeGoalPath == (fileSystem.Path.DirectorySeparatorChar + "Start.goal"))
+				{
+					goal.IsStart = true;
+				}
 				if (i > 0)
 				{
 					goals[0].SubGoals.Add(goal.RelativePrPath);
@@ -326,17 +397,7 @@ namespace PLang.Building.Parsers
 						throw new Exception($"The goal {goal.GoalName} is named the same the the goal file {goal.RelativeGoalPath}. {goal.GoalName} MUST be the first goal in the file. Either rename goal file or goal.");
 					}
 				}
-				if (injections.Count > 0)
-				{
-					foreach (var injection in injections)
-					{
-						var inj = new Injections(injection.Key, injection.Value, true, null, null);
-						inj.AtSignInjection = true;
-						goal.Injections.Add(inj);
-					}
-
-				}
-
+				
 				goal.IsSetup = GoalHelper.IsSetup(goal);
 				goal.IsEvent = GoalHelper.IsEvent(goal);
 				if (!goal.IsEvent)
@@ -508,11 +569,18 @@ namespace PLang.Building.Parsers
 		}
 
 
-		public string GetBuildPathOfGoalFile(string goalFilePath, string rootPath, string rootBuildPath)
+		public string GetBuildPathOfGoalFile(string goalAbsoluteFilePath, string rootPath, string rootBuildPath, Goal goal)
 		{
-			var path = goalFilePath.Replace(".goal", "").Replace(rootPath, "");
+			var path = goalAbsoluteFilePath.Replace(".goal", "").Replace(rootPath, "");
 			if (path.StartsWith(Path.DirectorySeparatorChar)) path = path.Substring(1);
-			return Path.Join(rootBuildPath, path);
+			if (goal.Version == 1)
+			{				
+				return fileSystem.Path.Join(rootBuildPath, path);
+			} else
+			{
+				var dirName = fileSystem.Path.GetDirectoryName(goalAbsoluteFilePath);
+				return fileSystem.Path.Join(dirName, ".build", path);
+			}
 		}
 
 		public List<App> GetApps(bool includeOs = true)

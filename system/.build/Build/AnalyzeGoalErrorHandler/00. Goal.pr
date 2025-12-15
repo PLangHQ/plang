@@ -1,6 +1,7 @@
 {
   "GoalName": "AnalyzeGoalErrorHandler",
   "Comment": null,
+  "Version": 1,
   "GoalSteps": [
     {
       "Text": "call AnalyzeGoal",
@@ -14,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-08T15:44:38.184271+00:00",
       "WaitForExecution": true,
@@ -25,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 14,
+      "LineNumber": 15,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "25c7b3e5a18efffb22feee123f5785e0294f82df0f99cffa3c402381f5f524b4",
+      "Hash": "4c1b51aeef9d77edaa7a45fac2c981e9ed8971c0b72074e658ea1f1a204d8f2a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Invoke or execute a predefined goal named AnalyzeGoal"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -39,18 +40,20 @@
   "Visibility": 0,
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
+  "PrPath": ".build\\Build\\AnalyzeGoalErrorHandler\\00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\AnalyzeGoalErrorHandler\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build\\AnalyzeGoalErrorHandler",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "0.1.18.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "158126c6dd71609e99486c9aa72460908cee1db0a5ceb428ce319ad840203f17",
+  "Hash": "f7a2c2cb124911c8165a6f85c464758c1ce4ae3bf7efaa50ad2d2a248e291518",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "IsStart": false
 }

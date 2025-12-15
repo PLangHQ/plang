@@ -2,6 +2,7 @@
 using Nostr.Client.Client;
 using NSubstitute;
 using PLang.Modules.MessageModule;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.MessageModule
 {

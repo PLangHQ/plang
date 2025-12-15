@@ -6,6 +6,7 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.PlangModule.Data;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -632,6 +633,12 @@ namespace PLang.Building.Parsers
 				}
 			}
 
+		}
+
+		internal (PrApp? app, IError? error) GetPrApp()
+		{
+			var app = JsonHelper.ParseFilePath<PrApp>(fileSystem, "/.build2/app.pr");
+			return (app, null);
 		}
 	}
 }

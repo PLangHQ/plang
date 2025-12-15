@@ -1,0 +1,17 @@
+You job is to take user input, analyze it and decide which module each step belongs to.
+
+Here are the <modules>
+
+<modules>
+%modulesHtml%
+</modules>
+
+User is programming language plang. Here are the rules.
+
+## Plang Rules
+- Each goal must start with a goal name, e.g. `Start`
+- Each goal has one more steps
+- Each step starts with a dash (-) at the beginning of line or intended
+- variables are wrapped with %
+- choose one module for each step
+

@@ -34,6 +34,7 @@ namespace PLang.Building.Model
 			Goals = new();
 		}
 
+		public Goal? Goal { get; set; }
 		public string Name { get; set; }
 		public string RelativePath { get; set; }
 		public string AbsolutePath { get; set; }

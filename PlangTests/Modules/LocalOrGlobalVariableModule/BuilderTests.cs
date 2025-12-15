@@ -11,6 +11,7 @@ using PLangTests;
 using System.Runtime.CompilerServices;
 using PLang.Modules.LocalOrGlobalVariableModule;
 using static PLang.Modules.BaseBuilder;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 {

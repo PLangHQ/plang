@@ -29,6 +29,53 @@ namespace PLang.Models.ObjectValueConverters
 			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
 
 			var segments = new List<PathSegment>();
+
+			var newRegex = new Regex(@"
+    ([A-Za-z_][A-Za-z0-9_]*\((?>[^()]+|\((?<DEPTH>)|\)(?<-DEPTH>))*(?(DEPTH)(?!))\)) # method call
+  | ([A-Za-z_][A-Za-z0-9_]*)                                                       # identifier
+  | \[(.+?)\]                                                                      # indexer
+", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace);
+			MatchCollection matches2 = newRegex.Matches(path);
+
+			foreach (Match match in matches2)
+			{
+				// method
+				if (match.Groups[1].Success)
+				{
+					segments.Add(new PathSegment(match.Groups[1].Value, SegmentType.Method));
+					continue;
+				}
+
+				// identifier
+				if (match.Groups[2].Success)
+				{
+					segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Path));
+					continue;
+				}
+
+				// index
+				if (match.Groups[3].Success)
+				{
+					var idx = match.Groups[3].Value;
+					var position = memoryStack.Get<object>(idx);
+					segments.Add(new PathSegment(idx, SegmentType.Index) { ValueOfPath = position });
+					continue;
+				}
+			}
+
+
+			PathCache.TryAdd(path, segments);
+
+			return segments;
+
+
+			/*
+
+
+
+
+
+
 			var regex = new Regex(@"([^[.\]]+)|\[(.+?)\]", RegexOptions.Compiled);
 			try
 			{
@@ -84,7 +131,7 @@ namespace PLang.Models.ObjectValueConverters
 
 			PathCache.TryAdd(path, segments);
 
-			return segments;
+			return segments;*/
 		}
 	}
 }

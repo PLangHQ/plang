@@ -1,0 +1,89 @@
+{
+  "Text": "get caching %!user.step.cachingHandler.key%, write to %result%",
+  "ModuleType": "PLang.Modules.CachingModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to retrieve a cached value using a dynamic key %!user.step.cachingHandler.key% and store the result into %result%. The appropriate function is 'Get' which takes a string key and returns an object.",
+    "Name": "Get",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "key",
+        "Value": "%!user.step.cachingHandler.key%"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%result%",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "key": {
+        "Name": "key",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {
+      "%result%": {
+        "Name": "%result%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRetrieve a cached value using a dynamic key and store the result in a variable\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.CachingModule.Program\",\"Description\":\"Handles caching of objects, set, get and remove. object can be can be cached with sliding or fixed period\",\"Methods\":[{\"MethodName\":\"Get\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"Get(System.String key) : System.Object\"},{\"MethodName\":\"SetForSlidingExpiration\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"timeInSeconds\",\"DefaultValue\":600,\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"SetForSlidingExpiration(System.String key, System.Object value, System.Int32? timeInSeconds = 600) : void\"},{\"MethodName\":\"SetForAbsoluteExpiration\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"timeInSeconds\",\"DefaultValue\":600,\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"SetForAbsoluteExpiration(System.String key, System.Object value, System.Int32? timeInSeconds = 600) : void\"},{\"MethodName\":\"RemoveCache\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"RemoveCache(System.String key) : void\"}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\n!user.step.cachingHandler.key (type:object), result (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "get caching %!user.step.cachingHandler.key%, write to %result%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "f99f22e130157ff56b9e9719fb55f1f3df5604fecb676e8727429d5b97d8716c",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to retrieve a cached value using a dynamic key %!user.step.cachingHandler.key% and store the result into %result%. The appropriate function is 'Get' which takes a string key and returns an object.\",\n  \"Name\": \"Get\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"key\",\n      \"Value\": \"%!user.step.cachingHandler.key%\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%result%\",\n      \"Value\": null\n    }\n  ]\n}"
+    }
+  ]
+}

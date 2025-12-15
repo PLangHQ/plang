@@ -80,7 +80,7 @@ namespace PLang.Modules.DbModule
 		{
 			public bool IsAttached { get; set; } = false;
 		};
-		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
+		public record DataSource(string Name, string TypeFullName, [LlmIgnore] string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
 			public bool KeepHistory { get; set; } = KeepHistory;

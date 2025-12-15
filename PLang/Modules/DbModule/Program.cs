@@ -135,9 +135,15 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("gets all databases that have been created")]
-		public async Task<List<DataSource>> GetDataSources()
+		public async Task<List<DataSource>> GetDataSources(List<string>? dataSourceNames = null)
 		{
-			return await dbSettings.GetAllDataSources();
+			var dataSources = await dbSettings.GetAllDataSources();
+			if (dataSourceNames == null || dataSourceNames.Count == 0) return dataSources;
+
+			return dataSources
+					.Where(ds => dataSourceNames.Contains(ds.Name))
+					.ToList();
+
 		}
 
 

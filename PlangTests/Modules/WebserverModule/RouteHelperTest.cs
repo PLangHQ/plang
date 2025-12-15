@@ -2,6 +2,7 @@
 using PLang.Modules.WebserverModule;
 using PLang.Utils;
 using static PLang.Modules.WebserverModule.Program;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.WebserverModule
 {

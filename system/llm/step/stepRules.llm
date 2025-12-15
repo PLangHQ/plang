@@ -1,0 +1,10 @@
+## Rules
+- %variables% are wrapped with %
+- %variables% are c# object, Properties and Methods are accessible, e.g. %name.ToUpper()%
+- %now% is DateTimeOffset object.
+- Use strict typing
+- Always wrap complex objects (like TextMessage, AskMessage, GoalToCallInfo, etc.) under their parameter name as defined in the method signature.
+- Primitive parameters (string, int, bool, etc.) can be placed directly.
+- Events default to BeforeEventHandlers when not defined by user
+- Plang code examples in <functions> are not literal but are meant to represent user intent and how intents would approx. map to a method. 
+- User might not be writing in english.

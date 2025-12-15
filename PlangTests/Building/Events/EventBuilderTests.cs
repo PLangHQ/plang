@@ -12,6 +12,7 @@ using PLang.Models;
 using PLangTests;
 using PLangTests.Mocks;
 using System.IO.Abstractions.TestingHelpers;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Building.Events.Tests
 {

@@ -107,6 +107,7 @@
       ],
       "type": "PLang.Modules.ConditionalModule.Builder",
       "caching": true,
+      "CacheKey": null,
       "RawResponse": "{\n  \"Reasoning\": \"The user wants to check if the variable %error% is empty and if so, return or exit the current step. The IsEmpty function is appropriate to check if %error% is empty and then perform a return action.\",\n  \"Name\": \"IsEmpty\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"item\",\n      \"Value\": \"%error%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCallIfTrue\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCallIfFalse\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Modules.ThrowErrorModule.ErrorInfo\",\n      \"Name\": \"throwErrorOnTrue\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Modules.ThrowErrorModule.ErrorInfo\",\n      \"Name\": \"throwErrorOnFalse\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": null\n}"
     }
   ]

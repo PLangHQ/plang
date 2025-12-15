@@ -44,7 +44,8 @@ namespace PLang.Modules.TerminalModule
 		}
 
 		[Description("Run a executable. Parameters string should not be escaped. variableNameForDeltaOnStandardStream and variableNameForDeltaOnErrorStream must to be clearly defined by the user either in it's name or with parameter variableNameForDeltaOnStandardStream: or variableNameForDeltaOnErrorStream:. When user write to a %variable%, this is the whole standard output stream, NOT delta.")]
-		[Example("terminal git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", variableNameForDeltaOnStandardStream=null, variableNameForDeltaOnErrorStream=null, ReturnValues = %output%")]
+		[Example("run command myapp.exe, write to %result%", "appExecutableName=myapp.exe, return values=%result%")]
+		[Example("run git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", variableNameForDeltaOnStandardStream=null, variableNameForDeltaOnErrorStream=null, ReturnValues = %output%")]
 		[Example("terminal ffmpeg -i input.mp4 output.avi, %delta%, %errorDelta%, write to %data%", @"appExecutableName=ffmpeg, parameters=""-i"",""input.mp4"",""output.avi"", variableNameForDeltaOnStandardStream=%delta%, variableNameForDeltaOnErrorStream=%errorDelta%, ReturnValues should be %data%")]
 		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,

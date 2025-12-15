@@ -1,0 +1,96 @@
+{
+  "Text": "assert %assistant% contains \"select * from users\"",
+  "ModuleType": "PLang.Modules.AssertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to assert that the variable %assistant% contains the text 'select * from users'. The appropriate function is 'Contains' from the AssertModule, which checks if the actual value contains the expected substring. The parameters are set accordingly with the actual value as %assistant% and the expected substring as 'select * from users'.",
+    "Name": "Contains",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "contains",
+        "Value": "select * from users"
+      },
+      {
+        "Type": "System.Object",
+        "Name": "actualValue",
+        "Value": "%assistant%"
+      },
+      {
+        "Type": "System.StringComparison",
+        "Name": "stringComparison",
+        "Value": 5
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "contains": {
+        "Name": "contains",
+        "FullTypeName": "System.Object"
+      },
+      "actualValue": {
+        "Name": "actualValue",
+        "FullTypeName": "System.Object"
+      },
+      "stringComparison": {
+        "Name": "stringComparison",
+        "FullTypeName": "System.StringComparison"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nVerify that the variable %assistant% contains the specific text 'select * from users'\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.AssertModule.Program\",\"Description\":\"Assert object/variable/text or other entity to be what is epxected. For unit testing\",\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"Contains\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.StringComparison\",\"DefaultValue\":5,\"Name\":\"stringComparison\",\"AvailableValues\":\"CurrentCulture|CurrentCultureIgnoreCase|InvariantCulture|InvariantCultureIgnoreCase|Ordinal|OrdinalIgnoreCase\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"Contains(System.Object contains, System.Object actualValue, System.StringComparison? stringComparison = OrdinalIgnoreCase) : void\"},{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"IsEqual(System.Object expectedValue, System.Object actualValue, System.String? resultVariable = assertResult, System.String? expectedValueType, System.String? actualValueType) : void\"}],\"SupportingObjects\":[],\"SupportingEnums\":[{\"Type\":\"System.StringComparison\",\"DefaultValue\":5,\"Name\":\"stringComparison\",\"AvailableValues\":\"CurrentCulture|CurrentCultureIgnoreCase|InvariantCulture|InvariantCultureIgnoreCase|Ordinal|OrdinalIgnoreCase\",\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nassistant (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "assert %assistant% contains \"select * from users\""
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": null,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %assistant% contains the text 'select * from users'. The appropriate function is 'Contains' from the AssertModule, which checks if the actual value contains the expected substring. The parameters are set accordingly with the actual value as %assistant% and the expected substring as 'select * from users'.\",\n  \"Name\": \"Contains\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"contains\",\n      \"Value\": \"select * from users\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%assistant%\"\n    },\n    {\n      \"Type\": \"System.StringComparison\",\n      \"Name\": \"stringComparison\",\n      \"Value\": 5\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

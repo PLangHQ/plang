@@ -729,7 +729,7 @@ namespace PLang.Modules.FileModule
 			{
 				content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			else if (content != null && content.ToString() == content.GetType().ToString())
+			else if (content != null && (content.ToString() == content.GetType().ToString()) || TypeHelper.IsRecordType(content))
 			{
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}

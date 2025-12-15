@@ -1,0 +1,26 @@
+/*CreateDataSourceTest
+- [settings] clear data sources for testing
+- call CreateDataSource name="test_db", keepHistory=false
+- expect %Settings.DataSources.Count% == 1
+- expect %Settings.DataSources[0].name% == "test_db"
+- expect %Settings.DataSources[0].isDefault% == true
+- expect %Settings.DataSources[0].type% == "sqlite"
+
+CreateDataSource_AlreadyExists_Test
+- [settings] clear data sources for testing
+- call CreateDataSource name="existing", keepHistory=false
+- call CreateDataSource name="existing", keepHistory=false
+- expect %Settings.DataSources.Count% == 1, "Should not duplicate"
+
+CreateDataSource_SecondIsNotDefault_Test
+- [settings] clear data sources for testing
+- call CreateDataSource name="first", keepHistory=false
+- call CreateDataSource name="second", keepHistory=false
+- expect %Settings.DataSources[0].isDefault% == true
+- expect %Settings.DataSources[1].isDefault% == false
+
+CreateSqliteDataSource_ConnectionString_Test
+- [settings] clear data sources for testing
+- call CreateDataSource name="myapp", keepHistory=true
+- expect %Settings.DataSources[0].connectionString% == "./myapp/data.sqlite"
+*/

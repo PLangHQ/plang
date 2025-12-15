@@ -1,6 +1,7 @@
 {
   "GoalName": "ValidateLlmResponse",
   "Comment": null,
+  "Version": 1,
   "GoalSteps": [
     {
       "Text": "if %step.retryCount% > 2 throw \"Could not validate step\"",
@@ -25,10 +26,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 96,
+      "LineNumber": 138,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "6b38539a663821bec2e1703b92116d81b509cb0c619b2547e47a69de47cdfca4",
+      "Hash": "180e3d20ecede4b58eeb0de923e7a5355b44f99847365a37fe0f4841c04209c7",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
       "UserIntent": null
@@ -56,10 +57,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 97,
+      "LineNumber": 139,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c64dffea821a63e4b1e0e8e7b69329335267833d5eb3d1b8533606410e3def21",
+      "Hash": "afd37007226c56b4cf1954f68472b09c950e4972281ba51dc7aa5e3995cfe0cc",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
       "UserIntent": null
@@ -76,7 +77,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-09T16:53:41.4099981+00:00",
       "WaitForExecution": true,
@@ -87,13 +88,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 98,
+      "LineNumber": 140,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ebdaf987c5f9fed655e734bdf0b960b8e39d7351c2221a6d73017a10d9d05c55",
+      "Hash": "d4a85cf09bc197135e58856d07b877b564690b3359fba6158b2b62838d515211",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Check if the variable %error% is empty and if so, exit or return from the current step or goal"
+      "UserIntent": null
     },
     {
       "Text": "append llm 'user': %error%",
@@ -107,7 +108,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-09T16:53:42.7711816+00:00",
       "WaitForExecution": true,
@@ -118,13 +119,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 3,
-      "LineNumber": 99,
+      "LineNumber": 141,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f68c0b231df5f9f7c8524c31b8380e3f964e61e49897c4950a535ee3ef80a732",
+      "Hash": "a8db6c063f2db3aaac20fcbee5102f81c0b499700db5879671b6a374955b1d45",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Append the content of the variable %error% to the 'user' input of an LLM (Large Language Model) interaction"
+      "UserIntent": null
     },
     {
       "Text": "retry step",
@@ -138,7 +139,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-09T16:53:44.1521232+00:00",
       "WaitForExecution": true,
@@ -149,13 +150,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 4,
-      "LineNumber": 100,
+      "LineNumber": 142,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "11a6f0b2e4b1890c9f24c812dd3466ce29bacbd503df25f26e82ecd07b863b12",
+      "Hash": "7639ca3b14d77da4a9bef3cf8742e088590c0ed3f820049be538a5ca25d1e564",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "The user wants to retry the current step or operation, likely after a failure or error."
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -163,16 +164,17 @@
   "Visibility": 0,
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
+  "PrPath": ".build\\Build\\ValidateLlmResponse\\00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\ValidateLlmResponse\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build\\ValidateLlmResponse",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "0.1.18.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c5556f6e3b76da355380c38db66011d70526b1e0cf084998d0afdb735edf5090",
+  "Hash": "4df31f5a5122fd41a20c87b4799fe8ab8dd2f9810c7e11331a766ae8d72bf319",
   "IncomingVariablesRequired": {
     "%step.retryCount%": "The number of times the step has been retried, used to determine if the maximum retry limit has been reached.",
     "%prMethod%": "The method that needs to be validated as a valid JSON.",
@@ -180,5 +182,6 @@
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "IsStart": false
 }

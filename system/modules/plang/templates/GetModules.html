@@ -1,9 +1,23 @@
 # Modules
 
 {{~ for module in modules ~}}
-Module: {{ module.Type.FullName }}
-{{~ module.ClassDescription.Description }}
-Example of methods: {{ for method in module.ClassDescription.Methods limit:5 }}{{ method.MethodName }}{{ if !for.last }}, {{ end }}{{ end }}
-
+## Module: {{ module.Name }}
+{{~ if module.Description ~}}
+{{~ module.Description }}
 {{~ end ~}}
+### Example of methods: 
+{{ for method in module.Methods limit:15 }}
+- {{ method.MethodName ~}}
+    {{~ if method.Examples.size > 0 }}
+```plang
+{{~ for example in method.Examples ~}}
+- {{ example.code }}
+{{~ end }}```
+    {{~ end ~}}
+{{~ end }}
+{{ if module.Methods.size > 15 }} - and more...{{ end }}
+{{~ end ~}}
+---
+
+Note: Plang code examples are not literal but are meant to represent user intent and how those intents would map to a module. User might not be writing in english.
 

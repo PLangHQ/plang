@@ -3,69 +3,110 @@ Build
 
 BuildCode
 - set default value %path% = "/", %actor% = "system" (SetDefaultValueOnVariables)
-- get all goals at %path%, include private files, use goal2 parser, write to %goals%
+- [plang] get app at %path% using goal parser, write to %app%
 - read scheme/goal.json, write to %goalScheme%
 - read scheme/step.json, write to %stepScheme%
 - read scheme/method.json, write to %methodScheme%
-/- filter %goals% where "HasChanged" is true, write to %goals%
-- foreach %goals% call goal AnalyzeGoalErrorHandler item=%goal%
+/- filter %app.goals% where "HasChanged" is true, write to %goals%
+- foreach %app.goals% call goal AnalyzeGoalErrorHandler item=%goal%
+- write %app% to %app.PrPath% as json
 
 AnalyzeGoalErrorHandler
 - call AnalyzeGoal
 
 AnalyzeGoal
-- write out "Analyzing goal \n%goal.TextWithLineNumber% ..."
+- write out "Analyzing goal \n%goal.Text% ..."
 - [plang] get all modules (GetAllModules2), write to %modules%
 - render template "/system/modules/plang/templates/GetModules.html", write to %modulesHtml%
-- read llm/goalSystem.llm, load vars, write to %system%
+- write %modulesHtml% to "modulesHtml.md", overwrite
+- read llm/goal/goalSystem.llm, load vars, write to %system%
 - [llm] system: %system%
-    user: %goal.TextWithLineNumber%
-    scheme:typeof = plang.PrGoal 
-    write to %prGoal%
-/- write out "prgoal: %prGoal%"
+    user: "
+        ## Goal information
+    \- Goal name is: %goal.GoalName%
+    \- There are %goal.Steps.count% steps in this goal
+
+        ## Goal
+        %goal.Text%"
+    scheme: %goalScheme%
+    write to %llmGoal%
+- set %goal.llm% = %llmGoal!llm%
+/- write out "llmGoal: %llmGoal%"
 / check if name, description is empty, if steps match to goal
-- [plang] validate and load prGoal=%prGoal%, goal=%goal%
+- call goal ValidateLlmGoal
     on error call FixGoal retry 3 times
 /- write out "goal: %goal%\nprGoal:%prGoal%"
-- foreach %prGoal.steps% call goal AnalyzeStepErrorHandler item=%step%
-- [plang] save %prGoal% to %goal.PrPath%
-- write out "%goal.GoalName% has been built - time: %!goal.Stopwatch.ToString()%"
+- foreach %goal.Steps% call goal AnalyzeStepErrorHandler item=%step%
+- save %goal% to file %goal.PrPath%
+- write out "%goal.Name% has been built - time: %!goal.Stopwatch.ToString()%"
+
+
+AnalyzeStep
+- write out "Analyzing step: `- %step.Text%` "
+- [plang] get class description from %step.Module%, write to %module%
+- render template "/system/modules/plang/templates/functions.html", write to %functions%
+- save %functions% to "functions.md", overwrite
+- read llm/step/stepRules.llm, write to %rules%
+- read llm/step/stepSystem.llm, load vars, write to %system%
+- call goal /system/modules/%step.Module.Replace(".Program", "")%/Builder/Builder
+    on error 404 call BuilderModuleNotFound
+    write to %assistant%
+/- write out "\n==== system ==== %system%\n==== system ====\nstep.Text: %step.Text%"
+- [llm] system: %system%, 
+    user: %step.Text%
+    assistant: %assistant%
+    scheme: typeof(PLang.Modules.PlangModule.Data.LlmStep)
+    write to %llmStep%
+- append %llmStep!llm% to %step.llm%      
+- write out "\nllmStep: %llmStep!llm%"
+- call goal ValidateLlmStep
+/*
+- read llm/step/pipeVariables.llm, write to %pipeVariables%
+- [plang] get piped classes, write to %pipedClasses%
+- render template "/system/modules/plang/templates/pipedClasses.html", write to %pipedClassesMd%
+- write %pipedClasses% to "pipedClasses.md"
+- read llm/step/pipedSystem.llm, write to %system%
+- [plangmodule] extract variables from %goal.steps[position]%, write to %variablesInStep%
+- write out "variablesInStep: %variablesInStep%"
+/- write out "== pipedSystem ===\n%system%\n== pipedSystem=="
+- [llm] system: %system%
+        user: %variablesInStep%
+        scheme: typeof(List<PLang.Variables.LlmVariable>)
+        write to %llmVariables%
+- write out "--- llmVariables === \n%llmVariables%\n------"
+- [PlangModule] validate Variables %llmVariables%, %goal.steps[position]%, 
+    write to %goal.steps[position].variables%
+*/
+
+ValidateLlmGoal
+- validate %goal.steps.count% equals %llmGoal.steps.count%
+- set %goal.Description% = %llmGoal.description%
+- foreach %llmGoal.steps% call ValidateLlmStepPreBuild item=%llmStep%
+
+ValidateLlmStepPreBuild
+- set %goal.steps[position].module% = %llmStep.module%
+
+ValidateLlmStep
+- [plang] validate function %step.Module%, %llmStep%
+- set %goal.steps[position].name% = %llmStep.name%
+        %goal.steps[position].reasoning% = %llmStep.reasoning%
+        %goal.steps[position].BeforeEventHandlers% = %llmStep.BeforeEventHandlers%
+        %goal.steps[position].AfterEventHandlers% = %llmStep.AfterEventHandlers%
+        %goal.steps[position].ErrorHandlers% = %llmStep.ErrorHandlers%
+        %goal.steps[position].CacheHandler% = %llmStep.CacheHandler%
+        %goal.steps[position].PrRunAndForget% = %llmStep.PrRunAndForget%
+        %goal.steps[position].Function% = %llmStep.Function%
+        %goal.steps[position].FormalizedText% = %llmStep.FormalizedText%
+
 
 AnalyzeStepErrorHandler
 - validate %step.Module% is not empty
 - call goal AnalyzeStep
     on error WriteOut
 
-AnalyzeStep
-- write out "Analyzing step: `- %step.Text%` "
-- [plang] get class description from %step.Module%, write to %module%
-- [plang] get class description from %step.SecondModule%, write to %secondModule%
-- render template "/system/modules/plang/templates/MethodsInModules.html", write to %modulesAndMethods%
-- save %modulesAndMethods% to "modulesAndMethods.md"
-/- write out "\n==== methods ==== %modulesAndMethods%\n==== methods ===="
-- read llm/stepRules.llm, write to %rules%
-- read llm/pipeVariables.llm, write to %pipeVariables%
-- read llm/stepSystem.llm, load vars, write to %system%
-- write out "\n==== system ==== %system%\n==== system ====\nstep.Text: %step.Text%"
-- [llm] system: %system%, 
-    user: %step.Text%
-    on complete: ValidateOutput
-    write to %prStep%
-- write out "\n\nprMethod: %prStep%"
-- [plang] get class description from %prStep.module%, %prStep.methods%, write to %methods%
-- read llm/methodSchemeInfo.llm, write to %methodScheme%
-- read llm/methodSchemeInfo.llm, load vars, write to %methodSystem%
-- [llm] system:  %methodSystem%
-        user: %step.Text%
-                %prStep%
-        scheme: typeof(plang.prFunction)
-        write to %prFunction%
-- [plang] validate and load %step%, %prFunction%, 
-    on error FixStep retry 3 times
-- [plang] save %prFunction% to %prMethod.PrPath%
 
 FixGoal
-- read llm/fixGoalSystem.llm, load vars, write to %system%
+- read llm/goal/fixGoalSystem.llm, load vars, write to %system%
 - [llm] system: %system%
     user: Goal:
             %!prGoal%
@@ -78,7 +119,7 @@ FixGoal
 
 
 FixStep
-- read llm/fixStepSystem.llm, load vars, write to %system%
+- read llm/step/fixStepSystem.llm, load vars, write to %system%
 - [llm] system: %system%
     user: "
         user: %step.Text%
@@ -103,3 +144,7 @@ ValidateLlmResponse
 WriteOut
 - write out %!error%, level:error, actor:%actor%
 - append %!error% to %errorList%
+
+
+BuilderModuleNotFound
+- set %assistant% = null

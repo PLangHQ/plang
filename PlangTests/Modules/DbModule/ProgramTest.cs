@@ -10,6 +10,7 @@ using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 using static PLang.Services.EncryptionService.Encryption;
 using PLang.Services.EncryptionService;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.DbModule
 {

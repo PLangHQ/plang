@@ -82,6 +82,8 @@ namespace PLang.Modules.OutputModule
 
 
 		[Description("Send to a question to the output stream and waits for answer. It always returns and answer will be written into variable")]
+		[Example(@"ask user ""How are you?"", write to %answer%", @"Content=""How are you?"", Actor=""user"", Channel=""default""")]
+		[Example(@"ask system %message%, channel=warning, write to %answer%", @"Content=""%message%"", Actor=""system"", Channel=""warning""")]
 		[Example("ask user template.html, open modal, validate ValidateData, call back data: %id%, write to %result%", 
 			@"Content=""template.html"", Actor=""user"", Channel=""default"", Actions:[""showModal""], CallbackData:{id:""%id""} ")]
 		public async Task<(object?, IError?)> Ask(AskMessage askMessage)
@@ -318,6 +320,7 @@ namespace PLang.Modules.OutputModule
 			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
 			ReferenceLoopHandling ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
+		[Example("write out {name:%name%, age:10}", @"TextMessage.Content={""name"":""%name%"", ""age"":10}")]
 		[Description("Write out json content. Only choose this method when it's clear user is defining a json output, e.g. `- write out '{name:John}'. Do your best to make sure that TextMessage.Content is valid json. Any %variable% should have double quotes around it. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system, channel=default|trace|debug|info(default for log)|warning|error|audit|metric|security|. User can also define his custom channel")]
 		public async Task<IError?> WriteJson(TextMessage textMessage, JsonOptions? jsonOptions = null)
 		{
@@ -393,6 +396,8 @@ namespace PLang.Modules.OutputModule
 		}*/
 
 		[Description("Write appends by default a text message to the target. User can define different actions, but when it is not defined set as 'append'. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
+		[Example("write out 'hello %name%'", @"TextMessage.Content=""hello %name%""")]
+		[Example("write out %name to upper and lower%", "TextMessage.Content=\"%name to upper and lower%\"")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
 

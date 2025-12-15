@@ -13,6 +13,7 @@ using System.Numerics;
 using PLang.Utils;
 using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.BlockchainModule
 {

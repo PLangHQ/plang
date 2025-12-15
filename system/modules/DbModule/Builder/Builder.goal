@@ -1,0 +1,85 @@
+Builder
+- call goal ExtractStepInfo
+- call goal ValidateSetupConstraint
+- if %stepInfo.tablesReferenced% is not empty then
+    - call goal LoadReferencedTableSchemas
+    - call goal ValidateSql
+    - call goal BuildAssistantContext
+- return %assistant%
+
+ExtractStepInfo
+/ First LLM call - extract datasources and tables from step (lightweight, no schema needed)
+- get all datasources, write to %dataSources%
+- get current datasource, write to %currentDataSource%
+- render template llm/extractStepInfo.llm, write to %extractPrompt%
+- [llm] system: %extractPrompt%
+    user: %step.Text%
+    scheme: {
+        "dataSourceNames": string[],
+        "isCreateDataSource": "bool",
+        "tables": [{name, datasource:string|null}]
+    }
+    write to %stepInfo%
+- append %stepInfo!llm% to %step.llm%
+- if %stepInfo.dataSourceNames% is empty then
+    - [db] get current datasource, write into %stepInfo.dataSourceNames% 
+
+ValidateSetupConstraint
+/ Create datasource only allowed in setup files
+- if %stepInfo.isCreateDataSource% is true and %goal.IsSetup% is false then
+    - throw "CreateDataSource can only be used in Setup.goal or files in /setup/ folder", key: "SetupRequired"
+
+LoadReferencedTableSchemas
+/ Load datasources and only the tables actually referenced in the step
+- set %currentDataSources% = null
+- set %tableSchemas% = null
+- foreach %stepInfo.dataSourceNames% call LoadDataSource item=%dsName%
+- foreach %stepInfo.tablesReferenced% call LoadTableSchema item=%tableRef%
+
+LoadDataSource
+/ Load datasource info - may not exist yet during setup
+
+- [db] get datasource %dsName%, write to %dataSource%
+    on error call HandleDataSourceNotFound
+- append %dataSource% to %currentDataSources%
+
+HandleDataSourceNotFound
+/ Expected during setup when creating new datasource
+- throw error "Datasource '%dsName%' not found - may be created by this step"
+
+LoadTableSchema
+/ Load single table schema from appropriate datasource
+- [db] get database structure %tableRef.datasource%, tables: [%tableRef.table%], write to %tableStructure%
+    on error call HandleTableNotFound
+- if %tableStructure% is not empty then
+    - append %tableStructure% to %tableSchemas%
+
+HandleTableNotFound
+/ Table might not exist yet in setup, or typo in SQL
+- throw error "Table '%tableRef.table%' not found in datasource '%targetDs%'"
+
+ValidateSql
+/ Second LLM call - validate SQL with focused schema context
+- set %databaseType% = "SQLite"
+- if %currentDataSources% is not empty then
+    - set %databaseType% = %currentDataSources[0].TypeFullName%
+- render template "llm/validateSql.llm", write to %validatePrompt%
+- [llm] system: %validatePrompt%
+    user: %step.Text%
+    scheme: {
+        "hasSql": "bool",
+        "originalSql": "string",
+        "validatedSql": "string",
+        "sqlComments": [{"Text": "string", "Level": "Info|Warning|Error|Improvement|Inconsistency"}]
+    }
+    write to %sqlValidation%
+- append %sqlValidation!llm% to %step.llm%    
+- if %sqlValidation.sqlComments% is not empty then
+    - append %sqlValidation.sqlComments% to %step.LlmComments%
+- if %sqlValidation.validatedSql% is not empty then
+    - set %validatedSql% = %sqlValidation.validatedSql%
+        
+
+BuildAssistantContext
+/ Build the assistant context for AnalyzeStep LLM call
+- render template "llm/assistantContext.llm", isSetup=%!goal.IsSetup%, write to %assistant%

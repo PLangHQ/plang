@@ -420,7 +420,10 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			var errorHandler = stepProperties.ErrorHandlers[i];
 			
 			if (errorHandler.GoalToCall == null) continue;	
-
+			if (VariableHelper.IsVariable(errorHandler.GoalToCall.Name))
+			{
+				continue;
+			}
 			(var goalFound, var error) = GoalHelper.GetGoalPath(step, errorHandler.GoalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
 			if (error != null) return (stepProperties, new BuilderError(error, false));
 

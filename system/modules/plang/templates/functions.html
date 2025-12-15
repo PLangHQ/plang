@@ -1,0 +1,38 @@
+{{~ for method in module.Methods ~}}
+<{{ method.MethodName }}>
+{{~ if method.Description ~}}
+Description: {{ method.Description }}
+{{~ end ~}}
+{{~ if method.Examples.size > 0 ~}}
+```plang
+{{ for example in  method.Examples ~}}
+- {{ example.code }} => {{ example.mapping ~}}
+{{ end }}
+```
+{{~ end ~}}
+```csharp
+{{ method.MethodSignature }}
+```
+</{{ method.MethodName }}>
+{{~ end ~}}
+
+{{ if module.SupportingObjects.size > 0 }}
+## SupportingObjects
+```csharp
+{{ for object in module.SupportingObjects }}
+<{{ object.Type }}>
+    {{ object.ParameterSignature }}
+</{{ object.Type }}>
+{{ end }}
+{{ end ~}}
+```
+{{ if module.SupportingEnums && module.SupportingEnums.size > 0 }}
+## SupportingEnums
+```csharp
+{{ for object in module.SupportingEnums }}
+<{{ object.Type }}>
+    {{ object.AvailableValues }}
+</{{ object.Type }}>
+{{ end }}
+```
+{{ end ~}}

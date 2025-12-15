@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using NJsonSchema;
 using Org.BouncyCastle.Bcpg;
 using PLang.Attributes;
 using PLang.Errors;
@@ -14,7 +15,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.ValidateModule
@@ -76,7 +79,26 @@ namespace PLang.Modules.ValidateModule
 			}
 			return (multiError.Count > 0) ? multiError : null;
 		}
+		[Description("compairer:==|<|>|<=|>=|!=")]
+		public async Task<(bool, IError?)> IsEqual(string variable, string variable2, ErrorMessage errorMessage)
+		{
+			var condition = GetProgramModule<ConditionalModule.Program>();
+			var result = await condition.IsEqual(variable, variable2);
+			if (result.Error != null) return (false, result.Error);
 
+			if ((bool)result.Result)
+			{
+				return (true, null);
+			}
+
+			string? message = errorMessage?.Content;
+			if (message == null || string.IsNullOrEmpty(message))
+			{
+				message = "Is not equal";
+			}
+			return (false, new ProgramError(message));
+
+		}
 		[Description("compairer:==|<|>|<=|>=|!=")]
 		public async Task<IError?> IsLength([HandlesVariable] string variableName, int length, string compairer, string errorMessage, int statusCode = 400)
 		{
@@ -90,12 +112,13 @@ namespace PLang.Modules.ValidateModule
 
 			int varLength = 0;
 
-			
+
 			var value = variable.Value;
 			if (value is int || value is long)
 			{
 				varLength = (int)value;
-			} else
+			}
+			else
 			{
 				varLength = variable.ToString().Length;
 			}
@@ -128,7 +151,7 @@ namespace PLang.Modules.ValidateModule
 			return null;
 		}
 
-			[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]
+		[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]
 		public async Task<IError?> HasPattern([HandlesVariable] string[]? variables, string pattern, string errorMessage, int statusCode = 400)
 		{
 			if (variables == null) return new ProgramError("Variables are empty", goalStep);
@@ -137,8 +160,9 @@ namespace PLang.Modules.ValidateModule
 			{
 				var obj = memoryStack.GetObjectValue(variable);
 				string? valueToTest = null;
-				if (obj.Initiated && obj.Value != null) { 
-					valueToTest = obj.Value.ToString();	
+				if (obj.Initiated && obj.Value != null)
+				{
+					valueToTest = obj.Value.ToString();
 				}
 
 				if (string.IsNullOrEmpty(errorMessage))
@@ -203,7 +227,8 @@ namespace PLang.Modules.ValidateModule
 						{
 							returnValues.Add(item);
 						}
-					} else if (item is string str)
+					}
+					else if (item is string str)
 					{
 						if (str.Equals(itemToCheckInList.ToString(), comparisonType))
 						{
@@ -221,6 +246,25 @@ namespace PLang.Modules.ValidateModule
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "item is not in list";
 
 			return (null, new ProgramError(errorMessage, goalStep));
+		}
+
+		public async Task<IError?> ValidateJsonScheme(JObject jObject, string schemeFilePath)
+		{
+			var absolutePath = GetPath(schemeFilePath);
+			var schema = await JsonSchema.FromFileAsync(absolutePath);
+			var json = JObject.FromObject(jObject).ToString();
+
+			var errors = schema.Validate(json);
+			if (errors.Count == 0) return null;
+
+			GroupedErrors ge = new();
+			foreach (var error in errors)
+			{
+
+				ge.Add(new ProgramError($"{error.ToString()}"));
+			}
+
+			return ge;
 		}
 
 

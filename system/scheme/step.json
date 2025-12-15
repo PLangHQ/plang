@@ -1,7 +1,46 @@
 {
     reasoning:string, 
-    method: [{
+    function: {
       name:string, 
-      parameters:dict<string, object>  
-    }]
+      parameters:dict<string, object>  // named parameters
+    },
+    // `dont wait`, `run and forget`, `step is async` 
+    runAndForget? : {
+        waitForMsBeforeRun = 50
+        afterExecutionRunGoal? : GoalToCallInfo = null
+    } = null,
+    // `cache the step for 4 minutes`
+    cacheHandler?: {
+        TimeInMilliseconds : int, // user must define
+        CacheKey : string, // generate if missing
+        CachingType : enum("sliding|absolute") = "absolute"
+        Location : enum("memory|disk") = "memory"
+    } = null,
+    // error handlers for the step, e.g. `on error ...`, `if step gives error with 'timeout' in it...`, `when 404 error occurs....`
+    errorHandlers? : [
+        {
+            IgnoreError : bool = false,
+            Message? : string, //error containing a message
+            StatusCode? : int,
+            Key? : string, // set Key == "*" when user does not define error to catch
+            GoalToCall : GoalToCallInfo,
+            RunRetryBeforeCallingGoalToCall: bool = false,
+            RetryHandler? : {
+                RetryCount : int = 1,
+                RetryDelayInMilliseconds? : int
+            } = null
+        }
+    ] = null
+    // event handlers for the step, `after step call ...`, `every 5 sec call...`, `before step runs...`, 
+    eventHandlers? : [ 
+        eventType : enum("before|after|interval") = "after",
+        goalToCall : GoalToCallInfo,
+        intervalInMs? : number = null
+    ] = null,
+    cancellationHandler? : {
+        CancelExecutionAfterXMilliseconds? : int,
+        GoalNameToCallAfterCancellation = GoalToCallInfo
+    } = null
+    // Inconsistency you notice
+    inconsistency: string
 }

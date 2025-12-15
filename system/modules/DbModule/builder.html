@@ -1,0 +1,9 @@
+## Available data sources
+{{ for dataSource in dataSources }}
+    - {{ dataSource.Name }}
+        - {{ dataSource }}
+{{ end }}
+
+For this DbModule you MUST
+- generate valid sql
+- select one or more datasources 

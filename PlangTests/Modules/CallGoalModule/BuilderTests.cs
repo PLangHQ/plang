@@ -7,6 +7,7 @@ using PLangTests;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 using PLang.Services.OpenAi;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.CallGoalModule.Tests
 {

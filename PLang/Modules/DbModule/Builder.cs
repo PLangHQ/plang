@@ -113,8 +113,11 @@ namespace PLang.Modules.DbModule
 
 			if (dataSource == null)
 			{
-				dataSource = context.DataSource;
-
+				(dataSource,var error2) = await dbSettings.GetDataSourceOrDefault();
+				if (error2 != null)
+				{
+					return (null, new BuilderError(error2));
+				}
 			}
 
 			string sqlType = "sqlite";
@@ -524,7 +527,10 @@ When table name is unknown at built time because it is created with variable, us
 					return (methodsAndTables, null);
 			}
 
-
+			if (methodsAndTables.DataSourceNames?.Any(p => p.IsDynamic) == true)
+			{
+				return (methodsAndTables, null);
+			}
 
 			if (!methodHasDataSourceName)
 			{

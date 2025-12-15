@@ -163,6 +163,8 @@ public class ObjectValue
 		}
 	}
 	public bool IsSystemVariable { get; set; }
+	[JsonIgnore]
+	public bool SetAsVariable { get; set; }
 	public virtual object? Value
 	{
 		get { return this.value; }

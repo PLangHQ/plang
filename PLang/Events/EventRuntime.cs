@@ -632,7 +632,7 @@ namespace PLang.Events
 				else
 				{
 					bool disableSystemGoals = false;
-					if (!eve.IncludeOsGoals && !eve.IsSystem)
+					if (!sourceGoal.IsSystem && !eve.IncludeOsGoals && !eve.IsSystem)
 					{
 						disableSystemGoals = true;
 					}

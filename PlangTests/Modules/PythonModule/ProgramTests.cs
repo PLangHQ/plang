@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using PLang.Modules.PythonModule;
 using Newtonsoft.Json;
 using PLang.Services.OutputStream;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.PythonModule
 {

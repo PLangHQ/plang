@@ -1,0 +1,41 @@
+You are analyzing a plang step to extract database-related information.
+
+The step may be written in any language (English, Icelandic, Spanish, etc.).
+
+Extract:
+1. **dataSourceNames** - Datasource names specified (patterns: "ds:", "datasource:", "data source:"). Default to ["data"] if none specified and SQL is present.
+2. **isCreateDataSource** - Is this step creating a new datasource/database connection?
+3. **tablesReferenced** - Tables/views used in any SQL statement. For multi-datasource queries, identify which datasource each table belongs to.
+
+For multi-datasource SQLite queries:
+- First datasource is the "main" database
+- Additional datasources are attached and referenced by their name
+- Example: "select * from main.users u join analytics.events e" has tables from two datasources
+
+Step to analyze: See user input
+
+Return JSON matching this structure exactly:
+{
+  "dataSourceNames": ["string"],
+  "isCreateDataSource": boolean,
+  "tablesReferenced": [
+    {"datasource": "string or null if unspecified", "table": "string"}
+  ]
+}
+
+If no SQL or tables, return empty array for tablesReferenced.
+If datasource not specified for a table, use null and it will be assumed from context.
+
+{{ if currentDataSource }}
+## Datasource in context
+When datasource is not defined in step or we 
+{{ end }}
+
+## Existing datasources
+{{ if dataSources }}
+{{ for dataSource in dataSources }}
+- {{ dataSource.Name }}
+{{ end }}
+{{ else }}
+No datasource exists currently in the 
+{{ end }}

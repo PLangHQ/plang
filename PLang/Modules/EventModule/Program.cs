@@ -24,6 +24,13 @@ public class Program : BaseProgram
 		return null;
 	}
 
+	public async Task<IError?> RunEvents(List<EventBinding> eventBinding)
+	{
+
+		//engine.GetEventRuntime().AddEvent(eventBinding);
+		return null;
+	}
+
 }
 
 

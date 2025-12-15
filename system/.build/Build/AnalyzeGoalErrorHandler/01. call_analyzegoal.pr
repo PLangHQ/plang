@@ -12,7 +12,10 @@
         "Value": {
           "Path": ".build\\Build\\AnalyzeGoal\\00. Goal.pr",
           "Name": "AnalyzeGoal",
-          "Parameters": {}
+          "Parameters": {},
+          "IsAsync": false,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
         }
       },
       {
@@ -138,6 +141,7 @@
       ],
       "type": "PLang.Modules.CallGoalModule.Builder",
       "caching": true,
+      "CacheKey": null,
       "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a goal named AnalyzeGoal without any parameters or additional options. The RunGoal function is designed to call goals by name, so it fits this intent perfectly.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"AnalyzeGoal\",\n        \"Parameters\": null\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"delayWhenNotWaitingInMilliseconds\",\n      \"Value\": 50\n    },\n    {\n      \"Type\": \"System.UInt32\",\n      \"Name\": \"waitForXMillisecondsBeforeRunningGoal\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"keepMemoryStackOnAsync\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"isolated\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"disableSystemGoals\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"isEvent\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": null\n}"
     }
   ]

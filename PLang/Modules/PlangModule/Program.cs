@@ -18,6 +18,8 @@ using PLang.Modules.PlangModule.Data;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
+using PLang.Variables;
+using PLang.Variables.Errors;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -50,14 +52,91 @@ namespace PLang.Modules.PlangModule
 			this.fileAccessHandler = fileAccessHandler;
 		}
 
-		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private. parser=pr|pr2|goal|goal2")]
-		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", List<string>? propertiesToExtract = null, string parser = "pr")
+		[Description("parser=pr|goal")]
+		public async Task<(PrApp? App, IError? Error)> GetApp(string path, string startingGoalName = "start", string parser = "pr")
 		{
-			if (parser == "pr2" || parser == "goal2")
+			var (app, error) = await GetPrApp(path, parser);
+			
+			if (error != null) return (null, error);
+			
+			if (string.IsNullOrEmpty(startingGoalName) || startingGoalName == "start")
 			{
-				return GetGoals2(fileOrFolderPath, visibility, propertiesToExtract);
+				app!.GoalToCall = new Models.GoalToCallInfo("Start")
+				{
+					Path = "/.build/start.pr"
+				};
+			}
+			else
+			{
+				if (startingGoalName.EndsWith(".goal")) startingGoalName = startingGoalName.Replace(".goal", "");
+
+				app!.GoalToCall = new Models.GoalToCallInfo(startingGoalName)
+				{
+					Path = fileSystem.Path.Join("/.build", $"{startingGoalName}.pr")
+				};
+
 			}
 
+			return (app, error);
+		}
+
+		private async Task<(PrApp? app, IError? error)> GetPrApp(string path, string parser)
+		{
+			PrApp app;
+			if (parser == "pr")
+			{
+				return prParser.GetPrApp();
+			} else
+			{
+				(app, var error) = goalParser.GetPrApp();
+				if (error != null) return (app, error);
+			}
+			return (app, null);
+		}
+
+		private async Task<(App app, IError error)> GetPrApp(string path)
+		{
+			throw new NotImplementedException();
+		}
+		private async Task<(List<PrGoal>? Goals, IError? Error)> GetPrGoals(string fileOrFolderPath, string visibility = "public", string parser = "pr")
+		{
+			var (goals, error) = await GetGoalsAsGoals(fileOrFolderPath, visibility, parser);
+			if (error != null) return (null, error);
+
+			List<PrGoal> prGoals = new();
+			foreach (var goal in goals)
+			{
+				var steps = GetPrSteps(goal);
+
+				PrGoal prGoal = new PrGoal(goal.GoalName, steps);
+				prGoal.AbsolutePath = $"{fileSystem.RootDirectory}/{goal.RelativeGoalPath}/{goal.GoalFileName}".Replace("//", "/");
+
+				prGoal.PrPath = $"{goal.RelativeGoalFolderPath}/.build/{goal.GoalName}";
+				prGoal.DeveloperComment = goal.Comment;
+				prGoal.FolderPath = goal.RelativePrFolderPath;
+				prGoal.IsSetup = goal.IsSetup;
+				prGoal.Path = goal.RelativeGoalPath;
+				prGoals.Add(prGoal);
+			}
+
+			return (prGoals, error);
+		}
+
+		private List<PrStep> GetPrSteps(Goal goal)
+		{
+			List<PrStep> prSteps = new();
+			foreach (var step in goal.GoalSteps)
+			{
+				var eventBindings = step.EventBinding;
+
+				var prStep = new PrStep(step.Text, null, step.Index, null, step.ModuleType, null, step.Indent, step.Comment, null, null, null, null);
+				prSteps.Add(prStep);
+			}
+			return prSteps;
+		}
+
+		private async Task<(List<Goal>? Goals, IError? Error)>  GetGoalsAsGoals(string fileOrFolderPath, string visibility = "public", string parser = "pr")
+		{
 			List<Goal> goals = new List<Goal>();
 			string path = GetPath(fileOrFolderPath);
 
@@ -111,6 +190,14 @@ namespace PLang.Modules.PlangModule
 			{
 				goals = goals.Where(p => p.Visibility == Visibility.Private).ToList();
 			}
+			return (goals, null);
+		}
+
+		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private. parser=pr|goal")]
+		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", List<string>? propertiesToExtract = null, string parser = "pr")
+		{
+			var (goals, error) = await GetGoalsAsGoals(fileOrFolderPath, visibility, parser);
+			if (error != null) return (null, error);
 			/*
 			 * should we return error if it's 0 goals?
 			if (goals.Count == 0)
@@ -144,10 +231,6 @@ namespace PLang.Modules.PlangModule
 			return (array, null);
 		}
 
-		private (object? Goals, IError? Error) GetGoals2(string fileOrFolderPath, string visibility, List<string>? propertiesToExtract)
-		{
-			throw new NotImplementedException();
-		}
 
 		[Description("Get all setup goals. visibility=public|private|public_and_private. propertiesToExtract define what properties from the goal should be extracted")]
 		public async Task<(List<Goal>?, IError?)> GetSetupGoals(string? appPath = null, string visibility = "public", List<string>? propertiesToExtract = null)
@@ -161,20 +244,17 @@ namespace PLang.Modules.PlangModule
 			return (goals.Where(p => p.IsSetup).ToList(), null);
 		}
 
-		public record Runtime(List<Module> Modules);
-		public record Module(Type Type, ClassDescription ClassDescription);
-
-		public async Task<(List<Module>?, IError?)> GetModules2()
+		public async Task<(List<ClassDescription>?, IError?)> GetModules2()
 		{
 			var runtimeModules = typeHelper.GetRuntimeModules();
-			List<Module> modules = new();
+			List<ClassDescription> modules = new();
 			foreach (var module in runtimeModules)
 			{
 				var classDescriptionHelper = new ClassDescriptionHelper();
 				var (classDescription, error) = classDescriptionHelper.GetClassDescription(module);
 				if (error != null) return (null, error);
 
-				modules.Add(new Module(module, classDescription));
+				modules.Add(classDescription);
 			}
 
 			return (modules, null);
@@ -186,13 +266,13 @@ namespace PLang.Modules.PlangModule
 			int i = 0;
 			return (null, null);
 		}
-		public async Task<(object?, IError?)> SaveMethod(object methodPr)
+		public async Task<(object?, IError?)> SaveInstruction(Building.Model.Instruction instruction)
 		{
 			int i = 0;
 			return (null, null);
 		}
 
-		public async Task<(ClassDescription?, IError?)> GetClassDescription(string module, string? format = "null|llm")
+		public async Task<(ClassDescription?, IError?)> GetClassDescription(string module)
 		{
 			if (string.IsNullOrWhiteSpace(module)) return (null, null);
 
@@ -201,8 +281,9 @@ namespace PLang.Modules.PlangModule
 			{
 				return (null, new ProgramError($"Could not load module '{module}'", goalStep));
 			}
-			var helper = GetImplementation<IClassDescriptionHelper>("IClassDescriptionHelper", typeof(ClassDescriptionHelper));
-			return helper.GetClassDescription(type);
+
+			var classDescriptionHelper = new ClassDescriptionHelper();
+			return classDescriptionHelper.GetClassDescription(type);
 		}
 
 		protected T GetImplementation<T>(string name, Type defaultType)
@@ -220,9 +301,10 @@ namespace PLang.Modules.PlangModule
 			return (T)instance;
 		}
 
-		public async Task<(List<ObjectValue>?, IError?)> ValidateGoal(PrGoal goal, PrGoal prGoal)
+		public async Task<(List<ObjectValue>?, IError?)> ValidateGoal(Goal goal)
 		{
-			var (steps, error) = ConvertToGoalSteps(goal, prGoal.Steps);
+			/*
+			var (steps, error) = ConvertToGoalSteps(goal, prGoal.GoalSteps);
 			if (error != null) return (null, error);
 			goal.Steps = steps;
 
@@ -243,12 +325,13 @@ namespace PLang.Modules.PlangModule
 
 			list.Add(new ObjectValue("goal", goal));
 			list.Add(new ObjectValue("prGoal", prGoal));
-
-			return (list, null);
+			*/
+			return (new(), null);
 		}
 
 		private (List<GoalStep>?, IError) ConvertToGoalSteps(PrGoal goal, IReadOnlyList<Data.PrStep> prSteps)
 		{
+			/*
 			foreach (var prStep in prSteps)
 			{
 				var step = goal.Steps.FirstOrDefault(p => p.Index == prStep.Index);
@@ -257,7 +340,7 @@ namespace PLang.Modules.PlangModule
 				step.Module = prStep.Module;
 				step.Indents = prStep.Indents;
 				step. = prStep.Reasoning;
-			}
+			}*/
 			/*
 			foreach (var prStep in goalSteps)
 			{
@@ -268,12 +351,121 @@ namespace PLang.Modules.PlangModule
 			*/
 			return new();
 		}
-
-
-		public async Task<(object?, IError?)> ValidateMethod(GoalStep step, object function)
+		public async Task<IError?> ValidateFunction(string module, LlmStep llmStep)
 		{
+			MethodValidator mv = new();
+			var error = mv.Validate(module, llmStep.Function.Name, llmStep.Function.Parameters);
+			return error;
+
+		}
+
+		public async Task<List<VariableMatch>> ExtractVariables(PrStep step)
+		{
+			PlangVariableExtractor pve = new();
+			return pve.ExtractVariables(JsonConvert.SerializeObject(step));
+		}
+
+		public async Task<(List<RuntimeVariable>?, IError?)> ValidateVariables(List<LlmVariable> llmVariables, PrStep step)
+		{
+			if (llmVariables == null || llmVariables.Count == 0)
+			{
+				return (null, null);
+			}
+
+			var helper = new VariableMappingHelper();
+			var allRuntimeVariables = new List<RuntimeVariable>();
+
+			// Convert step to JToken once for efficiency
+			var stepJson = JsonConvert.SerializeObject(step);
+			var stepToken = JToken.Parse(stepJson);
+
+			foreach (var llmVariable in llmVariables)
+			{
+				var (runtimeVar, error) = helper.ValidateVariable(llmVariable);
+				if (error != null)
+				{
+					return (null, error);
+				}
+
+				// For each property path, validate the variable exists there
+				foreach (var propertyPath in llmVariable.PropertyPaths)
+				{
+					// Build JSONPath (add $ prefix if not present)
+					var jsonPath = propertyPath.StartsWith("$") ? propertyPath : "$." + propertyPath;
+
+					// Get the value at that path
+					var token = stepToken.SelectToken(jsonPath);
+
+					if (token == null)
+					{
+						var notFoundError = new VariableNotFoundError(
+							$"Property path '{propertyPath}' not found in step");
+						return (null, notFoundError);
+					}
+
+					var originalText = token.ToString();
+
+					if (string.IsNullOrEmpty(originalText))
+					{
+						var notFoundError = new VariableNotFoundError(
+							$"Property path '{propertyPath}' is empty in step");
+						return (null, notFoundError);
+					}
+
+					// Verify the variable expression exists in that text
+					int start = originalText.IndexOf(llmVariable.FullExpression);
+					if (start == -1)
+					{
+						var notFoundError = new VariableNotFoundError(
+							$"Variable '{llmVariable.FullExpression}' not found in {propertyPath}. Found: '{originalText}'");
+						
+						return (null, notFoundError);
+					}
+				}
+
+				allRuntimeVariables.Add(runtimeVar);
+			}
+
+
+			return (allRuntimeVariables, null);
+		}
+
+
+		public async Task<List<ClassDescription>> GetPipedClasses()
+		{
+			PipedClassesHelper helper = new PipedClassesHelper();
+			var types = helper.GetPipedClasses();
+			if (types == null) return new();
+
+			List<ClassDescription> classDescriptions = new List<ClassDescription>();
+			foreach (var type in types)
+			{
+				ClassDescriptionHelper ch = new ClassDescriptionHelper();
+				ch.GetClassDescription(type);
+			}
+			return classDescriptions;
+		}
+
+		public async Task<(PrStep?, IError?)> ValidateStep(PrStep step, LlmStep llmStep)
+		{
+			step = step with
+			{
+				Reasoning = llmStep.Reasoning,
+				Function = llmStep.Function,
+				CacheHandler = llmStep.CacheHandler,
+				ErrorHandlers = llmStep.ErrorHandlers,
+				BeforeEventHandlers = llmStep.BeforeEventHandlers,
+				AfterEventHandlers = llmStep.AfterEventHandlers,
+				PrRunAndForget = llmStep.PrRunAndForget, 
+				LlmComments = llmStep.LlmComments,
+			};
+
+			MethodValidator mv = new();
+			var error = mv.Validate(step.Module, llmStep.Function.Name, llmStep.Function.Parameters);
+			if (error != null) return (step, error);
+
 			int i = 0;
-			return (null, null);
+			return (step, null);
 		}
 		public async Task<(string?, IError?)> GetModules(string? stepText = null, List<string>? excludeModules = null)
 		{
@@ -431,11 +623,9 @@ namespace PLang.Modules.PlangModule
 			return variables;
 		}
 
-		public async Task<(object?, IError?)> RunFunction(ObjectValue genericFunction)
+		public async Task<(object?, IError?)> RunFunction(IGenericFunction function)
 		{
-			var value = genericFunction.Value as string;
-			var genericeFunction = JsonConvert.DeserializeObject<IGenericFunction>(value);
-			return await base.RunFunction(genericeFunction);
+			return await base.RunFunction(function);
 		}
 
 		public async Task<(IReadOnlyList<GoalStep>?, IError?)> GetSteps(string goalPath)

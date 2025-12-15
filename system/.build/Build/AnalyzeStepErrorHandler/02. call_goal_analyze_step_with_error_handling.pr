@@ -12,7 +12,10 @@
         "Value": {
           "Path": ".build\\Build\\AnalyzeStep\\00. Goal.pr",
           "Name": "AnalyzeStep",
-          "Parameters": {}
+          "Parameters": {},
+          "IsAsync": false,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
         }
       },
       {
@@ -84,6 +87,7 @@
       ],
       "type": "PLang.Modules.CallGoalModule.Builder",
       "caching": true,
+      "CacheKey": null,
       "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a goal named 'AnalyzeStep' without any parameters and handle errors by writing out error information. The appropriate function is RunGoal with the goal name 'AnalyzeStep'.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"AnalyzeStep\",\n        \"Parameters\": null\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValues\": null\n}"
     }
   ]

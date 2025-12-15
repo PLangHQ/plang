@@ -1,0 +1,85 @@
+## Database Context for Step Analysis
+
+### Datasources
+{{ if currentDataSources }}
+{{ for ds in currentDataSources }}
+- **{{ ds.Name }}**: {{ ds.TypeFullName }}, KeepHistory={{ ds.KeepHistory }}
+{{ end }}
+{{ else }}
+*No existing datasources loaded - may be a new database or setup context.*
+{{ end }}
+
+### Referenced Tables Schema
+{{ if tableSchemas }}
+{{ tableSchemas | object.to_json }}
+{{ else }}
+*No tables referenced or schema not available.*
+{{ end }}
+
+{{ if validatedSql }}
+### Validated SQL
+Use this SQL in the method call:
+{{ validatedSql }}
+{{ end }}
+
+### Method Selection Rules
+
+**SELECT Operations:**
+- `SelectOneRow` - When query uses LIMIT 1, "return 1", or expects single result
+- `Select` - For multiple rows, returns Table (list of rows)
+- `SelectWithMultipleDataSources` - When joining across datasources
+- `SelectOneRowWithMultipleDataSources` - Single row from multiple datasources
+- `QueryDynamicSql` - When SQL comes entirely from a %variable%, requires tableAllowList
+
+**INSERT Operations:**
+- `InsertAndSelectIdOfInsertedRow` - When user writes result to %id% or any %variable%
+- `Insert` - When user doesn't capture the id, returns rowsAffected count
+- `InsertBulk` - For inserting list/array of items
+- `InsertOrUpdate` / `InsertOrUpdateAndSelectIdOfRow` - Upsert operations
+
+**UPDATE/DELETE:**
+- `Update` - Standard update, returns rowsAffected
+- `Delete` - Standard delete, returns rowsAffected
+- `UpdateWithJsonColumns` - When updating from JSON with allowColumns allowlist
+
+**Schema Operations (Setup only):**
+- `CreateTable` - DDL for table creation
+- `CreateDataSource` - Create new database connection
+- `Execute` - For DDL like CREATE INDEX, ALTER TABLE, PRAGMA
+
+**Transactions:**
+- `BeginTransaction` - Start transaction, can span multiple datasources
+- `EndTransaction` - Commit or rollback based on error state
+- `Rollback` - Explicit rollback
+
+**Other:**
+- `GetDataSources` - List all datasources
+- `GetDataSource` - Get specific datasource by name
+- `SetDataSourceNames` - Set active datasource(s)
+- `GetDbScheme` - Get list of tables/views
+- `GetDatabaseStructure` - Get full schema with columns
+- `LoadExtension` - Load SQLite extension
+- `ExecuteSqlFile` - Run SQL from file
+- `QuerySqlFile` - Query from SQL file
+
+### SQL Parameter Mapping
+- Use @paramName in SQL statements
+- Map %variable% to ParameterInfo(TypeFullName, ParameterName, VariableNameOrValue)
+- For LIKE: '\%value\%' pattern with escaped percent signs
+- For IN arrays: use System.Array type, runtime expands to @__plang_id0, @__plang_id1...
+- @id with "auto" value generates IdGen snowflake ID when KeepHistory=true
+
+### Multi-Datasource (SQLite ATTACH)
+When multiple datasources specified:
+- First datasource uses "main." prefix in queries
+- Additional datasources attached with their name as alias
+- Example: "select * from main.users u join analytics.events e on e.userId=u.id"
+
+{{ if isSetup }}
+### Setup File Context
+- CreateDataSource and CreateTable methods are available
+- Primary key 'id' added automatically when KeepHistory=true
+- Use foreign key constraints: 'foreign key to tablename.id'
+- Consider indexes for frequently queried columns
+- PRAGMA foreign_keys=OFF/ON needed when renaming tables with foreign keys
+{{ end }}

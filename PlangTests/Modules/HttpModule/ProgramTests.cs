@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLangTests.Modules.HttpModule
 {

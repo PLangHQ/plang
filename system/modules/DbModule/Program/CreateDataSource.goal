@@ -1,0 +1,27 @@
+/*CreateDataSource
+- filter %Settings.DataSources% where name=%name%, write to %dataSource%
+- if %dataSource% is not empty then end goal
+- get supported databases, write to %databases%
+- filter %Settings.DataSources% where isDefault=true, write to %hasDefault%
+- if %hasDefault% is empty then
+    - set %isDefault% = true
+- if %databases.count% > 1 then AskUserWhichDb, else CreateSqliteDataSource
+
+AskUserWhichDb 
+- ask user "Which database?", options: %databases.name%, 
+        must be number between 0 and %databases.count%, 
+        write to %position%
+- if %databases[position].type% == "sqlite" 
+    then CreateSqliteDataSource, else call CreateOtherDataSource
+- validate %dataSource% with scheme "scheme/datasource.json"
+- add %dataSource% to %Settings.DataSources% (unique name=%dataSource.name%)
+
+CreateSqliteDataSource
+- set default value %keepHistory% = true
+- set %dataSource% = { name=%name%, keepHistory=%keepHistory%, isDefault=%isDefault%, connectionString="./%name%/data.sqlite", type="sqlite"} 
+
+CreateOtherDataSource
+- ask user "What is the connection string? %!error%", write to %connectionString%
+- [db] test db connection %connectionString%
+    on error CreateOtherDataSource error=%!error.Message%
+- set %dataSource% = { name=%name%, keepHistory=%keepHistory%, isDefault=%isDefault%, connectionString=%connectionString%, type="%databases[position].type%"} */

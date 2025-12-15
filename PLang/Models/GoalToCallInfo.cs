@@ -132,7 +132,7 @@ namespace PLang.Models
 		}
 		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
 
-		[Description("Doesn't wait for goal response(run and forget)")]
+		[Description("Doesn't wait for goal response(run and forget, dont wait)")]
 		public bool IsAsync { get; set; } = false;
 		public int WaitBeforeExecutingInMs { get; set; } = 0;
 		public GoalToCallInfo? AfterExecution { get; set; } = null;

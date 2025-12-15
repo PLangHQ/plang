@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangConsole", "PlangConsol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangWindowForms", "PlangWindowForms\PLangWindowForms.csproj", "{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PLang.Tests", "PLang.Tests\PLang.Tests.csproj", "{98144D8E-A05B-46EE-B4DA-7C9E6C637544}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98144D8E-A05B-46EE-B4DA-7C9E6C637544}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98144D8E-A05B-46EE-B4DA-7C9E6C637544}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98144D8E-A05B-46EE-B4DA-7C9E6C637544}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98144D8E-A05B-46EE-B4DA-7C9E6C637544}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

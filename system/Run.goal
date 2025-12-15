@@ -1,4 +1,58 @@
 Run
-- run before app start event
-- call goal %goalName% %parameters%
-- run end app event
+- call goal RunApp
+
+RunApp
+- call goal LoadApp
+- call goal RunEvents "!events"=%!user.app.BeforeEvents%
+- call goal RunGoal "!goalToCall"=%!user.app.goalToCall%
+    on error call goal HandleErrors handlers=%!user.goal.ErrorHandlers%
+- call goal RunEvents "!events"=%!user.app.AfterEvents%
+
+RunGoal
+- call goal "LoadGoal", cache for 10 minutes
+- if %!user.goal.BeforeEvents.count% > 0 call RunEvents "!events"=%!user.goal.BeforeEvents%
+- foreach %!user.goal.steps% call RunStep item=%!user.step%
+- if %!user.goal.AfterEvents.count% > 0 call RunEvents "!events"=%!user.goal.AfterEvents%
+
+RunStep
+- if %!user.step.cachingHandler% != null then GetCache
+- if %!user.step.BeforeEvents.count% > 0 call RunEvents "!events"=%!user.step.BeforeEvents%
+- [plang] run function %!user.step%
+    on error call HandleErrors handlers=%!user.step.ErrorHandlers%
+- if %!user.step.AfterEvents.count% > 0 call RunEvents "!events"=%!user.step.AfterEvents%
+- if %!user.step.cachingHandler% != null then SetCaching
+
+GetCache
+- get caching %!user.step.cachingHandler.key%, write to %result%
+- if %result% is not empty then
+    - return %result% and previous
+
+SetCaching
+- if %result.error% != null then
+    - end goal
+- set %result% to cache 
+    key: %!user.step.cachingHandler.key%, 
+    type: %!user.step.cachingHandler.cachingType%, 
+    expires: %!user.step.cachingHandler.expires%
+
+RunEvents
+- foreach %!events% call RunEvent item=%!event%
+
+RunEvent
+- call goal %!event.GoalToCall%
+
+HandleErrors
+- foreach %handlers%, call HandleError item=%handler%
+
+HandleError
+- if %!error.StatusCode% == %handler.StatusCode% then call goal %handler.GoalToCall%
+- if %!error.Key% == %handler.Key% then call goal %handler.GoalToCall%
+- if %!error.Message% contains %handler.Message% then call goal %handler.GoalToCall%
+- if %handler.Key% == "*" then call goal %handler.GoalToCall%
+
+LoadApp
+- read "/.build2/app.pr", write to %!user.app%
+
+
+LoadGoal
+- read "%!goalToCall.Path%", write to %!user.goal%

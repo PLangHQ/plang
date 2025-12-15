@@ -1,5 +1,0 @@
-## Rules
-- %variables% are wrapped with %
-- %variables% are c# object, Properties and Methods are accessible. Pipe the calling
-- %now% is DateTimeOffset object.
-- Use strict typing

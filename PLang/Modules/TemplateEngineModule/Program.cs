@@ -101,7 +101,7 @@ namespace PLang.Modules.TemplateEngineModule
 			templateContext.EnableNullIndexer = true;
 			templateContext.EnableRelaxedMemberAccess = true;
 			templateContext.MemberRenamer = member => member.Name;
-
+			templateContext.PushGlobal(globals);
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
@@ -137,7 +137,7 @@ namespace PLang.Modules.TemplateEngineModule
 
 			SetFunctionsOnTemplate(templateContext);
 
-			templateContext.PushGlobal(globals);
+			
 
 			try
 			{

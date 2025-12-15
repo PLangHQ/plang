@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLangTests;
 using static PLang.Modules.BlockchainModule.ModuleSettings;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace PLang.Modules.BlockchainModule.Tests
 {

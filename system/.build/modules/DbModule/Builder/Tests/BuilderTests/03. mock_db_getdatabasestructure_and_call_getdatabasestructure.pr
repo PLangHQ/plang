@@ -1,0 +1,42 @@
+{
+  "Text": "mock db GetDatabaseStructure, call GetDatabaseStructure",
+  "ModuleType": "PLang.Modules.MockModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "",
+    "Name": "MockMethod",
+    "Parameters": [
+      {
+        "Type": "PLang.Modules.MockModule.Program+MockData",
+        "Name": "mockData",
+        "Value": {
+          "GoalToCall": {
+            "Path": ".build\\modules\\DbModule\\Builder\\Tests\\BuilderTests\\GetDatabaseStructure\\00. Goal.pr",
+            "Name": "GetDatabaseStructure",
+            "Parameters": {},
+            "IsAsync": false,
+            "WaitBeforeExecutingInMs": 0,
+            "AfterExecution": null
+          },
+          "ModuleType": "PLang.Modules.DbModule.Program",
+          "MethodName": "GetDatabaseStructure",
+          "Parameters": null
+        }
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "mockData": {
+        "Name": "mockData",
+        "FullTypeName": "PLang.Modules.MockModule.Program+MockData"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": []
+}

@@ -5,6 +5,7 @@ namespace PLang.Models
 {
     public record LlmRequest(string type, List<LlmMessage> promptMessage, string model = "gpt-4.1-mini", bool caching = true)
     {
+		public string CacheKey { get; set; }
         public double temperature = 0;
         public double top_p = 0;
         public double frequencyPenalty = 0;

@@ -1,6 +1,7 @@
 {
   "GoalName": "WriteOut",
   "Comment": null,
+  "Version": 1,
   "GoalSteps": [
     {
       "Text": "write out %!error%, level:error, actor:%actor%",
@@ -25,10 +26,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 103,
+      "LineNumber": 145,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3b265719dd35170ec1ac58681e6ac5dfd6ed0a3f20155fc36bf480707a88cc4c",
+      "Hash": "6fd01bcb09f761146551eb71ec53caff850adf8505d69886aac60d132635447a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
       "UserIntent": null
@@ -56,10 +57,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 104,
+      "LineNumber": 146,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "898825ae39a2230229befc2e34f0968ed9f46832a3004db7867cfda5a373dec9",
+      "Hash": "7f4d1b0f1994d711d9aa604813479b1e3bf7137a65481e6979fd3eb315420357",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
       "UserIntent": null
@@ -70,21 +71,23 @@
   "Visibility": 0,
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
+  "PrPath": ".build\\Build\\WriteOut\\00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\WriteOut\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build\\WriteOut",
   "RelativeAppStartupFolderPath": null,
-  "BuilderVersion": "0.1.18.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "cc70b8f81a563fd4627b574dd9ae6c3117d52d94855109eb625a4bca8898ee66",
+  "Hash": "3bf80097b1fa7a2934b014b1c3a3b8a98c0d87e3bba477353da2ec257bc094c4",
   "IncomingVariablesRequired": {
     "%error%": "The error message that needs to be logged.",
     "%actor%": "The actor responsible for the error."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "IsStart": false
 }
