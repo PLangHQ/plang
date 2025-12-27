@@ -88,7 +88,7 @@ namespace PLang.Modules.TemplateEngineModule
 			if (writeToOutputStream || (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
 				var renderMessage = new RenderMessage(result.Result, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
-				await context.UserSink.SendAsync(renderMessage);
+				await context.Output.SendAsync(renderMessage);
 			}
 
 			return result;

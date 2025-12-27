@@ -362,7 +362,7 @@ namespace PLang.Building.Parsers
 			return publicGoals;
 		}
 
-		public (Goal? Goal, IError? Error) GetGoal(GoalToCallInfo goalToCall)
+		public (Goal? Goal, IError? Error) GetGoal(GoalToCallInfo goalToCall, Goal parentGoal)
 		{
 			var goals = GetAllGoals();
 			if (!string.IsNullOrEmpty(goalToCall.Path))
@@ -511,24 +511,25 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
-		public async Task<(List<Goal>? Goals, IError? Error)> LoadAppPath(string appName, IFileAccessHandler fileAccessHandler)
+		public async Task<(List<Goal>? Goals, IError? Error)> LoadAppPath(AppToCallInfo appToCall)
 		{
-			var path = fileSystem.GoalsPath;
-			var appPath = fileSystem.Path.Join(path, appName, ".build");
+			var path = fileSystem.RootDirectory;
+			var appPath = fileSystem.Path.Join(path, appToCall.AppName);
+			var appBuildPath = fileSystem.Path.Join(appPath, ".build");
 
 			List<string>? files = new();
 
-			if (fileSystem.Directory.Exists(appPath))
+			if (fileSystem.Directory.Exists(appBuildPath))
 			{
-				files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(appPath, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				files = fileSystem.Directory.GetFiles(appBuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 			}
-
+			
 			if (files.Count == 0)
 			{
-				appPath = fileSystem.Path.Join(fileSystem.SystemDirectory, appName, ".build");
-				if (fileSystem.Directory.Exists(appPath))
+				appBuildPath = fileSystem.Path.Join(fileSystem.SystemDirectory, appToCall.AppName, ".build");
+				if (fileSystem.Directory.Exists(appBuildPath))
 				{
-					files = fileSystem.Directory.GetFiles(appPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+					files = fileSystem.Directory.GetFiles(appBuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				}
 			}
 			var goals = new List<Goal>();
@@ -540,7 +541,7 @@ namespace PLang.Building.Parsers
 					goals.Add(goal);
 				}
 			}
-			if (goals.Count == 0) return (null, new Error($"App '{appName}' could not be found", "AppNotFound"));
+			if (goals.Count == 0) return (null, new Error($"App '{appToCall.AppName}' could not be found", "AppNotFound"));
 			return (goals, null);
 		}
 

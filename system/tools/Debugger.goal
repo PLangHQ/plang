@@ -1,0 +1,59 @@
+Debugger
+- set %breakpoints% = %!system.debug.breakpoints%
+- listen for connection on pipe 'plang-debug-%!system.debug%', channel: 'debugger', on message call HandleDebugMessage, on connect call DebugClientConnected
+- wait for %debuggerActive%
+- bind before event to all steps(including private), call CheckBreakpoint
+
+DebugClientConnected
+- set %debuggerActive% = true
+
+HandleDebugMessage
+- if %message.command% == "setBreakpoints" then
+    - set %breakpoints% = %message.breakpoints%
+
+CheckBreakpoint
+/ Hit a breakpoint?
+- filter %breakpoints% where PrPath=%!callingStep.PrPath%, write to %breakpoint%
+- if %breakpoint% is not empty then call BreakAndWait
+
+/ Not stepping? Exit early
+- if %breakOnNextStep% is not true then end goal
+
+/ Step into - no depth constraints
+- if %stepOverDepth% is empty and %stepOutDepth% is empty then call BreakAndWait
+
+/ Step over - stop when back to same level or shallower
+- if %stepOverDepth% is not empty and %!callStack.Depth% <= %stepOverDepth% then call BreakAndWait
+
+/ Step out - stop when returned to parent
+- if %stepOutDepth% is not empty and %!callStack.Depth% < %stepOutDepth% then call BreakAndWait
+
+BreakAndWait
+- call SendToDebugClient
+- set %message% = null
+- end goal and previous
+
+SendToDebugClient
+- write out { "event": "stopped", "memoryStack": %!memoryStack%, "callStack": %!callStack%, "prPath": %!callingStep.PrPath% }, channel: 'debugger'
+- [sched] wait for %message%
+- if %message.command% == "continue" then call HandleContinue
+- if %message.command% == "step" then call HandleStep
+- if %message.command% == "stepOver" then call HandleStepOver
+- if %message.command% == "stepOut" then call HandleStepOut
+- if %message.command% == "stop" then end app
+
+HandleContinue
+- set %breakOnNextStep% = false
+- end goal and previous
+
+HandleStep
+- set %breakOnNextStep% = true, %stepOverDepth% = null, %stepOutDepth% = null
+- end goal and previous
+
+HandleStepOver
+- set %breakOnNextStep% = true, %stepOverDepth% = %!callStack.Depth%, %stepOutDepth% = null
+- end goal and previous
+
+HandleStepOut
+- set %breakOnNextStep% = true, %stepOverDepth% = null, %stepOutDepth% = %!callStack.Depth%
+- end goal and previous

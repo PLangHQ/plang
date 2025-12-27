@@ -1,0 +1,4 @@
+OnDisconnected
+/ Called when pipe connection is lost
+- set %debugActive% = false
+- execute js 'debugger.terminated' 'disconnected'

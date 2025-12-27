@@ -43,13 +43,13 @@ namespace PLang.Modules.TerminalModule
 			throw new NotImplementedException("Read is not implemented");
 		}
 
-		[Description("Run a executable. Parameters string should not be escaped. variableNameForDeltaOnStandardStream and variableNameForDeltaOnErrorStream must to be clearly defined by the user either in it's name or with parameter variableNameForDeltaOnStandardStream: or variableNameForDeltaOnErrorStream:. When user write to a %variable%, this is the whole standard output stream, NOT delta.")]
+		[Description("Run a executable. Parameters string should not be escaped. Return instance of the process")]
 		[Example("run command myapp.exe, write to %result%", "appExecutableName=myapp.exe, return values=%result%")]
 		[Example("run git --status, write to %output%", @"appExecutableName=git, parameters=""--status"", variableNameForDeltaOnStandardStream=null, variableNameForDeltaOnErrorStream=null, ReturnValues = %output%")]
 		[Example("terminal ffmpeg -i input.mp4 output.avi, %delta%, %errorDelta%, write to %data%", @"appExecutableName=ffmpeg, parameters=""-i"",""input.mp4"",""output.avi"", variableNameForDeltaOnStandardStream=%delta%, variableNameForDeltaOnErrorStream=%errorDelta%, ReturnValues should be %data%")]
 		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? variableNameForDeltaOnStandardStream = null, [HandlesVariable] string? variableNameForDeltaOnErrorStream = null,
+			GoalToCallInfo? onStandardOutput = null, GoalToCallInfo? onErrorOutput = null, GoalToCallInfo? onExit = null,
 			bool hideTerminal = false
 			)
 		{
@@ -117,32 +117,6 @@ namespace PLang.Modules.TerminalModule
 
 			Console.OutputEncoding = Encoding.UTF8;
 			Console.InputEncoding = Encoding.UTF8;
-			/*
-			// Determine the OS and set the appropriate command interpreter
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				if (command.Contains(".ps") || command.Contains("|") || command.Contains(">"))
-				{
-					startInfo.FileName = "powershell.exe";
-				}
-				else
-				{
-					startInfo.FileName = "cmd.exe";
-				}
-			}
-			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-				startInfo.FileName = "/bin/bash";
-			}
-			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-			{
-				startInfo.FileName = "/bin/zsh";
-			}
-			else
-			{
-				logger.LogError("Unsupported OS");
-				return (null, new ProgramError("Unsupported OS", goalStep, function), properties);
-			}*/
 
 			// Start the process
 			Process process = new Process { StartInfo = startInfo };
@@ -155,42 +129,47 @@ namespace PLang.Modules.TerminalModule
 			properties.Add(new ObjectValue("Process", process));
 			properties.Add(new ObjectValue("StartInfo", startInfo));
 
-			StringBuilder? dataOutput = new();
-			StringBuilder? errorOutput = new();
-
-			process.OutputDataReceived += (sender, e) =>
+			process.OutputDataReceived += async (sender, e) =>
 			{
 				//logger.LogInformation(e.Data);
-				if (string.IsNullOrWhiteSpace(e.Data)) return;
+				if (onStandardOutput == null || string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(variableNameForDeltaOnStandardStream))
-				{
-					memoryStack.Put(variableNameForDeltaOnStandardStream, e.Data, goalStep: goalStep);
-				}
+				var goalToCall = onStandardOutput.Clone();
+				goalToCall.Parameters.AddOrReplace("sender", sender);
+				goalToCall.Parameters.AddOrReplace("data", e.Data);
+				goalToCall.Parameters.AddOrReplace("event", e);
 
-				dataOutput.Append(e.Data + Environment.NewLine);
+				await engine.RunGoal(goalToCall, goal, context);
+
 
 				logger.LogTrace(e.Data);
 			};
 
 
-			process.ErrorDataReceived += (sender, e) =>
+			process.ErrorDataReceived += async (sender, e) =>
 			{
-				if (string.IsNullOrWhiteSpace(e.Data)) return;
+				if (onErrorOutput == null || string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(variableNameForDeltaOnErrorStream))
-				{
-					memoryStack.Put(variableNameForDeltaOnErrorStream, e.Data, goalStep: goalStep);
-				}
-				errorOutput.Append(e.Data + Environment.NewLine);
+				var goalToCall = onErrorOutput.Clone();
+				goalToCall.Parameters.Add("sender", sender);
+				goalToCall.Parameters.Add("data", e.Data);
+				goalToCall.Parameters.Add("event", e);
+
+				await engine.RunGoal(goalToCall, goal, context);
 
 				logger.LogTrace(e.Data);
 
 			};
 
-			process.Exited += (sender, e) =>
+			process.Exited += async (sender, e) =>
 			{
-				//logger.LogDebug($"Exited");
+				if (onExit == null) return;
+
+				onExit.Parameters.Add("sender", sender);
+				onExit.Parameters.Add("event", e);
+
+				await engine.RunGoal(onExit, goal, context);
+
 			};
 
 			process.Start();
@@ -204,30 +183,38 @@ namespace PLang.Modules.TerminalModule
 			// Write the command to run the application with parameters
 
 			//sw.WriteLine(command);
-			sw.Close();
+			
 			// Close the input stream to signal completion
+
+			object? returnProcess = null;
 			if (goalStep.WaitForExecution)
 			{
+				sw.Close();
 				await process.WaitForExitAsync();
-				
 			}
 			else
 			{
+				returnProcess = process;
 				KeepAlive(process, "Process");
 			}
 
-			IError? error = null;
-			if (errorOutput.Length > 0)
-			{
-				command = appExecutableName = string.Join(" ", startInfo.ArgumentList);
-				error = new ProgramError($"Command: {command}\n{errorOutput}", goalStep, function);
-			}
 			logger.LogTrace("Done with TerminalModule");
 
-			return (dataOutput.ToString(), error, properties);
+			return (returnProcess, null, properties);
 		}
 
+		public async Task WaitForProcessToExit(Process process)
+		{
+			await process.WaitForExitAsync();
+		}
+
+		public async Task Kill(Process process, bool killEntireProcessTree = true)
+		{
+			process.Kill(killEntireProcessTree);
+		}
 
 	}
+
+
 }
 

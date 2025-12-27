@@ -25,7 +25,7 @@ namespace PLang.Modules.WindowAppModule
 		public async Task<IError?> RunWindowApp(GoalToCallInfo goalName, 
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
-			var sink = context.UserSink;
+			var sink = context.Output.GetActor("user").GetChannel().Sink;
 			if (sink is not AppOutputSink os)
 			{
 				return new StepError("This is not UI Output, did you run plang instead of plangw?", goalStep);

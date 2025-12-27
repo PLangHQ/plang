@@ -74,7 +74,7 @@
       ],
       "type": "PLang.Modules.DbModule.Builder",
       "caching": true,
-      "CacheKey": "b61b5e111f7256db88b7828721595de56187b4d1d4a73824e1c77652b87ee17e",
+      "CacheKey": null,
       "RawResponse": "{\n  \"Reasoning\": \"The user wants to get all data sources and store them in the variable %dataSources%. The function GetDataSources() directly matches this intent as it retrieves all databases that have been created.\",\n  \"Name\": \"GetDataSources\",\n  \"Parameters\": [],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"PLang.Modules.DbModule.ModuleSettings+DataSource\",\n      \"VariableName\": \"%dataSources%\",\n      \"Value\": null\n    }\n  ],\n  \"TableNames\": null,\n  \"AffectedColumns\": null,\n  \"Warning\": null\n}"
     }
   ]

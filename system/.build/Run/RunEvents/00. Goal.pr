@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:16:41.9439709+00:00",
       "WaitForExecution": true,
@@ -26,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 39,
+      "LineNumber": 41,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f267538dde0e2e824e9e331e6b74572d4ba7b173c2701c8a15d5d4be26baaa2d",
+      "Hash": "79e53e2dc2771517c943ee436a2072582f0bdcb6f3b64deecf0db115511659f5",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Iterate over a collection of events and call the RunEvent goal for each individual event"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3a8376a876c25361f02eb2ce0cc65c63fbfae8bc083438dd7ac474701dba16d7",
+  "Hash": "04641b5523ed933a2ceb07c5f1fba27ba292cf684c9b6aaf1b10a6c92084019d",
   "IncomingVariablesRequired": {
     "%!events%": "A collection of events that need to be processed."
   },

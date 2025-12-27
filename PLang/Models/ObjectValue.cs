@@ -108,11 +108,26 @@ public class ObjectValue
 			this.Path = $"{parent.Path}!{name}";
 		}
 		else
-		{
-			//not happy with this check, a variable could be %product._id%, not sure if this is enough
-			//are there some other versions of variable? this one came about because of elastic search
-			string prefix = (Char.IsLetterOrDigit(name[0]) || name[0] == '_') ? "." : "";
-			this.Path = (parent != null) ? $"{parent.Path}{prefix}{name}" : name;
+		{	
+			if (parent != null)
+			{
+				
+				if (parent.Path.Contains("[") && parent.Path.Contains("]"))
+				{
+					this.Path = $"{parent.Path}";
+				}
+				else
+				{
+					//not happy with this check, a variable could be %product._id%, not sure if this is enough
+					//are there some other versions of variable? this one came about because of elastic search
+					string prefix = (Char.IsLetterOrDigit(name[0]) || name[0] == '_') ? "." : "";
+					this.Path = $"{parent.Path}{prefix}{name}";
+				}
+			} else
+			{
+				this.Path = name;
+			}
+				
 		}
 
 		if (value is string str)

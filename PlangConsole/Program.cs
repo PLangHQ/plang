@@ -11,7 +11,8 @@ using System.ComponentModel;
 using static PLang.Executor;
 
 
-(var builder, var runtime) = RegisterStartupParameters.Register(args);
+
+(var builder, var runtime, var appContext) = RegisterStartupParameters.Register(args);
 
 Console.CancelKeyPress += (_, e) =>
 {
@@ -29,7 +30,7 @@ if (builder)
 	container.RegisterForPLangBuilderConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
 
 
-	var pLanguage = new Executor(container);
+	var pLanguage = new Executor(container, appContext);
 	var result = pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
 	if (result.Error != null)
 	{
@@ -47,14 +48,12 @@ if (runtime)
 	var container = new ServiceContainer();
 	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
 
-	var context = container.GetInstance<PLangAppContext>();
-
 	var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 	var engine = container.GetInstance<IEngine>();
 	engine.Name = "Console";
 	
-	var pLanguage = new Executor(container);
+	var pLanguage = new Executor(container, appContext);
 	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
 	if (result.Error != null)
 	{

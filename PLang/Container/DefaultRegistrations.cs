@@ -18,7 +18,7 @@ namespace PLang.Container
 	public static class DefaultRegistrations
 	{
 
-
+		/*
 		public static void RegisterErrorHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
 		{
 			container.Register<IErrorHandlerFactory>(factory =>
@@ -51,6 +51,7 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
+		*/
 		/*
 
 		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputSink? instance = null, bool setToContext = false)

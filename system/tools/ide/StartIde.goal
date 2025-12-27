@@ -1,0 +1,27 @@
+StartIde
+- listen to stdin, call ParseMessage
+- write out "Plang IDE started"
+
+ParseMessage
+- if %message.type% == "call" then
+    - call goal %message.goalToCall.Name% %message.goalToCall.Parameters%
+
+Diagnostics
+- read llm/diagnosticsSystem.txt, write to %system%
+- [llm] system: %system%
+        user:  <plang_code>%request.stepText%<plang_code>
+                <method_mapping>%request.action%<method_mapping>
+                <error_message>%request.error%<error_message>
+        format: "md"
+        write to %response%
+- write out %response%
+
+RunTest
+- load plang step from %goalPath%, %stepPrFileName%, write to %step%
+- [plang] run step %step%, %parameters%, just this step, write to %result%
+
+
+
+CreateStepTest
+- run apps/Tests/CreateStepTest, goalPath=%request.goalPath%, stepPrFileName=%request.stepPrFileName%, output="html"
+

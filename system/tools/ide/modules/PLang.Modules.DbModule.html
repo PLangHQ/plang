@@ -1,0 +1,62 @@
+
+<div>
+    {{ 
+        sqlObj = instruction.Function | goalToCall "GetSqlObject"
+    }}
+    {{ if instruction.Function }}
+
+    {{ if instruction.Function.Parameters && instruction.Function.Parameters.size > 0 }}
+    
+    <h4>Sql</h4>
+   <code class="language-sql">{{ sqlObj.sql }}</code>
+
+   
+    {{ if sqlObj.parameters }}
+   <h4>Parameters</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for parameter in sqlObj.parameters }}
+            <tr>
+                <td>{{ parameter.ParameterName }}</td>
+                <td>{{ parameter.VariableNameOrValue }}</td>
+                <td>{{ parameter.TypeFullName }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    {{ end }}
+    {{ end }}
+
+
+    {{ if instruction.Function.Name == "Select" && sqlObj.returnValues && sqlObj.returnValues.size > 0 }}
+    <h4>Example usage</h4>   
+    You can use {{ sqlObj.returnValues[0].VariableName }} in the following way
+    <br />
+        <code>
+            - write out {{ sqlObj.returnValues[0].VariableName }}
+        </code>
+        <br> or loop through {{ sqlObj.returnValues[0].VariableName }}<br>
+        <code>
+            
+            - go through  {{ sqlObj.returnValues[0].VariableName }} call ProcessItem
+        </code>
+    {{ end }}
+    {{ if instruction.Function.Name == "SelectOneRow" && sqlObj.returnValues && sqlObj.returnValues.size > 0 }}
+    <h4>Example usage</h4>    
+    You can write out {{ sqlObj.returnValues.VariableName }} to the user in the following way
+    <br /><br />
+        <code>
+            - write out {{ sqlObj.returnValues.VariableName }}
+        </code>
+        
+    {{ end }}
+
+    {{ end }}
+</div>

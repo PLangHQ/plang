@@ -1,0 +1,7 @@
+DoStuff
+- return %data%
+
+GetSqlObject
+- filter %data.Parameters% where "Name"="sql", extract "Value" property, get first item in list, write to %sql%
+- filter %data.Parameters% where "Name"="sqlParameters", extract "Value" property, write to %parameters%
+- return %sql%, %parameters%, Name="%data.Name%", ReturnValues=%data.ReturnValues%

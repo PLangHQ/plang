@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Execution Path</title>
+    <script src="https://unpkg.com/d3@7"></script>
+    <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+        }
+
+        svg {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .node rect {
+            stroke: #333;
+            fill: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .node text {
+            font: 14px sans-serif;
+        }
+        #offline, #starting {
+            margin:5px auto;
+            width:50%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="offline">Debugger is offline. View the execution path by running the <a onclick="run();">debugger</a></div>
+    <div id="starting">Debugger is starting...</div>
+    <div id="disableExecution"><input name="enableExecutionPath" type="checkbox"> Enable Execution Path Viewer
+    <svg id="svg-canvas">
+        <g />
+    </svg>
+</body>
+
+</html>
+
+
+<script>
+    const stepStatusStyles = {
+        'waiting_to_executed': 'background-color: #fff;', // Gray
+        'executing': 'background-color: #ffeb3b; animation: loading 1s infinite;',
+        'executed': 'background-color: #4caf50;', // Green
+        'error': 'background-color: #f44336;' // Red
+    };
+
+    const g = new dagreD3.graphlib.Graph().setGraph({ rankdir: 'TB' });
+    const render = new dagreD3.render();
+    const svg = d3.select("svg");
+    const inner = svg.select("g");
+    let repositionTimeout = null;
+    svg.call(d3.zoom().on("zoom", (event) => {
+        inner.attr("transform", event.transform);
+    })).call(d3.zoom().transform, d3.zoomIdentity.scale(0.75));
+    let variables = {};
+    // Loading animation for executing steps
+    const styleSheet = document.styleSheets[0];
+    styleSheet.insertRule(`
+    @keyframes loading {
+        0% { background-color: #ffeb3b; }
+        50% { background-color: #ff9800; }
+        100% { background-color: #ffeb3b; }
+`, styleSheet.cssRules.length);
+
+    function debuggerStarting() {
+        document.getElementById('offline').style.display = 'none';
+        document.getElementById('starting').style.display = 'block';
+    }
+
+    function debuggerOffline() {
+        document.getElementById('offline').style.display = 'block';
+        document.getElementById('starting').style.display = 'none';
+    }
+    // Update the graph (called on initial load and later updates)
+    function updateGraph(boxes) {
+        document.getElementById('offline').style.display = 'none';
+        document.getElementById('starting').style.display = 'none';
+        g.nodes().forEach(v => g.removeNode(v));
+        g.edges().forEach(e => g.removeEdge(e.v, e.w));
+        
+        boxes.forEach((box, idx) => {
+            let html = `<div style='padding:5px;min-width:400px;'>
+                        <strong>${box.name}</strong>
+                        <ul style='margin:4px 0;padding-left:15px'>`;
+
+            html += box.steps.map(step => {
+                const truncatedName = step.name.length > 40 ? step.name.substring(0, 40) + '...' : step.name;
+                const statusStyle = stepStatusStyles[step.status] || '';
+                const extraInfo = step.extraInfo;
+                let varStr = '';
+                if (step.variables && step.variables.length > 0) {
+                    varStr = ' - ';
+                    for (let i = 0; i < step.variables.length; i++) {
+                        let variable = step.variables[i];
+                        variables[variable.Key] = variable.Value;
+                        varStr += `<span onmouseover="showKey('${box.hash}', '${variable.Key}');">${variable.Key}`;
+                        if (variable.Value && variable.Value.toString().indexOf('[object') == -1) {
+                            if (variable.Value.toString().length > 10) {
+                                varStr += `(${variable.Value.toString().substring(0, 10)})`
+                            } else {
+                                varStr += `(${variable.Value})`
+                            }
+                        }
+                        varStr += '</span>'
+
+                    }
+                }
+                return `<li 
+                        style='${statusStyle} cursor: pointer;padding:4px; color: #000' 
+                        title='${extraInfo}'">                         
+                        ${step.status === 'executed' ? '✔️ ' : step.status === 'error' ? '❌ ' : step.status === 'executing' ? '➡️ ' : '🟡 '}
+                    ${truncatedName}${varStr}</li>`;
+            }).join('');
+
+            html += `</ul>
+                <div id="${box.hash}"></div>
+            </div>`;
+
+            g.setNode('node' + idx, {
+                labelType: "html",
+                label: html,
+                padding: 10,
+                rx: 5,
+                ry: 5
+            });
+
+            if (idx > 0) {
+                g.setEdge('node' + (idx - 1), 'node' + idx, {
+                    arrowhead: "vee"
+                });
+            }
+        });
+console.log('g and inner', g, inner);
+        render(inner, g);
+        if (repositionTimeout != null) {
+            clearTimeout(repositionTimeout);
+        }
+        repositionTimeout = setTimeout(() => {
+            const latestNodeId = 'node' + (boxes.length - 1); // last node ID
+            const latestNode = g.node(latestNodeId);
+
+            if (latestNode) {
+                const x = latestNode.x;
+                const y = latestNode.y;
+
+                const svgElement = d3.select("svg");
+                const gElement = svgElement.select("g");
+
+                const svgWidth = parseInt(svgElement.style("width"));
+                const svgHeight = parseInt(svgElement.style("height"));
+
+                const scale = 0.75; // or current zoom scale if you want dynamic
+                const translateX = (svgWidth / 2) - (x * scale);
+                const translateY = (svgHeight / 4) - (y * scale);
+
+                svgElement.transition().duration(500).call(
+                    d3.zoom().transform,
+                    d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+                );
+            }
+        }, 500);
+    }
+
+    function showKey(goalHash, key) {
+        var element = document.getElementById(goalHash);
+        
+        if (!element) return;
+        element.innerText = JSON.stringify(variables);
+    }
+
+    window.addEventListener('message', event => {
+        const message = event.data;
+        if (message.type === 'updateBoxes') {
+            updateGraph(message.boxes);
+        }
+        if (message.type === 'debuggerOffline') {
+            debuggerOffline();
+        }
+        if (message.type === 'debuggerStarting') {
+            debuggerStarting();
+        }
+    });
+
+    function run() {
+        
+        vscode.postMessage({
+            command: 'run'
+        });
+    }
+</script>

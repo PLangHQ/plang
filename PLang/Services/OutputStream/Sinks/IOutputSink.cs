@@ -11,4 +11,5 @@ public interface IOutputSink
 	Task<IError?> SendAsync(OutMessage message, CancellationToken ct = default);
 
 	Task<(object? result, IError? error)> AskAsync(AskMessage message, CancellationToken ct = default);
+
 }

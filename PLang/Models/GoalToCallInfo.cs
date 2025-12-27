@@ -163,6 +163,19 @@ namespace PLang.Models
 			return false;
 		}
 		public override int GetHashCode() => Name?.GetHashCode() ?? 0;
+
+
+		public GoalToCallInfo Clone()
+		{
+			var clone = new GoalToCallInfo(this.name, this.parameters?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
+			{
+				Path = this.Path,
+				IsAsync = this.IsAsync,
+				WaitBeforeExecutingInMs = this.WaitBeforeExecutingInMs,
+				AfterExecution = this.AfterExecution?.Clone()
+			};
+			return clone;
+		}
 	}
 	/*
 	public class GoalToCall

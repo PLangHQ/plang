@@ -13,7 +13,7 @@ namespace PLangTests.Modules.FileModule
 		public void Init()
 		{
 			base.Initialize();
-			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler, errorSystemHandlerFactory);
+			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler);
 			p.Init(container, null, null, null, null);
 		}
 

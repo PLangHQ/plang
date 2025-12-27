@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:14:20.1066591+00:00",
       "WaitForExecution": true,
@@ -31,13 +31,13 @@
       },
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 12,
+      "LineNumber": 14,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "890926f5d4435812916240359c536f493d79b77217f782cacc92f8e3c88bb446",
+      "Hash": "b9e7ae119d9da01f82d167c56d7284d26bcb39d45774453d716b3e176fd5dd6a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "The user wants to invoke or execute a specific goal named 'LoadGoal' and cache its result for 10 minutes to improve performance or avoid repeated executions."
+      "UserIntent": null
     },
     {
       "Text": "if %!user.goal.BeforeEvents.count% > 0 call RunEvents \"!events\"=%!user.goal.BeforeEvents%",
@@ -51,7 +51,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "0001-01-01T00:00:00",
       "WaitForExecution": true,
@@ -62,13 +62,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 13,
+      "LineNumber": 15,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": null,
+      "Hash": "097a8c0a1e3bc763730b8b93b6875ab71a3610125958cf6699d2e144a7c4c745",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if there are any before events defined for the current user goal and if so, call the RunEvents goal passing those events as a parameter"
+      "UserIntent": null
     },
     {
       "Text": "foreach %!user.goal.steps% call RunStep item=%!user.step%",
@@ -82,7 +82,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:14:39.6172798+00:00",
       "WaitForExecution": true,
@@ -93,13 +93,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 14,
+      "LineNumber": 16,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7a30d3e0660106f928ad44d45645fe34e35799f61e1c9df735c5801fb8f5f36f",
+      "Hash": "e4b803f8f2f6d9ded2f69905a417ceb82b781cebd89c32c8a2dfc29c3499dd9e",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Iterate over each step in the user's goal steps and execute a sub-goal or step called RunStep for each item"
+      "UserIntent": null
     },
     {
       "Text": "if %!user.goal.AfterEvents.count% > 0 call RunEvents \"!events\"=%!user.goal.AfterEvents%",
@@ -113,7 +113,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:14:50.4193132+00:00",
       "WaitForExecution": true,
@@ -124,13 +124,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 3,
-      "LineNumber": 15,
+      "LineNumber": 17,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9bd776ad11566191e17588a64712ebfbd673a10a0de8a1f9b9d8be0b37772a73",
+      "Hash": "82ca27815239216daa97d845ce9cffe255de7f9e40bf6fc220263c3e31661317",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if there are any AfterEvents in the current user goal and if so, call the RunEvents goal passing the events as a parameter"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -148,7 +148,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f79bc53739d4655062fdfdafb1d800b93070d6a389152323c3b758effe48509a",
+  "Hash": "d4620c24961a96fbaf2593adfb5cc7cf112bd647072078271f8b811cc7ea61d0",
   "IncomingVariablesRequired": {
     "!user.goal.BeforeEvents": "A list of events to be executed before the main steps of the goal.",
     "!user.goal.steps": "A list of steps that define the actions to be taken in the goal.",

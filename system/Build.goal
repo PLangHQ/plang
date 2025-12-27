@@ -31,7 +31,7 @@ AnalyzeGoal
     scheme: %goalScheme%
     write to %llmGoal%
 - set %goal.llm% = %llmGoal!llm%
-/- write out "llmGoal: %llmGoal%"
+- write out "scheme: %goalScheme%\nllmGoal: %llmGoal%"
 / check if name, description is empty, if steps match to goal
 - call goal ValidateLlmGoal
     on error call FixGoal retry 3 times

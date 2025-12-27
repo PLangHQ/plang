@@ -64,7 +64,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -144,7 +144,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 

@@ -116,6 +116,29 @@ public class CallStack
 			goal = goal.ParentGoal;
 		}
 	}
+	public CallStack Clone()
+	{
+		var clone = new CallStack();
+
+		var framesList = _frames.ToList();
+		framesList.Reverse();
+
+		foreach (var frame in framesList)
+		{
+			clone._frames.Push(new CallStackFrame(
+				frame.Goal,
+				frame.EventScope,
+				frame.EventType
+			)
+			{
+				CurrentStep = frame.CurrentStep,
+				StepIndex = frame.StepIndex,
+				Phase = frame.Phase
+			});
+		}
+
+		return clone;
+	}
 }
 
 public class CallStackFrame

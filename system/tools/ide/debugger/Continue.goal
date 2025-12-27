@@ -1,0 +1,4 @@
+Continue
+/ Resume execution
+- if %debugActive% is not true, return
+- write out { "command": "continue" }, channel: 'debug'

@@ -37,7 +37,6 @@ namespace PLangTests.Modules.PythonModule
 			string requirements = File.ReadAllText(Path.Join(Environment.CurrentDirectory, "requirements.txt"));
 			fileSystem.AddFile("main.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 			fileSystem.AddFile("requirements.txt", new System.IO.Abstractions.TestingHelpers.MockFileData(requirements));
-			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
 
 			
 			var p = new Program(fileSystem, logger, settings, signingService, terminalProgram);

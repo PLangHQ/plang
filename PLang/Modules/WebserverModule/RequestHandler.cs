@@ -396,7 +396,7 @@ namespace PLang.Modules.WebserverModule
 			SignedMessage? signedMessage = context.SignedMessage;
 			if (signedMessage == null) return null;
 
-			var outputStream = context.UserSink as HttpSink;
+			var outputStream = context.Output.GetActor("user").GetChannel().Sink as HttpSink;
 			if (outputStream == null) return new Error("OutputStream is not HttpOutputStream");
 
 			LiveConnection? liveResponse = null;
@@ -565,7 +565,7 @@ namespace PLang.Modules.WebserverModule
 
 		string[] supportedHeaders = ["p-target", "p-actions"];
 
-		private void ParseHeaders(PLangContext context, IOutputSink outputStream)
+		private void ParseHeaders(PLangContext context)
 		{
 			var httpContext = context.HttpContext;
 			var headers = httpContext.Request.Headers;
@@ -610,7 +610,7 @@ namespace PLang.Modules.WebserverModule
 
 			ObjectValue objectValue;
 			logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
-			ParseHeaders(context, context.UserSink);
+			ParseHeaders(context);
 			logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
 			var properties = GetRequestProperties(httpContext);
 			logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");

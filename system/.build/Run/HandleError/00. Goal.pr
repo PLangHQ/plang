@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-11T10:31:19.4075869+00:00",
       "WaitForExecution": true,
@@ -43,13 +43,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 48,
+      "LineNumber": 50,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9280dfdae78bb956fea0039e07ffa97ca9460277989689b7963fbc85384058e8",
+      "Hash": "8dc2a8ccb88c69a08bb4ca6ef0ecfb1e56669f29885a2ef9f6f0fda825257e61",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if the error status code matches a handler's status code and if so, call the corresponding goal specified by the handler"
+      "UserIntent": null
     },
     {
       "Text": "if %!error.Key% == %handler.Key% then call goal %handler.GoalToCall%",
@@ -63,7 +63,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-11T10:31:30.491478+00:00",
       "WaitForExecution": true,
@@ -74,13 +74,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 49,
+      "LineNumber": 51,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b5234308bc529e167f98fe36febbc7a400a8ac337eefcd0f200b6f9101a48c7e",
+      "Hash": "f67d9b14fe8fb8aff6bdfd357b793ae75599f2981e191581a39db0d3497022a9",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if the error key matches the handler key and if so, call the corresponding handler goal"
+      "UserIntent": null
     },
     {
       "Text": "if %!error.Message% contains %handler.Message% then call goal %handler.GoalToCall%",
@@ -94,7 +94,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-11T10:31:44.0398387+00:00",
       "WaitForExecution": true,
@@ -122,13 +122,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 50,
+      "LineNumber": 52,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "6e98ef4701e0745c5f115c04b72ab19ad4802c9e38e22f1617f38f5e87963000",
+      "Hash": "c922554236c1af22cabd3880f266b159e81fdbf907181f6eb0aa395c188b0a1c",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if an error message contains a specific message and conditionally call a goal based on that check"
+      "UserIntent": null
     },
     {
       "Text": "if %handler.Key% == \"*\" then call goal %handler.GoalToCall%",
@@ -142,7 +142,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-11T10:31:57.1248437+00:00",
       "WaitForExecution": true,
@@ -170,13 +170,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 3,
-      "LineNumber": 51,
+      "LineNumber": 53,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b8e53b56aa46246342a4bb75d6dbc0d131fc4d446745fc698dd04db8c7c0ffdd",
+      "Hash": "2be14f35034ef67e373fe9f23ea03ce8bed4f31762a9f1cd867f374cdf217c5e",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Conditionally call a goal based on the value of a variable"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -194,7 +194,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a37be7904caa21e84af40a82cd12fa09238c39222cf9cfa3970ec04d33687589",
+  "Hash": "5989383c001169d60ec62f3c7bf8ba807c830a7275553df93a642357d364e88e",
   "IncomingVariablesRequired": {
     "%error.StatusCode%": "The status code of the error that needs to be checked against the handler's status code.",
     "%error.Key%": "The key associated with the error that needs to be compared with the handler's key.",

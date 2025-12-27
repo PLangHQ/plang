@@ -1,0 +1,4 @@
+StepOver
+/ Step over - execute current step without stepping into called goals
+- if %debugActive% is false then return
+- write out { "command": "stepOver" }, channel: 'debug'

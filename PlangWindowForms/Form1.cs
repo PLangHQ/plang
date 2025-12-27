@@ -44,7 +44,6 @@ namespace PlangWindowForms
 		ServiceContainer container;
 		IEngine engine;
 		IPLangFileSystem fileSystem;
-		IOutputStreamFactory outputStreamFactory;
 		IPLangContextAccessor contextAccessor;
 		PLangContext context;
 		Executor pLang;
@@ -68,8 +67,7 @@ namespace PlangWindowForms
 				new AskUserDialog(), new ErrorDialog(), this);
 
 			fileSystem = container.GetInstance<IPLangFileSystem>();
-			outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
-			pLang = new Executor(container);
+			pLang = new Executor(container, new());
 
 			//Engine.InitPerRequest(container);
 

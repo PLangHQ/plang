@@ -3,6 +3,7 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.Collections.Concurrent;
@@ -60,24 +61,18 @@ namespace PLang.Interfaces
 		public Callback? Callback { get; set; }
 		public GoalStep? CallingStep { get; set; }
 		public List<MockData> Mocks { get; init; }
-		public ConcurrentDictionary<string, object?> Items { get; init; }
+		public ConcurrentDictionary<string, object?> Items { get; set; }
 		public ConcurrentDictionary<string, object?> SharedItems { get; set; }
 
 		public UiOutputProperties UiOutputProperties { get; set; }
 		public IEngine Engine { get; }
-		public IOutputSink UserSink { get; set; }
-		public IOutputSink SystemSink { get; set; }
 		public CallStack CallStack {get;set;}
 		public ExecutionMode ExecutionMode { get; set; }
 		public IPLangFileSystem FileSystem { get; internal set; }
 		public DataSource DataSource { get; internal set; }
 		public DataSource SystemDataSource { get; internal set; }
 
-		public IOutputSink GetSink(string actor) {
-			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
-
-			return actor.Equals("user", StringComparison.OrdinalIgnoreCase) ? UserSink : SystemSink;
-		}
+		public Output Output { get; set; }
 
 		public PLangContext(MemoryStack memoryStack, IEngine engine, ExecutionMode executionMode)
 		{
@@ -85,8 +80,6 @@ namespace PLang.Interfaces
 			MemoryStack = memoryStack;
 			Engine = engine;
 			CallStack = new();
-			SystemSink = engine.SystemSink;
-			UserSink = engine.UserSink;
 			Items = new();
 			Mocks = new();
 			SharedItems = new();
@@ -242,9 +235,7 @@ namespace PLang.Interfaces
 			context.Callback = this.Callback;
 			context.DebugMode = this.DebugMode;
 			context.ShowErrorDetails = this.ShowErrorDetails;
-			context.SystemSink = this.SystemSink;
-			context.UserSink = this.UserSink;
-
+			context.Output = this.Output;
 
 			return context;
 		}

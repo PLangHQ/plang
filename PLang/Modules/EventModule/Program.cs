@@ -20,7 +20,7 @@ public class Program : BaseProgram
 	public async Task<IError?> BindEvent(EventBinding eventBinding)
 	{
 
-		//engine.GetEventRuntime().AddEvent(eventBinding);
+		engine.GetEventRuntime().AddEvent(eventBinding);
 		return null;
 	}
 

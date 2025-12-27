@@ -1,0 +1,107 @@
+{
+  "Text": "convert md %fileContent% to html, write to %content%",
+  "ModuleType": "PLang.Modules.ConvertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to convert markdown content stored in %fileContent% to HTML and store the result in %content%. The ConvertMdToHtml function directly supports converting markdown string to HTML string and returns the HTML string, which matches the user's intent perfectly.",
+    "Name": "ConvertMdToHtml",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "content",
+        "Value": "%fileContent%"
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "useAdvancedExtension",
+        "Value": true
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[System.String]",
+        "Name": "markdownPipelineExtensions",
+        "Value": null
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.String",
+        "VariableName": "%content%",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "content": {
+        "Name": "content",
+        "FullTypeName": "System.String"
+      },
+      "useAdvancedExtension": {
+        "Name": "useAdvancedExtension",
+        "FullTypeName": "System.Boolean"
+      },
+      "markdownPipelineExtensions": {
+        "Name": "markdownPipelineExtensions",
+        "FullTypeName": "System.Collections.Generic.List`1[System.String]"
+      }
+    },
+    "ReturnValues": {
+      "%content%": {
+        "Name": "%content%",
+        "FullTypeName": "System.String"
+      }
+    }
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert markdown content stored in a variable to HTML format and store the result in another variable\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.ConvertModule.Program\",\"Description\":\"Convert object from one to another. html => md, md => html, string => keyvalue list\",\"Methods\":[{\"Description\":\"converts html to pdf, returns byte array of file if no path is defined\",\"MethodName\":\"ConvertHtmlToPdf\",\"Parameters\":[{\"Type\":\"PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction\",\"Name\":\"options\",\"Description\":\"see PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction information in SupportingObjects)\\r\\nPLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction options\"}],\"Examples\":[],\"MethodSignature\":\"ConvertHtmlToPdf(// see PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction information in SupportingObjects)\\r\\nPLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction options) : void\"},{\"MethodName\":\"ConvertMdToHtml\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"useAdvancedExtension\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"markdownPipelineExtensions\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.String]? markdownPipelineExtensions\"}],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"ConvertMdToHtml(System.String content, System.Boolean? useAdvancedExtension = True, System.Collections.Generic.List`1[System.String]? markdownPipelineExtensions) : System.String\"},{\"Description\":\"unknownTags=(Bypass|Drop|PassThrough|Raise\",\"MethodName\":\"ConvertToMd\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"unknownTags\",\"DefaultValue\":\"Bypass\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"githubFlavored\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"removeComments\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"smartHrefHandling\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"cleanupUnnecessarySpaces\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"suppressDivNewlines\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"ConvertToMd(System.Object content, System.String? unknownTags = Bypass, System.Boolean? githubFlavored = True, System.Boolean? removeComments = True, System.Boolean? smartHrefHandling = True, System.Boolean? cleanupUnnecessarySpaces = True, System.Boolean? suppressDivNewlines = True) : System.String\"},{\"MethodName\":\"ConvertToKeyValueList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"variable\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"newLineSeperator\",\"DefaultValue\":\"\\r\\n\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"columnSeperator\",\"DefaultValue\":\"\\t\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"trimColumns\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"headers\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.String]? headers\"}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"ConvertToKeyValueList(System.Object variable, System.String? newLineSeperator = \\r\\n, System.String? columnSeperator = \\t, System.Boolean? trimColumns = True, System.Collections.Generic.List`1[System.String]? headers) : System.Object\"}],\"SupportingObjects\":[{\"Type\":\"Microsoft.Playwright.Margin\",\"Name\":\"Margin\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Top\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Right\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Bottom\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Left\",\"IsRequired\":false}],\"IsRequired\":false,\"ParameterSignature\":\"Microsoft.Playwright.Margin(System.String? Top\\r\\n, System.String? Right\\r\\n, System.String? Bottom\\r\\n, System.String? Left\\r\\n)\\nUsed in methods: ConvertHtmlToPdf\"},{\"Type\":\"Microsoft.Playwright.PagePdfOptions\",\"Name\":\"Options\",\"TypeProperties\":[{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"DisplayHeaderFooter\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"FooterTemplate\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Format\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"HeaderTemplate\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Height\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Landscape\",\"IsRequired\":false},{\"Type\":\"Microsoft.Playwright.Margin\",\"Name\":\"Margin\",\"Description\":\"see Microsoft.Playwright.Margin information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see Microsoft.Playwright.Margin information in SupportingObjects)\\r\\nMicrosoft.Playwright.Margin? Margin\"},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Outline\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"PageRanges\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"PreferCSSPageSize\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"PrintBackground\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Single]\",\"Name\":\"Scale\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Tagged\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Width\",\"IsRequired\":false}],\"IsRequired\":true,\"ParameterSignature\":\"Microsoft.Playwright.PagePdfOptions(System.Nullable`1[System.Boolean]? DisplayHeaderFooter\\r\\n, System.String? FooterTemplate\\r\\n, System.String? Format\\r\\n, System.String? HeaderTemplate\\r\\n, System.String? Height\\r\\n, System.Nullable`1[System.Boolean]? Landscape\\r\\n, // see Microsoft.Playwright.Margin information in SupportingObjects)\\r\\nMicrosoft.Playwright.Margin? Margin\\r\\n, System.Nullable`1[System.Boolean]? Outline\\r\\n, System.String? PageRanges\\r\\n, System.String? Path\\r\\n, System.Nullable`1[System.Boolean]? PreferCSSPageSize\\r\\n, System.Nullable`1[System.Boolean]? PrintBackground\\r\\n, System.Nullable`1[System.Single]? Scale\\r\\n, System.Nullable`1[System.Boolean]? Tagged\\r\\n, System.String? Width\\r\\n)\\nUsed in methods: ConvertHtmlToPdf\"},{\"Type\":\"PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction\",\"Name\":\"options\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Html\",\"IsRequired\":true},{\"Type\":\"Microsoft.Playwright.PagePdfOptions\",\"Name\":\"Options\",\"Description\":\"see Microsoft.Playwright.PagePdfOptions information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see Microsoft.Playwright.PagePdfOptions information in SupportingObjects)\\r\\nMicrosoft.Playwright.PagePdfOptions Options\"}],\"IsRequired\":false,\"ParameterSignature\":\"PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction(System.String Html\\r\\n, // see Microsoft.Playwright.PagePdfOptions information in SupportingObjects)\\r\\nMicrosoft.Playwright.PagePdfOptions Options\\r\\n)\\nUsed in methods: ConvertHtmlToPdf\"}],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nfileContent (type:object), content (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "convert md %fileContent% to html, write to %content%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "d0f846c83eea626f7ac7118abd89f2c9a8fafe76026c4c023dfe8ac6eee24ca2",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to convert markdown content stored in %fileContent% to HTML and store the result in %content%. The ConvertMdToHtml function directly supports converting markdown string to HTML string and returns the HTML string, which matches the user's intent perfectly.\",\n  \"Name\": \"ConvertMdToHtml\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"content\",\n      \"Value\": \"%fileContent%\"\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"useAdvancedExtension\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.String]\",\n      \"Name\": \"markdownPipelineExtensions\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.String\",\n      \"VariableName\": \"%content%\",\n      \"Value\": null\n    }\n  ]\n}"
+    }
+  ]
+}

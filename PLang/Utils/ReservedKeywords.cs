@@ -9,7 +9,6 @@
 		public static readonly string ParametersAtAppStart = "!ArgsAtAppStart";
 		public static readonly string Debug = "!Debug";
 		public static readonly string CSharpDebug = "!CSharpDebug";
-		public static readonly string Environment = "!Environment";
 		
 		//todo: should remove and use Environment
 		public static string Test = "!Test";

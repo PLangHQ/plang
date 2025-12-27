@@ -1,0 +1,162 @@
+
+
+<h3>Event Information</h3>
+<p><em>{{ step.LineNumber }}:</em> {{ step.Text }}</p>
+<div class="uk-flex uk-margin">
+    <div>
+        <button class="uk-button uk-button-default" onclick="build();">🏗️ Build <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="rebuildStep(false);">Rebuild step</a></li>
+                <li><a href="#" onclick="rebuildStep(true);">Rebuild step in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <button class="uk-button uk-button-default" onclick="run(false, false);">▶️ Run <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="run(true, false)">Run file {{ goal.GoalName }}</a></li>
+                {{ if step && step.Execute == 'True' }}
+                <li><a href="#">Run from {{ step.Name }}</a></li>
+                {{ end }}
+                <li><a href="#" onclick="run(true, true)">Run in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    function rebuildStep(debug) {
+        path = '{{ step.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'rebuildStep',
+            data: {path, debug}
+        });
+    }
+</script>
+<strong>Id:</strong> {{ step.EventBinding.Id }}
+<h4>Event</h4>
+<table>
+    <tr>
+        <th>EventType</th>
+        <td>{{ step.EventBinding.EventType }}</td>
+    </tr>
+    <tr>
+        <th>EventScope</th>
+        <td>{{ step.EventBinding.EventScope }}</td>
+    </tr>
+    <tr>
+        <th>GoalToBindTo</th>
+        <td>{{ step.EventBinding.GoalToBindTo.Name }}</td>
+    </tr>
+    <tr>
+        <th>GoalToCall</th>
+        <td>{{ step.EventBinding.GoalToCall.Name }}</td>
+    </tr>
+    <tr>
+        <th>GoalToCallParameters</th>
+        <td>
+            {{ step.EventBinding.GoalToCall.Parameters | json true }}
+        </td>
+    </tr>
+    <tr>
+        <th>IncludePrivate</th>
+        <td>{{ step.EventBinding.IncludePrivate }}</td>
+    </tr>
+    <tr>
+        <th>StepNumber</th>
+        <td>{{ step.EventBinding.StepNumber }}</td>
+    </tr>
+    <tr>
+        <th>StepText</th>
+        <td>{{ step.EventBinding.StepText }}</td>
+    </tr>
+    <tr>
+        <th>WaitForExecution</th>
+        <td>{{ step.EventBinding.WaitForExecution }}</td>
+    </tr>
+    <tr>
+        <th>RunOnlyOnStartParameter</th>
+        <td>{{ step.EventBinding.RunOnlyOnStartParameter }}</td>
+    </tr>
+    <tr>
+        <th>OnErrorContinueNextStep</th>
+        <td>{{ step.EventBinding.OnErrorContinueNextStep }}</td>
+    </tr>
+    <tr>
+        <th>ErrorKey</th>
+        <td>{{ step.EventBinding.ErrorKey }}</td>
+    </tr>
+    <tr>
+        <th>ErrorMessage</th>
+        <td>{{ step.EventBinding.ErrorMessage }}</td>
+    </tr>
+    <tr>
+        <th>StatusCode</th>
+        <td>{{ step.EventBinding.StatusCode }}</td>
+    </tr>
+    <tr>
+        <th>ExceptionType</th>
+        <td>{{ step.EventBinding.ExceptionType }}</td>
+    </tr>
+    <tr>
+        <th>IsLocal</th>
+        <td>{{ step.EventBinding.IsLocal }}</td>
+    </tr>
+    <tr>
+        <th>IncludeOsGoals</th>
+        <td>{{ step.EventBinding.IncludeOsGoals }}</td>
+    </tr>
+</table>
+
+
+<script>
+
+    function openFile(path) {
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+
+    function openStepPrFile() {
+        let path = '{{ goal.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function build() {
+        vscode.postMessage({
+            command: 'build'
+        });
+    }
+
+
+    function run(onlyFile, csdebug) {
+        vscode.postMessage({
+            command: 'run',
+            data: { onlyFile: onlyFile, csdebug: csdebug }
+        });
+    }
+</script>
+<hr>
+
+
+<ul uk-accordion class=" uk-overflow-auto uk-width-1-1">
+    <li>
+        <a class="uk-accordion-title" href="#">Step .pr file</a>
+        <div class="uk-accordion-content uk-overflow-auto uk-width-1-1">
+            <a href="#" onclick="openStepPrFile();">Open in editor</a>
+            <pre><code class="language-json">{{ step | json true | html.escape }}</code></pre>
+        </div>
+    </li>
+   
+</ul>
+

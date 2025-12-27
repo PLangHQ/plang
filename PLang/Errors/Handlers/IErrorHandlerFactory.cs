@@ -1,15 +1,16 @@
 ﻿using LightInject;
 using PLang.Utils;
 
-namespace PLang.Errors.Handlers
-{
-	public interface IErrorHandlerFactory
+namespace PLang.Errors.Handlers;
+
+/*
+public interface IErrorHandlerFactory
     {
-		IErrorHandler CreateHandler();
+	IErrorHandler CreateHandler();
     }
     public interface IErrorSystemHandlerFactory
-	{
-		IErrorHandler CreateHandler();
+{
+	IErrorHandler CreateHandler();
     }
 
     public class ErrorHandlerFactory : BaseFactory, IErrorHandlerFactory
@@ -26,17 +27,16 @@ namespace PLang.Errors.Handlers
         }
     }
 
-	public class ErrorSystemHandlerFactory : BaseFactory, IErrorSystemHandlerFactory
+public class ErrorSystemHandlerFactory : BaseFactory, IErrorSystemHandlerFactory
+{
+
+	public ErrorSystemHandlerFactory(ServiceContainer container) : base(container)
 	{
-
-		public ErrorSystemHandlerFactory(ServiceContainer container) : base(container)
-		{
-		}
-
-		public IErrorHandler CreateHandler()
-		{
-			var serviceName = GetServiceName(ReservedKeywords.Inject_ErrorSystemHandler);
-			return container.GetInstance<IErrorHandler>(serviceName);
-		}
 	}
-}
+
+	public IErrorHandler CreateHandler()
+	{
+		var serviceName = GetServiceName(ReservedKeywords.Inject_ErrorSystemHandler);
+		return container.GetInstance<IErrorHandler>(serviceName);
+	}
+}*/

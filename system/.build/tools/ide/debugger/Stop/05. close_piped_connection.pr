@@ -1,0 +1,78 @@
+{
+  "Text": "[commu] close piped %connection%",
+  "ModuleType": "PLang.Modules.CommunicationModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to close an existing pipe connection identified by the variable %connection%. The appropriate function to use is CloseConnection which takes the connection object to close it.",
+    "Name": "CloseConnection",
+    "Parameters": [
+      {
+        "Type": "PLang.Modules.CommunicationModule.PipeConnection",
+        "Name": "connection",
+        "Value": "%connection%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "connection": {
+        "Name": "connection",
+        "FullTypeName": "PLang.Modules.CommunicationModule.PipeConnection"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nClose an existing communication pipe or connection identified by the variable %connection%\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.CommunicationModule.Program\",\"Methods\":[{\"Description\":\"Listen for connection on pipe, register as channel, handle messages\",\"MethodName\":\"ListenForPipeConnection\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"pipeName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"channelName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onMessageGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo onMessageGoal\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onConnectGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnectGoal\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onDisconnectGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onDisconnectGoal\"},{\"Type\":\"System.String\",\"Name\":\"delimiter\",\"DefaultValue\":\"\\n\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"ListenForPipeConnection(System.String pipeName, System.String channelName, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo onMessageGoal, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnectGoal, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onDisconnectGoal, System.String? delimiter = \\n) : void\"},{\"Description\":\"Connect to pipe, register as channel, handle messages\",\"MethodName\":\"ConnectToPipe\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"pipeName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"channelName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onMessageGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo onMessageGoal\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onConnectGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnectGoal\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onDisconnectGoal\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onDisconnectGoal\"},{\"Type\":\"System.String\",\"Name\":\"delimiter\",\"DefaultValue\":\"\\n\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutMs\",\"DefaultValue\":5000,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"serverName\",\"DefaultValue\":\".\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.CommunicationModule.PipeConnection\",\"ReturnValueSignature\":\"PLang.Modules.CommunicationModule.PipeConnection\"},\"Examples\":[],\"MethodSignature\":\"ConnectToPipe(System.String pipeName, System.String channelName, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo onMessageGoal, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnectGoal, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onDisconnectGoal, System.String? delimiter = \\n, System.Int32? timeoutMs = 5000, System.String? serverName = .) : PLang.Modules.CommunicationModule.PipeConnection\"},{\"Description\":\"Close connection\",\"MethodName\":\"CloseConnection\",\"Parameters\":[{\"Type\":\"PLang.Modules.CommunicationModule.PipeConnection\",\"Name\":\"connection\",\"IsRequired\":false,\"ParameterSignature\":\"PLang.Modules.CommunicationModule.PipeConnection? connection\"}],\"Examples\":[],\"MethodSignature\":\"CloseConnection(PLang.Modules.CommunicationModule.PipeConnection? connection) : void\"}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onMessageGoal\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\"},{\"Type\":\"System.Boolean\",\"Name\":\"IsAsync\",\"Description\":\"Doesn't wait for goal response(run and forget, dont wait)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WaitBeforeExecutingInMs\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"AfterExecution\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo()\\nUsed in methods: \"}],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo(System.String Name\\r\\n, System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\\r\\n, // Doesn't wait for goal response(run and forget, dont wait)\\r\\nSystem.Boolean IsAsync\\r\\n, System.Int32 WaitBeforeExecutingInMs\\r\\n, // Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo? AfterExecution\\r\\n)\\nUsed in methods: ListenForPipeConnection, ListenForPipeConnection, ListenForPipeConnection, ConnectToPipe, ConnectToPipe, ConnectToPipe\"}],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nconnection (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "[commu] close piped %connection%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "db2d25031b8827bf603c4eb299d2e430189145d8592905281a12cd47cbb26a5e",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to close an existing pipe connection identified by the variable %connection%. The appropriate function to use is CloseConnection which takes the connection object to close it.\",\n  \"Name\": \"CloseConnection\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Modules.CommunicationModule.PipeConnection\",\n      \"Name\": \"connection\",\n      \"Value\": \"%connection%\"\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

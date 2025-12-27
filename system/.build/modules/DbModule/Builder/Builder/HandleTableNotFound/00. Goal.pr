@@ -26,10 +26,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 59,
+      "LineNumber": 61,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "25a070bbdf0165d2bfeddd76e83623776df01a31cbb4ba3971304914b2549b71",
+      "Hash": "fe563ad458c2b40aeafc4992318f54a0a63a37074b1d07abd75f7567961c25a2",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Builder.goal",
       "UserIntent": null
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "be3aacea4f5603f5621ae25293396da2f4e97dfb8c77d773b97dcdc5dc138551",
+  "Hash": "31beb779934c984267c29f678ee5882965013ef410cbdb2f961e37b1e377dc8a",
   "IncomingVariablesRequired": {
     "%tableRef.table%": "The name of the table that is being referenced and checked for existence.",
     "%targetDs%": "The name of the data source where the table is expected to be found."

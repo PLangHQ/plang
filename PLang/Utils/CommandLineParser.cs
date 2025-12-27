@@ -11,9 +11,9 @@ namespace PLang.Utils;
 public class CommandLineParser
 {
 	public string GoalName { get; private set; } = "Start.goal";
-	public Dictionary<string, object> Parameters { get; private set; } = new();
+	public Dictionary<string, object?> Parameters { get; private set; } = new();
 
-	public static (string goalName, Dictionary<string, object> parameters) Parse(string[] args)
+	public static (string goalName, Dictionary<string, object?> parameters) Parse(string[] args)
 	{
 		var parser = new CommandLineParser();
 		parser.ParseArgs(args);
@@ -87,7 +87,7 @@ public class CommandLineParser
 		foreach (Match match in matches)
 		{
 			bool hasExclaim = match.Groups[1].Success;
-			string key = match.Groups[0].Value;
+			string key = hasExclaim ? "!" + match.Groups[2].Value : match.Groups[2].Value;
 
 			// Determine value
 			string? rawValue = match.Groups[3].Success ? match.Groups[3].Value :
@@ -99,8 +99,8 @@ public class CommandLineParser
 
 			if (rawValue == null)
 			{
-				// No value provided - it's a flag, ! means true
-				value = hasExclaim;
+				// No value provided - it's a flag
+				value = true;
 			}
 			else
 			{

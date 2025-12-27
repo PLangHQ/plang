@@ -1,0 +1,21 @@
+HandleMessage
+/ Handle incoming debug events from the app being debugged
+/ %message% contains the event data
+
+- if %message.event% = 'stopped'
+    - [ui] execute js 'debugger.setVariables' %message.memoryStack%
+    - [ui] execute js 'debugger.setCallStack' %message.callStack%
+    - [ui] execute js 'debugger.stopped' %message.reason%, %message.prPath%
+
+- if %message.event% = 'continued'
+    - [ui] execute js 'debugger.continued'
+
+- if %message.event% = 'terminated'
+    - set %debugActive% = false
+    - [ui] execute js 'debugger.terminated' %message.reason%
+
+- if %message.event% = 'output'
+    - [ui] execute js 'debugger.output' %message.text%, %message.category%
+
+- if %message.event% = 'exception'
+    - [ui] execute js 'debugger.exception' %message.prPath%, %message.error%

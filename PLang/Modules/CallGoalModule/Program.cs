@@ -20,6 +20,7 @@ namespace PLang.Modules.CallGoalModule
 		
 		[Description("Call/Runs a goal. If backward slash(\\) is used by user, change to forward slash(/)")]
 		[Example("call goal Process %name%", @"GoalToCallInfo.Name=Process, GoalToCallInfo.Parameters={""name"":""%name%""}")]
+		[Example("call goal %goalToCall%", @"GoalToCallInfo = %goalToCall%")]
 		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, 
 			bool isolated = false, bool disableSystemGoals = false, bool isEvent = false)

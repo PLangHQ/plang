@@ -64,8 +64,6 @@ namespace PLangTests
 		protected IEncryptionFactory encryptionFactory;
 		protected IOutputSink outputStream;
 		protected IOutputSink outputSystemStream;
-		protected IOutputStreamFactory outputStreamFactory;
-		protected IOutputSystemStreamFactory outputSystemStreamFactory;
 		protected ProgramFactory programFactory;
 		protected IAppCache appCache;
 		protected IPLangIdentityService identityService;
@@ -74,8 +72,6 @@ namespace PLangTests
 		protected IHttpClientFactory httpClientFactory;
 		protected IAskUserHandler askUserHandler;
 		protected IErrorHandler errorHandler;
-		protected IErrorHandlerFactory errorHandlerFactory;
-		protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected IFileAccessHandler fileAccessHandler;
 		protected DependancyHelper dependancyHelper;
@@ -135,7 +131,7 @@ namespace PLangTests
 			container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IErrorSystemHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -172,16 +168,9 @@ namespace PLangTests
 
 			outputStream = Substitute.For<IOutputSink>();
 			container.RegisterInstance(outputStream);
-			outputStreamFactory = Substitute.For<IOutputStreamFactory>();
-			outputStreamFactory.CreateHandler().Returns(outputStream);
-			container.RegisterInstance(outputStreamFactory);
 
 			outputSystemStream = Substitute.For<IOutputSink>();
 			container.RegisterInstance(outputSystemStream);
-			outputSystemStreamFactory = Substitute.For<IOutputSystemStreamFactory>();
-			outputSystemStreamFactory.CreateHandler().Returns(outputStream);
-			container.RegisterInstance(outputStreamFactory);
-
 
 			httpClientFactory = Substitute.For<IHttpClientFactory>();
 			container.RegisterInstance(httpClientFactory);
@@ -210,11 +199,6 @@ namespace PLangTests
 
 			errorHandler = Substitute.For<IErrorHandler>();
 			container.RegisterInstance(errorHandler);
-			errorHandlerFactory = Substitute.For<IErrorHandlerFactory>();
-			container.RegisterInstance(errorHandlerFactory);
-
-			errorSystemHandlerFactory = Substitute.For<IErrorSystemHandlerFactory>();
-			container.RegisterInstance(errorSystemHandlerFactory);
 			db = Substitute.For<IDbConnection>();
 			//container.RegisterInstance(db);
 

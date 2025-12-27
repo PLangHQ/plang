@@ -1,0 +1,41 @@
+<h3>Step Information</h3>
+<div class="uk-flex uk-margin">
+    <div>
+        <button class="uk-button uk-button-default" onclick="build(false);">🏗️ Build <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="build(false);">Build</a></li>
+                <li>
+                    <hr>
+                </li>
+                <li><a href="#" onclick="build(true);">Build with c# debugger</a></li>
+            </ul>
+        </div>
+    </div>
+
+
+</div>
+<script>
+
+    function openFile(path) {
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function build(csdebug) {
+        vscode.postMessage({
+            command: 'build',
+            data: {csdebug : csdebug}
+        });
+    }
+
+    function run(onlyFile, csdebug) {
+        vscode.postMessage({
+            command: 'run',
+            data: { onlyFile: onlyFile, csdebug: csdebug }
+        });
+    }
+</script>

@@ -28,56 +28,21 @@ namespace PLang.Modules.OutputModule
 			this.programFactory = programFactory;
 		}
 
-		[Description("channel=audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
-		public record OutputStreamInfo(string Channel = "user", string Serializer = "default", Dictionary<string, object?>? Options = null);
-
-		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
+		[Description("")]
+		public async Task ConfigureOutput(OutputSettings settings)
 		{
-			throw new NotImplementedException();
-			/*
-			var validate = programFactory.GetProgram<ValidateModule.Program>(goalStep);
-			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
-			if (error != null) return error;
+			var channel = context.Output.GetActor(settings.Actor).GetChannel(settings.Channel);
 
-			error = await validate.IsNotEmpty([goalToCall], "GoalToCall cannot be empty");
-			if (error != null) return error;
+			if (!string.IsNullOrEmpty(settings.ContentType))
+				channel.ContentType = settings.ContentType;
 
-			goal.AddVariable(new GoalToCallInfo(goalToCall, parameters), variableName: "!output_stream_" + channel);
-			
-			return null;*/
-		}
-		/*
-		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
-		public async Task<(object?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202,
-			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}",
-			[HandlesVariable] Dictionary<string, object?>? options = null, string? scheme = null)
-		{
-			var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
-			var param = new Dictionary<string, object?> {
-				{ "type", type }, { "statusCode", statusCode }, { "text", text },
-				{ "developerInstructionForResult", developerInstructionForResult }, {"scheme", scheme } };
-			if (options != null)
-			{
-				string json = "";
-				foreach (var option in options)
-				{
-					json += $"<{option.Key}>\n{JsonConvert.SerializeObject(memoryStack.LoadVariables(option.Value))}\n<{option.Key}>\n";
-				}
-				param.Add("options", json);
-			}
+			if (!string.IsNullOrEmpty(settings.Encoding))
+				channel.Encoding = System.Text.Encoding.GetEncoding(settings.Encoding);
 
-			var goalToCall = new GoalToCallInfo("/modules/OutputModule/AskUserLlm", param);
-
-			return await callGoalModule.RunGoal(goalToCall, isolated: true);
-		}
-		*/
-
-		public enum UserOrSystemEnum
-		{
-			User = 0, System = 1
 		}
 
-
+		[Description("Configure output serialization. ContentType examples: text/plain, application/json, plang/ndjson, text/csv, application/xml")]
+		public record OutputSettings(string Actor = "user", string Channel = "default",	string? ContentType = null,	string? Encoding = null);
 
 
 
@@ -109,7 +74,7 @@ namespace PLang.Modules.OutputModule
 		private async Task<(object? Answer, IError? Error)> AskInternal(AskMessage askMessage, IError? error = null)
 		{
 			List<ObjectValue>? answers = new();
-			IOutputSink outputStream = context.GetSink(askMessage.Actor);
+			IOutputSink outputStream = context.Output.GetActor(askMessage.Actor).GetChannel(askMessage.Channel).Sink;
 
 			if (context.Callback != null)
 			{
@@ -400,13 +365,10 @@ namespace PLang.Modules.OutputModule
 		[Example("write out %name to upper and lower%", "TextMessage.Content=\"%name to upper and lower%\"")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
-
-
 			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
 			textMessage = textMessage with { Path = stepPath };
 
-			var sink = context.GetSink(textMessage.Actor);
-			return await sink.SendAsync(textMessage);
+			return await context.Output.SendAsync(textMessage);
 		}
 
 

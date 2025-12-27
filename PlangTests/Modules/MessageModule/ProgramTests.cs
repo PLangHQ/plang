@@ -31,7 +31,7 @@ namespace PLangTests.Modules.MessageModule
 			nostrClient.Streams.Returns(new NostrClientStreams());
 			nostrClient.Streams.EventStream.Subscribe();
 
-			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, nostrClient, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, nostrClient, signingService, fileSystem);
 			p.Init(container, null, null, null, null);
 		}
 
@@ -64,7 +64,7 @@ namespace PLangTests.Modules.MessageModule
 					nostrKeys = callInfo.Arg<List<NostrKey>>();
 				});
 
-			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, null, signingService, errorHandlerFactory, errorSystemHandlerFactory, fileSystem);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, null, signingService, fileSystem);
 			p.Init(container, null, null, null, null);
 
 

@@ -1,0 +1,3 @@
+HandleStderr
+/ Forward stderr from debugged app to VS Code debug console
+- [ui] execute js 'debugger.output' %output%, 'stderr'

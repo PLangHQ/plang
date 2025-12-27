@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:16:01.5484844+00:00",
       "WaitForExecution": true,
@@ -26,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 26,
+      "LineNumber": 28,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b6ad9f0537a813887f98b65480e1d67ff72bdbfcf49694a515ee74200e7a1939",
+      "Hash": "840455b8c868f85d3efa14efedfea0acc48639a163f0bc6e0cfa9070428a4f9a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Retrieve a cached value using a dynamic key and store the result in a variable"
+      "UserIntent": null
     },
     {
       "Text": "if %result% is not empty then",
@@ -57,10 +57,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 27,
+      "LineNumber": 29,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5ec3f24e076136d7ab61a40ee743cfc51ecfc9e3c237bde2361a1cd498320090",
+      "Hash": "39e6fbd5361d582b5b0b655510db6fcb013e83dbab8b0084d963281d3d766e7f",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
       "UserIntent": null
@@ -88,10 +88,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 28,
+      "LineNumber": 30,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "fff82431ec887dcb78d414ea2c6638969fa20672c6f8787991ab0a506eccc0e8",
+      "Hash": "5c8d244ef1da0e87592e7ee6b5e47f56378331fc0373d4e790703e8fb26bbf8f",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
       "UserIntent": null
@@ -112,7 +112,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c569faa90ea2f88da428def76e6832eb48bce4718825fb6b8d6a03fa83b582df",
+  "Hash": "c2ae1f301ab3b4fb02374426c19316df69494fb8502db2b88fd9af35770261ed",
   "IncomingVariablesRequired": {
     "%!user.step.cachingHandler.key%": "The key used to retrieve the cached value from the caching handler.",
     "%result%": "The variable that stores the result of the caching operation."

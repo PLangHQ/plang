@@ -1,15 +1,10 @@
-﻿using AngleSharp.Io;
-using CsvHelper;
-using LightInject;
-using Microsoft.AspNetCore.Http;
+﻿using LightInject;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
-using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Parsers;
-using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
@@ -17,7 +12,6 @@ using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Messages;
@@ -25,7 +19,6 @@ using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using System.Net.WebSockets;
@@ -33,7 +26,6 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Channels;
 
 namespace PLang.Modules.WebserverModule;
 
@@ -86,7 +78,7 @@ public class Program : BaseProgram, IDisposable
 		var webserverInfo = listeners.FirstOrDefault(p => p.Name == webserverName);
 		if (webserverInfo == null)
 		{
-			var error = await context.SystemSink.SendAsync(new TextMessage($"Webserver named '{webserverName}' does not exist"));
+			var error = await context.Output.SendAsync(new TextMessage($"Webserver named '{webserverName}' does not exist", Actor: "system"));
 			return (webserverInfo, error);
 		}
 
@@ -194,7 +186,7 @@ public class Program : BaseProgram, IDisposable
 
 		//engine.ChildEngines.Add(webserverEngine);
 
-		RequestHandler requestHandler = new RequestHandler(goalStep, logger, fileSystem, container.GetInstance<Modules.IdentityModule.Program>(), prParser);
+		RequestHandler requestHandler = new RequestHandler(goalStep, logger, fileSystem, container.GetInstance<Modules.IdentityModule.Program>(), engine.PrParser);
 
 		if (webserverProperties.OnStart != null)
 		{
@@ -301,8 +293,10 @@ public class Program : BaseProgram, IDisposable
 							context.HttpContext = httpContext;
 
 							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
-							context.UserSink = httpOutputSink;
-							context.SystemSink = engine.SystemSink;
+							requestEngine.Context = context;
+
+							context.Output = Output.CreateForExternalRequest(engine.Context.Output.User, httpOutputSink, requestEngine);
+
 							(poll, identity, error) = await requestHandler.HandleRequestAsync(requestEngine, context, webserverProperties);
 
 							if (error != null && error is not IErrorHandled)
@@ -317,13 +311,12 @@ public class Program : BaseProgram, IDisposable
 
 								if (error is StatelessCallbackError stc)
 								{
-									await context.UserSink.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode, Callback: stc.Callback));
+									await context.Output.SendAsync(new ErrorMessage(error.Message, error.Key, "error", error.StatusCode, Callback: stc.Callback));
 									return;
 								}
 								if (error is UserInputError uie)
 								{
-									var sink = context.GetSink(uie.ErrorMessage?.Actor ?? "user");
-									await sink.SendAsync(uie.ErrorMessage);
+									await context.Output.SendAsync(uie.ErrorMessage);
 									return;
 								}
 
@@ -336,7 +329,7 @@ public class Program : BaseProgram, IDisposable
 									{
 										string content = (context.ShowErrorDetails) ? error.ToString()! : error.Message;
 										var errorMessage = new ErrorMessage(content, error.Key, "error", error.StatusCode);
-										await context.UserSink.SendAsync(errorMessage);
+										await context.Output.SendAsync(errorMessage);
 									}
 									catch (Exception ex)
 									{
@@ -626,7 +619,7 @@ OnStartingWebserver
 
 	public async Task<IError?> Redirect(string url, bool permanent = false, bool preserveMethod = false)
 	{
-		var os = context.UserSink;
+		var os = context.Output.GetActor("user").GetChannel().Sink;
 		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
@@ -654,17 +647,6 @@ OnStartingWebserver
 
 
 		return new EndGoal(true, topGoal, goalStep, "Redirect", StatusCode: 302, Levels: 999);
-		/*
-		if (HttpContext == null)
-		{
-			return new ProgramError("Header has been sent to browser. Redirect cannot be sent after that.", StatusCode: 500);
-		}
-		if (HttpContext.Response.HasStarted) return new ProgramError("Header has been sent to browser. Redirect cannot be sent after that.", StatusCode: 500);
-
-		HttpContext.Response.Redirect(url, permanent, preserveMethod);
-		await HttpContext.Response.Body.FlushAsync();
-		*/
-
 	}
 
 	public async Task WriteToResponseHeader(Dictionary<string, object> headers)
@@ -739,7 +721,7 @@ Frontpage
 		options.HttpOnly = true;
 		options.Secure = true;
 
-		var os = context.UserSink;
+		var os = context.Output.GetActor("user").GetChannel().Sink;
 		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
@@ -793,7 +775,6 @@ Frontpage
 		var totalBytesToSend = actualEndByte - startByte + 1;
 		var bytesSent = 0L;
 
-		var sink = context.GetSink(streamMessage.Actor);
 		var response = HttpContext.Response;
 
 		// Send Start message with range info
@@ -805,7 +786,7 @@ Frontpage
 			["rangeBytes"] = totalBytesToSend
 		};
 
-		await sink.SendAsync(new StreamMessage(
+		await context.Output.SendAsync(new StreamMessage(
 			StreamId: streamId,
 			Phase: StreamPhase.Start,
 			Actions: new[] { "stream" },
@@ -813,6 +794,7 @@ Frontpage
 			FileName: streamMessage.FileName,
 			Channel: streamMessage.Channel,
 			Target: streamMessage.Target,
+			Actor: streamMessage.Actor,
 			Meta: meta
 		));
 
@@ -825,25 +807,27 @@ Frontpage
 				   (int)Math.Min(chunkSize, totalBytesToSend - bytesSent),
 				   response.HttpContext.RequestAborted)) > 0)
 		{
-			await sink.SendAsync(new StreamMessage(
+			await context.Output.SendAsync(new StreamMessage(
 				StreamId: streamId,
 				Phase: StreamPhase.Chunk,
 				Bytes: new ReadOnlyMemory<byte>(buffer, 0, bytesRead),
 				ContentType: streamMessage.ContentType,
 				FileName: streamMessage.FileName,
-				Channel: streamMessage.Channel
+				Channel: streamMessage.Channel,
+				Actor: streamMessage.Actor
 			));
 
 			bytesSent += bytesRead;
 		}
 
 		// Send End message
-		await sink.SendAsync(new StreamMessage(
+		await context.Output.SendAsync(new StreamMessage(
 			StreamId: streamId,
 			Phase: StreamPhase.End,
 			ContentType: streamMessage.ContentType,
 			FileName: streamMessage.FileName,
-			Channel: streamMessage.Channel
+			Channel: streamMessage.Channel,
+			Actor: streamMessage.Actor
 		));
 
 		return null;
@@ -900,15 +884,15 @@ Frontpage
 
 		await using var stream = fileSystem.File.OpenRead(absolutePath);
 
-		var sink = context.GetSink(actor);
 		// Send Start message
-		await sink.SendAsync(new StreamMessage(
+		await context.Output.SendAsync(new StreamMessage(
 			StreamId: streamId,
 			Phase: StreamPhase.Start,
 			ContentType: mimeType,
 			FileName: fileName,
 			Actions: new[] { "download" },
-			Channel: channel
+			Channel: channel,
+			Actor: actor
 
 		));
 
@@ -917,23 +901,25 @@ Frontpage
 		int bytesRead;
 		while ((bytesRead = await stream.ReadAsync(buffer, response.HttpContext.RequestAborted)) > 0)
 		{
-			await sink.SendAsync(new StreamMessage(
+			await context.Output.SendAsync(new StreamMessage(
 				StreamId: streamId,
 				Phase: StreamPhase.Chunk,
 				Bytes: new ReadOnlyMemory<byte>(buffer, 0, bytesRead),
 				ContentType: mimeType,
 				FileName: fileName,
-				Channel: channel
+				Channel: channel,
+				Actor: actor
 			));
 		}
 
 		// Send End message
-		await sink.SendAsync(new StreamMessage(
+		await context.Output.SendAsync(new StreamMessage(
 			StreamId: streamId,
 			Phase: StreamPhase.End,
 			ContentType: mimeType,
 			FileName: fileName,
-			Channel: channel
+			Channel: channel,
+			Actor: actor
 		));
 
 		return null;

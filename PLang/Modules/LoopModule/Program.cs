@@ -169,14 +169,12 @@ namespace PLang.Modules.LoopModule
 					goalToCall.Parameters.AddOrReplace(listName.ToString()!, items);
 					var item = items[i] as object;
 
-					if (item is ObjectValue ov)
+					if (item is not ObjectValue ov)
 					{
-						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov);
+						var parent = new ObjectValue($"{loopVariable.Name}[{i}]", items[i]);
+						ov = new ObjectValue(itemName, item, parent: parent);
 					}
-					else
-					{
-						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, new ObjectValue(itemName, item, parent: new ObjectValue($"{loopVariable.Path}[{i}]", loopVariable)));
-					}
+					goalToCall.Parameters.AddOrReplace(itemName.ToString()!, ov);
 					goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 
 					var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);

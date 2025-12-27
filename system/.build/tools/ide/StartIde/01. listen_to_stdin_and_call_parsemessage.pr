@@ -1,0 +1,94 @@
+{
+  "Text": "listen to stdin, call ParseMessage",
+  "ModuleType": "PLang.Modules.EnvironmentModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to listen to standard input and call the ParseMessage goal for each input message. The appropriate function is ListenToStdin which accepts a GoalToCallInfo object specifying the goal name to call on each message.",
+    "Name": "ListenToStdin",
+    "Parameters": [
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalToCall",
+        "Value": {
+          "Path": ".build\\tools\\ide\\StartIde\\ParseMessage\\00. Goal.pr",
+          "Name": "ParseMessage",
+          "Parameters": {},
+          "IsAsync": true,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
+        }
+      },
+      {
+        "Type": "System.String",
+        "Name": "delimiter",
+        "Value": "\n"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "goalToCall": {
+        "Name": "goalToCall",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "delimiter": {
+        "Name": "delimiter",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nListen for input from the standard input stream and upon receiving input, call the ParseMessage goal to process it\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.EnvironmentModule.Program\",\"Description\":\"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, listen to stdin\",\"Methods\":[{\"MethodName\":\"SetSettingsDbPath\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"SetSettingsDbPath(System.String path) : void\"},{\"MethodName\":\"GetAppName\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"GetAppName() : System.String\"},{\"MethodName\":\"EndApp\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"EndApp() : void\"},{\"MethodName\":\"GetEnvironmentVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"GetEnvironmentVariable(System.String key) : System.String\"},{\"MethodName\":\"GetMachineName\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"GetMachineName() : System.String\"},{\"MethodName\":\"GetUserName\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"GetUserName() : System.String\"},{\"MethodName\":\"GetProcessId\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Int32\",\"ReturnValueSignature\":\"System.Int32\"},\"Examples\":[],\"MethodSignature\":\"GetProcessId() : System.Int32\"},{\"MethodName\":\"GetOSDescription\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"GetOSDescription() : System.String\"},{\"MethodName\":\"IsInCSharpDebugMode\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Boolean\",\"ReturnValueSignature\":\"System.Boolean\"},\"Examples\":[],\"MethodSignature\":\"IsInCSharpDebugMode() : System.Boolean\"},{\"MethodName\":\"GetCurrentCulture\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Globalization.CultureInfo\",\"ReturnValueSignature\":\"System.Globalization.CultureInfo\"},\"Examples\":[],\"MethodSignature\":\"GetCurrentCulture() : System.Globalization.CultureInfo\"},{\"Description\":\"Get active mocks on engine, used for testing\",\"MethodName\":\"GetMocks\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Modules.MockModule.Program+MockData\",\"ReturnValueSignature\":\"PLang.Modules.MockModule.Program+MockData\"},\"Examples\":[],\"MethodSignature\":\"GetMocks() : PLang.Modules.MockModule.Program+MockData\"},{\"MethodName\":\"SetEnvironment\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"SetEnvironment(System.String name) : void\"},{\"Description\":\"Make sure to convert user code to valid BCP 47 code, language-country\",\"MethodName\":\"SetCultureLanguageCode\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"code\",\"DefaultValue\":\"en-US\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"SetCultureLanguageCode(System.String? code = en-US) : void\"},{\"Description\":\"Make sure to convert user code to valid BCP 47 code, language-country\",\"MethodName\":\"SetCultureUILanguageCode\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"code\",\"DefaultValue\":\"en-US\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"SetCultureUILanguageCode(System.String? code = en-US) : void\"},{\"MethodName\":\"OpenFileInDefaultApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"filePath\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"OpenFileInDefaultApp(System.String filePath) : void\"},{\"MethodName\":\"KeepAlive\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\",\"DefaultValue\":\"App KeepAlive\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"KeepAlive(System.String? message = App KeepAlive) : void\"},{\"MethodName\":\"InstallNpm\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"packageName\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"InstallNpm(System.String packageName) : void\"},{\"MethodName\":\"GetSettings\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Models.Setting\",\"ReturnValueSignature\":\"PLang.Models.Setting\"},\"Examples\":[],\"MethodSignature\":\"GetSettings() : PLang.Models.Setting\"},{\"MethodName\":\"SetDebugMode\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"SetDebugMode() : void\"},{\"MethodName\":\"RemoveDebugMode\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"RemoveDebugMode() : void\"},{\"MethodName\":\"IsInDebugMode\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Boolean\",\"ReturnValueSignature\":\"System.Boolean\"},\"Examples\":[],\"MethodSignature\":\"IsInDebugMode() : System.Boolean\"},{\"MethodName\":\"ShowErrorDetails\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"ShowErrorDetails() : void\"},{\"MethodName\":\"HideErrorDetails\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"HideErrorDetails() : void\"},{\"MethodName\":\"CanSeeErrorDetails\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Boolean\",\"ReturnValueSignature\":\"System.Boolean\"},\"Examples\":[],\"MethodSignature\":\"CanSeeErrorDetails() : System.Boolean\"},{\"Description\":\"Listen to stdin asynchronously, calling the specified goal for each complete message\",\"MethodName\":\"ListenToStdin\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo goalToCall\"},{\"Type\":\"System.String\",\"Name\":\"delimiter\",\"DefaultValue\":\"\\n\",\"Description\":\"Character(s) that mark end of message\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"ListenToStdin(// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo goalToCall, // Character(s) that mark end of message\\r\\nSystem.String? delimiter = \\n) : void\"}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\"},{\"Type\":\"System.Boolean\",\"Name\":\"IsAsync\",\"Description\":\"Doesn't wait for goal response(run and forget, dont wait)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WaitBeforeExecutingInMs\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"AfterExecution\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo()\\nUsed in methods: \"}],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo(System.String Name\\r\\n, System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\\r\\n, // Doesn't wait for goal response(run and forget, dont wait)\\r\\nSystem.Boolean IsAsync\\r\\n, System.Int32 WaitBeforeExecutingInMs\\r\\n, // Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo? AfterExecution\\r\\n)\\nUsed in methods: ListenToStdin\"}],\"SupportingEnums\":[]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "listen to stdin, call ParseMessage"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": null,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to listen to standard input and call the ParseMessage goal for each input message. The appropriate function is ListenToStdin which accepts a GoalToCallInfo object specifying the goal name to call on each message.\",\n  \"Name\": \"ListenToStdin\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"ParseMessage\",\n        \"Parameters\": null,\n        \"IsAsync\": true,\n        \"WaitBeforeExecutingInMs\": 0,\n        \"AfterExecution\": null\n      }\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"delimiter\",\n      \"Value\": \"\\n\"\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

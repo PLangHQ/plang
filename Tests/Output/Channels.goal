@@ -1,0 +1,6 @@
+Channels
+- create output channel "debug", call WriteOutDebug
+- write out "Hello debug channel", channel: "debug"
+
+WriteOutDebug
+- write out %plang.message%

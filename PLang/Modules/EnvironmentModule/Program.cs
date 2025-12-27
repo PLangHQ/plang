@@ -2,6 +2,7 @@
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using PLang.Utils;
@@ -9,11 +10,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using static PLang.Modules.MockModule.Program;
 
 namespace PLang.Modules.EnvironmentModule
 {
-	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install")]
+	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, listen to stdin")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -172,6 +174,46 @@ namespace PLang.Modules.EnvironmentModule
 		public async Task<bool> CanSeeErrorDetails()
 		{
 			return context.ShowErrorDetails;
+		}
+
+
+		// In EnvironmentModule
+
+		[Description("Listen to stdin asynchronously, calling the specified goal for each complete message")]
+		public async Task ListenToStdin(
+			[Description("Goal to call when message received")] GoalToCallInfo goalToCall,
+			[Description("Character(s) that mark end of message")] string delimiter = "\n")
+		{
+			var reader = new StreamReader(Console.OpenStandardInput());
+			var buffer = new StringBuilder();
+			
+			_ = Task.Run(async () =>
+			{
+				var charBuffer = new char[1];
+				while (true)
+				{
+					var read = await reader.ReadAsync(charBuffer, 0, 1);
+					if (read == 0) break; // stdin closed
+
+					buffer.Append(charBuffer[0]);
+					var content = buffer.ToString();
+
+					if (content.EndsWith(delimiter))
+					{
+						var message = content[..^delimiter.Length]; // remove delimiter
+						buffer.Clear();
+
+						if (!string.IsNullOrWhiteSpace(message))
+						{
+							goalToCall.Parameters.AddOrReplace("reader", reader);
+							goalToCall.Parameters.AddOrReplace("message", message);
+							await engine.RunGoal(goalToCall, goal, context);
+						}
+					}
+				}
+			});
+
+			KeepAlive(reader, "StdIn");
 		}
 	}
 }

@@ -44,27 +44,30 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 			this.contextAccessor = contextAccessor;
 		}
 
+		[Description("End the goal when statement is true or false. It can go certain goal levels up, e.g. end previous is Level=1")]
+		public record ReturnIfTrueOrFalse(bool? WhenTrueOrFalse = null, string? Message = null, int Levels = 0);
+
 		public async Task<(object?, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			string path = GetPath(filePathOrVariableName);
 			var result = fileSystem.File.Exists(path);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		public async Task<(object?, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var path = GetPath(dirPathOrVariableName);
 			var result = fileSystem.Directory.Exists(path);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 		public async Task<(object?, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var path = GetPath(dirOrFilePathOrVariableName);
 			var result = fileSystem.ValidatePath(path) != null;
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		[Description(@"Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. 
@@ -74,19 +77,19 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 )]
 		public async Task<(object?, IError?)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = ConditionEngine.Evaluate(condition);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
 		public async Task<(object?, IError?)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = ConditionEngine.Evaluate(condition);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 
@@ -105,77 +108,77 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		
 		public async Task<(object?, IError?)> IsFalse(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			if (item == null) { item = false; }
 			item = !item;
 
-			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		public async Task<(object?, IError?)> IsSystemPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			bool result = false;
 			if (!string.IsNullOrEmpty(path))
 			{
 				result = path.StartsWith(fileSystem.SystemDirectory);
 			}
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		public async Task<(object?, IError?)> IsOsPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			bool result = false;
 			if (!string.IsNullOrEmpty(path))
 			{
 				result = path.StartsWith(fileSystem.OsDirectory);
 			}
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 
 		public async Task<(object?, IError?)> IsTrue(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			if (item == null) { item = false; }
 
-			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		public async Task<(object?, IError?)> IsMod(double leftValue, double modValue, double equalsValue, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			bool result = (leftValue % modValue == equalsValue);
 
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 		public async Task<(object?, IError?)> IsNotEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = !IsEmptyCheck(item);
 
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		 
 		public async Task<(object?, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 						GoalToCallInfo? goalToCallIfFalse = null,
-						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = IsEmptyCheck(item);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 
 		[Description("example: `if %code% contains 123, 345 then ....`, `if %zip% is one of (223,333) then...`")]
 		public async Task<(object?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCallInfo? goalToCallIfTrue = null,  GoalToCallInfo? goalToCallIfFalse = null, 
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			bool? result = null;
 			if (item == null) result = false;
@@ -194,13 +197,13 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it."));
 			}
 
-			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 
 		}
 
 		[Description("isNot property reverse true to false, example: `if %name% contains \"john\" then`, `if %product% contains %title% then call goal DoProdudct`, `if %name% does not contain \"bill\"` (isNot=true)")]
 		public async Task<(object?, IError?)> ContainsString(object? item, string contains, bool isNot = false, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			bool? result = null;
 			if (item == null) result = false;
@@ -225,7 +228,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 
 			if (result != null)
 			{
-				return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+				return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 			}
 
 			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
@@ -263,10 +266,10 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		}
 		public async Task<(object? Result, IError? Error)> IsNotEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
-			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = !IsEqualInternal(item1, item2, ignoreCase);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 		[Description(@"Check if item equals(==) another object. 
 `if %id% == 100 then call IsCorrectNumber, else DoSomeThingElse....` => IsCorrectNumber is goalToCallIfTrue, DoSomeThingElse is goalToCallIfFalse
@@ -275,10 +278,10 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 ")]
 		public async Task<(object? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
 		GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
-		ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 			var result = IsEqualInternal(item1, item2, ignoreCase);
-			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse, returnIfTrueOrFalse);
 		}
 		
 		
@@ -412,7 +415,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		}
 
 		private async Task<(object?, IError?)> ExecuteResult(bool result, GoalToCallInfo? goalToCallOnTrue,
-			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null, ReturnIfTrueOrFalse? returnIfTrueOrFalse = null)
 		{
 
 			Task<(IEngine, object? Variables, IError? error)>? task = null;
@@ -467,7 +470,19 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 					}
 				}
 			}
-			
+			if (returnIfTrueOrFalse != null && returnIfTrueOrFalse.WhenTrueOrFalse != null)
+			{
+				if (result && returnIfTrueOrFalse.WhenTrueOrFalse.Value)
+				{
+					return (result, new EndGoal(false, null, goalStep, returnIfTrueOrFalse.Message, 200, returnIfTrueOrFalse.Levels));
+				}
+				if (!result && !returnIfTrueOrFalse.WhenTrueOrFalse.Value)
+				{
+					return (result, new EndGoal(false, null, goalStep, returnIfTrueOrFalse.Message, 200, returnIfTrueOrFalse.Levels));
+				}
+			}
+
+
 			if (result && throwErrorOnTrue != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();

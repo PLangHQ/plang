@@ -90,7 +90,7 @@ public sealed class HttpSink : IOutputSink
 			}
 		} catch (Exception ex)
 		{
-			Console.WriteLine(ex.ToString());
+			Console.WriteLine($"HttpSink flush error: {ex}");
 		}
 		
 

@@ -90,30 +90,27 @@ namespace PLang.Modules.ScheduleModule
 			return null;
 		}
 
-		public async Task<IError?> WaitOnVariable([HandlesVariable] string variableName, GoalToCallInfo goalToCall, long timeInMilliseconds = 1000)
+		[MethodSettings(CanBeAsync = false)]
+		public async Task<(object?, IError?)> WaitOnVariable(ObjectValue variable, GoalToCallInfo? goalToCall = null, long timeSinceChangeInMilliseconds = 0)
 		{
-			if (timeInMilliseconds == 0)
+			bool hasChanged = false;
+			while (!hasChanged)
 			{
-				return new ProgramError("You must define the time period to wait on a variable", goalStep, function);
-			}
-
-
-			bool hasChanged = true;
-			while (hasChanged)
-			{
-				var obj = memoryStack.GetObjectValue(variableName, false);
-				var totalMilliseconds = new TimeSpan(DateTime.Now.Ticks - obj.Updated.Ticks).TotalMilliseconds;
-				if (totalMilliseconds > timeInMilliseconds)
+				var totalMilliseconds = new TimeSpan(variable.Updated.Ticks - DateTime.Now.Ticks).TotalMilliseconds;
+				if (totalMilliseconds > timeSinceChangeInMilliseconds)
 				{
-					hasChanged = false;
+					break;
 				}
-
-				await Task.Delay(100);
+				else
+				{
+					await Task.Delay(100);
+				}
 			}
-
-			var result = await pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.RelativeAppPath, goalToCall);
-
-			return result.Error;
+			if (goalToCall != null)
+			{
+				return await engine.RunGoal(goalToCall, goal, context);
+			}
+			return (null, null);
 		}
 
 		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCallInfo GoalName, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
@@ -156,37 +153,27 @@ namespace PLang.Modules.ScheduleModule
 			IPseudoRuntime pseudoRuntime = this.pseudoRuntime;
 			IPLangFileSystem fileSystem = this.fileSystem;
 
-			if (context.SystemSink is not AppOutputSink)
-			{
-				logger.LogDebug("Initiate new engine for scheduler");
-				var containerForScheduler = new ServiceContainer();
+
+			logger.LogDebug("Initiate new engine for scheduler");
+			var containerForScheduler = new ServiceContainer();
 
 
-				containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), null, null, parentEngine: engine);
+			containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), parentEngine: engine);
 
-				engine = containerForScheduler.GetInstance<IEngine>();
-				engine.Init(containerForScheduler);
-				settings = containerForScheduler.GetInstance<ISettings>();
-				prParser = containerForScheduler.GetInstance<PrParser>();
-				logger = containerForScheduler.GetInstance<ILogger>();
-				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
-				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
-				engine.Name = "Scheduler";
-				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
-
-
-				KeepAlive(containerForScheduler, "Scheduler");
-
-			}
-			else
-			{
+			engine = containerForScheduler.GetInstance<IEngine>();
+			engine.Init(containerForScheduler);
+			settings = containerForScheduler.GetInstance<ISettings>();
+			prParser = containerForScheduler.GetInstance<PrParser>();
+			logger = containerForScheduler.GetInstance<ILogger>();
+			pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
+			fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
+			engine.Name = "Scheduler";
+			Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
 
-				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			KeepAlive(containerForScheduler, "Scheduler");
 
 
-				KeepAlive(engine, "Scheduler");
-			}
 
 		}
 

@@ -1,0 +1,98 @@
+{
+  "Text": "filter %instruction% where \"Function.Parameters.Name\"=\"path\", get parent, first entry, write to %path%",
+  "ModuleType": "PLang.Modules.ListDictionaryModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to filter the 'instruction' object to find entries where the parameter name is 'path', then get the parent of those entries and take the first one. This corresponds to retrieving the first item from a filtered list. The best matching function is 'GetItem' with operator 'first' to get the first item from a list. The list to operate on is the filtered 'instruction' object. The result should be stored in the variable %path%.",
+    "Name": "GetItem",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "operator",
+        "Value": "first"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[System.Object]",
+        "Name": "listInstance",
+        "Value": "%instruction%"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%path%",
+        "Value": null
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "operator": {
+        "Name": "operator",
+        "FullTypeName": "System.String"
+      },
+      "listInstance": {
+        "Name": "listInstance",
+        "FullTypeName": "System.Collections.Generic.List`1[System.Object]"
+      }
+    },
+    "ReturnValues": {
+      "%path%": {
+        "Name": "%path%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nExtract the first parent entry from the filtered instructions where the parameter name is 'path' and store it in the variable %path%\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.ListDictionaryModule.Program\",\"Description\":\"\\r\\nget first|last|random|position| item from list or dictionary.\\r\\nAdd, update, delete and retrieve list or dictionary. Group by key, merge two lists\\r\\n\",\"Methods\":[{\"MethodName\":\"ClearList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? listInstance\"}],\"Examples\":[],\"MethodSignature\":\"ClearList(System.Collections.Generic.List`1[System.Object]? listInstance) : void\"},{\"MethodName\":\"ClearDictionary\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"dictionary\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionary\"}],\"Examples\":[],\"MethodSignature\":\"ClearDictionary(System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionary) : void\"},{\"MethodName\":\"DeleteFromList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Boolean\",\"ReturnValueSignature\":\"System.Boolean\"},\"Examples\":[],\"MethodSignature\":\"DeleteFromList(System.Object item, System.Collections.Generic.List`1[System.Object]? listInstance) : System.Boolean\"},{\"MethodName\":\"DeleteKeyFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"dictionary\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionary\"}],\"ReturnValue\":{\"Type\":\"System.Boolean\",\"ReturnValueSignature\":\"System.Boolean\"},\"Examples\":[],\"MethodSignature\":\"DeleteKeyFromDictionary(System.String key, System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionary) : System.Boolean\"},{\"Description\":\"Method always returns instance of a list, ReturnValues with the list name should always be used\",\"MethodName\":\"AddItemsToList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"value\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? value\"}],\"ReturnValue\":{\"Type\":\"List<Object>\",\"ReturnValueSignature\":\"List<Object>\"},\"Examples\":[],\"MethodSignature\":\"AddItemsToList(System.Collections.Generic.List`1[System.Object]? value) : List<Object>\"},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined\",\"MethodName\":\"AddToList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? listInstance\"},{\"Type\":\"System.Boolean\",\"Name\":\"uniqueValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"AddToList(System.Object value, System.Collections.Generic.List`1[System.Object]? listInstance, System.Boolean? uniqueValue = False, System.Boolean? caseSensitive = False) : System.Object\"},{\"MethodName\":\"GetItem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"operator\",\"DefaultValue\":\"first\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? listInstance\"},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"sortColumns\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.String]? sortColumns\"},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"sortOperator\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.String]? sortOperator\"}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"GetItem(System.String? operator = first, System.Collections.Generic.List`1[System.Object]? listInstance, System.Collections.Generic.List`1[System.String]? sortColumns, System.Collections.Generic.List`1[System.String]? sortOperator) : System.Object\"},{\"Description\":\"Gets an item from a list by position\",\"MethodName\":\"GetFromList\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"position\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Object]? listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"GetFromList(System.Int32 position, System.Collections.Generic.List`1[System.Object]? listInstance) : System.Object\"},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary\",\"MethodName\":\"AddItemsToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"value\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? value\"},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance\"},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\",\"ReturnValueSignature\":\"System.String\"},\"Examples\":[],\"MethodSignature\":\"AddItemsToDictionary(System.String key, System.Collections.Generic.Dictionary`2[System.String,System.Object]? value, System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance, System.Boolean? updateIfExists = True) : System.String\"},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary\",\"MethodName\":\"AddToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance\"},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Dictionary<String,Object>\",\"ReturnValueSignature\":\"Dictionary<String,Object>\"},\"Examples\":[],\"MethodSignature\":\"AddToDictionary(System.String key, System.Object value, System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance, System.Boolean? updateIfExists = True) : Dictionary<String,Object>\"},{\"Description\":\"Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary\",\"MethodName\":\"GetFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"GetFromDictionary(System.String key, System.Collections.Generic.Dictionary`2[System.String,System.Object]? dictionaryInstance) : System.Object\"},{\"Description\":\"Group a %variable% by key\",\"MethodName\":\"GroupBy\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"obj\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"GroupBy(System.Object obj, System.String key) : System.Object\"},{\"Description\":\"Merges two objects or lists according to primary key\",\"MethodName\":\"MergeLists\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"list1\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"list2\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"MergeLists(System.Object list1, System.Object list2, System.String key) : System.Object\"}],\"SupportingObjects\":[],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ninstruction (type:object), path (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "filter %instruction% where \"Function.Parameters.Name\"=\"path\", get parent, first entry, write to %path%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "5ca9899801d7cff2fa7f7a43b7c0e602f7e4aba4b7dc0859a4ebf7253547e156",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to filter the 'instruction' object to find entries where the parameter name is 'path', then get the parent of those entries and take the first one. This corresponds to retrieving the first item from a filtered list. The best matching function is 'GetItem' with operator 'first' to get the first item from a list. The list to operate on is the filtered 'instruction' object. The result should be stored in the variable %path%.\",\n  \"Name\": \"GetItem\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"operator\",\n      \"Value\": \"first\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n      \"Name\": \"listInstance\",\n      \"Value\": \"%instruction%\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%path%\",\n      \"Value\": null\n    }\n  ]\n}"
+    }
+  ]
+}

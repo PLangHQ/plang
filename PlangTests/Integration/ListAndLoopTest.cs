@@ -14,7 +14,7 @@ namespace PLangTests.Integration
 		public void Init() {
 			base.Initialize();
 
-			fileProgram = new(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler, errorSystemHandlerFactory);
+			fileProgram = new(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler);
 			fileProgram.Init(container, null, null, null, null);
 			var goal = new Goal();
 			goal.RelativeAppStartupFolderPath = "/";

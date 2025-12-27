@@ -1,0 +1,16 @@
+StartDebugger
+/ Initialize debug session, spawn the app, connect to pipe
+/ Parameters: goalPath (optional), breakpoints (array of PrPaths)
+- set %pipeName% = "plang-debug-%folderName%-%!guid%"
+- [terminal] run 'plang' 
+    parameters:
+        %goalPath% !system.debug.name=%pipeName% !system.debug.breakpoints=%breakpoints%, 
+    on stdout call HandleStdout, 
+    on stderr call HandleStderr, 
+    dont wait for it to finish
+    write to %terminal%
+- [comm] connect to pipe %pipeName%, channel: 'debug', 
+    on message call HandleMessage, 
+    on connect call OnConnected, 
+    on disconnect call OnDisconnected
+    write to %connection%

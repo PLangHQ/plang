@@ -2,7 +2,9 @@ Run
 - call goal RunApp
 
 RunApp
+- if %!system.debug% then call tools/Debugger
 - call goal LoadApp
+    on error 404 call goal RunAppV1
 - call goal RunEvents "!events"=%!user.app.BeforeEvents%
 - call goal RunGoal "!goalToCall"=%!user.app.goalToCall%
     on error call goal HandleErrors handlers=%!user.goal.ErrorHandlers%
@@ -51,8 +53,13 @@ HandleError
 - if %handler.Key% == "*" then call goal %handler.GoalToCall%
 
 LoadApp
+- [out] set default output %!system.contentType%
 - read "/.build2/app.pr", write to %!user.app%
 
+RunAppV1
+- write out %!memoryStack%
+- call goal %!system.goalToCall%
+- end goal and previous
 
 LoadGoal
 - read "%!goalToCall.Path%", write to %!user.goal%

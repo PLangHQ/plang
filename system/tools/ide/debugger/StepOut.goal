@@ -1,0 +1,4 @@
+StepOut
+/ Step out - continue until current goal returns
+- if %debugActive% is not true, return
+- write out { "command": "stepOut" }, channel: 'debug'

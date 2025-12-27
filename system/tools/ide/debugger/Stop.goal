@@ -1,0 +1,11 @@
+Stop
+/ Stop the debug session
+- if %debugActive% is not true then 
+    - return
+- write out { "command": "stop" }, channel: 'debug'
+- set %debugActive% = false
+- [commu] close piped %connection%
+/ Kill the terminal process if still running
+- if %terminal% is not empty
+    - kill %terminal%
+- [ui] execute js 'debugger.terminated' 'stopped'

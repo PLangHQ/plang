@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:15:07.9539461+00:00",
       "WaitForExecution": true,
@@ -26,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 18,
+      "LineNumber": 20,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "bad4e0fc673beb112e1c2bb78cafda071bf7d02a23d749dd8b7a024f3ade0bff",
+      "Hash": "13941cd4033538210b9a80e2d925ca0a526bf88c447c979e2c4bc6ce21f641af",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if the variable %!user.step.cachingHandler% is not null and if so, execute the GetCache step"
+      "UserIntent": null
     },
     {
       "Text": "if %!user.step.BeforeEvents.count% > 0 call RunEvents \"!events\"=%!user.step.BeforeEvents%",
@@ -46,7 +46,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "0001-01-01T00:00:00",
       "WaitForExecution": true,
@@ -57,13 +57,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 19,
+      "LineNumber": 21,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": null,
+      "Hash": "766b44a7e60f0a45a20a78f1fa909f6e6a20e934464a2081f4c003344960bc54",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if there are any before events and if so, call the RunEvents goal with those events as a parameter"
+      "UserIntent": null
     },
     {
       "Text": "[plang] run function %!user.step%\n    on error call HandleErrors handlers=%!user.step.ErrorHandlers%",
@@ -77,7 +77,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:15:29.5755582+00:00",
       "WaitForExecution": true,
@@ -107,13 +107,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 20,
+      "LineNumber": 22,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "53e5cca44ce607f30e399752ae090455f60e0dcb525422501cdc4b8745575568",
+      "Hash": "1cd5caabe39557f3729475ff0e32acbbad3fd16dc5cc92cc9248b7183906cdd7",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Execute a dynamic function specified by the variable %!user.step% and handle any errors by calling a predefined error handler function with the specified error handlers."
+      "UserIntent": null
     },
     {
       "Text": "if %!user.step.AfterEvents.count% > 0 call RunEvents \"!events\"=%!user.step.AfterEvents%",
@@ -127,7 +127,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "0001-01-01T00:00:00",
       "WaitForExecution": true,
@@ -138,13 +138,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 3,
-      "LineNumber": 22,
+      "LineNumber": 24,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": null,
+      "Hash": "e222ae1d5151017dd51e4c890e2a09d9d8e639f3cba0b583ae2a0324fe770b39",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if there are any after events in the current user step and if so, call the RunEvents goal passing those events as a parameter"
+      "UserIntent": null
     },
     {
       "Text": "if %!user.step.cachingHandler% != null then SetCaching",
@@ -158,7 +158,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "0001-01-01T00:00:00",
       "WaitForExecution": true,
@@ -169,13 +169,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 4,
-      "LineNumber": 23,
+      "LineNumber": 25,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": null,
+      "Hash": "9dc6c633f6644f870949370370db1b7eeeab1327d03250cece1f0b84b2d6b2b1",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Check if the variable %!user.step.cachingHandler% is not null and if so, execute the SetCaching step or action"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -193,7 +193,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4c06a2c359c1bd870e2e91d3d58baf959f4cf3a14509e9ef2ca2e833132ea5fd",
+  "Hash": "2db766e88304fc6100b89d571a09ede1c9dbe99cac986d605e9c3254be992026",
   "IncomingVariablesRequired": {
     "!user.step.cachingHandler": "A handler for caching operations, required to manage cache retrieval and storage.",
     "!user.step.BeforeEvents": "A collection of events to be executed before the main function, if any exist.",

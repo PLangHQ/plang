@@ -142,6 +142,16 @@ namespace PLang.SafeFileSystem
 		{
 			this.fileAccesses.RemoveAll(p => p.path != this.SystemDirectory);
 		}
+		public void SetRoot(string path)
+		{
+			this.rootPath = path;
+			this.GoalsPath = path; //remove GoalsPath
+		}
+
+		public List<FileAccessControl> GetFileAccesses()
+		{
+			return fileAccesses;
+		}
 
 		public bool IsPlangRooted(string? path)
 		{

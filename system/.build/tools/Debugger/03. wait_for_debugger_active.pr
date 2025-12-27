@@ -1,0 +1,96 @@
+{
+  "Text": "wait for %debuggerActive%",
+  "ModuleType": "PLang.Modules.ScheduleModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to wait until the variable %debuggerActive% indicates readiness or a specific condition is met. The appropriate function to handle waiting on a variable is WaitOnVariable, which takes the variable to wait on as a parameter.",
+    "Name": "WaitOnVariable",
+    "Parameters": [
+      {
+        "Type": "PLang.Runtime.ObjectValue",
+        "Name": "variable",
+        "Value": "%debuggerActive%"
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalToCall",
+        "Value": null
+      },
+      {
+        "Type": "System.Int64",
+        "Name": "timeSinceChangeInMilliseconds",
+        "Value": 0
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "variable": {
+        "Name": "variable",
+        "FullTypeName": "PLang.Runtime.ObjectValue"
+      },
+      "goalToCall": {
+        "Name": "goalToCall",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "timeSinceChangeInMilliseconds": {
+        "Name": "timeSinceChangeInMilliseconds",
+        "FullTypeName": "System.Int64"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nPause the execution until the variable %debuggerActive% indicates readiness or a specific condition is met\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.ScheduleModule.Program\",\"Description\":\"Wait, Sleep and time delay. Cron scheduler\",\"Methods\":[{\"Description\":\"WaitForExecution is always true when calling Sleep\",\"MethodName\":\"Sleep\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"sleepTimeInMilliseconds\",\"IsRequired\":true}],\"Examples\":[],\"MethodSignature\":\"Sleep(System.Int32 sleepTimeInMilliseconds) : void\"},{\"Description\":\"Waits increasingly in a key\",\"MethodName\":\"WaitIncreasingly\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Int32]\",\"Name\":\"millisecondsDelay\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.List`1[System.Int32]? millisecondsDelay\"},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":300,\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"WaitIncreasingly(System.String key, System.Collections.Generic.List`1[System.Int32]? millisecondsDelay, System.Int32? timeoutInSeconds = 300) : void\"},{\"MethodName\":\"WaitOnVariable\",\"Parameters\":[{\"Type\":\"PLang.Runtime.ObjectValue\",\"Name\":\"variable\",\"Description\":\"see PLang.Runtime.ObjectValue information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Runtime.ObjectValue information in SupportingObjects)\\r\\nPLang.Runtime.ObjectValue variable\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? goalToCall\"},{\"Type\":\"System.Int64\",\"Name\":\"timeSinceChangeInMilliseconds\",\"DefaultValue\":0,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"WaitOnVariable(// see PLang.Runtime.ObjectValue information in SupportingObjects)\\r\\nPLang.Runtime.ObjectValue variable, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? goalToCall, System.Int64? timeSinceChangeInMilliseconds = 0) : System.Object\"},{\"Description\":\"Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).\",\"MethodName\":\"Schedule\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"cronCommand\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":true,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo goalName\"},{\"Type\":\"System.Nullable`1[System.DateTime]\",\"Name\":\"nextRun\",\"IsRequired\":false,\"ParameterSignature\":\"System.Nullable`1[System.DateTime]? nextRun\"}],\"Examples\":[],\"MethodSignature\":\"Schedule(System.String cronCommand, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo goalName, System.Nullable`1[System.DateTime]? nextRun) : void\"},{\"MethodName\":\"StartScheduler\",\"Parameters\":[],\"Examples\":[],\"MethodSignature\":\"StartScheduler() : void\"}],\"SupportingObjects\":[{\"Type\":\"PLang.Runtime.ObjectValue\",\"Name\":\"variable\",\"TypeProperties\":[{\"Type\":\"System.Boolean\",\"Name\":\"IsSystemVariable\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Value\",\"IsRequired\":false},{\"Type\":\"System.Type\",\"Name\":\"Type\",\"IsRequired\":false,\"ParameterSignature\":\"System.Type? Type\"},{\"Type\":\"System.Boolean\",\"Name\":\"Initiated\",\"IsRequired\":true},{\"Type\":\"PLang.Models.Properties\",\"Name\":\"Properties\",\"IsRequired\":true,\"ParameterSignature\":\"PLang.Models.Properties Properties\"},{\"Type\":\"System.DateTime\",\"Name\":\"Created\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Updated\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true}],\"IsRequired\":false,\"ParameterSignature\":\"PLang.Runtime.ObjectValue(System.Boolean IsSystemVariable\\r\\n, System.Object? Value\\r\\n, System.Type? Type\\r\\n, System.Boolean Initiated\\r\\n, PLang.Models.Properties Properties\\r\\n, System.DateTime Created\\r\\n, System.DateTime Updated\\r\\n, System.String Path\\r\\n)\\nUsed in methods: WaitOnVariable\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\"},{\"Type\":\"System.Boolean\",\"Name\":\"IsAsync\",\"Description\":\"Doesn't wait for goal response(run and forget, dont wait)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WaitBeforeExecutingInMs\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"AfterExecution\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo()\\nUsed in methods: \"}],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo(System.String Name\\r\\n, System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\\r\\n, // Doesn't wait for goal response(run and forget, dont wait)\\r\\nSystem.Boolean IsAsync\\r\\n, System.Int32 WaitBeforeExecutingInMs\\r\\n, // Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo? AfterExecution\\r\\n)\\nUsed in methods: WaitOnVariable, Schedule\"}],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ndebuggerActive (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "wait for %debuggerActive%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "542346243dcb7356d96540873f39baf7846d522b91cde423dfd53874117329e2",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to wait until the variable %debuggerActive% indicates readiness or a specific condition is met. The appropriate function to handle waiting on a variable is WaitOnVariable, which takes the variable to wait on as a parameter.\",\n  \"Name\": \"WaitOnVariable\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Runtime.ObjectValue\",\n      \"Name\": \"variable\",\n      \"Value\": \"%debuggerActive%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Int64\",\n      \"Name\": \"timeSinceChangeInMilliseconds\",\n      \"Value\": 0\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}

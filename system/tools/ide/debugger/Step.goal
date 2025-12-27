@@ -1,0 +1,4 @@
+Step
+/ Step to next line (step into)
+- if %debugActive% is not true, return
+- write out { "command": "step" }, channel: 'debug'

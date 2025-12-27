@@ -26,10 +26,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 48,
+      "LineNumber": 50,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a17fb14fb3db144d904e2ef6d9ea2e89ec7e4ff55bc6b13814b15f70ba622bcf",
+      "Hash": "54c50a8c8b4e5556fd0b5ed8697cd27d5bb9480ab656d18427ebd5885b58a00a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Builder.goal",
       "UserIntent": null
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c9e28852cdfc3d7a0aa36f9d95b294bac3d06ad0c07020327aaa8270dfbde79b",
+  "Hash": "969fa3920aab2a25b483e7057a8b1524e3cec409743a960348f55300c494b8ce",
   "IncomingVariablesRequired": {
     "%dsName%": "The name of the datasource that is expected to be found during the setup process."
   },

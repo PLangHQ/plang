@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-12T14:17:10.3260852+00:00",
       "WaitForExecution": true,
@@ -26,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 58,
+      "LineNumber": 65,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "48f4dcaadcbf69ac65534c5f357e1d97a19d5af3217740f377fc91100229d22f",
+      "Hash": "2936d19d91d29f5a2cfb41a0f4c61d0848d8c97b9252950e8ace3ddfd4d548d8",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Read the content from a file path specified by the variable %!goalToCall.Path% and write that content into the variable %!user.goal%"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9a78b341094816f59e9f5775e9933a1c5ca1dcb4bde6b4c648173836a2ceefb9",
+  "Hash": "aef8e9d58fd240683b5a48d45f4a63273af1f319b1d34e33609b796ebf7609fb",
   "IncomingVariablesRequired": {
     "%!goalToCall.Path%": "The path of the goal that needs to be read and loaded into the user's goal."
   },

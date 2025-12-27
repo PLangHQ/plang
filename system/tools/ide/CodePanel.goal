@@ -1,0 +1,80 @@
+CodePanel
+- give file access to %request.body.appPath%
+- read file %request.body.goalBuildPath%, write to %goal%
+    on error 'cannot be found', call LoadStepNotBuilt
+- if %request.body.lineNumber% != -1 then call LoadStep, else LoadGoal
+- call goal HtmlOut
+
+LoadGoal
+- render template "GoalCodePanel.html", write to %content%
+
+LoadStep
+- filter %goal% where "GoalSteps.LineNumber" = %request.body.lineNumber%, extract parent, first item, write to %step%
+- if %step.EventBinding% is not empty then, DisplayEvent, else call DisplayStep
+
+LoadStepNotBuilt
+- render template "StepNotBuiltPanel.html", write to %content%
+- end goal and previous
+
+DisplayEvent
+- render template "EventPanel.html", write to %content%
+
+DisplayStep
+- if %step.RelativePrPath% is empty then LoadStepNotBuilt, else LoadStepInfo
+
+LoadStepInfo
+- read file %request.body.appPath%/%step.RelativePrPath%, into %instruction%
+    on error key:"FileNotFound" call LoadStepNotBuilt
+- call goal %step.ModuleType%
+    on error key:'GoalNotFound' call WriteOut
+    on error call ModuleHadError
+- filter %instruction.Function.Parameters% on "Type"="PLang.Models.GoalToCallInfo", get parent, write to %goalsToCall%
+- foreach %goalsToCall% call RenderModuleTypeForGoal item=%goalToCall%    
+- render template "StepPanel.html", write to %content%
+
+ModuleHadError
+- render template "/events/error.html", write to %module%
+
+WriteOut
+- write out to system "Not found: %step.ModuleType%"
+
+PLang.Modules.CodeModule
+- render template "/modules/%step.ModuleType%.html", write to %module%
+
+PLang.Modules.ConditionalModule
+- render template "/modules/PLang.Modules.CodeModule.html", write to %module%
+
+PLang.Modules.DbModule
+- render template "/modules/%step.ModuleType%.html", write to %module%
+
+PLang.Modules.FileModule
+- filter %instruction% where "Function.Parameters.Name"="path", get parent, first entry, write to %path%
+- set %absoluteFilePath% = %request.body.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%
+- if %path.Value% does not contain  "%" then 
+    - read file %absoluteFilePath%, write to %content%
+        on error key:FileNotFound ignore error
+        on error, call ErrorOnFile
+    - render template "/modules/%step.ModuleType%.html", write to %module%
+
+ErrorOnFile
+- write out %!error.Message%
+
+RenderModuleTypeForGoal
+- if %goalToCall.Value.Path% is not empty then
+    - read file %request.body.appPath%/%goalToCall.Value.Path%, write to %goalToCallPr%
+        on error 404 call GoalToCallNotFound
+    - render template "/modules/CallGoalInfo.html", write to %render%
+    - append string %render% to %module%
+
+
+PLang.Modules.UiModule
+- filter %instruction% where "Function.Name"="RenderTemplate", get parent, first entry, write to %function%
+- if %function.IsTemplateFile% is true then
+    - read file %request.body.appPath%/%goalToCall.Value.Path%, write to %goalToCallPr%
+    - render template "/modules/CallGoalInfo.html", write to %render%
+    - append string %render% to %module%
+
+
+GoalToCallNotFound
+- append "Could not find %goalToCall.Value.Path%" to %module%
+- end goal and previous

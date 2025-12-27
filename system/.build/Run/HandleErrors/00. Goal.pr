@@ -15,7 +15,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-11T10:28:53.1053243+00:00",
       "WaitForExecution": true,
@@ -26,13 +26,13 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 45,
+      "LineNumber": 47,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "333dbf8d3619d477ba02a0e20f91b198168e3064e87680d46f55e33a9bea7ff0",
+      "Hash": "f330a72250d16ecf9f3e5088cebebee675a76fae78c44315179988c4b15a0347",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Iterate over a collection of handlers and call the HandleError goal for each handler item"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3e83bfa7ac7cabea4f7d9eee8f76e047c65440d9c93395ad4f83d940ffb7072e",
+  "Hash": "f17d1a7b979690bcfbde538e0165ba9fc4d99803c6a1babc8138cf9b8a7796b8",
   "IncomingVariablesRequired": {
     "%handlers%": "A collection of error handlers that will be processed by the HandleErrors goal."
   },

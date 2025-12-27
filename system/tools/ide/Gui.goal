@@ -1,0 +1,3 @@
+Gui
+- render "Gui.html", write to %content%
+- call goal HtmlOut

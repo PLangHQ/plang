@@ -1,0 +1,5 @@
+Evaluate
+/ Evaluate an expression in the current debug context
+/ Parameters: expression (string to evaluate)
+- if %debugActive% is not true, return
+- write out { "command": "evaluate", "expression": %expression% }, channel: 'debug'

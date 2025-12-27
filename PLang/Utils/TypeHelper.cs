@@ -494,8 +494,9 @@ public class TypeHelper : ITypeHelper
 	{
 		Type? type = Type.GetType(str, false, ignoreCase: true);
 		if (type != null) return type;
-
 		
+		type = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(str)).FirstOrDefault(x => x != null);
+
 		return type;
 	}
 

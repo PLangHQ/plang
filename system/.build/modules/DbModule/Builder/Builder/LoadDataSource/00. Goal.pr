@@ -43,10 +43,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 42,
+      "LineNumber": 44,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a64624bdacd3b0a77b50f056b5d2239f5b59b7e62acbb3c1478755772066edb1",
+      "Hash": "9a7c62445c865ee1655e4df91eee16d857b6585df5fe0f21c95c413d58a40171",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Builder.goal",
       "UserIntent": null
@@ -74,10 +74,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 44,
+      "LineNumber": 46,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "992579064499d93e4ee2b68cf87e41196eef908a2f1f1f0b01f1c7788f70c212",
+      "Hash": "84edfa9a42e14437467ff226b603dac5f89db3562c5f3c1d62c100e7d220a3f6",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Builder.goal",
       "UserIntent": null
@@ -98,7 +98,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "15b771df0853ad716a101434a96f4cb31ca84fb4eac7c151a66cbe5347adeb19",
+  "Hash": "848366e94cfa8ff03564092c2866c78162c10f818b90c4df8d80f6529502aecb",
   "IncomingVariablesRequired": {
     "%dsName%": "The name of the data source to be loaded.",
     "%currentDataSources%": "The list of currently available data sources to which the new data source will be appended."

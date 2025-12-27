@@ -1,0 +1,5 @@
+RenderLlm
+- give access to %request.filePath%
+- read %request.filePath%, write to %fileContent%
+- convert md %fileContent% to html, write to %content%
+- call goal HtmlOut

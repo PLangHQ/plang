@@ -13,6 +13,8 @@ using PLang.Modules;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
+using PLang.Services.OutputStream;
+using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.IO.Abstractions;
 using System.IO.Compression;
@@ -33,12 +35,19 @@ namespace PLang
 
 		private static IFileSystemWatcher? watcher = null;
 
-		public Executor(IServiceContainer container)
+		public Executor(IServiceContainer container, PLangAppContext appContext)
 		{
 			this.container = container;
-
+			this.engine = container.GetInstance<IEngine>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
+
+			this.engine.Init(container);
+
+			// this is temporary while not refactored.
+			// PlangAppContext is registered with container and retreieved multiple times and used
+			// this is just becuase of bad design, and should be removed.
+			this.engine.AppContext.Environment = appContext.Environment;
 
 		}
 
@@ -47,46 +56,7 @@ namespace PLang
 			Runtime = 0,
 			Builder = 1
 		}
-
-		public async static Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
-		{
-			throw new NotImplementedException("This needs to be fixed, RunGoal needs to take in context. Since only one method calls this, maybe delete this method?");
-			/*
-			AppContext.SetSwitch("InternalGoalRun", true);
-			AppContext.SetSwitch("Runtime", true);
-			using (var container = new ServiceContainer())
-			{
-				container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
 				
-				var engine = container.GetInstance<IEngine>();
-				engine.Init(container, nu);
-
-				var context = new PLangContext(container.GetInstance<MemoryStack>(), engine);
-
-				if (parameters != null)
-				{
-					foreach (var param in parameters)
-					{
-						engine.GetMemoryStack().Put(param.Key, param.Value);
-					}
-				}
-				var prParser = container.GetInstance<PrParser>();
-				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-				var fileSystem = container.GetInstance<IPLangFileSystem>();
-
-				await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);
-
-				var allGoals = prParser.GetAllGoals();
-				var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-				if (goal == null) return (engine, null, new Error($"Goal {goalName} could not be found"));
-
-				var (vars, error) = await engine.RunGoal(goal, context);
-				AppContext.SetSwitch("InternalGoalRun", false);
-				return (engine, vars, error);
-			}*/
-		}
-
-		
 
 		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
 		{
@@ -190,18 +160,7 @@ namespace PLang
 
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);
-			/*
-			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "runtime");
-
-			if (fileSystem.Directory.Exists(eventsPath)) return;
-
-			fileSystem.Directory.CreateDirectory(eventsPath);
-
-			using (MemoryStream ms = new MemoryStream(InternalApps.Runtime))
-			using (ZipArchive archive = new ZipArchive(ms))
-			{
-				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-			}*/
+			
 			return;
 
 		}
@@ -233,7 +192,7 @@ namespace PLang
 				{
 					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
-					var pLanguage = new Executor(container);
+					var pLanguage = new Executor(container, engine.AppContext);
 					await pLanguage.Build(null);
 
 					prParser.ForceLoadAllGoals();
@@ -247,7 +206,7 @@ namespace PLang
 				{
 					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
-					var pLanguage = new Executor(container);
+					var pLanguage = new Executor(container, engine.AppContext);
 					await pLanguage.Build(null);
 
 					prParser.ForceLoadAllGoals();
@@ -315,45 +274,45 @@ namespace PLang
 		{
 			// parse args => dict<string, object>
 			var result = CommandLineParser.Parse(args);
-			var goalInfo = new GoalToCallInfo(result.goalName)
-			{
-				Parameters = result.parameters,
-				Path = $".build{System.IO.Path.DirectorySeparatorChar}Run{System.IO.Path.DirectorySeparatorChar}00. Goal.pr"
-			};
 
-			return await Run2(goalInfo);
+			result.parameters.Add("!system.goalToCall", result.goalName);
+			var goalToCall = new GoalToCallInfo(result.goalName, result.parameters);
+		
+
+			return await Run2(goalToCall);
 		}
+
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run2(GoalToCallInfo goalInfo)
 		{
 			var engine = container.GetInstance<IEngine>();
 			engine.Init(container);
 			
 			var prParser = container.GetInstance<PrParser>();
-			var (goal, error) = prParser.GetGoal(goalInfo);
-			if (error != null) return (null, null, error);
+
+			string runPath = $".build/Run/00. Goal.pr".AdjustPathToOs();
+			var goal = prParser.GetSystemGoals().FirstOrDefault(p => p.RelativePrPath.Equals(runPath, StringComparison.OrdinalIgnoreCase));
+			if (goal == null) return (null, null, new Error("Run goal not found in system folder."));
 
 			var step = (goal!.GoalSteps.Count > 0) ? goal?.GoalSteps[0] : GetDefaultStep();
-			
+
 			if (step.Instruction == null)
 			{
 				step.Instruction = prParser.ParseInstructionFile(step!)!;
 			}
 
-			var msa = container.GetInstance<IMemoryStackAccessor>();
-			var memoryStack = MemoryStack.New(container, engine);
-			msa.Current = memoryStack;
-
-			var context = new PLangContext(memoryStack, engine, ExecutionMode.Console);
-			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
-			contextAccessor.Current = context;
-			context.CallStack = new CallStack();
+			var ms = engine.ContextAccessor.Current.MemoryStack;
+			foreach (var parameter in goalInfo.Parameters) {
+				ms.Put(parameter.Key, parameter.Value);
+			}
 
 			var classInstance = container.GetInstance(typeof(Modules.CallGoalModule.Program)) as BaseProgram;
-			classInstance.Init(container, goal, step, step.Instruction, contextAccessor);
+			classInstance.Init(container, goal, step, step.Instruction, engine.ContextAccessor);
 
 			var task = classInstance.Run();
 			await task;
 			var result = task.Result;
+
+			await engine.KeepAlive();
 
 			return (engine, result.ReturnValue, result.Error);
 		}
@@ -436,22 +395,24 @@ namespace PLang
 		{
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
 
-			this.engine = container.GetInstance<IEngine>();
 
-			
-			var msa = container.GetInstance<IMemoryStackAccessor>();
-			var memoryStack = MemoryStack.New(container, engine);
-			msa.Current = memoryStack;
+			/*
+				this.engine = container.GetInstance<IEngine>();		
+				var msa = container.GetInstance<IMemoryStackAccessor>();
+				var memoryStack = MemoryStack.New(container, engine);
+				msa.Current = memoryStack;
 
-			var context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
-			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
-			contextAccessor.Current = context;
+				var context = new PLangContext(memoryStack, this.engine, ExecutionMode.Console);
+				context.Output = Output.CreateFromAppOutput(engine.AppContext.Output, engine);
 
-			this.engine.Init(container);
+				var contextAccessor = container.GetInstance<IPLangContextAccessor>();
+				contextAccessor.Current = context;
 
-			var goalToRun = LoadArgsToMemoryStack(args, memoryStack);
+				this.engine.Init(container);
+			*/
+			var goalToRun = LoadArgsToMemoryStack(args, engine.Context.MemoryStack);
 
-			(var vars, var error) = await engine.Run(goalToRun, context);
+			(var vars, var error) = await engine.Run(goalToRun, engine.Context);
 			return (engine, vars, error);
 		}
 

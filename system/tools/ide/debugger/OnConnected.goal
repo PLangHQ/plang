@@ -1,0 +1,4 @@
+OnConnected
+/ Called when IDE connects to the debugged app's pipe
+- set %debugActive% = true
+- write out "Debug session connected"

@@ -26,10 +26,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 85,
+      "LineNumber": 87,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d3ebef0c305bec1167630b503c50161f411caac9a3623afb0c30fceda527b4ef",
+      "Hash": "92ba7e77e0ce083284c21a5ec958259b6fe94124a465d0953696b8b06c363bed",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\Builder\\Builder.goal",
       "UserIntent": null
@@ -50,7 +50,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "809b13278af74d6ecf5bdd6102885411e83620b160f387e3ca7c75a4f78e60a0",
+  "Hash": "d49ca2f9cd74736da7c495d29cbf8c87fd035d2b35b8d49bdea15cb7279dc042",
   "IncomingVariablesRequired": {
     "%!goal.IsSetup%": "A boolean value indicating whether the goal is set up or not, which affects the rendering of the template.",
     "%assistant%": "A variable that will hold the rendered template output."

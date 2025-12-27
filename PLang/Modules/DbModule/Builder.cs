@@ -28,6 +28,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection.PortableExecutable;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -84,83 +85,182 @@ namespace PLang.Modules.DbModule
 			(var methodsAndTables, var error) = await GetMethodsAndTables(goalStep, previousBuildError);
 			if (error != null) return (null, error);
 
-			var dataSource = methodsAndTables!.DataSource;
-
-			if (dataSource == null && goalStep.Goal.IsSetup && goalStep.Goal.GoalName.Equals("Setup"))
-			{
-				dataSource = (await dbSettings.GetAllDataSources()).FirstOrDefault(p => p.IsDefault);
-				goalStep.Goal.DataSourceName = dataSource.Name;
-			}
-			/*
-			List<DataSource> dataSources = new();
-			if (methodsAndTables.DataSourceWithTableInfos.Count > 0)
-			{
-				foreach (var dsName in methodsAndTables.DataSourceWithTableInfos.Keys)
-				{
-					if (!string.IsNullOrEmpty(dsName.Name))
-					{
-						(var ds, var error2) = await dbSettings.GetDataSource(dsName.Name, goalStep, false);
-						if (error2 != null) return (null, new BuilderError(error2));
-						if (dataSource != null && dataSource.NameInStep == null && ds?.Name == dataSource.Name)
-						{
-							dataSource = dataSource with { NameInStep = ds.NameInStep };
-						}
-						dataSources.Add(ds);
-					}
-				}
-			}
-			*/
-
+			var dataSource = await ResolveDataSource(methodsAndTables, goalStep);
 			if (dataSource == null)
 			{
-				(dataSource,var error2) = await dbSettings.GetDataSourceOrDefault();
-				if (error2 != null)
+				var (resolvedSource, error2) = await dbSettings.GetDataSourceOrDefault();
+				if (error2 != null) return (null, new BuilderError(error2));
+				dataSource = resolvedSource;
+			}
+
+			string sqlType = dataSource?.TypeFullName ?? "sqlite";
+			string system = BuildSystemMessage(methodsAndTables, dataSource, sqlType);
+			system += AppendSystemDependingOnMethod(methodsAndTables, dataSource);
+			system += MethodsAndTablesForSystem(methodsAndTables, dataSource, sqlType, system);
+
+			AppendToSystemCommand(system);
+			var buildResult = await base.BuildWithClassDescription<DbGenericFunction>(goalStep, methodsAndTables.ClassDescription, previousBuildError);
+			if (buildResult.BuilderError != null) return buildResult;
+			return await ValidateAfterBuild(goalStep, methodsAndTables, dataSource, buildResult);
+		}
+
+
+		private async Task<DataSource?> ResolveDataSource(MethodsAndTables methodsAndTables, GoalStep goalStep)
+		{
+			var dataSource = methodsAndTables.DataSource;
+
+			if (dataSource == null &&
+				goalStep.Goal.IsSetup &&
+				goalStep.Goal.GoalName.Equals("Setup"))
+			{
+				dataSource = (await dbSettings.GetAllDataSources())
+					.FirstOrDefault(p => p.IsDefault);
+
+				if (dataSource != null)
 				{
-					return (null, new BuilderError(error2));
+					goalStep.Goal.DataSourceName = dataSource.Name;
 				}
 			}
 
-			string sqlType = "sqlite";
-			string system = "";
-			if (dataSource != null)
-			{
-				sqlType = dataSource.TypeFullName;
-			}
+			return dataSource;
+		}
+
+		private string BuildSystemMessage(MethodsAndTables methodsAndTables, DataSource dataSource, string sqlType)
+		{
+			var system = new StringBuilder();
 
 			if (methodsAndTables.Tables.Count > 0)
 			{
-				system += @$"
-<dataSourceAndTableInfos>";
+				system.AppendLine("<dataSourceAndTableInfos>");
+
 				foreach (var table in methodsAndTables.Tables)
 				{
-					if (table.DataSource == null) table.DataSource = dataSource;
+					table.DataSource ??= dataSource;
+					if (table.DataSource == null) continue;
 
-					system += $@"
-DataSource name: {table.DataSource.NameInStep}
-Table name: {table.Name}
-Columns: {JsonConvert.SerializeObject(table.Columns)}
-----
-";
+					system.AppendLine($"DataSource name: {table.DataSource.NameInStep}");
+					system.AppendLine($"Table name: {table.Name}");
+					system.AppendLine($"Columns: {JsonConvert.SerializeObject(table.Columns)}");
+					system.AppendLine("----");
 				}
-				system += "</dataSourceAndTableInfos>";
+
+				system.AppendLine("</dataSourceAndTableInfos>");
+			}
+			string dataSourceAvailable = "";
+			if (dataSource != null)
+			{
+				dataSourceAvailable = $"- Datasource(s) available: {dataSource.NameInStep}";
 			}
 
-			system += @$"
-
+			system.AppendLine($@"
 Additional json Response explaination:
-- Datasource(s) to available: {dataSource.NameInStep}
 - TableNames: List of tables defined in sql statement
 - AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'
 - for `IN (@parameter)` statements => The parameter type should be System.Array
+{dataSourceAvailable}
 
 Rules:
 - You MUST generate valid sql statement for {sqlType}
 - Number(int => long) MUST be type System.Int64 unless defined by user.
 - Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime
-- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.";
+- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.");
 
-			system += AppendSystemDependingOnMethod(methodsAndTables, dataSource);
-			
+			return system.ToString();
+		}
+		private string AppendSystemDependingOnMethod(MethodsAndTables methodsAndTables, DataSource dataSource)
+		{
+			string system = "";
+			if (methodsAndTables.ContainsMethod("insert"))
+			{
+				system += @"\n- when user defines to write into come sort of %id%, then choose the method which select id of row back
+- ignore on duplicate should set validateAffectedRows=false";
+				if (dataSource?.KeepHistory == true)
+				{
+					system += "\n- YOU MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response AND modify the sql to include that column and parameter";
+					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
+					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
+					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";
+				}
+				else
+				{
+					system += "\n- When user want to do InsertAndSelectIdOfInsertedRow, include the select statment to get the id of inserted row";
+				}
+			}
+			else
+			{
+				if (!methodsAndTables.ContainsMethod("CreateTable"))
+				{
+					system += @"
+- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. 
+- Do not assume or include all columns from the table schema unless the user requests it. ";
+				}
+			}
+			if (methodsAndTables.ContainsMethod("CreateTable"))
+			{
+				string autoIncremental = (dataSource.KeepHistory) ? "(NO auto increment)" : "auto incremental";
+				system += $"\n- On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long";
+			}
+			if (methodsAndTables.ContainsMethod("update") || methodsAndTables.ContainsMethod("delete"))
+			{
+				system += $"\n- When sql statement is missing WHERE statement, give a Warning";
+			}
+			if (methodsAndTables.ContainsMethod("select"))
+			{
+				system += @$"
+- when user defines select * from XXX, keep the * in sql
+- You MUST generate ReturnValues for the select statement, see <select_example>
+- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
+- when user defines, write to %variable%, then result is an object
+
+<select_example>
+`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
+`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
+`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders
+`select id as %productId% from products` => sql=""select id as productId from products"", ReturnValues => VariableName: productId
+<select_example>
+";
+
+
+			}
+
+			if (methodsAndTables.DataSource?.AttachedDbs.Count > 0)
+			{
+				system += $@"
+sql statement contains multiple datasource. The first datasource is referenced as 'main' in the sql statement and MUST contain the original name({methodsAndTables.DataSource.NameInStep}) in dataSourceNames
+<select_example>
+`select main.title, analytics.hits from main.products p join analytics.hits h on p.id=h.productId` => main MUST contain the original datasource name in dataSourceNames but MUST keep main in sql statement 
+</select_example>
+
+DO NOT CHANGE main. prefix
+";
+			}
+
+			if (methodsAndTables.ContainsMethod("ExecuteDynamicSql"))
+			{
+				system += @"
+- for dynamic sql, keep dynamic table and columns names in sql statement, e.g. select * from %type%Options, then keep %type% for in the sql statement
+";
+			}
+
+			if (methodsAndTables.ContainsMethod("SelectOneRow"))
+			{
+				system += $@"
+- when user defines select * from XXX, keep the * in sql
+- select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'
+- user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid
+- Returning 1 mean user want only one row to be returned (limit 1)
+
+<select_example>
+`select id from users where id=%id%` => ReturnValues => VariableName:  id
+`select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice
+`select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
+<select_example>
+";
+			}
+			return system;
+		}
+		private static string MethodsAndTablesForSystem(MethodsAndTables methodsAndTables, DataSource? dataSource, string sqlType, string system)
+		{
 			if (methodsAndTables.Tables.Count > 0)
 			{
 				system += $@"
@@ -206,11 +306,11 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 				}
 			}
 
+			return system;
+		}
 
-			AppendToSystemCommand(system);
-			var buildResult = await base.BuildWithClassDescription<DbGenericFunction>(goalStep, methodsAndTables.ClassDescription, previousBuildError);
-			if (buildResult.BuilderError != null) return buildResult;
-
+		private async Task<(Instruction?, IBuilderError?)> ValidateAfterBuild(GoalStep goalStep, MethodsAndTables methodsAndTables, DataSource? dataSource, (Instruction? Instruction, IBuilderError? BuilderError) buildResult)
+		{
 			var gf = buildResult.Instruction.Function as DbGenericFunction;
 
 			if (gf == null || gf.Name == "N/A")
@@ -308,110 +408,12 @@ Use <dataSourceAndTableInfos> to construct the valid sql
 					}
 				}
 			}
-			/*
-			var parameters = gf.GetParameter<List<ParameterInfo>>("sqlParameters");
 
-			if (parameters != null && parameters.Count > 0)
-			{
-				return await ValidateSqlAndParameters(goalStep, insertAppend, buildResult.Instruction);
-			}
-			*/
 
 			return buildResult;
 		}
 
-		private string AppendSystemDependingOnMethod(MethodsAndTables methodsAndTables, DataSource dataSource)
-		{
-			string system = "";
-			if (methodsAndTables.ContainsMethod("insert"))
-			{
-				system += @"\n- when user defines to write into come sort of %id%, then choose the method which select id of row back
-- ignore on duplicate should set validateAffectedRows=false";
-				if (dataSource?.KeepHistory == true)
-				{
-					system += "\n- YOU MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response AND modify the sql to include that column and parameter";
-					system += "\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.";
-					system += "\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted";
-					system += "\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement";
-				}
-				else
-				{
-					system += "\n- When user want to do InsertAndSelectIdOfInsertedRow, include the select statment to get the id of inserted row";
-				}
-			}
-			else
-			{
-				if (!methodsAndTables.ContainsMethod("CreateTable"))
-				{
-					system += @"
-- When generating SQL statements, only include columns that are explicitly specified by the user in their intent or provided variable structure. 
-- Do not assume or include all columns from the table schema unless the user requests it. ";
-				}
-			}
-			if (methodsAndTables.ContainsMethod("CreateTable"))
-			{
-				string autoIncremental = (dataSource.KeepHistory) ? "(NO auto increment)" : "auto incremental";
-				system += $"\n- On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long";
-			}
-			if (methodsAndTables.ContainsMethod("update") || methodsAndTables.ContainsMethod("delete"))
-			{
-				system += $"\n- When sql statement is missing WHERE statement, give a Warning";
-			}
-			if (methodsAndTables.ContainsMethod("select"))
-			{
-				system += @$"
-- when user defines select * from XXX, keep the * in sql
-- You MUST generate ReturnValues for the select statement, see <select_example>
-- when user defines to write the result into a %variable%, then ReturnValues is only 1 item.
-- when user defines, write to %variable%, then result is an object
 
-<select_example>
-`select * from address where id=%id%, write to %address%` => ReturnValues => VariableName: address
-`select name, address, zip from users where id=%id%, write to %user%` => ReturnValues => VariableName: user
-`select count(*) as totalCount, sum(amount) as totalAmount, zip from orders where id=%id%, write to %orders%` => ReturnValues => VariableName: orders
-`select id as %productId% from products` => sql=""select id as productId from products"", ReturnValues => VariableName: productId
-<select_example>
-";
-
-
-			}
-
-			if (methodsAndTables.DataSource?.AttachedDbs.Count > 0)
-			{
-				system += $@"
-sql statement contains multiple datasource. The first datasource is referenced as 'main' in the sql statement and MUST contain the original name({methodsAndTables.DataSource.NameInStep}) in dataSourceNames
-<select_example>
-`select main.title, analytics.hits from main.products p join analytics.hits h on p.id=h.productId` => main MUST contain the original datasource name in dataSourceNames but MUST keep main in sql statement 
-</select_example>
-
-DO NOT CHANGE main. prefix
-";
-			}
-
-			if (methodsAndTables.ContainsMethod("ExecuteDynamicSql"))
-			{
-				system += @"
-- for dynamic sql, keep dynamic table and columns names in sql statement, e.g. select * from %type%Options, then keep %type% for in the sql statement
-";
-			}
-
-			if (methodsAndTables.ContainsMethod("SelectOneRow"))
-			{
-				system += $@"
-- when user defines select * from XXX, keep the * in sql
-- select statement that retrieves columns and does not write the result into a variable, then each column selected MUST be in ReturnValues where the name of the column is the name of the variable. e.g. `select id from products` => ReturnValues: 'id'
-- user might define his variable in the select statement, e.g. `select id as %articleId% from article where id=%id%`, the intent is to write into %articleId%, make sure to adjust the sql to be valid
-- Returning 1 mean user want only one row to be returned (limit 1)
-
-<select_example>
-`select id from users where id=%id%` => ReturnValues => VariableName:  id
-`select price as selectedPrice from products where id=%id%` => ReturnValues => VariableName: selectedPrice
-`select postcode as %zip% from address where id=%id%` => ReturnValues => VariableName: zip
-<select_example>
-";
-			}
-			return system;
-		}
 
 		[Description("DataSource Name can contain variables, e.g. /user/%user.id%, then IsDynamic=true or it can be something string such as 'data', 'analytics', etc. then IsDynamic=false")]
 		public record DataSourceName(string Name, bool IsDynamic);

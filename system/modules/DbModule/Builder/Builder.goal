@@ -10,6 +10,8 @@ Builder
 ExtractStepInfo
 / First LLM call - extract datasources and tables from step (lightweight, no schema needed)
 - get all datasources, write to %dataSources%
+- if %dataSources.count% == 0 and %goal.IsSetup% is false then
+    - throw error "You must define data source first. Create Setup.goal file with create table statement or create data source.", key: "DataSourceMissing" 
 - get current datasource, write to %currentDataSource%
 - render template llm/extractStepInfo.llm, write to %extractPrompt%
 - [llm] system: %extractPrompt%

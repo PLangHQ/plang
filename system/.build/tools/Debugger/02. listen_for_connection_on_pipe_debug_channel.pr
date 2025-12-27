@@ -1,0 +1,164 @@
+{
+  "Text": "listen for connection on pipe 'plang-debug-%!system.debug%', channel: 'debugger', on message call HandleDebugMessage, on connect call DebugClientConnected",
+  "ModuleType": "PLang.Modules.WebSocketModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to set up a listener on a named pipe for debug connections, specifying event handlers for incoming messages and connections. The Connect method from PLang.Modules.WebSocketModule.Program is suitable for this task as it allows connecting to a URL (which can be a named pipe) and specifying event handlers for onMessage and onConnected.",
+    "Name": "Connect",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "url",
+        "Value": "pipe://plang-debug-%!system.debug%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "name",
+        "Value": "debugger"
+      },
+      {
+        "Type": "System.Collections.Generic.Dictionary`2[System.String,System.Object]",
+        "Name": "headers",
+        "Value": null
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "onMessage",
+        "Value": {
+          "Path": ".build\\tools\\Debugger\\HandleDebugMessage\\00. Goal.pr",
+          "Name": "HandleDebugMessage",
+          "Parameters": {},
+          "IsAsync": true,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
+        }
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "onConnected",
+        "Value": {
+          "Path": ".build\\tools\\Debugger\\DebugClientConnected\\00. Goal.pr",
+          "Name": "DebugClientConnected",
+          "Parameters": {},
+          "IsAsync": true,
+          "WaitBeforeExecutingInMs": 0,
+          "AfterExecution": null
+        }
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "onClose",
+        "Value": null
+      },
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "onError",
+        "Value": null
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "bufferSize",
+        "Value": 8192
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "url": {
+        "Name": "url",
+        "FullTypeName": "System.String"
+      },
+      "name": {
+        "Name": "name",
+        "FullTypeName": "System.String"
+      },
+      "headers": {
+        "Name": "headers",
+        "FullTypeName": "System.Collections.Generic.Dictionary`2[System.String,System.Object]"
+      },
+      "onMessage": {
+        "Name": "onMessage",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "onConnected": {
+        "Name": "onConnected",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "onClose": {
+        "Name": "onClose",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "onError": {
+        "Name": "onError",
+        "FullTypeName": "PLang.Models.GoalToCallInfo"
+      },
+      "bufferSize": {
+        "Name": "bufferSize",
+        "FullTypeName": "System.Int32"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "1.0.0.0",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\\%variable\\% is escaped variable, leave it as is, it is text not a variable.\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions. ONLY function name, e.g. \"Save\". if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String, \"Value\" : System.Object = null}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nSet up a listener on a named pipe for debug connections and handle incoming messages and connections\n## functions available starts ##\r\n{\"Name\":\"PLang.Modules.WebSocketModule.Program\",\"Methods\":[{\"MethodName\":\"Connect\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"headers\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? headers\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onMessage\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onMessage\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onConnected\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnected\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onClose\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onClose\"},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onError\",\"Description\":\"see PLang.Models.GoalToCallInfo information in SupportingObjects)\",\"IsRequired\":false,\"ParameterSignature\":\"// see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onError\"},{\"Type\":\"System.Int32\",\"Name\":\"bufferSize\",\"DefaultValue\":8192,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\",\"ReturnValueSignature\":\"System.Object\"},\"Examples\":[],\"MethodSignature\":\"Connect(System.String url, System.String? name, System.Collections.Generic.Dictionary`2[System.String,System.Object]? headers, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onMessage, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onConnected, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onClose, // see PLang.Models.GoalToCallInfo information in SupportingObjects)\\r\\nPLang.Models.GoalToCallInfo? onError, System.Int32? bufferSize = 8192) : System.Object\"},{\"MethodName\":\"Send\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"message\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false}],\"Examples\":[],\"MethodSignature\":\"Send(System.Object message, System.String? name) : void\"}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"onMessage\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"IsRequired\":false,\"ParameterSignature\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\"},{\"Type\":\"System.Boolean\",\"Name\":\"IsAsync\",\"Description\":\"Doesn't wait for goal response(run and forget, dont wait)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WaitBeforeExecutingInMs\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"AfterExecution\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo()\\nUsed in methods: \"}],\"IsRequired\":false,\"ParameterSignature\":\"// Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo(System.String Name\\r\\n, System.Collections.Generic.Dictionary`2[System.String,System.Object]? Parameters\\r\\n, // Doesn't wait for goal response(run and forget, dont wait)\\r\\nSystem.Boolean IsAsync\\r\\n, System.Int32 WaitBeforeExecutingInMs\\r\\n, // Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\\r\\nPLang.Models.GoalToCallInfo? AfterExecution\\r\\n)\\nUsed in methods: Connect, Connect, Connect, Connect\"}],\"SupportingEnums\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\n!system.debug (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "listen for connection on pipe 'plang-debug-%!system.debug%', channel: 'debugger', on message call HandleDebugMessage, on connect call DebugClientConnected"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Previous LLM request caused following <error>, try to fix it.\r\n<error>\nError Message: \t- url is string, the property Value cannot start and end with quote(\").\n\t- name is string, the property Value cannot start and end with quote(\").\n\n\n\t- FixSuggestion:\t- \n\t- \n\nError Message: url is string, the property Value cannot start and end with quote(\").\nError Message: name is string, the property Value cannot start and end with quote(\").\n</error>\r\n\r\nThis is the previous LLM response: \r\n\"Name\": is the name of the method selected\r\n\r\n```json\r\n{\r\n  \"Reasoning\": \"The user wants to listen for connections on a named pipe with a specific channel and handle events for messages and connections. The Connect method from PLang.Modules.WebSocketModule.Program supports connecting to a URL (which can be a named pipe), specifying event handlers for onMessage and onConnected, which matches the user's intent.\",\r\n  \"Name\": \"Connect\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"url\",\r\n      \"Value\": \"\\\"pipe://plang-debug-%!system.debug%\\\"\"\r\n    },\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"name\",\r\n      \"Value\": \"\\\"debugger\\\"\"\r\n    },\r\n    {\r\n      \"Type\": \"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\r\n      \"Name\": \"headers\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\r\n      \"Name\": \"onMessage\",\r\n      \"Value\": {\r\n        \"Path\": \".build\\\\tools\\\\Debugger\\\\HandleDebugMessage\\\\00. Goal.pr\",\r\n        \"Name\": \"HandleDebugMessage\",\r\n        \"Parameters\": {},\r\n        \"IsAsync\": true,\r\n        \"WaitBeforeExecutingInMs\": 0,\r\n        \"AfterExecution\": null\r\n      }\r\n    },\r\n    {\r\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\r\n      \"Name\": \"onConnected\",\r\n      \"Value\": {\r\n        \"Path\": \".build\\\\tools\\\\Debugger\\\\DebugClientConnected\\\\00. Goal.pr\",\r\n        \"Name\": \"DebugClientConnected\",\r\n        \"Parameters\": {},\r\n        \"IsAsync\": true,\r\n        \"WaitBeforeExecutingInMs\": 0,\r\n        \"AfterExecution\": null\r\n      }\r\n    },\r\n    {\r\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\r\n      \"Name\": \"onClose\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\r\n      \"Name\": \"onError\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"System.Int32\",\r\n      \"Name\": \"bufferSize\",\r\n      \"Value\": 8192\r\n    }\r\n  ],\r\n  \"ReturnValues\": null\r\n}\r\n```\r\n"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "CacheKey": "ecd348d9abb3240d231101079d5d6ab3833025f233eba3cd95def4b459e2e035",
+      "RawResponse": "```json\n{\n  \"Reasoning\": \"The user wants to set up a listener on a named pipe for debug connections, specifying event handlers for incoming messages and connections. The Connect method from PLang.Modules.WebSocketModule.Program is suitable for this task as it allows connecting to a URL (which can be a named pipe) and specifying event handlers for onMessage and onConnected.\",\n  \"Name\": \"Connect\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"url\",\n      \"Value\": \"pipe://plang-debug-%!system.debug%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"name\",\n      \"Value\": \"debugger\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\n      \"Name\": \"headers\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"onMessage\",\n      \"Value\": {\n        \"Name\": \"HandleDebugMessage\",\n        \"Parameters\": {},\n        \"IsAsync\": true,\n        \"WaitBeforeExecutingInMs\": 0,\n        \"AfterExecution\": null\n      }\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"onConnected\",\n      \"Value\": {\n        \"Name\": \"DebugClientConnected\",\n        \"Parameters\": {},\n        \"IsAsync\": true,\n        \"WaitBeforeExecutingInMs\": 0,\n        \"AfterExecution\": null\n      }\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"onClose\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"onError\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"bufferSize\",\n      \"Value\": 8192\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
+    }
+  ]
+}

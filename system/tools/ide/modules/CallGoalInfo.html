@@ -1,0 +1,6 @@
+<h3>{{ goalToCallPr.GoalName }} - <a class="uk-text-small" href="#" onclick="openFile('{{ goalToCallPr.RelativeGoalPath  | string.replace "\\" "/" }}');">Open in editor</a></h3>
+
+<pre style="max-height: 150px;overflow-y: auto;">
+{{ goalToCallPr.GoalName }}
+{{ for step in goalToCallPr.GoalSteps }}- {{ step.Text | html.escape }}
+{{ end }}</pre>

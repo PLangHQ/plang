@@ -1,0 +1,2 @@
+LineSelected
+- write out "filePath: %filePath% | lineNumber: %lineNumber%"

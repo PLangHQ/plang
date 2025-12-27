@@ -1,0 +1,5 @@
+SetBreakpoints
+/ Update breakpoints during debug session
+/ Parameters: breakpoints (array of PrPaths)
+- if %debugActive% is not true, return
+- write out { "command": "setBreakpoints", "breakpoints": %breakpoints% }, channel: 'debug'

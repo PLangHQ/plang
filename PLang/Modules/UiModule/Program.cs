@@ -113,8 +113,7 @@ namespace PLang.Modules.UiModule
 		{
 			var executeMessage = new ExecuteMessage("dialogCommand", dialogCommand, Channel: dialogCommand.Channel, Actor: dialogCommand.Actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
 
-			var sink = context.GetSink(dialogCommand.Actor);
-			return await sink.SendAsync(executeMessage);
+			return await context.Output.SendAsync(executeMessage);
 		}
 		public enum UiFacet
 		{
@@ -137,8 +136,7 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 
 			var executeMessage = new ExecuteMessage("uiInstruction", param, Channel: channel, Actor: actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
 
-			var sink = context.GetSink(actor);
-			return await sink.SendAsync(executeMessage);
+			return await context.Output.SendAsync(executeMessage);
 		}
 
 		public record UiRemove(string Selector);
@@ -149,16 +147,13 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			param.Add("instructions", domRemoves);
 
 			var executeMessage = new ExecuteMessage("uiRemove", param, Channel: channel, Actor: actor, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
-
-			var sink = context.GetSink(actor);
-			return await sink.SendAsync(executeMessage);
+			return await context.Output.SendAsync(executeMessage);
 
 		}
 
 		public async Task<IError?> ExecuteJavascript(ExecuteMessage executeMessage)
 		{
-			var sink = context.GetSink(executeMessage.Actor);
-			return await sink.SendAsync(executeMessage);
+			return await context.Output.SendAsync(executeMessage);
 		}
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)
@@ -265,7 +260,7 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 			(var content, var error) = await templateEngine.RenderContent(html, variables: Parameters);
 			if (error != null) return (content, error);
 
-			var sink = context.GetSink(options.RenderMessage.Actor);
+			var sink = context.Output.GetActor(options.RenderMessage.Actor).GetChannel(options.RenderMessage.Channel).Sink;
 			if (sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
 			{
 				var layoutOptions = GetLayoutOptions();

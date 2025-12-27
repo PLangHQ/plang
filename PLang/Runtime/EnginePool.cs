@@ -1,8 +1,12 @@
 ﻿using LightInject;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors.Handlers;
 using PLang.Interfaces;
+using PLang.SafeFileSystem;
+using PLang.Services.OutputStream;
+using PLang.Services.SettingsService;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Xml.Linq;
@@ -148,6 +152,7 @@ namespace PLang.Runtime
 			var ca = container.GetInstance<IPLangContextAccessor>();
 			ca.Current = context;
 
+
 		}
 
 
@@ -155,8 +160,7 @@ namespace PLang.Runtime
 		{
 			var serviceContainer = new ServiceContainer();
 
-			serviceContainer.RegisterForPLang(rootPath, "/",
-								container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), rootEngine);
+			serviceContainer.RegisterForPLang(rootPath, "/", rootEngine);
 
 
 			var engine = serviceContainer.GetInstance<IEngine>();
@@ -167,10 +171,88 @@ namespace PLang.Runtime
 			engine.Init(serviceContainer);
 			engine.SetParentEngine(rootEngine);
 
-			engine.SystemSink = rootEngine.SystemSink;
-			engine.UserSink = rootEngine.UserSink;
+			
+			engine.AppContext = rootEngine.AppContext;
 
 			return engine;
+		}
+
+		public IEngine RentAppEngine(string appRootPath, IEngine parentEngine, bool waitForExecution)
+		{
+			var rootEngine = GetRootEngine();
+			var enginePool = rootEngine.EnginePool;
+			var pool = enginePool.Pool;
+
+			IEngine engine;
+			if (pool.TryPop(out var pooledEngine))
+			{
+				pooledEngine.IsInPool = false;
+				if (!enginePool.engineIds.TryRemove(pooledEngine.Id, out _))
+				{
+					throw new Exception($"Could not remove engineId ({pooledEngine.Id}) when renting engine");
+				}
+				engine = pooledEngine;
+			}
+			else
+			{
+				engine = CreateEngine(appRootPath, rootEngine.Container);
+			}
+
+			InitAppPerRequest(engine.Container, engine, parentEngine, appRootPath, waitForExecution);
+
+			return engine;
+		}
+
+		public void ReturnAppEngine(IEngine engine)
+		{
+			Return(engine, true);
+		}
+
+		private void InitAppPerRequest(IServiceContainer container, IEngine engine, IEngine parentEngine, string appRootPath, bool waitForExecution)
+		{
+			engine.FileSystem.SetRoot(appRootPath);
+			engine.FileSystem.ClearFileAccess();
+			engine.FileSystem.AddFileAccess(new FileAccessControl(engine.Name, appRootPath, null, engine.FileSystem.Id));
+
+			// Inherit parent's file accesses with new fileSystem.Id
+			foreach (var fileAccess in parentEngine.FileSystem.GetFileAccesses())
+			{
+				engine.FileSystem.AddFileAccess(new FileAccessControl(
+					fileAccess.appName,
+					fileAccess.path,
+					fileAccess.expires,
+					engine.FileSystem.Id
+				));
+			}
+
+			// Fresh memory stack
+			var msa = container.GetInstance<IMemoryStackAccessor>();
+			var memoryStack = MemoryStack.New(container, engine);
+			msa.Current = memoryStack;
+
+			// New context, inherit selectively from parent
+			var parentContext = container.GetInstance<IPLangContextAccessor>().Current;
+			var context = new PLangContext(memoryStack, engine, ExecutionMode.Console);
+			context.Output = parentContext.Output;
+			context.Items = parentContext.Items;
+
+			// CallStack: share if waiting, clone if async
+			if (waitForExecution)
+			{
+				context.CallStack = parentContext.CallStack;
+			}
+			else
+			{
+				context.CallStack = parentContext.CallStack.Clone();
+			}
+
+			var ca = container.GetInstance<IPLangContextAccessor>();
+			ca.Current = context;
+
+			// Create new instances with correct fileSystem (which has new root)
+			var settingsRepositoryFactory = engine.Container.GetInstance<ISettingsRepositoryFactory>();
+			engine.Settings = new Settings(engine.AppContext, settingsRepositoryFactory, engine.FileSystem);
+			engine.PrParser = new PrParser(engine.FileSystem, engine.Container.GetInstance<ILogger>());
 		}
 	}
 

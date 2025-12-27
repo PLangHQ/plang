@@ -311,7 +311,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-15T15:31:25.311139+00:00",
       "WaitForExecution": true,
@@ -325,10 +325,10 @@
       "LineNumber": 61,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d2c86bfb56313b5a483027a55ded0e04927a279e1fb372f007aebc426fab252d",
+      "Hash": "feb9c9a4a8dceda3e4e096f1cd593a220ae92edbd8669f67b0ad1e88dec40210",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Output the content of the variable %llmStep!llm% to the user or output stream"
+      "UserIntent": null
     },
     {
       "Text": "call goal ValidateLlmStep",
@@ -342,7 +342,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-15T15:31:25.3682691+00:00",
       "WaitForExecution": true,
@@ -356,10 +356,10 @@
       "LineNumber": 62,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "db30510b75581c6479aa57b46e67afb425daa44cae35ced2a0a285122c28f3b5",
+      "Hash": "854e3929ebb907ec66303f3b6c53662537969e0a5da7c81025fda3563de7a462",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Invoke the execution of a predefined goal named ValidateLlmStep"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -377,7 +377,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9077497c3c2283809cc07296b70d68ade3e872396ec8c22576c30d8f2c525021",
+  "Hash": "35885acb619ef942e4f249ce63de2f1e1779eb5a074dff57b925abe63e8d2d35",
   "IncomingVariablesRequired": {
     "%step.Text%": "The text description of the step being analyzed.",
     "%step.Module%": "The module from which the class description is to be retrieved."

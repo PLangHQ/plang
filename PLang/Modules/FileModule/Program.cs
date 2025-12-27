@@ -42,10 +42,9 @@ namespace PLang.Modules.FileModule
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly IFileAccessHandler fileAccessHandler;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler, IErrorSystemHandlerFactory errorSystemHandlerFactory) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -53,7 +52,6 @@ namespace PLang.Modules.FileModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.fileAccessHandler = fileAccessHandler;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
@@ -347,10 +345,10 @@ namespace PLang.Modules.FileModule
 
 			return list;
 		}
-		
 
 
-		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false, 
+
+		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false,
 			CsvOptions? csvOptions = null, bool createDirectoryAutomatically = true)
 		{
 			if (csvOptions == null) csvOptions = new();
@@ -371,19 +369,21 @@ namespace PLang.Modules.FileModule
 					if (csvOptions.Encoding == null)
 					{
 						csvOptions = csvOptions with { Encoding = enc.EncodingName };
-					} else if (csvOptions.Encoding != enc.EncodingName)
+					}
+					else if (csvOptions.Encoding != enc.EncodingName)
 					{
 						var encodingTo = Encoding.GetEncoding(csvOptions.Encoding);
 						var bytes = encodingTo.GetBytes(ov.Value.ToString());
 						variableToWriteToCsv = encodingTo.GetString(bytes);
 					}
 				}
-			} else
+			}
+			else
 			{
 				variableToWriteToCsv = memoryStack.LoadVariables(variableToWriteToCsv);
 			}
 
-				var absolutePath = GetPath(path);
+			var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
 			{
 				var dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
@@ -670,7 +670,7 @@ namespace PLang.Modules.FileModule
 			xmlDoc.LoadXml(Regex.Replace(result.Content.ToString(), "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
 
 			string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-			
+
 			return (JsonConvert.DeserializeObject(jsonString), null);
 		}
 
@@ -737,7 +737,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: FileHelper.GetEncoding(encoding));
 		}
 
-		
+
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
@@ -1004,11 +1004,11 @@ namespace PLang.Modules.FileModule
 		}
 
 		private static readonly object _lock = new object();
-		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCallInfo goalToCall, List<string>? excludeFiles,
+		private async Task<IError?> WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCallInfo goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName)
 		{
-			if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
+			if (excludeFiles != null && excludeFiles.Contains(e.Name)) return null;
 
 			lock (_lock)
 			{
@@ -1019,29 +1019,27 @@ namespace PLang.Modules.FileModule
 				parameters.Add(senderVariableName, sender);
 
 				goalToCall.Parameters.AddOrReplaceDict(parameters);
-				try
-				{
-					var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
-					task.Wait();
 
-					var (engine2, vars, error) = task.Result;
-					if (error != null)
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
+				task.Wait();
+
+				var (engine2, vars, error) = task.Result;
+				if (error != null)
+				{
+					return error;
+					/*
+					var errorTask = errorSystemHandlerFactory.CreateHandler().Handle(error);
+					errorTask.Wait();
+
+					var result = errorTask.Result;
+					if (result.Item2 != null)
 					{
-						var errorTask = errorSystemHandlerFactory.CreateHandler().Handle(error);
-						errorTask.Wait();
+						Console.WriteLine(error.ToString());
+					}*/
+				}
 
-						var result = errorTask.Result;
-						if (result.Item2 != null)
-						{
-							Console.WriteLine(error.ToString());
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					logger.LogError(ex, goalStep.Text);
-				}
 			}
+			return null;
 		}
 
 		[Description("Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder.")]

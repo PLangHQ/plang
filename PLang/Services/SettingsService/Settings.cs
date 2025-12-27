@@ -11,14 +11,14 @@ namespace PLang.Services.SettingsService
 
 	public class Settings : ISettings
     {
-		private readonly IEngine engine;
+		private readonly string environment;
 		private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
         private readonly IPLangFileSystem fileSystem;
 
 
-        public Settings(IEngine engine, ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem)
+        public Settings(PLangAppContext appContext, ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem)
         {
-			this.engine = engine;
+			this.environment = appContext.Environment;
 			this.settingsRepositoryFactory = settingsRepositoryFactory;
             this.fileSystem = fileSystem;
         }
@@ -148,9 +148,9 @@ namespace PLang.Services.SettingsService
 		private string GetKey(string key)
 		{
 			key = key.Replace("%", "");
-			if (key.Contains(engine.Environment + ".")) return key;
+			if (key.Contains(environment + ".")) return key;
 
-			return engine.Environment + "." + key;
+			return environment + "." + key;
 		}
 
 		public void Remove<T>(Type callingType, string? key = null)

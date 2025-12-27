@@ -1,10 +1,13 @@
-﻿using PLang.Utils;
+﻿using PLang.Services.OutputStream;
+using PLang.Utils;
 using System.Collections.Concurrent;
 
 namespace PLang.Interfaces
 {
 	public class PLangAppContext : ConcurrentDictionary<string, object?>
 	{
+		public Output Output { get; set; }
+		public string? Environment { get; set; }
 
 		public new object? this[string key]
 		{

@@ -111,13 +111,13 @@ namespace PLang.Utils
 				//prParser.ForceLoadAllGoals();
 			}
 			try
-			{			
-
-				(var engine, var vars, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
+			{
+				throw new NotImplementedException();
+				/*(var engine, var vars, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{
 					throw new Exception(error.ToString());
-				}
+				}*/
 			}
 			catch (Exception ex)
 			{

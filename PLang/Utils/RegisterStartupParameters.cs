@@ -1,5 +1,6 @@
 ﻿using Castle.Core.Logging;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using System;
 using System.Diagnostics;
 
@@ -8,20 +9,20 @@ namespace PLang.Utils
 	public class RegisterStartupParameters
 	{
 
-		public static (bool builder, bool runtime) Register(string[] args)
+		public static (bool builder, bool runtime, PLangAppContext appContext) Register(string[] args)
 		{
+			PLangAppContext appContext = new();
 			AppContext.SetData(ReservedKeywords.ParametersAtAppStart, args.Where(p => p.StartsWith("--")).ToArray());
 			if (args.FirstOrDefault(p => p == "--debug") != null)
 			{
 				AppContext.SetSwitch(ReservedKeywords.Debug, true);
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}
-			if (args.FirstOrDefault(p => p == "--env") != null)
-			{
-				AppContext.SetSwitch(ReservedKeywords.Environment, true);
-			}
 
-			var csdebug = args.FirstOrDefault(p => p == "--csdebug") != null;
+			appContext.Environment = args.FirstOrDefault(p => p.Equals("!system.environment", StringComparison.OrdinalIgnoreCase)) ?? "production";
+			
+
+			var csdebug = (args.FirstOrDefault(p => p == "--csdebug") ?? args.FirstOrDefault(p => p.Equals("!system.csdebug", StringComparison.OrdinalIgnoreCase))) != null;
 			if (csdebug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
@@ -80,7 +81,7 @@ namespace PLang.Utils
 				AppContext.SetData("llmservice", serviceName);
 			}
 
-			return (builder, runtime);
+			return (builder, runtime, appContext);
 		}
 	}
 }

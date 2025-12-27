@@ -9,8 +9,7 @@ namespace PLang.Container
 {
     public interface IServiceContainerFactory
     {
-        ServiceContainer CreateContainer(PLangAppContext context, string path, string goalPath, 
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory);
+        ServiceContainer CreateContainer(PLangAppContext context, string path, string goalPath);
     }
 	/*
     public class ServiceContainerFactory : IServiceContainerFactory

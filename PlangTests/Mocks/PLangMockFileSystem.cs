@@ -78,5 +78,15 @@ namespace PLangTests.Mocks
 		{
 			throw new NotImplementedException();
 		}
+
+		public List<FileAccessControl> GetFileAccesses()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void SetRoot(string path)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

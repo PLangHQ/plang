@@ -1,0 +1,21 @@
+
+<h3>🔴 Oops</h3>
+<p>There was an error rendering the IDE. This should not happen, please report to <a href="https://github.com/PLangHQ/plang/issues" target="_blank">https://github.com/PLangHQ/plang/issues</a>.</p>
+
+<p>Please include the Error details in your issue</p>
+
+<strong>Error message</strong>
+<p>
+    <pre>
+{{ this["!error"].Message | html.escape }}
+    </pre>
+</p>
+
+<ul uk-accordion class=" uk-overflow-auto uk-width-1-1">
+    <li>
+        <a class="uk-accordion-title" href="#">View Error details</a>
+        <div class="uk-accordion-content uk-overflow-auto uk-width-1-1">
+            <pre>{{ this["!error"] | html.escape }}</pre>
+        </div>
+    </li>
+</ul>

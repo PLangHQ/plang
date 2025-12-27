@@ -51,9 +51,6 @@ namespace PLang.Modules.MessageModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
-
-		private readonly IErrorHandlerFactory errorHandlerFactory;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private ModuleSettings moduleSettings;
 
@@ -61,8 +58,7 @@ namespace PLang.Modules.MessageModule
 		public static readonly string NosrtEventKey = "__NosrtEventKey__";
 
 		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
-			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IPLangFileSystem fileSystem
+			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService, IPLangFileSystem fileSystem
 			) : base()
 		{
 			this.settings = settings;
@@ -72,8 +68,6 @@ namespace PLang.Modules.MessageModule
 			this.llmServiceFactory = llmServiceFactory;
 			this.client = client;
 			this.signingService = signingService;
-			this.errorHandlerFactory = errorHandlerFactory;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.fileSystem = fileSystem;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 		}
@@ -215,7 +209,7 @@ namespace PLang.Modules.MessageModule
 
 			using (var container = new ServiceContainer())
 			{
-				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, errorHandlerFactory, errorSystemHandlerFactory, parentEngine: engine);
+				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, engine);
 
 				var content = ev.DecryptContent(privateKey);
 				var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
@@ -294,9 +288,11 @@ namespace PLang.Modules.MessageModule
 				catch { }
 
 				var error = TaskHasError(task);
-
+				return error;
+				/*
 				if (error != null)
 				{
+
 					var handler = errorHandlerFactory.CreateHandler();
 					(var isHandled, var handlerError) = await handler.Handle(error);
 					if (!isHandled)
@@ -307,6 +303,7 @@ namespace PLang.Modules.MessageModule
 				}
 
 				return error;
+				*/
 
 			}
 
