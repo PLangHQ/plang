@@ -72,7 +72,7 @@ namespace PLang.Modules.UiModule
 			goal.AddVariable(framework);
 		}
 
-		[Description("Device=web|desktop|mobile|tablet|console|tv|watch|other")]
+		[Description("Name=default when not defined by user. DO NOT use TemplateFile as name. Device=web|desktop|mobile|tablet|console|tv|watch|other")]
 		public record LayoutOptions(string Name = "default", string DefaultRenderVariable = "main",
 			[IsBuiltParameter("File")]
 			string TemplateFile = "/ui/{name}/layout.html", string Device = "desktop");
@@ -160,6 +160,21 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 			var sink = context.GetSink(executeMessage.Actor);
 			return await sink.SendAsync(executeMessage);
 		}
+
+		[Description(@"Set TextMessage.Actions=""notify""")]
+		public async Task<IError?> ShowNotification(TextMessage textMessage)
+		{
+			var sink = context.GetSink(textMessage.Actor);
+			return await sink.SendAsync(textMessage);
+		}
+
+		[Description(@"Set ExecuteMessage.Actions=""show""")]
+		public async Task<IError?> ShowElement(ExecuteMessage executeMessage)
+		{
+			var sink = context.GetSink(executeMessage.Actor);
+			return await sink.SendAsync(executeMessage);
+		}
+
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)
 		{

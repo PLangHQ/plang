@@ -132,6 +132,11 @@ namespace PLang.Modules.ConvertModule
 				
 			};
 			var converter = new Converter(config);
+			if (content is not string)
+			{
+				content = TypeHelper.ConvertToType(content, typeof(string));
+			}
+
 			var result = converter.Convert(content.ToString());
 			
 			return result;

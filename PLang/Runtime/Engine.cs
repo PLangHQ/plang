@@ -68,6 +68,7 @@ namespace PLang.Runtime
 		IOutputSink SystemSink { get; set; }
 		ResolveEventHandler AsmHandler { get; set; }
 		EnginePool EnginePool { get; set; }
+		List<ISerializer> Serializers { get; set; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetAppContext();
@@ -85,6 +86,7 @@ namespace PLang.Runtime
 		Task<IEngine> RentAsync(GoalStep callingStep);
 		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
+		T GetProgram<T>();
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -125,7 +127,7 @@ namespace PLang.Runtime
 		private IPLangContextAccessor contextAccessor;
 		public IOutputSink SystemSink { get; set; }
 		public IOutputSink UserSink { get; set; }
-
+		public List<ISerializer> Serializers { get; set; }
 		private PrParser prParser;
 		private PLangAppContext appContext;
 		public PrParser PrParser { get { return prParser; } }
@@ -169,7 +171,7 @@ namespace PLang.Runtime
 				Console.WriteLine($"Unhandled exception: {args.ExceptionObject}");
 			};
 			LastAccess = DateTime.Now;
-
+			Serializers = new();
 
 		}
 
@@ -220,71 +222,15 @@ namespace PLang.Runtime
 			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
-		/*
-		(IEngine, ConcurrentQueue<IEngine>) GetPoolEngine(IEngine engine)
-		{
-			var pool = this.pool;
-			var parentEngine = this._parentEngine;
-			IEngine poolEngine = this;
-			while (parentEngine != null)
-			{
-				poolEngine = parentEngine;
-				pool = parentEngine.Pool;
-				parentEngine = parentEngine.ParentEngine;
-			}
-
-			return (poolEngine, pool);
-		}
-		*/
 		public async Task<IEngine> RentAsync(GoalStep callingStep)
 		{
 			return await EnginePool.RentAsync(callingStep);
-			/*
-			var (poolEngine, pool) = GetPoolEngine(this);
-
-			Console.WriteLine($"RentAsync called - pool size BEFORE: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) - {callingStep.Text.ReplaceLineEndings(" ").MaxLength(35)}");
-
-			if (pool.TryDequeue(out var engine))
-			{
-				Console.WriteLine($"Reusing engine from pool({pool.Count}) - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
-
-				InitPerRequest(container, engine);
-				return engine;
-			}
-
-			Console.WriteLine($"Pool was empty, creating new engine");
-			engine = CreateEngine(this.Path);
-
-			Process currentProcess = Process.GetCurrentProcess();
-			long privateMemory = currentProcess.PrivateMemorySize64;
-			Console.WriteLine($"After Create engine - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id}) - Private Memory: {privateMemory / 1024 / 1024} MB");
-
-			return engine;
-			*/
+			
 		}
 		public void Return(IEngine engine, bool reset = false)
 		{
 			EnginePool.Return(engine, reset);
-			/*
-			var (poolEngine, pool) = GetPoolEngine(this);
-			Console.WriteLine($"Return called - pool size BEFORE: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
-
-			engine.Reset(true);
-			if (engine.FileSystem != null)
-			{
-				pool.Enqueue(engine);
-				Console.WriteLine($"Returned - pool size AFTER: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
-			} else
-			{
-				Console.WriteLine($"File system null not returning: {pool.Count} - Engine:{poolEngine.Name}({poolEngine.Id}) -> {engine.Name}({engine.Id})");
-			}*/
-
-
-
-			/*
-			var enginePool = GetEnginePool(Path);
-			enginePool.Return(engine, reset);
-			*/
+			
 		}
 
 		public void Reset(bool reset = false)
@@ -325,75 +271,14 @@ namespace PLang.Runtime
 			}
 		}
 
-		/*
-		public static void InitPerRequest(IServiceContainer container, IEngine? engine = null)
-		{
-			engine ??= container.GetInstance<IEngine>();
-
-			var msa = container.GetInstance<IMemoryStackAccessor>();
-			var memoryStack = MemoryStack.New(container, engine);
-			msa.Current = memoryStack;
-
-			var context = new PLangContext(memoryStack, engine, ExecutionMode.Console);
-			var ca = container.GetInstance<IPLangContextAccessor>();
-			ca.Current = context;
-
-		}
-
-		private IEngine CreateEngine(string rootPath)
-		{
-			var serviceContainer = new ServiceContainer();
-
-			serviceContainer.RegisterForPLang(rootPath, "/",
-								container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
-
-
-			var engine = serviceContainer.GetInstance<IEngine>();
-			engine.Name = $"Child - {Name}";
-
-			InitPerRequest(serviceContainer);
-
-			engine.Init(serviceContainer);
-			engine.SetParentEngine(this);
-
-			engine.SystemSink = this.SystemSink;
-			engine.UserSink = this.UserSink;
-
-			return engine;
-		}*/
-		/*
-		public EnginePool GetEnginePool(string rootPath)
-		{
-			rootPath = rootPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
-			if (enginePools.TryGetValue(rootPath, out var pool))
-			{
-				Console.WriteLine($"found enginpool for {rootPath} - Name:'{Name}' - {contextAccessor.Current?.HttpContext?.Request.Path}");
-				return pool;
-			}
-
-			var tempContext = container.GetInstance<PLangAppContext>();
-			Process currentProcess = Process.GetCurrentProcess();
-			long privateMemory = currentProcess.PrivateMemorySize64;
-			Console.WriteLine($"Before Private Memory: {privateMemory / 1024 / 1024} MB");
-			pool = new EnginePool(2, () =>
-			{
-				var engine = CreateEngine(rootPath);
-
-				long privateMemory = currentProcess.PrivateMemorySize64;
-				Console.WriteLine($"After Private Memory: {privateMemory / 1024 / 1024} MB");
-				return engine;
-			});
-
-			enginePools.TryAdd(rootPath, pool);
-			Console.WriteLine($"added {rootPath} has: {enginePools.Count} - Name:'{Name}' - {contextAccessor.Current?.HttpContext?.Request.Path} - {privateMemory / 1024 / 1024} MB");
-
-			return pool;
-
-		}
-		*/
 		public IEventRuntime GetEventRuntime()
 		{
 			return this.eventRuntime;
+		}
+
+		public T GetProgram<T>()
+		{
+			return container.GetInstance<T>();
 		}
 
 		public void AddContext(string key, object value)

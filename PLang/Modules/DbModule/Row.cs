@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Modules.DbModule
 {
+	using Newtonsoft.Json;
 	using System.Dynamic;
 
 	public class Table : List<Row>
@@ -23,6 +24,10 @@ namespace PLang.Modules.DbModule
 			{
 				return cols;
 			}
+			set
+			{
+				cols = value;
+			}
 		}
 
 		public object this[string columnName]
@@ -38,7 +43,13 @@ namespace PLang.Modules.DbModule
 		}
 	}
 
-	public class Row : Dictionary<string, object?>
+	public interface IPlangComparer
+	{
+		bool Contains(string str);
+
+	}
+
+	public class Row : Dictionary<string, object?>, IPlangComparer
 	{
 		private readonly Table table;
 
@@ -58,6 +69,11 @@ namespace PLang.Modules.DbModule
 			{
 				if (TryGetValue(key, out var value)) return value;
 
+				if (key.Equals("!row", StringComparison.OrdinalIgnoreCase))
+				{
+					return JsonConvert.SerializeObject(this);
+				}
+
 				var actualColumnName = table.ColumnNames.FirstOrDefault(p => p.Equals(key, StringComparison.OrdinalIgnoreCase));
 				if (actualColumnName == null) throw new KeyNotFoundException($"Column '{key}' does not exist.");
 				return this[actualColumnName];
@@ -70,40 +86,18 @@ namespace PLang.Modules.DbModule
 		{
 			return (T?)this[v];
 		}
-		/*
-DynamicMetaObject IDynamicMetaObjectProvider.GetMetaObject(System.Linq.Expressions.Expression parameter)
-	=> new RowMetaObject(parameter, this);
 
-private class RowMetaObject : DynamicMetaObject
-{
-	public RowMetaObject(System.Linq.Expressions.Expression parameter, Row value)
-		: base(parameter, System.Dynamic.BindingRestrictions.Empty, value) { }
-
-	public override DynamicMetaObject BindGetMember(GetMemberBinder binder)
-	{
-		var self = System.Linq.Expressions.Expression.Convert(Expression, LimitType);
-		var keyExpr = System.Linq.Expressions.Expression.Constant(binder.Name);
-		var tryGetValue = typeof(Row).GetMethod(nameof(TryGetValue));
-		var valueVar = System.Linq.Expressions.Expression.Variable(typeof(object), "value");
-
-		var body = System.Linq.Expressions.Expression.Block(
-			new[] { valueVar },
-			System.Linq.Expressions.Expression.Condition(
-				System.Linq.Expressions.Expression.Call(self, tryGetValue, keyExpr, valueVar),
-				valueVar,
-				System.Linq.Expressions.Expression.Throw(
-					System.Linq.Expressions.Expression.New(
-						typeof(KeyNotFoundException).GetConstructor(new[] { typeof(string) }),
-						System.Linq.Expressions.Expression.Constant($"Column '{binder.Name}' does not exist.")
-					),
-					typeof(object)
-				)
-			)
-		);
-
-		return new DynamicMetaObject(body, BindingRestrictions.GetTypeRestriction(Expression, LimitType));
-	}
-}*/
+		public bool Contains(string str)
+		{
+			foreach (var column in Columns)
+			{
+				if (TryGetValue(column, out var value))
+				{
+					if (value?.ToString()?.Contains(str, StringComparison.OrdinalIgnoreCase) == true) return true;
+				}
+			}
+			return false;
+		}
 	}
 
 }

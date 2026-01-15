@@ -18,7 +18,7 @@ namespace PLang.Services.DbService
 {
 	public interface IDbServiceFactory
 	{
-		IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack);
+		IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack, bool ReadOnly = false);
 	}
 
 	public class DbServiceFactory : BaseFactory, IDbServiceFactory
@@ -30,7 +30,7 @@ namespace PLang.Services.DbService
 			this.isBuilder = isBuilder;
 		}
 
-		public IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack)
+		public IDbConnection CreateHandler(DataSource dataSource, MemoryStack memoryStack, bool ReadOnly = false)
 		{
 			if (dataSource == null) throw new Exception("Data source cannot be empty");
 
@@ -54,6 +54,11 @@ namespace PLang.Services.DbService
 				else
 				{
 					connection.ConnectionString = dataSource.ConnectionString;
+					
+				}
+
+				if (ReadOnly && !isBuilder) {
+					//connection.ConnectionString += ";Mode=ReadOnly";
 				}
 			}
 

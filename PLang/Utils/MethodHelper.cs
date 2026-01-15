@@ -376,7 +376,8 @@ public class MethodHelper
 				{
 					if (VariableHelper.IsSetting(variableValue.ToString()))
 					{
-						string setting = settings.GetOrDefault<string>(typeof(Settings), variableValue.ToString().Replace("Settings.", ""), "");
+						string key = variableValue.ToString().Replace("Settings.", "");
+						string setting = settings.Get<string>(typeof(Settings), key, "", $"Settings for {key.Replace("%", "")}");
 						parameterValues.Add(parameter.Name, setting);
 						continue;
 					}
@@ -436,7 +437,7 @@ public class MethodHelper
 					return (parameterValues, new Error(ex.Message, StatusCode: 500, Exception: ex));
 				}
 
-				return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert '{inputParameter?.Value}' to {parameter.ParameterType} on parameter '{parameter.Name}' for method {method.Name} - value:'{variableValue}'", step, Exception: ex));
+				return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert '{inputParameter?.Value}' to {parameter.ParameterType} on parameter '{parameter.Name}' for method {method.Name} - value:'{variableValue}' - {ex}", step, Exception: ex));
 			}
 
 		}
@@ -460,7 +461,7 @@ public class MethodHelper
 					newJobj.ResolvePlaceholders(parameter.ParameterType, (name, targetType) =>
 					{
 						var value = memoryStack.Get(name);
-						if (value is ObjectValue ov) return ov.Value;
+						if (value is IObjectValue ov) return ov.Value;
 						if (value is List<object> list && list.FirstOrDefault() is ObjectValue)
 						{
 							return list.Select(p => ((ObjectValue)p).Value);

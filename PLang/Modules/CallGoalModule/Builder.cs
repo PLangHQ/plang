@@ -86,6 +86,7 @@ call app /Builder/DbModule %content%, write to %result% => function name:RunApp,
 			var systemGoals = (disableSystemGoals) ? new List<Goal>() : prParser.GetSystemGoals();
 
 			(var goal, var error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, goalToCall, goals, systemGoals);
+			if (error != null && error.StatusCode == 404) return (instruction, new BuilderError(error) { Retry = false });
 			if (error != null) return (instruction, new BuilderError(error));
 
 			logger.LogDebug($"      - found goal - {stopwatch.ElapsedMilliseconds}");

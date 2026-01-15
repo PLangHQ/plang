@@ -23,7 +23,11 @@ using UglyToad.PdfPig.Tokenization;
 
 namespace PLang.Modules.FilterModule
 {
-	[Description("Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable.")]
+	[Description(@$"Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable.
+```plang
+- filter %list% where id=%id%, write to %newList%
+```
+")]
 	public class Program : BaseProgram
 	{
 

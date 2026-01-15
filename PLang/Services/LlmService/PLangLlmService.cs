@@ -111,7 +111,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 					}
 					logger.LogTrace("Using cached response from LLM:" + cachedLlmQuestion.RawResponse);
 
-					var result2 = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
+					var result2 = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType, null);
 					if (result2 != null && !string.IsNullOrEmpty(result2.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
@@ -182,7 +182,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 
 				ShowCosts(hr);
 
-				var obj = Extractor.Extract(rawResponse, responseType);
+				var obj = Extractor.Extract(rawResponse, responseType, question.Tools);
 				if (obj == null)
 				{
 					return (null, new ServiceError(rawResponse, this.GetType()));

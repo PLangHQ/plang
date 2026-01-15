@@ -65,7 +65,7 @@ namespace PLang.SafeFileSystem
 		/// <inheritdoc />
 		public PLangFileSystem(string appStartupPath, string relativeAppPath)
 		{
-			this.rootPath = appStartupPath.AdjustPathToOs();
+			this.rootPath = System.IO.Path.GetFullPath(appStartupPath).AdjustPathToOs();
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 
 			this.Id = Guid.NewGuid().ToString();

@@ -22,6 +22,7 @@ using System.Text.RegularExpressions;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Modules.UiModule.Program;
 using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.TemplateEngineModule
@@ -79,19 +80,19 @@ namespace PLang.Modules.TemplateEngineModule
 					FixSuggestion: similarFilesMessage));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
-			var result = await RenderContent(content, fullPath, variables);
+			var (renderedContent, error)= await RenderContent(content, fullPath, variables);
 
-			if (result.Error != null) return (result.Result, result.Error);
-
-			if (!writeToOutputStream) return result;
+			if (error != null) return (renderedContent, error);
+			
+			if (!writeToOutputStream) return (renderedContent, error);
 
 			if (writeToOutputStream || (function?.ReturnValues == null || function?.ReturnValues.Count == 0))
 			{
-				var renderMessage = new RenderMessage(result.Result, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
+				var renderMessage = new RenderMessage(renderedContent, Properties: new Dictionary<string, object?> { ["step"] = goalStep });
 				await context.UserSink.SendAsync(renderMessage);
 			}
 
-			return result;
+			return (renderedContent, error);
 		}
 
 		public async Task<(string? Result, IError? Error)> RenderContent(string content, string? fullPath = null, Dictionary<string, object?>? variables = null)
@@ -145,7 +146,10 @@ namespace PLang.Modules.TemplateEngineModule
 				//var members = GetMembers(parsed);
 
 				var result = await parsed.RenderAsync(templateContext);
-
+				if (this.context != null && this.context.DebugMode && result != null)
+				{
+					result = InsertDebugInfo(result);
+				}
 				return (result, null);
 			}
 			catch (Exception ex) when (ex is ScriptRuntimeException || ex is InvalidOperationException)
@@ -403,9 +407,49 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					{
 						throw new ExceptionWrapper(result.Item2);
 					}
+					if (this.context.DebugMode && result.Item1 != null)
+					{
+						return InsertDebugInfo(result.Item1);
+						
+					}
 					return result.Item1;
 				}));
 			}
+		}
+
+		private string InsertDebugInfo(string html)
+		{
+			var debugJson = JsonConvert.SerializeObject(DebugHelper.GetDebugInfo(this.context))
+		.Replace("\"", "&quot;");
+
+			// Match first actual element, skipping comments and doctype
+			var elementMatch = Regex.Match(html, @"<(?!!)[a-zA-Z][\w-]*");
+			if (elementMatch.Success)
+			{
+				var insertPos = elementMatch.Index + elementMatch.Length;
+
+				// Check if class attribute exists on this element
+				var afterTag = html.Substring(insertPos);
+				var tagEndMatch = Regex.Match(afterTag, @"^[^>]*>");
+				var tagContent = tagEndMatch.Success ? tagEndMatch.Value : "";
+
+				var classMatch = Regex.Match(tagContent, @"\sclass=""([^""]*)""");
+				if (classMatch.Success)
+				{
+					// Append to existing class
+					var classInsertPos = insertPos + classMatch.Groups[1].Index + classMatch.Groups[1].Length;
+					html = html.Insert(classInsertPos, " debug-enabled");
+
+					// Insert data attribute after the tag name
+					html = html.Insert(insertPos, $" data-debug-info=\"{debugJson}\"");
+				}
+				else
+				{
+					// Add both attributes after tag name
+					html = html.Insert(insertPos, $" class=\"debug-enabled\" data-debug-info=\"{debugJson}\"");
+				}
+			}
+			return html;
 		}
 
 		private ScriptObject? GetScriptObject(IList<ObjectValue> list)

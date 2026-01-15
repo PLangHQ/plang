@@ -5,6 +5,7 @@ using Namotion.Reflection;
 using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
@@ -19,6 +20,8 @@ using PLang.Utils.JsonConverters;
 using RazorEngineCore;
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -245,7 +248,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			if (builderError != null) return (instruction, builderError);
 			
 			(instruction, var error) = await ValidateGoalToCall(step, instruction);
-			if (error != null) return (instruction, new BuilderError(error) { Retry = false });
+			if (error != null) return (instruction, error);
 			
 			return (instruction, null);
 		}
@@ -265,14 +268,20 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"    - Running 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
 
+			var runtime = typeHelper.GetRuntimeType(goalStep.ModuleType);
+			var error = ValidateRuntimeAttributes(runtime, gf);
+			if (error != null) return (instruction, error);
+
 			var builder = typeHelper.GetBuilderType(goalStep.ModuleType);
 			if (builder == null || gf == null) return (instruction, null);
 
+			
 			logger.LogDebug($"    - Have builder type '{goalStep.ModuleType}' - {stopwatch.ElapsedMilliseconds}");
 			
 			var isValidatedMethod = builder.GetMethod("IsValidated");			
 			var defaultValidate = builder.GetMethod("BuilderValidate");
 			var method = builder.GetMethod("Builder" + gf.Name);
+			
 
 			if (method == null && defaultValidate == null && isValidatedMethod == null) return (instruction, null);
 
@@ -351,6 +360,23 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 				return (instruction, null);
 		}
 
+		private IBuilderError? ValidateRuntimeAttributes(Type runtime, IGenericFunction gf)
+		{
+			if (string.IsNullOrEmpty(gf.Name) || gf.Name.Equals("n/a", StringComparison.OrdinalIgnoreCase)) return null;
+			var runtimeMethods = runtime.GetMethods().Where(p => p.Name.Equals(gf.Name));
+			var runtimeMethod = runtimeMethods.FirstOrDefault();
+
+			if (runtimeMethod == null) return new BuilderError($"Method {gf.Name} could not be found in {runtime.FullName}");
+			if (!runtimeMethod.CustomAttributes.Any()) return null;
+			 
+			var returnRequired = runtimeMethod.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(ReturnRequired)) != null;
+			if (returnRequired && (gf.ReturnValues == null || gf.ReturnValues.Count == 0))
+			{
+				return new BuilderError("This step must have ReturnValues");
+			}
+			return null;
+		}
+
 		public async Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction)
 		{
 			var token = instruction.FunctionJson;
@@ -378,7 +404,7 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 					throw new Exception($"Expected value to be GoalToCallInfo. {ErrorReporting.CreateIssueShouldNotHappen}");
 				}
 
-				if (goalToCall.Name.Contains("%"))
+				if (goalToCall.Name != null && goalToCall.Name.Contains("%"))
 				{
 					logger.LogInformation($"Cannot validate goal to call that is dynamic: {goalToCall.Name} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}");
 					return (instruction, null);

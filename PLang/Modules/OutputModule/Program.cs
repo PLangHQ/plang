@@ -12,6 +12,7 @@ using PLang.Services.OutputStream.Messages;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.ComponentModel;
+using static PLang.Modules.FileModule.CsvHelper;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
@@ -29,7 +30,7 @@ namespace PLang.Modules.OutputModule
 		}
 
 		[Description("channel=audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
-		public record OutputStreamInfo(string Channel = "user", string Serializer = "default", Dictionary<string, object?>? Options = null);
+		public record OutputStreamInfo(string Actor = "user", string Channel = "default", string Serializer = "default", Dictionary<string, object?>? Options = null);
 
 		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
 		{
@@ -188,11 +189,14 @@ namespace PLang.Modules.OutputModule
 
 		private async Task<(List<ObjectValue>? Answers, IError? Error)> ProcessCallbackAnswer(AskMessage askMessage, Callback callback, IError? error = null)
 		{
-			if (HttpContext == null || !HttpContext.Request.HasFormContentType)
+			if (HttpContext == null)
 			{
 				return (null, new ProgramError("Request no longer available", goalStep));
 			}
-
+			if (!HttpContext.Request.HasFormContentType)
+			{
+				return (null, new ProgramError("Ask user form must be POST", goalStep));
+			}
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
 			if (callback.CallbackData != null && callback.CallbackData?.Count > 0)
 			{
@@ -345,28 +349,20 @@ namespace PLang.Modules.OutputModule
 
 			return await Write(textMessage);
 		}
-		/*
+		
 		public async Task<IError?> WriteWithStreamInfo(object content, OutputStreamInfo outputStreamInfo)
 		{
-			IOutputSink os;
-			if (outputStreamInfo.Channel.Equals("system", StringComparison.OrdinalIgnoreCase))
-			{
-				os = outputSystemStreamFactory.CreateHandler();
-			}
-			else
-			{
-				os = outputStreamFactory.CreateHandler();
-			}
-
+			var sink = context.GetSink(outputStreamInfo.Actor);
+			
 
 			if (outputStreamInfo.Serializer.Equals("json", StringComparison.OrdinalIgnoreCase))
 			{
 				content = JsonConvert.SerializeObject(content);
-				await os.SendAsync(new TextMessage(content.ToString()));
+				await sink.SendAsync(new TextMessage(content.ToString()));
 			}
 			else if (outputStreamInfo.Serializer.Equals("csv", StringComparison.OrdinalIgnoreCase))
 			{
-				throw new NotImplementedException(ErrorReporting.CreateIssueNotImplemented.ToString());
+			//	throw new NotImplementedException(ErrorReporting.CreateIssueNotImplemented.ToString());
 				
 				CsvOptions options = RecordInitializer.FromDictionary<CsvOptions>(new CsvOptions(), outputStreamInfo.Options);
 
@@ -377,21 +373,17 @@ namespace PLang.Modules.OutputModule
 
 				memoryStream.Position = 0;
 
-				if (os is HttpSink httpOutputStream)
-				{
-					httpOutputStream.SetContentType("text/csv");
-				}
-				await memoryStream.CopyToAsync(os.Stream);
-
+				using var reader = new StreamReader(memoryStream);
+				var csvString = await reader.ReadToEndAsync();
+				
+				await sink.SendAsync(new TextMessage(csvString));
 			}
 			else
 			{
-
-				await os.SendAsync(new TextMessage(content.ToString()));
+				await sink.SendAsync(new TextMessage(content.ToString()));
 			}
 			return null;
-		}*/
-
+		}
 		[Description("Write appends by default a text message to the target. User can define different actions, but when it is not defined set as 'append'. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
@@ -405,5 +397,5 @@ namespace PLang.Modules.OutputModule
 		}
 
 
-	}
+		}
 }

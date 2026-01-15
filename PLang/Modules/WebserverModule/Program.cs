@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Net.Http.Headers;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -34,6 +35,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
+using System.Threading.Tasks.Dataflow;
 
 namespace PLang.Modules.WebserverModule;
 
@@ -127,9 +129,8 @@ public class Program : BaseProgram, IDisposable
 
 
 	[Description("Default Methods=[\"GET\"]")]
-	public record RequestProperties(List<string> Methods, long MaxContentLengthInBytes = 1024 * 16, bool SignedRequestRequired = false)
+	public record RequestProperties(List<string> Methods, long? MaxContentLengthInBytes = null, bool SignedRequestRequired = false)
 	{
-		public RequestProperties() : this(["GET"]) { }
 	}
 	public record ResponseProperties(string ContentType = "text/html", string ResponseEncoding = "utf-8");
 
@@ -137,7 +138,8 @@ public class Program : BaseProgram, IDisposable
 		RequestProperties? DefaultRequestProperties = null, ResponseProperties? DefaultResponseProperties = null,
 		GoalToCallInfo? OnStart = null, GoalToCallInfo? OnShutdown = null,
 		GoalToCallInfo? OnRequestBegin = null, GoalToCallInfo? OnRequestEnd = null,
-		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollEnd = null
+		GoalToCallInfo? OnGoalRequestBegin = null, GoalToCallInfo? OnGoalRequestEnd = null,
+		GoalToCallInfo? OnPollStart = null, GoalToCallInfo? OnPollRefresh = null, GoalToCallInfo? OnPollEnd = null
 		)
 		: IDisposable
 	{
@@ -255,6 +257,10 @@ public class Program : BaseProgram, IDisposable
 						o.EnableForHttps = true;
 						o.Providers.Add<GzipCompressionProvider>();
 						o.Providers.Add<BrotliCompressionProvider>();
+						o.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+						{
+							"application/x-ndjson"
+						});
 					});
 					s.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
 					s.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
@@ -369,17 +375,23 @@ public class Program : BaseProgram, IDisposable
 								{
 									//AppError had error, this is a critical thing and should not happen
 									//So we write the error to the console as last resort.								
-									Console.WriteLine(" ---- Critical Error  ---- ");
+									Console.WriteLine(" ---- Critical Error(1)  ---- ");
 									Console.WriteLine(error);
-									Console.WriteLine(" ---- Critical Error  ---- ");
+									Console.WriteLine(" ---- Critical Error(1)  ---- ");
 								}
 							}
 							catch (Exception ex2)
 							{
-								Console.WriteLine(" ---- Critical Exception  ---- ");
-								Console.WriteLine(ex2);
-								Console.WriteLine(ex);
-								Console.WriteLine(" ---- Critical Exception  ---- ");
+								try
+								{
+									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
+									Console.WriteLine(ex2);
+									Console.WriteLine(ex);
+									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
+								} catch
+								{
+									Console.WriteLine(" ---- Exception on that(2)  ---- ");
+								}
 							}
 						}
 						finally
@@ -516,6 +528,7 @@ OnStartingWebserver
 	public record Routing(string Path, Route Route, RequestProperties RequestProperties, ResponseProperties ResponseProperties);
 	public record Route(Regex PathRegex, Dictionary<string, string>? QueryMap, GoalToCallInfo Goal, List<ParamInfo> ParamInfos);
 
+	[Description("Add route to webserver. When goalToCall is null, use the path parameter in the response to created instance of goalToCall using the path paramter as GoalToCallInfo.Name")]
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{
@@ -570,7 +583,7 @@ AddRoutes
 			if (pathPart[i] == '%')
 			{
 				var j = pathPart.IndexOf('%', i + 1);
-				var name = pathPart[(i + 1)..j];
+				var name = pathPart[(i + 1)..j].Replace(".", "__dot__");
 				regex.Append($"(?<{name}>[^/?&]+)");   // stop at / ? & or - (hyphen safe)
 				i = j + 1;
 			}
@@ -630,13 +643,22 @@ OnStartingWebserver
 		if (os is HttpSink hos)
 		{
 			(var response, var isFlushed, var error) = hos.GetResponse();
-			if (response != null && !isFlushed && !response.HasStarted)
+			if (response != null)
 			{
-				response.Redirect(url, permanent, preserveMethod);
-				await response.Body.FlushAsync();
-				await response.CompleteAsync();
-				hos.IsComplete = true;
+				if (!string.IsNullOrEmpty(context.Identity))
+				{
+					var executeMessage = new ExecuteMessage("redirect", url);
+					var sink = context.GetSink(executeMessage.Actor);
+					return await sink.SendAsync(executeMessage);
+				}
+				else if (!isFlushed && !response.HasStarted)
+				{
+					response.Redirect(url, permanent, preserveMethod);
+					await response.Body.FlushAsync();
+					await response.CompleteAsync();
+					hos.IsComplete = true;
 
+				}
 			}
 		}
 
@@ -721,17 +743,49 @@ OnStartingWebserver
 Frontpage
 - get cookie 'name', write to %cookieValue%
 ";
+	public async Task<(object?, IError?)> GetCookie(string name)
+	{
+		(var value, var error) = await GetCookieRaw(name);
+		if (error != null) return (value, error);
 
-	public async Task<(string?, IError?)> GetCookie(string name)
+		if (!JsonHelper.IsJson(value, out object? parsedObj)) return (value, null);
+
+		try
+		{
+			List<ObjectValue> values = new();
+			var obj = JObject.Parse(value);
+			foreach (var property in obj.Properties())
+			{
+				values.Add(new ObjectValue(property.Name, property.Value));
+			}
+			return (values, null);
+		}
+		catch
+		{
+			return (value, null);
+		}
+
+		return (value, null);
+	}
+	public async Task<(string?, IError?)> GetCookieRaw(string name)
 	{
 		if (HttpContext == null) return (null, new ProgramError("HttpContext is empty. Is this being called during a web request?",
 			FixSuggestion: missingHttpContextFixSuggestion));
 
 
 		HttpContext.Request.Cookies.TryGetValue(name, out var value);
+
 		return (value, null);
 	}
-
+	public async Task<IError?> WriteVariablesToCookie(string name, List<ObjectValue> values, int expiresInSeconds = 60 * 60 * 24 * 7)
+	{
+		var jobj = new JObject();
+		foreach (var value in values)
+		{
+			jobj[value.Name] = JToken.FromObject(value.Value);
+		}
+		return await WriteCookie(name, jobj.ToString(), expiresInSeconds);
+	}
 	public async Task<IError?> WriteCookie(string name, string value, int expiresInSeconds = 60 * 60 * 24 * 7)
 	{
 		CookieOptions options = new();
@@ -745,7 +799,16 @@ Frontpage
 			(var response, var isFlushed, var error) = hos.GetResponse();
 			if (response != null)
 			{
-				response.Cookies.Append(name, value, options);
+				if (!response.HasStarted)
+				{
+					response.Cookies.Append(name, value, options);
+				} else
+				{
+					var sink = context.GetSink("user");
+
+					await sink.SendAsync(new ExecuteMessage("plang.writeCookie", new { name, value, expiresInSeconds }));
+				}
+				
 			}
 		}
 		return null;

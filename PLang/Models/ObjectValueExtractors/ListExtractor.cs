@@ -71,7 +71,7 @@ namespace PLang.Models.ObjectValueExtractors
 			}
 
 
-			return new ObjectValue(segment.Value, list.ElementAtOrDefault(index), parent: parent, properties: parent.Properties);
+			return new ObjectValue(segment.Value, list.ElementAtOrDefault(index), parent: parent, properties: parent.Properties, segmentType: segment.Type);
 
 		}
 

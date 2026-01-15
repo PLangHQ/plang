@@ -69,11 +69,12 @@ namespace PLang.Utils
 				var absolutePath = pathWithDirSep.Substring(1);
 				return fileSystem.Path.GetFullPath(absolutePath);
 			}
-			
+
+
 			startOfPath = (pathWithDirSep.Length > 2) ? pathWithDirSep.Substring(0, 2) : pathWithDirSep;
 			if (startOfPath == (fileSystem.Path.DirectorySeparatorChar.ToString() + fileSystem.Path.DirectorySeparatorChar.ToString()))
 			{
-				var absolutePath = fileSystem.Path.Join(fileSystem.Path.GetPathRoot(fileSystem.RootDirectory), pathWithDirSep);
+				var absolutePath = JoinRootWithPath(fileSystem, fileSystem.Path.GetPathRoot(fileSystem.RootDirectory), pathWithDirSep);
 				return fileSystem.Path.GetFullPath(absolutePath);
 			}
 
@@ -86,23 +87,29 @@ namespace PLang.Utils
 
 			if (pathWithDirSep.StartsWith(fileSystem.Path.DirectorySeparatorChar.ToString()))
 			{
-				pathWithDirSep = fileSystem.Path.Join(fileSystem.RootDirectory, pathWithDirSep);
+				pathWithDirSep = JoinRootWithPath(fileSystem, fileSystem.RootDirectory, pathWithDirSep);
 				return fileSystem.Path.GetFullPath(pathWithDirSep);
 			}
 			else
 			{
 				if (goal != null && goal.AbsoluteGoalFolderPath.StartsWith(fileSystem.RootDirectory))
 				{
-					pathWithDirSep = fileSystem.Path.Join(goal.AbsoluteGoalFolderPath, pathWithDirSep);
+					pathWithDirSep = JoinRootWithPath(fileSystem, goal.AbsoluteGoalFolderPath, pathWithDirSep);
 				}
 				else
 				{
-					pathWithDirSep = fileSystem.Path.Join(fileSystem.RootDirectory, pathWithDirSep);
+					pathWithDirSep = JoinRootWithPath(fileSystem, fileSystem.RootDirectory, pathWithDirSep);
 				}
 				pathWithDirSep = fileSystem.Path.GetFullPath(pathWithDirSep);
 			}
 			return pathWithDirSep;
 		}
 
+		public static string JoinRootWithPath(IPLangFileSystem fileSystem, string rootPath, string path2)
+		{
+			if (path2.StartsWith(rootPath)) return path2;
+			return fileSystem.Path.Join(rootPath, path2);
+		}
 	}
+
 }

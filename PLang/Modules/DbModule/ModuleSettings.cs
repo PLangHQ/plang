@@ -116,6 +116,7 @@ namespace PLang.Modules.DbModule
 
 				AttachedDbs.Add(new AttachedDb(alias, path));
 			}
+
 		}
 
 		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -289,7 +290,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 
 			dataSourceName = ConvertDataSourceNameInStep(dataSourceName);
 			dataSourcePath = ConvertDataSourceNameInStep(dataSourcePath);
-			
+
 			return (dataSourceName, dataSourcePath);
 		}
 		private SqlStatement GetSqliteDbInfoStatement()
@@ -407,7 +408,7 @@ Be concise"));
 
 		private async Task<List<DataSource>> AddDataSourceToSettings(DataSource dataSource)
 		{
-			
+
 			// todo: This needs to move to its own table, Datasource table, to expensive to load all datasources using json when thousands of datasources are avialable
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
@@ -429,7 +430,7 @@ Be concise"));
 				dataSources.Add(dataSource);
 			}
 
-			if (IsBuilder || UseInMemoryDataSource) return dataSources;
+			//if (IsBuilder || UseInMemoryDataSource) return dataSources;
 
 			settings.SetList(this.GetType(), dataSources);
 			return dataSources;
@@ -445,11 +446,26 @@ Be concise"));
 			}
 			settings.SetList(typeof(ModuleSettings), dataSources);
 		}
-	
+
+		public async Task<(List<DataSource>? DataSources, IBuilderError? Error)> GetAllDataSourcesForBuilder()
+		{
+			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
+			for (int i = 0; i < dataSources.Count; i++)
+			{
+				var (dataSource, error) = await ProcessDataSource(dataSources[i]);
+				if (error != null) return (null, new BuilderError(error));
+
+				dataSource = ConvertToMemoryDb(dataSource);
+				dataSources[i] = dataSource!;
+			}
+
+			return (dataSources, null);
+		}
+
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
 			var dataSources = settings.GetValues<DataSource>(this.GetType()).OrderByDescending(p => p.IsDefault).ToList();
-			for (int i=0;i<dataSources.Count;i++) 
+			for (int i = 0; i < dataSources.Count; i++)
 			{
 				var (dataSource, error) = await ProcessDataSource(dataSources[i]);
 				dataSources[i] = dataSource!;
@@ -478,9 +494,16 @@ Be concise"));
 			return await ProcessDataSource(dataSource);
 		}
 
+		public async Task<(DataSource? DataSource, IBuilderError? Error)> GetDataSourceForBuilder(string? nameInStep, GoalStep? step = null, bool transactionDependant = true)
+		{
+			var (dataSource, error) = await GetDataSource(nameInStep, step, transactionDependant);
+			if (error != null) return (null, new BuilderError(error));
+
+			return (ConvertToMemoryDb(dataSource), null);
+		}
+
 		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? nameInStep, GoalStep? step = null, bool transactionDependant = true)
 		{
-			
 			if (string.IsNullOrEmpty(nameInStep))
 			{
 				if (context.DataSource != null)
@@ -490,17 +513,43 @@ Be concise"));
 
 				return (null, new ProgramError("You need to provide a data source name", step));
 			}
+
 			if (nameInStep.StartsWith("/"))
 			{
 				nameInStep = nameInStep.TrimStart('/');
 			}
 
+
 			if (context.DataSource != null)
 			{
-				if (context.DataSource.Name.Equals(nameInStep, StringComparison.OrdinalIgnoreCase)) return (context.DataSource, null);
-				if (transactionDependant && context.DataSource.AttachedDbs.FirstOrDefault(p => p.Alias.Equals(nameInStep, StringComparison.OrdinalIgnoreCase)) != null)
+				string dataSourceName = ConvertDataSourceNameInStep(nameInStep);
+				if (context.DataSource.Name.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase)
+					)
 				{
-					return (context.DataSource, null);	
+					if (nameInStep.Contains("%"))
+					{
+						var nameInStepLoaded = memoryStack.LoadVariables(nameInStep);
+
+						var nr = nameInStepLoaded.ToString().Replace("users", "").Replace("/", "").Replace("\\", "");
+						Console.WriteLine($"nr:{nr} | nameInStep:{nameInStep} nameInStepLoaded:{nameInStepLoaded} | dataSourceName:{dataSourceName} | context.DataSource.Name:{context.DataSource.Name} | connstring:{context.DataSource.ConnectionString}");
+
+						if (context.DataSource.ConnectionString.Contains(nr))
+						{
+							return (context.DataSource, null);
+						}
+						Console.WriteLine($"did not return datasource");
+
+					}
+					else
+					{
+						return (context.DataSource, null);
+					}
+					
+
+				}
+				if (transactionDependant && context.DataSource.AttachedDbs.FirstOrDefault(p => p.Alias.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase)) != null)
+				{
+					return (context.DataSource, null);
 				}
 			}
 
@@ -515,7 +564,7 @@ Be concise"));
 			}
 
 			dataSource = dataSource with { NameInStep = nameInStep };
-			if (!IsBuilder && nameInStep.Contains("%"))
+			if (!IsBuilder && nameInStep.Contains("%") && !VariableHelper.IsVariable(nameInStep))
 			{
 				var dataSourceDynamicName = memoryStack.LoadVariables(nameInStep);
 				string cacheKey = "__plang_DataSource__" + dataSourceDynamicName;
@@ -690,7 +739,7 @@ Be concise"));
 				if (gf == null) return new Error($"Could not load generice function from instruction: {step.AbsolutePrFilePath}");
 
 				var sql = gf.GetParameter<string>("sql");
-				
+
 				if (string.IsNullOrEmpty(sql))
 				{
 					if (gf.Name == "ExecuteSqlFile")
@@ -736,6 +785,22 @@ Be concise"));
 
 		}
 
+		private DataSource ConvertToMemoryDb(DataSource dataSource)
+		{
+			if (!UseInMemoryDataSource && !IsBuilder) throw new Exception("Should not be called");
+
+			dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;", LocalPath = $"file:{dataSource.Name}?mode=memory&cache=shared" };
+			if (string.IsNullOrEmpty(dataSource.NameInStep))
+			{
+				dataSource = dataSource with
+				{
+					NameInStep = dataSource.Name
+				};
+			}
+			return dataSource;
+
+		}
+
 		private async Task<(DataSource? DataSource, IError? Error)> ProcessDataSource(DataSource? dataSource)
 		{
 			if (dataSource == null)
@@ -745,19 +810,6 @@ Be concise"));
 			}
 
 			if (dataSource.TypeFullName != typeof(SqliteConnection).FullName) return (dataSource, null);
-
-			if (UseInMemoryDataSource || IsBuilder)
-			{
-				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;", LocalPath = $"file:{dataSource.Name}?mode=memory&cache=shared" };
-				if (string.IsNullOrEmpty(dataSource.NameInStep))
-				{
-					dataSource = dataSource with
-					{
-						NameInStep = dataSource.Name
-					};
-				}
-				return (dataSource, null);
-			}
 
 			if (!string.IsNullOrEmpty(dataSource.LocalPath)
 					&& !dataSource.LocalPath.Contains("%")
@@ -808,7 +860,7 @@ Be concise"));
 					if (step?.Goal.IsSetup == true && step.Index == 0)
 					{
 						instruction = step.Instruction;
-					} 
+					}
 
 					if (instruction == null)
 					{
@@ -827,10 +879,11 @@ Be concise"));
 
 					return await CreateDataSource(dsName, dsDataType, setAsDefaultForApp, keepHistoryEventSourcing);
 
-				} else if ((name ?? "data").Equals("data", StringComparison.OrdinalIgnoreCase) && setupGoal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				}
+				else if ((name ?? "data").Equals("data", StringComparison.OrdinalIgnoreCase) && setupGoal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
 				{
 					return await CreateDataSource("data", "sqlite", true, true);
-					
+
 				}
 			}
 

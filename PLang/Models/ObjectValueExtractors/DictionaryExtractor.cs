@@ -28,6 +28,14 @@ namespace PLang.Models.ObjectValueExtractors
 								
 				throw new NotImplementedException("Is Index on DictionaryExtractor");
 			}
+			else if (segment.Type == SegmentType.Property)
+			{
+				if (parent is IObjectValue parentOv)
+				{
+					var propertyValue = parentOv.Properties.FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+					return propertyValue;
+				}
+			}
 
 			if (dict.Count == 0) return null;
 

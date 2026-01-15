@@ -55,7 +55,7 @@ namespace PLang.Utils
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 			detailedError = true;
-
+			
 			if (error.ErrorChain.Count > 0)
 			{
 				for (int i = 0; i < error.ErrorChain.Count; i++)

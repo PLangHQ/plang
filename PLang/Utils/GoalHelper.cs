@@ -3,6 +3,7 @@ using MiniExcelLibs.Utils;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -118,7 +119,7 @@ namespace PLang.Utils
 				goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return (goal, null);
 
-				return (null, new Error($"{goalToCall.Name} could not be found. Searched for {goalToCall.Path}", Key: "GoalNotFound", StatusCode: 404));
+				return (null, new Error($"{goalToCall.Name} could not be found. Searched for {goalToCall.Path}", Key: "GoalNotFound", StatusCode: 404) {  Step = step});
 			}
 
 			string goalToCallName = goalToCall.Name;
@@ -154,29 +155,25 @@ namespace PLang.Utils
 				goalToCallPath = goalToCallPath.TrimEnd(Path.DirectorySeparatorChar);
 			}
 
-			goal = GetMatchingGoal(appGoals, step, goalToCallPath, goalToCallName);
+			(goal, var error) = GetMatchingGoal(appGoals, step, goalToCallPath, goalToCallName);
 			if (goal != null) return (goal, null);
+			if (error != null && error.StatusCode != 404) return (null, error);
 
-			goal = GetMatchingGoal(systemGoals, step, goalToCallPath, goalToCallName);
-			if (goal != null) return (goal, null);
-
-			return (null, new Error($"{goalToCall.Name} could not be found. Searched for '{goalToCall.Path}'", Key: "GoalNotFound", StatusCode: 404));
+			return GetMatchingGoal(systemGoals, step, goalToCallPath, goalToCallName);
 		}
 
 
-		private static Goal? GetMatchingGoal(IReadOnlyList<Goal> goals, GoalStep step, string goalToCallPath, string goalToCallName)
+		private static (Goal?, IError?) GetMatchingGoal(IReadOnlyList<Goal> goals, GoalStep step, string goalToCallPath, string goalToCallName)
 		{
 			var foundGoals = goals.Where(p => p.RelativeGoalFolderPath.Equals(goalToCallPath, StringComparison.OrdinalIgnoreCase)
 					&& p.GoalName.Equals(goalToCallName, StringComparison.OrdinalIgnoreCase));
-			if (foundGoals.Count() == 1) return foundGoals.First();
-			if (foundGoals.Count() == 0) return null;
+			if (foundGoals.Count() == 1) return (foundGoals.First(), null);
+			if (foundGoals.Count() == 0) return (null, new NotFoundError($"Could not find goal matching {goalToCallName}. Searched for it at {goalToCallPath}") {  Step = step });
 
 			var goal = foundGoals.FirstOrDefault(p => p.RelativeGoalPath == step.Goal.RelativeGoalPath);
-			if (goal != null) return goal;
+			if (goal != null) return (goal, null);
 
-			goal = foundGoals.FirstOrDefault();
-			
-			return goal;
+			return (null, new Error($"Found {foundGoals.Count()} goals. I dont know which to choose") {  Step = step});
 		}
 
 		static string MergePath(string currentRelativePath, string newPath) =>

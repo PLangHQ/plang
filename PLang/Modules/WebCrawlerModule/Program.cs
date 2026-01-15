@@ -458,7 +458,23 @@ return result;");
 			return null;
 		}
 
+		public record AssertCheck(string TextToFind, string ErrorMessage, string Comparer = "contains", string? CssSelector = null);
+		public async Task<IError?> AssertPageContains(AssertCheck assertCheck)
+		{
+			var page = await GetPage();
+			var cssSelector = assertCheck.CssSelector ?? "html";
+			var pageContent = await page.InnerHTMLAsync(cssSelector);
+			if (pageContent.Contains(assertCheck.TextToFind, StringComparison.OrdinalIgnoreCase)) return null;
 
+			return new AssertError(assertCheck.ErrorMessage, assertCheck.TextToFind, "", goalStep);
+		}
+
+		public async Task<IError?> ReloadPage(PageReloadOptions? options = null)
+		{
+			var page = await GetPage();
+			var response = await page.ReloadAsync();
+			return null;
+		}
 		public async Task WaitForElementToAppear(string cssSelector, int timeoutInSeconds = 30, bool waitForElementToChange = false)
 		{
 			var timeoutMs = timeoutInSeconds * 1000;

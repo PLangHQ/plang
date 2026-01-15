@@ -15,23 +15,26 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
 using Websocket.Client.Logging;
+using static NBitcoin.RPC.SignRawTransactionRequest;
 
 namespace PLang.Runtime;
 
 public class DynamicObjectValue : ObjectValue
 {
-	Func<object> func;
-	public DynamicObjectValue(string name, Func<object> func, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false) : base(name, null, type, parent, Initiated, properties, isProperty, isSystemVariable)
+	private Func<object?> func;
+
+
+	public DynamicObjectValue(string name, Func<object?> func, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false) : base(name, null, type, parent, Initiated, properties, isProperty, isSystemVariable)
 	{
 		this.func = func;
 	}
 
-	public override object Value
+	public override object? Value
 	{
 		get
 		{
 			var value = func();
-
+			if (value == null) return null;
 			if (value is ObjectValue ov) return ov.Value;
 			return value;
 		}
@@ -47,7 +50,7 @@ public class DynamicObjectValue : ObjectValue
 		}
 	}
 }
-
+/*
 public class HtmlObjectValue : ObjectValue
 {
 	public HtmlObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false) : base(name, value, type, parent, Initiated, properties, isProperty)
@@ -86,14 +89,17 @@ public class HtmlObjectValue : ObjectValue
 		throw new NotImplementedException($"{convertToType} - {Value.GetType()}");
 
 	}
+}*/
+public interface IObjectValue { 
+	object? Value { get; set; }
+	Properties Properties { get; set; }
 }
-
-public class ObjectValue
+public class ObjectValue : IObjectValue
 {
 	private object? value;
 	private ObjectValue? parent;
 	public static ObjectValue Null { get { return Nullable(""); } }
-	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false)
+	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false, SegmentType? segmentType = null)
 	{
 		name = VariableHelper.Clean(name);
 		if (string.IsNullOrEmpty(name) && value.ToString().Equals(""))
@@ -111,11 +117,20 @@ public class ObjectValue
 		{
 			//not happy with this check, a variable could be %product._id%, not sure if this is enough
 			//are there some other versions of variable? this one came about because of elastic search
-			string prefix = (Char.IsLetterOrDigit(name[0]) || name[0] == '_') ? "." : "";
-			this.Path = (parent != null) ? $"{parent.Path}{prefix}{name}" : name;
-		}
+			if (segmentType != null && segmentType.Value == SegmentType.Index)
+			{
+				this.Path = (parent != null) ? $"{parent.Path}[{name}]" : $"[{name}]";
 
-		if (value is string str)
+			}
+			else
+			{
+				string prefix = (Char.IsLetterOrDigit(name[0]) || name[0] == '_') ? "." : "";
+				this.Path = (parent != null) ? $"{parent.Path}{prefix}{name}" : name;
+
+			}
+			}
+
+			if (value is string str)
 		{
 			this.value = str;// str.Trim();
 		}
@@ -140,6 +155,8 @@ public class ObjectValue
 	}
 
 	public List<VariableEvent> Events = new List<VariableEvent>();
+
+	[JsonProperty(Order = 1)]
 	public string Name { get; }
 	[JsonIgnore]
 	public ObjectValue Root
@@ -163,6 +180,7 @@ public class ObjectValue
 		}
 	}
 	public bool IsSystemVariable { get; set; }
+	[JsonProperty(Order = 2)]
 	public virtual object? Value
 	{
 		get { return this.value; }
@@ -306,6 +324,7 @@ public class ObjectValue
 			this.Path = $"{parent.Path}!{Name}";
 		}
 	}
+	[JsonProperty(Order = 1)]
 	public Properties Properties { get; set; }
 	public bool IsProperty { get; }
 	public DateTime Created { get; private set; }
@@ -418,6 +437,98 @@ public class ObjectValue
 	public void Set(string path, ObjectValue childObjectValue)
 	{
 		ObjectPath.Set(this, path, childObjectValue);
+	}
+
+	public TypeCode GetTypeCode()
+	{
+		return Name.GetTypeCode();
+	}
+
+	public bool ToBoolean(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToBoolean(provider);
+	}
+
+	public byte ToByte(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToByte(provider);
+	}
+
+	public char ToChar(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToChar(provider);
+	}
+
+	public DateTime ToDateTime(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToDateTime(provider);
+	}
+
+	public decimal ToDecimal(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToDecimal(provider);
+	}
+
+	public double ToDouble(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToDouble(provider);
+	}
+
+	public short ToInt16(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToInt16(provider);
+	}
+
+	public int ToInt32(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToInt32(provider);
+	}
+
+	public long ToInt64(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToInt64(provider);
+	}
+
+	public sbyte ToSByte(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToSByte(provider);
+	}
+
+	public float ToSingle(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToSingle(provider);
+	}
+
+	public string ToString(IFormatProvider? provider)
+	{
+		return Value.ToString().ToString(provider);
+	}
+
+	public object ToType(Type conversionType, IFormatProvider? provider)
+	{
+		if (Value == null || Value is not IConvertible) return Value;
+		try
+		{
+			return ((IConvertible)Value).ToType(conversionType, provider);
+		} catch (Exception ex)
+		{
+			return Value.ToString();
+		}
+	}
+
+	public ushort ToUInt16(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToUInt16(provider);
+	}
+
+	public uint ToUInt32(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToUInt32(provider);
+	}
+
+	public ulong ToUInt64(IFormatProvider? provider)
+	{
+		return ((IConvertible)Value).ToUInt64(provider);
 	}
 }
 

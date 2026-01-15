@@ -5,8 +5,10 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils.Extractors;
+using System.Globalization;
 using System.Text;
 
 namespace PLang.Services.OpenAi
@@ -59,7 +61,7 @@ namespace PLang.Services.OpenAi
 				try
 				{
 					question.RawResponse = q.RawResponse;
-					return (Extractor.Extract(q.RawResponse, responseType), null);
+					return (Extractor.Extract(q.RawResponse, responseType, null), null);
 
 				}
 				catch { }
@@ -82,11 +84,11 @@ namespace PLang.Services.OpenAi
 			
 			string data = $@"{{
 		""model"":""{question.model}"",
-		""temperature"":{question.temperature},
+		""temperature"":{question.temperature.ToString(CultureInfo.InvariantCulture)},
 		""max_tokens"":{question.maxLength},
-		""top_p"":{question.top_p},
-		""frequency_penalty"":{question.frequencyPenalty},
-		""presence_penalty"":{question.presencePenalty},
+		""top_p"":{question.top_p.ToString(CultureInfo.InvariantCulture)},
+		""frequency_penalty"":{question.frequencyPenalty.ToString(CultureInfo.InvariantCulture)},
+		""presence_penalty"":{question.presencePenalty.ToString(CultureInfo.InvariantCulture)},
 		""messages"":{JsonConvert.SerializeObject(question.promptMessage)}
 			}}";
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
@@ -115,11 +117,13 @@ namespace PLang.Services.OpenAi
 
 					question.RawResponse = json.choices[0].message.content.ToString();
 
-					var obj = Extractor.Extract(question.RawResponse, responseType);
+					var obj = Extractor.Extract(question.RawResponse, responseType, question.Tools);
 					if (question.caching)
 					{
 						llmCaching.SetCachedQuestion(appId, question);
 					}
+					var ov = new ObjectValue("data", obj);
+
 					return (obj, null);
 				}
 			}

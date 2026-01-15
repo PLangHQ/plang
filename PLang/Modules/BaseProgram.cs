@@ -321,7 +321,7 @@ namespace PLang.Modules
 							isMatch = true;
 						} else if (parameter.Value?.ToString() != null && 
 								parameter.Value.ToString()?.EndsWith("*") == true && 
-								parameterValues[parameter.Key]?.ToString()?.StartsWith(parameter.Value.ToString().TrimEnd('*')) == true)
+								parameterValues[parameter.Key]?.ToString()?.StartsWith(parameter.Value.ToString().TrimEnd('*').TrimEnd('.')) == true)
 						{
 							isMatch = true;
 						}
@@ -355,7 +355,14 @@ namespace PLang.Modules
 				var variables = VariableHelper.GetVariablesInText(error.Step.Text);
 				foreach (var variable in variables)
 				{
-					error.Variables.Add(memoryStack.GetObjectValue(variable));
+					try
+					{
+						error.Variables.Add(memoryStack.GetObjectValue(variable));
+					}
+					catch (Exception e)
+					{
+						Console.WriteLine($"Error getting variable:{variable} - exceptin:{e}");
+					}
 				}
 			}
 
@@ -644,7 +651,7 @@ namespace PLang.Modules
 				}
 				else
 				{
-					path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey).AdjustPathToOs();
+					path = fileSystem.Path.Join(goal.AbsoluteGoalFolderPath, cacheKey).AdjustPathToOs();
 				}
 
 				var dirName = fileSystem.Path.GetDirectoryName(path);
@@ -706,7 +713,7 @@ namespace PLang.Modules
 					}
 					else
 					{
-						path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey).AdjustPathToOs();
+						path = fileSystem.Path.Join(goal.AbsoluteGoalFolderPath, cacheKey).AdjustPathToOs();
 					}
 
 					if (!fileSystem.File.Exists(path)) return false;

@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Castle.Components.DictionaryAdapter.Xml;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,8 @@ using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.IO.Abstractions;
+using static PLang.Modules.DbModule.Builder;
 
 namespace PLang.Modules.CodeModule
 {
@@ -38,6 +41,32 @@ namespace PLang.Modules.CodeModule
 		}
 
 
+		public async Task<(Instruction, IBuilderError?)> BuilderValidate(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			if (gf.Name.Equals("RunInlineCode"))
+			{
+				var implementaion = gf.GetParameter<CodeImplementationResponse>("implementation");
+				return (instruction, null);
+			}
+
+			var implementation = gf.GetParameter<FileCodeImplementationResponse>("implementation");
+			if (implementation == null) return (instruction, null);
+
+			var filePath = GetPath(implementation.FileName, step.Goal);
+			if (fileSystem.File.Exists(filePath)) {
+				string dllFilePath = filePath.Replace(".cs", ".dll");
+				if (fileSystem.File.Exists(dllFilePath))
+				{
+					return (instruction, null);
+				} else
+				{
+					return (instruction, new BuilderError($".dll file not found. Looked for it at {dllFilePath}. Rebuild the step."));
+				}
+			}
+			return (instruction, new BuilderError($"{implementation.FileName} file not found. Looked for it at {filePath}.", Retry: false));
+		}
+
+
 		public async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
 		{
 			var result = await PrepareStep(step);
@@ -50,14 +79,14 @@ namespace PLang.Modules.CodeModule
 		{
 			var file = programFactory.GetProgram<FileModule.Program>(step);
 			var files = await file.GetFilePathsInDirectory(step.Goal.RelativeGoalFolderPath, "*.cs", includeSubfolders: true);
-			if (files.Count == 0) return (null, null);
+			if (files.Count == 0 && !step.Text.Contains(".cs")) return (null, null);
 
 			SetSystem(@$"You have two options:
 
 Generate New Code: Use the user input to create a new code snippet. The user will provide a description of the execution, and the code generation will be completed in another request. If this option is chosen, FileName should be null.
 
-Use a Prepared File: Utilize a <prepared> .cs file. The user will define the file to run, e.g., ""run CSharpFile with %content% write to %value%"". This example is applicable if the .cs file takes in one parameter and returns a value.
-
+Use a Prepared File: Utilize a <prepared> .cs file. The user will define the file to run, e.g., ""run file.cs with %content% write to %value%"". This example is applicable if the .cs file takes in one parameter and returns a value.
+When user defines a path to .cs file, use that. 
 Note: Prioritize generating new code unless the task explicitly requires using a prepared file.
 
 <prepared>
@@ -69,10 +98,14 @@ return file name with path or null");
 			if (buildError != null) return (null, buildError);
 
 			var fileToUse = instruction!.Function as FileToUse;
-			if (fileToUse.NameOfCSharpFile == null) return (null, null);
+			if (string.IsNullOrWhiteSpace(fileToUse.NameOfCSharpFile)) return (null, null);
 
-			var result = await file.ReadTextFile(fileToUse.NameOfCSharpFile);
+			var csharpFilePath = GetPath(fileToUse.NameOfCSharpFile, step.Goal);
+
+			var result = await file.ReadTextFile(csharpFilePath);
 			if (result.Error != null) return (null, new StepBuilderError(result.Error, step));
+
+			
 
 			string source = result.Item1 as string;
 
@@ -199,12 +232,14 @@ This would map the user statement to the parameter 'content' of the code and hav
 				ReturnValues: codeParams.ReturnValues
 			);
 
+			if (!fileSystem.File.Exists(csharpFilePath.Replace(".cs", ".dll")))
+			{
+				var compiler = new CSharpCompiler(fileSystem, prParser, logger);
+				var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);			
 
-			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
-			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
-
-			var error = await compiler.BuildFile(c, step, memoryStack);
-			if (error != null) return (null, error);
+				var error = await compiler.BuildFile(c, step, memoryStack);
+				if (error != null) return (null, error);
+			}
 
 			List<Parameter> parameters = new List<Parameter>();
 			parameters.Add(new Parameter(c.GetType().FullName, "implementation", c));

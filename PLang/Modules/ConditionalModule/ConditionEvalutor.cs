@@ -19,10 +19,10 @@ namespace PLang.Modules.ConditionalModule
 		[Description(@"
 For CompundCondition, use Conditions list to construct the condition. LeftValue and RightValue are used only at in SimpleCondition
 Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
-
+Logic: AND|OR is required for Compound
 ")]
 		public record CompoundCondition : Condition;
-		[Description("Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf")]
+		[Description("Logic: AND|OR. Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf")]
 		public record SimpleCondition : Condition;
 		public record Condition
 		{
@@ -55,7 +55,7 @@ Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
 				return result;
 			}
 
-			public static bool EvaluateSimple(Condition n) => n.Operator switch
+			public static bool EvaluateSimple(Condition n) => n.Operator.ToLowerInvariant() switch
 			{
 				
 
@@ -66,11 +66,11 @@ Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
 				">=" => Cmp(n) >= 0,
 				"<=" => Cmp(n) <= 0,
 				"in" => n.RightValue is IEnumerable r && r.Cast<object>().Contains(n.LeftValue),
-				"isEmpty" => IsEmpty(n.LeftValue, n.RightValue),
+				"isempty" => IsEmpty(n.LeftValue, n.RightValue),
 				"contains" => Has(n.LeftValue, n.RightValue),
-				"startsWith" => Str(n, (s, x) => s.StartsWith(x, StringComparison.Ordinal)),
-				"endsWith" => Str(n, (s, x) => s.EndsWith(x, StringComparison.Ordinal)),
-				"indexOf" => Str(n, (s, x) => s.IndexOf(x, StringComparison.Ordinal) >= 0),
+				"startswith" => Str(n, (s, x) => s.StartsWith(x, StringComparison.OrdinalIgnoreCase)),
+				"endswith" => Str(n, (s, x) => s.EndsWith(x, StringComparison.OrdinalIgnoreCase)),
+				"indexof" => Str(n, (s, x) => s.IndexOf(x, StringComparison.OrdinalIgnoreCase) >= 0),
 				_ => throw new NotSupportedException($"Op '{n.Operator}'")
 			};
 
@@ -120,12 +120,18 @@ Operator: ==|!=|<|>|<=|>=|in|isEmpty|contains|startswith|endswith|indexOf
 			static bool Has(object? c, object? i) =>
 				c switch
 				{
-					string s when i is string sub => s.Contains(sub, StringComparison.Ordinal),
+					string s when i is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
 					IEnumerable coll => coll.Cast<object>().Contains(i),
 					_ => false
 				};
-			static bool Str(Condition n, Func<string, string, bool> f) =>
-				n.LeftValue is string s && n.RightValue is string x && f(s, x);
+			static bool Str(Condition n, Func<string, string, bool> f)
+			{
+				string? leftValue = TypeHelper.ConvertToType(n.LeftValue, typeof(string)) as string;
+				string? rightValue = TypeHelper.ConvertToType(n.RightValue, typeof(string)) as string;
+				if (leftValue == null || rightValue == null) return false;
+
+				return f(leftValue, rightValue);
+			}
 		}
 	}
 }

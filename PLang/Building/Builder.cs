@@ -4,6 +4,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.AskUser;
+using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Events.Types;
@@ -20,7 +21,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<IError?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null);
+		Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null);
 	}
 	public class Builder : IBuilder
 	{
@@ -56,7 +57,7 @@ namespace PLang.Building
 		}
 
 
-		public async Task<IError?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null)
+		public async Task<List<IBuilderError>?> Start(IServiceContainer container, PLangContext context, string? absoluteGoalPath = null)
 		{
 			IError? error;
 			try
@@ -75,7 +76,7 @@ namespace PLang.Building
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				error = eventRuntime.Load(true);
-				if (error != null) return error;
+				if (error != null) return [new BuilderError(error)];
 
 				logger.LogDebug($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
 				
@@ -86,15 +87,17 @@ namespace PLang.Building
 					var goalError = await goalBuilder.BuildGoal(container, setupGoal, context);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
-						return goalError;
+						return [goalError];
 					}
 					else if (goalError != null)
 					{
-						logger.LogWarning(goalError.ToFormat().ToString());
-						goalBuilder.BuildErrors.Add(goalError);
+						//logger.LogWarning(goalError.ToFormat().ToString());
+						goalBuilder.AddToBuildErrors(goalError);
+						
 					}
 					logger.LogDebug($"Done Setup Build on {setupGoal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 				}
+				context.DataSource = null;
 
 				if (absoluteGoalPath != null)
 				{
@@ -102,13 +105,13 @@ namespace PLang.Building
 				}
 				logger.LogDebug($"Start building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 				error = await eventBuilder.BuildEventsPr();
-				if (error != null) return error;
+				if (error != null) return [new BuilderError(error)];
 				logger.LogDebug($"Done building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 
 				var (_, eventError) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, goal, true);
 				if (eventError != null)
 				{
-					return eventError;
+					return [new BuilderError(eventError)];
 				}
 				
 				var goalsToBuild = goals.Where(p => !p.IsSetup && !p.IsEvent);
@@ -123,12 +126,11 @@ namespace PLang.Building
 					var goalError = await goalBuilder.BuildGoal(container, goalToBuild, context);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
-						return goalError;
+						return [goalError];
 					}
 					else if (goalError != null)
 					{
-						goalBuilder.BuildErrors.Add(goalError);
-						logger.LogWarning(goalError.ToFormat().ToString());
+						goalBuilder.AddToBuildErrors(goalError);
 					}
 
 					foreach (var subGoalPr in goalToBuild.SubGoals)
@@ -148,7 +150,7 @@ namespace PLang.Building
 				(_, eventError) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, goal, true);
 				if (eventError != null)
 				{
-					return eventError;
+					return [new BuilderError(eventError)];
 				}
 
 				ReleaseDatabase();
@@ -156,7 +158,7 @@ namespace PLang.Building
 
 				logger.LogDebug($"Done - Finished cleaning, db releasee and inform user - {stopwatch.ElapsedMilliseconds}");
 
-
+				return goalBuilder.BuildErrors;
 			}
 			catch (Exception ex)
 			{
@@ -166,10 +168,10 @@ namespace PLang.Building
 					var engine = container.GetInstance<IEngine>();
 
 					(var answer, error) = await AskUser.GetAnswer(engine, context, fa.Message);
-					if (error != null) return error;
+					if (error != null) return [new BuilderError(error)];
 
 					(var _, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
-					if (error != null) return error;
+					if (error != null) return [new BuilderError(error)];
 
 					return await Start(container, context);
 
@@ -180,10 +182,10 @@ namespace PLang.Building
 				if (ex is MissingSettingsException mse)
 				{
 					var (answer, askError) = await AskUser.GetAnswer(engine, context, mse.Message);
-					if (askError != null) return askError;
+					if (askError != null) return [new BuilderError(askError)];
 
 					askError = await mse.InvokeCallback(answer);
-					if (askError != null) return askError;
+					if (askError != null) return [new BuilderError(askError)];
 
 					return await Start(container, context);
 				}

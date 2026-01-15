@@ -41,7 +41,7 @@ namespace PLang.Utils.Extractors
 				{
 					question.scheme = TypeHelper.GetJsonSchema(responseType);
 				}
-				requiredResponse = ((JsonExtractor) extractor).GetRequiredResponse(question.scheme);
+				requiredResponse = ((JsonExtractor) extractor).GetRequiredResponse(question.scheme, question.Tools);
 			}
 			else
 			{

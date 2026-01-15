@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.TagHelpers;
+using NBitcoin;
 using PLang.Attributes;
 using PLang.Runtime;
 using System.Reflection.Metadata;
@@ -31,31 +32,35 @@ namespace PLang.Building.Model
 		[IgnoreWhenInstructed]
 		public List<Variable> Variables { get { return _variables; } set { _variables = value; } }
 
-		
+
 		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
 		{
 			if (value == null) return;
 
 			if (variableName == null) variableName = typeof(T).FullName;
 
-			
-			var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
 
-			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			if (variableIdx == -1)
+			var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
+			if (_variables == null) _variables = new();
+			try
 			{
-				_variables.Add(variable);
-			}
-			else
-			{
-				try
+				var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+				if (variableIdx == -1)
 				{
-					_variables[variableIdx] = variable;
-				} catch (Exception ex)
-				{
-					Console.WriteLine($"Exception - AddVariable:{ex.Message} - variableIdx:{variableIdx}");
 					_variables.Add(variable);
 				}
+				else
+				{
+
+					_variables[variableIdx] = variable;
+
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Exception - AddVariable:{ex.Message} - variableName:{variableName}");
+				_variables = new();
+				_variables.Add(variable);
 			}
 			SetVariableOnEvent(variable);
 
@@ -63,15 +68,24 @@ namespace PLang.Building.Model
 		public void AddVariable(Variable goalVariable)
 		{
 			if (goalVariable == null) return;
+			if (_variables == null) _variables = new();
 
 			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(goalVariable.VariableName, StringComparison.OrdinalIgnoreCase));
-			if (variableIdx == -1)
+			try
 			{
-				_variables.Add(goalVariable);
+				if (variableIdx == -1)
+				{
+					_variables.Add(goalVariable);
+				}
+				else
+				{
+					_variables[variableIdx] = goalVariable;
+				}
 			}
-			else
+			catch (Exception ex)
 			{
-				_variables[variableIdx] = goalVariable;
+				Console.WriteLine($"VariableIndex: idx:{variableIdx} | count:{_variables.Count} - {ex}");
+				_variables.Add(goalVariable);
 			}
 			SetVariableOnEvent(goalVariable);
 
@@ -134,9 +148,9 @@ namespace PLang.Building.Model
 
 		public T? GetVariable<T>(string? variableName = null, int level = 0, List<string>? callStackGoals = null)
 		{
-			
+
 			if (variableName == null) variableName = typeof(T).FullName;
-			
+
 			var variable = _variables.FirstOrDefault(p => p.VariableName?.Equals(variableName, StringComparison.OrdinalIgnoreCase) == true);
 			if (variable != null) return (T?)variable?.Value;
 
@@ -198,11 +212,11 @@ namespace PLang.Building.Model
 
 		public async Task DisposeVariables(MemoryStack memoryStack)
 		{
-			
+
 			for (int i = _variables.Count - 1; i >= 0; i--)
 			{
 				var variable = _variables[i];
-				if (variable == null) continue;
+				if (variable == null || variable.VariableName.StartsWith("!")) continue;
 
 				var parent = GetParent();
 				if (parent != null && memoryStack.ContainsObject(variable))

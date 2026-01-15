@@ -50,7 +50,7 @@ public class PlangTransformer : JsonTransformer
 			var json = JsonConvert.SerializeObject(env, _newtonsoftSettings);
 			var jsonBytes = Encoding.UTF8.GetBytes(json);
 			length = jsonBytes.Length;
-			 
+			
 			// Write to PipeWriter
 			var span = writer.GetSpan(jsonBytes.Length + 1);
 			jsonBytes.CopyTo(span);

@@ -26,6 +26,7 @@ using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using ReverseMarkdown;
 using ReverseMarkdown.Converters;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,6 +37,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -70,7 +72,7 @@ namespace PLang.Modules.DbModule
 		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%")]
 		public record ParameterInfo(string TypeFullName, string ParameterName, object? VariableNameOrValue);
 		public record TableInfo(string Name, List<ColumnInfo> Columns);
-		public record ColumnInfo(string Information);
+		public record ColumnInfo(string Name, string Type, bool IsPrimaryKey, bool IsNotNull, object DefaultValue);
 
 		public Program(IDbServiceFactory dbFactory, PLangAppContext appContext, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
 			IEventSourceRepository eventSourceRepository, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
@@ -217,9 +219,10 @@ namespace PLang.Modules.DbModule
 			if (dataSource.AttachedDbs.Count > 0)
 			{
 				using var attachCommand = transaction.Connection.CreateCommand();
-				await AttachDb(dataSource, (DbCommand)attachCommand);
+				error = await AttachDb(dataSource, (DbCommand)attachCommand);
+				if (error != null) return error;
 			}
-
+			
 			error = AddDataSourceToContext(dataSource);
 			if (error != null) return error;
 
@@ -270,12 +273,8 @@ namespace PLang.Modules.DbModule
 			}
 			try
 			{
-				if (datasource != null && transaction.Connection != null && datasource.AttachedDbs.Count > 0)
-				{
-					var cmd = transaction.Connection.CreateCommand();
-					await DetachDb(datasource, cmd);
-				}
 
+				var connection = transaction.Connection;
 				if (HasError)
 				{
 					transaction.Rollback();
@@ -285,18 +284,29 @@ namespace PLang.Modules.DbModule
 					transaction.Commit();
 				}
 
+				if (datasource != null && connection != null && datasource.AttachedDbs.Count > 0)
+				{
+					//var cmd = transaction.Connection.CreateCommand();
+					var error = await DetachDb(datasource, connection);
+					connection.Close();
+					if (error != null) return error;
+				}
+
 			}
 			catch (Exception ex)
 			{
-				transaction.Rollback();
-				return new ExceptionError(ex, ex.Message, goal, goalStep);
+				return new ProgramError(ex.Message, goalStep, Exception: ex);
 			}
 			finally
 			{
 				transaction.Connection?.Close();
-
 				datasource.Transaction = null;
 				datasource.AttachedDbs.Clear();
+				if (context.DataSource != null && context.DataSource.Name == datasource.Name)
+				{
+					context.DataSource = datasource;
+				}
+				
 			}
 
 			return null;
@@ -378,7 +388,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Returns tables and views in database with the columns description")]
-		public async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure([HandlesVariable] string dataSourceName, List<string>? tables = null)
+		public async Task<(IEnumerable<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure([HandlesVariable] string dataSourceName, List<string>? tables = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (null, error);
@@ -386,7 +396,7 @@ namespace PLang.Modules.DbModule
 			return await GetDatabaseStructure(dataSource, tables);
 		}
 
-		internal async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(DataSource dataSource, List<string>? tables = null)
+		internal async Task<(IEnumerable<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(DataSource dataSource, List<string>? tables = null)
 		{
 
 			var result = await Select(dataSource, dataSource.SelectTablesAndViews);
@@ -426,13 +436,15 @@ namespace PLang.Modules.DbModule
 				List<ColumnInfo> columns = new();
 				foreach (var column in selectResult.Table)
 				{
-					columns.Add(new ColumnInfo(JsonConvert.SerializeObject(column)));
+					columns.Add(new ColumnInfo(column.Get<string>("name"),
+							column.Get<string>("type"), column.Get<Int64>("isprimarykey") == 1,
+							column.Get<Int64>("isnotnull") == 1, column.Get<object>("default_value")));
 				}
 				tableInfos.Add(new TableInfo(row.Get<string>("name"), columns));
 
 
 			}
-			return (tableInfos, null);
+			return (tableInfos.OrderBy(p => p.Name), null);
 		}
 
 		public async void Dispose()
@@ -442,7 +454,7 @@ namespace PLang.Modules.DbModule
 
 
 
-		private (IDbConnection? connection, IDbTransaction? transaction, DynamicParameters? param, string sql, IError? error) Prepare(DataSource dataSource, string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
+		private (IDbConnection? connection, IDbTransaction? transaction, DynamicParameters? param, string sql, IError? error) Prepare(DataSource dataSource, string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false, bool readOnly = false)
 		{
 			IDbConnection? connection = null;
 			var transaction = dataSource.Transaction;
@@ -452,14 +464,14 @@ namespace PLang.Modules.DbModule
 			}
 			else
 			{
-				connection = dbFactory.CreateHandler(dataSource, memoryStack);
+				connection = dbFactory.CreateHandler(dataSource, memoryStack, readOnly);
 			}
 			if (connection == null) return (null, null, null, sql, new ProgramError("Connection to db could not be created"));
 
 
 			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
 
-			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite);
+			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite, dataSource);
 			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
 
 			if (connection.State == ConnectionState.Open)
@@ -544,23 +556,32 @@ namespace PLang.Modules.DbModule
 			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		[Description("Query the database with a sql file")]
-		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql")]
+		[Example(@"query usersCount.sql, table: ""users"", write to %result%", @"fileName=""usersCount.sql"", tableAllowList=[""users""], ReturnValues=""%result%""")]
+		[Example(@"query sql/totalProducts.sql, table: ""products"", write to %productCount%", @"fileName=""totalProducts.sql"", tableAllowList=[""products""], ReturnValues=""%productCount%""")]
+		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
 		{
 			(var dataSource, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (0, error, null);
 
-			return await QuerySqlFile(dataSource, fileName, tableAllowList, parameters);
+			return await QuerySqlFile(dataSource, fileName, tableAllowList, parameters, rowsToReturn);
 		}
 
-		internal async Task<(object?, IError?, Properties?)> QuerySqlFile(DataSource dataSource, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null)
+		internal async Task<(object?, IError?, Properties?)> QuerySqlFile(DataSource dataSource, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
 		{
 			var file = GetProgramModule<Modules.FileModule.Program>();
 			var readResult = await file.ReadTextFile(fileName);
 			if (readResult.Error != null) return (0, readResult.Error, null);
 
-			return await Select(dataSource, readResult.Content.ToString(), parameters);
+			var result = await Select(dataSource, readResult.Content.ToString(), parameters);
+			if (rowsToReturn != null && rowsToReturn >= 0 && result.Table != null)
+			{
+				var table = result.Table.Take(rowsToReturn.Value);
+				if (rowsToReturn == 1) return (table.FirstOrDefault(), result.Error, result.Properties);
 
+				return (table, result.Error, result.Properties);
+			}
+			return result;
 		}
 
 		[Description("Query sql statement that is fully from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be queried")]
@@ -588,6 +609,16 @@ namespace PLang.Modules.DbModule
 			return await Execute(dataSource, sql, tableAllowList, parameters);
 		}
 
+		[Description("Execute sql statement on specific connection string")]
+		public async Task<(long RowsAffected, IError? Error)> ExecuteByConnectionString(string sql, string connectionString, string dbType = "sqlite", List<ParameterInfo>? parameters = null)
+		{
+			if (dbType != "sqlite") return (0, new ProgramError($"Database type {dbType} is not supported. {ErrorReporting.CreateIssueNotImplemented}"));
+
+			var fullPath = GetPath(connectionString);
+			var dataSource = new DataSource("temp", typeof(SqliteConnection).FullName, $"Data Source={connectionString}", "data", "", "");
+			return await ExecuteRaw(dataSource, sql, parameters);
+
+		}
 		[Description("Reference as db.Execute(%sql%, %parameters%)")]
 		public async Task<(long RowsAffected, IError? Error)> ExecutePlang(string sql, List<ObjectValue>? parameters = null)
 		{
@@ -624,7 +655,7 @@ namespace PLang.Modules.DbModule
 			return await ExecuteRaw(dataSource, sql, parameters);
 		}
 
-		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(DataSource dataSource, string sql, List<ParameterInfo>? parameters = null)
+		internal async Task<(long RowsAffected, IError? Error)> ExecuteRaw(DataSource dataSource, string sql, List<ParameterInfo>? parameters = null)
 		{
 			long rowsAffected = 0;
 
@@ -770,8 +801,11 @@ namespace PLang.Modules.DbModule
 
 		internal async Task<(Table? Table, IError? Error, Properties? Properties)> Select(DataSource dataSource, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
-			var prep = Prepare(dataSource, sql, sqlParameters);
-
+			var prep = Prepare(dataSource, sql, sqlParameters, readOnly : true);
+			if (sql.StartsWith("select o.id as orderId, o.type as orderType"))
+			{
+				Console.WriteLine($"---- FACT SALE: {dataSource.Name} | {dataSource.ConnectionString} - {JsonConvert.SerializeObject(sqlParameters)}");
+			}
 			Properties properties = new();
 			properties.Add(new ObjectValue("DataSource", dataSource));
 			properties.Add(new ObjectValue("MethodParameters", new { Sql = sql, SqlParameters = sqlParameters }));
@@ -793,7 +827,8 @@ namespace PLang.Modules.DbModule
 				}
 				else if (dataSource.AttachedDbs.Count > 0)
 				{
-					await AttachDb(dataSource, cmd);
+					var error = await AttachDb(dataSource, cmd);
+					if (error != null) return (null, error, properties);
 				}
 
 
@@ -849,7 +884,10 @@ namespace PLang.Modules.DbModule
 				}
 				cmd.CommandText = prep.sql;
 				properties.Add(new ObjectValue("CommandText", cmd.CommandText));
+				if (context.DebugMode)
+				{
 
+				}
 				using var reader = await cmd.ExecuteReaderAsync();
 
 
@@ -880,10 +918,22 @@ namespace PLang.Modules.DbModule
 
 				properties.Add(new ObjectValue("Columns", cols));
 				properties.Add(new ObjectValue("RowCount", table.Count));
-
+				if (sql.StartsWith("select o.id as orderId, o.type as orderType"))
+				{
+					Console.WriteLine($"---- FACT SALE: Table count: {table.Count} | commandText: {cmd.CommandText}");
+					if (dataSource.AttachedDbs.Count > 0)
+					{
+						Console.WriteLine($"---- FACT SALE: attached: {string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
+					}
+				}
 				//var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
 				logger.LogDebug($"Rows: {table.Count}");
-
+				
+				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
+				{
+					var error = await DetachDb(dataSource, prep.connection);
+					if (error != null) return (table, error, properties);
+				}
 
 				return (table == null) ? (new(cols), null, properties) : (table, null, properties);
 			}
@@ -893,18 +943,24 @@ namespace PLang.Modules.DbModule
 			}
 			finally
 			{
-				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
-				{
-					await DetachDb(dataSource, cmd);
-				}
+				
 				Done(prep.connection, prep.transaction);
 			}
 		}
 
-		private async Task AttachDb(DataSource dataSource, DbCommand cmd)
+		private async Task<IError?> AttachDb(DataSource dataSource, DbCommand cmd, int retryCount = 0)
 		{
-			if (dataSource.AttachedDbs.Count == 0) return;
-			if (dataSource.AttachedDbs.FirstOrDefault(p => !p.IsAttached) == null) return;
+			if (dataSource.AttachedDbs.Count == 0) return null;
+			if (dataSource.AttachedDbs.FirstOrDefault(p => !p.IsAttached) == null)
+			{
+				if (dataSource.AttachedDbs.Count > 0)
+				{
+					Console.WriteLine($"will not Attach  - {goalStep.RelativePrPath}:{goalStep.LineNumber}");
+				}
+				return null;
+			}
+			
+
 
 			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 			{
@@ -915,38 +971,71 @@ namespace PLang.Modules.DbModule
 					throw new InvalidOperationException($"Invalid alias: {alias}");
 
 				var dbAbsolutePath = fileSystem.Path.Join(goalStep.Goal.AbsoluteAppStartupFolderPath, dataSource.AttachedDbs[i].Path);
-
+				
+				
 				cmd.CommandText += $"ATTACH DATABASE '{dbAbsolutePath}' AS {alias};\n";
+				
 			}
-			await cmd.ExecuteNonQueryAsync();
+			try
+			{
+				//Console.WriteLine($"Try to attach {dataSource.Name}, {string.Join(',', dataSource.AttachedDbs.Select(p => p.Alias))} - {goalStep.RelativePrPath}:{goalStep.LineNumber} - Hash:{cmd.Connection.GetHashCode()} - Handle:{((SqliteConnection)cmd.Connection).Handle.DangerousGetHandle()}");
+				await cmd.ExecuteNonQueryAsync();
+				
+			} catch (Exception ex)
+			{
+				if (ex.Message.Contains("already in use"))
+				{
+					if (retryCount < 3)
+					{
+						logger.LogTrace($"  - {ex.Message}, waiting");
+						await Task.Delay(50);
+						var error = await AttachDb(dataSource, cmd, ++retryCount);
+						if (error != null) return error;
+					} else
+					{
+						return new ProgramError(ex.Message, Exception: ex);
+					}
+					
+					//what to do ??
+				}
+				else
+				{
+					return new ProgramError(ex.Message, Exception: ex);
+				}
+			}
+
 			for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 			{
 				dataSource.AttachedDbs[i].IsAttached = true;
 			}
 			cmd.CommandText = "";
+
+			logger.LogTrace($"  - Attached {dataSource.Name} - Attached:{string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
+			return null;
 		}
 
-		private async Task<IError?> DetachDb(DataSource dataSource, IDbCommand cmd)
+		private async Task<IError?> DetachDb(DataSource dataSource, IDbConnection connection)
 		{
 			if (dataSource.AttachedDbs.Count == 0) return null;
 
 			try
 			{
-				cmd.CommandText = "";
-				cmd.Parameters.Clear();
-
+				using var cmd = connection.CreateCommand();
 				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 				{
-					cmd.CommandText += $";\nDETACH DATABASE \"{dataSource.AttachedDbs[i].Alias}\";";
+					cmd.CommandText = $"DETACH DATABASE \"{dataSource.AttachedDbs[i].Alias}\";";
+					cmd.ExecuteNonQuery();
 				}
-				cmd.ExecuteNonQuery();
+				
+				//Console.WriteLine($"Detach {dataSource.Name}, {string.Join(',', dataSource.AttachedDbs.Select(p => p.Alias))} - {goalStep.RelativePrPath}:{goalStep.LineNumber} - Hash:{cmd.Connection.GetHashCode()} - Handle:{((SqliteConnection)cmd.Connection).Handle.DangerousGetHandle()}");
 				for (int i = 0; i < dataSource.AttachedDbs.Count; i++)
 				{
 					dataSource.AttachedDbs[i].IsAttached = false;
 				}
-
+				logger.LogTrace($"  - Detach {dataSource.Name} - Detached:{string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
 				dataSource.AttachedDbs.Clear();
-				
+
+
 			}
 			catch (Exception ex)
 			{
@@ -1237,13 +1326,18 @@ For example:
 
 		private List<string> GetProperties(object obj)
 		{
+			if (obj is Row row)
+			{
+				return row.Columns.Append("!data").ToList();
+			}
+
 			if (obj is JObject jObject)
 			{
-				return jObject.Properties().Select(p => p.Name).ToList();
+				return jObject.Properties().Select(p => p.Name).Append("!data").ToList();
 			}
 			else if (obj is ExpandoObject eo)
 			{
-				return ((IDictionary<string, object>)eo).Keys.ToList();
+				return ((IDictionary<string, object>)eo).Keys.Append("!data").ToList();
 			}
 			else
 			{
@@ -1268,16 +1362,10 @@ For example:
 			}
 			else
 			{
-				var type = obj.GetType();
-				var property = obj.GetType().GetProperty(propertyName);
-				if (property != null)
-				{
-					return property.GetValue(obj);
-				}
-				else
-				{
-					return GetValue(JObject.FromObject(obj), propertyName);
-				}
+				var value = obj.GetValueOnProperty(propertyName);
+				if (value != null) return value;
+
+				return GetValue(JObject.FromObject(obj), propertyName);
 			}
 			return null;
 		}
@@ -1347,36 +1435,36 @@ For example:
 					if (column.Key == "id")
 					{
 						param.Add(new ParameterInfo(typeof(Int64).FullName, "id", id + i));
+						rowHasAnyValue = true; 
+						continue;
 					}
-					else if (propertiesInItems.FirstOrDefault(p => p.Equals(cleanedColumnValue, StringComparison.OrdinalIgnoreCase)) != null
-						|| memoryStack.Contains(cleanedColumnValue))
+					
+					var obj = (isListItem) ? GetValue(itemsToInsert[i], cleanedColumnValue) : memoryStack.Get(cleanedColumnValue);
+					if (obj == null)
 					{
-						var obj = (isListItem) ? GetValue(itemsToInsert[i], cleanedColumnValue) : memoryStack.Get(cleanedColumnValue);
-						if (obj == null)
-						{
-							param.Add(new ParameterInfo(typeof(DBNull).FullName, column.Key, obj));
-							continue;
-						}
-						else if (obj is ObjectValue ov)
-						{
-							param.Add(new ParameterInfo(ov.Type.FullName, column.Key, ov.Value));
-						}
-						else if (obj is JValue value)
-						{
-							param.Add(new ParameterInfo(value.Value.GetType().FullName, column.Key, value.Value));
-						}
-						else
-						{
-							param.Add(new ParameterInfo(obj.GetType().FullName, column.Key, obj));
-						}
-						rowHasAnyValue = true;
+						param.Add(new ParameterInfo(typeof(DBNull).FullName, column.Key, obj));
+						continue;
 					}
+					else if (obj is ObjectValue ov)
+					{
+						param.Add(new ParameterInfo(ov.Type.FullName, column.Key, ov.Value));
+					}
+					else if (obj is JValue value)
+					{
+						param.Add(new ParameterInfo(value.Value.GetType().FullName, column.Key, value.Value));
+					}
+					else
+					{
+						param.Add(new ParameterInfo(obj.GetType().FullName, column.Key, obj));
+					}
+					rowHasAnyValue = true;
+					
 
 				}
 				if (!rowHasAnyValue) { continue; }
 
 				var insertResult = await Insert(dataSource, sql, param);
-				if (insertResult.error != null)
+				if (insertResult.error != null && !ignoreContraintOnInsert)
 				{
 					await Rollback();
 					return (0, insertResult.error);
@@ -1400,6 +1488,7 @@ For example:
 			["INT"] = typeof(long),
 			["REAL"] = typeof(double),
 			["NUMERIC"] = typeof(decimal),
+			["DECIMAL"] = typeof(decimal),
 			["TEXT"] = typeof(string),
 			["STRING"] = typeof(string),
 			["CHAR"] = typeof(string),
@@ -1416,14 +1505,16 @@ For example:
 		static Type? MapType(string declared) =>
 				SqliteToClr.TryGetValue(declared, out var t) ? t
 				: declared.IndexOf("INT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(long)
+				: declared.IndexOf("number", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(long)
 				: declared.IndexOf("CHAR", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				  declared.IndexOf("CLOB", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				  declared.IndexOf("TEXT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(string)
 				: declared.IndexOf("BLOB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(byte[])
 				: declared.IndexOf("REAL", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				  declared.IndexOf("FLOA", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				  declared.IndexOf("DOUB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(double)
-				: null;
+				  declared.IndexOf("DOUB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(double) :
+				  declared.IndexOf("BIT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(bool)
+				: throw new Exception($"Could not map {declared} to sqlite type");
 
 		private string? ConvertFromColumnTypeToCSharpTypeFullName(string type)
 		{
@@ -1450,13 +1541,14 @@ For example:
 				var valueKey = column.Value.ToString().Replace("%", "");
 				if (!valueKey.Contains("item."))
 				{
-					if (memoryStack.Contains(valueKey))
+					if (objProperties.Contains(valueKey) || memoryStack.GetObjectValue(valueKey).Initiated)
 					{
 						if (columns != null) columns += ", ";
 						columns += column.Key;
 
 						if (values != null) values += ", ";
-						values += $"@{column.Key}";
+						values += $"@{column.Key.ToString().Replace("%", "")}";
+						
 					}
 				}
 				else
@@ -1468,7 +1560,9 @@ For example:
 						columns += column.Key;
 
 						if (values != null) values += ", ";
-						values += $"@{column.Key}";
+						
+						values += $"@{column.Key.ToString().Replace("%", "")}";
+						
 					}
 				}
 			}
@@ -1512,7 +1606,7 @@ For example:
 		}
 
 
-		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters, bool isSqlite)
+		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters, bool isSqlite, DataSource dataSource)
 		{
 			DynamicParameters param = new();
 			if (Parameters == null) return (param, null);
@@ -1531,6 +1625,7 @@ For example:
 
 				if (p.VariableNameOrValue?.ToString() == "auto" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 				{
+					throw new Exception($"Auto incremental cannot be handled by plang when Event sourcing is disabled | DataSource:{JsonConvert.SerializeObject(dataSource)}");
 					return (param, new Error("Auto incremental cannot be handled by plang when Event sourcing is disabled"));
 				}
 
@@ -1582,8 +1677,6 @@ For example:
 					{
 						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 						{
-							var dataSource = context.DataSource;
-
 							multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
 						}
 						multipleErrors.Add(error);
@@ -1612,24 +1705,7 @@ For example:
 			}
 			return variableName;
 		}
-		/*
 
-		private object? ConvertToType(object? variableNameOrValue, string fullType)
-		{
-			if (variableNameOrValue is JToken token)
-			{
-				variableNameOrValue = token.ToString();
-			}
-			var type = MapType(fullType) ?? Type.GetType(fullType);
-			if (type == null)
-			{
-				throw new Exception($"Type {fullType} is unknown");
-			}
-
-			return TypeHelper.ConvertToType(variableNameOrValue, type);
-		}
-
-		*/
 		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue, bool isSqlite)
 		{
 			// TODO: because of bad structure in building, can be removed when fix
@@ -1777,7 +1853,11 @@ For example:
 		{
 			if (transaction == null && connection != null)
 			{
-				connection.Close();
+				connection.Close(); 
+				if (connection is IDisposable disposable)
+				{
+					disposable.Dispose();
+				}
 			}
 		}
 
@@ -1792,7 +1872,7 @@ For example:
 			}
 
 
-			var main = dataSourceNames[0];
+			var main = dataSourceNames[0].Trim();
 			var (dataSource, error) = await dbSettings.GetDataSource(main, goalStep);
 			if (error != null) return (null, error);
 
@@ -1801,7 +1881,7 @@ For example:
 				foreach (var dataSourceName in dataSourceNames[1..])
 				{
 
-					(var ds, error) = await dbSettings.GetDataSource(dataSourceName, goalStep, false);
+					(var ds, error) = await dbSettings.GetDataSource(dataSourceName.Trim(), goalStep, false);
 					if (error != null) return (null, error);
 
 					dataSource.Attach(ds.Name, ds.LocalPath);
@@ -1811,104 +1891,6 @@ For example:
 			return (dataSource, null);
 		}
 
-		/*
-		private async Task<(DataSource?, IError?)> GetRuntimeDataSource(DataSource datasource, List<ObjectValue> variables)
-		{
-			var parameters = new Dictionary<string, object?>();
-
-			var dataSourceVariables = variableHelper.GetVariables(datasource.Name);
-			string localPath = datasource.LocalPath;
-			string connectionString = datasource.ConnectionString;
-
-			for (int i = 0; i < variables.Count; i++)
-			{
-				if (variables[i].Value == null || string.IsNullOrEmpty(variables[i].Value?.ToString()))
-				{
-					return (null, new StepError($"Variable {variables[i].Name} has not been set.", goalStep, "UndefinedVariable"));
-				}
-
-				parameters.Add($"%variable{i}%", variables[i].Value);
-
-				localPath = localPath.Replace($"%variable{i}%", variables[i].Value.ToString());
-				connectionString = connectionString.Replace($"%variable{i}%", variables[i].Value.ToString());
-			}
-
-			string dirPath = Path.GetDirectoryName(localPath);
-			if (!fileSystem.Directory.Exists(dirPath))
-			{
-				fileSystem.Directory.CreateDirectory(dirPath);
-			}
-
-			if (!fileSystem.File.Exists(localPath))
-			{
-				using (var fs = fileSystem.File.Create(localPath))
-				{
-					fs.Close();
-				}
-			}
-
-			var runtimeDataSource = datasource with { LocalPath = localPath, ConnectionString = connectionString };
-			if (memoryStack.Contains("GetRuntimeDataSource"))
-			{
-				return (runtimeDataSource, null);
-			}
-
-
-			parameters.Add("GetRuntimeDataSource", true);
-
-			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(datasource.Name));
-			if (setupGoal != null)
-			{
-				var storedKey = "%__stepsExecuted__%";
-
-				goalStep.AddVariable(runtimeDataSource);
-
-				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
-				var varsRuntime = programFactory.GetProgram<VariableModule.Program>(goalStep);
-				var (value, error) = await varsRuntime.Load([storedKey]);
-				if (error != null) return (null, error);
-
-				bool hasExecuted = false;
-				GroupedErrors groupedErrors = new();
-				var stepExecuted = (value as JObject)?.ToObject<Dictionary<string, DateTime>>() ?? new();
-				foreach (var step in setupGoal.GoalSteps)
-				{
-					if (stepExecuted.ContainsKey(step.Hash)) continue;
-
-					hasExecuted = true;
-					(var result, error) = await plangRuntime.RunStep(step, parameters);
-					if (error != null)
-					{
-						groupedErrors.Add(error);
-					}
-					else
-					{
-						stepExecuted.AddOrReplace(step.Hash, DateTime.UtcNow);
-					}
-				}
-				if (!hasExecuted) return (runtimeDataSource, null);
-
-
-				object? tmp = null;
-				if (memoryStack.Contains(storedKey))
-				{
-					tmp = memoryStack.Get(storedKey);
-				}
-				this.goal.AddVariable(datasource);
-
-				memoryStack.Put(storedKey, stepExecuted);
-				error = await varsRuntime.Store([storedKey]);
-				memoryStack.Remove(storedKey);
-
-				if (tmp != null)
-				{
-					memoryStack.Put(storedKey, tmp);
-				}
-				if (error != null) return (null, error);
-			}
-
-			return (runtimeDataSource, null);
-		}*/
 
 	}
 }

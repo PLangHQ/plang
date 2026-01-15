@@ -56,6 +56,23 @@ namespace PLang.Models.ObjectValueExtractors
 				}
 				
 				throw new NotImplementedException("Is Index on DictionaryExtractor");
+			} else if (segment.Type == SegmentType.Property)
+			{
+				if (obj is IObjectValue ov)
+				{
+					var propertyValue = ov.Properties.FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+					if (propertyValue != null)
+					{
+						propertyValue.Path = parent.Path + ((propertyValue.IsProperty) ? "!" : ".") + propertyValue.Name;
+						propertyValue.Parent = parent;
+					}
+					return propertyValue;
+				}
+				if (parent is IObjectValue parentOv)
+				{
+					var propertyValue = parentOv.Properties.FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+					return propertyValue;
+				}
 			}
 
 			if (obj == null) return null;

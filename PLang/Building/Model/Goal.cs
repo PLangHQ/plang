@@ -69,6 +69,8 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
 		[LlmIgnore]
+		public string CurrentPath { get; set; }
+		[LlmIgnore]
 		public string RelativeGoalFolderPath { get; set; }
 		[LlmIgnore]
 		public string RelativePrPath { get; set; }

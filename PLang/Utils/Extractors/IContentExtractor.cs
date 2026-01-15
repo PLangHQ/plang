@@ -22,7 +22,7 @@ namespace PLang.Utils.Extractors
     public interface IContentExtractor
 	{
 		public string LlmResponseType { get; set; }
-		public object Extract(string content, Type responseType);
+		public object Extract(string content, Type responseType, Modules.LlmModule.Program.Tools tools);
 		public T Extract<T>(string content);
 		string GetRequiredResponse(Type scheme);
 	}
@@ -31,14 +31,14 @@ namespace PLang.Utils.Extractors
 	{
 		public string LlmResponseType { get { return "text"; } set { } }
 
-		public object Extract(string content, Type responseType)
+		public object Extract(string content, Type responseType, PLang.Modules.LlmModule.Program.Tools tools)
 		{
 			return content;
 		}
 
 		public T Extract<T>(string content)
 		{
-			return (T)Extract(content, typeof(T));
+			return (T)Extract(content, typeof(T), null);
 		}
 
 		public string GetRequiredResponse(Type scheme)
@@ -59,11 +59,11 @@ namespace PLang.Utils.Extractors
 		{
 			return (T)Extract(content, typeof(T));
 		}
-		public object Extract(string content, Type responseType)
+		public object Extract(string content, Type responseType, PLang.Modules.LlmModule.Program.Tools? tools = null)
 		{
-			return ExtractByType(content, type);
+			return ExtractByType(content, type, tools);
 		}
-		public object ExtractByType(string content, string? contentType = null)
+		public object ExtractByType(string content, string? contentType = null, PLang.Modules.LlmModule.Program.Tools? tools = null)
 		{
 			if (contentType == null && content.StartsWith("```"))
 			{
@@ -97,7 +97,7 @@ namespace PLang.Utils.Extractors
 	{
 		public string LlmResponseType { get => "csharp"; set { } }
 
-		public object Extract(string content, Type responseType)
+		public object Extract(string content, Type responseType, PLang.Modules.LlmModule.Program.Tools? tools = null)
 		{
 			var htmlExtractor = new HtmlExtractor();
 			var implementation = htmlExtractor.ExtractByType(content, "csharp") as string;

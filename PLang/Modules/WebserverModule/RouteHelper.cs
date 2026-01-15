@@ -30,12 +30,6 @@ namespace PLang.Modules.WebserverModule
 			// 
 			foreach (var route in routings)
 			{
-				if (route.Path.Contains("%"))
-				{
-					string input = "/category/Sport";
-					string pattern = @"/category/(?<name>.+)";
-				}
-
 				if (Regex.IsMatch(url, route.Path))
 				{
 					return goalBuildDirPath;

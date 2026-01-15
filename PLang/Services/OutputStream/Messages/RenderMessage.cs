@@ -11,6 +11,7 @@ Level: trace|debug|info|warning|error|critical. info is default. when user defin
 Channel: default|log|audit|security|metric or custom defined by user
 Actor: user|system => user is the default actor when Channel=default, for other channels use system as actor unless defined by user.
 ")]
+[Example(@"render ""template.html"", hide modal and show modal", @"Content=""template.html"", Actions=[""hideModal"", ""showModal""]")]
 public sealed record RenderMessage(
 	string Content, string? Target = null, IReadOnlyList<string>? Actions = null, 
 	string Level = "info", int StatusCode = 200, string Channel = "default", string Actor = "user",

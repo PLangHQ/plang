@@ -17,15 +17,15 @@ public sealed class PlaceholderCollectionConverter : JsonConverter
 		if (typeof(IList).IsAssignableFrom(objectType)) return true;
 		if (!objectType.IsGenericType) return false;
 
-		var generic = objectType.GetGenericTypeDefinition();
-		return generic == typeof(Dictionary<,>)
-			|| generic == typeof(List<>)
-			|| generic == typeof(IList<>)
-			|| generic == typeof(ICollection<>)
-			|| generic == typeof(IEnumerable<>)
-			|| generic == typeof(IDictionary<,>);
+		return IsGenericTypeDefintion(objectType);
 	}
 
+	private bool IsGenericTypeDefintion(Type objectType)
+	{
+		var generic = objectType.GetGenericTypeDefinition();
+		return TypeHelper.IsGenericListTypeDefintion(generic) || TypeHelper.IsGenericDictTypeDefintion(generic);
+	}
+	
 	public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
 	{
 		var token = JToken.Load(reader);
@@ -46,6 +46,7 @@ public sealed class PlaceholderCollectionConverter : JsonConverter
 				return CreateInstance(objectType);
 			}
 		}
+		if (token is JValue jValue && jValue.Value == null) return null;
 
 		try { return token.ToObject(objectType, serializer); }
 		catch { return CreateInstance(objectType); }
@@ -57,17 +58,17 @@ public sealed class PlaceholderCollectionConverter : JsonConverter
 	static bool IsPlaceholder(string s)
 		=> s.Length >= 2 && s[0] == '%' && s[^1] == '%';
 
-	static object? CreateInstance(Type t)
+	private object? CreateInstance(Type t)
 	{
 		if (t.IsInterface && t.IsGenericType)
 		{
 			var generic = t.GetGenericTypeDefinition();
 			var args = t.GetGenericArguments();
 
-			if (generic == typeof(IDictionary<,>))
+			if (TypeHelper.IsGenericDictTypeDefintion(generic))
 				return Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(args));
 
-			if (generic == typeof(IList<>) || generic == typeof(ICollection<>) || generic == typeof(IEnumerable<>))
+			if (TypeHelper.IsGenericListTypeDefintion(generic))
 				return Activator.CreateInstance(typeof(List<>).MakeGenericType(args));
 		}
 

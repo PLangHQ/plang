@@ -9,15 +9,15 @@ using System.Threading.Tasks;
 
 namespace PLang.Models.ObjectValueConverters
 {
-	public class JsonObjectValueConverter : JsonConverter<ObjectValue>
+	public class JsonObjectValueConverter : JsonConverter<IObjectValue>
 	{
-		public override ObjectValue ReadJson(JsonReader reader, Type objectType, ObjectValue existingValue, bool hasExistingValue, JsonSerializer serializer)
+		public override ObjectValue ReadJson(JsonReader reader, Type objectType, IObjectValue existingValue, bool hasExistingValue, JsonSerializer serializer)
 		{
 			var token = JToken.Load(reader);
 			return new ObjectValue("object", token.ToObject<object>(), objectType);
 		}
 
-		public override void WriteJson(JsonWriter writer, ObjectValue value, JsonSerializer serializer)
+		public override void WriteJson(JsonWriter writer, IObjectValue value, JsonSerializer serializer)
 		{
 			serializer.Serialize(writer, value.Value);
 		}

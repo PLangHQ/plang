@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Markdig;
 using Microsoft.Extensions.Logging;
 using MiniExcelLibs;
 using Newtonsoft.Json;
@@ -383,7 +384,7 @@ namespace PLang.Modules.FileModule
 				variableToWriteToCsv = memoryStack.LoadVariables(variableToWriteToCsv);
 			}
 
-				var absolutePath = GetPath(path);
+			var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
 			{
 				var dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
@@ -431,7 +432,7 @@ namespace PLang.Modules.FileModule
 
 			// TODO: it should store reader in context and dispose when goal finishes the run
 			// then we dont need to return ToList, but return the enumerator for speed and low memory
-			using (var reader = new StreamReader(absolutePath))
+			using (var reader = new StreamReader(absolutePath, readConfig.Encoding))
 			using (var csv = new CsvReader(reader, readConfig))
 			{
 				return csv.GetRecords<dynamic>().ToList();
@@ -1042,12 +1043,47 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
+		public record Pdf(List<PdfPage> Pages, int PageCount)
+		{
+			public string Content
+			{
+				get
+				{
+					StringBuilder sb = new();
+					foreach (var page in Pages)
+					{
+						sb.AppendLine(page.Content);
+					}
+					return sb.ToString();
+				}
+			}
+		}
+		public record PdfPage(IEnumerable<string> Lines, IEnumerable Images, int PageNr, int Size)
+		{
+			public string Content
+			{
+				get
+				{
+					StringBuilder sb = new();
+					foreach (var line in Lines)
+					{
+						sb.AppendLine(line);
+					}
+					sb.AppendLine("\n---\n");
+					return sb.ToString();
+				}
+			}
+		};
+
 		[Description("Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder.")]
-		public async Task<(string, IError?)> ReadPdf(string path, string format = "md", string imageAction = "none", bool includePageNr = true, string? password = null)
+		public async Task<(Pdf, IError?)> ReadPdf(string path, string format = "md", string imageAction = "none", bool includePageNr = true, string? password = null)
 		{
 			var absolutePath = GetPath(path);
-			PdfToMarkdownConverter pdf = new PdfToMarkdownConverter(fileSystem, goal);
-			return (pdf.ConvertPdfToMarkdown(absolutePath, format, includePageNr, imageAction, password), null);
+			PdfToMarkdownConverter pdfMarkdown = new PdfToMarkdownConverter(fileSystem, goal);
+			var pages = pdfMarkdown.ConvertPdfToMarkdown(absolutePath, format, includePageNr, imageAction, password);
+			var pdf = new Pdf(pages, pages.Count);
+
+			return (pdf, null);
 		}
 
 

@@ -13,7 +13,7 @@ namespace PLang.Models.ObjectValueConverters
 
 	public enum SegmentType
 	{
-		Path, Index, Method, Math
+		Path, Index, Method, Math, Property
 	}
 	public record PathSegment(string Value, SegmentType Type)
 	{
@@ -29,15 +29,16 @@ namespace PLang.Models.ObjectValueConverters
 			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
 
 			var segments = new List<PathSegment>();
-			var regex = new Regex(@"([^[.\]]+)|\[(.+?)\]", RegexOptions.Compiled);
+			var regex = new Regex(@"([.!]?)([^.!\[\]]+)|\[(.+?)\]", RegexOptions.Compiled);
 			try
 			{
+				bool propertyStarted = false;
 				MatchCollection matches = regex.Matches(path);
 				foreach (Match match in matches)
 				{
-					if (match.Groups[1].Success)
+					if (match.Groups[2].Success)
 					{
-						string value = match.Groups[1].Value.Trim();
+						string value = match.Groups[2].Value.Trim();
 
 						bool openBracket = value.Contains('(');
 						bool closeBracket = value.Contains(')');
@@ -65,14 +66,15 @@ namespace PLang.Models.ObjectValueConverters
 							}
 							else
 							{
-								segments.Add(new PathSegment(value, SegmentType.Path));
+								
+								segments.Add(new PathSegment(value, (match.Groups[1].Value == "!") ? SegmentType.Property : SegmentType.Path));
 							}
 						}
 					}
-					else if (match.Groups[2].Success)
+					else if (match.Groups[3].Success)
 					{
-						var position = memoryStack.Get<object>(match.Groups[2].Value);
-						segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Index) {  ValueOfPath = position });
+						var position = memoryStack.Get<object>(match.Groups[3].Value);
+						segments.Add(new PathSegment(match.Groups[3].Value, SegmentType.Index) {  ValueOfPath = position });
 					}
 				}
 			} catch (Exception ex)

@@ -1,5 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +42,8 @@ namespace PLang.Utils.Extractors
 			});
 			return newJson;
 		}
-
-		public new object? Extract(string? content, Type responseType)
+		public record ToolWrapper(List<GoalToCallInfo> Goals, object Data);
+		public new object? Extract(string? content, Type responseType, PLang.Modules.LlmModule.Program.Tools? tools = null)
 		{
 			if (string.IsNullOrEmpty(content)) return content;
 
@@ -54,7 +57,12 @@ namespace PLang.Utils.Extractors
 					}
 
 					if (responseType == typeof(string)) return content;
-
+					if (tools != null && tools.Goals.Count > 0)
+					{
+						var toolWrapper = JsonConvert.DeserializeObject<ToolWrapper>(content);
+						tools.GoalsToCall = toolWrapper.Goals;
+						return ((JObject)toolWrapper.Data).ToObject(responseType);
+					}
 					return JsonConvert.DeserializeObject(content, responseType) ?? "";
 				}
 				catch (Exception ex)
@@ -120,12 +128,23 @@ namespace PLang.Utils.Extractors
 		public new string GetRequiredResponse(Type type)
 		{
 			string strScheme = TypeHelper.GetJsonSchema(type);
-			return GetRequiredResponse(strScheme);
+			return GetRequiredResponse(strScheme, null);
 		}
 
-		public new string GetRequiredResponse(string scheme)
+		public new string GetRequiredResponse(string scheme, Modules.LlmModule.Program.Tools? tools)
 		{
-			return $"You MUST respond in JSON, scheme:\r\n {scheme.Replace("\n", " ")}";
+			scheme = scheme.Replace("\n", " ");
+				
+			if (tools != null && tools.Goals.Count > 0 )
+			{
+				if (scheme.Replace("{", "").Replace("}", "").Trim() == "")
+				{
+					scheme = "object";
+				}
+				return $@"You MUST respond in JSON, scheme using <goals>: {{ goals: [{{ path:string, parameters:dict<string,object>, returns:[{{expectedType:string, data:object}}] }}],\n data: {scheme} }}
+";
+			}
+			return $"You MUST respond in JSON, scheme:\r\n {scheme}";
 		}
 	}
 }

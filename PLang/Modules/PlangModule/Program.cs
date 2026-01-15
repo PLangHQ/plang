@@ -77,7 +77,7 @@ namespace PLang.Modules.PlangModule
 					}
 					else
 					{
-						goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+						goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
 					}
 				}
 				else
@@ -88,7 +88,7 @@ namespace PLang.Modules.PlangModule
 			} else if (parser == "goal")
 			{
 				var fileProgram = GetProgramModule<FileModule.Program>();
-				var files = await fileProgram.GetFilePathsInDirectory(path, includeSubfolders: true, searchPattern: "*.goal");
+				var files = await fileProgram.GetFilePathsInDirectory(fileOrFolderPath, includeSubfolders: true, searchPattern: "*.goal");
 				foreach (var file in files)
 				{
 					goals.AddRange(goalParser.ParseGoalFile(file.AbsolutePath));
@@ -109,7 +109,7 @@ namespace PLang.Modules.PlangModule
 			{
 				return (null, new ProgramError($"No goals found at {fileOrFolderPath}, the absolute path is: {path}"));
 			}*/
-
+			goals.ForEach(p => p.CurrentPath = p.RelativeGoalPath.Replace(goal.RelativeGoalFolderPath, ""));
 			if (propertiesToExtract == null || propertiesToExtract.Count == 0) return (goals, null);
 
 			JArray array = new JArray();
@@ -471,15 +471,19 @@ namespace PLang.Modules.PlangModule
 			engine.GetEventRuntime().SetActiveEvents(new());
 
 			var result = await startingEngine.RunFromStep(absoluteFilePath, context);
+			if (result.Error == null)
+			{
+				return (result.ReturnValue, new EndGoal(true, goal, goalStep, "Ending Run from step exeuction"));
+			}
 			return result;
 		}
 
 		[Description("Builds(compiles) a step in plang code")]
-		public async Task<(GoalStep?, IError?)> BuildPlangStep(GoalStep? step)
+		public async Task<(GoalStep?, List<IBuilderError>?)> BuildPlangStep(GoalStep? step)
 		{
 			if (step == null)
 			{
-				return (null, new ProgramError("Step is not provided. I cannot continue to build a step that is not provided", goalStep, function));
+				return (null, [new BuilderError("Step is not provided. I cannot continue to build a step that is not provided") { Step = goalStep, Goal = Goal }]);
 			}
 			if (fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
@@ -491,14 +495,14 @@ namespace PLang.Modules.PlangModule
 
 			var goals = prParser.ForceLoadAllGoals();
 			var goal = goals.FirstOrDefault(p => p.AbsolutePrFilePath == step.Goal.AbsolutePrFilePath);
-			if (goal == null) return (null, new StepError($"Could not find goal after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+			if (goal == null) return (null, [new StepBuilderError($"Could not find goal after building. {ErrorReporting.CreateIssueShouldNotHappen}", step)]);
 
 			GoalStep? newStep = newStep = goal.GoalSteps.FirstOrDefault(p => p.Number == step.Number);
-			if (newStep == null) return (null, new StepError($"Could not find step after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+			if (newStep == null) return (null, [new StepBuilderError($"Could not find step after building. {ErrorReporting.CreateIssueShouldNotHappen}", step)]);
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step, StatusCode: 404));
+				return (newStep, [new StepBuilderError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step, StatusCode: 404)]);
 			}
 
 			newStep.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);
@@ -507,7 +511,7 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Builds(compiles) a goal in plang code")]
-		public async Task<IError?> BuildPlangCode(Goal goal)
+		public async Task<List<IBuilderError>?> BuildPlangCode(Goal goal)
 		{
 			var builder = Container.GetInstance<IBuilder>();
 			var error = await builder.Start(Container, context, goal.AbsoluteGoalPath);

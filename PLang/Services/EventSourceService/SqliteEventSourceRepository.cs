@@ -84,17 +84,7 @@ namespace PLang.Services.EventSourceService
 					++eventId;
 				}
 
-				if (returnId)
-				{
-					var result = await dbConnection.QuerySingleOrDefaultAsync<long>(sql, parameters, transaction);
-
-					return result;
-				}
-				else
-				{
-					var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
-					return result; 
-				}
+                return await InsertData(dbConnection, sql, parameters, transaction, returnId);
 
 			}
 			catch (Exception ex)
@@ -104,7 +94,34 @@ namespace PLang.Services.EventSourceService
 
 		}
 
-		private async Task<(bool, IError?)> InsertIntoEvent(IDbConnection dbConnection, long eventId, string encryptedData, string pkey, IDbTransaction? transaction)
+		private static async Task<long> InsertData(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction, bool returnId, int retryCount = 0)
+		{
+			try
+			{
+				if (returnId)
+				{
+					var result = await dbConnection.QuerySingleOrDefaultAsync<long>(sql, parameters, transaction);
+
+					return result;
+				}
+				else
+				{
+					var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
+					return result;
+				}
+			} catch (Exception ex)
+			{
+				if (ex.Message.Contains("database is locked") && retryCount < 3)
+				{
+					await Task.Delay(new Random().Next(50));
+					return await InsertData(dbConnection, sql, parameters, transaction, returnId, ++retryCount);
+				}
+
+				throw;
+			}
+		}
+
+		private async Task<(bool, IError?)> InsertIntoEvent(IDbConnection dbConnection, long eventId, string encryptedData, string pkey, IDbTransaction? transaction, int retryCount = 0)
 		{
 			try
 			{
@@ -117,6 +134,10 @@ namespace PLang.Services.EventSourceService
 				if (ex.Message.Contains("UNIQUE constraint failed: __Events__.id"))
 				{
 					return (false, null);
+				} else if (ex.Message.Contains("database is locked") && retryCount < 3)
+				{
+					await Task.Delay(new Random().Next(50));
+					return await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction, ++retryCount);
 				}
 				throw;
 			}

@@ -1,11 +1,18 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Models.ObjectValueConverters;
 using System.IO.Abstractions;
 
 namespace PLang.Utils
 {
 	public class StringHelper
 	{
+		private static JsonSerializerSettings jsonSerializer = new JsonSerializerSettings()
+		{
+			ObjectCreationHandling = ObjectCreationHandling.Replace,
+			Converters = { new JsonObjectValueConverter() }
+		};
+
 		public static string? ConvertToString(object? body)
 		{
 			if (body == null) return "";
@@ -16,14 +23,20 @@ namespace PLang.Utils
 
 			try
 			{
-				JsonConvert.DeserializeObject(body.ToString()!);
-				return body.ToString()!;
+				var str2 = (body.ToString() ?? "").TrimStart();
+				if (str2.StartsWith("{") || str2.StartsWith("[")) {
+					JsonConvert.DeserializeObject(str2);
+					return str2;
+				} else
+				{
+					return JsonConvert.SerializeObject(body, jsonSerializer);
+				}
 			}
 			catch
 			{
 				try
 				{
-					return JsonConvert.SerializeObject(body);
+					return JsonConvert.SerializeObject(body, jsonSerializer);
 				}
 				catch
 				{
@@ -55,6 +68,41 @@ namespace PLang.Utils
 			return JsonConvert.SerializeObject(data);
 		}
 
-		
+
+		public static string NormalizeCacheKey(string cacheKey)
+		{
+			if (string.IsNullOrEmpty(cacheKey))
+				return "empty_key";
+
+			// Replace common URL characters with safe alternatives
+			var normalized = cacheKey
+				.Replace("://", "_")
+				.Replace("/", "_")
+				.Replace("\\", "_")
+				.Replace("?", "_")
+				.Replace("&", "_")
+				.Replace("=", "_")
+				.Replace(":", "_")
+				.Replace("*", "_")
+				.Replace("\"", "_")
+				.Replace("<", "_")
+				.Replace(">", "_")
+				.Replace("|", "_");
+
+			// Remove consecutive underscores
+			while (normalized.Contains("__"))
+				normalized = normalized.Replace("__", "_");
+
+			// Trim underscores from start/end
+			normalized = normalized.Trim('_');
+
+			// Limit length (Windows max path component is 255)
+			if (normalized.Length > 200)
+				normalized = normalized.Substring(0, 200);
+
+			return normalized;
+		}
+
+
 	}
 }

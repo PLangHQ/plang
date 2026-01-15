@@ -37,7 +37,7 @@ namespace PLang.Building.Parsers
 			this.logger = logger;
 
 			this.builderVersion = PlangHelper.GetVersion();
-			this.goals = GetGoals();
+		
 		}
 
 		public List<Goal> GetGoals(bool force = false)
@@ -59,9 +59,14 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
+		public void CheckGoals()
+		{
+			if (goals == null) goals = GetGoals();
+		}
 
 		public List<Goal> GetEventGoals()
 		{
+			CheckGoals();
 			return goals.Where(p => p.IsEvent).ToList();
 		}
 
@@ -218,6 +223,8 @@ namespace PLang.Building.Parsers
 
 				if (line.StartsWith(" ") || line.StartsWith('\t'))
 				{
+					if (currentGoal == null) throw new Exception("Did you forget to name your goal?");
+
 					var step = currentGoal.GoalSteps.LastOrDefault();
 					if (step != null)
 					{

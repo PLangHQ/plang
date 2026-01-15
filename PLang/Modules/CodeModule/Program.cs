@@ -159,16 +159,16 @@ namespace PLang.Modules.CodeModule
 		{
 			if (implementation == null) return (null, new BuilderError("Could not map the instruction file"));
 
-			var dllPath = GetPath(implementation.FileName.Replace(".cs", ".dll"));
+			var dllPath = GetPath(implementation.FileName.Replace(".cs", ".dll")); 
 			var assembly = Assembly.LoadFrom(dllPath);
 
 			var typeName = $"{implementation.Namespace}.{implementation.ClassName}".TrimStart('.'); // Replace with actual class name including namespace
 			var methodName = implementation.MethodName; // Replace with actual method name
 
-			var type = assembly.GetType(typeName);
+			var type = assembly.GetTypes().FirstOrDefault(p => p.Name.Equals(implementation.ClassName, StringComparison.OrdinalIgnoreCase));
 			if (type == null) return (null, new ProgramError($"Could not load {typeName}."));
 
-			var method = type.GetMethod(methodName);
+			var method = type.GetMethods().FirstOrDefault(p => p.Name.Equals(methodName, StringComparison.OrdinalIgnoreCase));
 			if (method == null) return (null, new ProgramError($"Method {methodName} could not be found."));
 
 			var instance = Activator.CreateInstance(type);
@@ -244,7 +244,7 @@ namespace PLang.Modules.CodeModule
 						}
 						else
 						{
-							value = inParameter.Value;
+							value = TypeHelper.ConvertToType(inParameter.Value, parameters[i].ParameterType);
 						}
 						parametersObject.Add(value);
 

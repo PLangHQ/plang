@@ -10,6 +10,7 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -158,7 +159,10 @@ namespace PLang.Modules.LoopModule
 			int idx = 0;
 			if (effectiveThreads == 1)
 			{
-				foreach (var param in goalToCall.Parameters)
+				var nonDefaultParameters = goalToCall.Parameters.Where(p => !p.Key.Equals("item", StringComparison.OrdinalIgnoreCase) &&
+						!p.Key.Equals("list", StringComparison.OrdinalIgnoreCase) &&
+						!p.Key.Equals("position", StringComparison.OrdinalIgnoreCase));
+				foreach (var param in nonDefaultParameters)
 				{
 					goalToCall.Parameters.AddOrReplace(param.Key, memoryStack.LoadVariables(param.Value));
 				}

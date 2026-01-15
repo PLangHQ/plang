@@ -25,7 +25,7 @@ namespace PLang.Modules.ValidateModule
 		public Program()
 		{
 		}
-
+		
 		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
 		public async Task<IError?> IsNotEmpty([HandlesVariable] List<ObjectValue> variables, ErrorMessage errorMessage)
 		{
@@ -50,7 +50,7 @@ namespace PLang.Modules.ValidateModule
 			}
 			return (multiError.Count > 0) ? multiError : null;
 		}
-
+		
 		[Description("[Depricated] Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
 		public async Task<IError?> IsNotEmpty([HandlesVariable] List<ObjectValue> variables, string errorMessage, int statusCode = 400)
 		{

@@ -18,5 +18,16 @@ namespace PLang.Utils
 		{
 			return JsonConvert.SerializeObject(obj);
 		}
+
+		public static object? GetValueOnProperty(this object obj, string propertyName)
+		{
+			if (propertyName.StartsWith("!"))
+			{
+				if (propertyName.Equals("!data")) return JsonConvert.SerializeObject(obj);
+			}
+			var property = obj.GetType().GetProperty(propertyName);
+			if (property == null) return null;
+			return property.GetValue(obj, null);
+		}
 	}
 }

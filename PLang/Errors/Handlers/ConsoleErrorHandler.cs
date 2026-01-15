@@ -14,7 +14,7 @@ namespace PLang.Errors.Handlers
 		public async Task<(bool, IError?)> Handle(IError error)
 		{
 			Console.WriteLine(error.ToString());
-			return (true, null);
+			return (false, null);
 			
 		}
 

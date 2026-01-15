@@ -1,5 +1,6 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -606,6 +607,15 @@ namespace PLang.Events
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Error, error);
+				if (contextAccessor == null || contextAccessor.Current == null)
+				{
+					var caError = new Error($"Context accessor null running event: EventType:{eve.EventType} | EventScope:{eve.EventScope} | GoalToCall:{eve.GoalToCall} | Source:{eve.SourceGoal}.{eve.SourceStep}", StatusCode: 500) { Step = sourceStep, Goal = sourceGoal };
+					if (error != null)
+					{
+						caError.ErrorChain.Add(error);
+					}
+					return (null, caError);
+				}
 				contextAccessor.Current.AddOrReplace(ReservedKeywords.Event, eve);
 				/*
 				//todo: hack, we should not be modifying the goal name. 

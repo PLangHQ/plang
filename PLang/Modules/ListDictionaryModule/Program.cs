@@ -67,6 +67,7 @@ Add, update, delete and retrieve list or dictionary. Group by key, merge two lis
 		}
 
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined")]
+		[ReturnRequired]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false, bool caseSensitive = false)
 		{
 			if (value == null) return new();

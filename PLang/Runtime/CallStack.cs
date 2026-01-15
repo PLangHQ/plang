@@ -8,10 +8,10 @@ public class CallStack
 {
 	private readonly Stack<CallStackFrame> _frames = new Stack<CallStackFrame>();
 
-	public CallStackFrame CurrentFrame => _frames.Count > 0 ? _frames.Peek() : null;
+	public CallStackFrame? CurrentFrame => _frames.Count > 0 ? _frames.Peek() : null;
 	public Goal CurrentGoal => CurrentFrame?.Goal;
 	public GoalStep CurrentStep => CurrentFrame?.CurrentStep;
-	
+
 	public ExecutionPhase CurrentPhase => CurrentFrame?.Phase ?? ExecutionPhase.None;
 	public string EventScope => CurrentFrame?.EventScope;
 	public string EventType => CurrentFrame?.EventType;
@@ -31,23 +31,24 @@ public class CallStack
 
 	public void SetCurrentStep(GoalStep step, int stepIndex)
 	{
-		if (CurrentFrame != null)
-		{
-			CurrentFrame.CurrentStep = step;
-			CurrentFrame.StepIndex = stepIndex;
-		}
+		if (CurrentFrame == null) return;
+
+		CurrentFrame.CurrentStep = step;
+		CurrentFrame.StepIndex = stepIndex;
+
 	}
 
 	public void SetPhase(ExecutionPhase phase)
 	{
-		if (CurrentFrame != null)
-		{
-			CurrentFrame.Phase = phase;
-		}
+		if (CurrentFrame == null) return;
+
+		CurrentFrame.Phase = phase;
+
 	}
 
 	public void AddDisposable(IDisposable disposable)
 	{
+		if (CurrentFrame == null) return;
 		CurrentFrame.Disposables.Add(disposable);
 	}
 
@@ -66,7 +67,7 @@ public class CallStack
 		{
 			if (CurrentFrame.Errors.Count > 0)
 			{
-				((BaseProgram) disposable).HasError = true;
+				((BaseProgram)disposable).HasError = true;
 			}
 			disposable.Dispose();
 		}

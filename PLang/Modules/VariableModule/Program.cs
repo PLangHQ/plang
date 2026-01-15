@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Json;
@@ -41,7 +42,7 @@ namespace PLang.Modules.VariableModule
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 			return await db.GetDataSource(dataSourceName);
-			
+
 		}
 
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, string? dataSourceName = null)
@@ -76,7 +77,7 @@ namespace PLang.Modules.VariableModule
 			foreach (var variable in variablesWithDefaultValue)
 			{
 				List<ParameterInfo> parameters = new();
-				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key.Trim('%')));
+				parameters.Add(new ParameterInfo("System.String", "variable", variable.Key));
 				try
 				{
 					var result = await db.Select(dataSource, "SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
@@ -164,7 +165,8 @@ namespace PLang.Modules.VariableModule
 				if (VariableHelper.IsVariable(variable.Value))
 				{
 					value = memoryStack.Get(variable.Value.ToString());
-				} else if (VariableHelper.ContainsVariable(variable.Value))
+				}
+				else if (VariableHelper.ContainsVariable(variable.Value))
 				{
 					value = memoryStack.LoadVariables(variable.Value);
 				}
@@ -202,7 +204,7 @@ namespace PLang.Modules.VariableModule
 				parameters.Add(new ParameterInfo("System.String", "value", JsonConvert.SerializeObject(value)));
 
 				var (rowsAffected, error) = await db.Insert(dataSource, "INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
-				
+
 				if (error != null)
 				{
 					if (error.Message.Contains("no such table"))
@@ -223,6 +225,8 @@ namespace PLang.Modules.VariableModule
 		[Description("One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%")]
 		public async Task<IError?> Return([HandlesVariable] Dictionary<string, object> variables)
 		{
+			if (variables == null) return new EndGoal(false, goal, goalStep, "", Levels: 0);
+
 			var returnValues = new List<ObjectValue>();
 			var properties = new Properties();
 
@@ -260,7 +264,7 @@ namespace PLang.Modules.VariableModule
 					}
 				}
 			}
-						
+
 
 			return new Return(returnValues);
 		}
@@ -485,9 +489,32 @@ namespace PLang.Modules.VariableModule
 			logger.LogDebug($"         - Done put into memorystack - {stopwatch.ElapsedMilliseconds}");
 		}
 
+		[Description(@"
+Converts 2 dates to a number or timespan, such as days ago.
+pattern=days|hours|minutes|seconds|milliseconds|nanoseconds|ticks|totaldays|totalhours|totalminutes|totalseconds|totalmilliseconds|totalnanoseconds")]
+		[Example("set %days% = total days between %fromDate% and %toDate%", @"pattern=""totaldays""")]
+		public async Task<(object, IError?)> GetTimeSpanRelated(DateTime fromDate, DateTime toDate, string pattern)
+		{
+			var ts = new TimeSpan(toDate.Ticks - fromDate.Ticks);
 
+			if (pattern.Equals("ticks", StringComparison.OrdinalIgnoreCase)) return (ts.Ticks, null);
+			if (pattern.Equals("days", StringComparison.OrdinalIgnoreCase)) return (ts.Days, null);
+			if (pattern.Equals("hours", StringComparison.OrdinalIgnoreCase)) return (ts.Hours, null);
+			if (pattern.Equals("minutes", StringComparison.OrdinalIgnoreCase)) return (ts.Minutes, null);
+			if (pattern.Equals("seconds", StringComparison.OrdinalIgnoreCase)) return (ts.Seconds, null);
+			if (pattern.Equals("milliseconds", StringComparison.OrdinalIgnoreCase)) return (ts.Milliseconds, null);
+			if (pattern.Equals("nanoseconds", StringComparison.OrdinalIgnoreCase)) return (ts.Nanoseconds, null);
+			if (pattern.Equals("totaldays", StringComparison.OrdinalIgnoreCase)) return (ts.TotalDays, null);
+			if (pattern.Equals("totalhours", StringComparison.OrdinalIgnoreCase)) return (ts.TotalHours, null);
+			if (pattern.Equals("totalminutes", StringComparison.OrdinalIgnoreCase)) return (ts.TotalMinutes, null);
+			if (pattern.Equals("totalseconds", StringComparison.OrdinalIgnoreCase)) return (ts.TotalSeconds, null);
+			if (pattern.Equals("totalmilliseconds", StringComparison.OrdinalIgnoreCase)) return (ts.TotalMilliseconds, null);
+			if (pattern.Equals("totalnanoseconds", StringComparison.OrdinalIgnoreCase)) return (ts.TotalNanoseconds, null);
 
-		[Description(@"Set multiple variables with possible default values. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+			return (ts, null);
+		}
+
+		[Description(@"Set multiple variables with possible default values used with variable(such as %request.query.*% and fix default. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
@@ -511,6 +538,9 @@ namespace PLang.Modules.VariableModule
 Example:
 `set default value %name% = %request.body.name%, %zip% = %request.body.zip%` => [{key=%name%, value=%request.body.zip%}, {key=%zip%, value=%request.body.zip%}]
 `set default value %target% = ""#body"" => {key=%target%, value=""#body""}
+
+Bad (dont use for):
+`set default %page% = %request.query.page% ?? 1` => use:SetValueOnVariablesOrDefaultIfValueIsEmpty
 ")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
@@ -524,27 +554,38 @@ Example:
 
 		}
 
-		public async Task SetVariableWithCondition([HandlesVariableAttribute] string variableName, bool boolValue, object valueIfTrue, object valueIfFalse)
+		public async Task<IError?> SetVariableWithCondition([HandlesVariableAttribute] string variableName, object value, object valueIfTrue, object valueIfFalse)
 		{
-			if (boolValue)
+			if (value is string str)
 			{
-				await SetVariable(variableName, valueIfTrue);
+				return await SetVariableWithCalculation(variableName, str);
 			}
-			else
+			if (value is bool boolValue)
 			{
-				await SetVariable(variableName, valueIfFalse);
+				if (boolValue)
+				{
+					await SetVariable(variableName, valueIfTrue);
+				}
+				else
+				{
+					await SetVariable(variableName, valueIfFalse);
+				}
 			}
+
+			return new ProgramError($"Dont know what to do with {value} in SetVariableWithCondition");
 		}
 
 		[Description("Type should be c# object type, e.g. System.String, System.DateTime, etc. When undefined, set to System.Object")]
 		public record VariableIfEmpty(string Name, object FirstValue, object ValueIfFirstIsEmpty, string Type);
 
 		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		[Example(@"set %q% = %request.query.q%, or ""hello"" if empty", @"keyValues.key=""%q%"", value=[""%request.query.q%"", ""hello""]")]
+		[Example(@"set %q% = %request.query.q% ?? """"", @"keyValues.key=""%q%"", value=[""%request.query.q%"", """"]")]
 		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)
 			{
-				
+
 
 
 				var value = (variable.FirstValue is string str && str.Contains("%")) ? memoryStack.Get(str) : variable.FirstValue;
@@ -597,7 +638,18 @@ Example:
 			{
 				if (value is not JArray)
 				{
-					jArray.Merge(JArray.FromObject(value));
+					if (value is string strValue)
+					{
+						jArray.Add(strValue);
+					}
+					else if (value is JObject jobj)
+					{
+						jArray.Merge(jobj);
+					}
+					else
+					{
+						jArray.Merge(JArray.FromObject(value));
+					}
 				}
 				else
 				{
@@ -612,7 +664,7 @@ Example:
 				{
 					list.Add(value);
 				}
-			}			
+			}
 			else
 			{
 				if (val == null && value is IList)

@@ -31,6 +31,8 @@ namespace PLang.Building
 	public interface IGoalBuilder
 	{
 		Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, PLangContext context, int errorCount = 0, int goalIndex = 0);
+		void AddToBuildErrors(IBuilderError buildStepError);
+
 		public List<IBuilderError> BuildErrors { get; init; }
 	}
 
@@ -91,7 +93,7 @@ namespace PLang.Building
 				return null;
 			}
 
-			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}:{goal.GoalSteps.FirstOrDefault()?.LineNumber} - {goal.HasChanged}");
+			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}:{goal.GoalSteps.FirstOrDefault()?.LineNumber}");
 
 			// Generate description and other properties for goal			
 			(goal, var error) = await LoadMethodAndDescription(goal);
@@ -187,11 +189,21 @@ namespace PLang.Building
 
 			if (buildStepError.Goal == null) buildStepError.Goal = goal;
 
-			BuildErrors.Add(buildStepError);
-
-			logger.LogWarning($"  - ❌ Error building goal - {buildStepError.MessageOrDetail}");
+			AddToBuildErrors(buildStepError);
+			
 
 			return buildStepError.ContinueBuild;
+		}
+
+		public void AddToBuildErrors(IBuilderError buildStepError)
+		{
+			if (BuildErrors.FirstOrDefault(p => p == buildStepError) == null && 
+				(BuildErrors.FirstOrDefault(p => p.Step?.AbsolutePrFilePath != buildStepError.Step?.AbsolutePrFilePath) == null && BuildErrors.FirstOrDefault(p => p.Step?.LineNumber == buildStepError.Step?.LineNumber) == null))
+			{
+				BuildErrors.Add(buildStepError);
+
+				logger.LogWarning($"  - ❌ Error building goal - {buildStepError.MessageOrDetail}");
+			}
 		}
 
 		private async Task<IBuilderError?> ContinueBuildStep(IBuilderError? buildStepError, Goal goal, int stepIndex, List<string> excludeModules)
@@ -215,8 +227,7 @@ namespace PLang.Building
 			{
 				logger.LogError($"  - ❌ Error finding module for step. I tried '{string.Join("', '", excludeModules)}' - Error message: {buildStepError.MessageOrDetail}");
 			}
-
-			BuildErrors.Add(buildStepError);
+			AddToBuildErrors(buildStepError);			
 
 			return buildStepError;
 		}
@@ -227,7 +238,7 @@ namespace PLang.Building
 			// steps that come after as they can be affected by previous steps. 
 			// example of that, steps that creates table but is not build,
 			// step after that insert into table will fail
-			if (goal.HasChanged) return null;
+			if (goal.HasChanged && !goal.IsSetup) return null;
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors errors = new();
@@ -277,6 +288,9 @@ namespace PLang.Building
 					var builderRun = await instructionBuilder.RunStepValidation(step, step.Instruction, functionResult.Function);
 					if (builderRun.Error != null)
 					{
+						builderRun.Error.Step = step;
+						builderRun.Error.Goal = goal;
+
 						step.ValidationErrors.Add(builderRun.Error);
 						errors.Add(builderRun.Error);
 						step.Reload = true;

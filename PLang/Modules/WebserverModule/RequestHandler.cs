@@ -79,12 +79,12 @@ namespace PLang.Modules.WebserverModule
 					if (error != null) return (false, signedMessage?.Identity, error);
 				}
 
-				if (webserverProperties.OnPollStart != null)
+				if (webserverProperties.OnPollStart != null || webserverProperties.OnPollRefresh != null)
 				{
 					string? query = request.QueryString.Value;
 					if (query?.StartsWith("?plang.poll=1") == true)
 					{
-						error = await HandlePlangPoll(requestEngine, context, webserverProperties);
+						error = await HandlePlangPoll(requestEngine, context, webserverProperties, query);
 						if (error != null) return (false, signedMessage?.Identity, error);
 
 						//return true to create long lasting connection
@@ -121,7 +121,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				IError? error = null;
-				
+
 				var httpContext = context.HttpContext!;
 				var acceptedTypes = httpContext.Request.Headers.Accept.FirstOrDefault();
 
@@ -145,7 +145,7 @@ namespace PLang.Modules.WebserverModule
 
 				if (routing == null)
 				{
-					return new NotFoundError("Routing not found");
+					return new NotFoundError($"Routing not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 				}
 
 				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -193,22 +193,18 @@ namespace PLang.Modules.WebserverModule
 		private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverProperties webserverInfo,
 			Routing routing, PLangContext context, IEngine requestEngine)
 		{
-			if (goal == null)
-			{
-				return new NotFoundError($"Goal could not be loaded");
-			}
 			Stopwatch stopwatch = Stopwatch.StartNew();
 
 			var httpContext = context.HttpContext!;
 			var resp = httpContext.Response;
 			var request = httpContext.Request;
-			/*resp.OnStarting(() =>
+
+			IError? error;
+			if (webserverInfo.OnGoalRequestBegin != null)
 			{
-				int i = 0;
-
-				return Task.CompletedTask;
-			});*/
-
+				error = await RunOnRequest(requestEngine, webserverInfo.OnGoalRequestBegin, context);
+				if (error != null) return error;
+			}
 
 			if (!resp.HasStarted && request.QueryString.Value == "__signature__")
 			{
@@ -218,7 +214,8 @@ namespace PLang.Modules.WebserverModule
 				return null;
 			}
 
-			long maxContentLength = routing.RequestProperties.MaxContentLengthInBytes;
+			long maxContentLength = routing.RequestProperties.MaxContentLengthInBytes ?? webserverInfo.DefaultRequestProperties?.MaxContentLengthInBytes ?? 1024 * 16;
+			if (maxContentLength == 0) maxContentLength = webserverInfo.DefaultRequestProperties?.MaxContentLengthInBytes ?? 1024 * 16;
 			if (request.ContentLength > maxContentLength)
 			{
 				return new Error($"Content sent to server is to big. Max {maxContentLength} bytes", StatusCode: 413);
@@ -239,7 +236,7 @@ namespace PLang.Modules.WebserverModule
 
 			if (request.Method == "HEAD") return null;
 
-			(var requestObjectValue, var error) = await ParseRequest(context);
+			(var requestObjectValue, error) = await ParseRequest(context);
 			if (error != null) return error;
 
 			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
@@ -269,6 +266,11 @@ namespace PLang.Modules.WebserverModule
 
 			logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
 
+			if (error == null && webserverInfo.OnGoalRequestEnd != null)
+			{
+				error = await RunOnRequest(requestEngine, webserverInfo.OnGoalRequestEnd, context);
+			}
+
 			return error;
 		}
 
@@ -293,7 +295,7 @@ namespace PLang.Modules.WebserverModule
 			(var callback, var newCallback, var error) = await CallbackHelper.GetCallback(identity, callbackValue);
 			if (newCallback != null) return (null, goal, new StatelessCallbackError(newCallback, statusCode: error?.StatusCode ?? 400));
 			if (error != null) return (null, goal, error);
-			
+
 			var callbackInfo = callback.CallbackInfo;
 			goal = prParser.GetAllGoals().FirstOrDefault(p => p.Hash == callbackInfo.GoalHash);
 
@@ -316,8 +318,8 @@ namespace PLang.Modules.WebserverModule
 			(var goal, var routing, var slugVariables, var error) = GetGoalByRouting(routings, httpContext.Request);
 
 			if (error != null) return error;
-			if (routing == null) return new NotFoundError("Routing not found");
-			if (goal == null) return new NotFoundError("Goal not found");
+			if (routing == null) return new NotFoundError($"Routing not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
+			if (goal == null) return new NotFoundError($"Goal not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 
 			var rp = routing.ResponseProperties with { ContentType = "application/plang+json" };
 			routing = routing with { ResponseProperties = rp };
@@ -390,7 +392,7 @@ namespace PLang.Modules.WebserverModule
 			return ms.ToArray();
 		}
 
-		private async Task<IError?> HandlePlangPoll(IEngine requestEngine, PLangContext context, WebserverProperties props)
+		private async Task<IError?> HandlePlangPoll(IEngine requestEngine, PLangContext context, WebserverProperties props, string query)
 		{
 			var httpContext = context.HttpContext!;
 			SignedMessage? signedMessage = context.SignedMessage;
@@ -415,17 +417,23 @@ namespace PLang.Modules.WebserverModule
 			{
 				liveResponse.IsFlushed = true;
 				outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, liveResponse);
-			} else
+			}
+			else
 			{
 				outputStream.LiveConnections.AddOrReplace(signedMessage.Identity, new LiveConnection(httpContext.Response, true));
 			}
 
-
-			if (props.OnPollStart != null)
+			if (props.OnPollRefresh != null && query.StartsWith("?plang.poll=1&refresh=1"))
+			{
+				var (_, error) = await requestEngine.RunGoal(props.OnPollRefresh, goal, context);
+				return error;
+			}
+			else if (props.OnPollStart != null)
 			{
 				var (_, error) = await requestEngine.RunGoal(props.OnPollStart, goal, context);
 				return error;
 			}
+
 			return null;
 		}
 
@@ -434,7 +442,7 @@ namespace PLang.Modules.WebserverModule
 		private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext)
 		{
 			var requestedFile = httpContext.Request.Path.Value;
-			if (string.IsNullOrEmpty(requestedFile)) return new NotFoundError("Path is empty");
+			if (string.IsNullOrEmpty(requestedFile)) return new NotFoundError($"Path is empty - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 
 			requestedFile = requestedFile.AdjustPathToOs();
 
@@ -443,8 +451,8 @@ namespace PLang.Modules.WebserverModule
 			var mimeType = GetMimeType(fileExtension);
 			if (mimeType == null)
 			{
-				httpContext.Response.StatusCode = 404;
-				return new Error($"Not Found - {httpContext.Request.Path.ToString()}", StatusCode: 404);
+				httpContext.Response.StatusCode = 415;
+				return new Error($"Unsupported Media Type - {httpContext.Request.Path.ToString()} | {httpContext.Request.Method} - {httpContext.Request.Headers.UserAgent}", StatusCode: 415);
 			}
 
 			if (!fileSystem.File.Exists(filePath))
@@ -729,7 +737,7 @@ namespace PLang.Modules.WebserverModule
 			if (request.Method != "HEAD")
 			{
 				var method = methods.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
-				if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", step, StatusCode: 405));
+				if (method == null) return (false, null, null);
 			}
 
 			var dict = m.Groups.Keys
@@ -751,7 +759,7 @@ namespace PLang.Modules.WebserverModule
 			List<ObjectValue> variables = new();
 			foreach (var item in dict)
 			{
-				variables.Add(new ObjectValue(item.Key, item.Value));
+				variables.Add(new ObjectValue(item.Key.Replace("__dot__", "."), item.Value));
 			}
 
 			return (true, variables, null);

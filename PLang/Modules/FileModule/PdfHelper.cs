@@ -1,16 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Linq;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
-using Markdig;
-using System.Collections.Generic;
-using UglyToad.PdfPig.Content;
+﻿using Markdig;
+using Markdig.Helpers;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.SafeFileSystem;
 using PLang.Utils;
-using PLang.Building.Model;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
+using static PLang.Modules.FileModule.Program;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PLang.Modules.FileModule;
 
@@ -27,7 +30,7 @@ public class PdfToMarkdownConverter
 
 	public enum ImageHandling { Skip, Base64, SaveToPath }
 
-	public string ConvertPdfToMarkdown(string pdfPath, string format, bool showPageNr = false, string imageAction = "none", string? password = null)
+	public List<PdfPage> ConvertPdfToMarkdown(string pdfPath, string format, bool showPageNr = false, string imageAction = "none", string? password = null)
 	{
 		if (!fileSystem.File.Exists(pdfPath))
 			throw new FileNotFoundException($"File not found: {pdfPath}");
@@ -36,25 +39,27 @@ public class PdfToMarkdownConverter
 		var options = new ParsingOptions();
 		if (password != null) { options.Password = password; }
 
+		List<PdfPage> pages = new();
+		
 		using (Stream stream =  fileSystem.File.OpenRead(pdfPath))
 		using (var pdfDocument = PdfDocument.Open(stream, options))
 		{
 			foreach (var page in pdfDocument.GetPages())
-			{
-				if (showPageNr)
-				{
-					markdown.AppendLine($"[^0]: Page {page.Number}\n");
-				}
-				ExtractPageContent(page, markdown, imageAction);
-				markdown.AppendLine("\n---\n");
+			{	
+				var lines = ExtractPageContent(page, markdown, imageAction);
+				var images = GetImages(page, imageAction);
+
+				var pdfPage = new PdfPage(lines, images, page.Number, (int)page.Size);
+				pages.Add(pdfPage);
 			}
 		}
 
-		return markdown.ToString();
+		return pages;
 	}
 
-	private void ExtractPageContent(Page page, StringBuilder markdown, string imageAction)
+	private IEnumerable<string>? ExtractPageContent(Page page, StringBuilder markdown, string imageAction)
 	{
+
 		var text = ContentOrderTextExtractor.GetText(page);
 		var lines = text.Split('\n').Select(l => l.Trim()).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
 
@@ -62,34 +67,42 @@ public class PdfToMarkdownConverter
 		{
 			if (DetectTable(lines))
 			{
-				ConvertTable(lines, markdown);
+				return ConvertTable(lines);
 			}
 			else
 			{
-				foreach (var line in lines)
+				if (int.TryParse(lines[lines.Count - 1].Trim(), out int pageNr) && pageNr == page.Number)
 				{
-					markdown.AppendLine(line);
+					return lines[..^1];
 				}
+				return lines;
+				
 			}
 		}
-		if (imageAction == "none") return;
+		return [""];
 
+	}
+
+	private IEnumerable<string> GetImages(Page page, string imageAction) {
+		if (string.IsNullOrEmpty(imageAction)) return [];
+
+		List<string> images = new();
 		foreach (var image in page.GetImages())
 		{
 			if (imageAction == "base64")
 			{
 				string base64 = Convert.ToBase64String(image.RawBytes);
 				string format = DetectImageFormat(image.RawBytes);
-				markdown.AppendLine($"![Image](data:image/{format};base64,{base64})");
+				images.Add($"data:image/{format};base64,{base64})");
 			}
 			else
 			{
 				string imagePath = SaveImage(image, imageAction);
-				markdown.AppendLine($"![Image]({imagePath})");
+				images.Add(imagePath);
 			}
 		}
+		return images;
 	}
-
 
 	private static string DetectImageFormat(ReadOnlySpan<byte> imageData)
 	{
@@ -107,16 +120,16 @@ public class PdfToMarkdownConverter
 		return lines.Count > 2 && lines.All(l => l.Contains("|"));
 	}
 
-	private void ConvertTable(List<string> lines, StringBuilder markdown)
+	private List<string> ConvertTable(List<string> lines)
 	{
-		markdown.AppendLine();
-		markdown.AppendLine(lines[0]); // Header row
-		markdown.AppendLine(new string('-', lines[0].Length)); // Separator
+		List<string> returnLines = new();
+		lines.Add(lines[0]); // Header row
+		returnLines.Add(new string('-', lines[0].Length)); // Separator
 		for (int i = 1; i < lines.Count; i++)
 		{
-			markdown.AppendLine(lines[i]); // Table rows
+			returnLines.Add(lines[i]); // Table rows
 		}
-		markdown.AppendLine();
+		return returnLines;
 	}
 
 	private string SaveImage(IPdfImage image, string imageHandling)
@@ -125,7 +138,7 @@ public class PdfToMarkdownConverter
 		fileSystem.Directory.CreateDirectory(absoluteFolderPath);
 
 		string imagePath = fileSystem.Path.Join(absoluteFolderPath, $"img_{Guid.NewGuid()}.png");
-		File.WriteAllBytes(imagePath, image.RawBytes);
+		fileSystem.File.WriteAllBytes(imagePath, image.RawBytes);
 		return imagePath;
 	}
 

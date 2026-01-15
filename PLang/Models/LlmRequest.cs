@@ -1,5 +1,6 @@
 ﻿using PLang.Runtime.Startup;
 using System.Runtime.Serialization;
+using static PLang.Modules.LlmModule.Program;
 
 namespace PLang.Models
 {
@@ -26,5 +27,6 @@ namespace PLang.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public string? PreviousResult { get; internal set; }
         public string? RawResponse { get; set; }
-    }
+		public Tools Tools { get; internal set; }
+	}
 }

@@ -8,6 +8,7 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models.ObjectValueConverters;
 using PLang.Modules;
 using PLang.Modules.WebserverModule;
 using PLang.Runtime;
@@ -31,6 +32,7 @@ using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Utils;
+
 public interface ITypeHelper
 {
 	BaseBuilder GetInstructionBuilderInstance(string module);
@@ -488,7 +490,7 @@ public class TypeHelper : ITypeHelper
 		Type? type = Type.GetType(str, false, ignoreCase: true);
 		if (type != null) return type;
 
-		
+
 		return type;
 	}
 
@@ -541,8 +543,14 @@ public class TypeHelper : ITypeHelper
 
 		if (value is JObject jobj)
 		{
-			
-			return jobj.ToObject(targetType, serializer);
+			try
+			{
+				return jobj.ToObject(targetType, serializer);
+			}
+			catch (Exception ex)
+			{
+				int i = 0;
+			}
 		}
 		if (value is JValue jValue)
 		{
@@ -586,9 +594,9 @@ public class TypeHelper : ITypeHelper
 			return ConvertToList(targetType, value);
 		}
 
-		
 
-			if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
+
+		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
 		{
 			if (IsRecordWithToString(value))
 			{
@@ -649,7 +657,7 @@ public class TypeHelper : ITypeHelper
 				};
 				return token.ToObject(targetType, jsonSerializer);
 			}
-			
+
 			return Convert.ChangeType(value, targetType);
 		}
 		catch (Exception ex)
@@ -658,10 +666,11 @@ public class TypeHelper : ITypeHelper
 			{
 				var jsonSerializer = new JsonSerializerSettings()
 				{
-					ObjectCreationHandling = ObjectCreationHandling.Replace
+					ObjectCreationHandling = ObjectCreationHandling.Replace,
+					Converters = { new JsonObjectValueConverter() }
 				};
 
-				var json = JsonConvert.SerializeObject(value);
+				var json = JsonConvert.SerializeObject(value, jsonSerializer);
 
 				return JsonConvert.DeserializeObject(json, targetType);
 			}
@@ -690,16 +699,24 @@ public class TypeHelper : ITypeHelper
 			foreach (var kvp in dict)
 				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
 			return result;
-		} else if (targetType.Name.StartsWith("Dict"))
+		}
+		else if (targetType.Name.StartsWith("Dict"))
 		{
 			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
 			var result = (System.Collections.IDictionary)Activator.CreateInstance(concreteType)!;
+
 			var dict2 = value as IDictionary;
+			if (value.GetType().IsPrimitive)
+			{
+				dict2 = new Dictionary<string, object>();
+				dict2.Add(variableName, value);
+			}
 			foreach (DictionaryEntry kvp in dict2)
 				result.Add(ConvertToType(kvp.Key, keyType)!, ConvertToType(kvp.Value, valType));
 			return result;
 
-		} else if (variableName != null)
+		}
+		else if (variableName != null)
 		{
 			Type concreteType = GetConcreteDictionaryType(targetType, keyType, valType);
 
@@ -855,6 +872,11 @@ public class TypeHelper : ITypeHelper
 		if (numericTypes.Contains(item1.GetType()))
 		{
 			theNumericType = item1.GetType();
+			if (item2 is string str && string.IsNullOrEmpty(str))
+			{
+				item2 = 0;
+			}
+
 			var obj = TypeHelper.ConvertToType(item2, item1.GetType());
 			if (obj != null && obj.GetType() == theNumericType)
 			{
@@ -865,6 +887,12 @@ public class TypeHelper : ITypeHelper
 		}
 		else if (numericTypes.Contains(item2.GetType()))
 		{
+			// when item2 is a number and item1 is empty string, then it is set to 0
+			if (item1 is string str && string.IsNullOrEmpty(str))
+			{
+				item1 = 0;
+			}
+
 			var obj = TypeHelper.ConvertToType(item1, item2.GetType());
 			if (obj != null)
 			{
@@ -1042,28 +1070,36 @@ public class TypeHelper : ITypeHelper
 	}
 	public static bool IsListOrDict(Type? type)
 	{
-		if (type == null)
+		if (type == null || !type.IsGenericType)
 			return false;
 
-		return typeof(IList).IsAssignableFrom(type) ||
-			   typeof(IDictionary).IsAssignableFrom(type) ||
-			   typeof(ITuple).IsAssignableFrom(type);
+		return (IsListOrDict(type) ||
+			   typeof(ITuple).IsAssignableFrom(type));
 	}
 	public static bool IsListOrDict(object? obj)
 	{
-		return (obj is IList || obj is IDictionary || obj is ITuple);
+		if (obj == null || !obj.GetType().IsGenericType) return false;
+
+		return IsList(obj.GetType());
 	}
 
 	internal static bool IsList(Type type)
 	{
-		if (type == null)
+		if (type == null || !type.IsGenericType)
 			return false;
 
-		return typeof(IList).IsAssignableFrom(type);
+		var generic = type.GetGenericTypeDefinition();
+		return IsGenericListTypeDefintion(generic);
 	}
 
 	public static bool ImplementsDict(object? obj, out IDictionary? dict)
 	{
+		if (obj == null)
+		{
+			dict = null;
+			return false;
+		}
+
 		var isDict = (obj.GetType().GetInterfaces().FirstOrDefault(p => p.Name.Equals("IDictionary`2")) != null);
 		if (!isDict)
 		{
@@ -1112,26 +1148,30 @@ public class TypeHelper : ITypeHelper
 		return result;
 	}
 
+	public static bool IsGenericDictTypeDefintion(Type generic)
+	{
+
+		return generic == typeof(Dictionary<,>)
+			|| generic == typeof(IReadOnlyDictionary<,>)
+			|| generic == typeof(IEnumerable<>)
+			|| generic == typeof(IDictionary<,>);
+	}
+	public static bool IsGenericListTypeDefintion(Type generic)
+	{
+		return generic == typeof(List<>)
+			|| generic == typeof(IList<>)
+			|| generic == typeof(ICollection<>)
+			|| generic == typeof(IReadOnlyList<>)
+			|| generic == typeof(IEnumerable<>);
+	}
+
 	private static bool IsDictionaryType(Type type)
 	{
 		if (!type.IsGenericType)
 			return false;
 
 		var genericTypeDef = type.GetGenericTypeDefinition();
-
-		// Check direct types
-		if (genericTypeDef == typeof(Dictionary<,>) ||
-			genericTypeDef == typeof(IDictionary<,>) ||
-			genericTypeDef == typeof(IReadOnlyDictionary<,>))
-		{
-			return true;
-		}
-
-		// Check if implements IDictionary<,> or IReadOnlyDictionary<,>
-		return type.GetInterfaces().Any(i =>
-			i.IsGenericType &&
-			(i.GetGenericTypeDefinition() == typeof(IDictionary<,>) ||
-			 i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)));
+		return IsGenericDictTypeDefintion(genericTypeDef);
 	}
 
 	public static string? GetAsString(object? obj, string format = "text")
@@ -1196,6 +1236,6 @@ public class TypeHelper : ITypeHelper
 	private static object? GetDefault(Type t) =>
 		t.IsValueType ? Activator.CreateInstance(t) : null;
 
-	
+
 }
 

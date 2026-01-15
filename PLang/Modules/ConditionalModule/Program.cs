@@ -8,6 +8,7 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Modules.ThrowErrorModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
@@ -80,7 +81,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
+		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
 		public async Task<(object?, IError?)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -219,14 +220,19 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			else if (item is IList list)
 			{
 				result = list.Contains(contains);
+			} else if (item is IPlangComparer comparer)
+			{
+				result = comparer.Contains(contains);
 			}
-			
+
 			if (isNot) result = !result;
 
 			if (result != null)
 			{
 				return await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 			}
+
+			
 
 			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
 		}

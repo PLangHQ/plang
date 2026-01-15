@@ -35,7 +35,7 @@ namespace PLang.Runtime
 			return engine;
 		}
 
-		public async Task<IEngine> RentAsync(GoalStep callingStep)
+		public async Task<IEngine> RentAsync(GoalStep callingStep, int retryCount = 0)
 		{
 			var rootEngine = GetRootEngine();
 			var enginePool = rootEngine.EnginePool;
@@ -46,9 +46,14 @@ namespace PLang.Runtime
 				engine.IsInPool = false;
 				if (!enginePool.engineIds.TryRemove(engine.Id, out _))
 				{
-					throw new Exception($"Could not remove engineId ({engine.Id}) when renting engine");
+					if (retryCount < 5)
+					{
+						return await RentAsync(callingStep, ++retryCount);
+					}
+					throw new Exception($"Could not remove engineId ({engine.Id}) when renting engine. Retry count {retryCount}");
 				}
-				
+
+
 				InitPerRequest(rootEngine.Container, engine);
 				return engine;
 			}

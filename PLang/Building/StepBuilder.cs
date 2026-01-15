@@ -422,7 +422,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			if (errorHandler.GoalToCall == null) continue;	
 
 			(var goalFound, var error) = GoalHelper.GetGoalPath(step, errorHandler.GoalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
-			if (error != null) return (stepProperties, new BuilderError(error, false));
+			if (error != null) return (stepProperties, new BuilderError(error) {  Retry = false });
 
 			if (goalFound != null)
 			{

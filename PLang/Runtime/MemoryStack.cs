@@ -113,6 +113,7 @@ namespace PLang.Runtime
 				return GetMemoryStackJson();
 			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
 			Put(new DynamicObjectValue(ReservedKeywords.GUID, () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
+			
 		}
 
 		public List<ObjectValue> GetMemoryStack()
@@ -463,7 +464,7 @@ namespace PLang.Runtime
 			if (keyPath.Path == null) return variable.Value;
 
 			// return the property of variable, e.g. %user!properties%
-			if (keyPath.Type == "!")
+			if (keyPath.Type == "!2")
 			{
 				if (keyPath.Path.Equals("properties", StringComparison.OrdinalIgnoreCase))
 				{

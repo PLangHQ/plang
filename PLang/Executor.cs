@@ -116,7 +116,7 @@ namespace PLang
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
 			var validate = args.FirstOrDefault(p => p == "--validate") != null;
 			var test = args.FirstOrDefault(p => p == "--test") != null;
-			var watch = args.FirstOrDefault(p => p == "watch") != null;
+			var watch = args.FirstOrDefault(p => p == "--watch") != null;
 
 			LoadParametersToAppContext(args);
 			if (args.FirstOrDefault(p => p == "exec") != null)
@@ -280,11 +280,13 @@ namespace PLang
 				LoadArgsToMemoryStack(args, memoryStack);
 
 				this.builder = container.GetInstance<IBuilder>();
-				var error = await builder.Start(container, context);
-				if (error != null)
+				var errors = await builder.Start(container, context);
+				if (errors != null && errors.Count > 0)
 				{
-					Console.WriteLine(error);
-					await this.engine.GetEventRuntime().AppErrorEvents(error);
+					foreach (var error in errors)
+					{
+						await this.engine.GetEventRuntime().AppErrorEvents(error);
+					}
 				}
 				else
 				{

@@ -6,9 +6,13 @@ using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.IdentityModule;
+using PLang.Runtime;
+using PLang.Utils;
 using System.Buffers;
 using System.ComponentModel;
 using System.Net.Security;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -27,6 +31,61 @@ namespace PLang.Modules.SerializerModule
 		public Program(Modules.ProgramFactory programFactory)
 		{
 			this.programFactory = programFactory;
+		}
+
+		public async Task<(int?, IError?)> AddSerializer(string path)
+		{
+			var absolutePath = GetPath(path);
+
+			AssemblyLoader al = new();
+			var (implementations, error) = al.LoadImplementations<ISerializer>(fileSystem, path);
+			if (error != null) return (null, error);
+
+			foreach (var serializer in implementations.Data)
+			{
+				engine.Serializers.Add(serializer);
+			}
+
+			return (implementations.Data.Count, null);
+		}
+
+		public async Task<(object, IError?)> ConvertToType(ObjectValue<List<string>> variables, string type)
+		{
+			List<ObjectValue> returns = new();
+			foreach (var variable in variables.Data)
+			{
+				var data = memoryStack.GetObjectValue(variable);
+				if (type == "json")
+				{
+					returns.Add(new ObjectValue(data.Name, JsonConvert.SerializeObject(data.Value)));
+				}
+
+				Type? targetType = Type.GetType(type);
+				if (targetType != null)
+				{
+					returns.Add(new ObjectValue(data.Name,
+						TypeHelper.ConvertToType(data.Name, targetType)));
+				}
+
+				var serializer = engine.Serializers.FirstOrDefault(s => s.Type.Equals(type, StringComparison.OrdinalIgnoreCase));
+				if (serializer == null)
+				{
+					var converted = Convert.ChangeType(data.Value, targetType);
+					returns.Add(new ObjectValue(data.Name, converted));
+				}
+
+				targetType = Type.GetType(serializer.Type);
+				if (targetType != null)
+				{
+					var parsed = serializer.Parse(data.Value, targetType);
+					if (parsed.Error != null) return parsed;					
+					returns.Add(new ObjectValue(data.Name, parsed));
+				}
+				return (returns, null);
+			}
+
+			return ((returns.Count == 1) ? returns[0] : returns, null);
+
 		}
 
 		[Description("serializer(message_pack|json). User can also define his own")]
@@ -49,12 +108,13 @@ namespace PLang.Modules.SerializerModule
 
 					return null;
 				}
-			} else if (serializer == "raw")
+			}
+			else if (serializer == "raw")
 			{
 
 			}
 
-				var writer = new ArrayBufferWriter<byte>();
+			var writer = new ArrayBufferWriter<byte>();
 			MessagePackSerializer.Serialize(writer, data);
 			return writer.WrittenSpan.ToArray(); //I should be return ReadOnlySpan<byte>
 		}

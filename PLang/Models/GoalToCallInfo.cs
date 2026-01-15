@@ -103,7 +103,8 @@ namespace PLang.Models
 		{
 			if (string.IsNullOrWhiteSpace(name))
 			{
-				throw new Exception("goal name cannot be empty");
+				return;
+				//throw new Exception("goal name cannot be empty");
 			}
 
 			if (name.Contains("\\"))

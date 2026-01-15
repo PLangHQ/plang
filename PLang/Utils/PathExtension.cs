@@ -14,11 +14,29 @@ namespace PLang.Utils
 			
 			if (Path.DirectorySeparatorChar == '\\')
 			{
-				return path.Replace('/', Path.DirectorySeparatorChar);
+				path = path.Replace('/', Path.DirectorySeparatorChar);
+				if (path.StartsWith("\\\\"))
+				{
+					path = "\\\\" + path.Substring(2).Replace("\\\\", "\\");
+				}
+				else
+				{
+					path = path.Replace("\\\\", "\\");
+				}
+				return path;
 			}
 			else
 			{
-				return path.Replace('\\', Path.DirectorySeparatorChar);
+				path = path.Replace('\\', Path.DirectorySeparatorChar);
+				if (path.StartsWith("//"))
+				{
+					path = "//" + path.Substring(2).Replace("//", "/");
+				}
+				else
+				{
+					path = path.Replace("//", "/");
+				}
+				return path;
 			}
 
 		}

@@ -135,6 +135,7 @@ namespace PLang.Modules.CryptographicModule
 		
 		internal async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
 		{
+			if (variable == null) return (null, new ProgramError("Varible is empty. It cannot be empty"));
 			if (variable is string)
 			{
 				return await HashInput(variable, useSalt ?? false, salt, type);

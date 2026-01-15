@@ -191,11 +191,7 @@ namespace PLang.Runtime
 								if (error != null)
 								{
 									Console.WriteLine("Error running async goal:" + error.ToString());					
-									var eve = contextAccessor.Current.GetOrDefault<EventBinding>(ReservedKeywords.Event, null);
-									if (eve != null)
-									{
-										Console.WriteLine("EventBinding:" + JsonConvert.SerializeObject(eve));
-									}
+									
 								}
 
 							}
