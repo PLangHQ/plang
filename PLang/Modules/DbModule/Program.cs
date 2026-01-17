@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using IdGen;
+using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -939,7 +940,19 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (null, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex), properties);
+				var sqlError = new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex);
+				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
+				{
+					var error = await DetachDb(dataSource, prep.connection);
+					if (error != null)
+					{
+						sqlError.ErrorChain.Add(error);
+					}
+				}
+
+				return (null, sqlError, properties);
+
+
 			}
 			finally
 			{

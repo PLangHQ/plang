@@ -10,6 +10,7 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Methods;
 using PLang.Errors.Runtime;
+using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using Sprache;
@@ -642,10 +643,10 @@ Trying to match this content:
 		public record HtmlNode(string Name, string OuterHtml, string? InnerText, Dictionary<string, string> Attributes)
 		{
 			[JsonIgnore]
-			public Goal Goal { get; set; }
+			public PLangContext Context { get; set; }
 			public override string ToString()
 			{
-				HtmlSanitizerOptions options = Goal.GetVariable<HtmlSanitizerOptions>() ?? new();
+				HtmlSanitizerOptions options = Context.GetVariable<HtmlSanitizerOptions>() ?? new();
 				var sanitizer = new HtmlSanitizer(options);
 				return sanitizer.Sanitize(OuterHtml);
 			}
@@ -671,7 +672,7 @@ Trying to match this content:
 			var attributes = node.Attributes.ToDictionary(a => a.Name, a => a.Value);
 			return new HtmlNode(node.Name, node.OuterHtml, node.InnerText?.Trim(), attributes)
 			{
-				Goal = goal
+				Context = context
 			};
 		}
 

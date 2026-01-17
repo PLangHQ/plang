@@ -24,7 +24,7 @@ using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.VariableModule
 {
-	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`")]
+	[Description("Set, Get & Return variable(s). Set(NOT if statement) on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm. Use this module on `- return %variable`. Modify datetime (%now%, etc.)")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -88,23 +88,32 @@ namespace PLang.Modules.VariableModule
 						return await LoadWithDefaultValue(variablesWithDefaultValue);
 					}
 
+
+					object defaultValue = variable.Value;
+					if (VariableHelper.IsVariable(variable.Value))
+					{
+						defaultValue = memoryStack.Get(variable.Value.ToString());
+					}
+
 					if (result.Table == null || result.Table.Count == 0)
 					{
-						objects.Add(new ObjectValue(variable.Key, variable.Value));
+
+
+						objects.Add(new ObjectValue(variable.Key, defaultValue));
 						continue;
 					}
 
 					var row = (Row)result.Table[0];
 					if (row == null)
 					{
-						objects.Add(new ObjectValue(variable.Key, variable.Value));
+						objects.Add(new ObjectValue(variable.Key, defaultValue));
 						continue;
 					}
 
 					var json = row["value"]?.ToString();
 					if (json == null)
 					{
-						objects.Add(new ObjectValue(variable.Key, variable.Value));
+						objects.Add(new ObjectValue(variable.Key, defaultValue));
 						continue;
 					}
 
@@ -720,6 +729,90 @@ Bad (dont use for):
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(memoryStack.Get(key).ToString()));
 		}
 
+		public record ModifyDateTimeOperation(
+	[Description("AddDays, AddMonths, AddYears, AddHours, AddMinutes, AddSeconds, AddMilliseconds, AddTicks")]
+	string Method,
+
+	[Description("For Add methods, use positive to add, negative to subtract")]
+	object[] Parameters
+);
+
+		[Description("Applies one or more modifications to a DateTime.")]
+		public record ModifyDateTimeParameters(
+			DateTime DateTime,
+			ModifyDateTimeOperation[] Operations,
+
+			[Description("e.g. 'yyyy-MM-dd', 'HH:mm:ss'")]
+	string? Format = null,
+
+			[Description("e.g. 'en-US', 'is-IS'. Defaults to current culture")]
+	string? CultureInfo = null
+		);
+
+		[Description("Modifies a DateTime by applying one or more operations.")]
+		[Example("remove 1 day from %fromDate%, format 'yyyy-MM-dd'", "Operations=[{Method='AddDays', Parameters=[-1]}], Format='yyyy-MM-dd'")]
+		[Example("add 3 months to %startDate%", "Operations=[{Method='AddMonths', Parameters=[3]}]")]
+		[Example("subtract 2 hours from %timestamp%", "Operations=[{Method='AddHours', Parameters=[-2]}]")]
+		[Example("remove 26 hours from %now%", "Operations=[{Method='AddHours', Parameters=[-26]}]")]
+		[Example("set %date% as %now% but add one month then subtract 2 days", "Operations=[{Method='AddMonths', Parameters=[1]}, {Method='AddDays', Parameters=[-2]}]")]
+		[Example("take %startDate%, add 1 year, add 6 months, subtract 1 day", "Operations=[{Method='AddYears', Parameters=[1]}, {Method='AddMonths', Parameters=[6]}, {Method='AddDays', Parameters=[-1]}]")]
+		[Example("add %months% months then %days% days to %date%, format 'yyyy-MM-dd'", "Operations=[{Method='AddMonths', Parameters=[%months%]}, {Method='AddDays', Parameters=[%days%]}], Format='yyyy-MM-dd'")]
+		public async Task<(object?, IError?)> ModifyDateTime(ModifyDateTimeParameters p)
+		{
+			var result = p.DateTime;
+
+			foreach (var op in p.Operations)
+			{
+				var methods = typeof(DateTime).GetMethods().Where(m => m.Name == op.Method).ToArray();
+
+				if (methods.Length == 0)
+					return (null, new ProgramError($"DateTime method '{op.Method}' not found"));
+
+				System.Reflection.MethodInfo? matchedMethod = null;
+				object[]? convertedParams = null;
+
+				foreach (var method in methods)
+				{
+					var methodParams = method.GetParameters();
+					if (methodParams.Length != op.Parameters.Length)
+						continue;
+
+					convertedParams = new object[op.Parameters.Length];
+					var allConverted = true;
+
+					for (int i = 0; i < op.Parameters.Length; i++)
+					{
+						var converted = TypeHelper.ConvertToType(op.Parameters[i], methodParams[i].ParameterType);
+						if (converted == null)
+						{
+							allConverted = false;
+							break;
+						}
+						convertedParams[i] = converted;
+					}
+
+					if (allConverted)
+					{
+						matchedMethod = method;
+						break;
+					}
+				}
+
+				if (matchedMethod == null)
+					return (null, new ProgramError($"Could not match parameters for DateTime method '{op.Method}'"));
+
+				result = (DateTime)matchedMethod.Invoke(result, convertedParams);
+			}
+
+			if (p.Format == null)
+				return (result, null);
+
+			var culture = p.CultureInfo != null
+				? System.Globalization.CultureInfo.GetCultureInfo(p.CultureInfo)
+				: System.Globalization.CultureInfo.CurrentCulture;
+
+			return (result.ToString(p.Format, culture), null);
+		}
 
 
 		public async Task<object?> TrimForLlm(object? obj, int maxItemCount = 30, int? maxItemLength = null, string? groupOn = null,

@@ -9,6 +9,7 @@ using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
 using PLang.Events;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -30,7 +31,7 @@ namespace PLang.Runtime
 		Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string appPath, GoalToCallInfo goalToCall,
 			Goal? callingGoal = null, bool waitForExecution = true,
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, bool isEvent = false);
+			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -48,7 +49,7 @@ namespace PLang.Runtime
 			RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string relativeAppPath, GoalToCallInfo goalToCall, Goal? callingGoal = null,
 						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
 						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, bool isEvent = false)
+						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null)
 		{
 
 			
@@ -67,16 +68,11 @@ namespace PLang.Runtime
 
 			var relativeGoalPath = callingGoal.RelativeGoalPath;
 			var appStartFolderPath = callingGoal.AbsoluteAppStartupFolderPath;
-			
-			// todo: hack, should not be modifying like this
-			if (isEvent)
+			if (runtimeEvent?.CallingStep != null)
 			{
-				var eventBinding = goalToCall.Parameters[ReservedKeywords.Event] as EventBinding;
-				if (eventBinding != null)
-				{
-					relativeGoalPath = eventBinding.Goal!.RelativeGoalPath;
-				}
+				relativeGoalPath = runtimeEvent.CallingStep.RelativeGoalPath;
 			}
+			
 			(var goalToRun, var error) = GoalHelper.GetGoal(relativeGoalPath, fileSystem.RootDirectory, goalToCall, goals, systemGoals);
 			
 			if (error != null) return (engine, null, error);
@@ -102,8 +98,11 @@ namespace PLang.Runtime
 					runtimeEngine = await engine.RentAsync(context.CallingStep);
 				}
 
-
-				goalToRun.IsEvent = isEvent;
+				if (runtimeEvent != null)
+				{
+					goalToRun.Event = runtimeEvent;
+					context.Event = runtimeEvent;
+				}
 
 				// prevent loop reference
 				if (callingGoal.ParentGoal == null || !callingGoal.ParentGoal.RelativePrPath.Equals(goalToRun.RelativePrPath))
@@ -120,7 +119,7 @@ namespace PLang.Runtime
 						object? value = (param.Value is ObjectValue ov) ? ov.Value : param.Value;
 						if (param.Key.StartsWith("!"))
 						{
-							goalToRun.AddVariable(value, variableName: param.Key);
+							context.AddVariable(value, variableName: param.Key);
 						}
 						else
 						{
@@ -129,8 +128,8 @@ namespace PLang.Runtime
 						}
 					}
 				}
-				var prevIndent = goalToRun.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
-				goalToRun.AddVariable((prevIndent + indent), variableName: ReservedKeywords.ParentGoalIndent);
+				var prevIndent = context.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
+				context.AddVariable((prevIndent + indent), variableName: ReservedKeywords.ParentGoalIndent);
 
 				Task<(object? Variables, IError? Error)> task;
 				if (waitForExecution)
@@ -213,37 +212,26 @@ namespace PLang.Runtime
 
 
 			}
-			/*
-			catch (FileAccessException ex)
-			{
-				return (engine, null, new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, async (appName, path, answer) =>
-				{
-					
-					
-					fileSystem.AddFileAccess(new FileAccessControl(appName, path, ProcessId: engine.Id));
-
-					var result = await RunGoal(engine, context, relativeAppPath, goalToCall, callingGoal,
-						waitForExecution, delayWhenNotWaitingInMilliseconds,
-						waitForXMillisecondsBeforeRunningGoal, indent,
-						keepMemoryStackOnAsync, isolated);
-					if (result.error != null) return (false, result.error);
-
-					return (true, null);
-				}), null);
-			}*/
 			catch (Exception ex)
 			{
 				return (engine, null, new ExceptionError(ex));
 			}
 			finally
 			{
+				IError? disposeError = null;
 				if (goalToRun != null)
 				{
-					await goalToRun.DisposeVariables(context.MemoryStack);
+					disposeError = await context.CallStack.CurrentFrame.DisposeVariables(context.MemoryStack);
+								
 				}
 				if (isRented && waitForExecution)
 				{
 					engine.Return(runtimeEngine);
+				}
+
+				if (disposeError != null)
+				{ 
+					throw new ExceptionWrapper(disposeError);
 				}
 			}
 		}

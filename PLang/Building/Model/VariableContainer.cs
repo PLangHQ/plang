@@ -1,246 +1,225 @@
-﻿using Microsoft.AspNetCore.Mvc.TagHelpers;
-using NBitcoin;
-using PLang.Attributes;
+﻿using PLang.Attributes;
+using PLang.Errors;
 using PLang.Runtime;
-using System.Reflection.Metadata;
+using System.Collections.Concurrent;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
-using static PLang.Utils.VariableHelper;
 
-namespace PLang.Building.Model
+namespace PLang.Building.Model;
+
+public record Variable(string VariableName, object Value)
 {
-	public record Variable(string VariableName, object Value)
+	[Newtonsoft.Json.JsonIgnore]
+	[IgnoreDataMemberAttribute]
+	[System.Text.Json.Serialization.JsonIgnore]
+	public Func<Task>? DisposeFunc { get; init; }
+
+	[Newtonsoft.Json.JsonIgnore]
+	[IgnoreDataMemberAttribute]
+	[System.Text.Json.Serialization.JsonIgnore]
+	public GoalStep? Step { get; set; }
+};
+
+public abstract class VariableContainer
+{
+	[Newtonsoft.Json.JsonIgnore]
+	[IgnoreDataMemberAttribute]
+	[System.Text.Json.Serialization.JsonIgnore]
+	protected ConcurrentDictionary<string, Variable> _variables = new(StringComparer.OrdinalIgnoreCase);
+
+	[IgnoreWhenInstructed]
+	public List<Variable> Variables
 	{
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
-		public Func<Task>? DisposeFunc { get; init; }
-
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
-		public GoalStep? Step { get; set; }
-	};
-
-	public abstract class VariableContainer
-	{
-		[Newtonsoft.Json.JsonIgnore]
-		[IgnoreDataMemberAttribute]
-		[System.Text.Json.Serialization.JsonIgnore]
-		protected List<Variable> _variables = new();
-
-		[IgnoreWhenInstructed]
-		public List<Variable> Variables { get { return _variables; } set { _variables = value; } }
-
-
-		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
+		get => _variables.Values.ToList();
+		set
 		{
+			_variables.Clear();
 			if (value == null) return;
 
-			if (variableName == null) variableName = typeof(T).FullName;
-
-
-			var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
-			if (_variables == null) _variables = new();
-			try
+			foreach (var v in value)
 			{
-				var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-				if (variableIdx == -1)
-				{
-					_variables.Add(variable);
-				}
-				else
-				{
-
-					_variables[variableIdx] = variable;
-
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Exception - AddVariable:{ex.Message} - variableName:{variableName}");
-				_variables = new();
-				_variables.Add(variable);
-			}
-			SetVariableOnEvent(variable);
-
-		}
-		public void AddVariable(Variable goalVariable)
-		{
-			if (goalVariable == null) return;
-			if (_variables == null) _variables = new();
-
-			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(goalVariable.VariableName, StringComparison.OrdinalIgnoreCase));
-			try
-			{
-				if (variableIdx == -1)
-				{
-					_variables.Add(goalVariable);
-				}
-				else
-				{
-					_variables[variableIdx] = goalVariable;
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"VariableIndex: idx:{variableIdx} | count:{_variables.Count} - {ex}");
-				_variables.Add(goalVariable);
-			}
-			SetVariableOnEvent(goalVariable);
-
-		}
-		public void AddVariables(List<Variable> variables)
-		{
-			foreach (var variable in variables)
-			{
-				AddVariable(variable);
+				_variables[v.VariableName] = v;
 			}
 		}
-		public List<Variable> GetVariables()
-		{
-			return _variables;
-		}
-
-		public List<T>? GetVariables<T>()
-		{
-			return _variables.Where(p => p.GetType() == typeof(T)).Select(p => (T)p.Value).ToList();
-		}
-
-		public object? GetVariable(string variableName, int level = 0, List<string>? callStackGoals = null)
-		{
-			var variable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			if (variable != null) return variable?.Value;
-
-			if (level > 100)
-			{
-				var parent2 = GetParent();
-				string goalName = (parent2 != null) ? parent2.GoalName : "";
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine($"To deep GetVariable. variableName:{variableName} | parent2.goalName:{goalName}");
-				Console.ResetColor();
-				return default;
-			}
-
-			var parent = GetParent();
-			if (parent == null) return default;
-
-			/*
-			 * TODO: fix this
-			 * 
-			 * List<string> callStack is a fix, the ParentGoal should not be set on goal object
-			 * it should be set on CallStack object that needs to be created, goal object should
-			 * not change at runtime. this is because if same goal is called 2 or more times
-			 * in a callstack, the parent goal is overwritten
-			 * */
-			if (callStackGoals?.Contains(parent.RelativePrPath) == true) return default;
-			if (callStackGoals == null) callStackGoals = new();
-			callStackGoals.Add(parent.RelativePrPath);
-
-
-			var value = parent.GetVariable(variableName, ++level, callStackGoals);
-			return value;
-		}
-
-		protected abstract Goal? GetParent();
-		protected abstract GoalStep? GetStep();
-		protected abstract void SetVariableOnEvent(Variable goalVariable);
-
-		public T? GetVariable<T>(string? variableName = null, int level = 0, List<string>? callStackGoals = null)
-		{
-
-			if (variableName == null) variableName = typeof(T).FullName;
-
-			var variable = _variables.FirstOrDefault(p => p.VariableName?.Equals(variableName, StringComparison.OrdinalIgnoreCase) == true);
-			if (variable != null) return (T?)variable?.Value;
-
-			if (level > 100)
-			{
-				var parent2 = GetParent();
-				string goalName = (parent2 != null) ? parent2.GoalName : "";
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine($"To deep GetVariable. variableName:{variableName} | parent2.goalName:{goalName}");
-				Console.ResetColor();
-				return default;
-			}
-
-			var parent = GetParent();
-			if (parent == null) return default;
-
-			/*
-			 * TODO: fix this
-			 * 
-			 * List<string> callStack is a fix, the ParentGoal should not be set on goal object
-			 * it should be set on CallStack object that needs to be created, goal object should
-			 * not change at runtime. this is because if same goal is called 2 or more times
-			 * in a callstack, the parent goal is overwritten
-			 * */
-			if (callStackGoals?.Contains(parent.RelativePrPath) == true) return default;
-			if (callStackGoals == null) callStackGoals = new();
-			callStackGoals.Add(parent.RelativePrPath);
-
-
-			T? value = parent.GetVariable<T>(variableName, ++level, callStackGoals);
-			return value;
-		}
-
-
-		public bool RemoveVariable<T>(string? variableName = null)
-		{
-			if (variableName == null) variableName = typeof(T).FullName;
-			return RemoveVariable(variableName);
-		}
-		public bool RemoveVariable(string? variableName = null)
-		{
-			var goalVariable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			if (goalVariable == null) return false;
-
-			if (goalVariable.DisposeFunc != null) goalVariable.DisposeFunc();
-			return _variables.Remove(goalVariable);
-
-		}
-
-		public void RemoveVariables<T>()
-		{
-			var variables = _variables.Where(p => p.GetType() == typeof(T));
-			foreach (var variable in variables)
-			{
-				RemoveVariable(variable.VariableName);
-			}
-
-		}
-
-		public async Task DisposeVariables(MemoryStack memoryStack)
-		{
-
-			for (int i = _variables.Count - 1; i >= 0; i--)
-			{
-				var variable = _variables[i];
-				if (variable == null || variable.VariableName.StartsWith("!")) continue;
-
-				var parent = GetParent();
-				if (parent != null && memoryStack.ContainsObject(variable))
-				{
-					//parent.AddVariable(variable);
-					continue;
-				}
-
-				if (variable.DisposeFunc != null)
-				{
-					try
-					{
-						await variable.DisposeFunc();
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine("Exception on Dispose:" + ex);
-					}
-				}
-			}
-			_variables.Clear();
-			_variables = new();
-
-		}
-
 	}
+
+	public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
+	{
+		if (value == null) return;
+
+		variableName ??= typeof(T).FullName;
+		if (variableName == null) return;
+
+		var variable = new Variable(variableName, value) { DisposeFunc = func, Step = GetStep() };
+		AddVariable(variable);
+	}
+
+	public void AddVariable(Variable? variable)
+	{
+		if (variable == null) return;
+
+		_variables[variable.VariableName] = variable;
+		SetVariableOnEvent(variable);
+	}
+
+	public void AddVariables(List<Variable>? variables)
+	{
+		if (variables == null) return;
+
+		foreach (var variable in variables)
+		{
+			AddVariable(variable);
+		}
+	}
+
+	public List<Variable> GetVariables()
+	{
+		return _variables.Values.ToList();
+	}
+
+	public List<T> GetVariables<T>()
+	{
+		return _variables.Values
+			.Where(p => p.Value is T)
+			.Select(p => (T)p.Value)
+			.ToList();
+	}
+
+	public object? GetVariable(string? variableName, int level = 0)
+	{
+		if (string.IsNullOrEmpty(variableName)) return null;
+
+		if (_variables.TryGetValue(variableName, out var variable))
+		{
+			return variable.Value;
+		}
+
+		if (level > 1000)
+		{
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine($"Too deep GetVariable. variableName:{variableName}");
+			Console.ResetColor();
+			return null;
+		}
+
+		var parent = GetParent();
+		return parent?.GetVariable(variableName, level + 1);
+	}
+
+	public T? GetVariable<T>(string? variableName = null, int level = 0)
+	{
+		variableName ??= typeof(T).FullName;
+
+		var value = GetVariable(variableName, level);
+		if (value == null) return default;
+
+		if (value is T typed)
+		{
+			return typed;
+		}
+
+		try
+		{
+			return (T)Convert.ChangeType(value, typeof(T));
+		}
+		catch
+		{
+			return default;
+		}
+	}
+
+	public bool RemoveVariable<T>(string? variableName = null)
+	{
+		variableName ??= typeof(T).FullName;
+		return RemoveVariable(variableName);
+	}
+
+	public bool RemoveVariable(string? variableName)
+	{
+		if (string.IsNullOrEmpty(variableName)) return false;
+
+		if (_variables.TryRemove(variableName, out var removed))
+		{
+			removed.DisposeFunc?.Invoke();
+			return true;
+		}
+		return false;
+	}
+
+	public async Task<bool> RemoveVariableAsync(string? variableName)
+	{
+		if (string.IsNullOrEmpty(variableName)) return false;
+
+		if (_variables.TryRemove(variableName, out var removed))
+		{
+			if (removed.DisposeFunc != null)
+			{
+				await removed.DisposeFunc();
+			}
+			return true;
+		}
+		return false;
+	}
+
+	public void RemoveVariables<T>()
+	{
+		var toRemove = _variables.Values
+			.Where(p => p.Value is T)
+			.Select(p => p.VariableName)
+			.ToList();
+
+		foreach (var name in toRemove)
+		{
+			RemoveVariable(name);
+		}
+	}
+
+	public async Task<IError?> DisposeVariables(MemoryStack memoryStack)
+	{
+		var parent = GetParent();
+		IError? error = null;
+		// Atomic swap - take ownership of old dictionary
+		var oldVariables = _variables;
+		_variables = new ConcurrentDictionary<string, Variable>(StringComparer.OrdinalIgnoreCase);
+
+		var toDispose = oldVariables.Values
+			.Where(v => !v.VariableName.StartsWith("!"))
+			.ToList();
+
+		foreach (var variable in toDispose)
+		{
+			if (parent != null && parent.Variables.Contains(variable))
+			{
+				continue;
+			}
+
+			if (memoryStack.ContainsObject(variable))
+			{
+				continue;
+			}
+
+			if (variable.DisposeFunc != null)
+			{
+				try
+				{
+					await variable.DisposeFunc();
+				}
+				catch (Exception ex)
+				{
+					if (error == null)
+					{
+						error = new ExceptionError(ex, ex.Message, memoryStack.Goal);
+					} else
+					{
+						error.ErrorChain.Add(new ExceptionError(ex, ex.Message, memoryStack.Goal));
+					}
+				}
+			}
+		}
+
+		return error;
+	}
+
+	protected abstract CallStackFrame? GetParent();
+	protected abstract GoalStep? GetStep();
+	protected abstract void SetVariableOnEvent(Variable goalVariable);
 }

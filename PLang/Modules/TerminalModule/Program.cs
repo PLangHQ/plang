@@ -145,7 +145,7 @@ namespace PLang.Modules.TerminalModule
 
 			// Start the process
 			Process process = new Process { StartInfo = startInfo };
-			goal.AddVariable(process, () =>
+			context.AddVariable(process, () =>
 			{
 				process.Dispose();
 				return Task.CompletedTask;

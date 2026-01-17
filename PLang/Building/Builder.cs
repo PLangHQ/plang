@@ -16,6 +16,7 @@ using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Data;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace PLang.Building
 {
@@ -66,19 +67,23 @@ namespace PLang.Building
 				AppContext.SetSwitch("Builder", true);
 				Goal goal = Goal.Builder;
 
-				logger.LogDebug($"Loading goal files - {stopwatch.ElapsedMilliseconds}");
+				var engine = container.GetInstance<IEngine>();
+				engine.Context.CallStack.EnterGoal(goal);
+				engine.Context.CallStack.SetCurrentStep(new GoalStep() { Name = "Step", RelativeGoalPath = goal.RelativeGoalPath, Goal = goal }, 0);
+
+				logger.LogTrace($"Loading goal files - {stopwatch.ElapsedMilliseconds}");
 				var goals = goalParser.GetGoalFilesToBuild();
-				logger.LogDebug($"Done loading goal files now Init folder - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"Done loading goal files now Init folder - {stopwatch.ElapsedMilliseconds}");
 
 				InitFolders();
 
-				logger.LogDebug($"Done Init folder, now load event runtime - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"Done Init folder, now load event runtime - {stopwatch.ElapsedMilliseconds}");
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				error = eventRuntime.Load(true);
 				if (error != null) return [new BuilderError(error)];
 
-				logger.LogDebug($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
 				
 				var setupGoals = goals.Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase));
 				foreach (var setupGoal in setupGoals)
@@ -132,7 +137,7 @@ namespace PLang.Building
 					{
 						goalBuilder.AddToBuildErrors(goalError);
 					}
-
+					/*
 					foreach (var subGoalPr in goalToBuild.SubGoals)
 					{
 						var subgoal = goals.FirstOrDefault(p => p.RelativePrPath == subGoalPr);
@@ -140,7 +145,7 @@ namespace PLang.Building
 						{
 							subgoal.AddVariables(goalToBuild.GetVariables());
 						}
-					}
+					}*/
 					logger.LogDebug($"Done building goal {goalToBuild.GoalName} took {buildGoalTime.ElapsedMilliseconds} - Total build time: {stopwatch.ElapsedMilliseconds}");
 				}
 

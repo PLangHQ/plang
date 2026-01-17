@@ -66,7 +66,7 @@ namespace PLang.Modules.ThrowErrorModule
 		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]
 		public async Task<IError?> Retry(int maxRetries = 1, string? maxRetriesReachedMesage = null, string key = "MaxRetries", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
-			var error = goal.GetVariable<IError>(ReservedKeywords.Error);
+			var error = context.Error;
 			if (error == null) return new ProgramError("No error available. Cannot retry a step when there is no error");
 			if (error.Step == null) return new ProgramError("No step available. Cannot retry a step when I dont know which step to retry");
 

@@ -88,7 +88,7 @@ namespace PLang.Modules
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
-			logger.LogDebug($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
 
 			
 			this.appContext = container.GetInstance<PLangAppContext>();			
@@ -105,14 +105,14 @@ namespace PLang.Modules
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
 
-			logger.LogDebug($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
 			
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			this.methodHelper = container.GetInstance<MethodHelper>();
 
 			this.fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			logger.LogDebug($"        - Done init - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Done init - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -163,7 +163,7 @@ namespace PLang.Modules
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogDebug($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -172,12 +172,12 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
-				logger.LogDebug($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
 				//slogger.LogTrace("         - Parameters:{0}", JsonConvert.SerializeObject(parameterValues, Formatting.None));
 
 				// This is for memoryStack event handler. Should find a better way
@@ -729,7 +729,7 @@ namespace PLang.Modules
 
 					foreach (var returnValue in function.ReturnValues)
 					{
-						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+						logger.LogTrace($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 						memoryStack.Put(returnValue.VariableName, data, goalStep: goalStep);
 					}
 					return true;
@@ -742,7 +742,7 @@ namespace PLang.Modules
 					{
 						foreach (var returnValue in function.ReturnValues)
 						{
-							logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+							logger.LogTrace($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 							memoryStack.Put(returnValue.VariableName, obj, goalStep: goalStep);
 						}
 						return true;

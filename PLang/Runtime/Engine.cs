@@ -69,6 +69,7 @@ namespace PLang.Runtime
 		ResolveEventHandler AsmHandler { get; set; }
 		EnginePool EnginePool { get; set; }
 		List<ISerializer> Serializers { get; set; }
+		PLangContext Context { get; }
 
 		void AddContext(string key, object value);
 		PLangAppContext GetAppContext();
@@ -86,7 +87,7 @@ namespace PLang.Runtime
 		Task<IEngine> RentAsync(GoalStep callingStep);
 		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
-		T GetProgram<T>();
+		T GetProgram<T>() where T : BaseProgram;
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -138,6 +139,14 @@ namespace PLang.Runtime
 			get
 			{
 				return container.GetInstance<IAppCache>();
+			}
+		}
+
+		public PLangContext Context
+		{
+			get
+			{
+				return contextAccessor.Current;
 			}
 		}
 
@@ -218,8 +227,6 @@ namespace PLang.Runtime
 				fileSystem.AddFileAccess(new FileAccessControl(fileSystem.RootDirectory, parentEngine.Path, ProcessId: this.fileSystem.Id));
 			}
 
-			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents();
-			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
 		public async Task<IEngine> RentAsync(GoalStep callingStep)
@@ -249,7 +256,7 @@ namespace PLang.Runtime
 			{
 				fileSystem.ClearFileAccess();
 			}
-			this.eventRuntime.GetActiveEvents().Clear();
+			
 			/*
 			foreach (var listofDisp in listOfDisposables)
 			{
@@ -264,11 +271,7 @@ namespace PLang.Runtime
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			msa.Current = null;
 
-			if (reset)
-			{
-				var prParser = container.GetInstance<PrParser>();
-				prParser.ClearVariables();
-			}
+		
 		}
 
 		public IEventRuntime GetEventRuntime()
@@ -276,9 +279,13 @@ namespace PLang.Runtime
 			return this.eventRuntime;
 		}
 
-		public T GetProgram<T>()
+		public T GetProgram<T>() where T : BaseProgram
 		{
-			return container.GetInstance<T>();
+			var program = container.GetInstance<T>();
+
+			var context = contextAccessor.Current;
+			program.Init(container, context.CallStack.CurrentGoal, context.CallStack.CurrentStep, context.CallStack.CurrentStep.Instruction, contextAccessor);
+			return program;
 		}
 
 		public void AddContext(string key, object value)
@@ -410,7 +417,7 @@ namespace PLang.Runtime
 			{
 				child.Container.Dispose();
 			}
-			if (this.prParser != null) this.prParser.ClearVariables();
+
 			AppDomain.CurrentDomain.AssemblyResolve -= AsmHandler;
 			AsmHandler = null;
 
@@ -468,7 +475,6 @@ namespace PLang.Runtime
 
 			foreach (var goal in setupGoals)
 			{
-				goal.AddVariables(startGoal.GetVariables());
 				if (goal.DataSourceName != null && goal.DataSourceName.Contains("%")) continue;
 
 				var result = await RunGoal(goal, context);
@@ -514,12 +520,10 @@ namespace PLang.Runtime
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, Dictionary<string, object?> Parameters, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
-			context.CallStack.EnterGoal(goal);
+			context.CallStack.EnterGoal(goal, context.Event);
 
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
-			goal.Stopwatch = Stopwatch.StartNew();
-			goal.UniqueId = Guid.NewGuid().ToString();
-
+			
 			logger.LogDebug($"[Start] Goal {goal.GoalName}");
 
 			AppContext.SetSwitch("Runtime", true);
@@ -536,24 +540,24 @@ namespace PLang.Runtime
 					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
 				}
 
-				logger.LogDebug($" - Running Before event on goal - {goal.Stopwatch.ElapsedMilliseconds}");
+				logger.LogDebug($" - Running Before event on goal - {context.CallStack.CurrentFrame.Duration}");
 
 				var result = await eventRuntime.RunGoalEvents(EventType.Before, goal);
 				if (result.Error != null) return result;
 
-				logger.LogDebug($" - Event done, now running Steps - {goal.Stopwatch.ElapsedMilliseconds}");
+				logger.LogDebug($" - Event done, now running Steps - {context.CallStack.CurrentFrame.Duration}");
 
 				//if (await CachedGoal(goal)) return null;
 				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, context, 0);
 
 				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
 				//await CacheGoal(goal);
-				logger.LogDebug($" - Steps done, running After events - {goal.Stopwatch.ElapsedMilliseconds}");
+				logger.LogDebug($" - Steps done, running After events - {context.CallStack.CurrentFrame.Duration}");
 
 				result = await eventRuntime.RunGoalEvents(EventType.After, goal);
 				if (result.Error != null) return result;
 
-				logger.LogDebug($" - After events done - {goal.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($" - After events done - {context.CallStack.CurrentFrame.Duration}");
 
 				return (returnValues, stepError);
 
@@ -569,9 +573,10 @@ namespace PLang.Runtime
 			finally
 			{
 				AppContext.SetData("GoalLogLevelByUser", null);
+
+				logger.LogDebug($"[End] Goal: {goal.GoalName} => " + context.CallStack.CurrentFrame.Duration);
 				context.CallStack.ExitGoal();
-				goal.Stopwatch.Stop();
-				logger.LogDebug($"[End] Goal: {goal.GoalName} => " + goal.Stopwatch.ElapsedMilliseconds);
+
 
 			}
 
@@ -603,17 +608,18 @@ namespace PLang.Runtime
 			{
 
 				Stopwatch stepWatch = Stopwatch.StartNew();
-				logger.LogDebug($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
+				logger.LogTrace($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
 
 				context.CallStack.SetCurrentStep(goal.GoalSteps[stepIndex], stepIndex);
 
 				logger.LogDebug("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
 				(returnValues, error) = await RunStep(goal, stepIndex, context);
-				logger.LogDebug("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
+				logger.LogTrace("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
+				context.CallStack.CompleteCurrentStep(returnValues, error);
 
 				if (error != null)
 				{
-					logger.LogDebug($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
+					logger.LogTrace($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
 					if (error is MultipleError me && me.IsErrorHandled)
 					{
 						var hasEndGoal = FindErrorHandled(me);
@@ -621,12 +627,12 @@ namespace PLang.Runtime
 					}
 					if (error is EndGoal endGoal)
 					{
-						logger.LogDebug($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+						logger.LogTrace($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 						try
 						{
 							if (!endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true)
 							{
-								logger.LogDebug($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+								logger.LogTrace($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 								return (returnValues, stepIndex, endGoal);
 							}
 							else if (endGoal.EndingGoal == null)
@@ -642,7 +648,7 @@ namespace PLang.Runtime
 
 						}
 
-						logger.LogDebug($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
+						logger.LogTrace($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
 						return (returnValues, stepIndex, null);
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex, context);
@@ -651,7 +657,7 @@ namespace PLang.Runtime
 				}
 				logger.LogDebug($"   - Step idx {stepIndex} done - {stepWatch.ElapsedMilliseconds} - Current for all steps: {stopwatch.ElapsedMilliseconds}");
 			}
-			logger.LogDebug($"  - All steps done in {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - All steps done in {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			return (returnValues, stepIndex, error);
 		}
 
@@ -695,23 +701,23 @@ namespace PLang.Runtime
 				if (HasExecuted(step)) return (null, null);
 
 				step.UniqueId = Guid.NewGuid().ToString();
-				logger.LogDebug($"     - Load instruction for step: {step.Text.MaxLength(20)} - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {step.Stopwatch.ElapsedMilliseconds}");
 
 				var error = LoadInstruction(goal, step);
 				if (error != null)
 				{
 					return (null, error);
 				}
-				logger.LogDebug($"     - Have instruction - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Have instruction - {step.Stopwatch.ElapsedMilliseconds}");
 				if (retryCount == 0)
 				{
-					logger.LogDebug($"     - Before event starts - {step.Stopwatch.ElapsedMilliseconds}");
+					logger.LogTrace($"     - Before event starts - {step.Stopwatch.ElapsedMilliseconds}");
 					// Only run event one time, even if step is tried multiple times
 					var stepEventResult = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 					if (stepEventResult.Error != null) return (null, stepEventResult.Error);
 				}
 
-				logger.LogDebug($"     - ProcessPrFile {step.PrFileName} - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {step.Stopwatch.ElapsedMilliseconds}");
 
 				var result = await ProcessPrFile(goal, step, goalStepIndex, context);
 
@@ -720,7 +726,7 @@ namespace PLang.Runtime
 					result = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount, context);
 					if (result.Error != null && result.Error is MultipleError me && !me.IsErrorHandled) return result;
 				}
-				logger.LogDebug($"     - Done with ProcessPrFile, doing after events - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {step.Stopwatch.ElapsedMilliseconds}");
 
 				if (retryCount == 0)
 				{
@@ -729,7 +735,7 @@ namespace PLang.Runtime
 					if (stepEventResult.Error != null) return stepEventResult;
 				}
 
-				logger.LogDebug($"     - Done with after events - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Done with after events - {step.Stopwatch.ElapsedMilliseconds}");
 				return result;
 			}
 			catch (Exception stepException)
@@ -742,7 +748,7 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				logger.LogDebug($"     - Reset log level - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"     - Reset log level - {step.Stopwatch.ElapsedMilliseconds}");
 				ResetStepLogLevel(goal);
 				step.Stopwatch.Stop();
 				logger.LogDebug($"     - Step all done - {step.Stopwatch.ElapsedMilliseconds}");
@@ -863,7 +869,7 @@ namespace PLang.Runtime
 			}
 			if (step.Stopwatch == null) step.Stopwatch = Stopwatch.StartNew();
 
-			logger.LogDebug($"     - Get runtime type {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"     - Get runtime type {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 
 			Type? classType = typeHelper.GetRuntimeType(step.ModuleType);
 			if (classType == null)
@@ -873,11 +879,12 @@ namespace PLang.Runtime
 
 			if (step.Instruction == null) LoadInstruction(goal, step);
 
-			goal.AddVariable(goal, variableName: ReservedKeywords.Goal);
-			goal.AddVariable(step, variableName: ReservedKeywords.Step);
-			goal.AddVariable(step.Instruction, variableName: ReservedKeywords.Instruction);
+			
+			context.AddVariable(goal, variableName: ReservedKeywords.Goal);
+			context.AddVariable(step, variableName: ReservedKeywords.Step);
+			context.AddVariable(step.Instruction, variableName: ReservedKeywords.Instruction);
 
-			logger.LogDebug($"     - Getting instace {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"     - Getting instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
 
 			BaseProgram? classInstance;
 			try

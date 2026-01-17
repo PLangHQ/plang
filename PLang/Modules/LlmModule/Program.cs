@@ -109,7 +109,7 @@ public class Program : BaseProgram
 	[Description("Retrieves all previous messages")]
 	public async Task<List<LlmMessage>?> GetPreviousMessages()
 	{
-		return goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
+		return context.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 	}
 
 	[Description("a Goal is object Goal.Path = %goal.path%")]
@@ -144,20 +144,20 @@ public class Program : BaseProgram
 
 		if (continuePrevConversation)
 		{
-			var prevMessages = goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
+			var prevMessages = context.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 			if (prevMessages != null)
 			{
 				promptMessages.InsertRange(0, prevMessages);
 			}
 			if (scheme == null)
 			{
-				scheme = goal.GetVariable<string>(PreviousConversationSchemeKey) ?? null;
+				scheme = context.GetVariable<string>(PreviousConversationSchemeKey) ?? null;
 			}
 		}
 		else
 		{
-			goal.RemoveVariable(PreviousConversationKey);
-			goal.RemoveVariable(PreviousConversationSchemeKey);
+			context.RemoveVariable(PreviousConversationKey);
+			context.RemoveVariable(PreviousConversationSchemeKey);
 		}
 
 		for (int i = 0; i < promptMessages.Count; i++)
@@ -243,8 +243,8 @@ public class Program : BaseProgram
 		if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
 
 		promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
-		goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
-		goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
+		context.AddVariable(promptMessages, variableName: PreviousConversationKey);
+		context.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
 
 		if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 		{

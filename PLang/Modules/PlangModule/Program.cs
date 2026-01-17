@@ -465,12 +465,7 @@ namespace PLang.Modules.PlangModule
 			// todo: attaching debugger and running from step does not work for http requests
 			// Run from step should also be a callback, like is done on websites (stateless)
 			// this validates that the user sending calls RunFromStep is valid
-			var startingEngine = engine.GetAppContext()[ReservedKeywords.StartingEngine] as IEngine;
-			if (startingEngine == null) startingEngine = engine;
-
-			engine.GetEventRuntime().SetActiveEvents(new());
-
-			var result = await startingEngine.RunFromStep(absoluteFilePath, context);
+			var result = await engine.RunFromStep(absoluteFilePath, context);
 			if (result.Error == null)
 			{
 				return (result.ReturnValue, new EndGoal(true, goal, goalStep, "Ending Run from step exeuction"));

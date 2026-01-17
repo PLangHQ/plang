@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Events;
+using PLang.Events.Types;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Sinks;
@@ -59,6 +61,10 @@ namespace PLang.Interfaces
 		public MemoryStack MemoryStack { get; }
 		public Callback? Callback { get; set; }
 		public GoalStep? CallingStep { get; set; }
+		public RuntimeEvent? Event { get; set; }
+		public IError Error { get; set; }
+
+		//public ConcurrentDictionary<string, string> ActiveEvents = new();
 		public List<MockData> Mocks { get; init; }
 		public ConcurrentDictionary<string, object?> Items { get; init; }
 		public ConcurrentDictionary<string, object?> SharedItems { get; set; }
@@ -67,13 +73,14 @@ namespace PLang.Interfaces
 		public IEngine Engine { get; }
 		public IOutputSink UserSink { get; set; }
 		public IOutputSink SystemSink { get; set; }
-		public CallStack CallStack {get;set;}
+		public CallStack CallStack { get; set; }
 		public ExecutionMode ExecutionMode { get; set; }
 		public IPLangFileSystem FileSystem { get; internal set; }
 		public DataSource DataSource { get; internal set; }
 		public DataSource SystemDataSource { get; internal set; }
 
-		public IOutputSink GetSink(string actor) {
+		public IOutputSink GetSink(string actor)
+		{
 			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
 
 			return actor.Equals("user", StringComparison.OrdinalIgnoreCase) ? UserSink : SystemSink;
@@ -90,11 +97,11 @@ namespace PLang.Interfaces
 			Items = new();
 			Mocks = new();
 			SharedItems = new();
-			MemoryStack.Context = this;
+
 			Id = Guid.NewGuid().ToString();
 		}
 
-		
+
 
 		public object? this[string key]
 		{
@@ -230,7 +237,8 @@ namespace PLang.Interfaces
 			context.Identity = this.Identity;
 			context.SignedMessage = this.SignedMessage;
 			context.CallStack = this.CallStack;
-			foreach (var item in this.Items) {
+			foreach (var item in this.Items)
+			{
 				context.Items.TryAdd(item.Key, item.Value);
 			}
 			foreach (var item in this.Mocks)
@@ -238,7 +246,7 @@ namespace PLang.Interfaces
 				context.Mocks.Add(item);
 			}
 			context.SharedItems = this.SharedItems;
-			context.HttpContext = this.HttpContext;	
+			context.HttpContext = this.HttpContext;
 			context.Callback = this.Callback;
 			context.DebugMode = this.DebugMode;
 			context.ShowErrorDetails = this.ShowErrorDetails;
@@ -247,6 +255,25 @@ namespace PLang.Interfaces
 
 
 			return context;
+		}
+
+		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
+		{
+			CallStack.CurrentFrame.AddVariable(value, func, variableName);
+		}
+
+		public object? GetVariable(string variableName, int level = 0)
+		{
+			return CallStack.CurrentFrame.GetVariable(variableName, level);
+		}
+		public T? GetVariable<T>(string? variableName = null, int level = 0)
+		{
+			return CallStack.CurrentFrame.GetVariable<T>(variableName, level);
+		}
+
+		internal void RemoveVariable(string variableName)
+		{
+			CallStack.CurrentFrame.RemoveVariable(variableName);
 		}
 	}
 }

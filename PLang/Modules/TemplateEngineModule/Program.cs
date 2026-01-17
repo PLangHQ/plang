@@ -118,9 +118,12 @@ namespace PLang.Modules.TemplateEngineModule
 					AddVariable(kvp.Name, kvp.Value, templateContext);
 				}
 			}
+
+
+			var vars = context.CallStack.CurrentFrame.GetVariables();
 			if (goalStep != null)
 			{
-				var vars = goalStep.GetVariables();
+				
 				foreach (var variable in vars)
 				{
 					AddVariable(variable.VariableName, variable.Value, templateContext);
@@ -128,7 +131,6 @@ namespace PLang.Modules.TemplateEngineModule
 			}
 			if (goal != null)
 			{
-				var vars = goal.GetVariables();
 				foreach (var variable in vars)
 				{
 					AddVariable(variable.VariableName, variable.Value, templateContext);

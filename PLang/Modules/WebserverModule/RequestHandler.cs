@@ -232,20 +232,20 @@ namespace PLang.Modules.WebserverModule
 				resp.Headers.Add("X-Goal-Hash", goal.Hash);
 				resp.Headers.Add("X-Goal-Signature", goal.Signature);
 			}
-			logger.LogDebug($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
 
 			if (request.Method == "HEAD") return null;
 
 			(var requestObjectValue, error) = await ParseRequest(context);
 			if (error != null) return error;
 
-			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
 
 			(var callback, goal, error) = await GetCallbackInfos(request, goal);
 			if (error != null) return error;
 			if (goal == null) return new ProgramError("Server code has changed. New request needs to be made", step, StatusCode: 503);
 
-			logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
 
 			if (requestObjectValue != null)
 			{

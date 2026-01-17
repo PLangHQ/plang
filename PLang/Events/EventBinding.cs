@@ -1,6 +1,7 @@
 ﻿using Org.BouncyCastle.Bcpg;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Events.Types;
 using PLang.Models;
 using PLang.Utils.JsonConverters;
 using System.Diagnostics;
@@ -38,6 +39,8 @@ namespace PLang.Events
 
 	}
 
+	public record RuntimeEvent(string Id, string EventType, string EventScope, GoalToCallInfo GoalToCall, GoalStep CallingStep);
+
 	// before each goal in api/* call !DoStuff
 	// before each step call !Debugger.SendInfo
 	// after Run.goal, call !AfterRun
@@ -64,14 +67,6 @@ namespace PLang.Events
 		[JsonIgnore]
 		[IgnoreWhenInstructed]
 		public Instruction? Instruction { get; set; }
-
-		[IgnoreWhenInstructed]
-		public Stopwatch Stopwatch { get; set; }
-		[JsonIgnore]
-		[IgnoreWhenInstructed]
-		public Goal SourceGoal { get; internal set; }
-		[JsonIgnore]
-		public GoalStep SourceStep { get; internal set; }
 
 		[JsonIgnore]
 		public bool IsSystem{ get; internal set; }

@@ -69,7 +69,7 @@ namespace PLang.Modules.UiModule
 			}
 
 			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
-			goal.AddVariable(framework);
+			context.AddVariable(framework);
 		}
 
 		[Description("Name=default when not defined by user. DO NOT use TemplateFile as name. Device=web|desktop|mobile|tablet|console|tv|watch|other")]

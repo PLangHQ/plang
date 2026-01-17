@@ -10,6 +10,7 @@ using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Events;
+using PLang.Events.Types;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -47,6 +48,7 @@ namespace PLang.Runtime
 
 	public record VariableEvent(string EventType, GoalToCallInfo GoalToCall, bool WaitForResponse = true, int DelayWhenNotWaitingInMilliseconds = 50, string? Hash = null)
 	{
+		public string Id { get { return $"{EventType}_Variable_{GoalToCall.Name}"; } }
 		public Goal Goal { get; set; }
 		public GoalStep Step { get; set; }
 	};
@@ -76,7 +78,7 @@ namespace PLang.Runtime
 		private readonly ISettings settings;
 		private readonly VariableHelper variableHelper;
 		private readonly IPLangContextAccessor contextAccessor;
-		private PLangContext context;
+		//private PLangContext context;
 
 		public MemoryStack Clone(IEngine engine)
 		{
@@ -87,11 +89,10 @@ namespace PLang.Runtime
 		}
 
 		public Goal Goal { get; set; }
-		public PLangContext Context
+		/*public PLangContext Context
 		{
-			get { return context; }
-			set { context = value; }
-		}
+			get { return contextAccessor.Current; }
+		}*/
 
 		public static MemoryStack New(IServiceContainer container, IEngine engine)
 		{
@@ -113,6 +114,9 @@ namespace PLang.Runtime
 				return GetMemoryStackJson();
 			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
 			Put(new DynamicObjectValue(ReservedKeywords.GUID, () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
+			Put(new DynamicObjectValue("!Callstack", () => {
+				return contextAccessor.Current.CallStack.ToSerializable(); 
+			}, typeof(SerializableCallStack), isSystemVariable: true));
 			
 		}
 
@@ -134,10 +138,11 @@ namespace PLang.Runtime
 				var ms = GetMemoryStack();
 
 				List<string> varsInStep = new();
-				var eventBinding = Goal.GetVariable<EventBinding>(ReservedKeywords.Event);
-				if (eventBinding != null && eventBinding.SourceStep != null)
+				var @event = contextAccessor.Current.Event;
+
+				if (@event != null && @event.CallingStep != null)
 				{
-					varsInStep = VariableHelper.GetVariablesInText(eventBinding.SourceStep.Text);
+					varsInStep = VariableHelper.GetVariablesInText(@event.CallingStep.Text);
 				}
 
 
@@ -379,6 +384,7 @@ namespace PLang.Runtime
 
 		private ObjectValue? GetFromContext(KeyPath keyPath)
 		{
+			var context = contextAccessor.Current;
 			if (context == null) return null;
 
 			var predefined = GetPredefined(keyPath);
@@ -406,6 +412,8 @@ namespace PLang.Runtime
 
 		private ObjectValue? GetPredefined(KeyPath keyPath)
 		{
+			var context = contextAccessor.Current;
+
 			if (keyPath.VariableName.Equals("identity", StringComparison.OrdinalIgnoreCase)) return new ObjectValue(keyPath.VariableName, context.Identity);
 			if (keyPath.VariableName.Equals("signature", StringComparison.OrdinalIgnoreCase)) return new ObjectValue(keyPath.VariableName, context.SignedMessage);
 			return null;
@@ -415,7 +423,8 @@ namespace PLang.Runtime
 		{
 			if (Goal == null) return null;
 
-			var obj = Goal.GetVariable(keyPath.VariableName);
+			var context = contextAccessor.Current;
+			var obj = context.GetVariable(keyPath.VariableName);
 			if (obj == null) return null;
 
 			var ov = new ObjectValue(keyPath.VariableName, obj, obj.GetType(), null, true);
@@ -1456,31 +1465,35 @@ namespace PLang.Runtime
 
 		private static readonly object _locker = new();
 
-		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep? step = null)
+		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep step)
 		{
 			if (step == null || step.IsEvent) return;
 
+			var context = contextAccessor.Current;
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
-				eve.Goal = step.Goal;
-				eve.Step = step;
+				if (context.CallStack.IsEventGoalInStack(eve.Id)) continue;
 
-				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
-				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
-				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
-				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
+				var goalToCall = new GoalToCallInfo(eve.GoalToCall.Name, eve.GoalToCall.Parameters);
+				if (goalToCall.Path == step.Goal.Path) return;
 
-				var goal = step.Goal;
-				if (eve.GoalToCall.Name == goal.GoalName) return;
+				goalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
+				goalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
+				goalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 
-				var task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, eve.GoalToCall, goal);
+				var runtimeEvent = new RuntimeEvent(eve.Id, eventType, "Variable", goalToCall, step);
+				context.Event = runtimeEvent;
+				
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, step.Goal.RelativeAppStartupFolderPath, goalToCall, step.Goal, runtimeEvent: runtimeEvent);
 				var result = task.GetAwaiter().GetResult();
+
 				if (result.Error != null)
 				{
 					// todo: should call event binding for step 
 					throw new ExceptionWrapper(result.Error);
 				}
+				context.Event = null;
 			}
 		}
 

@@ -638,18 +638,18 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task SetFileType(string extension, string type)
 		{
-			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
+			var fileTypes = context.GetVariable<Dictionary<string, string>>("FileTypes");
 			if (fileTypes == null) fileTypes = new();
 
 			if (!extension.StartsWith(".")) extension = "." + extension;
 
 			fileTypes.AddOrReplace(extension, type);
 
-			goal.AddVariable(fileTypes, variableName: "FileTypes");
+			context.AddVariable(fileTypes, variableName: "FileTypes");
 		}
 		public async Task<string> GetFileType(string extension)
 		{
-			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
+			var fileTypes = context.GetVariable<Dictionary<string, string>>("FileTypes");
 
 			if (!extension.StartsWith(".")) extension = "." + extension;
 			if (typeMapping.TryGetValue(extension, out var type)) return type;

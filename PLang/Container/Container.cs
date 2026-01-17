@@ -55,6 +55,9 @@ namespace PLang.Container
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine parentEngine)
 		{
+			container.RegisterSingleton<PrParser>((factory) => { return parentEngine.PrParser; });
+
+
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
 			RegisterModules(container);
 
@@ -871,7 +874,7 @@ namespace PLang.Container
 			}
 			if (container.CanGetInstance(interfaceType, implementationType.FullName)) return;
 
-			logger.LogDebug($"Loading '{injectorType}' in type of {implementationType}");
+			logger.LogTrace($"Loading '{injectorType}' in type of {implementationType}");
 
 			container.Register(interfaceType, implementationType, implementationType.FullName);
 
