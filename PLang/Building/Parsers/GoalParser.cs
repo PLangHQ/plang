@@ -584,48 +584,9 @@ namespace PLang.Building.Parsers
 
 
 			return orderedFiles;
-			/*
-
-			string[] anyFile = fileSystem.Directory.GetFiles(goalsPath, "*.goal", SearchOption.AllDirectories);
-			if (anyFile.Length == 0)
-			{
-				throw new BuilderException($"No goal files found in directory. Are you in the correct directory? I am running from {goalsPath}");
-			}
-			var goalFiles = fileSystem.Directory.GetFiles(goalsPath, "*.goal", SearchOption.AllDirectories).ToList();
-			var files = Remove_SystemFolder(goalsPath, goalFiles);
-			List<Goal> goals = new();
-			foreach (var file in files)
-			{
-				goals.AddRange(ParseGoalFile(file));
-			}
-			return goals;*/
 
 		}
-		/*
-		private static List<string> Remove_SystemFolder(string goalPath, List<string> goalFiles)
-		{
-
-
-			string[] dirsToExclude = new string[] { "apps", ".modules", ".services", ".build", ".deploy", ".db" };
-			string[] filesToExclude = new string[] { "Events.goal", "BuilderEvents.goal" };
-
-
-			// Filter out excluded directories and files first to simplify subsequent operations
-			var filteredGoalFiles = goalFiles.Where(goalFile =>
-			{
-				var relativePath = goalFile.Replace(goalPath, "").TrimStart(Path.DirectorySeparatorChar);
-				var baseFolderName = Path.GetDirectoryName(relativePath).Split(Path.DirectorySeparatorChar).FirstOrDefault();
-				var fileName = Path.GetFileName(goalFile).ToLower();
-
-				return !baseFolderName.StartsWith(".") && !dirsToExclude.Contains(baseFolderName, StringComparer.OrdinalIgnoreCase) && !filesToExclude.Contains(fileName, StringComparer.OrdinalIgnoreCase);
-			}).ToList();
-
-			// Order the files
-			;
-
-
-			return orderedFiles;
-		}*/
+		
 	}
 
 }

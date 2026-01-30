@@ -81,6 +81,7 @@ namespace PLang.Modules.LoopModule
 		public record LinqOptions(int Split = 0);
 
 		[Description(@"Predefined variables are %list%, %item%, %position%, %listCount%, user can overwrite those using parameters, e.g. `- go through %products%, call goal ProcessProduct item=%product%`, parameter key is ""item"" and value is ""%product%"". cpuUsage is percentage of cpu cores available, 80% => 0.8")]
+		
 		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, [HandlesVariableAttribute] GoalToCallInfo goalToCall,
 		 MultiThreaded? multiThreaded = null, LinqOptions? linqOptions = null)
 		{

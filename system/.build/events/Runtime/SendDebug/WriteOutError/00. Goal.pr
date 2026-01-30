@@ -28,7 +28,7 @@
       "LineNumber": 44,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8b45b542b21a663caf54c4e35ea169252b7960baf33515dd29c4c65f3389fc04",
+      "Hash": "296a51245ebfa02401727345c16352dda3f37f9f730b4affd44fea9fd39277ad",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -40,6 +40,7 @@
   "GoalFileName": "SendDebug.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\WriteOutError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\SendDebug\\WriteOutError",
@@ -48,11 +49,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "7093850dd0de76d9fa03fb40252be50c14bc12741bdf3d411a31da7fe794c9b2",
+  "Hash": "e43e2a1f12fc884fd3bc42a553f3ffe37b66bdc576a99ee2557645ad20025d59",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be logged."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

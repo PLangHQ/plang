@@ -58,10 +58,10 @@ namespace PLangTests.Modules.CryptographicModule
 		[TestMethod]
 		public async Task SetCurrentToken()
 		{
-			settings.GetValues<BearerSecret>(typeof(ModuleSettings)).Returns(new List<BearerSecret>()
+			settings.GetValues<Secret>(typeof(ModuleSettings)).Returns(new List<Secret>()
 			{
-				new BearerSecret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI="),
-				new BearerSecret("Default2", "2")
+				new Secret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI="),
+				new Secret("Default2", "2")
 			});
 
 			await p.SetCurrentBearerToken("Default2");
@@ -73,12 +73,12 @@ namespace PLangTests.Modules.CryptographicModule
 		public async Task CreateBearerToken_And_Validate()
 		{
 			
-			settings.GetValues<BearerSecret>(typeof(ModuleSettings)).Returns(new List<BearerSecret>()
+			settings.GetValues<Secret>(typeof(ModuleSettings)).Returns(new List<Secret>()
 			{
-				new BearerSecret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI=")
+				new Secret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI=")
 			});
 			var token = await p.GenerateBearerToken("email@example.org");
-			var result = await p.ValidateBearerToken(token);
+			var (result, error) = await p.ValidateBearerToken(token);
 
 			Assert.IsTrue(result);
 		}

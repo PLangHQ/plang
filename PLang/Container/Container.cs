@@ -55,6 +55,9 @@ namespace PLang.Container
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine parentEngine)
 		{
+			container.RegisterSingleton<PrParser>((factory) => { return parentEngine.PrParser; });
+
+
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
 			RegisterModules(container);
 
@@ -448,9 +451,13 @@ namespace PLang.Container
 				return dbConnection;
 			});*/
 
+			container.Register<IEventSourceFactory>(factory =>
+			{
+				return new EventSourceFactory(container);
+			});
 			container.Register<IEventSourceRepository, SqliteEventSourceRepository>(typeof(SqliteEventSourceRepository).FullName);
 			container.Register<IEventSourceRepository, DisableEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-			container.Register(factory =>
+			/*container.Register(factory =>
 			{
 				var context = container.GetInstance<PLangAppContext>();
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
@@ -481,10 +488,9 @@ namespace PLang.Container
 
 				string type = GetImplementation(context, ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository));
 				var eventSourceRepo = factory.GetInstance<IEventSourceRepository>(type);
-				eventSourceRepo.DataSource = dataSource;
 
 				return eventSourceRepo;
-			});
+			});*/
 
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
@@ -871,7 +877,7 @@ namespace PLang.Container
 			}
 			if (container.CanGetInstance(interfaceType, implementationType.FullName)) return;
 
-			logger.LogDebug($"Loading '{injectorType}' in type of {implementationType}");
+			logger.LogTrace($"Loading '{injectorType}' in type of {implementationType}");
 
 			container.Register(interfaceType, implementationType, implementationType.FullName);
 

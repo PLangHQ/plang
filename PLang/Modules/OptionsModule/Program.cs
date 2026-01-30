@@ -29,9 +29,9 @@ namespace PLang.Modules.OptionsModule
 		{
 
 			HtmlSanitizerOptions defaults = SetDefaults(new(), options);
-			
 
-			Goal.AddVariable(defaults);
+
+			context.AddVariable(defaults);
 		}
 
 		private T SetDefaults<T>(T defaults, T userDefined)

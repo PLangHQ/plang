@@ -30,12 +30,11 @@ public class PdfToMarkdownConverter
 
 	public enum ImageHandling { Skip, Base64, SaveToPath }
 
-	public List<PdfPage> ConvertPdfToMarkdown(string pdfPath, string format, bool showPageNr = false, string imageAction = "none", string? password = null)
+	public List<PdfPage> ConvertPdfToMarkdown(string pdfPath, string format, string? imagePath = null, string? password = null)
 	{
 		if (!fileSystem.File.Exists(pdfPath))
 			throw new FileNotFoundException($"File not found: {pdfPath}");
 
-		var markdown = new StringBuilder();
 		var options = new ParsingOptions();
 		if (password != null) { options.Password = password; }
 
@@ -46,8 +45,12 @@ public class PdfToMarkdownConverter
 		{
 			foreach (var page in pdfDocument.GetPages())
 			{	
-				var lines = ExtractPageContent(page, markdown, imageAction);
-				var images = GetImages(page, imageAction);
+				var lines = ExtractPageContent(page);
+				IEnumerable<string> images = new List<string>();
+				if (!string.IsNullOrEmpty(imagePath))
+				{
+					images = GetImages(page, imagePath);
+				}
 
 				var pdfPage = new PdfPage(lines, images, page.Number, (int)page.Size);
 				pages.Add(pdfPage);
@@ -57,7 +60,65 @@ public class PdfToMarkdownConverter
 		return pages;
 	}
 
-	private IEnumerable<string>? ExtractPageContent(Page page, StringBuilder markdown, string imageAction)
+	public PdfProperties GetProperties(string pdfPath, string? password = null)
+	{
+		var options = new ParsingOptions();
+		if (password != null) { options.Password = password; }
+
+		using (Stream stream = fileSystem.File.OpenRead(pdfPath))
+		using (var pdfDocument = PdfDocument.Open(stream, options))
+		{
+			var info = pdfDocument.Information;
+
+			return new PdfProperties
+			{
+				PageCount = pdfDocument.NumberOfPages,
+				Version = pdfDocument.Version.ToString(),
+				Title = info.Title,
+				Author = info.Author,
+				Subject = info.Subject,
+				Keywords = info.Keywords,
+				Creator = info.Creator,
+				Producer = info.Producer,
+				CreationDate = info.CreationDate,
+				ModificationDate = info.ModifiedDate,
+				IsEncrypted = pdfDocument.IsEncrypted,
+				Pages = pdfDocument.GetPages().Select(p => new PageInfo
+				{
+					PageNumber = p.Number,
+					Width = p.Width,
+					Height = p.Height,
+					Rotation = p.Rotation.Value
+				}).ToList()
+			};
+		}
+	}
+
+	public class PdfProperties
+	{
+		public int PageCount { get; set; }
+		public string? Version { get; set; }
+		public string? Title { get; set; }
+		public string? Author { get; set; }
+		public string? Subject { get; set; }
+		public string? Keywords { get; set; }
+		public string? Creator { get; set; }
+		public string? Producer { get; set; }
+		public string? CreationDate { get; set; }
+		public string? ModificationDate { get; set; }
+		public bool IsEncrypted { get; set; }
+		public List<PageInfo>? Pages { get; set; }
+	}
+
+	public class PageInfo
+	{
+		public int PageNumber { get; set; }
+		public double Width { get; set; }
+		public double Height { get; set; }
+		public int Rotation { get; set; }
+	}
+
+	private IEnumerable<string>? ExtractPageContent(Page page)
 	{
 
 		var text = ContentOrderTextExtractor.GetText(page);

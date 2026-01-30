@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Events;
+using PLang.Events.Types;
 using PLang.Modules;
 using PLang.Runtime;
 using System;
@@ -16,7 +18,7 @@ namespace PLang.Building.Model
 		Private = 0, Public = 1
 	}
 
-	public class Goal : VariableContainer
+	public class Goal
 	{
 		public Goal()
 		{
@@ -144,8 +146,8 @@ namespace PLang.Building.Model
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public bool IsSystem { get; set; }
-		[IgnoreWhenInstructed]
-		public string UniqueId { get; set; }
+
+
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public int CurrentStepIndex { get; set; }
@@ -161,30 +163,8 @@ namespace PLang.Building.Model
 			}
 			return goal;
 		}
-		protected override GoalStep? GetStep()
-		{
-			if (GoalSteps == null || GoalSteps.Count <= CurrentStepIndex) return null;	
-			return GoalSteps?[CurrentStepIndex];
-		}
-		protected override Goal? GetParent()
-		{
-			var parentGoal = ParentGoal;
-			if (parentGoal != null && parentGoal.Hash == Hash)
-			{
-				int i = 0;
-				return null;
-			}
-			return parentGoal;
 
-		}
 
-		protected override void SetVariableOnEvent(Variable goalVariable)
-		{
-			if (IsEvent && ParentGoal != null)
-			{
-				ParentGoal.AddVariable(goalVariable);
-			}
-		}
 
 		internal void Deconstruct(out object goal, out object error)
 		{
@@ -200,8 +180,7 @@ namespace PLang.Building.Model
 		public bool IsEvent { get; set; }
 
 		[LlmIgnore]
-		[IgnoreWhenInstructed]
-		public Stopwatch Stopwatch { get; set; }
+		public RuntimeEvent Event { get; set; }
 
 		public static Goal NotFound { get
 			{

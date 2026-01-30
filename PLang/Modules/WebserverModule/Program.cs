@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Io;
 using CsvHelper;
 using LightInject;
+using Markdig.Syntax.Inlines;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -9,6 +10,7 @@ using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
@@ -192,7 +194,7 @@ public class Program : BaseProgram, IDisposable
 		webserverEngine.UserSink = engine.UserSink;
 		webserverEngine.SystemSink = engine.SystemSink;
 		*/
-		goal.AddVariable(webserverProperties);
+		context.CallStack.CurrentFrame.AddVariable(webserverProperties);
 
 		//engine.ChildEngines.Add(webserverEngine);
 
@@ -285,7 +287,8 @@ public class Program : BaseProgram, IDisposable
 						IError? error = null;
 						bool poll = false;
 						string? identity = null;
-
+						
+					
 						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
@@ -301,10 +304,14 @@ public class Program : BaseProgram, IDisposable
 							msa.Current = memoryStack;
 
 							PLangContext context = new(memoryStack, requestEngine, ExecutionMode.HttpRequest);
+							
 
 							var contextAccessor = container.GetInstance<IPLangContextAccessor>();
 							contextAccessor.Current = context;
 							context.HttpContext = httpContext;
+							context.Items.AddOrReplace("!IsHttp", true);
+
+							AddToCallStack(requestEngine, httpContext.Request.Path.Value ?? "RequestStart");
 
 							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
 							context.UserSink = httpOutputSink;
@@ -384,9 +391,8 @@ public class Program : BaseProgram, IDisposable
 							{
 								try
 								{
-									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
+									Console.WriteLine(" ---- Critical Exception(2)  ----\n\nWill not show first exception, only last one ");
 									Console.WriteLine(ex2);
-									Console.WriteLine(ex);
 									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
 								} catch
 								{
@@ -489,7 +495,9 @@ public class Program : BaseProgram, IDisposable
 
 	public async Task<IError?> SetCertificate(string permFilePath, string? privateKeyFile = null)
 	{
-		var webserver = goal.GetVariable<WebserverProperties>();
+		
+		var webserver = context.CallStack.CurrentFrame.GetVariable<WebserverProperties>();
+		Console.WriteLine($"Have webserver: {webserver}");
 		if (webserver == null)
 		{
 			return new ProgramError("You can only set certificate on start of webserver", goalStep,
@@ -520,6 +528,8 @@ OnStartingWebserver
 		var cert = X509Certificate2
 		   .CreateFromPemFile(permFilePath, privateKeyFile);
 		webserver.Certificate = cert;
+
+		Console.WriteLine("Loaded CERT");
 		return null;
 	}
 
@@ -532,7 +542,7 @@ OnStartingWebserver
 	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> pathParameters, GoalToCallInfo goalToCall,
 		RequestProperties? requestProperties = null, ResponseProperties? responseProperties = null)
 	{
-		var webserverInfo = goal.GetVariable<WebserverProperties>();
+		var webserverInfo = context.CallStack.CurrentFrame.GetVariable<WebserverProperties>();
 		if (webserverInfo == null)
 		{
 			return new ProgramError("You can only add route on start of webserver", goalStep,
@@ -616,7 +626,7 @@ AddRoutes
 
 	public async Task<IError?> SetSelfSignedCertificate()
 	{
-		var webserver = goal.GetVariable<WebserverProperties>();
+		var webserver = context.CallStack.CurrentFrame.GetVariable<WebserverProperties>();
 		if (webserver == null)
 		{
 			return new ProgramError("You can only set certificate on start of webserver", goalStep,
@@ -649,7 +659,11 @@ OnStartingWebserver
 				{
 					var executeMessage = new ExecuteMessage("redirect", url);
 					var sink = context.GetSink(executeMessage.Actor);
-					return await sink.SendAsync(executeMessage);
+					error = await sink.SendAsync(executeMessage);
+					if (error != null) return error;
+
+					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
+
 				}
 				else if (!isFlushed && !response.HasStarted)
 				{
@@ -658,6 +672,7 @@ OnStartingWebserver
 					await response.CompleteAsync();
 					hos.IsComplete = true;
 
+					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
 				}
 			}
 		}
@@ -914,7 +929,7 @@ Frontpage
 
 	[Example("send 'file.pdf' to user", "path=file.pdf")]
 	[Example(@"send 'document.docx', name=""custom file.docx""", @"path=document.docx, fileName=""custom file.docx""")]
-	public async Task<IError?> SendFileToUser(string path, string? fileName = null, string actor = "user", string channel = "default")
+	public async Task<IError?> SendFileToUser(string path, string? fileName = null, string? contentType = null, string actor = "user", string channel = "default")
 	{
 		var absolutePath = GetPath(path);
 
@@ -923,7 +938,11 @@ Frontpage
 			return new NotFoundError("File not found");
 		}
 
-		var mimeType = RequestHandler.GetMimeType(path);
+		string? mimeType = contentType;
+		if (string.IsNullOrEmpty(contentType))
+		{
+			mimeType = RequestHandler.GetMimeType(path);
+		}
 		if (mimeType == null) mimeType = "application/octet-stream";
 
 		if (string.IsNullOrEmpty(fileName))
@@ -1181,7 +1200,14 @@ Frontpage
 
 
 
-
+	private void AddToCallStack(IEngine engine, string goalName)
+	{
+		var goal = new Goal() { GoalName = goalName, RelativeGoalFolderPath = "No path" };
+		var step = new GoalStep() { Name = "Step", RelativeGoalPath = goal.RelativeGoalPath, Goal = goal };
+		goal.GoalSteps.Add(step);
+		engine.Context.CallStack.EnterGoal(goal);
+		engine.Context.CallStack.SetCurrentStep(goal.GoalSteps[0], 0);
+	}
 
 }
 

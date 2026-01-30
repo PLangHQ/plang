@@ -86,7 +86,8 @@
       ],
       "type": "PLang.Modules.CallGoalModule.Builder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call the goal 'ProcessAnswer' with a parameter 'continue' set to true. This matches the RunGoal function which allows calling a goal with parameters.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"ProcessAnswer\",\n        \"Parameters\": {\n          \"continue\": true\n        }\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": null\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call the goal 'ProcessAnswer' with a parameter 'continue' set to true. This matches the RunGoal function which allows calling a goal with parameters.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"ProcessAnswer\",\n        \"Parameters\": {\n          \"continue\": true\n        }\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
     }
   ]
 }

@@ -28,7 +28,7 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8f78385171ba0c3a6ad1d8cccd79d7798b6a786898437631b694f3152ab318c8",
+      "Hash": "dd84c4b3f015281fa7973c96d369a30ee39f6e9098a7e13d739f3e0e146f46a2",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
@@ -59,7 +59,7 @@
       "LineNumber": 3,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7bdd24a8f800ce20f060ba346e82f9eb46d76632910646338ebc875582034abf",
+      "Hash": "9fb1c9e81b7619238442cf12a9e51a71c6e2821b03abfdc13b5ddbb152d426bf",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
@@ -90,26 +90,26 @@
       "LineNumber": 4,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a1a9a47d2fa51a79b67ed696200174000a1750a9fe85720846f34f4fbdd6e73d",
+      "Hash": "0c1719114a0af3711809180f1136998a8cd3a2a5395fcc168b7eb2ea806c06ec",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
     },
     {
-      "Text": "rebuild plang step %!error.Step%, write to %step%",
+      "Text": "[plang] rebuild plang step %!error.Step%, write to %step%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.VariableModule",
-      "Name": "rebuild_plang_step",
-      "Description": "Take the plang step stored in the variable %!error.Step%, perform a rebuild or reconstruction operation on it (likely parsing or reformatting), and then write the resulting step into the variable %step% for further use.",
-      "PrFileName": "04. rebuild_plang_step.pr",
-      "RelativePrPath": ".build\\events\\Runtime\\HandleBadInstructionFile\\04. rebuild_plang_step.pr",
+      "ModuleType": "PLang.Modules.PlangModule",
+      "Name": "rebuild_plang_step_from_error_step",
+      "Description": "Take the plang step stored in the variable %!error.Step%, rebuild or reconstruct it as needed, and write the resulting step into the variable %step%. This likely involves parsing or regenerating the step structure.",
+      "PrFileName": "04. rebuild_plang_step_from_error_step.pr",
+      "RelativePrPath": ".build\\events\\Runtime\\HandleBadInstructionFile\\04. rebuild_plang_step_from_error_step.pr",
       "InstructionHash": null,
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-07-13T21:14:02.2068486+00:00",
+      "Generated": "2026-01-16T16:13:33.5750214+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -121,10 +121,10 @@
       "LineNumber": 5,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3c4b0dfbd6b45aeac8f64b7ebf7a6c256f6a5070e60c411a91dcfb678ed3fe2f",
+      "Hash": "fe8ad5a7e71b873070e2537b7f342d5940bb437a696de064827a2c474047643d",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
-      "UserIntent": null
+      "UserIntent": "Rebuild or reconstruct a plang step from an error step variable and store the result in another variable"
     },
     {
       "Text": "retry",
@@ -152,7 +152,7 @@
       "LineNumber": 6,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "871721c633075df72cc9d5f5dcb4af8d34ffee2c9ca22b1fed49d8423f38df79",
+      "Hash": "7a9887ce1e6594ea90f84c58e2eb6b845ecfffb76684d11eb933de1b165a31f5",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
@@ -183,7 +183,7 @@
       "LineNumber": 7,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7a28185a725e408d2f4e78fde182dfaa6863347b719cfe131527b80dd011d8c5",
+      "Hash": "7f6d0826367b700ca8d8c7d73f6f1d23a3edc0a532566e644f9e540c55afe661",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
@@ -214,18 +214,19 @@
       "LineNumber": 8,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5d73c5315d0df54d889b272fa7b2a03aaecb85cef1b493c564df9d44ef5277c3",
+      "Hash": "28b3f88033e7ea3cba3c7075e562d601129a3b0970ed28cb0749827dc571dc8f",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
       "UserIntent": null
     }
   ],
   "SubGoals": [],
-  "Description": "The HandleBadInstructionFile goal is designed to manage errors related to invalid .pr files. It begins by logging an error message with a specific error detail. The system then prompts the user to decide whether to rebuild the invalid file or not. If the user opts to rebuild, the goal attempts to rebuild the specified step and retries the operation. If the user declines to rebuild, the original error is thrown.",
+  "Description": "The HandleBadInstructionFile goal is designed to handle errors related to invalid instruction files in the Plang programming environment. It begins by logging an error message with a specific error code (500) and details about the error. The system then prompts the user to decide whether to rebuild the invalid .pr file associated with the error. If the user chooses to rebuild (by responding with 'y'), the goal attempts to rebuild the specified step and retries the operation. If the user opts not to rebuild (by responding with 'n'), the goal throws the original error, effectively terminating the process.",
   "Visibility": 1,
   "GoalFileName": "HandleBadInstructionFile.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\HandleBadInstructionFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\HandleBadInstructionFile",
@@ -234,12 +235,14 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f6fa577cb5b914bd42c0e202e0215a50fa215a2a5830f672f7628c0c033b5a54",
+  "Hash": "28c98c5ffa9396b0888f6fc4a590667c50da6d2d9fb146843e292b77944240bb",
   "IncomingVariablesRequired": {
-    "error": "An object containing details about the error, including a message and the step that caused the error.",
-    "answer": "A string variable to capture the user's response to the rebuild prompt."
+    "error.Message": "The message associated with the error that occurred.",
+    "error.Step.Text": "The text description of the step that caused the error.",
+    "error": "The complete error object containing details about the error."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

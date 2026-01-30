@@ -22,7 +22,7 @@ namespace PLang.Modules.CallGoalModule
 		[Example("call goal Process %name%", @"GoalToCallInfo.Name=Process, GoalToCallInfo.Parameters={""name"":""%name%""}")]
 		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, 
-			bool isolated = false, bool disableSystemGoals = false, bool isEvent = false)
+			bool isolated = false, bool disableSystemGoals = false)
 		{
 			try
 			{
@@ -30,7 +30,7 @@ namespace PLang.Modules.CallGoalModule
 				int indent = (goalStep == null) ? 0 : goalStep.Indent;
 
 				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, path, goalInfo, goal,
-						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated, disableSystemGoals, isEvent);
+						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated, disableSystemGoals);
 
 				if (result.Error is Return ret)
 				{

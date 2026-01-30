@@ -11,7 +11,7 @@ using static PLang.Utils.StepHelper;
 namespace PLang.Building.Model
 {
 
-	public class GoalStep : VariableContainer
+	public class GoalStep 
 	{
 		public GoalStep()
 		{
@@ -194,7 +194,10 @@ namespace PLang.Building.Model
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
-		public Instruction? Instruction { get; set; }
+		public Instruction? Instruction { 
+			get; 
+			set; 
+		}
 
 		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
@@ -202,14 +205,7 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool IsValid { get; set; } = false;
-		protected override GoalStep? GetStep()
-		{
-			return this;
-		}
-		protected override Goal? GetParent()
-		{
-			return Goal;
-		}
+	
 
 		[IgnoreWhenInstructed]
 		public string UniqueId { get; set; }
@@ -223,7 +219,7 @@ namespace PLang.Building.Model
 		{
 			var result = InstructionCreator.Create(AbsolutePrFilePath, fileSystem);
 			if (result.Error != null || result.Instruction == null) return (null,  result.Error);
-
+			
 			Instruction = result.Instruction!;
 			Instruction.Step = this;
 			result.Instruction!.Function.Instruction = Instruction;
@@ -231,12 +227,6 @@ namespace PLang.Building.Model
 			return (result.Instruction!.Function, null);
 		}
 
-		protected override void SetVariableOnEvent(Variable goalVariable)
-		{
-			if (Goal.IsEvent && Goal.ParentGoal != null)
-			{
-				Goal.ParentGoal.AddVariable(goalVariable);
-			}
-		}
+	
 	}
 }

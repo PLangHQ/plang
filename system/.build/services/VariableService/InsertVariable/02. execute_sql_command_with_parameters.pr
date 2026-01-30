@@ -83,7 +83,8 @@
       ],
       "type": "PLang.Modules.DbModule.Builder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user intends to execute a database command or query using a SQL statement and parameters. The provided function ExecutePlang matches this intent as it takes a SQL string and a list of parameters to execute the command and returns the number of affected rows.\",\n  \"Name\": \"ExecutePlang\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"%sql%\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\n      \"Name\": \"parameters\",\n      \"Value\": \"%sqlParameters%\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"TableNames\": null,\n  \"AffectedColumns\": null,\n  \"Warning\": null\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user intends to execute a database command or query using a SQL statement and parameters. The provided function ExecutePlang matches this intent as it takes a SQL string and a list of parameters to execute the command and returns the number of affected rows.\",\n  \"Name\": \"ExecutePlang\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"%sql%\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Runtime.ObjectValue]\",\n      \"Name\": \"parameters\",\n      \"Value\": \"%sqlParameters%\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"TableNames\": null,\n  \"AffectedColumns\": null,\n  \"Warning\": null\n}",
+      "Tools": null
     }
   ]
 }

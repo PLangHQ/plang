@@ -43,7 +43,7 @@ namespace PLang.Runtime.Tests
 			prParser.ForceLoadAllGoals();
 
 
-			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser, logger);
 
 		}
 
@@ -86,7 +86,7 @@ namespace PLang.Runtime.Tests
 			var parameters = new Dictionary<string, object?>();
 			parameters.AddOrReplace("Name", "Jim");
 
-			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser, logger);
 
 			await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 
@@ -170,7 +170,7 @@ namespace PLang.Runtime.Tests
 		{"Age", 30}
 	};
 
-			pseudoRuntime = new PseudoRuntime(fileSystem, prParser);
+			pseudoRuntime = new PseudoRuntime(fileSystem, prParser, logger);
 
 			await pseudoRuntime.RunGoal(engine, contextAccessor, @"\", "apps/GoalWith2Steps/GoalWith2Steps");
 

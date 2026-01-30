@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using IdGen;
+using Markdig.Extensions.Tables;
 using Markdig.Extensions.TaskLists;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -33,6 +34,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
@@ -65,7 +67,7 @@ namespace PLang.Modules.DbModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
 		private readonly ILlmServiceFactory llmServiceFactory;
-		private readonly IEventSourceRepository eventSourceRepository;
+		private readonly IEventSourceFactory eventSourceFactory;
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 
@@ -75,13 +77,13 @@ namespace PLang.Modules.DbModule
 		public record ColumnInfo(string Name, string Type, bool IsPrimaryKey, bool IsNotNull, object DefaultValue);
 
 		public Program(IDbServiceFactory dbFactory, PLangAppContext appContext, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
-			IEventSourceRepository eventSourceRepository, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
+			IEventSourceFactory eventSourceFactory, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
 		{
 			this.dbFactory = dbFactory;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.llmServiceFactory = llmServiceFactory;
-			this.eventSourceRepository = eventSourceRepository;
+			this.eventSourceFactory = eventSourceFactory;
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.appContext = appContext;
@@ -332,6 +334,31 @@ namespace PLang.Modules.DbModule
 			return null;
 
 		}
+
+		public async Task<IError?> ResetSetup(List<string> dataSourceNames)
+		{
+			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			foreach (var dataSourceName in dataSourceNames)
+			{
+				(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
+				if (error != null) return error;
+
+				var goals = prParser.GetAllGoals().Where(p => p.IsSetup && p.DataSourceName != null && p.DataSourceName.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
+				if (!goals.Any()) return new ProgramError($"No steps found for datasource {dataSourceName}");
+
+				foreach (var goal in goals)
+				{
+					foreach (var step in goal.GoalSteps)
+					{
+						setupOnceDictionary.Remove(step.RelativePrPath);
+					}
+				}
+
+				settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", setupOnceDictionary);
+
+			}
+			return null;
+		}
 		public async Task<IError?> LoadExtension([HandlesVariable] string dataSourceName, string fileName, string? procName = null)
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
@@ -556,11 +583,12 @@ namespace PLang.Modules.DbModule
 			return await ExecuteDynamicSql(dataSource, sql, tableAllowList, parameters);
 		}
 
-		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql")]
+		[Description("Query the database with a sql file pointed to by path, e.g. query sql/file.sql. It can use multiple datasource and parameterer")]
+		[Example(@"query usersCount.sql, parameters: date=%now%, ds:""data"", ""sales"", table: ""users"", write to %result%", @"fileName=""usersCount.sql"", parameter=[{""date"":""%now%""}], dataSourceNames=[""data"", ""sales""], tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query usersCount.sql, table: ""users"", write to %result%", @"fileName=""usersCount.sql"", tableAllowList=[""users""], ReturnValues=""%result%""")]
 		[Example(@"query sql/totalProducts.sql, table: ""products"", write to %productCount%", @"fileName=""totalProducts.sql"", tableAllowList=[""products""], ReturnValues=""%productCount%""")]
 		public async Task<(object?, IError?, Properties?)> QuerySqlFile([HandlesVariable] List<string> dataSourceNames, string fileName, List<string> tableAllowList, List<ParameterInfo>? parameters = null, int? rowsToReturn = null)
-		{
+		{ 
 			(var dataSource, var error) = await GetDataSourcesByNames(dataSourceNames);
 			if (error != null) return (0, error, null);
 
@@ -676,15 +704,9 @@ namespace PLang.Modules.DbModule
 					return (0, prepare.error);
 				}
 
-				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
-				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
-				}
-				else
-				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
-				}
-
+				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
+				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				
 				Done(prepare.connection, prepare.transaction);
 
 
@@ -789,7 +811,7 @@ namespace PLang.Modules.DbModule
 			return await Select(dataSource, sql, sqlParameters);
 		}
 
-		[Description("Doing SELECT/WITH on one datasource")]
+		[Description("Any step starting with SELECT/WITH using one datasource.")]
 		[Example("select * from orders where id=%id%, ds: users/%user.id%, write to %orders%", @"sql=""select * from orders where id=@id"", sqlParameters=[""id"", ""%id""], dataSourceName=""users/%user.id%"", ReturnValues=[""%orders%""]")]
 		public async Task<(Table? Table, IError? Error, Properties? Properties)> Select([HandlesVariable] string dataSourceName, string sql, List<ParameterInfo>? sqlParameters = null)
 		{
@@ -888,14 +910,20 @@ namespace PLang.Modules.DbModule
 				{
 
 				}
+
+				Stopwatch stopwatch = Stopwatch.StartNew();
+
 				using var reader = await cmd.ExecuteReaderAsync();
 
+				properties.Add(new ObjectValue("QueryTime", stopwatch.Elapsed));
+				stopwatch.Restart();
 
 				var cols = Enumerable.Range(0, reader.FieldCount)
 					.Select(reader.GetName)
 					.ToList();
 
 				var table = new Table(cols);
+
 				while (await reader.ReadAsync())
 				{
 					var row = new Row(table);
@@ -915,18 +943,10 @@ namespace PLang.Modules.DbModule
 					table.Add(row);
 				}
 				await reader.CloseAsync();
-
+				properties.Add(new ObjectValue("MappingTime", stopwatch.Elapsed));
 				properties.Add(new ObjectValue("Columns", cols));
 				properties.Add(new ObjectValue("RowCount", table.Count));
-				if (sql.StartsWith("select o.id as orderId, o.type as orderType"))
-				{
-					Console.WriteLine($"---- FACT SALE: Table count: {table.Count} | commandText: {cmd.CommandText}");
-					if (dataSource.AttachedDbs.Count > 0)
-					{
-						Console.WriteLine($"---- FACT SALE: attached: {string.Join(",", dataSource.AttachedDbs.Select(p => p.Alias))}");
-					}
-				}
-				//var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
+				
 				logger.LogDebug($"Rows: {table.Count}");
 				
 				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
@@ -939,7 +959,19 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (null, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex), properties);
+				var sqlError = new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex);
+				if (prep.transaction == null && dataSource.AttachedDbs.Count > 0)
+				{
+					var error = await DetachDb(dataSource, prep.connection);
+					if (error != null)
+					{
+						sqlError.ErrorChain.Add(error);
+					}
+				}
+
+				return (null, sqlError, properties);
+
+
 			}
 			finally
 			{
@@ -1116,15 +1148,10 @@ Clearly define which columns are allowed to be updated.
 				}
 
 				long result;
-				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
-				{
-					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
-				}
-				else
-				{
-					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
-				}
 
+				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
+				result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				
 				if (validateAffectedRows && result == 0)
 				{
 					return (result, new ProgramError("0 Rows affected. This was not expected.", goalStep, FixSuggestion: $@"If this is expected, include that you dont want to validate affected rows in your step.
@@ -1162,15 +1189,9 @@ For example:
 					return (0, prepare.error);
 				}
 
-
-				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
-				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
-				}
-				else
-				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
-				}
+				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
+				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
+				
 
 				if (validateAffectedRows && rowsAffected == 0)
 				{
@@ -1207,7 +1228,7 @@ For example:
 		{
 			(var dataSource, var error) = await dbSettings.GetDataSource(dataSourceName, goalStep);
 			if (error != null) return (0, error);
-
+			
 			return await Insert(dataSource, sql, sqlParameters, validateAffectedRows);
 		}
 
@@ -1221,14 +1242,8 @@ For example:
 			}
 			try
 			{
-				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
-				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
-				}
-				else
-				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
-				}
+				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
+				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 
 				if (validateAffectedRows && rowsAffected == 0)
 				{
@@ -1287,7 +1302,9 @@ For example:
 					return (0, prepare.error);
 				}
 
-				if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+				var eventSourceRepository = eventSourceFactory.CreateHandler(dataSource);
+				
+				if (!dataSource.KeepHistory)
 				{
 					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param, prepare.transaction) as IDictionary<string, object>;
 					Done(prepare.connection, prepare.transaction);
@@ -1513,7 +1530,8 @@ For example:
 				: declared.IndexOf("REAL", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				  declared.IndexOf("FLOA", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				  declared.IndexOf("DOUB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(double) :
-				  declared.IndexOf("BIT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(bool)
+				  declared.IndexOf("BIT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(bool) :
+				  declared.IndexOf("", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(string)
 				: throw new Exception($"Could not map {declared} to sqlite type");
 
 		private string? ConvertFromColumnTypeToCSharpTypeFullName(string type)
@@ -1623,13 +1641,13 @@ For example:
 					sql = sql.Replace(oldParameterName, parameterName);
 				}
 
-				if (p.VariableNameOrValue?.ToString() == "auto" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+				if (p.VariableNameOrValue?.ToString() == "auto" && eventSourceFactory.GetType() == typeof(DisableEventSourceRepository))
 				{
 					throw new Exception($"Auto incremental cannot be handled by plang when Event sourcing is disabled | DataSource:{JsonConvert.SerializeObject(dataSource)}");
 					return (param, new Error("Auto incremental cannot be handled by plang when Event sourcing is disabled"));
 				}
 
-				if (isInsert && parameterName == "id" && (p.VariableNameOrValue?.ToString() == "auto" || eventSourceRepository.GetType() != typeof(DisableEventSourceRepository)))
+				if (isInsert && parameterName == "id" && (p.VariableNameOrValue?.ToString() == "auto" || eventSourceFactory.GetType() != typeof(DisableEventSourceRepository)))
 				{
 					var id = p.VariableNameOrValue.ToString();
 					if (id == "auto" || string.IsNullOrEmpty(id))
@@ -1675,7 +1693,7 @@ For example:
 					(object? value, IError? error) = ConvertObjectToType(variableName, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null)
 					{
-						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+						if (parameterName == "id" && eventSourceFactory.GetType() == typeof(DisableEventSourceRepository))
 						{
 							multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
 						}

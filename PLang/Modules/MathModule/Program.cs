@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Protocol;
 using NCalc;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Utilities;
 using PLang.Attributes;
@@ -127,7 +128,7 @@ namespace PLang.Modules.MathModule
 			}
 			catch (Exception e)
 			{
-				return (null, new ProgramError(e.Message, goalStep, function, FixSuggestion: $"The expression value is: {expression}", Exception: e));
+				return (null, new ProgramError(e.Message, goalStep, function, FixSuggestion: $"The expression value is: {JsonConvert.SerializeObject(expression)}", Exception: e));
 			}
 		}
 	}

@@ -76,7 +76,7 @@ namespace PLangTests.Modules.FileModule
 			fileSystem.AddFile(path1, new System.IO.Abstractions.TestingHelpers.MockFileData(text1));
 			fileSystem.AddFile(path2, new System.IO.Abstractions.TestingHelpers.MockFileData(text2));
 
-			var files = await p.ReadMultipleTextFiles(fileSystem.RootDirectory, "*.txt");
+			var (files, error) = await p.ReadMultipleTextFiles(fileSystem.RootDirectory, "*.txt");
 
 			Assert.AreEqual(text1, files[0].Content);
 			Assert.AreEqual(text2, files[1].Content);

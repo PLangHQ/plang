@@ -6,6 +6,7 @@ using PLang.Interfaces;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.DbService;
+using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Sinks;

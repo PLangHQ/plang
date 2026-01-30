@@ -21,6 +21,7 @@ using Scriban.Syntax;
 using Sprache;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Dynamic;
 using System.IO.Compression;
 using System.Threading;
@@ -69,7 +70,7 @@ namespace PLang.Modules.UiModule
 			}
 
 			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
-			goal.AddVariable(framework);
+			context.AddVariable(framework);
 		}
 
 		[Description("Name=default when not defined by user. DO NOT use TemplateFile as name. Device=web|desktop|mobile|tablet|console|tv|watch|other")]
@@ -128,6 +129,7 @@ namespace PLang.Modules.UiModule
 User can define a custom action.
 Attribute: Member is the key in the SetAttribute js method, make sure to convert to valid js name, e.g. Member class must be className
 ")]
+
 		public record UiInstruction(string Selector, string Member, object? Value, UiFacet Kind = UiFacet.Property);
 		public async Task<IError?> SetElement(List<UiInstruction> uiInstructions, string actor = "user", string channel = "default")
 		{
@@ -166,6 +168,13 @@ Attribute: Member is the key in the SetAttribute js method, make sure to convert
 		{
 			var sink = context.GetSink(textMessage.Actor);
 			return await sink.SendAsync(textMessage);
+		}
+
+		[Description(@"Navigate the user to location. Set function=""navigate"", data=""%url%""")]
+		public async Task<IError?> Navigate(ExecuteMessage executeMessage)
+		{
+			var sink = context.GetSink(executeMessage.Actor);
+			return await sink.SendAsync(executeMessage);
 		}
 
 		[Description(@"Set ExecuteMessage.Actions=""show""")]
@@ -246,6 +255,10 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+
+
+			logger.LogDebug($"           - Start RenderTemplate - {stopwatch.ElapsedMilliseconds}");
 			string html;
 			if (options.IsTemplateFile == true || (options.IsTemplateFile == null && options.GuessIfTemplateFile))
 			{
@@ -265,7 +278,7 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 			}
 			var url = (HttpContext?.Request.Path.Value ?? "/");
 			Dictionary<string, object?> Parameters = new();
-
+			logger.LogDebug($"           - Have html - {stopwatch.ElapsedMilliseconds}");
 			if (!Parameters.ContainsKey("url"))
 			{
 				Parameters.Add("url", url);
@@ -279,7 +292,7 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
 			(var content, var error) = await templateEngine.RenderContent(html, variables: Parameters);
 			if (error != null) return (content, error);
-
+			logger.LogDebug($"           - Have rendered html - {stopwatch.ElapsedMilliseconds}");
 			var sink = context.GetSink(options.RenderMessage.Actor);
 			if (sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
 			{
@@ -291,7 +304,7 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 					parameters.Add(layoutOptions.DefaultRenderVariable, content);
 
 					(content, error) = await templateEngine.RenderFile(layoutOptions.TemplateFile, parameters, options.RenderToOutputstream);
-
+					logger.LogDebug($"           - Did render layoutOptions and returning - {stopwatch.ElapsedMilliseconds}");
 					if (error != null) return (content, error);
 
 					return (content, null);
@@ -302,7 +315,7 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 			options = options with {  RenderMessage = rm };	
 
 			Parameters.Add("reRender", options.ReRender);
-			
+			logger.LogDebug($"           - Sending to sink - {stopwatch.ElapsedMilliseconds}");
 			if (options.RenderToOutputstream || function.ReturnValues == null || function.ReturnValues?.Count == 0)
 			{				
 				error = await sink.SendAsync(options.RenderMessage);

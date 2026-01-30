@@ -47,7 +47,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-10-07T15:54:17.5696431+00:00",
+      "Generated": "2026-01-17T13:56:04.6486568+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -59,7 +59,7 @@
       "LineNumber": 3,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9ebfd1a18ea125b2d0727e7af1cdf32f92d3915f12fd5ef63a7481ac6e90a720",
+      "Hash": "5bdb9f93788990197141ca1c762e1f685d6b70ed3da9c4e09831d8e329f2b559",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\CreateTemplateFile.goal",
       "UserIntent": null
@@ -75,6 +75,7 @@
   "GoalFileName": "CreateTemplateFile.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\modules\\UiModule\\CreateTemplateFile.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\modules\\UiModule",
   "RelativePrPath": ".build\\modules\\UiModule\\CreateTemplateFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\CreateTemplateFile",
@@ -83,11 +84,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d0b80e47d879ddb6bbd0e355689532f9ae29d8642133f58ba5e71cbef501caa3",
+  "Hash": "470488350c2b52ecf470a8c58b1ed5912600547f96138e876f54cb4f53a38349",
   "IncomingVariablesRequired": {
     "fileName": "The name of the file for which the template is being created."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

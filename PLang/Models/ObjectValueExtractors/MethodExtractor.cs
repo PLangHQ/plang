@@ -68,19 +68,21 @@ namespace PLang.Models.ObjectValueExtractors
 					if (convertedParams == null) continue;
 					if (list != null)
 					{
-						for (int i=0;i<list.Count;i++)
+						for (int i = 0; i < list.Count; i++)
 						{
 							if (list[i] is JValue && obj is string str)
 							{
 								object? result = Invoke(method, list[i]?.ToString(), convertedParams);
 								list[i] = new JValue(result);
-							} else
+							}
+							else
 							{
 								list[i] = Invoke(method, list[i], convertedParams);
 							}
 						}
 						return new ObjectValue(segment.Value, list, parent: parent, properties: parent.Properties);
-					} else
+					}
+					else
 					{
 						var result = Invoke(method, obj, convertedParams);
 						return new ObjectValue(segment.Value, result, parent: parent, properties: parent.Properties);
@@ -100,9 +102,9 @@ namespace PLang.Models.ObjectValueExtractors
 			{
 				return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
 			}
-			
+
 			throw new NotImplementedException($"Could not find method '{methodDescription}' on %{parent.Name}.{methodDescription}%");
-			
+
 		}
 
 		private static List<string> SplitParameters(string parameters)
@@ -167,8 +169,17 @@ namespace PLang.Models.ObjectValueExtractors
 				if (methods.Any()) return (methods, obj);
 			}
 
+			if (obj is string str && DateTime.TryParse(str, out DateTime dateTime))
+			{
+				(var methods, obj) = GetMethodsOnType(dateTime, methodName, paramValues);
+				if (methods.Any()) return (methods, obj);
+
+			}
+
 			throw new Exception($"No sure what to do with {obj.GetType()} on for method: {methodName}");
 		}
+
+
 
 		private object? Invoke(MethodInfo method, object? obj, object[] parameters)
 		{
@@ -178,7 +189,8 @@ namespace PLang.Models.ObjectValueExtractors
 			if (method.IsStatic)
 			{
 				result = method.Invoke(null, parameters);
-			} else
+			}
+			else
 			{
 				result = method.Invoke(obj, parameters);
 			}
@@ -226,7 +238,7 @@ namespace PLang.Models.ObjectValueExtractors
 
 			if (obj is JValue)
 			{
-				obj = obj.ToString() ?? string.Empty; 
+				obj = obj.ToString() ?? string.Empty;
 				return GetMethodsOnType(obj, methodName, paramValues);
 			}
 			return (new List<MethodInfo>(), obj);
@@ -303,15 +315,15 @@ namespace PLang.Models.ObjectValueExtractors
 								return null;
 							}
 
-							
-							
+
+
 							convertedParams[i] = TypeHelper.ConvertToType(strValue, paramType);
-							
+
 						}
 						else if (memoryStack != null)
 						{
 							object? value = (VariableHelper.IsVariable(paramValues[i])) ? memoryStack.Get(paramValues[i].ToString()) : paramValues[i];
-							
+
 							if (value != null)
 							{
 								convertedParams[i] = TypeHelper.ConvertToType(value, paramType);

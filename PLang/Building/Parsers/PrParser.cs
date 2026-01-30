@@ -366,14 +366,22 @@ namespace PLang.Building.Parsers
 			var goals = GetAllGoals();
 			if (!string.IsNullOrEmpty(goalToCall.Path))
 			{
-				var goal = goals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
+				string path = goalToCall.Path.AdjustPathToOs();
+				var goal = goals.FirstOrDefault(p => p.RelativePrPath.Equals(path));
 				if (goal == null)
 				{
 					var systemGoals = GetSystemGoals();
-					goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path));
+					goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(path));
 					if (goal == null)
 					{
-						return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {goalToCall.Path}", "GoalNotFound"));
+						string somePath = "";
+						goal = goals.FirstOrDefault(p => p.GoalName == "MockAurPurchase");
+						if (goal != null)
+						{
+							somePath = goal.RelativePrPath;
+						}
+
+						return (null, new NotFoundError($"Goal {goalToCall.Name} could not be found. Search at {path} => {somePath}", "GoalNotFound"));
 					}
 				}
 				return (goal, null);
@@ -601,37 +609,6 @@ namespace PLang.Building.Parsers
 			return eventFiles;
 
 		}
-
-		internal void ClearVariables()
-		{
-			for (int i = 0; i < goals.Count; i++)
-			{
-				for (int b = 0; b < goals[i].Variables.Count; b++)
-				{
-					if (goals[i].Variables[b].DisposeFunc != null)
-					{
-						goals[i].Variables[b]?.DisposeFunc()?.Wait();
-					}
-					
-				}
-				
-				goals[i].Variables.Clear();
-				goals[i].Variables = new();
-				for (int b = 0; b < goals[i].GoalSteps.Count; b++)
-				{
-					for (int c = 0; c < goals[i].GoalSteps[b].Variables.Count; c++)
-					{
-						if (goals[i].GoalSteps[b].Variables[c]?.DisposeFunc != null)
-						{
-							goals[i].GoalSteps[b].Variables[c]?.DisposeFunc()?.Wait();
-						}
-					}
-
-					goals[i].GoalSteps[b].Variables.Clear();
-					goals[i].GoalSteps[b].Variables = new();
-				}
-			}
-
-		}
+		
 	}
 }

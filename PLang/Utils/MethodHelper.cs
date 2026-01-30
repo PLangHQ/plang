@@ -349,7 +349,7 @@ public class MethodHelper
 
 		foreach (var parameter in parameters)
 		{
-			logger.LogDebug($"         - Loading parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"         - Loading parameter in GetParameterValues {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
 			if (parameter.Name == null) continue;
 
 			var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
@@ -424,14 +424,14 @@ public class MethodHelper
 				{
 					SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 				}
-				logger.LogDebug($"         - Have parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"         - Have parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
 
 			}
 			catch (PropertyNotFoundException) { throw; }
+			catch (ArgumentException) { throw; }
+			catch (AskUserError) { throw; }
 			catch (Exception ex)
 			{
-				if (ex is AskUserError) throw;
-
 				if (ex is InvalidOperationException)
 				{
 					return (parameterValues, new Error(ex.Message, StatusCode: 500, Exception: ex));
@@ -441,7 +441,7 @@ public class MethodHelper
 			}
 
 		}
-		logger.LogDebug($"         - returning parameterVAlues - {stopwatch.ElapsedMilliseconds}");
+		logger.LogTrace($"         - returning parameterVAlues - {stopwatch.ElapsedMilliseconds}");
 		return (parameterValues, null);
 	}
 

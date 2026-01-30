@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-07-13T21:28:22.1933444+00:00",
+      "Generated": "2026-01-17T13:56:00.9627134+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,7 +28,7 @@
       "LineNumber": 19,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d38ddfbc315f9f95ce77a801393a919c3ace57c655379ba3c07359b448074f16",
+      "Hash": "0b270634a0278d7c7a070a34cb33b56656110c41659ed1594054cea1f69bd1d5",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\Builder\\SetFrameworks.goal",
       "UserIntent": null
@@ -40,6 +40,7 @@
   "GoalFileName": "SetFrameworks.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\modules\\UiModule\\Builder\\SetFrameworks.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\modules\\UiModule\\Builder",
   "RelativePrPath": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\AppendToTypes\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\Builder\\SetFrameworks\\AppendToTypes",
@@ -48,12 +49,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "45f92c40c0c96ec7820b4a0f361086696fdf1f53b209f47630b4631b5a84e399",
+  "Hash": "8cfef919e266f207a734ace0cd26374f40c6e71ccb144befeed7a3d78d82ca76",
   "IncomingVariablesRequired": {
     "%Type%": "The type to be appended to the framework.Types list.",
     "%item.Path%": "The path associated with the type being appended."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

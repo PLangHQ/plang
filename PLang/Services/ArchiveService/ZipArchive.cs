@@ -1,4 +1,6 @@
-﻿using PLang.Exceptions;
+﻿using PLang.Errors;
+using PLang.Errors.Runtime;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using System.IO.Compression;
 
@@ -13,21 +15,26 @@ namespace PLang.Services.ArchiveService
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0, bool includeBaseDirectory = true, bool overwrite = false)
+		public async Task<IError?> CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0, bool includeBaseDirectory = true, bool overwrite = false)
 		{
-			OverwriteCheck(destinationArchiveFileName, overwrite);
+			var error = OverwriteCheck(destinationArchiveFileName, overwrite);
+			if (error != null) return error;
 
 			ZipFile.CreateFromDirectory(sourceDirectoryName, destinationArchiveFileName, (CompressionLevel)compressionLevel, includeBaseDirectory);
+			return null;
 		}
 
-		public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
+		public async Task<IError?> CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
 		{
-			await CompressFiles(new string[] { filePath }, saveToPath, compressionLevel);
+			return await CompressFiles(new string[] { filePath }, saveToPath, compressionLevel);
 		}
 
-		public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0, bool overwrite = false)
+		public async Task<IError?> CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0, bool overwrite = false)
 		{
-			OverwriteCheck(saveToPath, overwrite);
+			if (filePaths.Length == 0) return new ProgramError("No files to complress");
+
+			var error = OverwriteCheck(saveToPath, overwrite);
+			if (error != null) return error;
 
 			var commonPath = FindCommonBaseDirectory(filePaths.ToList());
 			using (var zipFileStream = new FileStream(saveToPath, FileMode.Create))
@@ -43,9 +50,10 @@ namespace PLang.Services.ArchiveService
 				}
 
 			}
+			return null;
 		}
 
-		private void OverwriteCheck(string saveToPath, bool overwrite)
+		private IError? OverwriteCheck(string saveToPath, bool overwrite)
 		{
 			if (fileSystem.File.Exists(saveToPath))
 			{
@@ -55,9 +63,10 @@ namespace PLang.Services.ArchiveService
 				}
 				else
 				{
-					throw new RuntimeException($"Destination file already exists");
+					return new ServiceError($"Destination file already exists", GetType());
 				}
 			}
+			return null;
 		}
 
 		private string FindCommonBaseDirectory(List<string> filePaths)

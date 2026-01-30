@@ -88,7 +88,7 @@ namespace PLang.Modules
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
-			logger.LogDebug($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
 
 			
 			this.appContext = container.GetInstance<PLangAppContext>();			
@@ -105,14 +105,14 @@ namespace PLang.Modules
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
 
-			logger.LogDebug($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
 			
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			this.methodHelper = container.GetInstance<MethodHelper>();
 
 			this.fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			logger.LogDebug($"        - Done init - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"        - Done init - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -156,14 +156,14 @@ namespace PLang.Modules
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				logger.LogDebug($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogDebug($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -172,14 +172,13 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
-				logger.LogDebug($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
-				//slogger.LogTrace("         - Parameters:{0}", JsonConvert.SerializeObject(parameterValues, Formatting.None));
-
+				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
@@ -232,7 +231,7 @@ namespace PLang.Modules
 					}
 				}
 
-				logger.LogDebug($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
 
 				if (task.Status == TaskStatus.Canceled)
 				{
@@ -325,6 +324,12 @@ namespace PLang.Modules
 						{
 							isMatch = true;
 						}
+						else if (parameter.Value?.ToString() != null &&
+								parameter.Value.ToString()?.StartsWith("*") == true &&
+								parameterValues[parameter.Key]?.ToString()?.EndsWith(parameter.Value.ToString().TrimStart('*').TrimStart('.')) == true)
+						{
+							isMatch = true;
+						}
 						else
 						{
 							isMatch = false;
@@ -406,8 +411,12 @@ namespace PLang.Modules
 		{
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var engine = container.GetInstance<IEngine>();
-
-			(var answer, var error) = await AskUser.GetAnswer(engine, context, fa.Message);
+			string message = fa.Message;
+			if (context.DebugMode)
+			{
+				message = $"[Debug: {goalStep.Text.Replace("%", "\\%")} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}]\n\n" + message;
+			}
+			(var answer, var error) = await AskUser.GetAnswer(engine, context, message);
 			if (error != null) return (null, error);
 
 			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
@@ -729,7 +738,7 @@ namespace PLang.Modules
 
 					foreach (var returnValue in function.ReturnValues)
 					{
-						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+						logger.LogTrace($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 						memoryStack.Put(returnValue.VariableName, data, goalStep: goalStep);
 					}
 					return true;
@@ -742,7 +751,7 @@ namespace PLang.Modules
 					{
 						foreach (var returnValue in function.ReturnValues)
 						{
-							logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+							logger.LogTrace($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 							memoryStack.Put(returnValue.VariableName, obj, goalStep: goalStep);
 						}
 						return true;

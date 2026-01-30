@@ -78,7 +78,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-12-06T21:48:43.5379259+00:00",
+      "Generated": "2026-01-17T13:55:52.6914833+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -90,7 +90,7 @@
       "LineNumber": 65,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "343dacc7e04567548edbebcac580059ab55f6d92b2fccbbf8cfeee398e5a2311",
+      "Hash": "48d8626e6e83f467e429eb9ac3edea3abb22d363570b8f86644fa304a6f988f8",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
       "UserIntent": null
@@ -102,6 +102,7 @@
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\FixStep\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build\\FixStep",
@@ -110,12 +111,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4dbed207b65abe2c192425e6196398322f07f7d0d6f304fe372ce1c8b9713e18",
+  "Hash": "e205d5c817db52be13136ba22f8862035cd25326d175c1a0ab8f1cc3da03549a",
   "IncomingVariablesRequired": {
     "%step.Text%": "The text input from the user that will be processed by the method.",
     "%methodScheme%": "The scheme that defines the structure of the method to be used in processing the user input."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

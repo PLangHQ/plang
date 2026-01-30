@@ -76,7 +76,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-07T00:09:25.3747472+00:00",
       "WaitForExecution": true,
@@ -90,10 +90,10 @@
       "LineNumber": 29,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "28f5e76a015e47cae90728241ada922fdc03b9ac9c4321a233eb2c1c811ca4fb",
+      "Hash": "4c0dfd4b3799d73ab750f2774b1429646d7698ff78e02cfbdd3e2f370a02d8c9",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Read the content of a file named 'llm/stepSchemeInfo.llm' and store its content into the variable %stepScheme%"
+      "UserIntent": null
     },
     {
       "Text": "read llm/stepSystem.llm, load vars, write to %system%",
@@ -158,20 +158,20 @@
       "UserIntent": null
     },
     {
-      "Text": "[plang] validate and load %prMethod.method%\n    on error FixStep retry 3 times",
+      "Text": "[plang] validate and load %step%, %prMethod.method%,\n    on error FixStep retry 3 times",
       "Comment": null,
       "ModuleType": "PLang.Modules.PlangModule",
-      "Name": "validate_and_load_prmethod_method_with_retry",
-      "Description": "Perform validation on the variable %prMethod.method% to ensure it meets required conditions and load its value for further use. If an error occurs during validation or loading, execute the FixStep and retry this validation up to three times before failing.",
-      "PrFileName": "06. validate_and_load_prmethod_method_with_retry.pr",
-      "RelativePrPath": ".build\\Build\\AnalyzeStep\\06. validate_and_load_prmethod_method_with_retry.pr",
+      "Name": "validate_and_load_with_retry",
+      "Description": "Perform validation and loading of the variables %step% and %prMethod.method%. If an error occurs during this process, execute the FixStep error handler and retry the validation and loading up to three times before failing.",
+      "PrFileName": "06. validate_and_load_with_retry.pr",
+      "RelativePrPath": ".build\\Build\\AnalyzeStep\\06. validate_and_load_with_retry.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "High",
       "Inconsistency": null,
-      "Generated": "2025-12-07T00:06:26.3758163+00:00",
+      "Generated": "2026-01-16T16:13:20.6137873+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": [
@@ -200,10 +200,10 @@
       "LineNumber": 35,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "448d93e3bf710b136b55e2fcba5fade73ffe1114c4759fd9849f3d5bfb69db2f",
+      "Hash": "e0b451d28ff97769271d0c9e96d0ef0b0686248be9999a942f820a140cfa2dcf",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": null
+      "UserIntent": "The user wants to validate and load the variables %step% and %prMethod.method%, and if an error occurs, they want to execute a FixStep procedure and retry the operation up to three times."
     },
     {
       "Text": "[plang] save %prMethod% to %prMethod.PrPath%",
@@ -238,11 +238,12 @@
     }
   ],
   "SubGoals": [],
-  "Description": "The AnalyzeStep goal is designed to analyze a specific step by performing a series of operations. It begins by outputting a message that indicates which step is being analyzed. It retrieves all methods from the specified modules associated with the step, reads necessary information from predefined files, and loads variables into the system. The goal then processes the user input and method scheme, validating the method and handling any errors that may arise during this process. Finally, it saves the processed method to a specified path.",
+  "Description": "The AnalyzeStep goal is designed to analyze a specific step by extracting relevant information from its associated modules and validating the method. It begins by outputting a message indicating the step being analyzed. It retrieves all methods from the specified modules, reads necessary scheme information, and loads system variables. The goal then processes the user input and method scheme, validating the step and method, with a retry mechanism in case of errors. Finally, it saves the processed method to a specified path.",
   "Visibility": 0,
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\AnalyzeStep\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build\\AnalyzeStep",
@@ -251,14 +252,15 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "074739309f9c64f3c3b63865e647035e6ff3d8ea146795dccea191eed5f7175e",
+  "Hash": "e86421990c8ddcc7983d8eb33e19478de6c5fdc92937d024cc5555c34cb60425",
   "IncomingVariablesRequired": {
     "%step.Text%": "The text description of the step being analyzed.",
-    "%step.module%": "The primary module from which methods are to be retrieved.",
-    "%step.second_module%": "An additional module from which methods are to be retrieved.",
-    "%methodScheme%": "The scheme that defines the structure of the methods being processed."
+    "%step.module%": "The primary module from which methods will be retrieved.",
+    "%step.second_module%": "An additional module from which methods will be retrieved.",
+    "%methodScheme%": "The scheme that defines the structure of the method being processed."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

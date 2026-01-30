@@ -15,6 +15,7 @@ using Scriban.Runtime;
 using Scriban.Syntax;
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Net.Sockets;
 using System.Text;
@@ -68,6 +69,7 @@ namespace PLang.Modules.TemplateEngineModule
 		[Description("Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into")]
 		public async Task<(string?, IError?)> RenderFile(string path, Dictionary<string, object?>? variables = null, bool writeToOutputStream = false)
 		{
+			
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
 			{
@@ -97,12 +99,14 @@ namespace PLang.Modules.TemplateEngineModule
 
 		public async Task<(string? Result, IError? Error)> RenderContent(string content, string? fullPath = null, Dictionary<string, object?>? variables = null)
 		{
-
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"             - Start RenderContent - {stopwatch.ElapsedMilliseconds}");
 			var templateContext = new TemplateContext();
 			templateContext.EnableNullIndexer = true;
 			templateContext.EnableRelaxedMemberAccess = true;
 			templateContext.MemberRenamer = member => member.Name;
 
+			logger.LogDebug($"             - Add variables: variables - {stopwatch.ElapsedMilliseconds}");
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
@@ -110,31 +114,37 @@ namespace PLang.Modules.TemplateEngineModule
 					AddVariable(kvp.Key, kvp.Value, templateContext);
 				}
 			}
-
+			logger.LogDebug($"             - Add variables: memoryStack - {stopwatch.ElapsedMilliseconds}");
 			if (memoryStack != null)
 			{
-				foreach (var kvp in memoryStack.GetMemoryStack())
+				var ms = memoryStack.GetMemoryStack();
+
+				logger.LogDebug($"             - Have ms {ms.Count()}: memoryStack - {stopwatch.ElapsedMilliseconds}");
+
+				logger.LogDebug($"             - Printed: memoryStack - {stopwatch.ElapsedMilliseconds}");
+				foreach (var kvp in ms)
 				{
+					if (kvp.Name.StartsWith("!")) continue;
+
+					logger.LogDebug($"               - Adding {kvp.Name} - {stopwatch.ElapsedMilliseconds}");
 					AddVariable(kvp.Name, kvp.Value, templateContext);
-				}
-			}
-			if (goalStep != null)
-			{
-				var vars = goalStep.GetVariables();
-				foreach (var variable in vars)
-				{
-					AddVariable(variable.VariableName, variable.Value, templateContext);
-				}
-			}
-			if (goal != null)
-			{
-				var vars = goal.GetVariables();
-				foreach (var variable in vars)
-				{
-					AddVariable(variable.VariableName, variable.Value, templateContext);
+					logger.LogDebug($"               - done Adding {kvp.Name} - {stopwatch.ElapsedMilliseconds}");
 				}
 			}
 
+			logger.LogDebug($"             - Add variables: currentFrame - {stopwatch.ElapsedMilliseconds}");
+			var vars = context.CallStack.CurrentFrame.GetVariables();
+			logger.LogDebug($"             - Have vars {vars.Count()}: currentFrame - {stopwatch.ElapsedMilliseconds}");
+			if (goalStep != null)
+			{
+				
+				foreach (var variable in vars)
+				{
+					AddVariable(variable.VariableName, variable.Value, templateContext);
+				}
+			}
+			
+			logger.LogDebug($"             - Added variables - {stopwatch.ElapsedMilliseconds}");
 
 			SetFunctionsOnTemplate(templateContext);
 
@@ -145,7 +155,9 @@ namespace PLang.Modules.TemplateEngineModule
 				var parsed = Template.Parse(content);
 				//var members = GetMembers(parsed);
 
+				logger.LogDebug($"             - Parsed content - {stopwatch.ElapsedMilliseconds}");
 				var result = await parsed.RenderAsync(templateContext);
+				logger.LogDebug($"             - Rendered content for: {goalStep.Text.MaxLength(40)} - {stopwatch.ElapsedMilliseconds}");
 				if (this.context != null && this.context.DebugMode && result != null)
 				{
 					result = InsertDebugInfo(result);
@@ -287,14 +299,20 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				globals.Import("callGoal", new Func<TemplateContext, string, object[]?, Task<object?>>(async (context, goalName, data) =>
 				{
 					var parameters = new Dictionary<string, object?>();
-					parameters.Add("data", data);
+					if (data?.Length > 0)
+					{
+						parameters.Add("data", data);
+					}
 					parameters.Add(ReservedKeywords.Goal, goal);
 					parameters.Add(ReservedKeywords.Step, goalStep);
 					parameters.Add(ReservedKeywords.Instruction, goalStep.Instruction);
 
 					var caller = GetProgramModule<CallGoalModule.Program>();
 					var result = await caller.RunGoal(new Models.GoalToCallInfo(goalName, parameters));
-					if (result.Error != null) return result.Error.ToString();
+					if (result.Error != null)
+					{
+						throw new ExceptionWrapper(result.Error);
+					}
 
 					if (result.Return is IList<ObjectValue> list)
 					{
@@ -358,8 +376,11 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				{
 					var modelDict = new Dictionary<string, object?>();
 
-					foreach (var item in memoryStack.GetMemoryStack())
+					var ms = memoryStack.GetMemoryStack();
+					foreach (var item in ms)
 					{
+						if (item.Name.StartsWith("!")) continue;
+
 						modelDict.AddOrReplace(item.Name, item.Value);
 					}
 

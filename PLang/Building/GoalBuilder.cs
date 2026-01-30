@@ -149,7 +149,15 @@ namespace PLang.Building
 			if (validationError == null) return (!goal.HasChanged, null);
 
 			var missingSettings = validationError.ErrorChain.Where(p => p.Exception?.GetType() == typeof(MissingSettingsException));
-			if (!missingSettings.Any()) return (!goal.HasChanged, null);
+			if (!missingSettings.Any())
+			{
+				if (validationError != null)
+				{
+					validationError.Step.IsValid = false;
+					return (false, null);
+				}
+				return (goal.HasChanged, null);
+			}
 
 			var error = await MissingSettingsHelper.Handle(engine, context, missingSettings);
 			if (error != null)

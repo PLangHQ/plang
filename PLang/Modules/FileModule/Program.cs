@@ -12,6 +12,7 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.ThrowErrorModule;
 using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
@@ -25,6 +26,7 @@ using System.Globalization;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -37,14 +39,9 @@ namespace PLang.Modules.FileModule
 	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads files, such as text, llm, csv, xls, pdf files and raw stream")]
 	public class Program : BaseProgram, IDisposable
 	{
-		private readonly IPLangFileSystem fileSystem;
-		private readonly ISettings settings;
-		private readonly ILogger logger;
 		private readonly IPseudoRuntime pseudoRuntime;
-		private readonly IEngine engine;
-		private readonly IFileAccessHandler fileAccessHandler;
 		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
-
+		private readonly TypeMapping typeMapping;
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
 			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler, IErrorSystemHandlerFactory errorSystemHandlerFactory) : base()
 		{
@@ -56,11 +53,28 @@ namespace PLang.Modules.FileModule
 			this.fileAccessHandler = fileAccessHandler;
 			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+			
+			string typeMappingKey = "PLang.Modules.FileModule.TypeMapping";
+			if (context == null)
+			{
+				this.typeMapping = new TypeMapping();
+			} else if (context.TryGetValue<TypeMapping>(typeMappingKey, out var typeMapping))
+			{
+				typeMapping = new TypeMapping();
+				context.AddOrReplace(typeMappingKey, typeMapping);
+			}
 		}
 
 		public async Task GiveAccess(string path)
 		{
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
+		}
+
+		public async Task<(object?, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var condition = GetProgramModule<ConditionalModule.Program>();
+			return await condition.FileExists(filePathOrVariableName, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
 		public async Task<IError?> WaitForFile(string filePath, int timeoutInMilliseconds = 30 * 1000, bool waitForAccess = false)
@@ -348,10 +362,10 @@ namespace PLang.Modules.FileModule
 
 			return list;
 		}
-		
 
 
-		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false, 
+
+		public async Task WriteCsvFile(string path, [HandlesVariable] object variableToWriteToCsv, bool appendToFile = false,
 			CsvOptions? csvOptions = null, bool createDirectoryAutomatically = true)
 		{
 			if (csvOptions == null) csvOptions = new();
@@ -372,14 +386,16 @@ namespace PLang.Modules.FileModule
 					if (csvOptions.Encoding == null)
 					{
 						csvOptions = csvOptions with { Encoding = enc.EncodingName };
-					} else if (csvOptions.Encoding != enc.EncodingName)
+					}
+					else if (csvOptions.Encoding != enc.EncodingName)
 					{
 						var encodingTo = Encoding.GetEncoding(csvOptions.Encoding);
 						var bytes = encodingTo.GetBytes(ov.Value.ToString());
 						variableToWriteToCsv = encodingTo.GetString(bytes);
 					}
 				}
-			} else
+			}
+			else
 			{
 				variableToWriteToCsv = memoryStack.LoadVariables(variableToWriteToCsv);
 			}
@@ -469,7 +485,7 @@ namespace PLang.Modules.FileModule
 			return key;
 		}
 
-		public record FileInfo(string Path, string AbsolutePath, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
+		//public record FileInfo(string Path, string AbsolutePath, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
 
 
 		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
@@ -477,28 +493,37 @@ namespace PLang.Modules.FileModule
 		{
 			foreach (var file in files)
 			{
-				string content = file.Content;
-				if (loadVariables && !string.IsNullOrEmpty(content))
+				var content = file.Content;
+				if (content == null) continue;
+
+				if (content is byte[] bytes)
 				{
-					content = memoryStack.LoadVariables(content, emptyVariableIfNotFound).ToString();
+					fileSystem.File.WriteAllBytes(file.Path, bytes);
 				}
-				fileSystem.File.WriteAllText(file.Path, content, encoding: FileHelper.GetEncoding(encoding));
+				else
+				{
+					var text = content.ToString() ?? string.Empty;
+					if (loadVariables && !string.IsNullOrEmpty(text))
+					{
+						text = memoryStack.LoadVariables(text, emptyVariableIfNotFound).ToString();
+					}
+					fileSystem.File.WriteAllText(file.Path, text, encoding: FileHelper.GetEncoding(encoding));
+				}
 			}
 		}
-		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
+		public async Task<(List<FileInfo>?, IError?)> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
 		{
 			var absoluteFolderPath = GetPath(folderPath);
+			var searchOption = includeAllSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-			var searchOption = (includeAllSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			if (!fileSystem.Directory.Exists(absoluteFolderPath))
 			{
-				logger.LogWarning($"!Warning! Directory {absoluteFolderPath} not found");
-				return new();
+				return (null, new ProgramError($"Directory {absoluteFolderPath} not found"));
 			}
 
 			var files = fileSystem.Directory.GetFiles(absoluteFolderPath, searchPattern, searchOption);
+			var result = new List<FileInfo>();
 
-			List<FileInfo> result = new List<FileInfo>();
 			foreach (var absoluteFilePath in files)
 			{
 				if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(absoluteFilePath, pattern)))
@@ -508,16 +533,14 @@ namespace PLang.Modules.FileModule
 
 				if (!fileSystem.File.Exists(absoluteFilePath))
 				{
-					logger.LogWarning($"!Warning! File {absoluteFilePath} not found");
+					continue;
 				}
 
-				var fileInfo = new System.IO.FileInfo(absoluteFilePath);
-				var relativePath = absoluteFilePath.Replace(fileSystem.RootDirectory, "");
-				string fileName = fileSystem.Path.GetFileName(absoluteFilePath);
-				var content = await fileSystem.File.ReadAllTextAsync(absoluteFilePath);
-				result.Add(new FileInfo(relativePath, absoluteFilePath, content, fileName, fileInfo.CreationTime, fileInfo.LastWriteTime, fileInfo.DirectoryName));
+				var fileInfo = fileSystem.FileInfo.New(absoluteFilePath);
+				result.Add(FileInfo.FromFileInfo(fileInfo, fileSystem.RootDirectory, fileSystem, typeMapping));
 			}
-			return result;
+
+			return (result, null);
 		}
 
 		public record Directory(string Name, string Path, string AbsolutePath, Properties? DirectoryInfo = null);
@@ -605,7 +628,9 @@ namespace PLang.Modules.FileModule
 			foreach (var path in paths)
 			{
 				string extension = fileSystem.Path.GetExtension(path);
-				string type = await GetFileType(extension);
+				var (type, error) = await GetFileType(extension);
+				if (string.IsNullOrEmpty(type)) type = "unknown";
+
 				if (filterOnType != null && !type.Equals(filterOnType, StringComparison.OrdinalIgnoreCase))
 				{
 					continue;
@@ -636,25 +661,14 @@ namespace PLang.Modules.FileModule
 
 			return filesToReturn;
 		}
-		public async Task SetFileType(string extension, string type)
+
+		public async Task<(string?, IError?)> GetFileType(string extension)
 		{
-			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
-			if (fileTypes == null) fileTypes = new();
+			var fileTypes = context.GetVariable<Dictionary<string, string>>("FileTypes");
 
 			if (!extension.StartsWith(".")) extension = "." + extension;
 
-			fileTypes.AddOrReplace(extension, type);
-
-			goal.AddVariable(fileTypes, variableName: "FileTypes");
-		}
-		public async Task<string> GetFileType(string extension)
-		{
-			var fileTypes = goal.GetVariable<Dictionary<string, string>>("FileTypes");
-
-			if (!extension.StartsWith(".")) extension = "." + extension;
-			if (typeMapping.TryGetValue(extension, out var type)) return type;
-
-			return "unknown";
+			return typeMapping.GetType(extension);
 
 		}
 
@@ -669,7 +683,7 @@ namespace PLang.Modules.FileModule
 			xmlDoc.LoadXml(Regex.Replace(result.Content.ToString(), "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
 
 			string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-			
+
 			return (JsonConvert.DeserializeObject(jsonString), null);
 		}
 
@@ -701,9 +715,14 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
-		public async Task WriteToFile(string path, object content, bool overwrite = false,
+		public async Task<IError?> WriteToFile(string path, object content, bool overwrite = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
+			if (string.IsNullOrEmpty(path))
+			{
+				return new ProgramError("Path cannot be empty.", FixSuggestion: "Make sure you are sending path in your step, if it's variable then it might be empty.");
+			}
+
 			var absolutePath = GetPath(path);
 			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
@@ -718,10 +737,16 @@ namespace PLang.Modules.FileModule
 					fileSystem.File.Delete(absolutePath);
 				}
 			}
+			if (content is IFormFile formFile)
+			{
+				using var stream = fileSystem.File.Create(absolutePath);
+				await formFile.CopyToAsync(stream);
+				return null;
+			}
 			if (content is XmlDocument doc)
 			{
 				doc.Save(absolutePath);
-				return;
+				return null;
 			}
 
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
@@ -734,9 +759,10 @@ namespace PLang.Modules.FileModule
 			}
 
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: FileHelper.GetEncoding(encoding));
+			return null;
 		}
 
-		
+
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
@@ -757,13 +783,14 @@ namespace PLang.Modules.FileModule
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
 			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
-			directoryPath = GetPath(directoryPath);
-			destinationPath = GetPath(destinationPath);
+			var absoluteDirectoryPath = GetPath(directoryPath);
+			var absoluteDestinationPath = GetPath(destinationPath);
 
-			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
+			var files = await GetFilePathsInDirectory(absoluteDirectoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				var copyDestinationFilePath = fileSystem.Path.Join(destinationPath, file.Path);
+				string relativePath = file.AbsolutePath.Replace(absoluteDirectoryPath, "");
+				var copyDestinationFilePath = fileSystem.Path.Join(absoluteDestinationPath, relativePath);
 				await CopyFile(file.AbsolutePath, copyDestinationFilePath, true, overwriteFiles);
 			}
 
@@ -802,11 +829,15 @@ namespace PLang.Modules.FileModule
 				throw new FileNotFoundException($"{absoluteFileName} could not be found");
 			}
 		}
-		public async Task<IFileInfo> GetFileInfo(string fileName)
+
+
+		public async Task<FileInfo> GetFileInfo(string fileName)
 		{
 			var absoluteFileName = GetPath(fileName);
-			return fileSystem.FileInfo.New(absoluteFileName);
+			var fileInfo = fileSystem.FileInfo.New(absoluteFileName);
+			return FileInfo.FromFileInfo(fileInfo, fileSystem.RootDirectory, fileSystem, typeMapping);
 		}
+
 
 		public async Task<string> CreateDirectory(string directoryPath, bool incrementalNaming = false)
 		{
@@ -1075,16 +1106,26 @@ namespace PLang.Modules.FileModule
 			}
 		};
 
-		[Description("Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder.")]
-		public async Task<(Pdf, IError?)> ReadPdf(string path, string format = "md", string imageAction = "none", bool includePageNr = true, string? password = null)
+		[Description("Reads pdf file and loads into return variable. format can be md|text. imagePath can be null|base64|pathToFolder.")]
+		public async Task<(Pdf, IError?)> ReadPdf(string path, string format = "md", string? imagePath = null, string? password = null)
 		{
 			var absolutePath = GetPath(path);
 			PdfToMarkdownConverter pdfMarkdown = new PdfToMarkdownConverter(fileSystem, goal);
-			var pages = pdfMarkdown.ConvertPdfToMarkdown(absolutePath, format, includePageNr, imageAction, password);
+
+			var pages = pdfMarkdown.ConvertPdfToMarkdown(absolutePath, format, imagePath, password);
 			var pdf = new Pdf(pages, pages.Count);
 
 			return (pdf, null);
 		}
+
+		public async Task AddTypeMapping(string extension, string type, string? contentType = null)
+		{
+			var ext = extension.StartsWith('.') ? extension : $".{extension}";
+			typeMapping.AddMapping(ext, type, contentType);
+		}
+
+		
+	
 
 
 		public void Dispose()
@@ -1110,205 +1151,99 @@ namespace PLang.Modules.FileModule
 		}
 
 
+	}
 
 
-		private static readonly Dictionary<string, string> typeMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+	public record FileInfo
+	{
+		public string Name { get; init; }
+		public string FullName { get; init; }
+		public string? DirectoryName { get; init; }
+		public string Path { get; init; }
+		public string Extension { get; init; }
+		public string? ContentType { get; init; }
+		public string? Type { get; init; }
+		public long Length { get; init; }
+		public bool Exists { get; init; }
+		public bool IsReadOnly { get; init; }
+		public DateTime Created { get; init; }
+		public DateTime Updated { get; init; }
+		public DateTime Accessed { get; init; }
+		public FileAttributes Attributes { get; init; }
+
+		private readonly Lazy<object?> _content;
+		public object? Content => _content.Value;
+
+		public FileInfo(
+			string name,
+			string fullName,
+			string? directoryName,
+			string path,
+			string extension,
+			string? contentType,
+			string? type,
+			long length,
+			bool exists,
+			bool isReadOnly,
+			DateTime created,
+			DateTime updated,
+			DateTime accessed,
+			FileAttributes attributes,
+			Func<object?> contentLoader)
 		{
-			// video
-			[".goal"] = "plang",
-			// video
-			[".mp4"] = "video",
-			[".webm"] = "video",
-			[".mkv"] = "video",
-			[".mov"] = "video",
-			[".avi"] = "video",
-			[".flv"] = "video",
+			Name = name;
+			FullName = fullName;
+			DirectoryName = directoryName;
+			Path = path;
+			Extension = extension;
+			ContentType = contentType;
+			Type = type;
+			Length = length;
+			Exists = exists;
+			IsReadOnly = isReadOnly;
+			Created = created;
+			Updated = updated;
+			Accessed = accessed;
+			Attributes = attributes;
+			_content = new Lazy<object?>(contentLoader);
+		}
 
-			// audio
-			[".mp3"] = "audio",
-			[".wav"] = "audio",
-			[".flac"] = "audio",
-			[".aac"] = "audio",
-			[".ogg"] = "audio",
-			[".m4a"] = "audio",
+		public static FileInfo FromFileInfo(IFileInfo fileInfo, string rootPath, IPLangFileSystem fileSystem, ITypeMapping typeMapping)
+		{
+			var relativePath = System.IO.Path.GetRelativePath(rootPath, fileInfo.FullName);
+			var extension = fileInfo.Extension.TrimStart('.');
+			var contentType = typeMapping.GetContentType(extension);
+			var (type, error) = typeMapping.GetType(extension);
+			if (error != null) type = "unknown";
 
-			// text
-			[".txt"] = "text",
-			[".json"] = "text",
-			[".xml"] = "text",
-			[".csv"] = "text",
-			[".md"] = "text",
-			[".yaml"] = "text",
-			[".yml"] = "text",
-			[".ini"] = "text",
+			return new FileInfo(
+				fileInfo.Name,
+				fileInfo.FullName,
+				fileInfo.DirectoryName,
+				relativePath,
+				fileInfo.Extension,
+				contentType,
+				type,
+				fileInfo.Exists ? fileInfo.Length : 0,
+				fileInfo.Exists,
+				fileInfo.IsReadOnly,
+				fileInfo.CreationTimeUtc,
+				fileInfo.LastWriteTimeUtc,
+				fileInfo.LastAccessTimeUtc,
+				fileInfo.Attributes,
+				() => fileInfo.Exists ? LoadContent(fileInfo.FullName, type, fileSystem) : null);
+		}
 
-			// image
-			[".jpg"] = "image",
-			[".jpeg"] = "image",
-			[".png"] = "image",
-			[".gif"] = "image",
-			[".bmp"] = "image",
-			[".tif"] = "image",
-			[".tiff"] = "image",
-			[".svg"] = "image",
-			[".webp"] = "image",
-			[".heic"] = "image",
-
-			// pdf
-			[".pdf"] = "pdf",
-
-			// archive
-			[".zip"] = "archive",
-			[".rar"] = "archive",
-			[".7z"] = "archive",
-			[".tar"] = "archive",
-			[".gz"] = "archive",
-			[".bz2"] = "archive",
-
-			// spreadsheet
-			[".xls"] = "spreadsheet",
-			[".xlsx"] = "spreadsheet",
-			[".ods"] = "spreadsheet",
-			[".numbers"] = "spreadsheet",          // Apple Numbers
-			[".gsheet"] = "spreadsheet",      // Google Sheet (Drive link)
-
-			// document
-			[".doc"] = "document",
-			[".docx"] = "document",
-			[".odt"] = "document",
-			[".pages"] = "document",               // Apple Pages
-			[".gdoc"] = "document",           // Google Doc (Drive link)
-
-			// presentation
-			[".ppt"] = "presentation",
-			[".pptx"] = "presentation",
-			[".odp"] = "presentation",
-			[".key"] = "presentation",             // Apple Keynote
-			[".gslides"] = "presentation",    // Google Slides (Drive link)
-
-			// code / script
-			[".cs"] = "code",
-			[".js"] = "code",
-			[".ts"] = "code",
-			[".py"] = "code",
-			[".java"] = "code",
-			[".cpp"] = "code",
-			[".h"] = "code",
-			[".html"] = "code",
-			[".css"] = "code",
-			[".go"] = "code",
-			[".rb"] = "code",
-			[".sh"] = "code",
-			[".bat"] = "code",
-			[".ps1"] = "code",
-
-			// vector graphics
-			[".ai"] = "vector",
-			[".eps"] = "vector",
-
-			// 3-D model
-			[".obj"] = "3d-model",
-			[".fbx"] = "3d-model",
-			[".stl"] = "3d-model",
-			[".gltf"] = "3d-model",
-			[".glb"] = "3d-model",
-
-			// database
-			[".db"] = "database",
-			[".sqlite"] = "database",
-			[".mdb"] = "database",
-			[".sql"] = "database",
-			[".parquet"] = "database",
-			[".orc"] = "database",
-			[".avro"] = "database",
-			[".h5"] = "database",   // HDF5
-			[".feather"] = "database",
-			[".arrow"] = "database",
-
-			// subtitle / captions
-			[".srt"] = "subtitle",
-			[".vtt"] = "subtitle",
-			[".sub"] = "subtitle",
-
-			// ebook
-			[".epub"] = "ebook",
-			[".mobi"] = "ebook",
-			[".azw3"] = "ebook",
-
-			// font
-			[".ttf"] = "font",
-			[".otf"] = "font",
-			[".woff"] = "font",
-			[".woff2"] = "font",
-
-			// installers / packages
-			[".msi"] = "package",
-			[".deb"] = "package",
-			[".rpm"] = "package",
-			[".pkg"] = "package",
-			[".dmg"] = "package",
-			[".nupkg"] = "package",
-
-			// disk-images / VM images
-			[".iso"] = "disk-image",
-			[".img"] = "disk-image",
-			[".vhd"] = "disk-image",
-			[".vmdk"] = "disk-image",
-			[".qcow2"] = "disk-image",
-			[".ova"] = "disk-image",
-
-			// mobile apps
-			[".apk"] = "mobile-app",
-			[".aab"] = "mobile-app",
-			[".ipa"] = "mobile-app",
-			[".xapk"] = "mobile-app",
-
-			// certificates / keys
-			[".crt"] = "certificate",
-			[".cer"] = "certificate",
-			[".pem"] = "certificate",
-			[".der"] = "certificate",
-			[".p12"] = "certificate",
-			[".pfx"] = "certificate",
-			[".key"] = "certificate",
-
-			// configs & logs
-			[".conf"] = "config",
-			[".cfg"] = "config",
-			[".toml"] = "config",
-			[".properties"] = "config",
-			[".env"] = "config",
-			[".log"] = "log",
-
-			// machine-learning / model files
-			[".pt"] = "machine-learning",
-			[".pth"] = "machine-learning",
-			[".pb"] = "machine-learning",
-			[".onnx"] = "machine-learning",
-			[".joblib"] = "machine-learning",
-
-			// email
-			[".eml"] = "email",
-			[".msg"] = "email",
-
-			// calendar
-			[".ics"] = "calendar",
-
-			// GIS data
-			[".shp"] = "gis-data",
-			[".geojson"] = "gis-data",
-			[".kml"] = "gis-data",
-			[".gpx"] = "gis-data",
-
-			// checksum
-			[".sha256"] = "checksum",
-			[".md5"] = "checksum",
-			[".sfv"] = "checksum",
-
-			// executable / generic binary fallback
-			[".exe"] = "executable",
-			[".dll"] = "executable",
-			[".bin"] = "binary"
-		};
+		private static object? LoadContent(string fullName, string? type, IPLangFileSystem fileSystem)
+		{
+			return type switch
+			{
+				"text" => fileSystem.File.ReadAllText(fullName),
+				"binary" => fileSystem.File.ReadAllBytes(fullName),
+				_ => fileSystem.File.ReadAllBytes(fullName)
+			};
+		}
 	}
 }
+
+

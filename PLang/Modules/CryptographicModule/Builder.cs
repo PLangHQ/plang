@@ -14,7 +14,7 @@ namespace PLang.Modules.CryptographicModule
 		}
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			string names = string.Join(", ", moduleSettings.GetBearerTokenSecrets().Select(p => p.Name));
+			string names = string.Join(", ", moduleSettings.GetSecrets().Select(p => p.Name));
 			AppendToAssistantCommand($"Bearer token names are: {names}");
 			return await base.Build(step, previousBuildError);
 		}

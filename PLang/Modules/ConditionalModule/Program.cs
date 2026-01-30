@@ -52,6 +52,14 @@ if statement can throw an error, e.g. `if %isValid% is false, then throw error '
 			var result = fileSystem.File.Exists(path);
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
+		
+		public async Task<(object?, IError?)> IsBase64(string content, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool result =	!string.IsNullOrWhiteSpace(content) && content.Length % 4 == 0 && Convert.TryFromBase64String(content, new byte[content.Length], out _);
+
+			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
+		}
 
 		public async Task<(object?, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -73,7 +81,7 @@ IsNot=True for ‘is not’, ‘does not’,
 Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 "
 )]
-		public async Task<(object?, IError?)> SimpleCondition(SimpleCondition condition, 
+		public async Task<(object? ReturnValue, IError? Error)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -82,7 +90,7 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 		}
 
 		[Description("Logic: AND|OR Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
-		public async Task<(object?, IError?)> CompoundCondition(CompoundCondition condition, 
+		public async Task<(object? ReturnValue, IError? Error)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -165,7 +173,8 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			return await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse);
 		}
 
-		 
+		[Example("if %id% is empty then call Create, else call Update", @"item=%id%, goalTocallIfTrue={Name=""Create""}, goalToCallifFalse={Name=""Update""}")]
+		[Example("if %name% is empty then throw", @"item=%name%, throwErrorOnTrue=...generate ErrorInfo")]
 		public async Task<(object?, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 						GoalToCallInfo? goalToCallIfFalse = null,
 						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -477,12 +486,12 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			if (result && throwErrorOnTrue != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return (returnVars, await module.Throw(throwErrorOnTrue.errorMessage ?? "Is empty", throwErrorOnTrue.type, throwErrorOnTrue.statusCode));
+				return (returnVars, await module.Throw(throwErrorOnTrue.Message ?? "Is empty", throwErrorOnTrue.Type, throwErrorOnTrue.StatusCode));
 			}
 			if (!result && throwErrorOnFalse != null)
 			{
 				var module = GetProgramModule<ThrowErrorModule.Program>();
-				return (returnVars, await module.Throw(throwErrorOnFalse.errorMessage ?? "Is not empty", throwErrorOnFalse.type, throwErrorOnFalse.statusCode));
+				return (returnVars, await module.Throw(throwErrorOnFalse.Message ?? "Is not empty", throwErrorOnFalse.Type, throwErrorOnFalse.StatusCode));
 			}
 			if (!result) return (returnVars, error);
 

@@ -4,6 +4,7 @@ using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Modules.ThrowErrorModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Services.SettingsService;
@@ -228,6 +229,98 @@ namespace PLang.Modules.ValidateModule
 		public async Task<IError?> ValidateSignedContract(object contract, List<string> signatureProperties, List<string>? propertiesToMatch = null)
 		{
 			return new ProgramError("Not implemented");
+		}
+
+		public async Task<IError?> ValidateFileExtension(List<string> allowedExtensions, string fileName)
+		{
+			var extension = Path.GetExtension(fileName)?.ToLowerInvariant();
+
+			if (string.IsNullOrEmpty(extension))
+			{
+				return new ProgramError($"File has no extension. Allowed: {string.Join(", ", allowedExtensions)}");
+			}
+
+			var allowed = allowedExtensions
+				.Select(e => e.StartsWith('.') ? e.ToLowerInvariant() : $".{e.ToLowerInvariant()}")
+				.ToHashSet();
+
+			if (!allowed.Contains(extension))
+			{
+				return new ProgramError($"Invalid file extension '{extension}'. Allowed: {string.Join(", ", allowed)}");
+			}
+
+			return null;
+		}
+
+
+		[Description("Configuration for type validation")]
+		public class TypeValidation
+		{
+			[Description("The value to validate")]
+			public object? Value { get; set; }
+
+			[Description("Type to validate against. Supported: long, int64, int, int32, short, int16, byte, double, float, single, decimal, bool, boolean, guid, datetime, string")]
+			public string TypeName { get; set; } = string.Empty;
+
+			[Description("Format string for datetime validation, e.g. 'yyyy-MM-dd', 'dd/MM/yyyy HH:mm:ss'")]
+			public string? Format { get; set; }
+
+			[Description("Culture for number/date parsing, e.g. 'en-US', 'de-DE', 'is-IS'. Defaults to InvariantCulture")]
+			public string? Culture { get; set; }
+
+			[Description("Error information if validation fails")]
+			public ErrorInfo? Error { get; set; }
+		}
+
+		[Description("Validates that a value can be converted to a specified type. Supported types: long/int64, int/int32, short/int16, byte, double, float/single, decimal, bool/boolean, guid, datetime, string")]
+		[Example("validate %id% is long", "TypeValidation.Value=%id%, TypeValidation.TypeName=\"long\"")]
+		[Example("validate %price% is decimal", "TypeValidation.Value=%price%, TypeValidation.TypeName=\"decimal\"")]
+		[Example("validate %price% is decimal with culture \"de-DE\"", "TypeValidation.Value=%price%, TypeValidation.TypeName=\"decimal\", TypeValidation.Culture=\"de-DE\"")]
+		[Example("validate %count% is int", "TypeValidation.Value=%count%, TypeValidation.TypeName=\"int\"")]
+		[Example("validate %isActive% is bool", "TypeValidation.Value=%isActive%, TypeValidation.TypeName=\"bool\"")]
+		[Example("validate %userId% is guid", "TypeValidation.Value=%userId%, TypeValidation.TypeName=\"guid\"")]
+		[Example("validate %startDate% is datetime", "TypeValidation.Value=%startDate%, TypeValidation.TypeName=\"datetime\"")]
+		[Example("validate %startDate% is datetime format \"yyyy-MM-dd\"", "TypeValidation.Value=%startDate%, TypeValidation.TypeName=\"datetime\", TypeValidation.Format=\"yyyy-MM-dd\"")]
+		public async Task<IError?> ValidateType(TypeValidation validation)
+		{
+			if (validation.Value == null)
+			{
+				var error = validation.Error ?? new ErrorInfo();
+				return new ProgramError(error.Message ?? $"Value is null, expected {validation.TypeName}", StatusCode: error.StatusCode);
+			}
+
+			var cultureInfo = validation.Culture != null
+				? CultureInfo.GetCultureInfo(validation.Culture)
+				: CultureInfo.InvariantCulture;
+			var valueStr = validation.Value.ToString();
+
+			var isValid = validation.TypeName.ToLowerInvariant() switch
+			{
+				"long" or "int64" => long.TryParse(valueStr, NumberStyles.Integer, cultureInfo, out _),
+				"int" or "int32" => int.TryParse(valueStr, NumberStyles.Integer, cultureInfo, out _),
+				"short" or "int16" => short.TryParse(valueStr, NumberStyles.Integer, cultureInfo, out _),
+				"byte" => byte.TryParse(valueStr, NumberStyles.Integer, cultureInfo, out _),
+				"double" => double.TryParse(valueStr, NumberStyles.Float | NumberStyles.AllowThousands, cultureInfo, out _),
+				"float" or "single" => float.TryParse(valueStr, NumberStyles.Float | NumberStyles.AllowThousands, cultureInfo, out _),
+				"decimal" => decimal.TryParse(valueStr, NumberStyles.Number, cultureInfo, out _),
+				"bool" or "boolean" => bool.TryParse(valueStr, out _),
+				"guid" => Guid.TryParse(valueStr, out _),
+				"datetime" => validation.Format != null
+					? DateTime.TryParseExact(valueStr, validation.Format, cultureInfo, DateTimeStyles.None, out _)
+					: DateTime.TryParse(valueStr, cultureInfo, DateTimeStyles.None, out _),
+				"string" => validation.Value is string,
+				_ => validation.Value.GetType().Name.Equals(validation.TypeName, StringComparison.OrdinalIgnoreCase)
+			};
+
+			if (!isValid)
+			{
+				var error = validation.Error ?? new ErrorInfo();
+				var details = validation.Format != null ? $" with format '{validation.Format}'" : "";
+				details += validation.Culture != null ? $" and culture '{validation.Culture}'" : "";
+				return new ProgramError(error.Message ?? $"Value '{validation.Value}' is not a valid {validation.TypeName}{details}", StatusCode: error.StatusCode);
+			}
+
+			return null;
 		}
 	}
 }

@@ -14,9 +14,9 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-12-06T22:32:54.4307335+00:00",
+      "Generated": "2026-01-17T13:55:50.4545811+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,10 +28,10 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c13935800cc847ae12d0ca70a1703856396d58a24b62d35e94787b89c07fc25c",
+      "Hash": "f8afa533d2136b0c4697ca8727621f24cdf79a7cbf3c02b8c46add0d9bc6957a",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Build.goal",
-      "UserIntent": "Invoke the execution of a predefined goal named 'BuildCode' within the plang environment"
+      "UserIntent": null
     }
   ],
   "SubGoals": [
@@ -46,6 +46,7 @@
   "GoalFileName": "Build.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\Build.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Build\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Build",
@@ -54,9 +55,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "7547f5420ae6ade96d324840ead8c394733fb0e71a23bed14fed8889766892d8",
+  "Hash": "1fe453b4d2ec3c09b78d64b89e66abe712fc87d626ffc914db067e733163c6dd",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

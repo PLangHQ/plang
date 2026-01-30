@@ -17,7 +17,7 @@ using System.Diagnostics.Contracts;
 namespace PLang.Modules.ThrowErrorModule
 {
 	[Description("statusCode default is 400")]
-	public record ErrorInfo(string? errorMessage = null, string type = "error", int statusCode = 400);
+	public record ErrorInfo(string? Message = null, string Type = "error", int StatusCode = 400, string Key = "Error");
 
 	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram
@@ -66,7 +66,7 @@ namespace PLang.Modules.ThrowErrorModule
 		[Description("Retries a step that caused an error. maxRetriesReachedMesage can contain {0} to include the retry count, when null a default message will be provided")]
 		public async Task<IError?> Retry(int maxRetries = 1, string? maxRetriesReachedMesage = null, string key = "MaxRetries", int statusCode = 400, string? fixSuggestion = null, string? helpfullLinks = null)
 		{
-			var error = goal.GetVariable<IError>(ReservedKeywords.Error);
+			var error = context.Error;
 			if (error == null) return new ProgramError("No error available. Cannot retry a step when there is no error");
 			if (error.Step == null) return new ProgramError("No step available. Cannot retry a step when I dont know which step to retry");
 

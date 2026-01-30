@@ -14,15 +14,15 @@ SendDebugInfo
     data: {
         "!MemoryStack":"%!MemoryStack%",
         "!Context": "%!context%"
+        "!Callstack": "%!Callstack%"
         "AbsolutePath":"%!Event.SourceGoal.AbsoluteGoalPath%", 
         "!Goal":"%!Event.SourceGoal%", 
         "!Step":"%!Event.SourceStep%",
-        "!Instruction":"%!Event.Instruction%",
+        "!Instruction":"%!Event.SourceInstruction%",
         "!Event":"%!Event%",
         "!IsHttpRequest":"%!IsHttpRequest%",
-        "!StepIndex": %!Event.SourceStep.Index%,
         "!Error":"%!error%",
-        "!GoalVariables":"%!Event.SourceGoal.GetVariables()%",
+        "ErrorMessage":"%!error.MessageOrDetail%"
         "StepRelativeGoalPath":"%!Event.SourceStep.RelativeGoalPath%",
         }
     dont sign

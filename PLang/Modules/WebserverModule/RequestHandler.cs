@@ -125,11 +125,11 @@ namespace PLang.Modules.WebserverModule
 				var httpContext = context.HttpContext!;
 				var acceptedTypes = httpContext.Request.Headers.Accept.FirstOrDefault();
 
-
+				var ip = httpContext.Connection.RemoteIpAddress?.ToString();
 				var isPlangRequest = acceptedTypes?.StartsWith("application/plang") ?? false;
 				if (isPlangRequest)
 				{
-					Console.WriteLine($"{DateTime.Now} - plang: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
+					Console.WriteLine($"{DateTime.Now} - plang: {ip} | {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 
 					error = await ProcessPlangRequest(context, webserverInfo, webserverInfo.Routings, requestEngine);
 					return error;
@@ -148,8 +148,9 @@ namespace PLang.Modules.WebserverModule
 					return new NotFoundError($"Routing not found - {httpContext.Request.Path}({httpContext.Request.Method}) - {httpContext.Request.Headers.UserAgent}");
 				}
 
+
 				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
-				Console.WriteLine($"{DateTime.Now} - classic: {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
+				Console.WriteLine($"{DateTime.Now} - classic: {ip} | {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}");
 				error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, context, requestEngine);
 
 				logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
@@ -232,20 +233,20 @@ namespace PLang.Modules.WebserverModule
 				resp.Headers.Add("X-Goal-Hash", goal.Hash);
 				resp.Headers.Add("X-Goal-Signature", goal.Signature);
 			}
-			logger.LogDebug($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
 
 			if (request.Method == "HEAD") return null;
 
 			(var requestObjectValue, error) = await ParseRequest(context);
 			if (error != null) return error;
 
-			logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
 
 			(var callback, goal, error) = await GetCallbackInfos(request, goal);
 			if (error != null) return error;
 			if (goal == null) return new ProgramError("Server code has changed. New request needs to be made", step, StatusCode: 503);
 
-			logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
 
 			if (requestObjectValue != null)
 			{
@@ -649,23 +650,32 @@ namespace PLang.Modules.WebserverModule
 
 				if (!parameters.ContainsKey("body"))
 				{
-					var form = await req.ReadFormAsync();
-					var fields = form.ToDictionary(
-						pair => pair.Key,
-						pair => pair.Value.Count > 1
-								 ? (object)pair.Value.ToArray()          // keep all repeated values
-								 : (object)pair.Value.ToString()!        // single value
-					);
-
-					var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
-					if (form.Files.Count > 0)
+					try
 					{
-						payload.Add("_files", form.Files);
+						var form = await req.ReadFormAsync();
+						var fields = form.ToDictionary(
+							pair => pair.Key,
+							pair => pair.Value.Count > 1
+									 ? (object)pair.Value.ToArray()          // keep all repeated values
+									 : (object)pair.Value.ToString()!        // single value
+						);
+
+						var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
+						if (form.Files.Count > 0)
+						{
+							payload.Add("_files", form.Files);
+						}
+
+						if (payload.Count > 0)
+						{
+							parameters.Add("body", payload);
+						}
 					}
-
-					if (payload.Count > 0)
+					catch (Exception ex)
 					{
-						parameters.Add("body", payload);
+						var ip = httpContext.Connection.RemoteIpAddress?.ToString();
+
+						Console.WriteLine($"{DateTime.Now} - ERRPR:{ip} | {httpContext.Request.Path} | {httpContext.Request.Headers.UserAgent}\nmultipart error:{ex}");
 					}
 				}
 

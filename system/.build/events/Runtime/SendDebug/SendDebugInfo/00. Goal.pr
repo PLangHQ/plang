@@ -3,20 +3,20 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "post http://localhost:%plang.debugPort%/\n    data: {\n        \"!MemoryStack\":\"%!MemoryStack%\",\n        \"!Context\": \"%!context%\"\n        \"AbsolutePath\":\"%!Event.SourceGoal.AbsoluteGoalPath%\", \n        \"!Goal\":\"%!Event.SourceGoal%\", \n        \"!Step\":\"%!Event.SourceStep%\",\n        \"!Instruction\":\"%!Event.Instruction%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!StepIndex\": %!Event.SourceStep.Index%,\n        \"!Error\":\"%!error%\",\n        \"!GoalVariables\":\"%!Event.SourceGoal.GetVariables()%\",\n        \"StepRelativeGoalPath\":\"%!Event.SourceStep.RelativeGoalPath%\",\n        }\n    dont sign\n    timeout 30 min\n    on error 'No connection could', call WriteToConsole\n    on error, call WriteOutError\n    write to %debugResponse%",
+      "Text": "post http://localhost:%plang.debugPort%/\n    data: {\n        \"!MemoryStack\":\"%!MemoryStack%\",\n        \"!Context\": \"%!context%\"\n        \"!Callstack\": \"%!Callstack%\"\n        \"AbsolutePath\":\"%!Event.SourceGoal.AbsoluteGoalPath%\", \n        \"!Goal\":\"%!Event.SourceGoal%\", \n        \"!Step\":\"%!Event.SourceStep%\",\n        \"!Instruction\":\"%!Event.SourceInstruction%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!Error\":\"%!error%\",\n        \"ErrorMessage\":\"%!error.MessageOrDetail%\"\n        \"StepRelativeGoalPath\":\"%!Event.SourceStep.RelativeGoalPath%\",\n        }\n    dont sign\n    timeout 30 min\n    on error 'No connection could', call WriteToConsole\n    on error, call WriteOutError\n    write to %debugResponse%",
       "Comment": null,
       "ModuleType": "PLang.Modules.HttpModule",
-      "Name": "post_debug_data_to_localhost",
-      "Description": "Perform an HTTP POST request to the URL http://localhost with the port from %plang.debugPort%. The request body contains a JSON object with various runtime context variables such as memory stack, event details, error info, and goal variables. The request should not be signed and has a timeout of 30 minutes. If an error occurs containing 'No connection could', the step WriteToConsole is called. For any other error, the step WriteOutError is called. The response from the HTTP request is stored in the variable %debugResponse%.",
-      "PrFileName": "01. post_debug_data_to_localhost.pr",
-      "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo\\01. post_debug_data_to_localhost.pr",
+      "Name": "post_debug_information_to_localhost",
+      "Description": "Perform an HTTP POST request to the URL http://localhost with the port specified by %plang.debugPort%. The request body contains a JSON object with various runtime context variables such as memory stack, call stack, event source details, error information, and flags. The request should not be signed and has a timeout of 30 minutes. If an error occurs containing 'No connection could', it calls the WriteToConsole goal. For any error, it calls the WriteOutError goal. The response from the POST request is stored in the variable %debugResponse%.",
+      "PrFileName": "01. post_debug_information_to_localhost.pr",
+      "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo\\01. post_debug_information_to_localhost.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
-      "Inconsistency": null,
-      "Generated": "2025-07-30T13:41:23.5744107+00:00",
+      "Confidence": "Very High",
+      "Inconsistency": "Missing commas after some JSON key-value pairs in the data object (e.g., after \"%!context%\" and \"%!error.MessageOrDetail%\"), which may cause syntax errors.",
+      "Generated": "2026-01-18T21:27:51.7829327+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": [
@@ -26,7 +26,7 @@
           "StatusCode": null,
           "Key": null,
           "GoalToCall": {
-            "Path": null,
+            "Path": ".build\\events\\Runtime\\SendDebug\\WriteToConsole\\00. Goal.pr",
             "Name": "WriteToConsole",
             "Parameters": {}
           },
@@ -37,9 +37,9 @@
           "IgnoreError": false,
           "Message": null,
           "StatusCode": null,
-          "Key": "*",
+          "Key": null,
           "GoalToCall": {
-            "Path": null,
+            "Path": ".build\\events\\Runtime\\SendDebug\\WriteOutError\\00. Goal.pr",
             "Name": "WriteOutError",
             "Parameters": {}
           },
@@ -55,10 +55,10 @@
       "LineNumber": 13,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d218196af6c135cea2cd566b2d2c3ca0a9d80124dfbbacedf09d4b87e8058379",
+      "Hash": "58cd5cc9334404ffaef692a53bb3f815269ac7ef3199d2faf5d93c3c78181477",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
-      "UserIntent": null
+      "UserIntent": "Send a HTTP POST request to a local debug server with detailed runtime context and error information, handle errors by calling specific goals, and store the response in a variable."
     },
     {
       "Text": "if %debugResponse.csharpDebugger% then",
@@ -86,7 +86,7 @@
       "LineNumber": 33,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "56d395b162fc0eacb2fdc20a7fafae45881874c17a712ae84930425cab2e0898",
+      "Hash": "dec896cbaf9ab2b5990347f4180c1847f49d15033ef831bc8285b09d655de3f1",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -117,7 +117,7 @@
       "LineNumber": 34,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "18a9833af9ce667df82a303ccd2e6c355428900112c6dea2697807abb96a68e5",
+      "Hash": "0af56c9c58c502d530f862c9809540cc758aaa1e440b67142152f81486fce17b",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -148,7 +148,7 @@
       "LineNumber": 35,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b38dac3cb010a669f0b8f73ca7ece87386d9285ea3d3d23af6abf2d00c547ab8",
+      "Hash": "d01402347935ddd6b2e72bf26c45778ba6bb17baff2ebc308914ba9a05a7a5b0",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -179,7 +179,7 @@
       "LineNumber": 36,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e402efa4d7f5a5346eec725f2cacb776edcd4afadd8bba94b40d8103ba3e05e2",
+      "Hash": "76603447deb233668c320d36643e5f4cd100521b06c5ddbd37decdc1e68a97f1",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -210,7 +210,7 @@
       "LineNumber": 37,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "88bf97a1b66ad69ff47d2f3f5a981f84f1b8c141d938386c0abd1f2a63b4157f",
+      "Hash": "a17689a93c2b15f507e3831f45519be0e7e4518d555fff5731cee9a82106be67",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -241,18 +241,19 @@
       "LineNumber": 38,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "701a3ecbb7ee41347c64cb7cd92900bf2db674e7ddef362d08154a3d2c1e1f80",
+      "Hash": "a975265e539afab415f3ed27357bc14795343a5af82ec9b4f68c8d5618577578",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
     }
   ],
   "SubGoals": [],
-  "Description": "The SendDebugInfo goal sends debugging information to a specified HTTP endpoint. It constructs a data payload containing various debugging details such as memory stack, context, goal path, step information, and error details. The goal handles HTTP request errors by logging them and attempts to start a C# debugger if certain conditions are met based on the response received.",
+  "Description": "The SendDebugInfo goal sends debugging information to a specified HTTP endpoint. It constructs a data payload containing various debugging details such as memory stack, context, call stack, and event information. The goal handles potential errors by logging them and can initiate a C# debugger or run from a specific step based on the response received.",
   "Visibility": 0,
   "GoalFileName": "SendDebug.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo",
@@ -261,22 +262,23 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8a31fd79a3c98a14e411a5172fe5abd92ccce519782e95a0499973307d728f73",
+  "Hash": "60f143ebccf681d633741a9a64f3c027ca02fa230d4fbe29c3a1fcb7be4d5cb2",
   "IncomingVariablesRequired": {
     "plang.debugPort": "The port number for the debug server to which the information will be sent.",
-    "context": "The current context in which the goal is being executed.",
-    "Event.SourceGoal.AbsoluteGoalPath": "The absolute path of the source goal from which the event originated.",
-    "Event.SourceGoal": "The source goal that triggered the event.",
-    "Event.SourceStep": "The step within the source goal that is currently being executed.",
-    "Event.Instruction": "The instruction associated with the current event.",
+    "context": "The current context of the execution.",
+    "Callstack": "The current call stack at the time of the debug information request.",
+    "Event.SourceGoal.AbsoluteGoalPath": "The absolute path of the source goal that triggered the event.",
+    "Event.SourceGoal": "The source goal that is being debugged.",
+    "Event.SourceStep": "The specific step within the source goal that is being executed.",
+    "Event.SourceInstruction": "The instruction that is currently being processed.",
     "Event": "The event object containing details about the current execution context.",
-    "IsHttpRequest": "A boolean indicating whether the current operation is an HTTP request.",
-    "Event.SourceStep.Index": "The index of the current step within the source goal.",
-    "error": "Any error message that may have occurred during execution.",
-    "Event.SourceGoal.GetVariables()": "A method call to retrieve the variables associated with the source goal.",
+    "IsHttpRequest": "A boolean indicating if the current operation is an HTTP request.",
+    "error": "An object containing error details if an error occurred during execution.",
+    "error.MessageOrDetail": "A message or detail about the error that occurred.",
     "Event.SourceStep.RelativeGoalPath": "The relative path of the step within the source goal."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

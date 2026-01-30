@@ -154,6 +154,7 @@ namespace PLang.Utils
 			{
 				goalToCallPath = goalToCallPath.TrimEnd(Path.DirectorySeparatorChar);
 			}
+			goalToCallPath = goalToCallPath.AdjustPathToOs();
 
 			(goal, var error) = GetMatchingGoal(appGoals, step, goalToCallPath, goalToCallName);
 			if (goal != null) return (goal, null);
@@ -181,10 +182,32 @@ namespace PLang.Utils
 		 
 		internal static (Goal?, IError?) GetGoal(string relativeGoalPath, string absoluteAppPath, GoalToCallInfo goalToCall, IReadOnlyList<Goal> appGoals, IReadOnlyList<Goal> systemGoals)
 		{
+			bool debug = false;
+			if (goalToCall.Name == "/user/refund/GetAurBearerToken")
+			{
+				debug = true;
+			}
+
 			Goal? goal;
 			if (!string.IsNullOrEmpty(goalToCall.Path))
 			{
 				goal = appGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (debug)
+				{
+					Console.WriteLine($"isGoalNull: {goal == null} : goalPath:{goalToCall.Path.AdjustPathToOs()}");
+					if (goal == null)
+					{
+						var debugGoal = appGoals.FirstOrDefault(p => p.GoalName.Contains("GetAurBearerToken", StringComparison.OrdinalIgnoreCase));
+						if (debugGoal == null)
+						{
+							Console.WriteLine($"WTF goalname not found");
+						}
+						else
+						{
+							Console.WriteLine($"relativePrPath: {debugGoal.RelativePrPath} should Match goalPath:{goalToCall.Path.AdjustPathToOs()}");
+						}
+					}
+				}
 				if (goal != null) return (goal, null);
 
 				goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
@@ -220,8 +243,8 @@ namespace PLang.Utils
 				{
 					relativePath = relativePath.Replace(extension, "");
 				}
-			} 
-
+			}
+			relativePath = relativePath.AdjustPathToOs();
 			goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(relativePath, StringComparison.OrdinalIgnoreCase)
 										&& p.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return (goal, null);
