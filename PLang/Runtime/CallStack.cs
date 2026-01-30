@@ -4,6 +4,7 @@ using PLang.Events;
 using PLang.Events.Types;
 using PLang.Models;
 using PLang.Modules;
+using PLang.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
@@ -47,7 +48,15 @@ public class CallStack
 	{
 		var parentFrame = CurrentFrameOrNull;
 		var frame = new CallStackFrame(goal, parentFrame, eventBinding);
+
 		_frames.Push(frame);
+		SetPhase(ExecutionPhase.ExecutingGoal);
+
+		if (_frames.Count > 1000)
+		{
+			throw new Exception("1000 frames");
+		}
+
 		return frame;
 	}
 
@@ -73,6 +82,7 @@ public class CallStack
 			}
 			CurrentFrame.SetCurrentStep(step, stepIndex);
 		}
+		SetPhase(ExecutionPhase.ExecutingStep);
 	}
 
 	public void CompleteCurrentStep(object? returnValue = null, IError? error = null)
@@ -260,6 +270,10 @@ public class CallStackFrame : VariableContainer
 	public CallStackFrame(Goal goal, CallStackFrame? parentFrame, RuntimeEvent? eventBinding = null)
 	{
 		Goal = goal;
+		if (goal.GoalName == "SendDebug" || goal.GoalName == "SendDebugInfo")
+		{
+			int i = 0;
+		}
 		ParentFrame = parentFrame;
 		Event = eventBinding;
 		Phase = ExecutionPhase.None;
@@ -269,7 +283,10 @@ public class CallStackFrame : VariableContainer
 	public void SetCurrentStep(GoalStep step, int stepIndex)
 	{
 		_currentExecutingStep?.CompleteIfRunning(null, null);
-
+		if (step.Goal.RelativePrPath != Goal.RelativePrPath)
+		{
+			//throw new Exception("Here it is");
+		}
 		CurrentStep = step;
 		StepIndex = stepIndex;
 
@@ -373,6 +390,7 @@ public class ExecutedStep
 {
 	public GoalStep Step { get; }
 	public int Index { get; }
+	public int LineNumber { get; }
 	public DateTime StartedAt { get; }
 	public DateTime? CompletedAt { get; private set; }
 	public TimeSpan Duration { get; private set; }
@@ -386,6 +404,7 @@ public class ExecutedStep
 	{
 		Step = step;
 		Index = index;
+		LineNumber = step.LineNumber;
 		StartedAt = DateTime.UtcNow;
 		_stopwatch = Stopwatch.StartNew();
 	}
@@ -435,8 +454,8 @@ public class CompressedStepGroup
 
 	public bool IsSameStep(ExecutedStep other, CallStackFrame otherFrame)
 	{
-		return Frame.Goal.GoalName == otherFrame.Goal.GoalName
-			&& Step.Step.Text == other.Step.Text;
+		return Frame.Goal.RelativeGoalPath == otherFrame.Goal.RelativeGoalPath
+			&& Step.Step.RelativePrPath == other.Step.RelativePrPath;
 	}
 }
 

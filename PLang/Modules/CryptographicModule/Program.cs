@@ -1,12 +1,16 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using NBitcoin;
 using Nethereum.ABI;
 using Nethereum.Util;
 using NSec.Cryptography;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Modules.ThrowErrorModule;
+using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
 using PLang.Services.SigningService;
 using PLang.Utils;
@@ -18,6 +22,7 @@ using System.Security.Cryptography;
 using System.Text;
 using static Dapper.SqlMapper;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
+using static PLang.Modules.CryptographicModule.ModuleSettings;
 
 namespace PLang.Modules.CryptographicModule
 {
@@ -314,12 +319,12 @@ namespace PLang.Modules.CryptographicModule
 		{
 			if (appContext.ContainsKey(CurrentBearerToken))
 			{
-				return moduleSettings.GetBearerSecret(appContext[CurrentBearerToken].ToString()).Secret;
+				return moduleSettings.GetSecret(appContext[CurrentBearerToken].ToString()).Value;
 			}
-			return moduleSettings.GetDefaultBearerSecret().Secret;
+			return moduleSettings.GetDefaultSecret().Value;
 		}
 
-		public async Task<bool> ValidateBearerToken(string token, string issuer = "PLangRuntime", string audience = "user")
+		public async Task<(bool, IError?)> ValidateBearerToken(string token, string issuer = "PLangRuntime", string audience = "user")
 		{
 			try
 			{
@@ -339,22 +344,101 @@ namespace PLang.Modules.CryptographicModule
 				ClaimsPrincipal claimsPrincipal = tokenHandler.ValidateToken(token, validationParameters, out _);
 
 				// Token is valid
-				return true;
+				return (true, null);
 			}
 			catch (Exception ex)
 			{
 				// Token validation failed
-				return false;
+				return (false, new ProgramError("Invalid bearer token"));
 			}
 		}
 
+		private byte[] GetKey(string? password, string? secretKeyName)
+		{
+			if (!string.IsNullOrWhiteSpace(password))
+			{
+				return Encoding.UTF8.GetBytes(password);
+			}
+			else
+			{
+				Secret secret;
+				if (string.IsNullOrWhiteSpace(secretKeyName))
+				{
+					secret = moduleSettings.GetDefaultSecret();
+					return Encoding.UTF8.GetBytes(secret.Value);
+				}
 
+				secret = moduleSettings.GetSecret(secretKeyName);
+				return Encoding.UTF8.GetBytes(secret.Value);
+			}
+		}
 
+		[Description("Creates a simple token that is valid for x seconds using HMACSHA256. When password is empty, the runtime uses password from settings")]
+		public async Task<string> CreateToken(string? password = null, int validForSeconds = 60 * 10, string? secretKeyName = null)
+		{
+			byte[] key = GetKey(password, secretKeyName);
+			
+			var expiry = DateTime.UtcNow.AddSeconds(validForSeconds).Ticks;
+			var random = Guid.NewGuid().ToString("N");
+
+			var payload = $"{random}|{expiry}";
+
+			using var hmac = new HMACSHA256(key);
+			var signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)));
+
+			return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{payload}|{signature}"));
+		}
+
+		[Description("Validates token (HMACSHA256) when password is null the runtime uses password from settings")]
+		[Example("validate %token%", "token=%token%")]
+		public async Task<IError?> ValidateToken(string token, string? password = null, string? secretKeyName = null)
+		{
+			byte[] key = GetKey(password, secretKeyName);
+
+			string decoded;
+			try
+			{
+				decoded = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+			}
+			catch
+			{
+				return new ProgramError("Invalid token format");	
+			}
+
+			var parts = decoded.Split('|');
+			if (parts.Length != 3)
+			{
+				return new ProgramError("Invalid token structure");
+			}
+
+			var payload = $"{parts[0]}|{parts[1]}";
+			var signature = parts[2];
+
+			using var hmac = new HMACSHA256(key);
+			var expectedSignature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)));
+
+			if (signature != expectedSignature)
+			{
+				return new ProgramError("Invalid token signature");
+			}
+
+			if (!long.TryParse(parts[1], out var expiryTicks))
+			{
+				return new ProgramError("Invalid token expiry");
+			}
+
+			if (DateTime.UtcNow.Ticks > expiryTicks)
+			{
+				return new ProgramError("Token has expired");
+			}
+
+			return null;
+		}
 
 
 		public async Task<string> GenerateBearerToken(string uniqueString, string issuer = "PLangRuntime", string audience = "user", int expireTimeInSeconds = 7 * 24 * 60 * 60)
 		{
-			var bearerSecret = GetBearerSecret().Result;
+			var bearerSecret = await GetBearerSecret();
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(bearerSecret));
 			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 			var claims = new[]

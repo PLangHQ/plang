@@ -156,7 +156,7 @@ namespace PLang.Modules
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				logger.LogDebug($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
@@ -178,8 +178,7 @@ namespace PLang.Modules
 				if (error != null) return (null, error);
 
 				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
-				//slogger.LogTrace("         - Parameters:{0}", JsonConvert.SerializeObject(parameterValues, Formatting.None));
-
+				
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
@@ -232,7 +231,7 @@ namespace PLang.Modules
 					}
 				}
 
-				logger.LogDebug($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
 
 				if (task.Status == TaskStatus.Canceled)
 				{
@@ -325,6 +324,12 @@ namespace PLang.Modules
 						{
 							isMatch = true;
 						}
+						else if (parameter.Value?.ToString() != null &&
+								parameter.Value.ToString()?.StartsWith("*") == true &&
+								parameterValues[parameter.Key]?.ToString()?.EndsWith(parameter.Value.ToString().TrimStart('*').TrimStart('.')) == true)
+						{
+							isMatch = true;
+						}
 						else
 						{
 							isMatch = false;
@@ -406,8 +411,12 @@ namespace PLang.Modules
 		{
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var engine = container.GetInstance<IEngine>();
-
-			(var answer, var error) = await AskUser.GetAnswer(engine, context, fa.Message);
+			string message = fa.Message;
+			if (context.DebugMode)
+			{
+				message = $"[Debug: {goalStep.Text.Replace("%", "\\%")} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}]\n\n" + message;
+			}
+			(var answer, var error) = await AskUser.GetAnswer(engine, context, message);
 			if (error != null) return (null, error);
 
 			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);

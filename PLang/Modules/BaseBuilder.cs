@@ -1,6 +1,7 @@
 ﻿using Jil;
 using LightInject;
 using Microsoft.Extensions.Logging;
+using MimeKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
@@ -245,10 +246,13 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			public GenericFunction SetParameter(string name, object value)
 			{
-				var parameter = Parameters?.FirstOrDefault(p => p.Name == name);
-				if (parameter == null) return default;
+				if (Parameters == null) return this;
 
-				parameter = parameter with { Value = value };
+				var idx = Parameters.FindIndex(p => p.Name == name);
+				if (idx == -1) return this;
+
+				var parameter = Parameters[idx];
+				Parameters[idx] = parameter with { Value = value };
 
 				return this;
 			}

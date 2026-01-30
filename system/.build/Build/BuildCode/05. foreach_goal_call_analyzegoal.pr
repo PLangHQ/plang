@@ -86,7 +86,8 @@
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over a list of goals (%goals%) and call the goal 'AnalyzeGoal' for each individual goal item (%goal%). The RunLoop function is designed for looping over a collection and calling a goal for each item, which matches the user's intent perfectly.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%goals%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AnalyzeGoal\",\n        \"Parameters\": {\n          \"item\": \"%goal%\"\n        }\n      }\n    }\n  ],\n  \"ReturnValues\": null\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over a list of goals (%goals%) and call the goal 'AnalyzeGoal' for each individual goal item (%goal%). The RunLoop function is designed for looping over a collection and calling a goal for each item, which matches the user's intent perfectly.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%goals%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"AnalyzeGoal\",\n        \"Parameters\": {\n          \"item\": \"%goal%\"\n        }\n      }\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
     }
   ]
 }

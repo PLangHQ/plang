@@ -87,7 +87,7 @@ namespace PLang.Utils
 				if (IsVariable(variableName))
 				{
 
-					logger.LogDebug($"           - Loading {variableName} - {stopwatch.ElapsedMilliseconds}");
+					logger.LogTrace($"           - Loading {variableName} - {stopwatch.ElapsedMilliseconds}");
 					if (variableName.StartsWith("%Settings."))
 					{
 						var vars = GetVariables(variableName, memoryStack, emptyIfNotFound);
@@ -97,7 +97,7 @@ namespace PLang.Utils
 					else
 					{
 						var value = memoryStack.Get(variableName, false, defaultValue);
-						logger.LogDebug($"           - Have variable {variableName} - {stopwatch.ElapsedMilliseconds}");
+						logger.LogTrace($"           - Have variable {variableName} - {stopwatch.ElapsedMilliseconds}");
 						return value;
 					}
 				}
@@ -647,7 +647,7 @@ namespace PLang.Utils
 
 		public static List<string> GetVariablesInText(string content)
 		{
-			if (!content.Contains("%")) return new();
+			if (string.IsNullOrWhiteSpace(content) || !content.Contains("%")) return new();
 
 			var pattern = @"(?<!\\)%([^\n\r%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
 

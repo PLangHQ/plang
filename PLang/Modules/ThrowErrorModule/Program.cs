@@ -17,7 +17,7 @@ using System.Diagnostics.Contracts;
 namespace PLang.Modules.ThrowErrorModule
 {
 	[Description("statusCode default is 400")]
-	public record ErrorInfo(string? errorMessage = null, string type = "error", int statusCode = 400);
+	public record ErrorInfo(string? Message = null, string Type = "error", int StatusCode = 400, string Key = "Error");
 
 	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram

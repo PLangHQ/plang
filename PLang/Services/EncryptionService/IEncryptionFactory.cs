@@ -2,24 +2,23 @@
 using PLang.Interfaces;
 using PLang.Utils;
 
-namespace PLang.Services.LlmService
+namespace PLang.Services.EncryptionService;
+
+public interface IEncryptionFactory
 {
-	public interface IEncryptionFactory
+	IEncryption CreateHandler();
+}
+
+public class EncryptionFactory : BaseFactory, IEncryptionFactory
+{
+	
+	public EncryptionFactory(ServiceContainer container) : base(container)
 	{
-		IEncryption CreateHandler();
 	}
 
-	public class EncryptionFactory : BaseFactory, IEncryptionFactory
+	public IEncryption CreateHandler()
 	{
-		
-		public EncryptionFactory(ServiceContainer container) : base(container)
-		{
-		}
-
-		public IEncryption CreateHandler()
-		{
-			var serviceName = GetServiceName(ReservedKeywords.Inject_EncryptionService);
-			return container.GetInstance<IEncryption>(serviceName);
-		}
+		var serviceName = GetServiceName(ReservedKeywords.Inject_EncryptionService);
+		return container.GetInstance<IEncryption>(serviceName);
 	}
 }

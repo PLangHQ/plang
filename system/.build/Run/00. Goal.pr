@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T21:53:56.3517062+00:00",
       "WaitForExecution": true,
@@ -31,7 +31,7 @@
       "Hash": "b6ca3e77bbf01af364e369c51573ebb64a8e0a60e5d191f862796d08fc2abaa2",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Set up an event handler to run a specific action before the application starts"
+      "UserIntent": null
     },
     {
       "Text": "call goal %goalName% %parameters%",
@@ -47,7 +47,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-12-06T21:48:56.9722495+00:00",
+      "Generated": "2026-01-17T13:55:54.6687672+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -59,7 +59,7 @@
       "LineNumber": 3,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a6a94048afdd0173a99d49f9a51b6e04f945a659f5a47973209b688b9ff683ad",
+      "Hash": "c17b77f248886642f45f5d0ea5b1e80ac51d170b8c25d10361bc85d3707d4ce3",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
       "UserIntent": null
@@ -76,7 +76,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T21:54:03.8200553+00:00",
       "WaitForExecution": true,
@@ -93,7 +93,7 @@
       "Hash": "e43c286e69539ede77bc603005d768234da9fe0442c0d56938f37eded7efb729",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
-      "UserIntent": "Trigger the event that runs when the application ends"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -102,6 +102,7 @@
   "GoalFileName": "Run.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\Run.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Run\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Run",
@@ -110,12 +111,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9cf4f8dfaa7caae067b6c570a8b0bd0e983c79da3fbb6916e5eb082a1e60f704",
+  "Hash": "acb3c607e63ff5fa16d8825102da7233fc320e2f7266e5850f2d63c01de0244e",
   "IncomingVariablesRequired": {
     "goalName": "The name of the goal to be called during the execution.",
     "parameters": "The parameters that need to be passed to the goal being called."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

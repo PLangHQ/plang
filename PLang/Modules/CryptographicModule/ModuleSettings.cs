@@ -18,40 +18,40 @@ namespace PLang.Modules.CryptographicModule
 			this.settings = settings;
 		}
 
-		public record BearerSecret(string Name, string Secret)
+		public record Secret(string Name, string Value)
 		{
 			public bool IsDefault = false;
 			public bool IsArchived = false;
 		};
 
-		public List<BearerSecret> GetBearerTokenSecrets()
+		public List<Secret> GetSecrets()
 		{
-			var tokens = settings.GetValues<BearerSecret>(this.GetType());
+			var tokens = settings.GetValues<Secret>(this.GetType());
 			if (tokens == null || tokens.Count == 0)
 			{
-				GenerateNewBearerSecretKey("Default", true);
-				tokens = settings.GetValues<BearerSecret>(this.GetType()) ?? new List<BearerSecret>();
+				GenerateNewSecretKey("Default", true);
+				tokens = settings.GetValues<Secret>(this.GetType()) ?? new List<Secret>();
 			}
 			return tokens;
 		}
-		public BearerSecret GetDefaultBearerSecret()
+		public Secret GetDefaultSecret()
 		{
-			var tokens = settings.GetValues<BearerSecret>(this.GetType());
+			var tokens = settings.GetValues<Secret>(this.GetType());
 			if (tokens == null || tokens.Count == 0)
 			{
-				GenerateNewBearerSecretKey("Default", true);
-				tokens = settings.GetValues<BearerSecret>(this.GetType()) ?? new List<BearerSecret>();
+				GenerateNewSecretKey("Default", true);
+				tokens = settings.GetValues<Secret>(this.GetType()) ?? new List<Secret>();
 			}
 			var token = tokens.FirstOrDefault(p => p.IsDefault);
 			if (token == null) token = tokens[0];
 			return token;
 		}
-		public BearerSecret GetBearerSecret(string name) {
-			var tokens = settings.GetValues<BearerSecret>(this.GetType());
+		public Secret GetSecret(string name) {
+			var tokens = settings.GetValues<Secret>(this.GetType());
 			if (tokens == null || tokens.Count == 0)
 			{
-				GenerateNewBearerSecretKey("Default", true);
-				tokens = settings.GetValues<BearerSecret>(this.GetType()) ?? new List<BearerSecret>();
+				GenerateNewSecretKey("Default", true);
+				tokens = settings.GetValues<Secret>(this.GetType()) ?? new List<Secret>();
 			}
 			var token = tokens.FirstOrDefault(p => p.Name == name);
 			if (token == null) token = tokens[0];
@@ -60,7 +60,7 @@ namespace PLang.Modules.CryptographicModule
 
 		public void SetAsDefault(string name)
 		{
-			var tokens = settings.GetValues<BearerSecret>(this.GetType());
+			var tokens = settings.GetValues<Secret>(this.GetType());
 			if (tokens != null && tokens.Count > 0)
 			{
 				var defaultToken = tokens.FirstOrDefault(p => p.IsDefault);
@@ -80,7 +80,7 @@ namespace PLang.Modules.CryptographicModule
 
 		public void ArchiveToken(string name)
 		{
-			var tokens = settings.GetValues<BearerSecret>(this.GetType());
+			var tokens = settings.GetValues<Secret>(this.GetType());
 			if (tokens != null && tokens.Count > 0)
 			{
 				var token = tokens.FirstOrDefault(p => p.Name == name);
@@ -92,7 +92,7 @@ namespace PLang.Modules.CryptographicModule
 			}
 		}
 
-		public void GenerateNewBearerSecretKey(string name = "Default", bool setAsDefault = false)
+		public void GenerateNewSecretKey(string name = "Default", bool setAsDefault = false)
 		{	
 			using (var rng = RandomNumberGenerator.Create())
 			{
@@ -103,8 +103,8 @@ namespace PLang.Modules.CryptographicModule
 				var symmetricKey = new SymmetricSecurityKey(key);
 				string base64Key = Convert.ToBase64String(key);
 
-				var tokens = settings.GetValues<BearerSecret>(this.GetType()) ?? new List<BearerSecret>();
-				var bearerSecret = new BearerSecret(name, base64Key);
+				var tokens = settings.GetValues<Secret>(this.GetType()) ?? new List<Secret>();
+				var bearerSecret = new Secret(name, base64Key);
 				if (tokens.Count == 0)
 				{
 					bearerSecret.IsDefault = true;

@@ -38,8 +38,8 @@ namespace PLangTests.Modules.DbModule
 		public async Task TestSetDatasource()
 		{
 			db = new SqliteConnection("DataSource=:memory:");
-			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceRepository, logger, typeHelper, null, prParser, programFactory);
+			eventSourceFactory = new EventSourceFactory(container);
+			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceFactory, logger, typeHelper, null, prParser, programFactory);
 
 			var dataSources = new List<DataSource>();
 			dataSources.Add(new DataSource("db", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
@@ -57,8 +57,8 @@ namespace PLangTests.Modules.DbModule
 		public async Task TestTransaction()
 		{
 			db = new SqliteConnection("DataSource=:memory:");
-			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceRepository, logger, typeHelper, null, prParser, programFactory);
+			eventSourceFactory = new EventSourceFactory(container);
+			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceFactory, logger, typeHelper, null, prParser, programFactory);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
@@ -112,10 +112,10 @@ namespace PLangTests.Modules.DbModule
 			var encryption = new Encryption(settings);
 			
 			db = new SqliteConnection("DataSource=:memory:");
+			eventSourceFactory = new EventSourceFactory(container);
 			eventSourceRepository = new SqliteEventSourceRepository(fileSystem, encryption);
-			eventSourceRepository.DataSource = datasources[0];
 
-			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceRepository, logger, typeHelper, null, prParser, programFactory);
+			p = new Program(dbFactory, appContext, fileSystem, settings, llmServiceFactory, eventSourceFactory, logger, typeHelper, null, prParser, programFactory);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");

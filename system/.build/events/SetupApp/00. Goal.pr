@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T22:21:23.3318564+00:00",
       "WaitForExecution": true,
@@ -31,7 +31,7 @@
       "Hash": "22e8230097d40d41345207530b80790f5324c0457a84b601c3fb32ec45685c84",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
-      "UserIntent": "Check if the variable %!debug% is true or truthy and conditionally execute subsequent steps based on that"
+      "UserIntent": null
     },
     {
       "Text": "set as developer",
@@ -45,7 +45,7 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Confidence": "High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T22:21:31.8559961+00:00",
       "WaitForExecution": true,
@@ -62,7 +62,7 @@
       "Hash": "e19c136c890e2e769215491776c558cb25ede2eaaddb5d73f8a9228b281adad9",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
-      "UserIntent": "Set the current user role or status as a developer"
+      "UserIntent": null
     },
     {
       "Text": "add event on before each step, include private goals, call Runtime/SendDebug",
@@ -76,7 +76,7 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T22:21:39.3315787+00:00",
       "WaitForExecution": true,
@@ -93,7 +93,7 @@
       "Hash": "2a976fc40a4883513506866a7adf3687914a6eb4275e3806e1d404dcf399051f",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
-      "UserIntent": "The user wants to bind an event that triggers before each step executes, including private goals, and when triggered, it should call the Runtime/SendDebug goal."
+      "UserIntent": null
     },
     {
       "Text": "before goal ends, include private goals, call Runtime/SendDebug",
@@ -107,9 +107,9 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-12-06T22:21:46.4173615+00:00",
+      "Generated": "2026-01-17T13:55:57.0834382+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -121,10 +121,10 @@
       "LineNumber": 6,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7315c380998a80d39014f1a46a1fb89f019d99d9c3ded4ab1db3df78193a80da",
+      "Hash": "2b69f2d70bb33b276b1dd3722915de80e52689d01884791a5df080701e2dbdea",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
-      "UserIntent": "Before the current goal finishes, the user wants to include or execute private goals and specifically call the goal Runtime/SendDebug."
+      "UserIntent": null
     },
     {
       "Text": "on step error, call /events/Runtime/DebugErrorInIde",
@@ -138,7 +138,7 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-12-06T22:21:55.6153304+00:00",
       "WaitForExecution": true,
@@ -169,7 +169,7 @@
       "Hash": "6bbef19e9f36cc4c6899bd8a93cda769f893ffbaee2e5394b5f1e4a2fa523209",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
-      "UserIntent": "Set up an event handler to call a specific goal when a step error occurs during runtime"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -178,6 +178,7 @@
   "GoalFileName": "SetupApp.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\SetupApp.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SetupApp\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SetupApp",
@@ -186,11 +187,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "fcda5804774134d4aa7aa444fa275402b5356a3796437d3ae3816d8d4159b991",
+  "Hash": "aa0eb6ab5388face8131cc35779391f7af06eb934c85cd34d34d020ee4edd987",
   "IncomingVariablesRequired": {
     "%!debug%": "A boolean variable that determines if the application should run in debug mode, enabling additional debugging features."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

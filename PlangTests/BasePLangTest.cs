@@ -17,6 +17,8 @@ using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
 using PLang.Services.DbService;
+using PLang.Services.EncryptionService;
+using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
@@ -60,6 +62,7 @@ namespace PLangTests
 		protected IDbConnection db;
 		protected IArchiver archiver;
 		protected IEventSourceRepository eventSourceRepository;
+		protected IEventSourceFactory eventSourceFactory;
 		protected IEncryption encryption;
 		protected IEncryptionFactory encryptionFactory;
 		protected IOutputSink outputStream;

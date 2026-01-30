@@ -28,7 +28,7 @@
       "LineNumber": 47,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "72c9309107b387e6dd83980bc810cf35937759cb42cc1ec4b760480d23a6434b",
+      "Hash": "ab73e93dec9f2961dbd0dc99e335530b0fd838818129a852bec1e62f8c18d45d",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -40,6 +40,7 @@
   "GoalFileName": "SendDebug.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\SendDebug\\LoadCallStack\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\SendDebug\\LoadCallStack",
@@ -48,11 +49,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f60b3fa4bb42c9af510e0482fc9620b8a96f292dfc5d250d442fc7a0171547cd",
+  "Hash": "de1aa79d5abebf9ab38f175cac9ffabe1bc145d6d209199ec88cdaa211733805",
   "IncomingVariablesRequired": {
     "callStack": "An array that holds the current call stack entries."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

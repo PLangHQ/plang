@@ -305,12 +305,18 @@ namespace PLang.Modules.ScheduleModule
 						{
 							if (error != null && error is not EndGoal)
 							{
-								(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
-
-								if (error != null)
+								try
 								{
-									Console.WriteLine("Error running async goal:" + error.ToString());
-									
+									(_, error) = await engine.GetEventRuntime().AppErrorEvents(error);
+
+									if (error != null)
+									{
+										Console.WriteLine("Error running async goal:" + error.ToString());
+
+									}
+								} catch (Exception ex)
+								{
+									Console.WriteLine($"GoalName: {item.GoalName}" + ex.ToString());
 								}
 
 							}

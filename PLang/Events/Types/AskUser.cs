@@ -1,4 +1,5 @@
 ﻿using NJsonSchema.Validation;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
@@ -28,8 +29,7 @@ AskSystem
 ```"));
 			}
 
-
-
+			context.MemoryStack.Put("__plang_actor", "system");
 			context.MemoryStack.Put("__plang_question", question);
 
 			var goalResult = await engine.RunGoal(askUser, context);

@@ -120,11 +120,11 @@ namespace PLang.Runtime
 			
 		}
 
-		public List<ObjectValue> GetMemoryStack()
+		public IOrderedEnumerable<ObjectValue> GetMemoryStack()
 		{
 			//remove memorystack from variables before returning it to prevent circular reference.
 			var vars = variables.Where(p => !p.Key.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase) && !p.Key.Equals(ReservedKeywords.MemoryStack + "Json", StringComparison.OrdinalIgnoreCase))
-				.Select(p => p.Value).OrderByDescending(p => p.Updated).ThenBy(p => p.Name).ToList();
+				.Select(p => p.Value).OrderByDescending(p => p.Updated).ThenBy(p => p.Name);
 			return vars;
 		}
 		private void HandleSerializationError(object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
@@ -140,9 +140,9 @@ namespace PLang.Runtime
 				List<string> varsInStep = new();
 				var @event = contextAccessor.Current.Event;
 
-				if (@event != null && @event.CallingStep != null)
+				if (@event != null && @event.SourceStep != null)
 				{
-					varsInStep = VariableHelper.GetVariablesInText(@event.CallingStep.Text);
+					varsInStep = VariableHelper.GetVariablesInText(@event.SourceStep.Text);
 				}
 
 
@@ -160,12 +160,13 @@ namespace PLang.Runtime
 				// javascript cannot handle long variables, so we convert it to string
 				customSettings.Converters.Add(new LongAsStringConverter());
 
+				var copyMs = ms.Where(p => !p.Name.StartsWith("!")).ToList();
 
 				// when there is variable in step, lets reorder the memorystack to put 
 				// used variable at the top and notify use if variable is empty.
 				// This modifies the memory stack, so we need a new instance of it
 				// "simples" way to close it to serialize to json and back, not the fastest.
-				var json = JsonConvert.SerializeObject(ms, customSettings);
+				var json = JsonConvert.SerializeObject(copyMs, customSettings);
 				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json);
 
 				for (int i = 0; i < newMs.Count; i++)
@@ -179,7 +180,7 @@ namespace PLang.Runtime
 						newMs[i].Value = dict.Cast<object>().Take(50).ToList();
 					}
 					newMs[i].Order += varsInStep.Count;
-					ms[i].Order += varsInStep.Count;
+					copyMs[i].Order += varsInStep.Count;
 				}
 
 				for (int i = 0; i < varsInStep.Count; i++)
@@ -194,7 +195,7 @@ namespace PLang.Runtime
 						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is not initiated");
 					}
 					ov.Order = i;
-					var index = ms.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
+					var index = copyMs.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
 					if (index != -1)
 					{
 						newMs[index] = ov;
@@ -1082,216 +1083,6 @@ namespace PLang.Runtime
 
 
 			return;
-			/*
-			if (!key.Contains("."))
-			{
-				var type = (value == null) ? null : value.GetType();
-				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize, properties), goalStep, disableEvent);
-				return;
-			}
-
-			if (key.Contains("."))
-			{
-				var keyPlan = GetVariableExecutionPlan(originalKey, key, staticVariable);
-
-				ObjectValue objectValue = keyPlan.ObjectValue;
-				object? obj = keyPlan.Target ?? objectValue.Value;
-				if (obj == null)
-				{
-					keyPlan.Calls.Reverse();
-
-					IDictionary? prev = null;
-					foreach (var call in keyPlan.Calls)
-					{
-						var dict = new Dictionary<string, object?>();
-						if (prev == null)
-						{
-							dict.AddOrReplace(call, value);
-						}
-						else
-						{
-							dict.AddOrReplace(call, prev);
-						}
-						prev = dict;
-					}
-
-					if (prev != null)
-					{
-
-						objectValue = new ObjectValue(objectValue.Name, prev, prev.GetType(), objectValue.Parent, initialize, properties);
-						AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep, disableEvent);
-						return;
-					}
-				}
-
-				if (obj == null) obj = new { };
-
-				object? itemOnStack = obj;
-				for (int i=0;i<keyPlan.Calls.Count;i++)
-				{
-					
-					var call = keyPlan.Calls[i];
-
-					if (obj.GetType().Name.StartsWith("<>f__Anonymous"))
-					{
-						var anomType = obj.GetType();
-						var anonProperties = new ExpandoObject() as IDictionary<string, Object?>;
-						var objProperties = anomType.GetProperties();
-
-						foreach (var prop in objProperties)
-						{
-							if (prop.Name.ToLower() == call.ToLower())
-							{
-								anonProperties[prop.Name] = value;
-							}
-							else
-							{
-								anonProperties[prop.Name] = prop.GetValue(obj);
-							}
-						}
-						var objProperty = objProperties.FirstOrDefault(p => p.Name.Equals(call, StringComparison.OrdinalIgnoreCase));
-						if (objProperty == null)
-						{
-							anonProperties.Add(call, value);
-						}
-
-						objectValue = new ObjectValue(objectValue.Name, anonProperties, anonProperties.GetType(), objectValue.Parent, initialize, properties);
-					}
-					else if (call.Contains("("))
-					{
-						objectValue = ExecuteMethod(objectValue, call, keyPlan.VariableName);
-					}
-					else if (obj is Table)
-					{
-						throw new Exception("I dont believe this is used");
-
-						var row = ((IDictionary<string, object>)obj);
-						var column = row.Keys.FirstOrDefault(p => p.Equals(call, StringComparison.OrdinalIgnoreCase));
-						if (column == null)
-						{
-							throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
-						}
-						row[column] = value;
-						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize, properties);
-					}
-					else if (itemOnStack is IDictionary dict)
-					{
-						string? keyName = null;
-						foreach (object keyItem in dict.Keys)
-						{
-							if (keyItem is string strKey && string.Equals(strKey, call, StringComparison.OrdinalIgnoreCase))
-							{
-								keyName = keyItem.ToString();
-								break;
-							}
-						}
-
-						if (keyName != null)
-						{
-							if (i == keyPlan.Calls.Count - 1)
-							{
-								dict[keyName] = value;
-							} else
-							{
-								itemOnStack = dict[keyName];
-							}
-							
-						}
-						else
-						{
-
-							if (i == keyPlan.Calls.Count - 1)
-							{
-								dict.Add(call, value);
-							} else
-							{
-								var newItem = new Dictionary<string, object?>();
-								dict.Add(call, newItem);
-								itemOnStack = newItem;
-							}
-							
-						}
-					}
-					else
-					{
-						if (obj is JToken token)
-						{
-							if (token is JProperty)
-							{
-								token.Parent[call] = JToken.FromObject(value);
-							}
-							else
-							{
-								token[call] = JToken.FromObject(value);
-							}
-							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize, properties);
-						}
-						else
-						{
-							Type type = obj.GetType();
-
-							PropertyInfo? propInfo;
-							if (call.Contains("[") && call.Contains("]"))
-							{
-								string name = call.Substring(0, call.IndexOf("["));
-								string idxName = call.Replace(name, "").Replace("[", "").Replace("]", "");
-
-								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == name.ToLower());
-								if (propInfo == null)
-								{
-									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
-								}
-								var list = propInfo?.GetValue(obj) as IList;
-								var position = variables[idxName];
-								list[(int)position.Value] = value;
-								propInfo.SetValue(obj, list);
-								//objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
-							}
-							else
-							{
-								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
-
-								if (propInfo == null)
-								{
-									if (obj is ExpandoObject eo)
-									{
-										if (eo.FirstOrDefault(p => p.Key == call).Key == null)
-										{
-											CollectionExtensions.TryAdd(eo, call, value);
-										}
-										// property added
-										continue;
-									}
-									else
-									{
-										throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
-									}
-								}
-
-								if (value != null && value.GetType() != propInfo.PropertyType && propInfo.PropertyType != typeof(object))
-								{
-									value = Convert.ChangeType(value, propInfo.PropertyType);
-								}
-
-								propInfo.SetValue(obj, value);
-
-								//objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
-							}
-						}
-					}
-		
-		}
-
-				if (keyPlan.JsonPath != null && keyPlan.Target is JToken jToken)
-				{
-					SetJsonValue(jToken, keyPlan.JsonPath, value);
-				}
-
-				AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep, disableEvent);
-				
-			}	*/
-
-
 		}
 
 		public static void SetJsonValue(JToken jToken, string jsonPath, Object value)

@@ -230,13 +230,13 @@ namespace PLang.Interfaces
 			return dict;
 		}
 
-		internal PLangContext Clone(IEngine runtimeEngine)
+		internal PLangContext Clone(MemoryStack memoryStack, IEngine runtimeEngine)
 		{
-			var context = new PLangContext(MemoryStack, runtimeEngine, ExecutionMode);
+			var context = new PLangContext(memoryStack, runtimeEngine, ExecutionMode);
 			context.CallingStep = this.CallingStep;
 			context.Identity = this.Identity;
 			context.SignedMessage = this.SignedMessage;
-			context.CallStack = this.CallStack;
+			context.CallStack = new CallStack();
 			foreach (var item in this.Items)
 			{
 				context.Items.TryAdd(item.Key, item.Value);
@@ -274,6 +274,12 @@ namespace PLang.Interfaces
 		internal void RemoveVariable(string variableName)
 		{
 			CallStack.CurrentFrame.RemoveVariable(variableName);
+		}
+
+		public List<EventBinding> EventBindings = new List<EventBinding>();
+		internal void AddEvent(EventBinding eventBinding)
+		{
+			EventBindings.Add(eventBinding);
 		}
 	}
 }

@@ -39,7 +39,11 @@ namespace PLang.Events
 
 	}
 
-	public record RuntimeEvent(string Id, string EventType, string EventScope, GoalToCallInfo GoalToCall, GoalStep CallingStep);
+	public record RuntimeEvent(string Id, string EventType, string EventScope, GoalToCallInfo GoalToCall, GoalStep SourceStep)
+	{
+		public Goal SourceGoal { get { return SourceStep.Goal; } }
+		public Instruction? SourceInstruction {  get { return SourceStep.Instruction;  } }
+	};
 
 	// before each goal in api/* call !DoStuff
 	// before each step call !Debugger.SendInfo

@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Io;
 using CsvHelper;
 using LightInject;
+using Markdig.Syntax.Inlines;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -286,13 +287,8 @@ public class Program : BaseProgram, IDisposable
 						IError? error = null;
 						bool poll = false;
 						string? identity = null;
-						var ip = httpContext.Connection.RemoteIpAddress?.ToString();
-						if (ip != "85.220.51.178")
-						{
-							//Console.WriteLine($"No ip: {ip}");
-							return;
-						}
-
+						
+					
 						Stopwatch stopwatch = Stopwatch.StartNew();
 						try
 						{
@@ -313,9 +309,9 @@ public class Program : BaseProgram, IDisposable
 							var contextAccessor = container.GetInstance<IPLangContextAccessor>();
 							contextAccessor.Current = context;
 							context.HttpContext = httpContext;
+							context.Items.AddOrReplace("!IsHttp", true);
 
-
-							AddToCallStack(requestEngine, "RequestStart");
+							AddToCallStack(requestEngine, httpContext.Request.Path.Value ?? "RequestStart");
 
 							var httpOutputSink = new HttpSink(context, webserverProperties, engine.LiveConnections);
 							context.UserSink = httpOutputSink;
@@ -395,9 +391,8 @@ public class Program : BaseProgram, IDisposable
 							{
 								try
 								{
-									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
+									Console.WriteLine(" ---- Critical Exception(2)  ----\n\nWill not show first exception, only last one ");
 									Console.WriteLine(ex2);
-									Console.WriteLine(ex);
 									Console.WriteLine(" ---- Critical Exception(2)  ---- ");
 								} catch
 								{
@@ -664,7 +659,11 @@ OnStartingWebserver
 				{
 					var executeMessage = new ExecuteMessage("redirect", url);
 					var sink = context.GetSink(executeMessage.Actor);
-					return await sink.SendAsync(executeMessage);
+					error = await sink.SendAsync(executeMessage);
+					if (error != null) return error;
+
+					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
+
 				}
 				else if (!isFlushed && !response.HasStarted)
 				{
@@ -673,6 +672,7 @@ OnStartingWebserver
 					await response.CompleteAsync();
 					hos.IsComplete = true;
 
+					return new EndGoal(true, goal, goalStep, "Redirect", (permanent) ? 301 : 302);
 				}
 			}
 		}
@@ -929,7 +929,7 @@ Frontpage
 
 	[Example("send 'file.pdf' to user", "path=file.pdf")]
 	[Example(@"send 'document.docx', name=""custom file.docx""", @"path=document.docx, fileName=""custom file.docx""")]
-	public async Task<IError?> SendFileToUser(string path, string? fileName = null, string actor = "user", string channel = "default")
+	public async Task<IError?> SendFileToUser(string path, string? fileName = null, string? contentType = null, string actor = "user", string channel = "default")
 	{
 		var absolutePath = GetPath(path);
 
@@ -938,7 +938,11 @@ Frontpage
 			return new NotFoundError("File not found");
 		}
 
-		var mimeType = RequestHandler.GetMimeType(path);
+		string? mimeType = contentType;
+		if (string.IsNullOrEmpty(contentType))
+		{
+			mimeType = RequestHandler.GetMimeType(path);
+		}
 		if (mimeType == null) mimeType = "application/octet-stream";
 
 		if (string.IsNullOrEmpty(fileName))

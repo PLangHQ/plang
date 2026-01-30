@@ -801,7 +801,7 @@ Be concise"));
 
 		}
 
-		private async Task<(DataSource? DataSource, IError? Error)> ProcessDataSource(DataSource? dataSource)
+		private async Task<(DataSource? DataSource, IError? Error)> ProcessDataSource(DataSource? dataSource, int retryCount = 0)
 		{
 			if (dataSource == null)
 			{
@@ -815,9 +815,21 @@ Be concise"));
 					&& !dataSource.LocalPath.Contains("%")
 					&& !fileSystem.File.Exists(dataSource.LocalPath))
 			{
-				using (var fs = fileSystem.File.Create(dataSource.LocalPath))
+				try
 				{
-					fs.Close();
+					using (var fs = fileSystem.File.Create(dataSource.LocalPath))
+					{
+						fs.Close();
+					}
+				} catch (Exception ex)
+				{
+					if (retryCount < 2 && ex.Message.Contains("Could not find a part of the path"))
+					{
+						var dir = fileSystem.Path.GetDirectoryName(dataSource.LocalPath);
+						fileSystem.Directory.CreateDirectory(dir);
+						return await ProcessDataSource(dataSource, ++retryCount);
+					}
+					throw;
 				}
 
 			}

@@ -160,6 +160,7 @@ namespace PLang.Building
 
 				ReleaseDatabase();
 				ShowBuilderErrors(goals, stopwatch);
+				
 
 				logger.LogDebug($"Done - Finished cleaning, db releasee and inform user - {stopwatch.ElapsedMilliseconds}");
 

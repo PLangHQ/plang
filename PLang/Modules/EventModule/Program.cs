@@ -19,8 +19,12 @@ public class Program : BaseProgram
 
 	public async Task<IError?> BindEvent(EventBinding eventBinding)
 	{
+		if (context.EventBindings.Any(p => p.Id == eventBinding.Id)) return null;
 
-		//engine.GetEventRuntime().AddEvent(eventBinding);
+		eventBinding.GoalStep = goalStep;
+		eventBinding.Goal = goal;
+
+		context.AddEvent(eventBinding);
 		return null;
 	}
 

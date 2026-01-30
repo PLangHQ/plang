@@ -6,6 +6,7 @@ using PLang.Models;
 using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.Xml.Linq;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
@@ -42,6 +43,7 @@ namespace PLang.Modules.OutputModule
 					if (result.Error != null) return (instruction, new BuilderError(result.Error));
 				}
 			}
+
 			return (instruction, null);
 		}
 	}

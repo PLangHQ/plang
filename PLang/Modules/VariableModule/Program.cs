@@ -19,6 +19,7 @@ using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Web;
+using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 
@@ -44,7 +45,7 @@ namespace PLang.Modules.VariableModule
 			return await db.GetDataSource(dataSourceName);
 
 		}
-
+		[Example("load %step%", @"variables=[""%step%""]")]
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables, string? dataSourceName = null)
 		{
 			Dictionary<string, object?> varsWithValue = new();
@@ -60,6 +61,7 @@ namespace PLang.Modules.VariableModule
 		}
 
 		[Description(@"Loads(not setting a variable) a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
+		[Example("load %step%, set as 1 if empty", @"variablesWithDefaultValue=[""%step%"", 1]")]
 		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, string? dataSourceName = null)
 		{
 			var (dataSource, error) = await GetDataSource(dataSourceName);
@@ -320,6 +322,9 @@ namespace PLang.Modules.VariableModule
 
 			return memoryStack.LoadVariables(content);
 		}
+
+
+
 		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
 		{
@@ -447,6 +452,16 @@ namespace PLang.Modules.VariableModule
 			{
 				memoryStack.Put(value.Key, value.Value, goalStep: goalStep);
 			}
+		}
+		[Description(@"Set bool variable width condition.")]
+		public async Task<IError?> SetBoolVariableWithCondition([HandlesVariable] string key, SimpleCondition simpleCondition, bool? defaultValue = null)
+		{
+			var program = engine.GetProgram<ConditionalModule.Program>();
+			var result = await program.SimpleCondition(simpleCondition);
+			if (result.Item2 != null) return result.Error;
+			
+			memoryStack.Put(key, result.ReturnValue ?? defaultValue, goalStep: goalStep);
+			return null;
 		}
 
 		[Description(@"Set bool variable.")]
@@ -589,7 +604,7 @@ Bad (dont use for):
 
 		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		[Example(@"set %q% = %request.query.q%, or ""hello"" if empty", @"keyValues.key=""%q%"", value=[""%request.query.q%"", ""hello""]")]
-		[Example(@"set %q% = %request.query.q% ?? """"", @"keyValues.key=""%q%"", value=[""%request.query.q%"", """"]")]
+		[Example(@"set %q% = %request.query.page% ?? 1", @"keyValues.key=""%page%"", value=[""%request.query.page%"", 1, ""System.Int64""]")]
 		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] List<VariableIfEmpty> variables, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var variable in variables)

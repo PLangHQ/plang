@@ -1,6 +1,8 @@
-﻿using PLang.Attributes;
+﻿using NCalc.Helpers;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Runtime;
+using ReverseMarkdown.Converters;
 using System.Collections.Concurrent;
 using System.Runtime.Serialization;
 
@@ -27,9 +29,9 @@ public abstract class VariableContainer
 	protected ConcurrentDictionary<string, Variable> _variables = new(StringComparer.OrdinalIgnoreCase);
 
 	[IgnoreWhenInstructed]
-	public List<Variable> Variables
+	public ICollection<Variable> Variables
 	{
-		get => _variables.Values.ToList();
+		get => _variables.Values;
 		set
 		{
 			_variables.Clear();
@@ -71,17 +73,16 @@ public abstract class VariableContainer
 		}
 	}
 
-	public List<Variable> GetVariables()
+	public IEnumerable<Variable> GetVariables()
 	{
-		return _variables.Values.ToList();
+		return _variables.Values.Where(p => !p.VariableName.StartsWith("!"));
 	}
 
-	public List<T> GetVariables<T>()
+	public IEnumerable<T> GetVariables<T>()
 	{
 		return _variables.Values
-			.Where(p => p.Value is T)
-			.Select(p => (T)p.Value)
-			.ToList();
+			.Where(p => !p.VariableName.StartsWith("!") && p.Value is T)
+			.Select(p => (T)p.Value);
 	}
 
 	public object? GetVariable(string? variableName, int level = 0)
@@ -119,7 +120,7 @@ public abstract class VariableContainer
 
 		try
 		{
-			return (T)Convert.ChangeType(value, typeof(T));
+			return (T?)PLang.Utils.TypeHelper.ConvertToType(value, typeof(T));
 		}
 		catch
 		{

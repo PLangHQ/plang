@@ -43,8 +43,9 @@ public class SerializableCallStack
 
 public class SerializableCallStackFrame
 {
-	public string? GoalName { get; set; }
-	public string? GoalPath { get; set; }
+	public string? Name { get; set; }
+	public string? Path { get; set; }
+	public string? AbsolutePath { get; set; }
 	public string Phase { get; set; } = ExecutionPhase.None.ToString();
 	public string? EventScope { get; set; }
 	public string? EventType { get; set; }
@@ -71,8 +72,9 @@ public class SerializableCallStackFrame
 
 		return new SerializableCallStackFrame
 		{
-			GoalName = frame.Goal?.GoalName,
-			GoalPath = frame.Goal?.RelativeGoalPath,
+			Name = frame.Goal?.GoalName,
+			Path = frame.Goal?.RelativeGoalPath,
+			AbsolutePath = frame.Goal?.AbsoluteGoalPath,
 			Phase = frame.Phase.ToString(),
 			EventScope = frame.Event?.EventScope,
 			EventType = frame.Event?.EventType,
@@ -93,6 +95,10 @@ public class SerializableExecutedStep
 {
 	public string? StepText { get; set; }
 	public int Index { get; set; }
+	public int LineNumber { get; set; }
+	public string? PrPath { get; set; }
+	public string? Path { get; set; }
+	public string? AbsolutePath { get; set; }
 	public DateTime StartedAt { get; set; }
 	public DateTime? CompletedAt { get; set; }
 	public double DurationMs { get; set; }
@@ -112,7 +118,11 @@ public class SerializableExecutedStep
 		return new SerializableExecutedStep
 		{
 			StepText = step.Step?.Text,
+			Path = step.Step?.RelativeGoalPath,
+			AbsolutePath = step.Step?.Goal.AbsoluteGoalPath,
+			PrPath = step.Step?.RelativePrPath,
 			Index = step.Index,
+			LineNumber = step.LineNumber,
 			StartedAt = step.StartedAt,
 			CompletedAt = step.CompletedAt,
 			DurationMs = durationMs,
@@ -133,7 +143,11 @@ public class SerializableExecutedStep
 		return new SerializableExecutedStep
 		{
 			StepText = step.Step?.Text,
+			Path = step.Step?.RelativeGoalPath,
+			AbsolutePath = step.Step?.Goal.AbsoluteGoalPath,
+			PrPath = step.Step?.RelativePrPath,
 			Index = step.Index,
+			LineNumber = step.LineNumber,
 			StartedAt = step.StartedAt,
 			CompletedAt = step.CompletedAt,
 			DurationMs = step.Duration.TotalMilliseconds,

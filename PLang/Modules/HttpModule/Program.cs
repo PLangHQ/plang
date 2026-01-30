@@ -430,12 +430,22 @@ namespace PLang.Modules.HttpModule
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			if (data != null)
 			{
-				string body = StringHelper.ConvertToString(data);
-
-				requestValue.Add("Body", body);
 				requestValue.Add("Encoding", encoding);
 				requestValue.Add("Content-Type", contentType);
-				request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+
+				if (contentType == "application/x-www-form-urlencoded")
+				{
+					await PutFormUrlEncoding(requestValue, data, request);
+				}
+				else
+				{ 
+					string? body = StringHelper.ConvertToString(data);
+
+					requestValue.Add("Body", body);
+					request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+				}
+				
+				
 			}
 
 			if (!doNotSignRequest)
@@ -527,13 +537,13 @@ namespace PLang.Modules.HttpModule
 				var bytes = await response.Content.ReadAsByteArrayAsync();
 
 				if (!IsTextResponse(mediaType))
-				{					
+				{
 					properties = GetHttpResponse(properties, response);
 					return (bytes, null, properties);
 				}
 
 				var charsets = UtfUnknown.CharsetDetector.DetectFromBytes(bytes);
-				var enc = charsets.Detected?.Encoding ?? Encoding.UTF8;				
+				var enc = charsets.Detected?.Encoding ?? Encoding.UTF8;
 				if (charsets != null && charsets.Details != null)
 				{
 					List<string> charsetProp = new();
@@ -549,7 +559,7 @@ namespace PLang.Modules.HttpModule
 				Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 				string responseBody = enc.GetString(bytes);
-				
+
 
 				//string responseBody = await response.Content.ReadAsStringAsync();
 				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
@@ -567,14 +577,22 @@ namespace PLang.Modules.HttpModule
 				}
 				else if (IsXml(response.Content.Headers.ContentType?.MediaType))
 				{
-					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-					XmlDocument xmlDoc = new XmlDocument();
-					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-					properties.Add(new ObjectValue("Encoding", enc));
-					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-					properties = GetHttpResponse(properties, response);
-					return (JsonConvert.DeserializeObject(jsonString), null, properties);
+					try
+					{
+						// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+						// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+						XmlDocument xmlDoc = new XmlDocument();
+						xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+						properties.Add(new ObjectValue("Encoding", enc));
+						string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+						properties = GetHttpResponse(properties, response);
+						return (JsonConvert.DeserializeObject(jsonString), null, properties);
+					} catch (Exception ex)
+					{
+						Console.WriteLine($"Error on xml response:{responseBody}");
+
+						return (responseBody, new ProgramError(ex.Message, Exception: ex), properties);
+					}
 
 				}
 				properties = GetHttpResponse(properties, response);
@@ -593,6 +611,35 @@ namespace PLang.Modules.HttpModule
 			}
 
 
+		}
+
+		private async Task PutFormUrlEncoding(Dictionary<string, object?> requestValue, object data, HttpRequestMessage request)
+		{
+			// Convert data to form-urlencoded format
+			IEnumerable<KeyValuePair<string, string>> formData;
+
+			if (data is Dictionary<string, object> dict)
+			{
+				formData = dict.Select(kvp => new KeyValuePair<string, string>(
+					kvp.Key,
+					kvp.Value?.ToString() ?? ""));
+			}
+			else if (data is IDictionary<string, string> stringDict)
+			{
+				formData = stringDict;
+			}
+			else
+			{
+				// Try to deserialize JSON to dictionary
+				var json = StringHelper.ConvertToString(data);
+				var parsed = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+				formData = parsed?.Select(kvp => new KeyValuePair<string, string>(
+					kvp.Key,
+					kvp.Value?.ToString() ?? "")) ?? [];
+			}
+
+			request.Content = new FormUrlEncodedContent(formData);
+			requestValue.Add("Body", await request.Content.ReadAsStringAsync());
 		}
 
 		private async Task<IError?> GetError(JsonRpcError error)

@@ -3,20 +3,20 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "ask \"%__plang_question%\", channel=\"info\", write to %__plang_answer%",
+      "Text": "ask \"%__plang_question%\", actor=%__plang_actor%, write to %__plang_answer%",
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "ask_question_and_capture_answer",
-      "Description": "Display the content of the variable %__plang_question% as a question to the user on the 'info' channel, then capture the user's response and store it in the variable %__plang_answer%",
-      "PrFileName": "01. ask_question_and_capture_answer.pr",
-      "RelativePrPath": ".build\\events\\AskSystem\\01. ask_question_and_capture_answer.pr",
+      "Name": "ask_question_and_store_answer",
+      "Description": "Send the question stored in %__plang_question% to the actor specified in %__plang_actor%, then capture and store the actor's response in the variable %__plang_answer%",
+      "PrFileName": "01. ask_question_and_store_answer.pr",
+      "RelativePrPath": ".build\\events\\AskSystem\\01. ask_question_and_store_answer.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-10-03T15:54:01.2923809+00:00",
+      "Generated": "2026-01-21T11:57:21.7517109+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,10 +28,10 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "fd843bef24cef6f631c3d0c30ac2e4de829505377fc006f1e1be562e2793593b",
+      "Hash": "4d4a32a8be3b3e63312c56e465c63852c34092848cbfc9fcc21c67f65e838d46",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\AskSystem.goal",
-      "UserIntent": null
+      "UserIntent": "Ask a question to a specified actor and store the response"
     },
     {
       "Text": "return %__plang_answer%",
@@ -59,18 +59,19 @@
       "LineNumber": 3,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "390ee7ab174aa0b83bb2b037c221a2b2678ee2b5ee81f55a2678b37ca26a09db",
+      "Hash": "349c5b69f4cd118fbe10d17993fd2902bddd1264320a84b4a7e0c0fbb9eee13d",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\AskSystem.goal",
       "UserIntent": null
     }
   ],
   "SubGoals": [],
-  "Description": "The AskSystem goal is designed to prompt a question and retrieve an answer based on the provided input. It takes a question string and sends it to a specified channel, then captures the response in a designated variable before returning that response.",
+  "Description": "The AskSystem goal is designed to prompt a question to a specified actor and capture their response. It takes a question string and an actor identifier, then writes the actor's answer to a designated answer variable before returning that answer.",
   "Visibility": 1,
   "GoalFileName": "AskSystem.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\AskSystem.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\AskSystem\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\AskSystem",
@@ -79,12 +80,14 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "496bc52b0b25317cefe8108221efd052d87c553e528389adea8db570f2e75755",
+  "Hash": "3ac107d0610268d918f2517b312e3c0d137cbadacd0f8a363a74f18a11e36f85",
   "IncomingVariablesRequired": {
-    "__plang_question": "The question string that needs to be asked in the system.",
-    "__plang_answer": "The variable where the answer to the question will be stored."
+    "__plang_question": "The question to be asked to the actor, must be a string.",
+    "__plang_actor": "The identifier of the actor who will respond to the question, must be a string.",
+    "__plang_answer": "The variable where the actor's response will be stored, must be a string."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }
