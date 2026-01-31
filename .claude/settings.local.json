@@ -9,7 +9,9 @@
       "Bash(plang exec:*)",
       "Bash(plang build:*)",
       "Bash(cat:*)",
-      "Bash(plang:*)"
+      "Bash(plang:*)",
+      "Bash(ls:*)",
+      "Bash(dotnet test:*)"
     ]
   }
 }

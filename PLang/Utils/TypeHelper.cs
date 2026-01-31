@@ -1073,7 +1073,7 @@ public class TypeHelper : ITypeHelper
 		if (type == null || !type.IsGenericType)
 			return false;
 
-		return (IsListOrDict(type) ||
+		return (IsList(type) || IsDictionaryType(type) ||
 			   typeof(ITuple).IsAssignableFrom(type));
 	}
 	public static bool IsListOrDict(object? obj)
