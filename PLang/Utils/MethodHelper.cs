@@ -38,14 +38,31 @@ public class MethodHelper
 	private readonly ILogger logger;
 	private readonly IPLangContextAccessor contextAccessor;
 	private readonly ISettings settings;
-	private ConcurrentDictionary<string, MethodInfo> cachedMethodInfo;
+
+	// Static cache for MethodInfo along with its ParameterInfo[] - shared across all instances/requests
+	private static readonly ConcurrentDictionary<string, (MethodInfo Method, ParameterInfo[] Parameters)> _cachedMethodInfo = new();
+
+	// Static cache for GetMethods() results per Type - avoids repeated reflection
+	private static readonly ConcurrentDictionary<Type, MethodInfo[]> _typeMethodsCache = new();
+
 	public MethodHelper(ITypeHelper typeHelper, ILogger logger, IPLangContextAccessor contextAccessor, ISettings settings)
 	{
 		this.typeHelper = typeHelper;
 		this.logger = logger;
 		this.contextAccessor = contextAccessor;
 		this.settings = settings;
-		cachedMethodInfo = new();
+	}
+
+	/// <summary>
+	/// Gets cached ParameterInfo[] for a method, or null if not cached.
+	/// </summary>
+	public ParameterInfo[]? GetCachedParameters(string cacheKey)
+	{
+		if (_cachedMethodInfo.TryGetValue(cacheKey, out var cached))
+		{
+			return cached.Parameters;
+		}
+		return null;
 	}
 
 	public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
@@ -55,12 +72,15 @@ public class MethodHelper
 		{
 			cacheKey += "_" + string.Join(",", function.Parameters.Select(p => p.Type));
 		}
-		if (cachedMethodInfo.TryGetValue(cacheKey, out var methodInfo))
+		if (_cachedMethodInfo.TryGetValue(cacheKey, out var cached))
 		{
-			return methodInfo;
+			return cached.Method;
 		}
 
-		var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+		// Use cached methods per type to avoid repeated GetMethods() reflection
+		var type = callingInstance.GetType();
+		var methods = _typeMethodsCache.GetOrAdd(type, t =>
+			t.GetMethods(BindingFlags.Instance | BindingFlags.Public));
 
 		GroupedBuildErrors? error = null;
 		var method = methods.FirstOrDefault(p =>
@@ -76,7 +96,9 @@ public class MethodHelper
 		});
 		if (method != null)
 		{
-			cachedMethodInfo.TryAdd(cacheKey, method);
+			// Cache both MethodInfo and ParameterInfo[] together
+			var parameters = method.GetParameters();
+			_cachedMethodInfo.TryAdd(cacheKey, (method, parameters));
 			return method;
 		}
 
@@ -340,7 +362,14 @@ public class MethodHelper
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		var parameterValues = new Dictionary<string, object?>();
-		var parameters = method.GetParameters();
+
+		// Try to get cached parameters first, fall back to reflection
+		string cacheKey = function.Instruction.ModuleType + "_" + function.Name;
+		if (function.Parameters != null)
+		{
+			cacheKey += "_" + string.Join(",", function.Parameters.Select(p => p.Type));
+		}
+		var parameters = GetCachedParameters(cacheKey) ?? method.GetParameters();
 		if (parameters.Length == 0) return (parameterValues, null);
 
 		var step = function.Instruction.Step;
@@ -349,7 +378,7 @@ public class MethodHelper
 
 		foreach (var parameter in parameters)
 		{
-			logger.LogTrace($"         - Loading parameter in GetParameterValues {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace("         - Loading parameter in GetParameterValues {ParameterName} - {ElapsedMs}", parameter.Name, stopwatch.ElapsedMilliseconds);
 			if (parameter.Name == null) continue;
 
 			var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
@@ -424,8 +453,7 @@ public class MethodHelper
 				{
 					SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues, memoryStack);
 				}
-				logger.LogTrace($"         - Have parameter {parameter.Name} - {stopwatch.ElapsedMilliseconds}");
-
+				logger.LogTrace("         - Have parameter {ParameterName} - {ElapsedMs}", parameter.Name, stopwatch.ElapsedMilliseconds);
 			}
 			catch (PropertyNotFoundException) { throw; }
 			catch (ArgumentException) { throw; }
@@ -441,7 +469,7 @@ public class MethodHelper
 			}
 
 		}
-		logger.LogTrace($"         - returning parameterVAlues - {stopwatch.ElapsedMilliseconds}");
+		logger.LogTrace("         - returning parameterValues - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 		return (parameterValues, null);
 	}
 

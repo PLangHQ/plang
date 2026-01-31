@@ -65,6 +65,9 @@ namespace PLang.Container
 			// Layer 10: Default services that can be overridden via plang
 			RegisterDefaultServices(container);
 
+			// Layer 11: ModuleServices bundle (must be after all dependencies are registered)
+			RegisterModuleServices(container);
+
 			// Setup assembly resolve
 			SetupAssemblyResolve(container);
 
@@ -119,6 +122,27 @@ namespace PLang.Container
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
 			container.RegisterSingleton<MethodHelper>();
 			container.Register<VariableHelper, VariableHelper>();
+
+			// ModuleServices is registered later in RegisterModuleServices after all dependencies are available
+		}
+
+		private static void RegisterModuleServices(ServiceContainer container)
+		{
+			container.RegisterSingleton<ModuleServices>(factory =>
+			{
+				return new ModuleServices(
+					factory.GetInstance<ILogger>(),
+					factory.GetInstance<PLangAppContext>(),
+					factory.GetInstance<IAppCache>(),
+					factory.GetInstance<IPLangFileSystem>(),
+					factory.GetInstance<ISettings>(),
+					factory.GetInstance<IEngine>(),
+					factory.GetInstance<ITypeHelper>(),
+					factory.GetInstance<ILlmServiceFactory>(),
+					factory.GetInstance<MethodHelper>(),
+					factory.GetInstance<IFileAccessHandler>()
+				);
+			});
 		}
 
 		private static void RegisterSecurity(ServiceContainer container)

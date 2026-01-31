@@ -87,15 +87,21 @@ namespace PLang.Modules
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.container = container;
 
-			this.logger = container.GetInstance<ILogger>();
-			logger.LogTrace($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
+			// Single DI lookup for bundled services instead of 10 individual lookups
+			var services = container.GetInstance<ModuleServices>();
 
-			
-			this.appContext = container.GetInstance<PLangAppContext>();			
-			this.appCache = container.GetInstance<IAppCache>();
-			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-			this.settings = container.GetInstance<ISettings>();			
-			this.engine = container.GetInstance<IEngine>();
+			this.logger = services.Logger;
+			logger.LogTrace("        - Init on BaseProgram - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
+
+			this.appContext = services.AppContext;
+			this.appCache = services.AppCache;
+			this.fileSystem = services.FileSystem;
+			this.settings = services.Settings;
+			this.engine = services.Engine;
+			this.typeHelper = services.TypeHelper;
+			this.llmServiceFactory = services.LlmServiceFactory;
+			this.methodHelper = services.MethodHelper;
+			this.fileAccessHandler = services.FileAccessHandler;
 
 			this.contextAccessor = contextAccessor;
 			this.context = contextAccessor.Current;
@@ -105,14 +111,7 @@ namespace PLang.Modules
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
 
-			logger.LogTrace($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
-			
-			this.typeHelper = container.GetInstance<ITypeHelper>();
-			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-			this.methodHelper = container.GetInstance<MethodHelper>();
-
-			this.fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			logger.LogTrace($"        - Done init - {stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace("        - Done init - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -176,14 +175,14 @@ namespace PLang.Modules
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				logger.LogTrace($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace("       - Get method {FunctionName} - {ElapsedMs}", function.Name, stopwatch.ElapsedMilliseconds);
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogTrace($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace("       - Method:{ModuleType}.{MethodName} - {ElapsedMs}", goalStep.ModuleType, method.Name, stopwatch.ElapsedMilliseconds);
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -192,12 +191,12 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
-				logger.LogTrace($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace("       - Loading parameter values - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
-				logger.LogTrace($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace("       - Have parameter values, calling Invoke - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 				
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -251,7 +250,7 @@ namespace PLang.Modules
 					}
 				}
 
-				logger.LogTrace($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+				logger.LogTrace("       - Invoke done - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 
 				if (task.Status == TaskStatus.Canceled)
 				{

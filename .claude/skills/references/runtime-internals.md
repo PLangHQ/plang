@@ -39,7 +39,12 @@ PLang/
 │   └── Types/                 # Event type definitions
 │
 ├── Container/
-│   └── Container.cs           # DI registration (LightInject)
+│   ├── Container.cs           # DI registration (LightInject) - full registration
+│   ├── MinimalContainer.cs    # Minimal bootstrap for console runtime
+│   └── ModuleServices.cs      # Bundled services for BaseProgram.Init()
+│
+├── Utils/
+│   └── MethodHelper.cs        # Method resolution with static caching
 │
 └── Errors/
     ├── IError.cs              # Error interface
@@ -669,3 +674,179 @@ mockPrParser.GetAllGoals().Returns(new List<Goal>
     new Goal { GoalName = "TestGoal" }
 });
 ```
+
+## Performance Optimizations
+
+### ModuleServices - Bundled DI Pattern
+
+Instead of multiple DI lookups per step, `ModuleServices` bundles commonly-used services:
+
+**File:** `PLang/Container/ModuleServices.cs`
+
+```csharp
+public class ModuleServices
+{
+    public ILogger Logger { get; }
+    public PLangAppContext AppContext { get; }
+    public IAppCache AppCache { get; }
+    public IPLangFileSystem FileSystem { get; }
+    public ISettings Settings { get; }
+    public IEngine Engine { get; }
+    public ITypeHelper TypeHelper { get; }
+    public ILlmServiceFactory LlmServiceFactory { get; }
+    public MethodHelper MethodHelper { get; }
+    public IFileAccessHandler FileAccessHandler { get; }
+
+    public ModuleServices(/* all dependencies injected */) { ... }
+}
+```
+
+**Usage in BaseProgram.Init():**
+
+```csharp
+public void Init(IServiceContainer container, Goal goal, GoalStep step, ...)
+{
+    // Single DI lookup instead of 10 individual lookups
+    var services = container.GetInstance<ModuleServices>();
+
+    this.logger = services.Logger;
+    this.appContext = services.AppContext;
+    this.appCache = services.AppCache;
+    // ... etc
+}
+```
+
+**Registration:** Must be in both `Container.cs` and `MinimalContainer.cs`:
+
+```csharp
+container.RegisterSingleton<ModuleServices>(factory =>
+{
+    return new ModuleServices(
+        factory.GetInstance<ILogger>(),
+        factory.GetInstance<PLangAppContext>(),
+        factory.GetInstance<IAppCache>(),
+        factory.GetInstance<IPLangFileSystem>(),
+        factory.GetInstance<ISettings>(),
+        factory.GetInstance<IEngine>(),
+        factory.GetInstance<ITypeHelper>(),
+        factory.GetInstance<ILlmServiceFactory>(),
+        factory.GetInstance<MethodHelper>(),
+        factory.GetInstance<IFileAccessHandler>()
+    );
+});
+```
+
+### Static Caching in MethodHelper
+
+Method and parameter info is cached statically to share across all containers/requests:
+
+**File:** `PLang/Utils/MethodHelper.cs`
+
+```csharp
+public class MethodHelper
+{
+    // Static - shared across ALL MethodHelper instances (important for webserver)
+    private static readonly ConcurrentDictionary<string, (MethodInfo Method, ParameterInfo[] Parameters)>
+        _cachedMethodInfo = new();
+
+    // Static - caches GetMethods() results per Type
+    private static readonly ConcurrentDictionary<Type, MethodInfo[]>
+        _typeMethodsCache = new();
+
+    public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
+    {
+        string cacheKey = function.Instruction.ModuleType + "_" + function.Name;
+        if (function.Parameters != null)
+        {
+            cacheKey += "_" + string.Join(",", function.Parameters.Select(p => p.Type));
+        }
+
+        // Check method cache first
+        if (_cachedMethodInfo.TryGetValue(cacheKey, out var cached))
+        {
+            return cached.Method;
+        }
+
+        // Use type methods cache to avoid repeated GetMethods() reflection
+        var type = callingInstance.GetType();
+        var methods = _typeMethodsCache.GetOrAdd(type, t =>
+            t.GetMethods(BindingFlags.Instance | BindingFlags.Public));
+
+        // Find matching method...
+        var method = methods.FirstOrDefault(p => p.Name == function.Name && ...);
+
+        if (method != null)
+        {
+            // Cache both MethodInfo and ParameterInfo[] together
+            var parameters = method.GetParameters();
+            _cachedMethodInfo.TryAdd(cacheKey, (method, parameters));
+        }
+
+        return method;
+    }
+
+    public ParameterInfo[]? GetCachedParameters(string cacheKey)
+    {
+        if (_cachedMethodInfo.TryGetValue(cacheKey, out var cached))
+        {
+            return cached.Parameters;
+        }
+        return null;
+    }
+}
+```
+
+**Why Static?**
+- Webserver creates new container per request
+- Instance-level cache would be empty for each request
+- Static cache persists across all containers, warming up once
+
+### Structured Logging
+
+Use structured logging to defer string formatting until log level is enabled:
+
+**Bad (always formats string):**
+```csharp
+logger.LogTrace($"Method:{goalStep.ModuleType}.{method.Name} - {stopwatch.ElapsedMilliseconds}");
+```
+
+**Good (formats only if Trace enabled):**
+```csharp
+logger.LogTrace("Method:{ModuleType}.{MethodName} - {ElapsedMs}",
+    goalStep.ModuleType, method.Name, stopwatch.ElapsedMilliseconds);
+```
+
+### Container Registration Paths
+
+Two registration paths exist - both need performance optimizations:
+
+| File | Purpose | Used By |
+|------|---------|---------|
+| `Container.cs` | Full registration | Webserver, WindowApp, Builder, ScheduleModule, sub-engines |
+| `MinimalContainer.cs` | Minimal bootstrap | Console runtime, Tests |
+
+When adding new singletons like `ModuleServices`, add to **both** files.
+
+### Performance Measurement
+
+Run with trace logging to see step timing:
+```bash
+plang Hello --logger=Trace
+```
+
+Output shows milliseconds per operation:
+```
+- Init on BaseProgram - 0           ← 0ms = cache hit
+- Get method Write - 0              ← 0ms = cache hit
+- Have parameter textMessage - 0    ← 0ms = cache hit
+```
+
+First execution is slow (JIT + cache population), subsequent executions should show 0ms for cached operations.
+
+### Known Remaining Bottlenecks
+
+1. **Settings variable resolution** (`%Settings.xxx%`) - hits database each time
+2. **MemoryStack variable resolution** - dictionary lookups and type conversion
+3. **Module instantiation** - new instance per step (not cached due to per-step state)
+
+These would require deeper changes to optimize.

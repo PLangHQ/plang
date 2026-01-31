@@ -362,6 +362,46 @@ context.Modules.Disable("terminal");
 context.Modules.Remove("code");
 ```
 
+## Performance Optimizations
+
+### ModuleServices Bundle
+
+`BaseProgram.Init()` uses `ModuleServices` for single DI lookup instead of 10:
+
+```csharp
+var services = container.GetInstance<ModuleServices>();
+this.logger = services.Logger;
+this.engine = services.Engine;
+// ... etc (bundled in ModuleServices)
+```
+
+### Static Method Caching
+
+`MethodHelper` uses static caches shared across all containers/requests:
+
+```csharp
+// Static - shared across ALL instances (important for webserver)
+private static readonly ConcurrentDictionary<string, (MethodInfo, ParameterInfo[])>
+    _cachedMethodInfo = new();
+private static readonly ConcurrentDictionary<Type, MethodInfo[]>
+    _typeMethodsCache = new();
+```
+
+### Structured Logging
+
+Use placeholders, not interpolation (defers formatting):
+
+```csharp
+// Good - formats only if Trace enabled
+logger.LogTrace("Method:{ModuleType}.{MethodName} - {ElapsedMs}",
+    goalStep.ModuleType, method.Name, stopwatch.ElapsedMilliseconds);
+
+// Bad - always formats string
+logger.LogTrace($"Method:{goalStep.ModuleType}.{method.Name} - {stopwatch.ElapsedMilliseconds}");
+```
+
+See `references/runtime-internals.md` for detailed performance documentation.
+
 ## Testing
 
 ### Unit Testing Modules

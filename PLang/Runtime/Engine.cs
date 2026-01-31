@@ -565,7 +565,7 @@ namespace PLang.Runtime
 			}
 			if (step.Stopwatch == null) step.Stopwatch = Stopwatch.StartNew();
 
-			logger.LogTrace($"     - Get runtime type {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace("     - Get runtime type {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 
 			Type? classType = typeHelper.GetRuntimeType(step.ModuleType);
 			if (classType == null)
@@ -579,7 +579,7 @@ namespace PLang.Runtime
 			context.AddVariable(step, variableName: ReservedKeywords.Step);
 			context.AddVariable(step.Instruction, variableName: ReservedKeywords.Instruction);
 
-			logger.LogTrace($"     - Getting instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+			logger.LogTrace("     - Getting instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 
 			BaseProgram? classInstance;
 			try
@@ -597,12 +597,12 @@ namespace PLang.Runtime
 
 				return await ProcessPrFile(goal, step, stepIndex, context);
 			}
-			logger.LogDebug($"     - Init instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+			logger.LogDebug("     - Init instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 			classInstance.Init(container, goal, step, step.Instruction, contextAccessor);
 
 			if (classInstance is IAsyncConstructor asyncConstructor)
 			{
-				logger.LogDebug($"     - Calling async init on instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+				logger.LogDebug("     - Calling async init on instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 				await asyncConstructor.AsyncConstructor();
 			}
 
@@ -617,7 +617,7 @@ namespace PLang.Runtime
 					{
 						context.CallStack.AddDisposable(disposable);
 					}
-					logger.LogDebug($"     - Calling Run instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+					logger.LogDebug("     - Calling Run instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 
 					var task = classInstance.Run();
 					await task;
@@ -634,7 +634,7 @@ namespace PLang.Runtime
 						step.Executed = DateTime.UtcNow;
 					}
 
-					logger.LogDebug($"     - Done running instance {step.ModuleType} - {step.Stopwatch.ElapsedMilliseconds}");
+					logger.LogDebug("     - Done running instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 
 					return result;
 				}

@@ -270,6 +270,21 @@ namespace PLang.Container
 			container.Register<VariableHelper, VariableHelper>();
 
 			container.RegisterSingleton<MethodHelper>();
+			container.RegisterSingleton<ModuleServices>(factory =>
+			{
+				return new ModuleServices(
+					factory.GetInstance<ILogger>(),
+					factory.GetInstance<PLangAppContext>(),
+					factory.GetInstance<IAppCache>(),
+					factory.GetInstance<IPLangFileSystem>(),
+					factory.GetInstance<ISettings>(),
+					factory.GetInstance<IEngine>(),
+					factory.GetInstance<ITypeHelper>(),
+					factory.GetInstance<ILlmServiceFactory>(),
+					factory.GetInstance<MethodHelper>(),
+					factory.GetInstance<IFileAccessHandler>()
+				);
+			});
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();
 			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
 
