@@ -52,13 +52,13 @@ namespace PLang.Building
 		private readonly ISettings settings;
 		private readonly IEngine engine;
 		private readonly IGoalParser goalParser;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly MethodHelper methodHelper;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			IMemoryStackAccessor memoryStackAccessor, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, ISettings settings,
-			IEngine engine, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
+			IEngine engine, IGoalParser goalParser, IPrParser prParser, MethodHelper methodHelper)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;

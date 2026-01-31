@@ -28,9 +28,9 @@ namespace PLang.Modules.WebserverModule
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IdentityModule.Program identity;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 
-		public RequestHandler(GoalStep step, ILogger logger, IPLangFileSystem fileSystem, Modules.IdentityModule.Program identity, PrParser prParser)
+		public RequestHandler(GoalStep step, ILogger logger, IPLangFileSystem fileSystem, Modules.IdentityModule.Program identity, IPrParser prParser)
 		{
 			this.step = step;
 			this.goal = step.Goal;

@@ -12,11 +12,11 @@ namespace PLang.Modules.ConditionalModule
 	public class Builder : BaseBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly MemoryStack memoryStack;
 		private readonly ILogger logger;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, ILogger logger) : base()
+		public Builder(IPLangFileSystem fileSystem, IPrParser prParser, ILogger logger) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;

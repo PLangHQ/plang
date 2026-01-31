@@ -32,10 +32,10 @@ namespace PLang.Services.CompilerService
 	{
 		private List<string> Assemblies = new List<string>();
 		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly ILogger logger;
 
-		public CSharpCompiler(IPLangFileSystem fileSystem, PrParser prParser, ILogger logger)
+		public CSharpCompiler(IPLangFileSystem fileSystem, IPrParser prParser, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;

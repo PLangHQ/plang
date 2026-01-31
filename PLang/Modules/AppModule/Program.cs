@@ -13,7 +13,7 @@ namespace PLang.Modules.AppModule
 {
 	
 	[Description("Call an App. When the user has the word 'app' in his statement, this should be called. ")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }
 

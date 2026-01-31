@@ -44,7 +44,7 @@ namespace PLang.Modules.DbModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly IPLangContextAccessor contextAccessor;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
@@ -55,7 +55,7 @@ namespace PLang.Modules.DbModule
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
 		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext appContext, ILlmServiceFactory llmServiceFactory,
-			ILogger logger, ITypeHelper typeHelper, PrParser prParser, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, IDbServiceFactory dbFactory, IAppCache appCache)
+			ILogger logger, ITypeHelper typeHelper, IPrParser prParser, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, IDbServiceFactory dbFactory, IAppCache appCache)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;

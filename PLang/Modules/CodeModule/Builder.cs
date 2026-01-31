@@ -21,12 +21,12 @@ namespace PLang.Modules.CodeModule
 	{
 
 		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly ILogger logger;
 		private readonly IEngine engine;
 		private int errorCount = 0;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, ILogger logger, IEngine engine) : base()
+		public Builder(IPLangFileSystem fileSystem, IPrParser prParser, ILogger logger, IEngine engine) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;

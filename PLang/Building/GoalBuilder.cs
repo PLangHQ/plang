@@ -45,7 +45,7 @@ namespace PLang.Building
 		private readonly IGoalParser goalParser;
 		private readonly IEventRuntime eventRuntime;
 		private readonly ITypeHelper typeHelper;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly ISettings settings;
 		private readonly ModuleSettings dbSettings;
 		private readonly IInstructionBuilder instructionBuilder;
@@ -55,7 +55,7 @@ namespace PLang.Building
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-				PrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
+				IPrParser prParser, ISettings settings, Modules.DbModule.ModuleSettings dbSettings,
 				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
 		{
 

@@ -11,6 +11,7 @@ using System.Collections.Concurrent;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.MockModule.Program;
 using static PLang.Utils.StepHelper;
+using LightInject;
 
 namespace PLang.Interfaces
 {
@@ -73,6 +74,7 @@ namespace PLang.Interfaces
 		public IEngine Engine { get; }
 		public IOutputSink UserSink { get; set; }
 		public IOutputSink SystemSink { get; set; }
+		public IModuleRegistry Modules { get; private set; }
 		public CallStack CallStack { get; set; }
 		public ExecutionMode ExecutionMode { get; set; }
 		public IPLangFileSystem FileSystem { get; internal set; }
@@ -92,6 +94,9 @@ namespace PLang.Interfaces
 			MemoryStack = memoryStack;
 			Engine = engine;
 			CallStack = new();
+			// Clone module registry from engine's default for this context
+			Modules = engine.CloneDefaultModuleRegistry();
+			// Get default sinks from engine (these will be the defaults since context is not yet set)
 			SystemSink = engine.SystemSink;
 			UserSink = engine.UserSink;
 			Items = new();
@@ -252,7 +257,8 @@ namespace PLang.Interfaces
 			context.ShowErrorDetails = this.ShowErrorDetails;
 			context.SystemSink = this.SystemSink;
 			context.UserSink = this.UserSink;
-
+			// Clone module registry - inherit enabled/disabled state
+			context.Modules = (this.Modules as ModuleRegistry)?.Clone() ?? runtimeEngine.CloneDefaultModuleRegistry();
 
 			return context;
 		}

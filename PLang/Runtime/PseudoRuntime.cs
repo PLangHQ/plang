@@ -1,4 +1,4 @@
-﻿using Force.DeepCloner;
+using Force.DeepCloner;
 using LightInject;
 using Newtonsoft.Json;
 using PLang.Building.Model;
@@ -37,14 +37,16 @@ namespace PLang.Runtime
 	public class PseudoRuntime : IPseudoRuntime
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly ILogger logger;
+		private readonly IEnginePool enginePool;
 
-		public PseudoRuntime(IPLangFileSystem fileSystem, PrParser prParser, ILogger logger)
+		public PseudoRuntime(IPLangFileSystem fileSystem, IPrParser prParser, ILogger logger, IEnginePool enginePool)
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
 			this.logger = logger;
+			this.enginePool = enginePool;
 		}
 
 		public async Task<(IEngine Engine, object? Variables, IError? Error)>
@@ -75,21 +77,8 @@ namespace PLang.Runtime
 			{
 				relativeGoalPath = runtimeEvent.SourceStep.RelativeGoalPath;
 			}
-			
-			(var goalToRun, var error) = GoalHelper.GetGoal(relativeGoalPath, fileSystem.RootDirectory, goalToCall, goals, systemGoals);
-			if (goalToCall.Name == "CreateUserInVitalSource")
-			{
-				Console.WriteLine($"CreateUserInVitalSource: {goalToCall.Name} | params:{string.Join(",", goalToCall.Parameters.Select(p => p.Key))} | path: {goalToCall.Path}");
-				if (goalToRun != null)
-				{
-					Console.WriteLine($"Goal: {goalToRun.GoalName} | pr:{goalToRun.RelativePrPath}");
-				} else
-				{
-					Console.WriteLine($"Goal IS NULL: relativeGoalPath:{relativeGoalPath} | fileSystem.RootDirectory: {fileSystem.RootDirectory} | goalToCall:{goalToCall}");
-					throw new Exception("CreateUserInVitalSource Goal is null");
-				}
 
-			}
+			(var goalToRun, var error) = GoalHelper.GetGoal(relativeGoalPath, fileSystem.RootDirectory, goalToCall, goals, systemGoals);
 			if (error != null) return (engine, null, error);
 			if (goalToRun == null) return (engine, null, new Error($"{goalToCall.Name} could not be found"));
 
@@ -106,12 +95,12 @@ namespace PLang.Runtime
 				// this is not working now, when I rent engine it gets the memory.
 				// this might not be an issues since all goals are open source and can be easily validated
 				// decision: leave it in to give memory stack to isolated goals
-				if (isolated || !waitForExecution || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
+				var isAsync = !waitForExecution;
+
+				if (isolated || isAsync || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
 				{
 					isRented = true;
-
-					runtimeEngine = await engine.RentAsync(context.CallingStep);
-					logger.LogDebug($"             - Rented engine - {stopwatch.ElapsedMilliseconds}");
+					runtimeEngine = enginePool.Rent(engine);
 				}
 
 				if (runtimeEvent != null)
@@ -139,14 +128,14 @@ namespace PLang.Runtime
 						}
 						else
 						{
-													
 							memoryStack.Put(param.Key, value, goalStep: context.CallingStep, disableEvent: true);
 						}
 					}
 				}
+
 				var prevIndent = context.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
 				context.AddVariable((prevIndent + indent), variableName: ReservedKeywords.ParentGoalIndent);
-				logger.LogDebug($"             - Running goal waitForExecution:{waitForExecution} - {stopwatch.ElapsedMilliseconds}");
+
 				Task<(object? Variables, IError? Error)> task;
 				if (waitForExecution)
 				{
@@ -170,74 +159,70 @@ namespace PLang.Runtime
 				}
 				else
 				{
-					
-					logger.LogDebug($"               - Create new memory for Task.Run {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-					var newMemoryStack = MemoryStack.New(runtimeEngine.Container, runtimeEngine);
-					foreach (var item in memoryStack.GetMemoryStack())
+					// Capture the rented engine - if setup fails before Task.Run starts, we must return it
+					var asyncEngine = runtimeEngine;
+					MemoryStack? newMemoryStack = null;
+
+					try
 					{
-						try
+						newMemoryStack = MemoryStack.New(asyncEngine.Container, asyncEngine);
+						var items = memoryStack.GetMemoryStack();
+						foreach (var item in items)
 						{
 							if (item.Name == "!Callstack") continue;
-
-							logger.LogDebug($"                 - Deep clone on {item.Name} {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
 							newMemoryStack.Put(new ObjectValue(item.Name, item.Value.DeepClone()));
-
-							
 						}
-						catch (Exception ex)
-						{
-							throw;
-						}
-					}
-					logger.LogDebug($"               - Task.Run {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-					task = Task.Run(async () =>
-					{
-						try
-						{
 
-							logger.LogDebug($"             - Starting to clone context {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							var newContext = context.Clone(newMemoryStack, runtimeEngine);
-							newContext.IsAsync = true;
-							newContext.HttpContext = null;
-							contextAccessor.Current = newContext;
-							
-							logger.LogDebug($"             - Done cloning context {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							var msa = runtimeEngine.Container.GetInstance<IMemoryStackAccessor>();
-							msa.Current = newMemoryStack;
-							logger.LogDebug($"             - Have new memory, now runtimeEngine.RunGoal {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							var (variables, error) = await runtimeEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
-							if (error != null && error is not EndGoal)
+						var capturedGoalName = goalToRun.GoalName;
+						task = Task.Run(async () =>
+						{
+							try
 							{
-								(_, error) = await runtimeEngine.GetEventRuntime().AppErrorEvents(error);
+								var newContext = context.Clone(newMemoryStack, asyncEngine);
+								newContext.IsAsync = true;
+								newContext.HttpContext = null;
+								contextAccessor.Current = newContext;
 
-								if (error != null)
+								var msa = asyncEngine.Container.GetInstance<IMemoryStackAccessor>();
+								msa.Current = newMemoryStack;
+								var (variables, error) = await asyncEngine.RunGoal(goalToRun, newContext, waitForXMillisecondsBeforeRunningGoal);
+								if (error != null && error is not EndGoal)
 								{
-									Console.WriteLine("Error running async goal:" + error.ToString());					
-									
+									(_, error) = await asyncEngine.GetEventRuntime().AppErrorEvents(error);
 								}
-
+								return (variables, error);
 							}
-							logger.LogDebug($"             - Done Running Task goal {goalToRun.GoalName} - {stopwatch.ElapsedMilliseconds}");
-							return (variables, error);
-						} finally
-						{
-							if (isRented)
+							finally
 							{
-								engine.Return(runtimeEngine);
+								enginePool.Return(asyncEngine);
 							}
-						}
-						
-					});
-				
-					KeepAlive(engine, task);
+						});
 
-					return (runtimeEngine, task, null);
+						// Task started successfully - engine will be returned by Task.Run's finally
+						isRented = false;
+
+						KeepAlive(engine, task);
+
+						return (asyncEngine, task, null);
+					}
+					catch (Exception ex)
+					{
+						enginePool.Return(asyncEngine);
+						isRented = false;
+						throw;
+					}
 				}
 
 
 			}
 			catch (Exception ex)
 			{
+				// If we rented an engine but failed before Task.Run started, return it now
+				if (isRented)
+				{
+					enginePool.Return(runtimeEngine);
+					isRented = false;
+				}
 				return (engine, null, new ExceptionError(ex));
 			}
 			finally
@@ -246,15 +231,16 @@ namespace PLang.Runtime
 				if (goalToRun != null && !isRented)
 				{
 					//disposeError = await context.CallStack.CurrentFrame.DisposeVariables(context.MemoryStack);
-								
+
 				}
-				if (isRented && waitForExecution)
+				// Return engine if still rented (sync completes here; async sets isRented=false when Task.Run starts)
+				if (isRented)
 				{
-					engine.Return(runtimeEngine);
+					enginePool.Return(runtimeEngine);
 				}
 
 				if (disposeError != null)
-				{ 
+				{
 					throw new ExceptionWrapper(disposeError);
 				}
 			}

@@ -1,9 +1,7 @@
-using Castle.DynamicProxy;
 using LightInject;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
-using PLang.Events;
 using PLang.Interfaces;
 using PLang.Modules;
 using System.Reflection;
@@ -13,17 +11,55 @@ namespace PLang.Runtime;
 
 public class ModuleRegistry : IModuleRegistry
 {
-	private readonly Dictionary<string, Type> _modules = new(StringComparer.OrdinalIgnoreCase);
-	private readonly HashSet<string> _disabled = new(StringComparer.OrdinalIgnoreCase);
-	private readonly HashSet<string> _removed = new(StringComparer.OrdinalIgnoreCase);
+	// Pre-compiled regex for extracting short names
+	private static readonly Regex ModuleNameRegex = new(@"PLang\.Modules\.(\w+)Module\.(Program|Builder)", RegexOptions.Compiled);
+
+	private Dictionary<string, Type> _modules;
+	private HashSet<string> _disabled;
+	private HashSet<string> _removed;
 	private readonly IServiceContainer _container;
 	private readonly IPLangContextAccessor _contextAccessor;
-	private readonly ProxyGenerator _proxyGen = new();
+
+	// Copy-on-write: track if we own the collections or are sharing with parent
+	private bool _ownsCollections;
+	// Reference to parent registry for copy-on-write
+	private ModuleRegistry? _parent;
 
 	public ModuleRegistry(IServiceContainer container, IPLangContextAccessor contextAccessor)
 	{
 		_container = container;
 		_contextAccessor = contextAccessor;
+		_modules = new(StringComparer.OrdinalIgnoreCase);
+		_disabled = new(StringComparer.OrdinalIgnoreCase);
+		_removed = new(StringComparer.OrdinalIgnoreCase);
+		_ownsCollections = true;
+	}
+
+	// Private constructor for shallow clone (copy-on-write)
+	private ModuleRegistry(IServiceContainer container, IPLangContextAccessor contextAccessor,
+		Dictionary<string, Type> modules, HashSet<string> disabled, HashSet<string> removed)
+	{
+		_container = container;
+		_contextAccessor = contextAccessor;
+		_modules = modules;
+		_disabled = disabled;
+		_removed = removed;
+		_ownsCollections = false; // We don't own these - will copy on first write
+	}
+
+	/// <summary>
+	/// Ensures we have our own mutable copies of the collections (copy-on-write)
+	/// </summary>
+	private void EnsureWritable()
+	{
+		if (_ownsCollections) return;
+
+		// Create our own copies
+		_modules = new Dictionary<string, Type>(_modules, StringComparer.OrdinalIgnoreCase);
+		_disabled = new HashSet<string>(_disabled, StringComparer.OrdinalIgnoreCase);
+		_removed = new HashSet<string>(_removed, StringComparer.OrdinalIgnoreCase);
+		_ownsCollections = true;
+		_parent = null;
 	}
 
 	public void Register<T>() where T : BaseProgram
@@ -44,6 +80,7 @@ public class ModuleRegistry : IModuleRegistry
 			throw new ArgumentException($"Type {moduleType.FullName} must inherit from BaseProgram", nameof(moduleType));
 		}
 
+		EnsureWritable();
 		_modules[shortName] = moduleType;
 		_removed.Remove(shortName);
 	}
@@ -55,6 +92,7 @@ public class ModuleRegistry : IModuleRegistry
 
 	public void Remove(string shortName)
 	{
+		EnsureWritable();
 		_modules.Remove(shortName);
 		_removed.Add(shortName);
 		_disabled.Remove(shortName);
@@ -66,11 +104,13 @@ public class ModuleRegistry : IModuleRegistry
 		{
 			throw new ArgumentException($"Module '{shortName}' is not registered", nameof(shortName));
 		}
+		EnsureWritable();
 		_disabled.Add(shortName);
 	}
 
 	public void Enable(string shortName)
 	{
+		EnsureWritable();
 		_disabled.Remove(shortName);
 	}
 
@@ -146,22 +186,7 @@ public class ModuleRegistry : IModuleRegistry
 			// Initialize the program
 			program.Init(_container, goal, step, instruction, _contextAccessor);
 
-			// Create proxy with error handling interceptor
-			var ctor = moduleType
-				.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-				.OrderByDescending(c => c.GetParameters().Length)
-				.First();
-			var ctorArgs = ctor.GetParameters()
-				.Select(p => _container.GetInstance(p.ParameterType))
-				.ToArray();
-
-			var ctx = _container.GetInstance<PLangAppContext>();
-			IInterceptor[] interceptors = [new ErrorHandlingInterceptor(_container.GetInstance<IEventRuntime>(), ctx)];
-
-			var proxy = _proxyGen.CreateClassProxyWithTarget(moduleType, program, ctorArgs, interceptors) as BaseProgram;
-			proxy!.Init(_container, goal, step, instruction, _contextAccessor);
-
-			return (proxy, null);
+			return (program, null);
 		}
 		catch (Exception ex)
 		{
@@ -179,7 +204,7 @@ public class ModuleRegistry : IModuleRegistry
 		var fullName = moduleType.FullName ?? moduleType.Name;
 
 		// Pattern: PLang.Modules.<Name>Module.Program or PLang.Modules.<Name>Module.Builder
-		var match = Regex.Match(fullName, @"PLang\.Modules\.(\w+)Module\.(Program|Builder)");
+		var match = ModuleNameRegex.Match(fullName);
 		if (match.Success)
 		{
 			return match.Groups[1].Value.ToLowerInvariant();
@@ -220,5 +245,20 @@ public class ModuleRegistry : IModuleRegistry
 				// Skip types that can't be registered
 			}
 		}
+	}
+
+	/// <summary>
+	/// Creates a shallow clone of the registry using copy-on-write pattern.
+	/// The clone shares the collections with the parent until a write operation occurs.
+	/// This is very fast for the common case where modules are only read, not modified.
+	/// </summary>
+	public ModuleRegistry Clone()
+	{
+		// Use copy-on-write: just share the same collections
+		// They will be copied only if the clone tries to modify them
+		return new ModuleRegistry(_container, _contextAccessor, _modules, _disabled, _removed)
+		{
+			_parent = this
+		};
 	}
 }

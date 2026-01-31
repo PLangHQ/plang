@@ -15,7 +15,7 @@ namespace PLang.Modules.AiModule
 	public record AiInfo(string model, object config);
 	
 	[Description("")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }
 

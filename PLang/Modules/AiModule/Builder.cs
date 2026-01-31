@@ -19,7 +19,7 @@ namespace PLang.Modules.AiModule
 		private readonly IGoalParser goalParser;
 		private readonly ILogger logger;
 
-		public Builder(IEngine engine, IGoalParser goalParser, PrParser prParser, IMemoryStackAccessor memoryStackAccessor, ILogger logger)
+		public Builder(IEngine engine, IGoalParser goalParser, IPrParser prParser, IMemoryStackAccessor memoryStackAccessor, ILogger logger)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"        - Start constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");

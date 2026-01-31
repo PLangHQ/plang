@@ -61,7 +61,7 @@ namespace PLang.Modules.DbModule
 		private record DbConnectionSupported(string Key, string Name, Type Type);
 
 		private ModuleSettings dbSettings;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly IDbServiceFactory dbFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
@@ -76,7 +76,7 @@ namespace PLang.Modules.DbModule
 		public record ColumnInfo(string Name, string Type, bool IsPrimaryKey, bool IsNotNull, object DefaultValue);
 
 		public Program(IDbServiceFactory dbFactory, PLangAppContext appContext, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
-			IEventSourceFactory eventSourceFactory, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser) : base()
+			IEventSourceFactory eventSourceFactory, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, IPrParser prParser) : base()
 		{
 			this.dbFactory = dbFactory;
 			this.fileSystem = fileSystem;

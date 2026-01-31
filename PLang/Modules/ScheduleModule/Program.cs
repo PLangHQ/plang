@@ -29,9 +29,9 @@ namespace PLang.Modules.ScheduleModule
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly ModuleSettings moduleSettings;
-		public PrParser PrParser { get; }
+		public IPrParser PrParser { get; }
 
-		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime,
+		public Program(ISettings settings, IPrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime,
 			ILogger logger, IPLangFileSystem fileSystem, IAppCache appCache) : base()
 		{
 			this.settings = settings;
@@ -151,7 +151,7 @@ namespace PLang.Modules.ScheduleModule
 
 			IEngine engine = this.engine;
 			ISettings settings = this.settings;
-			PrParser prParser = this.PrParser;
+			IPrParser prParser = this.PrParser;
 			ILogger logger = this.logger;
 			IPseudoRuntime pseudoRuntime = this.pseudoRuntime;
 			IPLangFileSystem fileSystem = this.fileSystem;
@@ -162,12 +162,12 @@ namespace PLang.Modules.ScheduleModule
 				var containerForScheduler = new ServiceContainer();
 
 
-				containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), null, null, parentEngine: engine);
+				containerForScheduler.RegisterForPLang(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString(), engine);
 
 				engine = containerForScheduler.GetInstance<IEngine>();
 				engine.Init(containerForScheduler);
 				settings = containerForScheduler.GetInstance<ISettings>();
-				prParser = containerForScheduler.GetInstance<PrParser>();
+				prParser = containerForScheduler.GetInstance<IPrParser>();
 				logger = containerForScheduler.GetInstance<ILogger>();
 				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
 				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
@@ -191,7 +191,7 @@ namespace PLang.Modules.ScheduleModule
 		}
 
 
-		private void Start(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private void Start(ISettings settings, IEngine engine, IPrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			RunContainer(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
@@ -210,7 +210,7 @@ namespace PLang.Modules.ScheduleModule
 
 				container.RegisterForPLangConsole(app.AbsoluteAppStartupFolderPath, app.RelativeGoalFolderPath);
 				RunContainer(container.GetInstance<ISettings>(), appEngine
-					, container.GetInstance<PrParser>(), container.GetInstance<ILogger>()
+					, container.GetInstance<IPrParser>(), container.GetInstance<ILogger>()
 					, container.GetInstance<IPseudoRuntime>(), container.GetInstance<IPLangFileSystem>());
 
 			}
@@ -218,7 +218,7 @@ namespace PLang.Modules.ScheduleModule
 
 		}
 
-		private void RunContainer(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private void RunContainer(ISettings settings, IEngine engine, IPrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			var moduleSettings = new ModuleSettings(settings);
 			var list = moduleSettings.GetCronJobs();
@@ -266,7 +266,7 @@ namespace PLang.Modules.ScheduleModule
 		}
 
 
-		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private async Task RunScheduledTasks(ISettings settings, IEngine engine, IPrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			logger.LogDebug("Running 1 min cron check");
 			CronJob? item = null;

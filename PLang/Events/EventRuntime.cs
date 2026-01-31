@@ -57,7 +57,7 @@ namespace PLang.Events
 	public class EventRuntime : IEventRuntime, IEventProvider
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly PLangAppContext appContext;
 		private readonly IPLangContextAccessor contextAccessor;
 		private readonly ILogger logger;
@@ -66,7 +66,7 @@ namespace PLang.Events
 		private List<EventBinding>? runtimeEvents = null;
 		private List<EventBinding>? builderEvents = null;
 		private IServiceContainer? container;
-		public EventRuntime(IPLangFileSystem fileSystem, PrParser prParser, PLangAppContext appContext, IPLangContextAccessor contextAccessor, ILogger logger, IEngine engine, IPseudoRuntime pseudoRuntime)
+		public EventRuntime(IPLangFileSystem fileSystem, IPrParser prParser, PLangAppContext appContext, IPLangContextAccessor contextAccessor, ILogger logger, IEngine engine, IPseudoRuntime pseudoRuntime)
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
@@ -96,10 +96,11 @@ namespace PLang.Events
 				throw new RuntimeException("Events are null. GetRuntimeEvents() cannot be called before Load");
 			}
 
-			if (contextAccessor.Current.EventBindings.Count > 0)
+			var context = contextAccessor.Current;
+			if (context?.EventBindings.Count > 0)
 			{
 				var events = new List<EventBinding>();
-				events.AddRange(contextAccessor.Current.EventBindings);
+				events.AddRange(context.EventBindings);
 				events.AddRange(runtimeEvents);
 				return events;
 			}

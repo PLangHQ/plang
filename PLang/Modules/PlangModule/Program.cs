@@ -34,10 +34,10 @@ namespace PLang.Modules.PlangModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IEngine engine;
 		private readonly IGoalBuilder goalBuilder;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly IFileAccessHandler fileAccessHandler;
 
-		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem, IEngine engine, IGoalBuilder goalBuilder, PrParser prParser, IFileAccessHandler fileAccessHandler) : base()
+		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem, IEngine engine, IGoalBuilder goalBuilder, IPrParser prParser, IFileAccessHandler fileAccessHandler) : base()
 		{
 			this.logger = logger;
 			this.goalParser = goalParser;

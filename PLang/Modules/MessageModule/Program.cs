@@ -52,8 +52,6 @@ namespace PLang.Modules.MessageModule
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
 
-		private readonly IErrorHandlerFactory errorHandlerFactory;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private ModuleSettings moduleSettings;
 
@@ -62,7 +60,7 @@ namespace PLang.Modules.MessageModule
 
 		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
 			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IPLangFileSystem fileSystem
+			IPLangFileSystem fileSystem
 			) : base()
 		{
 			this.settings = settings;
@@ -72,8 +70,6 @@ namespace PLang.Modules.MessageModule
 			this.llmServiceFactory = llmServiceFactory;
 			this.client = client;
 			this.signingService = signingService;
-			this.errorHandlerFactory = errorHandlerFactory;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.fileSystem = fileSystem;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 		}
@@ -215,7 +211,7 @@ namespace PLang.Modules.MessageModule
 
 			using (var container = new ServiceContainer())
 			{
-				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, errorHandlerFactory, errorSystemHandlerFactory, parentEngine: engine);
+				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, engine);
 
 				var content = ev.DecryptContent(privateKey);
 				var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
@@ -295,13 +291,12 @@ namespace PLang.Modules.MessageModule
 
 				var error = TaskHasError(task);
 
-				if (error != null)
+				if (error != null && error is not Errors.EndGoal)
 				{
-					var handler = errorHandlerFactory.CreateHandler();
-					(var isHandled, var handlerError) = await handler.Handle(error);
-					if (!isHandled)
+					var (_, handlerError) = await engine.GetEventRuntime().AppErrorEvents(error);
+					if (handlerError != null)
 					{
-						await handler.ShowError(error, goalStep);
+						logger.LogError(handlerError.ToString());
 					}
 					error = ErrorHelper.GetMultipleError(error, handlerError);
 				}

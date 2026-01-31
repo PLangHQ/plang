@@ -45,18 +45,20 @@ namespace PLang.Modules.WebserverModule;
 public class Program : BaseProgram, IDisposable
 {
 	private readonly IEventRuntime eventRuntime;
-	private readonly PrParser prParser;
+	private readonly IPrParser prParser;
 	private readonly IPseudoRuntime pseudoRuntime;
+	private readonly IEnginePool enginePool;
 	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
 
 
-	public Program(IEventRuntime eventRuntime, PrParser prParser,
-		IPseudoRuntime pseudoRuntime) : base()
+	public Program(IEventRuntime eventRuntime, IPrParser prParser,
+		IPseudoRuntime pseudoRuntime, IEnginePool enginePool) : base()
 	{
 		this.eventRuntime = eventRuntime;
 		this.prParser = prParser;
 		this.pseudoRuntime = pseudoRuntime;
+		this.enginePool = enginePool;
 
 	}
 
@@ -204,6 +206,8 @@ public class Program : BaseProgram, IDisposable
 			if (error != null) return (webserverProperties, error);
 		}
 
+		// Pre-warm the engine pool for faster request handling
+		enginePool.PreWarm(engine, count: 0);
 
 		var builder = Host.CreateDefaultBuilder()
 			.ConfigureLogging(l => l.ClearProviders())
@@ -293,19 +297,11 @@ public class Program : BaseProgram, IDisposable
 							logger.LogInformation(" ---------- Request Starts ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);
 
 
-							requestEngine = await engine.RentAsync(goalStep);
+							requestEngine = enginePool.Rent(engine);
 							requestEngine.Name = "RequestEngine_" + httpContext.Request.Path.Value;
 
-
-							var memoryStack = MemoryStack.New(container, requestEngine);
-							var msa = container.GetInstance<IMemoryStackAccessor>();
-							msa.Current = memoryStack;
-
-							PLangContext context = new(memoryStack, requestEngine, ExecutionMode.HttpRequest);
-							
-
-							var contextAccessor = container.GetInstance<IPLangContextAccessor>();
-							contextAccessor.Current = context;
+							// Context is already created by Rent() via PrepareForRequest
+							var context = requestEngine.Context;
 							context.HttpContext = httpContext;
 							context.Items.AddOrReplace("!IsHttp", true);
 
@@ -402,7 +398,7 @@ public class Program : BaseProgram, IDisposable
 						{
 							if (requestEngine != null)
 							{
-								engine.Return(requestEngine, true);
+								enginePool.Return(requestEngine);
 							}
 
 							logger.LogInformation(" ---------- Request Done ({0}) ---------- {1}", httpContext.Request.Path.Value, stopwatch.ElapsedMilliseconds);

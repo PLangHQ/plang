@@ -24,7 +24,7 @@ namespace PLang
 	public class Executor
 	{
 		private readonly IServiceContainer container;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IErrorHandler errorHandler;
 		private IEngine engine;
@@ -37,7 +37,7 @@ namespace PLang
 		{
 			this.container = container;
 
-			this.prParser = container.GetInstance<PrParser>();
+			this.prParser = container.GetInstance<IPrParser>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 
 		}
@@ -70,7 +70,7 @@ namespace PLang
 						engine.GetMemoryStack().Put(param.Key, param.Value);
 					}
 				}
-				var prParser = container.GetInstance<PrParser>();
+				var prParser = container.GetInstance<IPrParser>();
 				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
 
@@ -330,7 +330,7 @@ namespace PLang
 			var engine = container.GetInstance<IEngine>();
 			engine.Init(container);
 			
-			var prParser = container.GetInstance<PrParser>();
+			var prParser = container.GetInstance<IPrParser>();
 			var (goal, error) = prParser.GetGoal(goalInfo);
 			if (error != null) return (null, null, error);
 

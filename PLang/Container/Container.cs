@@ -1,5 +1,4 @@
 ﻿using AngleSharp.Dom;
-using Castle.DynamicProxy;
 using LightInject;
 using Microsoft.Data.Sqlite;
 using Namotion.Reflection;
@@ -52,31 +51,18 @@ namespace PLang.Container
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
 
 
-		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, IEngine parentEngine)
+		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath, IEngine parentEngine)
 		{
-			container.RegisterSingleton<PrParser>((factory) => { return parentEngine.PrParser; });
-
-
+			container.RegisterSingleton<IPrParser>((factory) => { return parentEngine.PrParser; });
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath, parentEngine);
 			RegisterModules(container);
-
-
-			container.RegisterSingleton<IErrorHandlerFactory>(factory => { return errorHandlerFactory; });
-			container.RegisterSingleton<IErrorSystemHandlerFactory>(factory => { return errorSystemHandlerFactory; });
-
-			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
+			container.RegisterCoreForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 
 			var engine = container.GetInstance<IEngine>();
-
 			engine.SystemSink = parentEngine.SystemSink;
 			engine.UserSink = parentEngine.UserSink;
-			//	engine.Init(container);
 
 			RegisterEventRuntime(container);
-
-
-
 			RegisterBaseVariables(container, parentEngine);
 		}
 
@@ -84,22 +70,14 @@ namespace PLang.Container
 		{
 			container.RegisterBaseForPLang(step.Goal.AbsoluteAppStartupFolderPath, step.Goal.RelativeGoalFolderPath, parentEngine);
 			RegisterModules(container);
-			container.RegisterForPLang(step.Goal.AbsoluteAppStartupFolderPath, step.Goal.RelativeGoalFolderPath);
-
-			var engine = container.GetInstance<IEngine>();
-
+			container.RegisterCoreForPLang(step.Goal.AbsoluteAppStartupFolderPath, step.Goal.RelativeGoalFolderPath);
 
 			container.Register<RequestHandler>(factory =>
 					new RequestHandler(step,
 									factory.GetInstance<ILogger>(),
 									factory.GetInstance<IPLangFileSystem>(),
 									factory.GetInstance<Modules.IdentityModule.Program>(),
-									factory.GetInstance<PrParser>()));
-
-			var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), engine.Modules);
-			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
-
-			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
+									factory.GetInstance<IPrParser>()));
 
 			RegisterEventRuntime(container);
 			RegisterBaseVariables(container);
@@ -109,14 +87,11 @@ namespace PLang.Container
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
-			container.RegisterForPLang(appStartupPath, relativeAppPath);
+			container.RegisterCoreForPLang(appStartupPath, relativeAppPath);
 
 			var engine = container.GetInstance<IEngine>();
 			engine.SystemSink = new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm);
 			engine.UserSink = new AppOutputSink(container.GetInstance<IPLangFileSystem>(), iForm);
-
-			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
-			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog));
 
 			RegisterEventRuntime(container);
 			RegisterBaseVariables(container);
@@ -126,18 +101,15 @@ namespace PLang.Container
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
-			container.RegisterForPLang(appStartupPath, relativeAppPath);
+			container.RegisterCoreForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
 
 			engine.SystemSink = new ConsoleSink();
 			engine.UserSink = new ConsoleSink();
 
-			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
-			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 			RegisterEventRuntime(container);
 
 			RegisterBaseVariables(container);
-
 		}
 
 
@@ -145,21 +117,16 @@ namespace PLang.Container
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
-			container.RegisterForPLang(appStartupPath, relativeAppPath);
+			container.RegisterCoreForPLang(appStartupPath, relativeAppPath);
 			var engine = container.GetInstance<IEngine>();
 			engine.SystemSink = new ConsoleSink();
 			engine.UserSink = new ConsoleSink();
-
-
-			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
-			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
 
 			RegisterEventRuntime(container, true);
 
 			engine.Init(container);
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-
 
 			RegisterBaseVariables(container);
 		}
@@ -192,7 +159,7 @@ namespace PLang.Container
 			});
 
 			container.RegisterSingleton<DependancyHelper>();
-			container.RegisterSingleton<PrParser>();
+			container.RegisterSingleton<IPrParser, PrParser>();
 
 		}
 
@@ -215,8 +182,7 @@ namespace PLang.Container
 				var runtimeContainer = new ServiceContainer();
 
 
-				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath,
-					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), engine);
+				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, engine);
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 
 				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();
@@ -239,8 +205,6 @@ namespace PLang.Container
 
 		private static void RegisterBaseVariables(ServiceContainer container, IEngine? parentEngine = null)
 		{
-			container.RegisterSingleton<IInterceptor, ErrorHandlingInterceptor>();
-
 			var context = container.GetInstance<PLangAppContext>();
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
@@ -252,7 +216,7 @@ namespace PLang.Container
 			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.SystemDirectory);
 		}
 
-		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath, IEngine? parentEngine = null)
+		private static void RegisterCoreForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath, IEngine? parentEngine = null)
 		{
 			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
 			{
@@ -266,6 +230,7 @@ namespace PLang.Container
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 
 			container.RegisterSingleton<IEngine, Engine>();
+			container.RegisterSingleton<IEnginePool, EnginePoolService>();
 
 
 			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>(), container.GetInstance<IEngine>());
@@ -532,28 +497,53 @@ namespace PLang.Container
 			AppDomain.CurrentDomain.AssemblyResolve += engine.AsmHandler;
 		}
 
+		// Cache module types to avoid expensive reflection on every engine creation
+		// Internal so MinimalContainer can share the cache
+		internal static List<Type>? _cachedModuleSettings;
+		internal static List<Type>? _cachedFactories;
+		internal static List<Type>? _cachedModules;
+		internal static readonly object _moduleCacheLock = new();
+
+		internal static void EnsureModuleTypesScanned()
+		{
+			if (_cachedModules != null) return;
+
+			lock (_moduleCacheLock)
+			{
+				if (_cachedModules != null) return;
+
+				var currentAssembly = Assembly.GetExecutingAssembly();
+				var allTypes = currentAssembly.GetTypes();
+
+				_cachedModuleSettings = allTypes
+					.Where(t => !t.IsAbstract && !t.IsInterface && typeof(IModuleSettings).IsAssignableFrom(t))
+					.ToList();
+
+				_cachedFactories = allTypes
+					.Where(t => !t.IsAbstract && !t.IsInterface && typeof(BaseFactory).IsAssignableFrom(t))
+					.ToList();
+
+				_cachedModules = allTypes
+					.Where(t => !t.IsAbstract && !t.IsInterface &&
+						(typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
+					.ToList();
+			}
+		}
+
 		private static void RegisterModules(ServiceContainer container)
 		{
+			// Ensure types are scanned (only happens once)
+			EnsureModuleTypesScanned();
 
-			var currentAssembly = Assembly.GetExecutingAssembly();
-			var moduleSettingsFromCurrentAssembly = currentAssembly.GetTypes()
-																			.Where(t => !t.IsAbstract && !t.IsInterface &&
-																			(typeof(IModuleSettings).IsAssignableFrom(t)))
-																			.ToList();
-
-			// Register these types with the DI container
-			foreach (var type in moduleSettingsFromCurrentAssembly)
+			// Register module settings
+			foreach (var type in _cachedModuleSettings!)
 			{
 				container.Register(type);
 				container.Register(type, type, serviceName: type.FullName);
 			}
-			var factoriesFromCurrentAssembly = currentAssembly.GetTypes()
-																			.Where(t => !t.IsAbstract && !t.IsInterface &&
-																			(typeof(BaseFactory).IsAssignableFrom(t)))
-																			.ToList();
 
-			// Register these types with the DI container
-			foreach (var type in factoriesFromCurrentAssembly)
+			// Register factories
+			foreach (var type in _cachedFactories!)
 			{
 				container.Register(type, factory =>
 				{
@@ -562,19 +552,14 @@ namespace PLang.Container
 				});
 			}
 
-			// Scan the current assembly for types that inherit from BaseBuilder
-			var modulesFromCurrentAssembly = currentAssembly.GetTypes()
-																.Where(t => !t.IsAbstract && !t.IsInterface &&
-																(typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-																.ToList();
-
-			// Register these types with the DI container
-			foreach (var type in modulesFromCurrentAssembly)
+			// Register modules (builders and programs)
+			foreach (var type in _cachedModules!)
 			{
 				container.Register(type);
 			}
 			container.Register<BaseBuilder, BaseBuilder>();
 
+			// Load custom modules from .modules folder (this still needs to be per-container for file system access)
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			if (fileSystem.Directory.Exists(".modules"))
 			{
@@ -588,11 +573,9 @@ namespace PLang.Container
 						return instance;
 					}, serviceName: module.FullName);
 				}
-
 			}
 
 			RegisterUserGlobalInjections(container);
-
 		}
 		static double GetVersionPriority(string version)
 		{
@@ -633,7 +616,7 @@ namespace PLang.Container
 
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
-			var prParser = container.GetInstance<PrParser>();
+			var prParser = container.GetInstance<IPrParser>();
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var goals = prParser.GetGoals();

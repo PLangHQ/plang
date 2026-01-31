@@ -73,10 +73,6 @@ namespace PLang.Container
 			engine.SystemSink = new ConsoleSink();
 			engine.UserSink = new ConsoleSink();
 
-			// Register error handlers
-			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
-			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
-
 			// Register event runtime
 			container.RegisterSingleton<IEventRuntime, EventRuntime>();
 
@@ -115,7 +111,7 @@ namespace PLang.Container
 		private static void RegisterParsing(ServiceContainer container)
 		{
 			container.RegisterSingleton<DependancyHelper>();
-			container.RegisterSingleton<PrParser>();
+			container.RegisterSingleton<IPrParser, PrParser>();
 		}
 
 		private static void RegisterTypeUtilities(ServiceContainer container)
@@ -151,30 +147,24 @@ namespace PLang.Container
 		private static void RegisterEngine(ServiceContainer container)
 		{
 			container.RegisterSingleton<IEngine, Engine>();
+			container.RegisterSingleton<IEnginePool, EnginePoolService>();
 			container.RegisterSingleton<IPseudoRuntime, PseudoRuntime>();
 		}
 
 		private static void RegisterModules(ServiceContainer container)
 		{
-			var currentAssembly = Assembly.GetExecutingAssembly();
+			// Use shared cache from Instance class to avoid expensive reflection
+			Instance.EnsureModuleTypesScanned();
 
 			// Register module settings
-			var moduleSettingsTypes = currentAssembly.GetTypes()
-				.Where(t => !t.IsAbstract && !t.IsInterface && typeof(IModuleSettings).IsAssignableFrom(t))
-				.ToList();
-
-			foreach (var type in moduleSettingsTypes)
+			foreach (var type in Instance._cachedModuleSettings!)
 			{
 				container.Register(type);
 				container.Register(type, type, serviceName: type.FullName);
 			}
 
 			// Register factories
-			var factoryTypes = currentAssembly.GetTypes()
-				.Where(t => !t.IsAbstract && !t.IsInterface && typeof(BaseFactory).IsAssignableFrom(t))
-				.ToList();
-
-			foreach (var type in factoryTypes)
+			foreach (var type in Instance._cachedFactories!)
 			{
 				container.Register(type, factory =>
 				{
@@ -184,12 +174,7 @@ namespace PLang.Container
 			}
 
 			// Register module builders and programs
-			var moduleTypes = currentAssembly.GetTypes()
-				.Where(t => !t.IsAbstract && !t.IsInterface &&
-					(typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-				.ToList();
-
-			foreach (var type in moduleTypes)
+			foreach (var type in Instance._cachedModules!)
 			{
 				container.Register(type);
 			}

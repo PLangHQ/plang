@@ -32,49 +32,46 @@ namespace PLang.Runtime
 	public interface IEngine : IDisposable
 	{
 		string Id { get; init; }
-		public string Name { get; set; }
-		void SetParentEngine(IEngine engine);
-		IEngine? ParentEngine { get; }
+		string Name { get; set; }
 		string Path { get; }
-		bool IsInPool { get; set; }
-		public DateTime LastAccess { get; set; }
+		DateTime LastAccess { get; set; }
 
-		public static readonly string DefaultEnvironment = "production";
-		public string Environment { get; set; }
+		static readonly string DefaultEnvironment = "production";
+		string Environment { get; set; }
 		IPLangFileSystem FileSystem { get; }
-		PrParser PrParser { get; }
+		IPrParser PrParser { get; }
 		ConcurrentDictionary<string, Engine.LiveConnection> LiveConnections { get; set; }
 
 		IServiceContainer Container { get; }
-		List<IEngine> ChildEngines { get; set; }
 		IAppCache AppCache { get; }
 		IOutputSink UserSink { get; set; }
 		IOutputSink SystemSink { get; set; }
 		ResolveEventHandler AsmHandler { get; set; }
-		EnginePool EnginePool { get; set; }
 		List<ISerializer> Serializers { get; set; }
 		PLangContext Context { get; }
 
 		/// <summary>
 		/// Module registry for accessing and controlling modules.
+		/// Returns the current context's registry if available, otherwise the default registry.
 		/// </summary>
 		IModuleRegistry Modules { get; }
+
+		/// <summary>
+		/// Creates a clone of the default module registry for a new context.
+		/// </summary>
+		ModuleRegistry CloneDefaultModuleRegistry();
 
 		void AddContext(string key, object value);
 		PLangAppContext GetAppContext();
 		void Init(IServiceContainer container);
 		Task<(object? Variables, IError? Error)> Run(string goalToRun, PLangContext context);
 		Task<(object? Variables, IError? Error)> RunGoal(Goal goal, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		Task<(object? ReturnValue, IError? Error)> RunFromStep(string prFile, PLangContext context);
 		Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex, PLangContext context);
 		IEventRuntime GetEventRuntime();
-
-		//EnginePool GetEnginePool(string rootPath);
 		void Reset(bool reset = false);
-		Task<(object? Variables, IError? Error)> RunGoal(GoalToCallInfo goalToCall, Goal parentGoal, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0);
-		Task<IEngine> RentAsync(GoalStep callingStep);
-		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
 		T GetProgram<T>() where T : BaseProgram;
 	}
@@ -115,15 +112,53 @@ namespace PLang.Runtime
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
 		private IPLangContextAccessor contextAccessor;
-		public IOutputSink SystemSink { get; set; }
-		public IOutputSink UserSink { get; set; }
+		/// <summary>
+		/// Returns context's system sink if available, otherwise the default.
+		/// </summary>
+		public IOutputSink SystemSink
+		{
+			get => contextAccessor?.Current?.SystemSink ?? _defaultSystemSink;
+			set
+			{
+				if (contextAccessor?.Current != null)
+					contextAccessor.Current.SystemSink = value;
+				else
+					_defaultSystemSink = value;
+			}
+		}
+
+		/// <summary>
+		/// Returns context's user sink if available, otherwise the default.
+		/// </summary>
+		public IOutputSink UserSink
+		{
+			get => contextAccessor?.Current?.UserSink ?? _defaultUserSink;
+			set
+			{
+				if (contextAccessor?.Current != null)
+					contextAccessor.Current.UserSink = value;
+				else
+					_defaultUserSink = value;
+			}
+		}
 		public List<ISerializer> Serializers { get; set; }
-		private PrParser prParser;
+		private IPrParser prParser;
 		private PLangAppContext appContext;
-		private IModuleRegistry moduleRegistry;
-		public PrParser PrParser { get { return prParser; } }
+		private ModuleRegistry _defaultModuleRegistry;
+		private IOutputSink _defaultUserSink;
+		private IOutputSink _defaultSystemSink;
+		public IPrParser PrParser { get { return prParser; } }
 		public DateTime LastAccess { get; set; }
-		public IModuleRegistry Modules { get { return moduleRegistry; } }
+
+		/// <summary>
+		/// Returns context's module registry if available, otherwise the default.
+		/// </summary>
+		public IModuleRegistry Modules => contextAccessor?.Current?.Modules ?? _defaultModuleRegistry;
+
+		/// <summary>
+		/// Creates a clone of the default module registry for a new context.
+		/// </summary>
+		public ModuleRegistry CloneDefaultModuleRegistry() => _defaultModuleRegistry.Clone();
 
 		public IAppCache AppCache
 		{
@@ -151,17 +186,8 @@ namespace PLang.Runtime
 			public bool IsFlushed { get; set; } = IsFlushed;
 		};
 
-		IEngine? _parentEngine = null;
-		public IEngine? ParentEngine { get { return _parentEngine; } }
-
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public ResolveEventHandler AsmHandler { get; set; }
-
-
-		ConcurrentQueue<IEngine> pool = new();
-		public bool IsInPool { get; set; }
-		public ConcurrentQueue<IEngine> Pool { get { return pool; } }
-		public EnginePool EnginePool { get; set; }
 		public Engine()
 		{
 			Id = Guid.NewGuid().ToString();
@@ -191,14 +217,12 @@ namespace PLang.Runtime
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.contextAccessor = container.GetInstance<IPLangContextAccessor>();
 
-			// Initialize ModuleRegistry and register all modules
-			this.moduleRegistry = new ModuleRegistry(container, contextAccessor);
-			this.moduleRegistry.RegisterAllFromContainer();
+			// Initialize default ModuleRegistry and register all modules
+			this._defaultModuleRegistry = new ModuleRegistry(container, contextAccessor);
+			this._defaultModuleRegistry.RegisterAllFromContainer();
 			logger.LogDebug($" ---------- ModuleRegistry initialized  ---------- {stopwatch.ElapsedMilliseconds}");
 
-			EnginePool = new EnginePool(container.GetInstance<IEngine>());
-
-			this.prParser = container.GetInstance<PrParser>();
+			this.prParser = container.GetInstance<IPrParser>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var plangGlobal = new Dictionary<string, object>()
 			{
@@ -215,60 +239,18 @@ namespace PLang.Runtime
 
 
 
-		public void SetParentEngine(IEngine parentEngine)
-		{
-			this._parentEngine = parentEngine;
-			if (fileSystem.RootDirectory != parentEngine.Path)
-			{
-				fileSystem.AddFileAccess(new FileAccessControl(fileSystem.RootDirectory, parentEngine.Path, ProcessId: this.fileSystem.Id));
-			}
-
-		}
-
-		public async Task<IEngine> RentAsync(GoalStep callingStep)
-		{
-			return await EnginePool.RentAsync(callingStep);
-			
-		}
-		public void Return(IEngine engine, bool reset = false)
-		{
-			EnginePool.Return(engine, reset);
-			
-		}
-
 		public void Reset(bool reset = false)
 		{
-			if (ParentEngine == null)
-			{
-				throw new Exception($"Parent engine is null on return. {ErrorReporting.CreateIssueShouldNotHappen}");
-			}
-			LastAccess = DateTime.Now;
-			appContext = ParentEngine.GetAppContext();
-			if (fileSystem == null)
-			{
-				Console.WriteLine($"???????????? - fileSystem is null???????????? - {Name}");
-			}
-			else
+			LastAccess = DateTime.UtcNow;
+
+			if (fileSystem != null)
 			{
 				fileSystem.ClearFileAccess();
 			}
 
-			/*
-			foreach (var listofDisp in listOfDisposables)
-			{
-				foreach (var disposable in listofDisp.Value)
-				{
-					disposable.Dispose();
-				}
-			}
-			listOfDisposables.Clear();*/
-			
 			contextAccessor.Current = null;
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			msa.Current = null;
-			
-
-		
 		}
 
 		public IEventRuntime GetEventRuntime()
@@ -729,7 +711,7 @@ namespace PLang.Runtime
 								if (engineWait.task.IsCompleted)
 								{
 									aliveTaskType.Instances.Remove(engineWait);
-									engineWait.engine.ParentEngine?.Return(engineWait.engine);
+									// Engine is returned inside the async task (PseudoRuntime)
 									i--;
 								}
 							}
@@ -739,12 +721,8 @@ namespace PLang.Runtime
 							}
 						}
 					}
-
-					EnginePool.CleanupEngines();
-
+					// EnginePool cleanup is handled automatically by EnginePoolService timer
 				}
-
-
 			}
 		}
 
@@ -752,8 +730,6 @@ namespace PLang.Runtime
 
 		private void WatchForRebuild()
 		{
-			if (ParentEngine != null) return;
-
 			string path = fileSystem.Path.Join(fileSystem.BuildPath);
 			if (fileWatcher != null) fileWatcher.Dispose();
 
@@ -780,14 +756,7 @@ namespace PLang.Runtime
 								{
 									Console.WriteLine(error);
 								}
-
-								foreach (var item in EnginePool.Pool)
-								{
-									item.ReloadGoals();
-									item.GetEventRuntime().Reload();
-								}
-
-
+								// Pooled engines will reload goals on next use when re-parsed
 							}
 						}, TaskScheduler.Default);
 				}

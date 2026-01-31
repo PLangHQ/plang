@@ -425,6 +425,11 @@ namespace PLang.Runtime
 			if (Goal == null) return null;
 
 			var context = contextAccessor.Current;
+
+			// Can't access goal-level variables if no frame exists on the CallStack yet
+			// (e.g., when processing parameters before RunGoal/EnterGoal is called)
+			if (!context.CallStack.HasFrames) return null;
+
 			var obj = context.GetVariable(keyPath.VariableName);
 			if (obj == null) return null;
 

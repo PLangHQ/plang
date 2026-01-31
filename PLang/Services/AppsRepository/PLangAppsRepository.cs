@@ -10,7 +10,7 @@ namespace PLang.Services.AppsRepository
 	{
 		void InstallApp(string appName);
 	}
-	public class PLangAppsRepository(IPLangFileSystem fileSystem, IHttpClientFactory httpClient, PrParser prParser) : IPLangAppsRepository
+	public class PLangAppsRepository(IPLangFileSystem fileSystem, IHttpClientFactory httpClient, IPrParser prParser) : IPLangAppsRepository
 	{
 		public void InstallApp(string appName)
 		{

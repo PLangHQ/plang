@@ -37,20 +37,19 @@ public class StepBuilder : IStepBuilder
 	private readonly ITypeHelper typeHelper;
 	private readonly MemoryStack memoryStack;
 	private readonly VariableHelper variableHelper;
-	private readonly IErrorHandlerFactory exceptionHandlerFactory;
 	private readonly PLangAppContext appContext;
 	private readonly PLangContext context;
 	private readonly ISettings settings;
 	private readonly IEngine engine;
-	private readonly PrParser prParser;
+	private readonly IPrParser prParser;
 	private readonly IGoalParser goalParser;
 	private IMemoryStackAccessor memoryStackAccessor;
 
 	public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
+				IMemoryStackAccessor memoryStackAccessor, VariableHelper variableHelper,
 				PLangAppContext appContext, IPLangContextAccessor contextAccessor, ISettings settings, IEngine engine,
-				PrParser prParser, IGoalParser goalParser)
+				IPrParser prParser, IGoalParser goalParser)
 	{
 		this.fileSystem = fileSystem;
 		this.llmServiceFactory = llmServiceFactory;
@@ -60,7 +59,6 @@ public class StepBuilder : IStepBuilder
 		this.typeHelper = typeHelper;
 		this.memoryStack = memoryStackAccessor.Current;
 		this.variableHelper = variableHelper;
-		this.exceptionHandlerFactory = exceptionHandlerFactory;
 		this.appContext = appContext;
 		this.context = contextAccessor.Current;
 		this.settings = settings;
@@ -140,14 +138,15 @@ public class StepBuilder : IStepBuilder
 			{
 				error = new ExceptionError(ex, Message: ex.Message, Step: step, Goal: goal);
 			}
-			(var isHandled, var handlerError) = await exceptionHandlerFactory.CreateHandler().Handle(error);
-			if (isHandled)
+			var (_, handlerError) = await eventRuntime.AppErrorEvents(error);
+			// If handlerError is null, the error was handled
+			if (handlerError == null)
 			{
 				return await BuildStep(goal, stepIndex, excludeModules);
 			}
 			else
 			{
-				if (handlerError == null || handlerError == error) return error;
+				if (handlerError == error) return error;
 
 				return ErrorHelper.GetMultipleBuildError(error, handlerError);
 			}

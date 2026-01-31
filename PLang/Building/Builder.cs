@@ -32,15 +32,14 @@ namespace PLang.Building
 		private readonly IGoalBuilder goalBuilder;
 		private readonly IEventBuilder eventBuilder;
 		private readonly IEventRuntime eventRuntime;
-		private readonly PrParser prParser;
-		private readonly IErrorHandlerFactory exceptionHandlerFactory;
+		private readonly IPrParser prParser;
 		private readonly IGoalParser goalParser;
 		private readonly IEngine engine;
 		private readonly PLangAppContext appContext;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, 
+			IPrParser prParser,
 			IGoalParser goalParser, IEngine engine, PLangAppContext appContext)
 		{
 
@@ -51,7 +50,6 @@ namespace PLang.Building
 			this.eventBuilder = eventBuilder;
 			this.eventRuntime = eventRuntime;
 			this.prParser = prParser;
-			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.goalParser = goalParser;
 			this.engine = engine;
 			this.appContext = appContext;
@@ -200,20 +198,13 @@ namespace PLang.Building
 				var goal = (ex is BuilderException be) ? be.Goal : null;
 
 				error = new ExceptionError(ex, ex.Message, goal ?? step?.Goal, step, Key: ex.GetType().FullName);
-				var handler = exceptionHandlerFactory.CreateHandler();
-				(var isHandled, var handleError) = await handler.Handle(error);
-				if (!isHandled)
+				var (_, handleError) = await eventRuntime.AppErrorEvents(error);
+				// If handleError is not null, the error was not handled
+				if (handleError != null)
 				{
-					if (handleError != null)
-					{
-						var me = new MultipleError(error);
-						me.Add(handleError);
-						await handler.ShowError(error, null);
-					}
-					else
-					{
-						await handler.ShowError(error, null);
-					}
+					var me = new MultipleError(error);
+					me.Add(handleError);
+					logger.LogError(error.ToString());
 				}
 
 			}

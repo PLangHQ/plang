@@ -12,7 +12,8 @@
       "Bash(plang:*)",
       "Bash(ls:*)",
       "Bash(dotnet test:*)",
-      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -50 \"\"{}\"\"')"
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -50 \"\"{}\"\"')",
+      "Bash(find:*)"
     ]
   }
 }

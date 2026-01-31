@@ -32,11 +32,11 @@ namespace PLang.Events
         private readonly ISettings settings;
         private readonly IGoalParser goalParser;
         private readonly MemoryStack memoryStack;
-        private readonly PrParser prParser;
+        private readonly IPrParser prParser;
 		private readonly ITypeHelper typeHelper;
 
 		public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-            ISettings settings, IGoalParser goalParser, IMemoryStackAccessor memoryStackAccessor, PrParser prParser, ITypeHelper typeHelper)
+            ISettings settings, IGoalParser goalParser, IMemoryStackAccessor memoryStackAccessor, IPrParser prParser, ITypeHelper typeHelper)
         {
             this.fileSystem = fileSystem;
             this.llmServiceFactory = llmServiceFactory;

@@ -1,57 +1,15 @@
 ﻿using LightInject;
-using NBitcoin.Secp256k1;
-using PLang.Errors.Handlers;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
-using PLang.Modules.DbModule;
-using PLang.Runtime;
 using PLang.Services.DbService;
 using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
-using PLang.Services.OutputStream;
-using PLang.Services.OutputStream.Sinks;
 using PLang.Services.SettingsService;
 using PLang.Utils;
-using System.Data;
 
 namespace PLang.Container
 {
 	public static class DefaultRegistrations
 	{
-
-
-		public static void RegisterErrorHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
-		{
-			container.Register<IErrorHandlerFactory>(factory =>
-			{
-				SetContext(container, type, ReservedKeywords.Inject_ErrorHandler, isDefault);
-				return new ErrorHandlerFactory(container);
-			});
-
-			if (instance != null)
-			{
-				container.Register(factor =>
-				{
-					return instance;
-				}, instance.GetType().FullName);
-			}
-		}
-		public static void RegisterErrorSystemHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
-		{
-			container.Register<IErrorSystemHandlerFactory>(factory =>
-			{
-				SetContext(container, type, ReservedKeywords.Inject_ErrorSystemHandler, isDefault);
-				return new ErrorSystemHandlerFactory(container);
-			});
-
-			if (instance != null)
-			{
-				container.Register(factor =>
-				{
-					return instance;
-				}, instance.GetType().FullName);
-			}
-		}
 		/*
 
 		public static void RegisterOutputStreamFactory(this ServiceContainer container, IEngine engine, Type type, bool isDefault = false, IOutputSink? instance = null, bool setToContext = false)

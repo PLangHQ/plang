@@ -13,9 +13,9 @@ namespace PLang.Modules.EventModule;
 public class Builder : BaseBuilder
 {
 	private readonly IGoalParser goalParser;
-	private readonly PrParser prParser;
+	private readonly IPrParser prParser;
 
-	public Builder(IGoalParser goalParser, PrParser prParser)
+	public Builder(IGoalParser goalParser, IPrParser prParser)
 	{
 		this.goalParser = goalParser;
 		this.prParser = prParser;

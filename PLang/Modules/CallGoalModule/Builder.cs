@@ -16,11 +16,11 @@ namespace PLang.Modules.CallGoalModule
 	public class Builder : BaseBuilder
 	{
 		private readonly IGoalParser goalParser;
-		private readonly PrParser prParser;
+		private readonly IPrParser prParser;
 		private readonly MemoryStack memoryStack;
 		private readonly ILogger logger;
 
-		public Builder(IGoalParser goalParser, PrParser prParser, IMemoryStackAccessor memoryStackAccessor, ILogger logger)
+		public Builder(IGoalParser goalParser, IPrParser prParser, IMemoryStackAccessor memoryStackAccessor, ILogger logger)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			logger.LogDebug($"        - Start constructor for CallGoalModule.Builder - {stopwatch.ElapsedMilliseconds}");

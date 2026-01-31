@@ -20,7 +20,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Building.Parsers
 {
-	public class PrParser
+	public class PrParser : IPrParser
 	{
 		private IReadOnlyList<Goal> goals = null!;
 		private IReadOnlyList<Goal> publicGoals = null!;

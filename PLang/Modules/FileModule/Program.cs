@@ -40,10 +40,9 @@ namespace PLang.Modules.FileModule
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly TypeMapping typeMapping;
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler, IErrorSystemHandlerFactory errorSystemHandlerFactory) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -51,7 +50,6 @@ namespace PLang.Modules.FileModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.fileAccessHandler = fileAccessHandler;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 			
 			string typeMappingKey = "PLang.Modules.FileModule.TypeMapping";
@@ -1055,15 +1053,12 @@ namespace PLang.Modules.FileModule
 					task.Wait();
 
 					var (engine2, vars, error) = task.Result;
-					if (error != null)
+					if (error != null && error is not Errors.EndGoal)
 					{
-						var errorTask = errorSystemHandlerFactory.CreateHandler().Handle(error);
-						errorTask.Wait();
-
-						var result = errorTask.Result;
-						if (result.Item2 != null)
+						var (_, handlerError) = engine.GetEventRuntime().AppErrorEvents(error).Result;
+						if (handlerError != null)
 						{
-							Console.WriteLine(error.ToString());
+							Console.WriteLine(handlerError.ToString());
 						}
 					}
 				}
