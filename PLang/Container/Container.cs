@@ -503,7 +503,7 @@ namespace PLang.Container
 
 		}
 
-		private static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)
+		internal static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)
 		{
 			if (context.TryGetValue(reservedKeyword, out object? value) && value != null)
 			{
@@ -524,7 +524,7 @@ namespace PLang.Container
 			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
 		}
 
-		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper, IEngine engine)
+		internal static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper, IEngine engine)
 		{
 			engine.AsmHandler = (sender, resolveArgs) =>
 			{
@@ -765,91 +765,102 @@ namespace PLang.Container
 
 			if (injectorType.ToLower() == "db")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IDbConnection), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(IDbConnection), pathToModule, "db");
 				RegisterType(container, "db", typeof(IDbConnection), type, ReservedKeywords.Inject_IDbConnection, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "settings")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ISettingsRepository), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(ISettingsRepository), pathToModule, "settings");
 				RegisterType(container, "settings", typeof(ISettingsRepository), type, ReservedKeywords.Inject_SettingsRepository, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "caching")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IAppCache), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(IAppCache), pathToModule, "caching");
 				RegisterType(container, "caching", typeof(IAppCache), type, ReservedKeywords.Inject_Caching, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "logger")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ILogger), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(ILogger), pathToModule, "logger");
 				RegisterType(container, "logger", typeof(ILogger), type, ReservedKeywords.Inject_Logger, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "llm")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ILlmService), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(ILlmService), pathToModule, "llm");
 				RegisterType(container, "llm", typeof(ILlmService), type, ReservedKeywords.Inject_LLMService, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "askuser")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IAskUserHandler), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(IAskUserHandler), pathToModule, "askuser");
 				RegisterType(container, "askuser", typeof(IAskUserHandler), type, ReservedKeywords.Inject_AskUserHandler, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "encryption")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IEncryption), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(IEncryption), pathToModule, "encryption");
 				RegisterType(container, "encryption", typeof(IEncryption), type, ReservedKeywords.Inject_EncryptionService, isGlobalForApp, pathToModule);
 
 			}
 
 			if (injectorType.ToLower() == "archiver")
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IArchiver), pathToModule);
+				var type = injectionType ?? GetInjectionType(container, typeof(IArchiver), pathToModule, "archiver");
 				RegisterType(container, "archiver", typeof(IArchiver), type, ReservedKeywords.Inject_Archiving, isGlobalForApp, pathToModule);
 
 			}
 
 		}
-		public static Type? GetInjectionType(IServiceContainer container, Type typeToFind, string injectorType)
+		public static Type? GetInjectionType(IServiceContainer container, Type typeToFind, string pathOrTypeName, string serviceType)
 		{
+			// First check if it's a built-in type name
+			if (BuiltInTypeRegistry.IsBuiltInTypeName(pathOrTypeName))
+			{
+				var builtInType = BuiltInTypeRegistry.GetBuiltInType(serviceType, pathOrTypeName);
+				if (builtInType != null)
+				{
+					return builtInType;
+				}
+			}
+
+			// Fall back to .services folder lookup
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 
 			if (!fileSystem.Directory.Exists(".services"))
 			{
 				var logger = container.GetInstance<ILogger>();
-				logger.LogWarning($".services folder not found in {fileSystem.RootDirectory}. If you have modified injection you need to Delete the file Start/00. Goal.pr or events/00. Goal.pr. Will be fixed in future release.");
+				logger.LogDebug($".services folder not found in {fileSystem.RootDirectory}. Using built-in types only.");
 				return null;
 			}
 			string[] dllFiles;
-			string extension = fileSystem.Path.GetExtension(injectorType);
-			if (!string.IsNullOrEmpty(injectorType) && !string.IsNullOrEmpty(extension))
+			string extension = fileSystem.Path.GetExtension(pathOrTypeName);
+			if (!string.IsNullOrEmpty(pathOrTypeName) && !string.IsNullOrEmpty(extension))
 			{
-				string dllFilePath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
+				string dllFilePath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", pathOrTypeName);
 				if (!fileSystem.File.Exists(dllFilePath))
 				{
 					var logger = container.GetInstance<ILogger>();
-					logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFilePath}");
+					logger.LogWarning($"{pathOrTypeName} injection file could not be found. Path {dllFilePath}");
 					return null;
 				}
 				dllFiles = [dllFilePath];
 			}
 			else
 			{
-				string dllFolderPath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
+				string dllFolderPath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", pathOrTypeName);
 				if (!fileSystem.Directory.Exists(dllFolderPath))
 				{
 					var logger = container.GetInstance<ILogger>();
-					logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFolderPath}");
+					logger.LogDebug($"{pathOrTypeName} injection folder could not be found. Path {dllFolderPath}");
 					return null;
 				}
 
@@ -863,7 +874,7 @@ namespace PLang.Container
 				if (type != null) return type;
 			}
 
-			throw new RuntimeException($"Cannot find {injectorType} in {string.Join(", ", dllFiles)}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
+			throw new RuntimeException($"Cannot find implementation for {pathOrTypeName} in {string.Join(", ", dllFiles)}. Make sure that the class inherits from {typeToFind.Name}");
 		}
 
 		private static void RegisterType(IServiceContainer container, string injectorType, Type interfaceType, Type? implementationType, string reservedKeyword, bool isGlobalForApp, string pathToModule)

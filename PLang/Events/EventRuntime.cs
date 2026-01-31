@@ -46,8 +46,15 @@ namespace PLang.Events
 
 		Task<(object? Variables, IError? Error)> RunOnModuleError(MethodInfo method, IError error, Exception ex);
 		IError? Reload();
+
+		// IEventProvider methods for "events as steps" pattern
+		Task<List<EventBinding>> GetBeforeGoalEvents(Goal goal);
+		Task<List<EventBinding>> GetAfterGoalEvents(Goal goal);
+		Task<List<EventBinding>> GetBeforeStepEvents(Goal goal, GoalStep step);
+		Task<List<EventBinding>> GetAfterStepEvents(Goal goal, GoalStep step);
+		Task<(object? Variables, IError? Error)> ExecuteEvent(EventBinding evt, Goal sourceGoal, GoalStep? sourceStep);
 	}
-	public class EventRuntime : IEventRuntime
+	public class EventRuntime : IEventRuntime, IEventProvider
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
@@ -904,7 +911,134 @@ namespace PLang.Events
 
 		}
 
+		#region IEventProvider Implementation (events as steps)
+
+		public async Task<List<EventBinding>> GetBeforeGoalEvents(Goal goal)
+		{
+			var events = await GetRuntimeEvents();
+			if (events == null) return new List<EventBinding>();
+
+			return events
+				.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.Goal && GoalHasBinding(goal, p))
+				.ToList();
+		}
+
+		public async Task<List<EventBinding>> GetAfterGoalEvents(Goal goal)
+		{
+			var events = await GetRuntimeEvents();
+			if (events == null) return new List<EventBinding>();
+
+			return events
+				.Where(p => p.EventType == EventType.After && p.EventScope == EventScope.Goal && GoalHasBinding(goal, p))
+				.ToList();
+		}
+
+		public async Task<List<EventBinding>> GetBeforeStepEvents(Goal goal, GoalStep step)
+		{
+			var events = await GetRuntimeEvents();
+			if (events == null) return new List<EventBinding>();
+
+			return events
+				.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.Step && GoalHasBinding(goal, p) && IsStepMatch(step, p))
+				.ToList();
+		}
+
+		public async Task<List<EventBinding>> GetAfterStepEvents(Goal goal, GoalStep step)
+		{
+			var events = await GetRuntimeEvents();
+			if (events == null) return new List<EventBinding>();
+
+			return events
+				.Where(p => p.EventType == EventType.After && p.EventScope == EventScope.Step && GoalHasBinding(goal, p) && IsStepMatch(step, p))
+				.ToList();
+		}
+
+		/// <summary>
+		/// Execute a single event as if it were a step.
+		/// This is the "event as step" execution pattern for the flat execution model.
+		/// </summary>
+		public async Task<(object? Variables, IError? Error)> ExecuteEvent(EventBinding evt, Goal sourceGoal, GoalStep? sourceStep)
+		{
+			var (context, error) = GetContext();
+			if (error != null) return (null, error);
+
+			// Check if this event is already in the call stack (prevent recursion)
+			if (context!.CallStack.IsEventGoalInStack(evt.Id))
+			{
+				return (null, null); // Skip - already executing
+			}
+
+			var goalToCall = new GoalToCallInfo(evt.GoalToCall.Name, evt.GoalToCall.Parameters) { Path = evt.GoalToCall.Path };
+			goalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+
+			var goalStep = sourceStep ?? new GoalStep() { Name = $"Event_{evt.EventType}_{evt.EventScope}", RelativeGoalPath = sourceGoal.RelativeGoalPath, Goal = sourceGoal };
+			var runtimeEvent = new RuntimeEvent(evt.Id, evt.EventType, evt.EventScope, goalToCall, goalStep);
+			context.Event = runtimeEvent;
+
+			logger.LogTrace("Execute event: type={0}, scope={1}, binding={2}, calling={3}", evt.EventType, evt.EventScope, evt.GoalToBindTo, goalToCall);
+
+			bool disableSystemGoals = !evt.IncludeOsGoals && !evt.IsSystem;
+
+			var task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", goalToCall, sourceGoal, evt.WaitForExecution, 0, 0, 0, false, !evt.IsLocal, disableSystemGoals, runtimeEvent: runtimeEvent);
+
+			if (evt.WaitForExecution)
+			{
+				await task;
+			}
+
+			context.Event = null;
+			var result = task.Result;
+
+			if (result.Error == null) return (result.Variables, null);
+
+			// Wrap errors appropriately
+			if (result.Error is RuntimeEventError || result.Error is IErrorHandled || result.Error is IUserInputError)
+			{
+				return (result.Variables, result.Error);
+			}
+
+			return (result.Variables, new RuntimeEventError(result.Error.Message, evt, result.Error.Goal, result.Error.Step, result.Error.Key, result.Error.StatusCode, result.Error.Exception, InitialError: result.Error));
+		}
+
+		#endregion
 
 	}
+
+	#region Simplified Event Execution (for flat execution model)
+
+	/// <summary>
+	/// Simplified interface for getting applicable events.
+	/// Used by the flat execution model to treat events more like steps.
+	/// </summary>
+	public interface IEventProvider
+	{
+		/// <summary>
+		/// Get all events that should run before this goal starts.
+		/// </summary>
+		Task<List<EventBinding>> GetBeforeGoalEvents(Goal goal);
+
+		/// <summary>
+		/// Get all events that should run after this goal completes.
+		/// </summary>
+		Task<List<EventBinding>> GetAfterGoalEvents(Goal goal);
+
+		/// <summary>
+		/// Get all events that should run before this step executes.
+		/// </summary>
+		Task<List<EventBinding>> GetBeforeStepEvents(Goal goal, GoalStep step);
+
+		/// <summary>
+		/// Get all events that should run after this step completes.
+		/// </summary>
+		Task<List<EventBinding>> GetAfterStepEvents(Goal goal, GoalStep step);
+
+		/// <summary>
+		/// Execute a single event as if it were a step.
+		/// Returns the result of the event goal execution.
+		/// </summary>
+		Task<(object? Variables, IError? Error)> ExecuteEvent(EventBinding evt, Goal sourceGoal, GoalStep? sourceStep);
+	}
+
+	#endregion
 
 }

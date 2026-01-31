@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dir:*)",
+      "Bash(\"C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net10.0\\\\plang.exe\" Hello)",
+      "Bash(\"C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net10.0\\\\plang.exe\" build)",
+      "Bash(dotnet run:*)",
+      "Bash(plang exec:*)",
+      "Bash(plang build:*)",
+      "Bash(cat:*)",
+      "Bash(plang:*)"
+    ]
+  }
+}

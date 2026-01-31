@@ -4,7 +4,7 @@
   "GoalSteps": [
     {
       "Text": "run before app start event",
-      "Comment": null,
+      "Comment": "- inject caching, memory, global",
       "ModuleType": "PLang.Modules.EventModule",
       "Name": "run_before_app_start_event",
       "Description": "Bind an event handler that triggers before the application starts running, allowing initialization or setup tasks to be performed at that time",
@@ -25,7 +25,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 2,
+      "LineNumber": 20,
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "b6ca3e77bbf01af364e369c51573ebb64a8e0a60e5d191f862796d08fc2abaa2",
@@ -56,10 +56,10 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 1,
-      "LineNumber": 3,
+      "LineNumber": 21,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c17b77f248886642f45f5d0ea5b1e80ac51d170b8c25d10361bc85d3707d4ce3",
+      "Hash": "fb0d7148d081bd883091e57ad3382c76f9069e53ee6d7f29c2191406ef133c09",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Run.goal",
       "UserIntent": null
@@ -87,7 +87,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 4,
+      "LineNumber": 22,
       "EventBinding": null,
       "IsEvent": false,
       "Hash": "e43c286e69539ede77bc603005d768234da9fe0442c0d56938f37eded7efb729",
@@ -97,7 +97,7 @@
     }
   ],
   "SubGoals": [],
-  "Description": "This Goal, named Run, is designed to execute a sequence of steps that include running a process before an application starts, calling another goal with specified parameters, and finally executing an end event for the application. The goal requires the name of the goal to be called and any parameters that need to be passed to that goal.",
+  "Description": "This Goal, named Run, is designed to execute a series of steps that involve injecting caching, memory, and global settings before the application starts. It then calls another goal specified by the variable \\%goalName\\% with the provided \\%parameters\\%, and finally, it runs the end application event.",
   "Visibility": 1,
   "GoalFileName": "Run.goal",
   "PrFileName": "00. Goal.pr",
@@ -111,10 +111,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "acb3c607e63ff5fa16d8825102da7233fc320e2f7266e5850f2d63c01de0244e",
+  "Hash": "70d2e6172d9e368b237cff2b1a6b4084c43262b13b1586e5cc884b85fa71ba28",
   "IncomingVariablesRequired": {
-    "goalName": "The name of the goal to be called during the execution.",
-    "parameters": "The parameters that need to be passed to the goal being called."
+    "\\%goalName\\%": "The name of the goal to be called during the execution.",
+    "\\%parameters\\%": "The parameters to be passed to the goal specified by \\%goalName\\%."
   },
   "DataSourceName": null,
   "IsSetup": false,

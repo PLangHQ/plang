@@ -45,7 +45,10 @@ if (runtime)
 	(string currentDirectory, args) = GetCurrentDirectory(args);
 
 	var container = new ServiceContainer();
-	container.RegisterForPLangConsole(currentDirectory, Path.DirectorySeparatorChar.ToString());
+
+	// Use MinimalContainer for cleaner bootstrap
+	// Services can be configured via system/Run.goal using inject command
+	container.RegisterBootstrap(currentDirectory, Path.DirectorySeparatorChar.ToString());
 
 	var context = container.GetInstance<PLangAppContext>();
 
@@ -53,7 +56,8 @@ if (runtime)
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 	var engine = container.GetInstance<IEngine>();
 	engine.Name = "Console";
-	
+	engine.Init(container);
+
 	var pLanguage = new Executor(container);
 	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
 	if (result.Error != null)

@@ -370,6 +370,11 @@ namespace PLang.Building.Parsers
 						}
 					}
 				}
+				else
+				{
+					// No previous build exists - mark as changed so it gets built
+					goal.HasChanged = true;
+				}
 
 				for (int b = 0; b < goals[i].GoalSteps.Count; b++)
 				{

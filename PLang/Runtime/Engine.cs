@@ -89,6 +89,9 @@ namespace PLang.Runtime
 		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
 		T GetProgram<T>() where T : BaseProgram;
+
+		// Flat execution model
+		Task<(object? Variables, IError? Error)> ExecuteGoalFlat(Goal goal, PLangContext context, uint delayMs = 0, int startStepIndex = 0);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -522,146 +525,15 @@ namespace PLang.Runtime
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, Dictionary<string, object?> Parameters, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
-			context.CallStack.EnterGoal(goal, context.Event);
-
-			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
-			
-			logger.LogDebug($"[Start] Goal {goal.GoalName}");
-
-			AppContext.SetSwitch("Runtime", true);
-			SetLogLevel(goal.Comment);
-
-			int stepIndex = -1;
-			try
-			{
-				logger.LogTrace("RootDirectory:{0}", fileSystem.RootDirectory);
-				foreach (var injection in goal.Injections)
-				{
-					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
-				}
-
-				logger.LogDebug($" - Running Before event on goal - {context.CallStack.CurrentFrame.Duration}");
-
-				var result = await eventRuntime.RunGoalEvents(EventType.Before, goal);
-				if (result.Error != null) return result;
-
-				logger.LogDebug($" - Event done, now running Steps - {context.CallStack.CurrentFrame.Duration}");
-
-				//if (await CachedGoal(goal)) return null;
-				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, context, 0);
-
-				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
-				//await CacheGoal(goal);
-				logger.LogDebug($" - Steps done, running After events - {context.CallStack.CurrentFrame.Duration}");
-
-				result = await eventRuntime.RunGoalEvents(EventType.After, goal);
-				if (result.Error != null) return result;
-
-				logger.LogTrace($" - After events done - {context.CallStack.CurrentFrame.Duration}");
-
-				return (returnValues, stepError);
-
-			}
-			catch (Exception ex)
-			{
-				var error = new Error(ex.Message, Exception: ex);
-				//if (context.ContainsKey(ReservedKeywords.IsEvent)) return error;
-
-				var eventError = await HandleGoalError(error, goal, stepIndex, context);
-				return eventError;
-			}
-			finally
-			{
-				AppContext.SetData("GoalLogLevelByUser", null);
-
-				logger.LogDebug($"[End] Goal: {goal.GoalName} => " + context.CallStack.CurrentFrame.Duration);
-				context.CallStack.ExitGoal();
-
-
-			}
-
+			// Use the new flat execution model
+			// This provides a cleaner, flatter call stack
+			return await ExecuteGoalFlat(goal, context, waitForXMillisecondsBeforeRunningGoal);
 		}
 
 		private async Task DisposeGoal(Goal goal)
 		{
-			
+
 		}
-
-		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, PLangContext context, int stepIndex = 0)
-		{
-			Stopwatch stopwatch = Stopwatch.StartNew();
-			object? returnValues = null;
-			IError? error = null;
-			logger.LogDebug($"  - Goal {goal.GoalName} starts - {stopwatch.ElapsedMilliseconds}");
-
-			if (context.Callback?.CallbackInfo.GoalHash == goal.Hash)
-			{
-				stepIndex = context.Callback.CallbackInfo.StepIndex;
-				if (stepIndex > goal.GoalSteps.Count - 1)
-				{
-					return (null, stepIndex, new Error("stepIndex is higher than steps in goal"));
-				}
-				goal.GoalSteps[stepIndex].Execute = true;
-			}
-
-			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
-			{
-
-				Stopwatch stepWatch = Stopwatch.StartNew();
-				logger.LogTrace($"   - Step idx {stepIndex} starts - {stepWatch.ElapsedMilliseconds}");
-							
-
-				logger.LogDebug("   - [S] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
-				(returnValues, error) = await RunStep(goal, stepIndex, context);
-				logger.LogTrace("   - [E] RunStep:{0} - {1}", goal.GoalSteps[stepIndex].PrFileName, stepWatch.ElapsedMilliseconds);
-				
-				
-				if (error != null)
-				{
-					logger.LogTrace($"   - Step idx {stepIndex} has ERROR - {stepWatch.ElapsedMilliseconds}");
-					if (error is MultipleError me && me.IsErrorHandled)
-					{
-						var hasEndGoal = FindErrorHandled(me);
-						if (hasEndGoal != null) error = hasEndGoal;
-					}
-					if (error is EndGoal endGoal)
-					{
-						logger.LogTrace($"   - Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-						try
-						{
-							if (!endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true)
-							{
-								logger.LogTrace($"   - End goal doing return: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-								return (returnValues, stepIndex, endGoal);
-							}
-							else if (endGoal.EndingGoal == null)
-							{
-								logger.LogError("Ending goal is null, this should not happen:" + JsonConvert.SerializeObject(endGoal));
-							}
-						}
-						catch (Exception ex)
-						{
-							Console.WriteLine(ex);
-							Console.WriteLine("endGoal.EndingGoal:" + JsonConvert.SerializeObject(endGoal.EndingGoal));
-							Console.WriteLine("goal:" + JsonConvert.SerializeObject(goal));
-
-						}
-
-						logger.LogTrace($"   - End goal doing continue: {endGoal.Goal?.RelativeGoalPath} - {stepWatch.ElapsedMilliseconds}");
-						return (returnValues, stepIndex, null);
-					}
-					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex, context);
-					if (errorInGoalErrorHandler.Error != null) return (returnValues, stepIndex, errorInGoalErrorHandler.Error);
-					if (errorInGoalErrorHandler.Error is IErrorHandled) error = null;
-				}
-				logger.LogDebug($"   - Step idx {stepIndex} done - {stepWatch.ElapsedMilliseconds} - Current for all steps: {stopwatch.ElapsedMilliseconds}");
-			}
-			logger.LogTrace($"  - All steps done in {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
-			return (returnValues, stepIndex, error);
-		}
-
-
-
 
 		private async Task<(object? Variables, IError? Error)> HandleGoalError(IError error, Goal goal, int goalStepIndex, PLangContext context)
 		{
@@ -681,163 +553,7 @@ namespace PLang.Runtime
 			var goal = prParser.ParsePrFile(goalFile);
 			var step = goal.GoalSteps.FirstOrDefault(p => p.AbsolutePrFilePath == prFile);
 
-			var result = await RunSteps(goal, context, step.Index);
-			return (result.ReturnValue, result.Error);
-		}
-
-		private async Task<(object? ReturnValue, IError? Error)> RunStep(Goal goal, int goalStepIndex, PLangContext context, int retryCount = 0)
-		{
-			(object? ReturnValues, IError? Error)? result = null;
-
-			var step = goal.GoalSteps[goalStepIndex];
-			context.CallingStep = step;
-
-			goal.CurrentStepIndex = goalStepIndex;
-			step.Stopwatch = Stopwatch.StartNew();
-			
-			context.CallStack.SetCurrentStep(step, goalStepIndex);
-
-			SetStepLogLevel(step);
-			try
-			{
-				
-				
-				if (HasExecuted(step)) return (null, null);
-
-				step.UniqueId = Guid.NewGuid().ToString();
-				logger.LogTrace($"     - Load instruction for step: {step.Text.MaxLength(20)} - {step.Stopwatch.ElapsedMilliseconds}");
-
-				var error = LoadInstruction(goal, step);
-				if (error != null)
-				{
-					return (null, error);
-				}
-				logger.LogTrace($"     - Have instruction - {step.Stopwatch.ElapsedMilliseconds}");
-				if (retryCount == 0)
-				{
-					logger.LogTrace($"     - Before event starts - {step.Stopwatch.ElapsedMilliseconds}");
-					// Only run event one time, even if step is tried multiple times
-					var stepEventResult = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
-					if (stepEventResult.Error != null) return (null, stepEventResult.Error);
-				}
-
-				logger.LogTrace($"     - ProcessPrFile {step.PrFileName} - {step.Stopwatch.ElapsedMilliseconds}");
-
-				result = await ProcessPrFile(goal, step, goalStepIndex, context);
-
-				if (result.Value.Error != null)
-				{
-					result = await HandleStepError(goal, step, goalStepIndex, result.Value.Error, retryCount, context);
-					if (result.Value.Error != null && result.Value.Error is MultipleError me && !me.IsErrorHandled) return result.Value;
-				}
-				logger.LogTrace($"     - Done with ProcessPrFile, doing after events - {step.Stopwatch.ElapsedMilliseconds}");
-
-				if (retryCount == 0)
-				{
-					// Only run event one time, even if step is tried multiple times, retryCount is 0 event after retry when callstack is traversed back up
-					var stepEventResult = await eventRuntime.RunStepEvents(EventType.After, goal, step);
-					if (stepEventResult.Error != null) return stepEventResult;
-				}
-
-				logger.LogTrace($"     - Done with after events - {step.Stopwatch.ElapsedMilliseconds}");
-				return result.Value;
-			}
-			catch (Exception stepException)
-			{
-
-				var error = new ExceptionError(stepException, stepException.Message, goal, step);
-				result = await HandleStepError(goal, step, goalStepIndex, error, retryCount, context);
-
-				return result.Value;
-			}
-			finally
-			{
-				logger.LogTrace($"     - Reset log level - {step.Stopwatch.ElapsedMilliseconds}");
-				ResetStepLogLevel(goal);
-				step.Stopwatch.Stop();
-				logger.LogDebug($"     - Step all done - {step.Stopwatch.ElapsedMilliseconds}");
-
-				object? returnValues = null;
-				IError? error = null;
-				if (result != null)
-				{
-					returnValues = result.Value.ReturnValues;
-					error = result.Value.Error;
-				}
-				context.CallStack.CompleteCurrentStep(returnValues, error);
-			}
-
-		}
-
-
-
-		private async Task<(object? ReturnValue, IError? Error)> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount, PLangContext context)
-		{
-			if (error == null || error is IErrorHandled) return (null, error);
-			if (step.ModuleType == "PLang.Modules.ThrowErrorModule" && step.Instruction?.Function.Name == "Throw") return (null, error);
-
-			if (error is Errors.AskUser.AskUserError aue)
-			{
-				var (answer, answerError) = await AskUser.GetAnswer(this, context, aue.Message);
-				if (answerError != null) return (null, answerError);
-
-				var (_, callbackError) = await aue.InvokeCallback([answer]);
-				if (callbackError != null) return (null, callbackError);
-
-				return await RunStep(goal, goalStepIndex, context);
-			}
-
-			if (error is FileAccessRequestError fare)
-			{
-				(var isHandled, var handlerError) = await HandleFileAccessError(fare, context);
-				if (handlerError != null)
-				{
-					return (null, ErrorHelper.GetMultipleError(error, handlerError));
-				}
-
-				return await RunStep(goal, goalStepIndex, context);
-
-			}
-
-			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
-			if (errorHandler != null)
-			{
-
-				if (HasRetriedToRetryLimit(errorHandler, retryCount)) return (null, error);
-
-				if (ShouldRunRetry(errorHandler, true))
-				{
-					logger.LogDebug($"Error occurred - Before goal to call - Will retry in {errorHandler.RetryHandler?.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler?.RetryCount}\nError:{error}");
-					if (errorHandler.RetryHandler?.RetryDelayInMilliseconds != null && errorHandler.RetryHandler.RetryDelayInMilliseconds > 0)
-					{
-						await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
-					}
-					return await RunStep(goal, goalStepIndex, context, ++retryCount);
-				}
-			}
-
-			var eventRuntime = container.GetInstance<IEventRuntime>();
-			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
-			if (stepErrorResult.Error != null)
-			{
-				return stepErrorResult;
-			}
-
-			// step.Retry can be step by a goal in RunOnErrorStepEvents
-			if (step.Retry || ShouldRunRetry(errorHandler, false))
-			{
-				// reset the retry property
-				step.Retry = false;
-
-				logger.LogDebug($"Error occurred - After goal to call - Will retry in {errorHandler?.RetryHandler?.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler?.RetryHandler?.RetryCount}\nError:{error}");
-				if (errorHandler?.RetryHandler?.RetryDelayInMilliseconds != null && errorHandler.RetryHandler.RetryDelayInMilliseconds > 0)
-				{
-					await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
-				}
-				return await RunStep(goal, goalStepIndex, context, ++retryCount);
-			}
-
-			return (null, stepErrorResult.Error);
+			return await ExecuteGoalFlat(goal, context, 0, step.Index);
 		}
 
 		private bool HasRetriedToRetryLimit(ErrorHandler? errorHandler, int retryCount)
@@ -1246,5 +962,264 @@ namespace PLang.Runtime
 		{
 			prParser.ForceLoadAllGoals();
 		}
+
+		#region Flat Execution Model
+		// Flatter execution model that merges RunGoal + RunSteps into a single flow
+		// Events are treated as steps - executed inline in the execution flow
+
+		/// <summary>
+		/// Simplified error handling for flat execution model.
+		/// Returns: (shouldRetry, error)
+		/// </summary>
+		private async Task<(bool ShouldRetry, IError? Error)> HandleStepErrorFlat(
+			Goal goal, GoalStep step, int stepIndex, IError error, int retryCount, PLangContext context)
+		{
+			// Already handled or null - nothing to do
+			if (error == null || error is IErrorHandled) return (false, error);
+
+			// ThrowError module errors should propagate
+			if (step.ModuleType == "PLang.Modules.ThrowErrorModule" && step.Instruction?.Function.Name == "Throw")
+			{
+				return (false, error);
+			}
+
+			// Handle AskUser errors - prompt and retry
+			if (error is Errors.AskUser.AskUserError aue)
+			{
+				var (answer, answerError) = await AskUser.GetAnswer(this, context, aue.Message);
+				if (answerError != null) return (false, answerError);
+
+				var (_, callbackError) = await aue.InvokeCallback([answer]);
+				if (callbackError != null) return (false, callbackError);
+
+				return (true, null); // Retry the step
+			}
+
+			// Handle FileAccess errors - request permission and retry
+			if (error is FileAccessRequestError fare)
+			{
+				var (isHandled, handlerError) = await HandleFileAccessError(fare, context);
+				if (handlerError != null)
+				{
+					return (false, ErrorHelper.GetMultipleError(error, handlerError));
+				}
+				return (true, null); // Retry the step
+			}
+
+			// Check for step-defined error handlers with retry
+			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
+			if (errorHandler != null && HasRetriedToRetryLimit(errorHandler, retryCount))
+			{
+				return (false, error); // Hit retry limit
+			}
+
+			// Pre-event retry
+			if (ShouldRunRetry(errorHandler, true))
+			{
+				logger.LogDebug($"Error - retry before event. Attempt {retryCount}/{errorHandler?.RetryHandler?.RetryCount}");
+				if (errorHandler?.RetryHandler?.RetryDelayInMilliseconds > 0)
+				{
+					await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
+				}
+				return (true, null); // Retry the step
+			}
+
+			// Run step error events
+			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
+			if (stepErrorResult.Error != null && stepErrorResult.Error != error)
+			{
+				// Event handled the error differently
+				if (stepErrorResult.Error is IErrorHandled)
+				{
+					return (false, null); // Error was handled
+				}
+				return (false, stepErrorResult.Error);
+			}
+
+			// Post-event retry (set by error event or handler)
+			if (step.Retry || ShouldRunRetry(errorHandler, false))
+			{
+				step.Retry = false; // Reset
+				logger.LogDebug($"Error - retry after event. Attempt {retryCount}/{errorHandler?.RetryHandler?.RetryCount}");
+				if (errorHandler?.RetryHandler?.RetryDelayInMilliseconds > 0)
+				{
+					await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
+				}
+				return (true, null); // Retry the step
+			}
+
+			return (false, stepErrorResult.Error ?? error);
+		}
+
+		/// <summary>
+		/// Executes a goal with a flatter execution model.
+		/// Events are treated as steps and executed inline.
+		/// </summary>
+		public async Task<(object? Variables, IError? Error)> ExecuteGoalFlat(Goal goal, PLangContext context, uint delayMs = 0, int startStepIndex = 0)
+		{
+			context.CallStack.EnterGoal(goal, context.Event);
+
+			if (delayMs > 0) await Task.Delay((int)delayMs);
+
+			logger.LogDebug($"[Start] Goal {goal.GoalName}");
+			AppContext.SetSwitch("Runtime", true);
+			SetLogLevel(goal.Comment);
+
+			object? returnValues = null;
+			int stepIndex = startStepIndex;
+
+			try
+			{
+				// Register goal-level injections
+				foreach (var injection in goal.Injections)
+				{
+					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
+				}
+
+				// Skip before-goal events if starting from a specific step (resuming)
+				if (startStepIndex == 0)
+				{
+					// Execute before-goal events as steps
+					var beforeGoalEvents = await eventRuntime.GetBeforeGoalEvents(goal);
+					foreach (var evt in beforeGoalEvents)
+					{
+						var evtResult = await eventRuntime.ExecuteEvent(evt, goal, null);
+						if (evtResult.Error != null) return evtResult;
+					}
+				}
+
+				// Handle callback continuation (takes precedence over startStepIndex)
+				if (context.Callback?.CallbackInfo.GoalHash == goal.Hash)
+				{
+					stepIndex = context.Callback.CallbackInfo.StepIndex;
+					if (stepIndex > goal.GoalSteps.Count - 1)
+					{
+						return (null, new Error("stepIndex is higher than steps in goal"));
+					}
+					goal.GoalSteps[stepIndex].Execute = true;
+				}
+
+				// Execute steps in a flat loop with events as steps
+				for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
+				{
+					var step = goal.GoalSteps[stepIndex];
+					context.CallingStep = step;
+					goal.CurrentStepIndex = stepIndex;
+					step.Stopwatch = Stopwatch.StartNew();
+					context.CallStack.SetCurrentStep(step, stepIndex);
+
+					SetStepLogLevel(step);
+
+					try
+					{
+						// Skip if already executed (RunOnce)
+						if (HasExecuted(step)) continue;
+
+						step.UniqueId = Guid.NewGuid().ToString();
+
+						// Load instruction
+						var loadError = LoadInstruction(goal, step);
+						if (loadError != null) return (null, loadError);
+
+						// Execute before-step events as steps (only once, even on retry)
+						var beforeStepEvents = await eventRuntime.GetBeforeStepEvents(goal, step);
+						foreach (var evt in beforeStepEvents)
+						{
+							var evtResult = await eventRuntime.ExecuteEvent(evt, goal, step);
+							if (evtResult.Error != null) return (null, evtResult.Error);
+						}
+
+						// Execute the step with retry support
+						int retryCount = 0;
+						object? stepReturnValue = null;
+						IError? stepError = null;
+
+						while (true)
+						{
+							(stepReturnValue, stepError) = await ProcessPrFile(goal, step, stepIndex, context);
+
+							if (stepError == null) break; // Success
+
+							// Handle error - check if we should retry
+							var (shouldRetry, handledError) = await HandleStepErrorFlat(goal, step, stepIndex, stepError, retryCount, context);
+
+							if (!shouldRetry)
+							{
+								stepError = handledError;
+								break; // No retry, exit loop
+							}
+
+							retryCount++;
+							stepError = null; // Clear for retry
+						}
+
+						if (stepError != null)
+						{
+							if (stepError is MultipleError me && !me.IsErrorHandled)
+							{
+								return (stepReturnValue, stepError);
+							}
+							if (stepError is EndGoal endGoal)
+							{
+								if (!endGoal.EndingGoal?.RelativePrPath.Equals(goal.RelativePrPath) == true)
+								{
+									return (stepReturnValue, endGoal);
+								}
+								// EndGoal targets this goal, exit normally
+								returnValues = stepReturnValue;
+								break;
+							}
+							// Other unhandled errors
+							if (stepError is not IErrorHandled)
+							{
+								return (stepReturnValue, stepError);
+							}
+						}
+						else
+						{
+							returnValues = stepReturnValue;
+						}
+
+						// Execute after-step events as steps (only once, even after retry)
+						var afterStepEvents = await eventRuntime.GetAfterStepEvents(goal, step);
+						foreach (var evt in afterStepEvents)
+						{
+							var evtResult = await eventRuntime.ExecuteEvent(evt, goal, step);
+							if (evtResult.Error != null) return evtResult;
+						}
+					}
+					finally
+					{
+						ResetStepLogLevel(goal);
+						step.Stopwatch?.Stop();
+						context.CallStack.CompleteCurrentStep(returnValues, null);
+					}
+				}
+
+				// Execute after-goal events as steps
+				var afterGoalEvents = await eventRuntime.GetAfterGoalEvents(goal);
+				foreach (var evt in afterGoalEvents)
+				{
+					var evtResult = await eventRuntime.ExecuteEvent(evt, goal, null);
+					if (evtResult.Error != null) return evtResult;
+				}
+
+				return (returnValues, null);
+			}
+			catch (Exception ex)
+			{
+				var error = new Error(ex.Message, Exception: ex);
+				var eventError = await HandleGoalError(error, goal, stepIndex, context);
+				return eventError;
+			}
+			finally
+			{
+				AppContext.SetData("GoalLogLevelByUser", null);
+				logger.LogDebug($"[End] Goal: {goal.GoalName} => {context.CallStack.CurrentFrame?.Duration}");
+				context.CallStack.ExitGoal();
+			}
+		}
+
+		#endregion
 	}
 }

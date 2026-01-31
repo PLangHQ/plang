@@ -1,4 +1,22 @@
 Run
+/ Default service registrations (already registered in bootstrap)
+/ Uncomment to override with different implementations:
+/
+/ Built-in options:
+/   llm: plang, openai
+/   db: sqlite
+/   caching: memory, inmemory
+/   archiver: zip
+/   encryption: default, aes
+/
+/ Custom DLL (place in .services folder):
+/   - inject db, npgsql/lib/net7.0/Npgsql.dll, global
+/
+/ Examples:
+/ - inject llm, openai, global
+/ - inject db, sqlite, global
+/ - inject caching, memory, global
+
 - run before app start event
 - call goal %goalName% %parameters%
 - run end app event
