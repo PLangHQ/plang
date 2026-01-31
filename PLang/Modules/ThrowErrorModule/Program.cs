@@ -22,11 +22,8 @@ namespace PLang.Modules.ThrowErrorModule
 	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram
 	{
-		private readonly ProgramFactory programFactory;
-
-		public Program(ProgramFactory programFactory)
+		public Program()
 		{
-			this.programFactory = programFactory;
 		}
 
 
@@ -129,7 +126,7 @@ namespace PLang.Modules.ThrowErrorModule
 			{
 				path = HttpContext.Request.Path;
 			}
-			var callback = await StepHelper.GetCallback(path, new(), memoryStack, goalStep, programFactory);
+			var callback = await StepHelper.GetCallback(path, new(), memoryStack, goalStep, engine.Modules);
 
 			var obj = new PaymentContract(name, description, error, services);
 			

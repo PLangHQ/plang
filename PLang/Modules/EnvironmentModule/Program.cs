@@ -143,6 +143,39 @@ public class Program : BaseProgram
 		return settings.GetAllSettings().ToList();
 	}
 
+	[Description("Remove a module from the engine, making it unavailable")]
+	public async Task<IError?> RemoveModule(string moduleName)
+	{
+		engine.Modules.Remove(moduleName.ToLowerInvariant());
+		return null;
+	}
+
+	[Description("Disable a module temporarily")]
+	public async Task<IError?> DisableModule(string moduleName)
+	{
+		engine.Modules.Disable(moduleName.ToLowerInvariant());
+		return null;
+	}
+
+	[Description("Enable a previously disabled module")]
+	public async Task<IError?> EnableModule(string moduleName)
+	{
+		engine.Modules.Enable(moduleName.ToLowerInvariant());
+		return null;
+	}
+
+	[Description("Check if a module is enabled")]
+	public async Task<bool> IsModuleEnabled(string moduleName)
+	{
+		return engine.Modules.IsEnabled(moduleName.ToLowerInvariant());
+	}
+
+	[Description("Get a list of all registered module names")]
+	public async Task<List<string>> GetModules()
+	{
+		return engine.Modules.GetRegisteredModules().ToList();
+	}
+
 
 	public async Task SetDebugMode()
 	{

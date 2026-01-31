@@ -7,6 +7,7 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream.Messages;
@@ -25,16 +26,16 @@ namespace PLang.Modules.UiModule
 		private readonly ITypeHelper typeHelper;
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly ProgramFactory programFactory;
+		private readonly IEngine engine;
 		private readonly VariableHelper variableHelper;
 
-		public Builder(ILogger logger, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem, ProgramFactory programFactory, VariableHelper variableHelper) : base()
+		public Builder(ILogger logger, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem, IEngine engine, VariableHelper variableHelper) : base()
 		{
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
 			this.fileSystem = fileSystem;
-			this.programFactory = programFactory;
+			this.engine = engine;
 			this.variableHelper = variableHelper;
 		}
 
@@ -116,7 +117,7 @@ Response with only the function name you would choose");
 
 					GoalToCallInfo goalToCallInfo = new GoalToCallInfo("/modules/UiModule/CreateTemplateFile", parameters);
 
-					var program = programFactory.GetProgram<CallGoalModule.Program>(step);
+					var program = engine.Modules.Get<CallGoalModule.Program>().Module!;
 					var result = await program.RunGoal(goalToCallInfo);
 					if (result.Error != null) return (instruction, new BuilderError(result.Error));
 				}
@@ -396,7 +397,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 		public async Task<(Instruction, IBuilderError?)> BuilderSetFrameworks(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
-			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
+			var caller = engine.Modules.Get<CallGoalModule.Program>().Module!;
 
 			var framework = gf.GetParameter<UiFramework>("framework");
 			var dict = new Dictionary<string, object?>();
@@ -409,7 +410,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 			framework = result.Return as UiFramework;
 
-			var variable = programFactory.GetProgram<VariableModule.Program>(step); 
+			var variable = engine.Modules.Get<VariableModule.Program>().Module!; 
 			var storedFrameworks = await variable.GetSettings<UiFramework>("UiFrameworks");
 
 			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
@@ -419,7 +420,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 		public async Task<(Instruction, IBuilderError?)> BuilderSetLayout(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
 			/*
-			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
+			var caller = engine.Modules.Get<CallGoalModule.Program>().Module!;
 
 			var options = gf.GetParameter<LayoutOptions>("options");
 			var dict = new Dictionary<string, object?>();

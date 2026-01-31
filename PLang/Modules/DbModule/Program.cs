@@ -62,7 +62,6 @@ namespace PLang.Modules.DbModule
 
 		private ModuleSettings dbSettings;
 		private readonly PrParser prParser;
-		private readonly ProgramFactory programFactory;
 		private readonly IDbServiceFactory dbFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
@@ -77,7 +76,7 @@ namespace PLang.Modules.DbModule
 		public record ColumnInfo(string Name, string Type, bool IsPrimaryKey, bool IsNotNull, object DefaultValue);
 
 		public Program(IDbServiceFactory dbFactory, PLangAppContext appContext, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
-			IEventSourceFactory eventSourceFactory, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
+			IEventSourceFactory eventSourceFactory, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser) : base()
 		{
 			this.dbFactory = dbFactory;
 			this.fileSystem = fileSystem;
@@ -90,7 +89,6 @@ namespace PLang.Modules.DbModule
 
 			this.dbSettings = dbSettings;
 			this.prParser = prParser;
-			this.programFactory = programFactory;
 
 			this.dbSettings.IsBuilder = this.IsBuilder;
 		}

@@ -2,9 +2,11 @@
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
+using PLang.Interfaces;
 using PLang.Models.Formats;
 using PLang.Modules;
 using PLang.Modules.SerializerModule;
+using PLang.Runtime;
 using PLang.Utils;
 using System.Net;
 
@@ -14,13 +16,13 @@ namespace PLang.Errors.Handlers
 	{
 		private readonly HttpContext httpContext;
 		private readonly ILogger logger;
-		private readonly ProgramFactory programFactory;
+		private readonly IModuleRegistry moduleRegistry;
 
-		public HttpErrorHandler(HttpContext httpContext, ILogger logger, ProgramFactory programFactory) : base()
+		public HttpErrorHandler(HttpContext httpContext, ILogger logger, IModuleRegistry moduleRegistry) : base()
 		{
 			this.httpContext = httpContext;
 			this.logger = logger;
-			this.programFactory = programFactory;
+			this.moduleRegistry = moduleRegistry;
 		}
 		public async Task<(bool, IError?)> Handle(IError error)
 		{
@@ -36,12 +38,17 @@ namespace PLang.Errors.Handlers
 				resp.StatusCode = error.StatusCode;
 
 
-				var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(step);
+				var (identity, identityError) = moduleRegistry.Get<Modules.IdentityModule.Program>();
+				if (identityError != null)
+				{
+					logger.LogError($"Failed to get IdentityModule: {identityError.Message}");
+					return;
+				}
 				/*var plangResponse = new PlangResponse()
 				{
 					Data = error.AsData(),
 					Headers = null,
-					Callback = await StepHelper.Callback(error.Step, programFactory)
+					Callback = await StepHelper.Callback(error.Step, moduleRegistry)
 				};*/
 
 				var jsonError = new JsonRpcError()
@@ -59,12 +66,18 @@ namespace PLang.Errors.Handlers
 				Payload payload = new Payload()
 				{
 					Response = jsonRpc,
-					Signature = await identity.Sign(jsonRpc)
+					Signature = await identity!.Sign(jsonRpc)
 				};
 
 				var result = JsonConvert.SerializeObject(payload);
 				var result2 = System.Text.Json.JsonSerializer.Serialize(payload);
-				await programFactory.GetProgram<Modules.SerializerModule.Program>(step).Serialize(payload, stream: resp.Body);
+				var (serializer, serializerError) = moduleRegistry.Get<Modules.SerializerModule.Program>();
+				if (serializerError != null)
+				{
+					logger.LogError($"Failed to get SerializerModule: {serializerError.Message}");
+					return;
+				}
+				await serializer!.Serialize(payload, stream: resp.Body);
 			}
 			catch (ObjectDisposedException)
 			{

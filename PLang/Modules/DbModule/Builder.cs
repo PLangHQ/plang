@@ -51,11 +51,11 @@ public class Builder : BaseBuilder
 	private readonly VariableHelper variableHelper;
 	private ModuleSettings dbSettings;
 	private readonly IGoalParser goalParser;
-	private readonly ProgramFactory programFactory;
+	private readonly IEngine engine;
 
 	public Builder(IPLangFileSystem fileSystem, IDbServiceFactory dbFactory, ISettings settings, PLangAppContext appContext,
 		ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger,
-		VariableHelper variableHelper, ModuleSettings dbSettings, IGoalParser goalParser, ProgramFactory programFactory) : base()
+		VariableHelper variableHelper, ModuleSettings dbSettings, IGoalParser goalParser, IEngine engine) : base()
 	{
 		this.fileSystem = fileSystem;
 		this.dbFactory = dbFactory;
@@ -67,7 +67,7 @@ public class Builder : BaseBuilder
 		this.variableHelper = variableHelper;
 		this.dbSettings = dbSettings;
 		this.goalParser = goalParser;
-		this.programFactory = programFactory;
+		this.engine = engine;
 
 		this.dbSettings.UseInMemoryDataSource = true;
 		this.dbSettings.IsBuilder = true;
@@ -755,7 +755,8 @@ When table name is unknown at built time because it is created with variable, us
 			return new StepBuilderError("Filename is empty", step);
 		}
 
-		var file = programFactory.GetProgram<Modules.FileModule.Program>(step);
+		var (file, fileError) = engine.Modules.Get<FileModule.Program>();
+		if (fileError != null) return new BuilderError(fileError);
 		var readResult = await file.ReadTextFile(fileName);
 		if (readResult.Error != null) return new BuilderError(readResult.Error);
 
@@ -1118,9 +1119,9 @@ Reason:{error.Message}", step,
 
 	private Program GetProgram(GoalStep step)
 	{
-		var program = programFactory.GetProgram<Program>(step);
-
-		return program;
+		var (program, error) = engine.Modules.Get<Program>();
+		if (error != null) throw new Exception($"Failed to get DbModule.Program: {error.Message}");
+		return program!;
 	}
 
 	public async Task<IBuilderError?> BuilderSetDataSourceNames(GoalStep step, Instruction instruction, DbGenericFunction gf)

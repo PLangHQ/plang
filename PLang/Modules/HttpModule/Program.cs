@@ -22,7 +22,7 @@ namespace PLang.Modules.HttpModule
 {
 	[Description("Make Http request. Mare sure to format Bearer authentication correctly in headers variable")]
 	public class Program(IPLangFileSystem fileSystem, IHttpClientFactory httpClientFactory,
-		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
+		VariableHelper variableHelper) : BaseProgram()
 	{
 		private new readonly IPLangFileSystem fileSystem = fileSystem;
 		private new readonly VariableHelper variableHelper = variableHelper;
@@ -472,7 +472,9 @@ namespace PLang.Modules.HttpModule
 				if (!response.IsSuccessStatusCode)
 				{
 
-					var result = await programFactory.GetProgram<SerializerModule.Program>(goalStep).Deserialize(response.Content.ReadAsStream(), mediaType);
+					var (serializer, serializerError) = Module<SerializerModule.Program>();
+					if (serializerError != null) return (null, serializerError, GetHttpResponse(properties, response));
+					var result = await serializer!.Deserialize(response.Content.ReadAsStream(), mediaType);
 					if (result.Error != null && result.Error.Key != "SerializerNotDefined") return (null, result.Error, GetHttpResponse(properties, response));
 
 
@@ -508,7 +510,9 @@ namespace PLang.Modules.HttpModule
 					var signatureJson = obj.FirstOrDefault(p => p.Key.Equals("signature", StringComparison.OrdinalIgnoreCase));
 					if (signatureJson.Key != null)
 					{
-						var signature = await programFactory.GetProgram<IdentityModule.Program>(goalStep).VerifySignature(signatureJson.Value.ToString());
+						var (identityModule, identityError) = Module<IdentityModule.Program>();
+						if (identityError != null) return (obj.ToString(), identityError, GetHttpResponse(properties, response));
+						var signature = await identityModule!.VerifySignature(signatureJson.Value.ToString());
 						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(properties, response));
 
 						if (appContext != null && signature.Signature != null)
@@ -738,8 +742,9 @@ namespace PLang.Modules.HttpModule
 			headers.Add("url", url);
 			headers.Add("method", method);
 
-			var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
-			var signature = await identity.Sign(body, contracts: contracts.ToList(), headers: headers);
+			var (identity, identityError) = Module<IdentityModule.Program>();
+			if (identityError != null) throw new Exception($"Failed to get IdentityModule: {identityError.Message}");
+			var signature = await identity!.Sign(body, contracts: contracts.ToList(), headers: headers);
 			var json = JsonConvert.SerializeObject(signature);
 			//var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
 

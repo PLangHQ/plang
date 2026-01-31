@@ -43,19 +43,17 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly ILogger logger;
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime runtime;
-		private readonly ProgramFactory programFactory;
 		private BrowserModuleData data;
 
 		private object locker = new object();
 		private bool disposed;
 
-		public Program(IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
+		public Program(IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.engine = engine;
 			this.runtime = runtime;
-			this.programFactory = programFactory;			
 		}
 
 		public async Task<IError?> AsyncConstructor()
@@ -184,7 +182,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			});
 
-			var callGoal = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var callGoal = Module<CallGoalModule.Program>().Module!;
 			if (onRequest != null)
 			{
 				browser.Request += async (sender, e) =>
@@ -1046,7 +1044,7 @@ return result;");
 				{
 					if (errorCount < 2 && pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
+						var program = Module<TerminalModule.Program>().Module!;
 						await program.RunTerminal("playwright.ps1", ["install"], pathToWorkingDirInTerminal: AppContext.BaseDirectory);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode, ++errorCount);
@@ -1095,7 +1093,7 @@ return result;");
 				{
 					if (pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
+						var program = Module<TerminalModule.Program>().Module!;
 						await program.RunTerminal("playwright.ps1", ["instal"]);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
@@ -1156,7 +1154,7 @@ return result;");
 			GoalToCallInfo? onConsoleOutput = null, GoalToCallInfo? onWorker = null, GoalToCallInfo? onDialog = null, GoalToCallInfo? onLoad = null,
 			GoalToCallInfo? onDOMLoad = null, GoalToCallInfo? onFileChooser = null, GoalToCallInfo? onIFrameLoad = null, GoalToCallInfo? onDownload = null)
 		{
-			var callGoal = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var callGoal = Module<CallGoalModule.Program>().Module!;
 
 			page.Console += async (object? sender, IConsoleMessage e) =>
 			{

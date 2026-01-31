@@ -3,6 +3,7 @@ using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Models;
 using System;
 using System.Collections.Generic;
@@ -49,17 +50,17 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(string Path, Dictionary<string, object?>? CallbackData, CallbackInfo CallbackInfo, SignedMessage Signature) { 
+		public record Callback(string Path, Dictionary<string, object?>? CallbackData, CallbackInfo CallbackInfo, SignedMessage Signature) {
 			public string Hash { get; set; }
 			public string? PreviousHash { get; set; }
 		}
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
-		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, 
-			Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory, bool skipNonce = false)
+		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData,
+			Runtime.MemoryStack memoryStack, GoalStep? step, IModuleRegistry moduleRegistry, bool skipNonce = false)
 		{
 			if (step == null) return null;
 
-			
+
 	//		var callbackInfos = new Stack<CallbackInfo>();
 			var goal = step.Goal;
 			string method = goal.GoalName;
@@ -69,19 +70,19 @@ namespace PLang.Utils
 
 			/*
 			 * TODO: fix this
-			 * 
+			 *
 			 * List<string> callStackGoals is a temp fix, the ParentGoal should not be set on goal object
 			 * it should be set on CallStack object that needs to be created, goal object should
 			 * not change at runtime. this is because if same goal is called 2 or more times
 			 * in a callstack, the parent goal is overwritten
-			 * 
+			 *
 			List<string> callStackGoals = new();
 			callStackGoals.Add(goal.RelativePrPath);
 
 
 			var parentGoal = goal.ParentGoal;
 			while (parentGoal != null)
-			{					
+			{
 				if (callStackGoals.Contains(parentGoal.RelativePrPath))
 				{
 					parentGoal = null;
@@ -91,7 +92,7 @@ namespace PLang.Utils
 					callStackGoals.Add(parentGoal.RelativePrPath);
 
 					parentGoal = parentGoal.ParentGoal;
-					
+
 				}
 
 				// todo: temp thing while figuring out to deep calls
@@ -102,12 +103,13 @@ namespace PLang.Utils
 					break;
 				}
 
-				
+
 			}
 
 			*/
 
-			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(step);
+			var (encryption, encryptionError) = moduleRegistry.Get<Modules.CryptographicModule.Program>();
+			if (encryptionError != null) return null;
 
 			if (callbackData != null)
 			{
@@ -120,18 +122,20 @@ namespace PLang.Utils
 						var obj = memoryStack.Get(item.Value.ToString());
 						if (obj != null)
 						{
-							var encryptedValue = await encryption.Encrypt(obj);
+							var encryptedValue = await encryption!.Encrypt(obj);
 							callbackData.AddOrReplace(item.Key, encryptedValue);
 						}
 					}
 					else
 					{
-						var encryptedValue = await encryption.Encrypt(item.Value);
+						var encryptedValue = await encryption!.Encrypt(item.Value);
 						callbackData.AddOrReplace(item.Key, encryptedValue);
 					}
 				}
 			}
-			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callBackInfo, skipNonce : skipNonce);
+			var (identity, identityError) = moduleRegistry.Get<Modules.IdentityModule.Program>();
+			if (identityError != null) return null;
+			var signed = await identity!.Sign(callBackInfo, skipNonce : skipNonce);
 			var callBack = new Callback(path, callbackData, callBackInfo, signed);
 			var hash = HashHelper.Hash(callBack);
 			callBack.Hash = hash;

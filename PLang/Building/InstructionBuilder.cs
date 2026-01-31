@@ -50,7 +50,7 @@ namespace PLang.Building
 		private readonly PLangContext context;
 		private readonly VariableHelper variableHelper;
 		private readonly ISettings settings;
-		private readonly ProgramFactory programFactory;
+		private readonly IEngine engine;
 		private readonly IGoalParser goalParser;
 		private readonly PrParser prParser;
 		private readonly MethodHelper methodHelper;
@@ -58,7 +58,7 @@ namespace PLang.Building
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			IMemoryStackAccessor memoryStackAccessor, IPLangContextAccessor contextAccessor, VariableHelper variableHelper, ISettings settings,
-			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
+			IEngine engine, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -69,7 +69,7 @@ namespace PLang.Building
 			this.context = contextAccessor.Current;
 			this.variableHelper = variableHelper;
 			this.settings = settings;
-			this.programFactory = programFactory;
+			this.engine = engine;
 			this.goalParser = goalParser;
 			this.prParser = prParser;
 			this.methodHelper = methodHelper;
@@ -155,7 +155,8 @@ namespace PLang.Building
 			parameters.Add("parameters", build.Instruction.Function.Parameters);
 
 			var goalInfo = new GoalToCallInfo("MapVariables") { Path = ".build/modules/MapVariables/00. Goal.pr", Parameters = parameters };
-			var callGoal = programFactory.GetProgram<Modules.CallGoalModule.Program>(step);
+			var (callGoal, callGoalError) = engine.Modules.Get<Modules.CallGoalModule.Program>();
+			if (callGoalError != null) return (null, new StepBuilderError(callGoalError.Message, step));
 			var result = await callGoal.RunGoal(goalInfo);
 			*/
 

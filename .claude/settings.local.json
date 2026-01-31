@@ -11,7 +11,8 @@
       "Bash(cat:*)",
       "Bash(plang:*)",
       "Bash(ls:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -50 \"\"{}\"\"')"
     ]
   }
 }

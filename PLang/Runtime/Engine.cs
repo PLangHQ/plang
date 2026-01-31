@@ -55,6 +55,11 @@ namespace PLang.Runtime
 		List<ISerializer> Serializers { get; set; }
 		PLangContext Context { get; }
 
+		/// <summary>
+		/// Module registry for accessing and controlling modules.
+		/// </summary>
+		IModuleRegistry Modules { get; }
+
 		void AddContext(string key, object value);
 		PLangAppContext GetAppContext();
 		void Init(IServiceContainer container);
@@ -115,8 +120,10 @@ namespace PLang.Runtime
 		public List<ISerializer> Serializers { get; set; }
 		private PrParser prParser;
 		private PLangAppContext appContext;
+		private IModuleRegistry moduleRegistry;
 		public PrParser PrParser { get { return prParser; } }
 		public DateTime LastAccess { get; set; }
+		public IModuleRegistry Modules { get { return moduleRegistry; } }
 
 		public IAppCache AppCache
 		{
@@ -183,6 +190,11 @@ namespace PLang.Runtime
 			logger.LogDebug($" ---------- Init on Engine  ---------- {stopwatch.ElapsedMilliseconds}");
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.contextAccessor = container.GetInstance<IPLangContextAccessor>();
+
+			// Initialize ModuleRegistry and register all modules
+			this.moduleRegistry = new ModuleRegistry(container, contextAccessor);
+			this.moduleRegistry.RegisterAllFromContainer();
+			logger.LogDebug($" ---------- ModuleRegistry initialized  ---------- {stopwatch.ElapsedMilliseconds}");
 
 			EnginePool = new EnginePool(container.GetInstance<IEngine>());
 

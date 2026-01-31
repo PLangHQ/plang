@@ -300,7 +300,6 @@ namespace PLang.Container
 
 			// Misc
 			container.RegisterSingleton<ICertHelper, CertHelper>();
-			container.RegisterSingleton<ProgramFactory>(factory => new ProgramFactory(container));
 
 			// File access from settings
 			var fileSystem = container.GetInstance<IPLangFileSystem>();

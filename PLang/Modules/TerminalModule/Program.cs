@@ -25,16 +25,14 @@ namespace PLang.Modules.TerminalModule
 		private readonly ILogger logger;
 		private readonly ISettings settings;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly ProgramFactory programFactory;
 		private readonly IEngine engine;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine) : base()
+		public Program(ILogger logger, ISettings settings, IPLangFileSystem fileSystem, IEngine engine) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
 			this.fileSystem = fileSystem;
-			this.programFactory = programFactory;
 			this.engine = engine;
 		}
 

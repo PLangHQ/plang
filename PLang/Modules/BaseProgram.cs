@@ -131,6 +131,26 @@ namespace PLang.Modules
 			return (T)container.GetInstance(typeof(T));
 		}
 
+		/// <summary>
+		/// Gets a module from the engine's module registry with full proxy and error handling support.
+		/// </summary>
+		/// <typeparam name="T">The module type to retrieve</typeparam>
+		/// <returns>Tuple of (module, error) - check error before using module</returns>
+		protected (T? Module, IError? Error) Module<T>() where T : BaseProgram
+		{
+			return engine.Modules.Get<T>();
+		}
+
+		/// <summary>
+		/// Gets a module by short name from the engine's module registry.
+		/// </summary>
+		/// <param name="shortName">The short name of the module (e.g., "terminal", "http")</param>
+		/// <returns>Tuple of (module, error) - check error before using module</returns>
+		protected (BaseProgram? Module, IError? Error) Module(string shortName)
+		{
+			return engine.Modules.Get(shortName);
+		}
+
 		public void SetStep(GoalStep step)
 		{
 			this.goalStep = step;

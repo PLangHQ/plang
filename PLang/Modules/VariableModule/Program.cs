@@ -29,20 +29,19 @@ namespace PLang.Modules.VariableModule
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
-		private readonly ProgramFactory programFactory;
 		private new readonly VariableHelper variableHelper;
 
-		public Program(ISettings settings, ProgramFactory programFactory, VariableHelper variableHelper) : base()
+		public Program(ISettings settings, VariableHelper variableHelper) : base()
 		{
 			this.settings = settings;
-			this.programFactory = programFactory;
 			this.variableHelper = variableHelper;
 		}
 
 		private async Task<(DataSource?, IError?)> GetDataSource(string? dataSourceName)
 		{
-			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
-			return await db.GetDataSource(dataSourceName);
+			var (db, dbError) = Module<DbModule.Program>();
+			if (dbError != null) return (null, dbError);
+			return await db!.GetDataSource(dataSourceName);
 
 		}
 		[Example("load %step%", @"variables=[""%step%""]")]
@@ -72,7 +71,7 @@ namespace PLang.Modules.VariableModule
 
 		private async Task<(object?, IError?)> LoadWithDefaultValueInternal([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue, DataSource dataSource)
 		{
-			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
+			var db = Module<DbModule.Program>().Module!;
 
 
 			List<object?> objects = new();
@@ -204,7 +203,7 @@ namespace PLang.Modules.VariableModule
 				return new ProgramError("Only sqlite is supported");
 			}
 
-			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
+			var db = Module<DbModule.Program>().Module!;
 			foreach (var variable in variables)
 			{
 				var value = memoryStack.Get(variable);

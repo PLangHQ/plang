@@ -47,18 +47,16 @@ public class Program : BaseProgram, IDisposable
 	private readonly IEventRuntime eventRuntime;
 	private readonly PrParser prParser;
 	private readonly IPseudoRuntime pseudoRuntime;
-	private readonly ProgramFactory programFactory;
 	private readonly static List<WebserverProperties> listeners = new();
 	private bool disposed;
 
 
 	public Program(IEventRuntime eventRuntime, PrParser prParser,
-		IPseudoRuntime pseudoRuntime, Modules.ProgramFactory programFactory) : base()
+		IPseudoRuntime pseudoRuntime) : base()
 	{
 		this.eventRuntime = eventRuntime;
 		this.prParser = prParser;
 		this.pseudoRuntime = pseudoRuntime;
-		this.programFactory = programFactory;
 
 	}
 
@@ -1106,7 +1104,9 @@ Frontpage
 		var obj = new WebSocketData(goalToCall, url, method, null);
 		obj.Parameters = parameters;
 
-		var signature = await programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep).Sign(obj);
+		var (identityModule, identityError) = Module<IdentityModule.Program>();
+		if (identityError != null) throw new Exception($"Failed to get IdentityModule: {identityError.Message}");
+		var signature = await identityModule!.Sign(obj);
 		obj.Signature = signature;
 
 		byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
@@ -1179,7 +1179,9 @@ Frontpage
 					}
 
 					var signature = websocketData.Signature;
-					var verifiedSignature = await programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep).VerifySignature(signature);
+					var (identityMod, idError) = Module<IdentityModule.Program>();
+					if (idError != null) continue;
+					var verifiedSignature = await identityMod!.VerifySignature(signature);
 					// todo: missing verifiedSignature.Error check
 					if (verifiedSignature.Signature == null)
 					{

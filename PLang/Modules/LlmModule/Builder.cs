@@ -3,7 +3,9 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
@@ -14,11 +16,11 @@ namespace PLang.Modules.LlmModule
 {
 	public class Builder : BaseBuilder
 	{
-		private readonly ProgramFactory programFactory;
+		private readonly IEngine engine;
 
-		public Builder(ProgramFactory programFactory) : base()
+		public Builder(IEngine engine) : base()
 		{
-			this.programFactory = programFactory;
+			this.engine = engine;
 		}
 
 		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
@@ -177,8 +179,9 @@ make sure to return value if user wants to write the result into a variable.
 					messages.Add(new LlmMessage("system", "Make the user input into a valid json scheme. ONLY give me scheme, DO not explaing. DO not wrap it"));
 					messages.Add(new LlmMessage("user", scheme?.Value.ToString()));
 
-					var llm = programFactory.GetProgram<LlmModule.Program>(step);
-					var result = await llm.AskLlm(messages, llmResponseType: "text", model: "gpt-4o");
+					var (llm, llmError) = engine.Modules.Get<LlmModule.Program>();
+					if (llmError != null) return (instruction, new BuilderError(llmError));
+					var result = await llm!.AskLlm(messages, llmResponseType: "text", model: "gpt-4o");
 					var validScheme = result.Item1.ToString() ?? "";
 					if (validScheme.Contains("```json"))
 					{

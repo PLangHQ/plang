@@ -3,6 +3,7 @@ using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.Xml.Linq;
@@ -13,12 +14,12 @@ namespace PLang.Modules.OutputModule
 	public class Builder : BaseBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly ProgramFactory programFactory;
+		private readonly IEngine engine;
 
-		public Builder(IPLangFileSystem fileSystem, ProgramFactory programFactory)
+		public Builder(IPLangFileSystem fileSystem, IEngine engine)
 		{
 			this.fileSystem = fileSystem;
-			this.programFactory = programFactory;
+			this.engine = engine;
 		}
 
 		public async Task<(Instruction?, IBuilderError?)> BuilderAsk(GoalStep step, Instruction instruction, GenericFunction gf)
@@ -38,8 +39,9 @@ namespace PLang.Modules.OutputModule
 
 					GoalToCallInfo goalToCallInfo = new GoalToCallInfo("/modules/UiModule/CreateTemplateFile", parameters);
 
-					var program = programFactory.GetProgram<CallGoalModule.Program>(step);
-					var result = await program.RunGoal(goalToCallInfo);
+					var (program, programError) = engine.Modules.Get<CallGoalModule.Program>();
+					if (programError != null) return (instruction, new BuilderError(programError));
+					var result = await program!.RunGoal(goalToCallInfo);
 					if (result.Error != null) return (instruction, new BuilderError(result.Error));
 				}
 			}

@@ -10,14 +10,12 @@ namespace PLang.Modules.WebSocketModule
 {
 	public class Program : BaseProgram, IDisposable
 	{
-		private readonly ProgramFactory programFactory;
 		private bool disposed;
 
 		private static readonly string WebsocketClient = "WebsocketClient";
 
-		public Program(ProgramFactory programFactory)
+		public Program()
 		{
-			this.programFactory = programFactory;
 		}
 
 		public record WebsocketConnection(string name, ClientWebSocket connection);
@@ -38,7 +36,8 @@ namespace PLang.Modules.WebSocketModule
 				name = url;
 			}
 
-			var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var (caller, callerError) = Module<CallGoalModule.Program>();
+			if (callerError != null) return (null, callerError);
 
 			ClientWebSocket _socket = new();
 			await _socket.ConnectAsync(new Uri(url), CancellationToken.None);

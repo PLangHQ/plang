@@ -96,7 +96,7 @@ namespace PLang.Container
 									factory.GetInstance<Modules.IdentityModule.Program>(),
 									factory.GetInstance<PrParser>()));
 
-			var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), new PLang.Modules.ProgramFactory(container));
+			var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), engine.Modules);
 			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
 
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler());
@@ -240,10 +240,6 @@ namespace PLang.Container
 		private static void RegisterBaseVariables(ServiceContainer container, IEngine? parentEngine = null)
 		{
 			container.RegisterSingleton<IInterceptor, ErrorHandlingInterceptor>();
-			container.RegisterSingleton<ProgramFactory>(factory =>
-			{
-				return new ProgramFactory(container);
-			});
 
 			var context = container.GetInstance<PLangAppContext>();
 

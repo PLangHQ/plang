@@ -21,12 +21,10 @@ namespace PLang.Modules.OutputModule
 	public class Program : BaseProgram
 	{
 		private readonly VariableHelper variableHelper;
-		private readonly ProgramFactory programFactory;
 
-		public Program(VariableHelper variableHelper, ProgramFactory programFactory) : base()
+		public Program(VariableHelper variableHelper) : base()
 		{
 			this.variableHelper = variableHelper;
-			this.programFactory = programFactory;
 		}
 
 		[Description("channel=audit|metric|trace|debug|info|warning|error| or user defined channel, serializer=default(current serializer)|json|csv|xml or user defined")]
@@ -36,7 +34,7 @@ namespace PLang.Modules.OutputModule
 		{
 			throw new NotImplementedException();
 			/*
-			var validate = programFactory.GetProgram<ValidateModule.Program>(goalStep);
+			var validate = Module<ValidateModule.Program>().Module!;
 			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
 			if (error != null) return error;
 
@@ -53,7 +51,7 @@ namespace PLang.Modules.OutputModule
 			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}",
 			[HandlesVariable] Dictionary<string, object?>? options = null, string? scheme = null)
 		{
-			var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var callGoalModule = Module<CallGoalModule.Program>().Module!;
 			var param = new Dictionary<string, object?> {
 				{ "type", type }, { "statusCode", statusCode }, { "text", text },
 				{ "developerInstructionForResult", developerInstructionForResult }, {"scheme", scheme } };
@@ -124,7 +122,7 @@ namespace PLang.Modules.OutputModule
 			{
 				var path = GetCallbackPath();
 				var url = (HttpContext?.Request.Path.Value ?? "/");
-				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				var callback = await StepHelper.GetCallback(url, askMessage.CallbackData, memoryStack, goalStep, engine.Modules);
 
 				askMessage = askMessage with { Callback = callback };
 
@@ -172,7 +170,7 @@ namespace PLang.Modules.OutputModule
 			{
 				throw new NotImplementedException("ask user error");
 				/*
-				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, engine.Modules);
 				uie = uie with { Callback = newCallBack };
 
 				error = await Write(uie);
@@ -197,7 +195,7 @@ namespace PLang.Modules.OutputModule
 			{
 				return (null, new ProgramError("Ask user form must be POST", goalStep));
 			}
-			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
+			var encryption = Module<CryptographicModule.Program>().Module!;
 			if (callback.CallbackData != null && callback.CallbackData?.Count > 0)
 			{
 				foreach (var item in callback.CallbackData ?? [])
@@ -221,7 +219,7 @@ namespace PLang.Modules.OutputModule
 
 			if (error != null && error is UserInputError uie2)
 			{
-				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, programFactory);
+				var newCallBack = await StepHelper.GetCallback(GetCallbackPath(), askMessage.CallbackData, memoryStack, goalStep, engine.Modules);
 				newCallBack.PreviousHash = context.Callback.Hash;
 
 				var errorMessage = uie2.ErrorMessage with { Callback = newCallBack };
@@ -250,7 +248,7 @@ namespace PLang.Modules.OutputModule
 				askMessage.OnCallback.Parameters.AddOrReplace(askOptionsData.Key, askOptionsData.Value);
 			}
 
-			var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			var caller = Module<CallGoalModule.Program>().Module!;
 			var runGoalResult = await caller.RunGoal(askMessage.OnCallback);
 			if (runGoalResult.Error != null)
 			{

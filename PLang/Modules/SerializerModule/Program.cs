@@ -22,15 +22,12 @@ namespace PLang.Modules.SerializerModule
 {
 	public class Program : BaseProgram
 	{
-		private readonly ProgramFactory programFactory;
-
 		/*
 * Need to inject ISerializer
 * Switch out Newtonsoft, but this needs to be done in MemoryStack
 * */
-		public Program(Modules.ProgramFactory programFactory)
+		public Program()
 		{
-			this.programFactory = programFactory;
 		}
 
 		public async Task<(int?, IError?)> AddSerializer(string path)
