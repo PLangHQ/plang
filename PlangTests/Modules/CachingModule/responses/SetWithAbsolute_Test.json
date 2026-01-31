@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "set %obj% to cache, 'ObjCache', cache for 10 minutes from now",
-    "response": "{\"FunctionName\": \"SetForAbsoluteExpiration\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"ObjCache\"},\n{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%obj%\"},\n{\"Type\": \"Int32\",\n\"Name\": \"timeInSeconds\",\n\"Value\": 600}],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T12:10:09.521713+00:00"
-  }
-]

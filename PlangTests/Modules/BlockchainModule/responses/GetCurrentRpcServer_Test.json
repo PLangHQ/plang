@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "get currenct rpc server, write to %rpcServer%",
-    "response": "{\"FunctionName\": \"GetCurrentRpcServer\", \"Parameters\": [], \"ReturnValue\": [{\"Type\": \"object\", \"VariableName\": \"rpcServer\"}]}",
-    "created": "2024-02-07T12:12:47.2920072+00:00"
-  }
-]

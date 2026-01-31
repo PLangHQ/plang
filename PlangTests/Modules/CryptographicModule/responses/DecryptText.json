@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "decrypt %encryptedText%, write to %text%",
-    "response": "{\"FunctionName\": \"Decrypt\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%encryptedText%\"}],\n\"ReturnValue\": [{\"Type\": \"Object\",\n\"VariableName\": \"text\"}]}",
-    "created": "2024-02-07T12:54:43.7909828+00:00"
-  }
-]

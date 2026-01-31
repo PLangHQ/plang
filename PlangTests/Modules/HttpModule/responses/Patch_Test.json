@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "Patch http://example.org, write to %json%",
-    "response": "{\"FunctionName\": \"Patch\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"url\", \"Value\": \"http://example.org\"},\n    {\"Type\": \"Object\", \"Name\": \"data\", \"Value\": null},\n    {\"Type\": \"Boolean\", \"Name\": \"doNotSignRequest\", \"Value\": false},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"headers\", \"Value\": null},\n    {\"Type\": \"String\", \"Name\": \"encoding\", \"Value\": \"utf-8\"},\n    {\"Type\": \"String\", \"Name\": \"contentType\", \"Value\": \"application/json\"},\n    {\"Type\": \"Int32\", \"Name\": \"timeoutInSeconds\", \"Value\": 30}\n],\n\"ReturnValue\": [{\"Type\": \"Object\", \"VariableName\": \"json\"}]}",
-    "created": "2024-02-07T13:04:58.8191524+00:00"
-  }
-]

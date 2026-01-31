@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "set mumbai as current rpc server",
-    "response": "{\"FunctionName\": \"SetCurrentRpcServer\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"nameOrUrl\",\n\"Value\": \"Mumbai - Polygon testnet\"}],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T12:13:38.8268112+00:00"
-  }
-]

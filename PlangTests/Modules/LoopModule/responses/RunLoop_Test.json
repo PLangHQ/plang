@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "loop through %list%, call !Process/File name=%full_name%, %key%",
-    "response": "{\"FunctionName\": \"RunLoop\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"variableToLoopThrough\", \"Value\": \"%list%\"},\n    {\"Type\": \"String\", \"Name\": \"goalNameToCall\", \"Value\": \"!Process/File\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"key\": \"%key%\"}}\n],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T14:15:10.8857014+00:00"
-  }
-]

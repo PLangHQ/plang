@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "write out 'Hello PLang world'",
-    "response": "{\"FunctionName\": \"Write\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"content\",\n\"Value\": \"Hello PLang world\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"writeToBuffer\",\n\"Value\": false},\n{\"Type\": \"string\",\n\"Name\": \"type\",\n\"Value\": \"text\"},\n{\"Type\": \"Int32\",\n\"Name\": \"statusCode\",\n\"Value\": 200}],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T14:12:20.5571106+00:00"
-  }
-]

@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "remove variable 'name'",
-    "response": "{\"FunctionName\": \"RemoveVariable\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"key\",\n\"Value\": \"name\"}],\n\"ReturnValue\": null}",
-    "created": "2024-02-07T14:11:37.806851+00:00"
-  }
-]
