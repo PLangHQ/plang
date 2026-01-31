@@ -95,9 +95,7 @@ namespace PLang.Container
 									factory.GetInstance<IPLangFileSystem>(),
 									factory.GetInstance<Modules.IdentityModule.Program>(),
 									factory.GetInstance<PrParser>()));
-			/*
-		container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
-			*/
+
 			var httpErrorHandler = new HttpErrorHandler(null, container.GetInstance<ILogger>(), new PLang.Modules.ProgramFactory(container));
 			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
 
@@ -276,12 +274,6 @@ namespace PLang.Container
 
 			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>(), container.GetInstance<IEngine>());
 
-			/*
-			container.RegisterSingleton<EnginePool>(factory =>
-			{
-				return new EnginePool(10, () => container.GetInstance<IEngine>(), container);
-			});*/
-
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
@@ -410,88 +402,12 @@ namespace PLang.Container
 			});
 			container.RegisterDbFactory(typeof(SqliteConnection), true);
 
-			/*
-			container.Register(factory =>
-			{
-				var context = container.GetInstance<PLangAppContext>();
-				var fileSystem = container.GetInstance<IPLangFileSystem>();
-				var settings = container.GetInstance<ISettings>();
-				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-				var logger = container.GetInstance<ILogger>();
-				var typeHelper = container.GetInstance<ITypeHelper>();
-
-				throw new Exception("Here?");
-
-				IDbConnection? dbConnection = GetDbConnection(factory, context);
-				if (dbConnection != null) return dbConnection;
-
-				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = container.GetInstance<Modules.DbModule.ModuleSettings>();
-
-				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
-				if (dbConnection != null) return dbConnection;
-
-				var supportedTypes = moduleSettings.GetSupportedDbTypes();
-				if (supportedTypes.Count == 1)
-				{
-					moduleSettings.CreateDataSource("data", "sqlite", true, true).Wait();
-					dbConnection = GetDbConnection(factory, context);
-					if (dbConnection != null) return dbConnection;
-				}
-
-				if (AppContext.TryGetSwitch("Builder", out bool isBuilder) && isBuilder)
-				{
-					(var dataSource, var error) = moduleSettings.GetCurrentDataSource().Result;
-					if (error != null) throw new ExceptionWrapper(error);
-
-					dbConnection = factory.GetInstance<IDbConnection>(dataSource.TypeFullName);
-					dbConnection.ConnectionString = dataSource.ConnectionString;
-				}
-
-				return dbConnection;
-			});*/
-
 			container.Register<IEventSourceFactory>(factory =>
 			{
 				return new EventSourceFactory(container);
 			});
 			container.Register<IEventSourceRepository, SqliteEventSourceRepository>(typeof(SqliteEventSourceRepository).FullName);
 			container.Register<IEventSourceRepository, DisableEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-			/*container.Register(factory =>
-			{
-				var context = container.GetInstance<PLangAppContext>();
-				var fileSystem = container.GetInstance<IPLangFileSystem>();
-				var settings = container.GetInstance<ISettings>();
-				var logger = container.GetInstance<ILogger>();
-				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-				var typeHelper = container.GetInstance<ITypeHelper>();
-
-				var moduleSettings = container.GetInstance<Modules.DbModule.ModuleSettings>();
-				var dataSources = moduleSettings.GetAllDataSources().Result;
-				if (dataSources.Count == 0)
-				{
-					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-				}
-
-				(var dataSource, var error) = moduleSettings.GetDataSourceOrDefault().Result;
-				if (error != null) throw new ExceptionWrapper(error);
-
-				if (!dataSource.KeepHistory)
-				{
-					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
-					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-				}
-				else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
-				{
-					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository).FullName);
-				}
-
-				string type = GetImplementation(context, ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository));
-				var eventSourceRepo = factory.GetInstance<IEventSourceRepository>(type);
-
-				return eventSourceRepo;
-			});*/
-
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();
@@ -660,17 +576,6 @@ namespace PLang.Container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
 				container.Register(type);
-				//container.Register(type, type, serviceName: type.FullName); 
-				/*container.Register(type, factory =>
-				{
-					var instance = Activator.CreateInstance(type) as BaseProgram;
-					var context = container.GetInstance<PLangAppContext>();
-
-					instance.Init(container, context["!Goal"] as Goal, context["!Step"] as GoalStep, context["!Instruction"] as Building.Model.Instruction, null);	
-					return instance;
-				}, serviceName: type.FullName + "Factory");*/
-
-
 			}
 			container.Register<BaseBuilder, BaseBuilder>();
 
@@ -747,6 +652,20 @@ namespace PLang.Container
 			}
 		}
 		private static Dictionary<string, bool> NotifiedAboutNotRegister = new();
+
+		// Maps injector type names to (InterfaceType, ReservedKeyword)
+		private static readonly Dictionary<string, (Type InterfaceType, string ReservedKeyword)> InjectorMappings = new()
+		{
+			["db"] = (typeof(IDbConnection), ReservedKeywords.Inject_IDbConnection),
+			["settings"] = (typeof(ISettingsRepository), ReservedKeywords.Inject_SettingsRepository),
+			["caching"] = (typeof(IAppCache), ReservedKeywords.Inject_Caching),
+			["logger"] = (typeof(ILogger), ReservedKeywords.Inject_Logger),
+			["llm"] = (typeof(ILlmService), ReservedKeywords.Inject_LLMService),
+			["askuser"] = (typeof(IAskUserHandler), ReservedKeywords.Inject_AskUserHandler),
+			["encryption"] = (typeof(IEncryption), ReservedKeywords.Inject_EncryptionService),
+			["archiver"] = (typeof(IArchiver), ReservedKeywords.Inject_Archiving),
+		};
+
 		public static void RegisterForPLangUserInjections(this IServiceContainer container, string injectorType, string pathToModule, bool isGlobalForApp, string? environmentVariable = null, string? environmentVariableValue = null, Type? injectionType = null)
 		{
 			var logger = container.GetInstance<ILogger>();
@@ -763,62 +682,12 @@ namespace PLang.Container
 				}
 			}
 
-			if (injectorType.ToLower() == "db")
+			var key = injectorType.ToLower();
+			if (InjectorMappings.TryGetValue(key, out var mapping))
 			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IDbConnection), pathToModule, "db");
-				RegisterType(container, "db", typeof(IDbConnection), type, ReservedKeywords.Inject_IDbConnection, isGlobalForApp, pathToModule);
-
+				var type = injectionType ?? GetInjectionType(container, mapping.InterfaceType, pathToModule, key);
+				RegisterType(container, key, mapping.InterfaceType, type, mapping.ReservedKeyword, isGlobalForApp, pathToModule);
 			}
-
-			if (injectorType.ToLower() == "settings")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ISettingsRepository), pathToModule, "settings");
-				RegisterType(container, "settings", typeof(ISettingsRepository), type, ReservedKeywords.Inject_SettingsRepository, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "caching")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IAppCache), pathToModule, "caching");
-				RegisterType(container, "caching", typeof(IAppCache), type, ReservedKeywords.Inject_Caching, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "logger")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ILogger), pathToModule, "logger");
-				RegisterType(container, "logger", typeof(ILogger), type, ReservedKeywords.Inject_Logger, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "llm")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(ILlmService), pathToModule, "llm");
-				RegisterType(container, "llm", typeof(ILlmService), type, ReservedKeywords.Inject_LLMService, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "askuser")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IAskUserHandler), pathToModule, "askuser");
-				RegisterType(container, "askuser", typeof(IAskUserHandler), type, ReservedKeywords.Inject_AskUserHandler, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "encryption")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IEncryption), pathToModule, "encryption");
-				RegisterType(container, "encryption", typeof(IEncryption), type, ReservedKeywords.Inject_EncryptionService, isGlobalForApp, pathToModule);
-
-			}
-
-			if (injectorType.ToLower() == "archiver")
-			{
-				var type = injectionType ?? GetInjectionType(container, typeof(IArchiver), pathToModule, "archiver");
-				RegisterType(container, "archiver", typeof(IArchiver), type, ReservedKeywords.Inject_Archiving, isGlobalForApp, pathToModule);
-
-			}
-
 		}
 		public static Type? GetInjectionType(IServiceContainer container, Type typeToFind, string pathOrTypeName, string serviceType)
 		{
@@ -905,23 +774,6 @@ namespace PLang.Container
 			}
 		}
 
-
-		private static IDbConnection? GetDbConnection(IServiceFactory factory, PLangAppContext context)
-		{
-			throw new Exception("HUh??");
-			DataSource? dataSource = null;
-			if (context.TryGetValue(ReservedKeywords.CurrentDataSource, out object? obj) && obj != null)
-			{
-				dataSource = obj as DataSource;
-			}
-
-			if (dataSource == null) return null;
-
-			var dbConnection = factory.GetInstance<IDbConnection>(dataSource.TypeFullName);
-			dbConnection.ConnectionString = dataSource.ConnectionString;
-			return dbConnection;
-
-		}
 
 	}
 }

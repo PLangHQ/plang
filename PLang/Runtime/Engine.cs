@@ -1,11 +1,7 @@
-﻿using AngleSharp.Dom;
-using LightInject;
-using Microsoft.CodeAnalysis;
+﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using NBitcoin.Secp256k1;
-using Newtonsoft.Json;
-using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building.Model;
+using System.Collections;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
@@ -22,25 +18,12 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules;
 using PLang.SafeFileSystem;
-using PLang.Services.AppsRepository;
-using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
-using ReverseMarkdown.Converters;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Abstractions;
-using System.Net;
-using System.Reactive.Concurrency;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Transactions;
-using static PLang.Modules.BaseBuilder;
-using static PLang.Modules.MockModule.Program;
 using static PLang.Runtime.PseudoRuntime;
 using static PLang.Utils.StepHelper;
 
@@ -89,9 +72,6 @@ namespace PLang.Runtime
 		void Return(IEngine engine, bool reset = false);
 		void ReloadGoals();
 		T GetProgram<T>() where T : BaseProgram;
-
-		// Flat execution model
-		Task<(object? Variables, IError? Error)> ExecuteGoalFlat(Goal goal, PLangContext context, uint delayMs = 0, int startStepIndex = 0);
 	}
 	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
 	{
@@ -525,14 +505,7 @@ namespace PLang.Runtime
 		}
 		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, Dictionary<string, object?> Parameters, PLangContext context, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
-			// Use the new flat execution model
-			// This provides a cleaner, flatter call stack
-			return await ExecuteGoalFlat(goal, context, waitForXMillisecondsBeforeRunningGoal);
-		}
-
-		private async Task DisposeGoal(Goal goal)
-		{
-
+			return await RunGoalInternal(goal, context, waitForXMillisecondsBeforeRunningGoal);
 		}
 
 		private async Task<(object? Variables, IError? Error)> HandleGoalError(IError error, Goal goal, int goalStepIndex, PLangContext context)
@@ -553,7 +526,7 @@ namespace PLang.Runtime
 			var goal = prParser.ParsePrFile(goalFile);
 			var step = goal.GoalSteps.FirstOrDefault(p => p.AbsolutePrFilePath == prFile);
 
-			return await ExecuteGoalFlat(goal, context, 0, step.Index);
+			return await RunGoalInternal(goal, context, 0, step.Index);
 		}
 
 		private bool HasRetriedToRetryLimit(ErrorHandler? errorHandler, int retryCount)
@@ -732,13 +705,9 @@ namespace PLang.Runtime
 						var aliveTaskType = alives.FirstOrDefault(p => p.Key == "WaitForExecution");
 						if (aliveTaskType?.Instances != null)
 						{
-							bool isCompleted = true;
-							int counter = 0;
-							List<Task> tasks = new();
 							for (int i = 0; i < aliveTaskType.Instances.Count; i++)
 							{
 								var engineWait = (EngineWait)aliveTaskType.Instances[i];
-								tasks.Add(engineWait.task);
 
 								if (engineWait.task.IsFaulted)
 								{
@@ -750,11 +719,6 @@ namespace PLang.Runtime
 									aliveTaskType.Instances.Remove(engineWait);
 									engineWait.engine.ParentEngine?.Return(engineWait.engine);
 									i--;
-									counter++;
-									if (counter > 100)
-									{
-										Console.WriteLine("!!! LOOP waiting on engine");
-									}
 								}
 							}
 							if (aliveTaskType.Instances.Count == 0)
@@ -762,7 +726,6 @@ namespace PLang.Runtime
 								alives.Remove(aliveTaskType);
 							}
 						}
-
 					}
 
 					EnginePool.CleanupEngines();
@@ -829,67 +792,6 @@ namespace PLang.Runtime
 			string absolutePath = fileSystem.Path.Join(fileSystem.BuildPath, prPath);
 
 			return prParser.GetGoal(absolutePath);
-
-		}
-		private List<string> GetStartGoals(List<string> goalNames)
-		{
-			List<string> goalsToRun = new();
-			if (goalNames.Count > 0)
-			{
-
-				var goalFiles = fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
-				foreach (var goalName in goalNames)
-				{
-					if (string.IsNullOrEmpty(goalName)) continue;
-
-					string name = goalName.AdjustPathToOs().Replace(".goal", "").ToLower();
-					if (name.StartsWith(".")) name = name.Substring(1);
-
-					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower() == fileSystem.Path.Join(fileSystem.RootDirectory, ".build", name, ISettings.GoalFileName).ToLower());
-					if (folderPath != null)
-					{
-						goalsToRun.Add(folderPath);
-					}
-					else
-					{
-						logger.LogError($"{goalName} could not be found. It will not run. Startup path: {fileSystem.RootDirectory}");
-						return new();
-					}
-				}
-
-				return goalsToRun;
-			}
-
-			if (!fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.BuildPath, "Start")))
-			{
-				return new();
-			}
-
-			var startFile = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();
-			if (startFile != null)
-			{
-				goalsToRun.Add(startFile);
-				return goalsToRun;
-			}
-
-			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal");
-			if (files.Length > 1)
-			{
-				logger.LogError("Could not decide on what goal to run. More then 1 goal file is in directory. You send the goal name as parameter when you run plang");
-				return new();
-			}
-			else if (files.Length == 1)
-			{
-				goalsToRun.Add(files[0]);
-			}
-			else
-			{
-				logger.LogError($"No goal file could be found in directory. Are you in the correct directory? I am running from {fileSystem.GoalsPath}");
-				return new();
-			}
-
-			return goalsToRun;
-
 		}
 
 		public Goal? GetGoal(string goalName, Goal? callingGoal)
@@ -963,12 +865,8 @@ namespace PLang.Runtime
 			prParser.ForceLoadAllGoals();
 		}
 
-		#region Flat Execution Model
-		// Flatter execution model that merges RunGoal + RunSteps into a single flow
-		// Events are treated as steps - executed inline in the execution flow
-
 		/// <summary>
-		/// Simplified error handling for flat execution model.
+		/// Error handling for step execution with retry support.
 		/// Returns: (shouldRetry, error)
 		/// </summary>
 		private async Task<(bool ShouldRetry, IError? Error)> HandleStepErrorFlat(
@@ -1052,10 +950,9 @@ namespace PLang.Runtime
 		}
 
 		/// <summary>
-		/// Executes a goal with a flatter execution model.
-		/// Events are treated as steps and executed inline.
+		/// Core goal execution. Events are treated as steps and executed inline.
 		/// </summary>
-		public async Task<(object? Variables, IError? Error)> ExecuteGoalFlat(Goal goal, PLangContext context, uint delayMs = 0, int startStepIndex = 0)
+		private async Task<(object? Variables, IError? Error)> RunGoalInternal(Goal goal, PLangContext context, uint delayMs = 0, int startStepIndex = 0)
 		{
 			context.CallStack.EnterGoal(goal, context.Event);
 
@@ -1070,12 +967,6 @@ namespace PLang.Runtime
 
 			try
 			{
-				// Register goal-level injections
-				foreach (var injection in goal.Injections)
-				{
-					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
-				}
-
 				// Skip before-goal events if starting from a specific step (resuming)
 				if (startStepIndex == 0)
 				{
@@ -1219,7 +1110,5 @@ namespace PLang.Runtime
 				context.CallStack.ExitGoal();
 			}
 		}
-
-		#endregion
 	}
 }
