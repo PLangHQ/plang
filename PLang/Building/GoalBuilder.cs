@@ -153,7 +153,10 @@ namespace PLang.Building
 			{
 				if (validationError != null)
 				{
-					validationError.Step.IsValid = false;
+					if (validationError.Step != null)
+					{
+						validationError.Step.IsValid = false;
+					}
 					return (false, null);
 				}
 				return (goal.HasChanged, null);

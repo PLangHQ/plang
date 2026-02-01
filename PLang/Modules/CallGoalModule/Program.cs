@@ -17,31 +17,24 @@ namespace PLang.Modules.CallGoalModule
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPrParser prParser, IPLangContextAccessor contextAccessor) : BaseProgram()
 	{
 		public PLangContext Context { get { return context; } }
-		
-		[Description("Call/Runs a goal. If backward slash(\\) is used by user, change to forward slash(/)")]
+
+		[Description("Call/Runs a goal. If backward slash(\\) is used by user, change to forward slash(/). Execution options (WaitForExecution, Isolated, etc.) are set on GoalToCallInfo.")]
 		[Example("call goal Process %name%", @"GoalToCallInfo.Name=Process, GoalToCallInfo.Parameters={""name"":""%name%""}")]
-		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
-			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, 
-			bool isolated = false, bool disableSystemGoals = false)
+		[Example("call goal Process, dont wait", @"GoalToCallInfo.Name=Process, GoalToCallInfo.WaitForExecution=false")]
+		[Example("call goal Process, isolated", @"GoalToCallInfo.Name=Process, GoalToCallInfo.Isolated=true")]
+		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo)
 		{
 			try
 			{
 				string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
 				int indent = (goalStep == null) ? 0 : goalStep.Indent;
 
-				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, path, goalInfo, goal,
-						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated, disableSystemGoals);
+				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, path, goalInfo, goal, indent);
 
 				if (result.Error is Return ret)
 				{
 					return (ret.ReturnVariables, null);
 				}
-
-				/*
-				if (result.error is EndGoal endGoal && (goal == null || GoalHelper.IsPartOfCallStack(goal, endGoal)) && endGoal.Levels == 0)
-				{
-					return (result.Variables, null);
-				}*/
 
 				return (result.Variables, result.Error);
 			} catch (Exception ex)

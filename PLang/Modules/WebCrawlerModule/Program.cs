@@ -191,7 +191,8 @@ namespace PLang.Modules.WebCrawlerModule
 					onRequest.Parameters.Add("!request", WebCrawlerHelper.GetRequest(e));
 					onRequest.Parameters.Add("!PlaywrightRequest", e);
 
-					var result = await callGoal.RunGoal(onRequest, isolated: true);
+					onRequest.Isolated = true;
+					var result = await callGoal.RunGoal(onRequest);
 
 					if (result.Error != null)
 					{
@@ -210,7 +211,8 @@ namespace PLang.Modules.WebCrawlerModule
 					onResponse.Parameters.Add("!request", WebCrawlerHelper.GetResponse(e));
 					onResponse.Parameters.Add("!" + e.GetType().FullName, e);
 
-					var result = await callGoal.RunGoal(onResponse, isolated: true);
+					onResponse.Isolated = true;
+					var result = await callGoal.RunGoal(onResponse);
 
 					if (result.Error != null)
 					{
@@ -1166,7 +1168,8 @@ return result;");
 				{
 					onConsoleOutput.Parameters.Add("!sender", sender);
 					onConsoleOutput.Parameters.Add("!console", e);
-					var result = await callGoal.RunGoal(onConsoleOutput, isolated: true);
+					onConsoleOutput.Isolated = true;
+					var result = await callGoal.RunGoal(onConsoleOutput);
 
 					if (result.Error != null)
 					{
@@ -1188,7 +1191,8 @@ return result;");
 					onRequest.Parameters.Add("!sender", sender);
 					onRequest.Parameters.Add("!request", WebCrawlerHelper.GetRequest(e));
 					onRequest.Parameters.Add("!" + e.GetType().FullName, e);
-					var result = await callGoal.RunGoal(onRequest, isolated: true);
+					onRequest.Isolated = true;
+					var result = await callGoal.RunGoal(onRequest);
 
 					if (result.Error != null)
 					{
@@ -1212,7 +1216,8 @@ return result;");
 
 					onResponse.Parameters.Add("!sender", sender);
 					onResponse.Parameters.Add("!response", response);
-					var result = await callGoal.RunGoal(onResponse, isolated: true);
+					onResponse.Isolated = true;
+					var result = await callGoal.RunGoal(onResponse);
 
 					if (result.Error != null)
 					{
@@ -1235,7 +1240,8 @@ return result;");
 							onWebsocketReceived.Parameters.Add("!sender", sender);
 							onWebsocketReceived.Parameters.Add("!websocket", e);
 
-							var result = await callGoal.RunGoal(onWebsocketReceived, isolated: true);
+							onWebsocketReceived.Isolated = true;
+							var result = await callGoal.RunGoal(onWebsocketReceived);
 							if (result.Error != null)
 							{
 								throw new ExceptionWrapper(result.Error);
@@ -1248,7 +1254,8 @@ return result;");
 						{
 							onWebsocketSent.Parameters.Add("!sender", sender);
 							onWebsocketSent.Parameters.Add("!websocket", e);
-							var result = await callGoal.RunGoal(onWebsocketSent, isolated: true);
+							onWebsocketSent.Isolated = true;
+							var result = await callGoal.RunGoal(onWebsocketSent);
 
 							if (result.Error != null)
 							{
@@ -1268,7 +1275,8 @@ return result;");
 					onWorker.Parameters.Add("!sender", sender);
 					onWorker.Parameters.Add("!worker", e);
 
-					var result = await callGoal.RunGoal(onWorker, isolated: true);
+					onWorker.Isolated = true;
+					var result = await callGoal.RunGoal(onWorker);
 
 					if (result.Error != null)
 					{
@@ -1291,7 +1299,8 @@ return result;");
 				{
 					onDialog.Parameters.Add("!sender", sender);
 					onDialog.Parameters.Add("!dialog", e);
-					var result = await callGoal.RunGoal(onDialog, isolated: true);
+					onDialog.Isolated = true;
+					var result = await callGoal.RunGoal(onDialog);
 
 					if (result.Error != null)
 					{
@@ -1306,7 +1315,8 @@ return result;");
 				{
 					onLoad.Parameters.Add("!sender", sender);
 					onLoad.Parameters.Add("!page", e);
-					var result = await callGoal.RunGoal(onLoad, isolated: true);
+					onLoad.Isolated = true;
+					var result = await callGoal.RunGoal(onLoad);
 
 					if (result.Error != null)
 					{
@@ -1323,7 +1333,8 @@ return result;");
 					onDOMLoad.Parameters.Add("!sender", sender);
 					onDOMLoad.Parameters.Add("!page", e);
 
-					var result = await callGoal.RunGoal(onDOMLoad, isolated: true);
+					onDOMLoad.Isolated = true;
+					var result = await callGoal.RunGoal(onDOMLoad);
 
 					if (result.Error != null)
 					{
@@ -1345,7 +1356,8 @@ return result;");
 				{
 					onFileChooser.Parameters.Add("!sender", sender);
 					onFileChooser.Parameters.Add("!filechooser", e);
-					var result = await callGoal.RunGoal(onFileChooser, isolated: true);
+					onFileChooser.Isolated = true;
+					var result = await callGoal.RunGoal(onFileChooser);
 
 					if (result.Error != null)
 					{
@@ -1361,7 +1373,8 @@ return result;");
 					onIFrameLoad.Parameters.Add("!sender", sender);
 					onIFrameLoad.Parameters.Add("!iframe", e);
 
-					var result = await callGoal.RunGoal(onIFrameLoad, isolated: true);
+					onIFrameLoad.Isolated = true;
+					var result = await callGoal.RunGoal(onIFrameLoad);
 
 					if (result.Error != null)
 					{
@@ -1381,7 +1394,8 @@ return result;");
 					onDownload.Parameters.Add("!sender", sender);
 					onDownload.Parameters.Add("!download", e);
 
-					var result = await callGoal.RunGoal(onDownload, isolated: true);
+					onDownload.Isolated = true;
+					var result = await callGoal.RunGoal(onDownload);
 
 					if (result.Error != null)
 					{

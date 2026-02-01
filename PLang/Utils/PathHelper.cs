@@ -92,7 +92,7 @@ namespace PLang.Utils
 			}
 			else
 			{
-				if (goal != null && goal.AbsoluteGoalFolderPath.StartsWith(fileSystem.RootDirectory))
+				if (goal?.AbsoluteGoalFolderPath?.StartsWith(fileSystem.RootDirectory) == true)
 				{
 					pathWithDirSep = JoinRootWithPath(fileSystem, goal.AbsoluteGoalFolderPath, pathWithDirSep);
 				}

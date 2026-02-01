@@ -755,7 +755,7 @@ When table name is unknown at built time because it is created with variable, us
 			return new StepBuilderError("Filename is empty", step);
 		}
 
-		var (file, fileError) = engine.Modules.Get<FileModule.Program>();
+		var (file, fileError) = engine.Modules.Get<FileModule.Program>(step.Goal, step);
 		if (fileError != null) return new BuilderError(fileError);
 		var readResult = await file.ReadTextFile(fileName);
 		if (readResult.Error != null) return new BuilderError(readResult.Error);
@@ -1119,7 +1119,7 @@ Reason:{error.Message}", step,
 
 	private Program GetProgram(GoalStep step)
 	{
-		var (program, error) = engine.Modules.Get<Program>();
+		var (program, error) = engine.Modules.Get<Program>(step.Goal, step);
 		if (error != null) throw new Exception($"Failed to get DbModule.Program: {error.Message}");
 		return program!;
 	}

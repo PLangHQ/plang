@@ -77,7 +77,7 @@ namespace PLang.Modules.CodeModule
 		}
 		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
 		{
-			var file = engine.Modules.Get<FileModule.Program>().Module!;
+			var file = engine.Modules.Get<FileModule.Program>(step.Goal, step).Module!;
 			var files = await file.GetFilePathsInDirectory(step.Goal.RelativeGoalFolderPath, "*.cs", includeSubfolders: true);
 			if (files.Count == 0 && !step.Text.Contains(".cs")) return (null, null);
 
@@ -206,7 +206,7 @@ when <output_parameters> parameter is 'System.String', then Outputs: {{ ""System
 This would map the user statement to the parameter 'content' of the code and have a string return value
 <example>
 ");
-			var hasher = engine.Modules.Get<CryptographicModule.Program>().Module!;
+			var hasher = engine.Modules.Get<CryptographicModule.Program>(step.Goal, step).Module!;
 			var hashResult = await hasher.GetHashOfFile(fileToUse.NameOfCSharpFile);
 			if (hashResult.Error != null) return (null, new BuilderError(hashResult.Error));
 

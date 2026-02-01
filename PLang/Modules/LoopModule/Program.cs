@@ -68,8 +68,8 @@ namespace PLang.Modules.LoopModule
 			var groupedErrors = new GroupedErrors("RepeatErrors");
 			for (int i = startIndex; i < repeatCounter; i++)
 			{
-				(var returnEngine, var variables, var error) = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, goal);
-				if (error != null) return error;
+				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, goal);
+				if (result.Error != null) return result.Error;
 			}
 			return null;
 		}
@@ -183,8 +183,8 @@ namespace PLang.Modules.LoopModule
 					}
 					goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 
-					var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
-					if (result.Error != null && result.Error is not IErrorHandled) return result.Error;
+					var runResult = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
+					if (runResult.Error != null && runResult.Error is not IErrorHandled) return runResult.Error;
 
 				}
 			}
@@ -212,34 +212,33 @@ namespace PLang.Modules.LoopModule
 						}
 						goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 
-						Task<(IEngine engine, object? Variables, IError? error)> task;
 						if (multiThreaded.GoalToCallBeforeItemIsProcessed != null)
 						{
 							multiThreaded.GoalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-							task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallBeforeItemIsProcessed, Goal, isolated: true);
-							await task;
+							multiThreaded.GoalToCallBeforeItemIsProcessed.Isolated = true;
+							await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallBeforeItemIsProcessed, Goal);
 						}
 
-						task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal, isolated: true);
-						var result = await task;
-						if (result.error != null)
+						goalToCall.Isolated = true;
+						var result = await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
+						if (result.Error != null)
 						{
 							if (multiThreaded.FailFast)
 							{
 								cts?.Cancel();
-								return result.error;
+								return result.Error;
 							}
 							else
 							{
-								groupedErrors.Add(result.error);
+								groupedErrors.Add(result.Error);
 							}
 						}
 
 						if (multiThreaded.GoalToCallAfterItemIsProcessed != null)
 						{
 							multiThreaded.GoalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
-							task = pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallAfterItemIsProcessed, Goal, isolated: true);
-							await task;
+							multiThreaded.GoalToCallAfterItemIsProcessed.Isolated = true;
+							await pseudoRuntime.RunGoal(engine, contextAccessor, goal.RelativeAppStartupFolderPath, multiThreaded.GoalToCallAfterItemIsProcessed, Goal);
 						}
 
 					}

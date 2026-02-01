@@ -39,7 +39,7 @@ namespace PLang.Modules.OutputModule
 
 					GoalToCallInfo goalToCallInfo = new GoalToCallInfo("/modules/UiModule/CreateTemplateFile", parameters);
 
-					var (program, programError) = engine.Modules.Get<CallGoalModule.Program>();
+					var (program, programError) = engine.Modules.Get<CallGoalModule.Program>(step.Goal, step);
 					if (programError != null) return (instruction, new BuilderError(programError));
 					var result = await program!.RunGoal(goalToCallInfo);
 					if (result.Error != null) return (instruction, new BuilderError(result.Error));

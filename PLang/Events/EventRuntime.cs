@@ -268,13 +268,13 @@ namespace PLang.Events
 				var runtimeEvent = new RuntimeEvent(eve.Id, eve.EventType, eve.EventScope, goalToCall, new GoalStep() { Name = "StartEndEvent", RelativeGoalPath = goal.RelativeGoalPath, Goal = goal });
 				context.Event = runtimeEvent;
 				logger.LogTrace("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, goalToCall);
-				bool disableSystemGoals = false;
+				goalToCall.WaitForExecution = eve.WaitForExecution;
 				if (!eve.IncludeOsGoals && !eve.IsSystem)
 				{
-					disableSystemGoals = true;
+					goalToCall.DisableSystemGoals = true;
 				}
 
-				var task = pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall, goal, eve.WaitForExecution, 0, 0, 0, false, false, disableSystemGoals, runtimeEvent: runtimeEvent);
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, "", goalToCall, goal, runtimeEvent: runtimeEvent);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -672,16 +672,14 @@ namespace PLang.Events
 				logger.LogTrace("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, goalToCall);
 
 
-				Task<(IEngine Engine, object? Variables, IError? Error)> task;
-
-
-				bool disableSystemGoals = false;
+				goalToCall.WaitForExecution = eve.WaitForExecution;
+				goalToCall.Isolated = !eve.IsLocal;
 				if (!eve.IncludeOsGoals && !eve.IsSystem)
 				{
-					disableSystemGoals = true;
+					goalToCall.DisableSystemGoals = true;
 				}
 
-				task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", goalToCall, sourceGoal, eve.WaitForExecution, 0, 0, 0, false, !eve.IsLocal, disableSystemGoals, runtimeEvent: runtimeEvent);
+				var task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", goalToCall, sourceGoal, runtimeEvent: runtimeEvent);
 
 
 				if (eve.WaitForExecution)
@@ -978,9 +976,11 @@ namespace PLang.Events
 
 			logger.LogTrace("Execute event: type={0}, scope={1}, binding={2}, calling={3}", evt.EventType, evt.EventScope, evt.GoalToBindTo, goalToCall);
 
-			bool disableSystemGoals = !evt.IncludeOsGoals && !evt.IsSystem;
+			goalToCall.WaitForExecution = evt.WaitForExecution;
+			goalToCall.Isolated = !evt.IsLocal;
+			goalToCall.DisableSystemGoals = !evt.IncludeOsGoals && !evt.IsSystem;
 
-			var task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", goalToCall, sourceGoal, evt.WaitForExecution, 0, 0, 0, false, !evt.IsLocal, disableSystemGoals, runtimeEvent: runtimeEvent);
+			var task = pseudoRuntime.RunGoal(engine, contextAccessor, "/", goalToCall, sourceGoal, runtimeEvent: runtimeEvent);
 
 			if (evt.WaitForExecution)
 			{

@@ -29,9 +29,7 @@ namespace PLang.Runtime
 	public interface IPseudoRuntime
 	{
 		Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string appPath, GoalToCallInfo goalToCall,
-			Goal? callingGoal = null, bool waitForExecution = true,
-			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-			bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null);
+			Goal? callingGoal = null, int indent = 0, RuntimeEvent? runtimeEvent = null);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -51,13 +49,16 @@ namespace PLang.Runtime
 
 		public async Task<(IEngine Engine, object? Variables, IError? Error)>
 			RunGoal(IEngine engine, IPLangContextAccessor contextAccessor, string relativeAppPath, GoalToCallInfo goalToCall, Goal? callingGoal = null,
-						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
-						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
-						bool keepMemoryStackOnAsync = false, bool isolated = false, bool disableOsGoals = false, RuntimeEvent? runtimeEvent = null)
+						int indent = 0, RuntimeEvent? runtimeEvent = null)
 		{
+			// Read execution options from GoalToCallInfo
+			var waitForExecution = goalToCall.WaitForExecution;
+			var waitForXMillisecondsBeforeRunningGoal = goalToCall.WaitForXMillisecondsBeforeRunningGoal;
+			var isolated = goalToCall.Isolated;
+			var disableSystemGoals = goalToCall.DisableSystemGoals;
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
-			logger.LogDebug($"             - Start PseudoRuntime - {stopwatch.ElapsedMilliseconds}");
+			logger.LogDebug("             - Start PseudoRuntime - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 			if (callingGoal == null)
 			{
 				callingGoal = prParser.GetAllGoals().FirstOrDefault(p => p.GoalName == "Start");
@@ -69,7 +70,7 @@ namespace PLang.Runtime
 			var isRented = false;
 
 			var goals = prParser.GetGoals();
-			var systemGoals = (disableOsGoals) ? new List<Goal>() : prParser.GetSystemGoals();
+			var systemGoals = (disableSystemGoals) ? new List<Goal>() : prParser.GetSystemGoals();
 
 			var relativeGoalPath = callingGoal.RelativeGoalPath;
 			var appStartFolderPath = callingGoal.AbsoluteAppStartupFolderPath;
@@ -86,7 +87,7 @@ namespace PLang.Runtime
 			var context = contextAccessor.Current;
 
 
-			logger.LogDebug($"             - Have goal - {stopwatch.ElapsedMilliseconds}");
+			logger.LogDebug("             - Have goal - {ElapsedMs}", stopwatch.ElapsedMilliseconds);
 			try
 			{
 

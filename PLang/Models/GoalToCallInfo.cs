@@ -133,6 +133,22 @@ namespace PLang.Models
 		}
 		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
 
+		// Execution options - control how the goal is executed
+		[Description("Whether to wait for the goal to complete before continuing. Default is true.")]
+		public bool WaitForExecution { get; set; } = true;
+
+		[Description("Delay in milliseconds when not waiting for execution. Default is 50.")]
+		public long DelayWhenNotWaitingInMilliseconds { get; set; } = 50;
+
+		[Description("Wait for X milliseconds before running the goal. Default is 0.")]
+		public uint WaitForXMillisecondsBeforeRunningGoal { get; set; } = 0;
+
+		[Description("Run the goal in an isolated container. Default is false.")]
+		public bool Isolated { get; set; } = false;
+
+		[Description("Disable system/OS goals when running. Default is false.")]
+		public bool DisableSystemGoals { get; set; } = false;
+
 		public IGenericFunction GetFunction(PLangContext context)
 		{
 

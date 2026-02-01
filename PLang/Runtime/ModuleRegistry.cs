@@ -129,6 +129,14 @@ public class ModuleRegistry : IModuleRegistry
 		return ((T?)module, null);
 	}
 
+	public (T? Module, IError? Error) Get<T>(Goal goal, GoalStep? step = null) where T : BaseProgram
+	{
+		var shortName = ExtractShortName(typeof(T));
+		var (module, error) = Get(shortName, goal, step);
+		if (error != null) return (null, error);
+		return ((T?)module, null);
+	}
+
 	public (BaseProgram? Module, IError? Error) Get(string shortName)
 	{
 		// Check if removed
@@ -153,6 +161,30 @@ public class ModuleRegistry : IModuleRegistry
 		return CreateModuleInstance(moduleType);
 	}
 
+	public (BaseProgram? Module, IError? Error) Get(string shortName, Goal goal, GoalStep? step = null)
+	{
+		// Check if removed
+		if (_removed.Contains(shortName))
+		{
+			return (null, new ProgramError($"Module '{shortName}' has been removed and is not available", Key: "ModuleRemoved"));
+		}
+
+		// Check if disabled
+		if (_disabled.Contains(shortName))
+		{
+			return (null, new ProgramError($"Module '{shortName}' is disabled", Key: "ModuleDisabled"));
+		}
+
+		// Check if registered
+		if (!_modules.TryGetValue(shortName, out var moduleType))
+		{
+			return (null, new ProgramError($"Module '{shortName}' is not registered", Key: "ModuleNotRegistered"));
+		}
+
+		// Create instance with explicit goal context
+		return CreateModuleInstance(moduleType, goal, step);
+	}
+
 	public IReadOnlyList<string> GetRegisteredModules()
 	{
 		return _modules.Keys
@@ -169,11 +201,16 @@ public class ModuleRegistry : IModuleRegistry
 
 	private (BaseProgram? Module, IError? Error) CreateModuleInstance(Type moduleType)
 	{
+		var context = _contextAccessor.Current;
+		var goal = context?.CallStack?.CurrentGoal ?? Goal.NotFound;
+		var step = context?.CallStack?.CurrentStep;
+		return CreateModuleInstance(moduleType, goal, step);
+	}
+
+	private (BaseProgram? Module, IError? Error) CreateModuleInstance(Type moduleType, Goal goal, GoalStep? step)
+	{
 		try
 		{
-			var context = _contextAccessor.Current;
-			var goal = context?.CallStack?.CurrentGoal ?? Goal.NotFound;
-			var step = context?.CallStack?.CurrentStep;
 			var instruction = step?.Instruction;
 
 			// Get instance from container

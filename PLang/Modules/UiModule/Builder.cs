@@ -117,7 +117,7 @@ Response with only the function name you would choose");
 
 					GoalToCallInfo goalToCallInfo = new GoalToCallInfo("/modules/UiModule/CreateTemplateFile", parameters);
 
-					var program = engine.Modules.Get<CallGoalModule.Program>().Module!;
+					var program = engine.Modules.Get<CallGoalModule.Program>(step.Goal, step).Module!;
 					var result = await program.RunGoal(goalToCallInfo);
 					if (result.Error != null) return (instruction, new BuilderError(result.Error));
 				}
@@ -397,7 +397,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 		public async Task<(Instruction, IBuilderError?)> BuilderSetFrameworks(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
-			var caller = engine.Modules.Get<CallGoalModule.Program>().Module!;
+			var caller = engine.Modules.Get<CallGoalModule.Program>(step.Goal, step).Module!;
 
 			var framework = gf.GetParameter<UiFramework>("framework");
 			var dict = new Dictionary<string, object?>();
@@ -410,7 +410,7 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 
 			framework = result.Return as UiFramework;
 
-			var variable = engine.Modules.Get<VariableModule.Program>().Module!; 
+			var variable = engine.Modules.Get<VariableModule.Program>(step.Goal, step).Module!; 
 			var storedFrameworks = await variable.GetSettings<UiFramework>("UiFrameworks");
 
 			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
