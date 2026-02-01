@@ -17,7 +17,12 @@
         "Value": {
           "Path": ".build\\modules\\UiModule\\Builder\\SetLayout\\AskWhichTemplate\\00. Goal.pr",
           "Name": "AskWhichTemplate",
-          "Parameters": {}
+          "Parameters": {},
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

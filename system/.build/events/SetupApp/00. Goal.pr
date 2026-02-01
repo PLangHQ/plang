@@ -109,7 +109,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2026-01-17T13:55:57.0834382+00:00",
+      "Generated": "2026-02-01T07:49:12.1282548+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -121,7 +121,7 @@
       "LineNumber": 6,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2b69f2d70bb33b276b1dd3722915de80e52689d01884791a5df080701e2dbdea",
+      "Hash": "3d6a1ab2f2a144d19f63cc48a80f2ef5873473b601be0878060a6a76e47c88c0",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\SetupApp.goal",
       "UserIntent": null
@@ -152,7 +152,12 @@
           "GoalToCall": {
             "Path": ".build\\events\\Runtime\\DebugErrorInIde\\00. Goal.pr",
             "Name": "/events/Runtime/DebugErrorInIde",
-            "Parameters": {}
+            "Parameters": {},
+            "WaitForExecution": true,
+            "DelayWhenNotWaitingInMilliseconds": 50,
+            "WaitForXMillisecondsBeforeRunningGoal": 0,
+            "Isolated": false,
+            "DisableSystemGoals": false
           },
           "RetryHandler": null,
           "RunRetryBeforeCallingGoalToCall": false
@@ -187,7 +192,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "aa0eb6ab5388face8131cc35779391f7af06eb934c85cd34d34d020ee4edd987",
+  "Hash": "9149097409ae0869346073c0f6c9a0edd1f9c159e1ab1ec932f4964b62aca4d4",
   "IncomingVariablesRequired": {
     "%!debug%": "A boolean variable that determines if the application should run in debug mode, enabling additional debugging features."
   },

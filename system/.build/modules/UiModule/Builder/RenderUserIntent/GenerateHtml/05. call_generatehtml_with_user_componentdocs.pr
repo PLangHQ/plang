@@ -14,7 +14,12 @@
           "Name": "GenerateHtml",
           "Parameters": {
             "user": "%componentDocs%"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

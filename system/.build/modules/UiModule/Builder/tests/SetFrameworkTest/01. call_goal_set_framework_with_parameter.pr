@@ -16,7 +16,12 @@
             "framework": {
               "Name": "uikit"
             }
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

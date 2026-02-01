@@ -12,7 +12,12 @@
         "Value": {
           "Path": ".build\\events\\Runtime\\SendDebug\\SendDebugInfo\\00. Goal.pr",
           "Name": "SendDebugInfo",
-          "Parameters": {}
+          "Parameters": {},
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

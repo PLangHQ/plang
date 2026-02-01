@@ -47,20 +47,10 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-10-07T15:55:50.0446858+00:00",
-      "WaitForExecution": true,
+      "Generated": "2026-02-01T07:49:20.3181838+00:00",
+      "WaitForExecution": false,
       "LoggerLevel": null,
-      "ErrorHandlers": [
-        {
-          "IgnoreError": true,
-          "Message": null,
-          "StatusCode": null,
-          "Key": null,
-          "GoalToCall": null,
-          "RetryHandler": null,
-          "RunRetryBeforeCallingGoalToCall": false
-        }
-      ],
+      "ErrorHandlers": null,
       "Retry": false,
       "RetryCount": 1,
       "CacheHandler": null,
@@ -69,7 +59,7 @@
       "LineNumber": 17,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e060744e8b648eb8bbaf83b04adabf55e934844b67596fdbe810625b95e173f5",
+      "Hash": "6401a3b946c35aac0ade1490d0edebac77662f37f6d52036c6dd5172953a56b4",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\UiModule\\CreateTemplateFile.goal",
       "UserIntent": null
@@ -81,6 +71,7 @@
   "GoalFileName": "CreateTemplateFile.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\modules\\UiModule\\CreateTemplateFile.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\modules\\UiModule",
   "RelativePrPath": ".build\\modules\\UiModule\\CreateTemplateFile\\AskUser\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\modules\\UiModule\\CreateTemplateFile\\AskUser",
@@ -89,11 +80,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "fe706e96b2811a6e54097373dd6b2dd5e761a11e056bbb43f4e53f5259debf33",
+  "Hash": "857592558909b9ded22f689bdd753eb08b5008283b67e06040137f2afc00e15c",
   "IncomingVariablesRequired": {
     "\\%ask\\%": "The question that will be presented to the user."
   },
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

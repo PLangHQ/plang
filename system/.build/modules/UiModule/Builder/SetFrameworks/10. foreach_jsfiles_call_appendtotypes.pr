@@ -19,7 +19,12 @@
           "Name": "AppendToTypes",
           "Parameters": {
             "Type": "js"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

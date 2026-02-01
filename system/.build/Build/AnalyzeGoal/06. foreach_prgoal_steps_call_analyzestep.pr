@@ -19,7 +19,12 @@
           "Name": "AnalyzeStep",
           "Parameters": {
             "item": "%step%"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       },
       {

@@ -19,7 +19,12 @@
           "Name": "AskUser",
           "Parameters": {
             "ask": "%result.ask%"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       },
       {
@@ -28,7 +33,12 @@
         "Value": {
           "Path": ".build\\modules\\UiModule\\CreateTemplateFile\\SaveTemplate\\00. Goal.pr",
           "Name": "SaveTemplate",
-          "Parameters": {}
+          "Parameters": {},
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

@@ -19,7 +19,12 @@
           "Name": "AnalyzeGoal",
           "Parameters": {
             "item": "%goal%"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       }
     ],

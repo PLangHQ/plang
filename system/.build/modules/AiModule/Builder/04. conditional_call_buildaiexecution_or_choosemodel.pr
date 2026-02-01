@@ -24,7 +24,12 @@
           "Name": "BuildAiExecution",
           "Parameters": {
             "model": "%result.models[0]%"
-          }
+          },
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       },
       {
@@ -33,7 +38,12 @@
         "Value": {
           "Path": ".build\\modules\\AiModule\\Builder\\ChooseModel\\00. Goal.pr",
           "Name": "ChooseModel",
-          "Parameters": {}
+          "Parameters": {},
+          "WaitForExecution": true,
+          "DelayWhenNotWaitingInMilliseconds": 50,
+          "WaitForXMillisecondsBeforeRunningGoal": 0,
+          "Isolated": false,
+          "DisableSystemGoals": false
         }
       },
       {
