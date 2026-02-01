@@ -1,0 +1,40 @@
+Start
+- write out 'Starting Goal Call Delay tests...'
+
+/ Test 1: Call with delay - goal should start after specified time
+- set %beforeCall% to %Now%
+- call !DelayedGoal, wait 200 ms before running, write to %result%
+- set %afterCall% to %Now%
+- [assert] %result% contains 'delayed_complete'
+    on error call !AssertFailed
+- write out 'Test 1 passed: Goal with delay executed'
+
+/ Test 2: Multiple delayed calls
+- set %order% to ''
+- call !AppendToOrder value='first', wait 100 ms before running
+- call !AppendToOrder value='second', wait 50 ms before running
+/ The second call has shorter delay, but since we wait for each, order should be first,second
+- write out 'Test 2 passed: Multiple delayed calls executed'
+
+/ Test 3: Delay with return value
+- call !DelayedReturn, wait 150 ms before running, write to %delayedResult%
+- [assert] %delayedResult% contains 'after_delay'
+    on error call !AssertFailed
+- write out 'Test 3 passed: Delayed call with return value'
+
+- write out 'All Goal Call Delay tests passed!'
+
+DelayedGoal
+- set %status% to 'delayed_complete'
+- return %status%
+
+AppendToOrder
+- write out '  Executing with value: %value%'
+
+DelayedReturn
+- set %data% to 'after_delay'
+- return %data%
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

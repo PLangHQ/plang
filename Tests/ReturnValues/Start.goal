@@ -1,0 +1,85 @@
+Start
+- write out 'Starting Return Values tests...'
+
+/ Test 1: Single return value
+- call !GetSingleValue, write to %singleValue%
+- [assert] %singleValue% contains 'single_result'
+    on error call !AssertFailed
+- write out 'Test 1 passed: Single return value'
+
+/ Test 2: Return number
+- call !GetNumber, write to %numberValue%
+- [assert] %numberValue% equals 42
+    on error call !AssertFailed
+- write out 'Test 2 passed: Return number'
+
+/ Test 3: Nested goal calls with returns
+- call !OuterGoal, write to %nestedResult%
+- [assert] %nestedResult% contains 'inner_value'
+    on error call !AssertFailed
+- write out 'Test 3 passed: Nested goal calls'
+
+/ Test 4: Return from conditional
+- set %condition% to true
+- call !ConditionalReturn condition=%condition%, write to %conditionalResult%
+- [assert] %conditionalResult% contains 'condition_was_true'
+    on error call !AssertFailed
+- write out 'Test 4 passed: Return from conditional'
+
+/ Test 5: Return with transformation
+- set %input% to 'hello'
+- call !TransformAndReturn input=%input%, write to %transformed%
+- [assert] %transformed% contains 'HELLO'
+    on error call !AssertFailed
+- write out 'Test 5 passed: Return with transformation'
+
+/ Test 6: Multiple sequential returns
+- call !FirstGoal, write to %first%
+- call !SecondGoal, write to %second%
+- [assert] %first% contains 'first'
+    on error call !AssertFailed
+- [assert] %second% contains 'second'
+    on error call !AssertFailed
+- write out 'Test 6 passed: Multiple sequential returns'
+
+- write out 'All Return Values tests passed!'
+
+GetSingleValue
+- set %result% to 'single_result'
+- return %result%
+
+GetNumber
+- set %num% to 42
+- return %num%
+
+OuterGoal
+- call !InnerGoal, write to %innerValue%
+- return %innerValue%
+
+InnerGoal
+- set %value% to 'inner_value'
+- return %value%
+
+ConditionalReturn
+- if %condition% is true then
+    - set %outcome% to 'condition_was_true'
+- if %condition% is false then
+    - set %outcome% to 'condition_was_false'
+- return %outcome%
+
+TransformAndReturn
+- set %upper% to %input%
+- set %upper% to %upper.ToUpper()%
+- return %upper%
+
+FirstGoal
+- set %val% to 'first'
+- return %val%
+
+SecondGoal
+- set %val% to 'second'
+- return %val%
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

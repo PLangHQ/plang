@@ -1041,6 +1041,12 @@ namespace PLang.Runtime
 								returnValues = stepReturnValue;
 								break;
 							}
+							// Handle Return - extract return values and exit the goal
+							if (stepError is Return returnError)
+							{
+								returnValues = returnError.ReturnVariables;
+								break;
+							}
 							// Other unhandled errors
 							if (stepError is not IErrorHandled)
 							{

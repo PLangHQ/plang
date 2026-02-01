@@ -1,0 +1,79 @@
+{
+  "GoalName": "ReceiveParameter",
+  "Comment": null,
+  "GoalSteps": [
+    {
+      "Text": "[assert] %value% contains 'Hello from caller'\n    on error call !AssertFailed",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.AssertModule",
+      "Name": "assert_value_contains_hello_from_caller",
+      "Description": "Check if the variable %value% includes the substring 'Hello from caller'. If this condition is not met, trigger the error handling routine by calling !AssertFailed.",
+      "PrFileName": "01. assert_value_contains_hello_from_caller.pr",
+      "RelativePrPath": ".build\\Start\\ReceiveParameter\\01. assert_value_contains_hello_from_caller.pr",
+      "InstructionHash": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Confidence": "Very High",
+      "Inconsistency": null,
+      "Generated": "2026-02-01T08:24:55.3555225+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": [
+        {
+          "IgnoreError": false,
+          "Message": null,
+          "StatusCode": null,
+          "Key": "*",
+          "GoalToCall": {
+            "Path": ".build\\Start\\AssertFailed\\00. Goal.pr",
+            "Name": "AssertFailed",
+            "Parameters": {},
+            "WaitForExecution": true,
+            "DelayWhenNotWaitingInMilliseconds": 50,
+            "WaitForXMillisecondsBeforeRunningGoal": 0,
+            "Isolated": false,
+            "DisableSystemGoals": false
+          },
+          "RetryHandler": null,
+          "RunRetryBeforeCallingGoalToCall": false
+        }
+      ],
+      "Retry": false,
+      "RetryCount": 1,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Number": 0,
+      "LineNumber": 24,
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "3b8bd7c5455cb2fb62032e45bbac778cd32ea1229570bf310fefe2e2500b6789",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal",
+      "UserIntent": "Verify that the variable %value% contains the substring 'Hello from caller' and handle failure by calling an error handler"
+    }
+  ],
+  "SubGoals": [],
+  "Description": "The Goal 'ReceiveParameter' checks if the input parameter %value% contains the string 'Hello from caller'. If the assertion fails, it triggers an error handling mechanism by calling the !AssertFailed function.",
+  "Visibility": 0,
+  "GoalFileName": "Start.goal",
+  "PrFileName": "00. Goal.pr",
+  "RelativeGoalPath": "\\Start.goal",
+  "CurrentPath": null,
+  "RelativeGoalFolderPath": "\\",
+  "RelativePrPath": ".build\\Start\\ReceiveParameter\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\Start\\ReceiveParameter",
+  "RelativeAppStartupFolderPath": null,
+  "BuilderVersion": "0.1.18.1",
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "1289da009bfd437310b77c94d4dafe9d80f3e4099328e410cc3e37c40b6b2a90",
+  "IncomingVariablesRequired": {
+    "value": "A string input that should contain 'Hello from caller' to pass the assertion."
+  },
+  "DataSourceName": null,
+  "IsSetup": false,
+  "IsEvent": false,
+  "Event": null
+}

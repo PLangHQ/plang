@@ -14,7 +14,11 @@
       "Bash(dotnet test:*)",
       "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -50 \"\"{}\"\"')",
       "Bash(find:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(where:*)",
+      "Bash(Select-String -Pattern \"\\(Passed|Failed|Skipped|Test Run\\)\")",
+      "Bash(Select-Object -Last 5)",
+      "Bash(powershell -Command \"dotnet test PLang.Tests -v q --no-restore 2>&1 | Select-String -Pattern ''Passed|Failed|Test Run|Error'' | Select-Object -Last 10\")"
     ]
   }
 }

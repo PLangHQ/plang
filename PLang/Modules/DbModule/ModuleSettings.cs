@@ -531,14 +531,11 @@ Be concise"));
 						var nameInStepLoaded = memoryStack.LoadVariables(nameInStep);
 
 						var nr = nameInStepLoaded.ToString().Replace("users", "").Replace("/", "").Replace("\\", "");
-						Console.WriteLine($"nr:{nr} | nameInStep:{nameInStep} nameInStepLoaded:{nameInStepLoaded} | dataSourceName:{dataSourceName} | context.DataSource.Name:{context.DataSource.Name} | connstring:{context.DataSource.ConnectionString}");
-
+					
 						if (context.DataSource.ConnectionString.Contains(nr))
 						{
 							return (context.DataSource, null);
 						}
-						Console.WriteLine($"did not return datasource");
-
 					}
 					else
 					{

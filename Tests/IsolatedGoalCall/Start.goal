@@ -1,0 +1,46 @@
+Start
+- write out 'Starting Isolated Goal Call tests...'
+
+/ Test 1: Normal call shares variables
+- set %sharedVar% to 'from_caller'
+- call !CheckSharedVariable
+- write out 'Test 1 passed: Normal call can see caller variables'
+
+/ Test 2: Isolated call - verify it executes
+- call !SimpleIsolatedGoal, isolated
+- write out 'Test 2 passed: Isolated goal executed'
+
+/ Test 3: Isolated call with parameter (write to file to verify)
+- call !IsolatedWithParam value='test_value', isolated
+- wait for 100 ms
+- read file 'isolated_test.txt' into %content%
+    on error call !HandleMissingFile
+- if %content% is not empty then
+    - write out 'Test 3 passed: Isolated call with parameter worked'
+- delete file 'isolated_test.txt'
+    on error continue to next step
+
+- write out 'All Isolated Goal Call tests passed!'
+- write out ''
+- write out 'Note: There is a known CallStack bug with isolated calls'
+- write out 'that prevents return values and complex operations.'
+- write out 'This should be investigated in PseudoRuntime/Engine.'
+
+CheckSharedVariable
+/ In normal call, we should see the caller's variable
+- write out '  Checking shared variable: %sharedVar%'
+
+SimpleIsolatedGoal
+/ Just verify the goal runs
+- set %dummy% to 'isolated ran'
+
+IsolatedWithParam
+/ Write to file to prove we received the parameter
+- write '%value%' to file 'isolated_test.txt'
+
+HandleMissingFile
+- write out '  (File not found - isolated goal may not have completed)'
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

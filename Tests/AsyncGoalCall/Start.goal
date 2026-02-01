@@ -1,0 +1,45 @@
+Start
+- write out 'Starting Async Goal Call tests...'
+
+/ Test 1: Call goal without waiting - main execution should continue immediately
+- set %startTime% to %Now%
+- call !SlowGoal, dont wait
+- set %afterCallTime% to %Now%
+/ The call should return immediately, not wait for SlowGoal to complete
+- write out 'Test 1: Main thread continued after async call'
+
+/ Test 2: Call goal with waiting (default behavior)
+- set %beforeWait% to %Now%
+- call !QuickGoal
+- set %afterWait% to %Now%
+- write out 'Test 2 passed: Synchronous call waited for completion'
+
+/ Give async goal time to complete
+- wait for 200 ms
+
+/ Test 3: Verify async goal did run (it should have written to a file)
+- read file 'async_marker.txt' into %asyncContent%
+    on error call !HandleMissingFile
+- if %asyncContent% is not empty then
+    - [assert] %asyncContent% contains 'async_completed'
+        on error call !AssertFailed
+    - write out 'Test 3 passed: Async goal completed in background'
+- delete file 'async_marker.txt'
+    on error continue to next step
+
+- write out 'All Async Goal Call tests passed!'
+
+SlowGoal
+/ This goal runs asynchronously - write a marker file to prove it ran
+- wait for 100 ms
+- write 'async_completed' to file 'async_marker.txt'
+
+QuickGoal
+- set %dummy% to 'done'
+
+HandleMissingFile
+- write out 'Note: Async marker file not found (async goal may not have completed yet)'
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

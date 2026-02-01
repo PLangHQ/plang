@@ -1,0 +1,45 @@
+Start
+- write out 'Starting Disable System Goals tests...'
+
+/ Test 1: Normal call can access system goals (if any exist)
+- call !NormalGoalCall
+- write out 'Test 1 passed: Normal goal call works'
+
+/ Test 2: Call with system goals disabled
+- call !GoalWithSystemDisabled, disable system goals
+- write out 'Test 2 passed: Goal with system goals disabled executed'
+
+/ Test 3: Verify the flag is passed correctly by checking goal executes
+- call !CheckDisabledFlag, disable system goals, write to %result%
+- [assert] %result% contains 'executed_without_system'
+    on error call !AssertFailed
+- write out 'Test 3 passed: Disable system goals flag works'
+
+/ Test 4: Disable system goals with parameter passing
+- call !DisabledWithParam input='test_input', disable system goals, write to %paramResult%
+- [assert] %paramResult% contains 'processed_test_input'
+    on error call !AssertFailed
+- write out 'Test 4 passed: Disable system goals with parameters works'
+
+- write out 'All Disable System Goals tests passed!'
+
+NormalGoalCall
+- set %dummy% to 'normal'
+
+GoalWithSystemDisabled
+/ This goal runs with system goals disabled
+/ It should still execute normally for local goals
+- set %status% to 'ran_without_system'
+
+CheckDisabledFlag
+- set %response% to 'executed_without_system'
+- return %response%
+
+DisabledWithParam
+/ Test disable system goals with parameter passing
+- set %result% to 'processed_%input%'
+- return %result%
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

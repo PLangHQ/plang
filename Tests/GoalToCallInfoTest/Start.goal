@@ -1,0 +1,39 @@
+Start
+- write out 'Starting GoalToCallInfo tests...'
+
+/ Test 1: Basic parameter passing
+- set %testValue% to 'Hello from caller'
+- call !ReceiveParameter value=%testValue%
+- write out 'Test 1 passed: Basic parameter passing'
+
+/ Test 2: Multiple parameters
+- set %name% to 'TestUser'
+- set %age% to 42
+- call !ReceiveMultipleParams name=%name%, age=%age%
+- write out 'Test 2 passed: Multiple parameters'
+
+/ Test 3: Return value from called goal
+- call !ReturnValue, write to %returnedValue%
+- [assert] %returnedValue% contains 'returned_data'
+    on error call !AssertFailed
+- write out 'Test 3 passed: Return value from called goal'
+
+- write out 'All GoalToCallInfo tests passed!'
+
+ReceiveParameter
+- [assert] %value% contains 'Hello from caller'
+    on error call !AssertFailed
+
+ReceiveMultipleParams
+- [assert] %name% contains 'TestUser'
+    on error call !AssertFailed
+- [assert] %age% equals 42
+    on error call !AssertFailed
+
+ReturnValue
+- set %result% to 'returned_data'
+- return %result%
+
+AssertFailed
+- write out 'FAILED: Assertion error occurred'
+- write out 'Error: %!error.Message%'

@@ -377,6 +377,92 @@ public class ModuleRegistryTests
             .Throws<ArgumentException>();
     }
 
+    #region Get with Goal/GoalStep overloads
+
+    [Test]
+    public async Task ModuleRegistry_GetWithGoal_ReturnsErrorForDisabledModule()
+    {
+        // Arrange
+        var registry = new ModuleRegistry(_container, _contextAccessor);
+        registry.Register("test", typeof(TestModule));
+        registry.Disable("test");
+        var goal = CreateTestGoal();
+
+        // Act
+        var (module, error) = registry.Get("test", goal);
+
+        // Assert
+        await Assert.That(module).IsNull();
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Key).IsEqualTo("ModuleDisabled");
+    }
+
+    [Test]
+    public async Task ModuleRegistry_GetWithGoal_ReturnsErrorForRemovedModule()
+    {
+        // Arrange
+        var registry = new ModuleRegistry(_container, _contextAccessor);
+        registry.Register("test", typeof(TestModule));
+        registry.Remove("test");
+        var goal = CreateTestGoal();
+
+        // Act
+        var (module, error) = registry.Get("test", goal);
+
+        // Assert
+        await Assert.That(module).IsNull();
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Key).IsEqualTo("ModuleRemoved");
+    }
+
+    [Test]
+    public async Task ModuleRegistry_GetWithGoal_ReturnsErrorForUnregisteredModule()
+    {
+        // Arrange
+        var registry = new ModuleRegistry(_container, _contextAccessor);
+        var goal = CreateTestGoal();
+
+        // Act
+        var (module, error) = registry.Get("nonexistent", goal);
+
+        // Assert
+        await Assert.That(module).IsNull();
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Key).IsEqualTo("ModuleNotRegistered");
+    }
+
+    [Test]
+    public async Task ModuleRegistry_GetWithGoalAndStep_ReturnsErrorForDisabled()
+    {
+        // Arrange
+        var registry = new ModuleRegistry(_container, _contextAccessor);
+        registry.Register("test", typeof(TestModule));
+        registry.Disable("test");
+        var goal = CreateTestGoal();
+        var step = new GoalStep { Text = "Test step", Goal = goal };
+
+        // Act
+        var (module, error) = registry.Get("test", goal, step);
+
+        // Assert
+        await Assert.That(module).IsNull();
+        await Assert.That(error!.Key).IsEqualTo("ModuleDisabled");
+    }
+
+    private Goal CreateTestGoal()
+    {
+        return new Goal
+        {
+            GoalName = "TestGoal",
+            GoalSteps = new List<GoalStep>(),
+            AbsoluteGoalFolderPath = "C:\\test\\TestGoal",
+            RelativeGoalFolderPath = "\\TestGoal",
+            Injections = new List<Injections>()
+        };
+    }
+
+    #endregion
+
     [Test]
     public async Task ModuleRegistry_GetRegisteredModules_ExcludesRemoved()
     {
