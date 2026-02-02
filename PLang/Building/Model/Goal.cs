@@ -196,6 +196,23 @@ namespace PLang.Building.Model
 			}
 		}
 
+		public static Goal EndOfApp
+		{
+			get
+			{
+				return new Goal("EndOfApp", new());
+			}
+		}
+
+		public static GoalStep EndOfAppStep
+		{
+			get
+			{
+				var goal = EndOfApp;
+				return new GoalStep { Goal = goal, Number = 0, Text = "return" };
+			}
+		}
+
 	}
 
 	

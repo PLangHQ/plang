@@ -17,7 +17,17 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask a question with either text or template file. output stream can be to the user(default), system, to different channels such audit|metric|debug|...., and it can have different serialization, text, json, csv, binary, etc.")]
+	[Description(@"Writes to the output stream. Ask a question with either text or template file.
+Output stream can be to the user(default), system, to different channels such audit|metric|debug|log|security|...
+Supports different serialization: text, json, csv, binary, etc.
+
+Key features:
+- 'on channel' registers a goal handler for actor/channel: `on channel 'user', 'log', call !MyLogHandler` - when output goes to that channel, calls the goal instead
+- 'configure output' sets content type: `configure output to 'application/json'` or `configure output to 'text/plain', scope: goal`
+- 'configure output encoding' sets encoding: `configure output encoding to 'utf-16'`
+
+Content types: text/plain, application/json, text/html, application/x-ndjson (plang envelope)
+Scope: 'context' (default, persists for request) or 'goal' (cleared when goal exits)")]
 	public class Program : BaseProgram
 	{
 		private readonly VariableHelper variableHelper;
@@ -32,19 +42,82 @@ namespace PLang.Modules.OutputModule
 
 		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
 		{
-			throw new NotImplementedException();
-			/*
-			var validate = Module<ValidateModule.Program>().Module!;
-			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
-			if (error != null) return error;
-
-			error = await validate.IsNotEmpty([goalToCall], "GoalToCall cannot be empty");
-			if (error != null) return error;
-
-			goal.AddVariable(new GoalToCallInfo(goalToCall, parameters), variableName: "!output_stream_" + channel);
-			
-			return null;*/
+			return await OnChannel("user", channel, goalToCall);
 		}
+
+		[Description(@"Registers a goal to be called when output is sent to a specific actor/channel combination.
+When a message is sent to the registered actor/channel, the goal will be called with the message as a parameter instead of the default output sink.
+Actor can be 'user', 'system', or 'service'. Channel is typically 'default', 'log', 'audit', 'metric', etc.")]
+		public async Task<IError?> OnChannel(string actor, string channel, GoalToCallInfo goalToCall)
+		{
+			if (string.IsNullOrWhiteSpace(actor))
+			{
+				return new ProgramError("Actor cannot be empty. Use 'user', 'system', or 'service'.", goalStep);
+			}
+
+			if (string.IsNullOrWhiteSpace(channel))
+			{
+				return new ProgramError("Channel cannot be empty. Use 'default', 'log', 'audit', etc.", goalStep);
+			}
+
+			if (goalToCall == null)
+			{
+				return new ProgramError("GoalToCall cannot be null.", goalStep);
+			}
+
+			context.RegisterChannelHandler(actor, channel, goalToCall);
+			return await Task.FromResult<IError?>(null);
+		}
+
+		public enum OutputScope
+		{
+			Context = 0,  // Persists for entire request/context lifetime
+			Goal = 1      // Scoped to current goal, cleared when goal exits
+		}
+
+		[Description(@"Configures the output content type for serialization.
+ContentType options: 'text/plain', 'application/json', 'text/html', 'application/x-ndjson' (plang envelope format).
+Scope: 'context' persists for the request lifetime, 'goal' is cleared when the current goal exits.
+Actor: 'user' (default) or 'system'.
+Channel: 'default' or custom channel name.")]
+		public async Task<IError?> ConfigureOutput(string contentType, OutputScope scope = OutputScope.Context,
+			string actor = "user", string channel = "default")
+		{
+			if (string.IsNullOrWhiteSpace(contentType))
+			{
+				return new ProgramError("ContentType cannot be empty.", goalStep);
+			}
+
+			Goal? scopeGoal = scope == OutputScope.Goal ? goal : null;
+			context.ConfigureOutput(actor, channel, contentType, scopeGoal);
+
+			return await Task.FromResult<IError?>(null);
+		}
+
+		[Description(@"Configures the output encoding.
+Encoding options: 'utf-8' (default), 'utf-16', 'ascii', etc.
+Scope: 'context' persists for the request lifetime, 'goal' is cleared when the current goal exits.")]
+		public async Task<IError?> ConfigureOutputEncoding(string encoding, OutputScope scope = OutputScope.Context,
+			string actor = "user", string channel = "default")
+		{
+			if (string.IsNullOrWhiteSpace(encoding))
+			{
+				return new ProgramError("Encoding cannot be empty.", goalStep);
+			}
+
+			try
+			{
+				var enc = System.Text.Encoding.GetEncoding(encoding);
+				Goal? scopeGoal = scope == OutputScope.Goal ? goal : null;
+				context.ConfigureOutputEncoding(actor, channel, enc, scopeGoal);
+				return await Task.FromResult<IError?>(null);
+			}
+			catch (ArgumentException)
+			{
+				return new ProgramError($"Unknown encoding: {encoding}", goalStep);
+			}
+		}
+
 		/*
 		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
 		public async Task<(object?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202,
@@ -113,7 +186,7 @@ namespace PLang.Modules.OutputModule
 				(answers, error) = await ProcessCallbackAnswer(askMessage, context.Callback, error);
 
 
-				
+
 				return (answers, error);
 			}
 			Dictionary<string, object?> parameters = new();
@@ -151,6 +224,38 @@ namespace PLang.Modules.OutputModule
 			}
 
 			askMessage = askMessage with { Content = content };
+
+			// Check if there's a goal handler registered for this actor/channel
+			var handler = context.GetChannelHandler(askMessage.Actor, askMessage.Channel);
+			if (handler != null)
+			{
+				// Call the registered goal instead of the sink
+				var callGoalModule = Module<CallGoalModule.Program>().Module!;
+				handler.Parameters ??= new Dictionary<string, object?>();
+				handler.Parameters["askMessage"] = askMessage;
+				handler.Parameters["question"] = askMessage.Content;
+				handler.Parameters["content"] = askMessage.Content;
+				handler.Parameters["actor"] = askMessage.Actor;
+				handler.Parameters["channel"] = askMessage.Channel;
+
+				var (result, handlerError) = await callGoalModule.RunGoal(handler);
+				if (handlerError is Return r && r.ReturnVariables.Count > 0)
+				{
+					// The handler returned a value - use it as the answer
+					var handlerAnswer = r.ReturnVariables[0].Value;
+					if (function.ReturnValues != null && function.ReturnValues.Count > 0)
+					{
+						answers.Add(new ObjectValue(function.ReturnValues[0].VariableName, handlerAnswer));
+					}
+					return (answers, null);
+				}
+				else if (handlerError != null)
+				{
+					return (null, handlerError);
+				}
+				// Handler returned nothing - treat as null answer
+				return (answers, null);
+			}
 
 			(var answer, error) = await outputStream.AskAsync(askMessage);
 			if (error != null) return (null, error);
@@ -385,10 +490,26 @@ namespace PLang.Modules.OutputModule
 		[Description("Write appends by default a text message to the target. User can define different actions, but when it is not defined set as 'append'. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. actor=user|system.")]
 		public async Task<IError?> Write(TextMessage textMessage)
 		{
-
-
 			string stepPath = Path.Join(goalStep.Goal.GoalName, goalStep.Number.ToString()).Replace("\\", "/");
 			textMessage = textMessage with { Path = stepPath };
+
+			// Check if there's a goal handler registered for this actor/channel
+			var handler = context.GetChannelHandler(textMessage.Actor, textMessage.Channel);
+			if (handler != null)
+			{
+				// Call the registered goal instead of the sink
+				var callGoalModule = Module<CallGoalModule.Program>().Module!;
+				handler.Parameters ??= new Dictionary<string, object?>();
+				handler.Parameters["message"] = textMessage;
+				handler.Parameters["content"] = textMessage.Content;
+				handler.Parameters["actor"] = textMessage.Actor;
+				handler.Parameters["channel"] = textMessage.Channel;
+				handler.Parameters["level"] = textMessage.Level;
+				handler.Parameters["statusCode"] = textMessage.StatusCode;
+
+				var (_, error) = await callGoalModule.RunGoal(handler);
+				return error;
+			}
 
 			var sink = context.GetSink(textMessage.Actor);
 			return await sink.SendAsync(textMessage);

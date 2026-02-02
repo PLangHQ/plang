@@ -180,41 +180,77 @@ public class StepBuilder : IStepBuilder
 		return error.RetryCount < GetErrorCount(step, error);
 	}
 
-	private async Task<IBuilderError?> HandleAskUser(AskUserError mse, Goal goal, int stepIndex, List<string> excludeModules)
+	private async Task<IBuilderError?> HandleAskUser(AskUserError mse, Goal goal, int stepIndex, List<string> excludeModules, int retryCount = 0)
 	{
+		const int maxRetries = 3;
+
 		try
 		{
-			Console.WriteLine(mse.Message);
-			var line = Console.ReadLine();
-
-			var error = await mse.InvokeCallback(line);
-			if (error != null && error is PLang.Errors.AskUser.AskUserError aue)
+			// Check if we've exceeded retry limit
+			if (retryCount >= maxRetries)
 			{
-				error = await HandleAskUserError(aue);
-			}
-			if (error != null)
-			{
-				return new BuilderError(error);
+				return new BuilderError(new Error($"Failed to get valid input after {maxRetries} attempts for: {mse.Message}",
+					FixSuggestion: "Please provide a non-empty value when prompted, or set the value in your settings file."));
 			}
 
-			return await BuildStep(goal, stepIndex, excludeModules);
+			// Check if console input is available
+			if (!Console.IsInputRedirected || Console.In.Peek() != -1)
+			{
+				if (retryCount > 0)
+				{
+					Console.WriteLine($"[Attempt {retryCount + 1}/{maxRetries}] Please provide a non-empty value:");
+				}
+				Console.Write($"{mse.Message}: ");
+				var line = Console.ReadLine();
+
+				// Validate input is not empty
+				if (string.IsNullOrWhiteSpace(line))
+				{
+					Console.WriteLine("Error: Value cannot be empty.");
+					return await HandleAskUser(mse, goal, stepIndex, excludeModules, retryCount + 1);
+				}
+
+				var error = await mse.InvokeCallback(line);
+				if (error != null && error is PLang.Errors.AskUser.AskUserError aue)
+				{
+					error = await HandleAskUserError(aue);
+				}
+				if (error != null)
+				{
+					return new BuilderError(error);
+				}
+
+				return await BuildStep(goal, stepIndex, excludeModules);
+			}
+			else
+			{
+				// Console input not available (e.g., non-interactive environment)
+				return new BuilderError(new Error($"Cannot prompt for setting '{mse.Message}' - no interactive console available.",
+					FixSuggestion: "Run 'plang build' in an interactive terminal, or pre-configure the required settings."));
+			}
 		}
 		catch (AskUserError ex)
 		{
-
-			return await HandleAskUser(ex, goal, stepIndex, excludeModules);
+			return await HandleAskUser(ex, goal, stepIndex, excludeModules, retryCount);
 		}
 	}
 
 	private async Task<IBuilderError?> HandleAskUserError(Errors.AskUser.AskUserError aue)
 	{
-		var (answer, error) = await AskUser.GetAnswer(engine, context, aue.Message);
+		var (answer, error) = await AskUser.GetAnswer(engine, context, aue.Message, AskChannel.Default);
 		if (error != null) return new BuilderError(error);
 
-		(var isHandled, error) = await aue.InvokeCallback([answer]);
-		if (error is AskUserError aueSecond)
+		// Validate answer is not empty
+		if (answer == null || (answer is string s && string.IsNullOrWhiteSpace(s)))
 		{
-			return await HandleAskUserError(aue);
+			return new BuilderError(new Error($"No valid answer provided for: {aue.Message}",
+				FixSuggestion: "Please provide a non-empty value when prompted."));
+		}
+
+		(var isHandled, error) = await aue.InvokeCallback([answer]);
+		if (error is Errors.AskUser.AskUserError aueSecond)
+		{
+			return await HandleAskUserError(aueSecond);
 		}
 
 		if (error is ExceptionError) return new BuilderError(error, false);

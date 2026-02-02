@@ -1,0 +1,12 @@
+Start
+- write out 'Testing Settings Ask Flow...'
+- write out 'This test validates that settings are prompted when missing'
+- write out 'You should see a prompt for TestSettingsAskKey'
+- call !UseSettings
+- write out 'Test completed'
+
+UseSettings
+- write out 'Attempting to access setting...'
+- set %myKey% = %Settings.TestSettingsAskKey%
+- write out 'Setting value: %myKey%'
+- return %myKey%

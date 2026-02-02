@@ -430,7 +430,7 @@ namespace PLang.Runtime
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 
-			(var answer, var error) = await AskUser.GetAnswer(this, context, fare.Message);
+			(var answer, var error) = await AskUser.GetAnswer(this, context, fare.Message, AskChannel.FileAccess);
 			if (error != null) return (false, error);
 
 			return await fileAccessHandler.ValidatePathResponse(fare.AppName, fare.Path, answer.ToString(), FileSystem.Id);
@@ -596,6 +596,10 @@ namespace PLang.Runtime
 				if (error != null) return (null, error);
 
 				return await ProcessPrFile(goal, step, stepIndex, context);
+			} catch (Exception ex)
+			{
+				int i = 0;
+				throw;
 			}
 			logger.LogDebug("     - Init instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 			classInstance.Init(container, goal, step, step.Instruction, contextAccessor);
@@ -865,7 +869,7 @@ namespace PLang.Runtime
 			// Handle AskUser errors - prompt and retry
 			if (error is Errors.AskUser.AskUserError aue)
 			{
-				var (answer, answerError) = await AskUser.GetAnswer(this, context, aue.Message);
+				var (answer, answerError) = await AskUser.GetAnswer(this, context, aue.Message, AskChannel.Default);
 				if (answerError != null) return (false, answerError);
 
 				var (_, callbackError) = await aue.InvokeCallback([answer]);
@@ -1094,6 +1098,8 @@ namespace PLang.Runtime
 			{
 				AppContext.SetData("GoalLogLevelByUser", null);
 				logger.LogDebug($"[End] Goal: {goal.GoalName} => {context.CallStack.CurrentFrame?.Duration}");
+				// Clear goal-scoped channel settings before exiting
+				context.ClearGoalScopedSettings(goal);
 				context.CallStack.ExitGoal();
 			}
 		}

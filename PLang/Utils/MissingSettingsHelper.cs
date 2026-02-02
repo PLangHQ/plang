@@ -32,7 +32,7 @@ namespace PLang.Utils
 
 		public static async Task<IError?> HandleMissingSetting(IEngine engine, PLangContext context, MissingSettingsException missing)
 		{
-			(var answer, var error) = await AskUser.GetAnswer(engine, context, missing.Message);
+			(var answer, var error) = await AskUser.GetAnswer(engine, context, missing.Message, AskChannel.Settings);
 			if (error != null) return error;
 
 			error = await missing.InvokeCallback(answer);

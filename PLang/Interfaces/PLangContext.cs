@@ -5,6 +5,7 @@ using PLang.Events;
 using PLang.Events.Types;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Runtime.Actors;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Utils;
 using System.Collections.Concurrent;
@@ -81,11 +82,153 @@ namespace PLang.Interfaces
 		public DataSource DataSource { get; internal set; }
 		public DataSource SystemDataSource { get; internal set; }
 
+		// Actor-based output routing
+		public Actor? UserActor { get; set; }
+		public Actor? SystemActor { get; set; }
+		public Actor? ServiceActor { get; set; }
+
 		public IOutputSink GetSink(string actor)
 		{
 			if (string.IsNullOrWhiteSpace(actor)) return SystemSink;
 
 			return actor.Equals("user", StringComparison.OrdinalIgnoreCase) ? UserSink : SystemSink;
+		}
+
+		/// <summary>
+		/// Gets the Actor by name. Returns UserActor for "user", SystemActor for "system", ServiceActor for "service"
+		/// </summary>
+		public Actor? GetActor(string? actorName)
+		{
+			if (string.IsNullOrWhiteSpace(actorName)) return UserActor;
+
+			return actorName.ToLowerInvariant() switch
+			{
+				"user" => UserActor,
+				"system" => SystemActor,
+				"service" => ServiceActor ?? SystemActor,
+				_ => UserActor
+			};
+		}
+
+		/// <summary>
+		/// Gets the goal handler for an actor/channel combination, if one is registered
+		/// </summary>
+		public GoalToCallInfo? GetChannelHandler(string? actorName, string? channelName)
+		{
+			var actor = GetActor(actorName);
+			return actor?.GetChannelHandler(channelName);
+		}
+
+		/// <summary>
+		/// Registers a goal handler for an actor/channel combination
+		/// </summary>
+		public void RegisterChannelHandler(string actorName, string channelName, GoalToCallInfo goalHandler)
+		{
+			var actor = GetActor(actorName);
+			actor?.RegisterChannelHandler(channelName, goalHandler);
+		}
+
+		/// <summary>
+		/// Clears goal-scoped channel settings for a goal when it exits.
+		/// Called automatically by Engine when a goal completes.
+		/// </summary>
+		public void ClearGoalScopedSettings(Goal goal)
+		{
+			if (goal == null) return;
+
+			foreach (var actor in new[] { SystemActor, UserActor, ServiceActor })
+			{
+				if (actor == null) continue;
+				foreach (var channel in actor.GetAllChannels())
+				{
+					channel.ClearScopedSettings(goal);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Configures the output content type for an actor/channel.
+		/// If goal is provided, the setting is scoped to that goal and cleared when the goal exits.
+		/// If goal is null, the setting persists for the context lifetime.
+		/// </summary>
+		public void ConfigureOutput(string? actorName, string? channelName, string contentType, Goal? scopeToGoal = null)
+		{
+			var actor = GetActor(actorName);
+			if (actor == null) return;
+
+			var channel = actor.GetOrCreateChannel(channelName ?? "default");
+
+			if (scopeToGoal != null)
+			{
+				channel.SetScopedContentType(scopeToGoal, contentType);
+			}
+			else
+			{
+				channel.ContentType = contentType;
+			}
+		}
+
+		/// <summary>
+		/// Configures the output encoding for an actor/channel.
+		/// </summary>
+		public void ConfigureOutputEncoding(string? actorName, string? channelName, System.Text.Encoding encoding, Goal? scopeToGoal = null)
+		{
+			var actor = GetActor(actorName);
+			if (actor == null) return;
+
+			var channel = actor.GetOrCreateChannel(channelName ?? "default");
+
+			if (scopeToGoal != null)
+			{
+				channel.SetScopedEncoding(scopeToGoal, encoding);
+			}
+			else
+			{
+				channel.Encoding = encoding;
+			}
+		}
+
+		/// <summary>
+		/// Gets the effective content type for an actor/channel, considering goal-scoped overrides.
+		/// </summary>
+		public string? GetEffectiveContentType(string? actorName, string? channelName = null)
+		{
+			var actor = GetActor(actorName);
+			if (actor == null) return null;
+
+			var channel = actor.GetChannel(channelName ?? "default");
+			if (channel == null) return actor.ContentType;
+
+			return channel.GetEffectiveContentType(CallStack, actor.ContentType);
+		}
+
+		/// <summary>
+		/// Gets the effective encoding for an actor/channel, considering goal-scoped overrides.
+		/// </summary>
+		public System.Text.Encoding? GetEffectiveEncoding(string? actorName, string? channelName = null)
+		{
+			var actor = GetActor(actorName);
+			if (actor == null) return null;
+
+			var channel = actor.GetChannel(channelName ?? "default");
+			if (channel == null) return actor.Encoding;
+
+			return channel.GetEffectiveEncoding(CallStack, actor.Encoding);
+		}
+
+		/// <summary>
+		/// Gets explicitly configured content type (via ConfigureOutput), or null if using defaults.
+		/// This is used to determine if Accept header should be overridden.
+		/// </summary>
+		public string? GetExplicitContentType(string? actorName, string? channelName = null)
+		{
+			var actor = GetActor(actorName);
+			if (actor == null) return null;
+
+			var channel = actor.GetChannel(channelName ?? "default");
+			if (channel == null) return null;
+
+			return channel.GetExplicitContentType(CallStack);
 		}
 
 		public PLangContext(MemoryStack memoryStack, IEngine engine, ExecutionMode executionMode)
@@ -99,6 +242,11 @@ namespace PLang.Interfaces
 			// Get default sinks from engine (these will be the defaults since context is not yet set)
 			SystemSink = engine.SystemSink;
 			UserSink = engine.UserSink;
+
+			// Initialize actors with the sinks
+			SystemActor = new SystemActor(identity: null, defaultSink: SystemSink);
+			UserActor = new UserActor(identity: null, defaultSink: UserSink, isTrusted: executionMode == ExecutionMode.Console);
+
 			Items = new();
 			Mocks = new();
 			SharedItems = new();
@@ -257,6 +405,10 @@ namespace PLang.Interfaces
 			context.ShowErrorDetails = this.ShowErrorDetails;
 			context.SystemSink = this.SystemSink;
 			context.UserSink = this.UserSink;
+			// Clone actors - they share the same sinks but channel handlers are per-context
+			context.UserActor = this.UserActor;
+			context.SystemActor = this.SystemActor;
+			context.ServiceActor = this.ServiceActor;
 			// Clone module registry - inherit enabled/disabled state
 			context.Modules = (this.Modules as ModuleRegistry)?.Clone() ?? runtimeEngine.CloneDefaultModuleRegistry();
 

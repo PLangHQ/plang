@@ -171,7 +171,7 @@ namespace PLang.Building
 					var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 					var engine = container.GetInstance<IEngine>();
 
-					(var answer, error) = await AskUser.GetAnswer(engine, context, fa.Message);
+					(var answer, error) = await AskUser.GetAnswer(engine, context, fa.Message, AskChannel.FileAccess);
 					if (error != null) return [new BuilderError(error)];
 
 					(var _, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);
@@ -185,8 +185,15 @@ namespace PLang.Building
 
 				if (ex is MissingSettingsException mse)
 				{
-					var (answer, askError) = await AskUser.GetAnswer(engine, context, mse.Message);
+					var (answer, askError) = await AskUser.GetAnswer(engine, context, mse.Message, AskChannel.Settings);
 					if (askError != null) return [new BuilderError(askError)];
+
+					// Validate answer is not empty to prevent infinite loop
+					if (answer == null || (answer is string s && string.IsNullOrWhiteSpace(s)))
+					{
+						return [new BuilderError(new Error($"No valid answer provided for setting: {mse.Key}",
+							FixSuggestion: "Please provide a non-empty value when prompted, or pre-configure the required settings."))];
+					}
 
 					askError = await mse.InvokeCallback(answer);
 					if (askError != null) return [new BuilderError(askError)];

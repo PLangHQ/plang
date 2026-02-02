@@ -1,10 +1,11 @@
-﻿
 using LightInject;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
@@ -65,6 +66,15 @@ if (runtime)
 		var logger = container.GetInstance<ILogger>();
 		logger.LogError(result.Error.ToFormat("text").ToString());
 	}
+
+	// Output return value directly to sink (avoids CallStack requirement)
+	if (result.Variables != null)
+	{
+		var json = JsonConvert.SerializeObject(result.Variables, Formatting.Indented);
+		var textMessage = new TextMessage(json);
+		engine.UserSink.SendAsync(textMessage).GetAwaiter().GetResult();
+	}
+
 	container.Dispose();
 }
 

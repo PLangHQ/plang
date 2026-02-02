@@ -9,6 +9,7 @@ using PLang.Services.CachingService;
 using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
+using PLang.Services.EventSourceService;
 using PLang.Utils;
 using Microsoft.Data.Sqlite;
 using System.Data;
@@ -286,6 +287,14 @@ namespace PLang.Container
 			container.RegisterSingleton<IPLangIdentityService, PLangIdentityService>();
 			container.RegisterSingleton<IPLangSigningService, PLangSigningService>();
 			container.Register<IPublicPrivateKeyCreator, PublicPrivateKeyCreator>();
+
+			// Event sourcing
+			container.Register<IEventSourceFactory>(factory =>
+			{
+				return new EventSourceFactory(container);
+			});
+			container.Register<IEventSourceRepository, SqliteEventSourceRepository>(typeof(SqliteEventSourceRepository).FullName);
+			container.Register<IEventSourceRepository, DisableEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
 
 			// Builder infrastructure (needed even for runtime to support dynamic building)
 			container.RegisterSingleton<IBuilder, Building.Builder>();

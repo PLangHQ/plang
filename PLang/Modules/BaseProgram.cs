@@ -301,7 +301,7 @@ namespace PLang.Modules
 			{
 				if (ex is MissingSettingsException mse)
 				{
-					(var answer, var error) = await AskUser.GetAnswer(engine, context, mse.Message);
+					(var answer, var error) = await AskUser.GetAnswer(engine, context, mse.Message, AskChannel.Settings);
 					if (error != null) return (null, error);
 
 					error = await mse.InvokeCallback(answer);
@@ -415,7 +415,7 @@ namespace PLang.Modules
 
 		private async Task<(bool, IError?)> HandleAskUser(AskUserError aue)
 		{
-			var (answer, error) = await AskUser.GetAnswer(engine, context, aue.Message);
+			var (answer, error) = await AskUser.GetAnswer(engine, context, aue.Message, AskChannel.Default);
 			if (error != null) return (false, error);
 
 			(var isHandled, error) = await aue.InvokeCallback([answer]);
@@ -435,7 +435,7 @@ namespace PLang.Modules
 			{
 				message = $"[Debug: {goalStep.Text.Replace("%", "\\%")} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}]\n\n" + message;
 			}
-			(var answer, var error) = await AskUser.GetAnswer(engine, context, message);
+			(var answer, var error) = await AskUser.GetAnswer(engine, context, message, AskChannel.FileAccess);
 			if (error != null) return (null, error);
 
 			(var isHandled, error) = await fileAccessHandler.ValidatePathResponse(fa.AppName, fa.Path, answer.ToString(), engine.FileSystem.Id);

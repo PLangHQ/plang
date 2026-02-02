@@ -46,11 +46,13 @@ namespace PLang.Modules.DbModule
 		private readonly ITypeHelper typeHelper;
 		private readonly IPrParser prParser;
 		private readonly IPLangContextAccessor contextAccessor;
-		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
 		private readonly IDbServiceFactory dbFactory;
 		private readonly IAppCache appCache;
-		private readonly PLangContext context;
+
+		// Lazy access to avoid null reference during DI resolution when context isn't set yet
+		private MemoryStack? memoryStack => contextAccessor.Current?.MemoryStack;
+		private PLangContext? context => contextAccessor.Current;
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
@@ -65,11 +67,9 @@ namespace PLang.Modules.DbModule
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
 			this.contextAccessor = contextAccessor;
-			this.memoryStack = contextAccessor.Current.MemoryStack;
 			this.variableHelper = variableHelper;
 			this.dbFactory = dbFactory;
 			this.appCache = appCache;
-			context = contextAccessor.Current;
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
 			UseInMemoryDataSource = inMemory;
 		}
@@ -580,6 +580,8 @@ Be concise"));
 
 		}
 
+		private const string SetupHashVariable = "Db.SetupHash";
+
 		private async Task<(DataSource?, IError?)> InitiateDatabase(DataSource dataSource, string name, string cacheKey)
 		{
 			var dataSourceVariables = variableHelper.GetVariables(dataSource.Name, memoryStack);
@@ -619,38 +621,54 @@ Be concise"));
 			}
 			else
 			{
-
 				var connection = new SqliteConnection(connectionString);
-				await connection.OpenAsync();
-				var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable='SetupHash'");
-				if (result == null)
+				try
 				{
-					if (dataSource.IsDefault) return (dataSource, null);
-					return (dataSource, new Error("SetupHash is missing from __Variables__"));
-				}
+					await connection.OpenAsync();
 
-				var setupHashKey = "__plang_SetupHash_" + dataSource.Name;
-				var value = result.value;
-				var setupCache = await appCache.Get(setupHashKey);
-				if (value.ToString() != setupCache?.ToString())
-				{
-					var transaction = await connection.BeginTransactionAsync();
-					try
+					// Get setup goal to check which steps need to run
+					var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(dataSource.Name));
+					if (setupGoal == null)
 					{
-						IDbConnection? anchorDb = null;
-						var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb");
-						if (anchors != null && anchors.TryGetValue(dataSource.Name, out anchorDb))
+						// No setup goal for this datasource, nothing to do
+						return (dataSource with { LocalPath = localPath, ConnectionString = connectionString, NameInStep = name }, null);
+					}
+
+					// Load executed step hashes from Db.SetupHash JSON array
+					var result = await connection.QueryFirstOrDefaultAsync("SELECT value FROM __Variables__ WHERE variable=@var", new { var = SetupHashVariable });
+					var executedHashes = new HashSet<string>();
+					if (result?.value != null)
+					{
+						try
 						{
-							anchorDb.Close();
+							var hashArray = JsonConvert.DeserializeObject<List<string>>(result.value);
+							if (hashArray != null) executedHashes = new HashSet<string>(hashArray);
 						}
-						var error = await ExecuteSetup(transaction, dataSource.Name);
-						if (error != null)
+						catch { /* Invalid JSON, treat as empty */ }
+					}
+
+					// Check if any steps need running
+					bool needsSetup = setupGoal.GoalSteps.Any(s => !executedHashes.Contains(s.Hash));
+
+					if (needsSetup)
+					{
+						var transaction = await connection.BeginTransactionAsync();
+						try
 						{
-							await transaction.RollbackAsync();
-							return (null, error);
-						}
-						else
-						{
+							IDbConnection? anchorDb = null;
+							var anchors = appContext.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb");
+							if (anchors != null && anchors.TryGetValue(dataSource.Name, out anchorDb))
+							{
+								anchorDb.Close();
+							}
+
+							var error = await ExecuteSetup(transaction, dataSource.Name, executedHashes);
+							if (error != null)
+							{
+								await transaction.RollbackAsync();
+								return (null, error);
+							}
+
 							await transaction.CommitAsync();
 
 							if (anchorDb != null)
@@ -658,18 +676,16 @@ Be concise"));
 								anchorDb.Open();
 							}
 						}
+						catch (Exception ex)
+						{
+							await transaction.RollbackAsync();
+							return (null, new ExceptionError(ex, ex.Message));
+						}
 					}
-					catch (Exception ex)
-					{
-						await transaction.RollbackAsync();
-						return (null, new ExceptionError(ex, ex.Message));
-					}
-					finally
-					{
-						await connection.CloseAsync();
-					}
-
-
+				}
+				finally
+				{
+					await connection.CloseAsync();
 				}
 			}
 
@@ -698,34 +714,44 @@ Be concise"));
     expires DATETIME)";
 
 			var connection = new SqliteConnection(connectionString);
-			await connection.OpenAsync();
-			var transaction = await connection.BeginTransactionAsync();
-			await connection.ExecuteAsync(sql, transaction: transaction);
-
-			var error = await ExecuteSetup(transaction, name);
-			if (error != null)
+			try
 			{
-				await transaction.RollbackAsync();
-				await connection.CloseAsync();
+				await connection.OpenAsync();
+				var transaction = await connection.BeginTransactionAsync();
+				await connection.ExecuteAsync(sql, transaction: transaction);
 
-				fileSystem.File.Delete(localPath);
-
-				return error;
+				// New database, no steps executed yet
+				var executedHashes = new HashSet<string>();
+				var error = await ExecuteSetup(transaction, name, executedHashes);
+				if (error != null)
+				{
+					await transaction.RollbackAsync();
+					fileSystem.File.Delete(localPath);
+					return error;
+				}
+				await transaction.CommitAsync();
+				return null;
 			}
-			await transaction.CommitAsync();
-			await connection.CloseAsync();
-			await connection.DisposeAsync();
-			return null;
+			finally
+			{
+				await connection.CloseAsync();
+				await connection.DisposeAsync();
+			}
 		}
 
-		private async Task<IError?> ExecuteSetup(DbTransaction transaction, string name)
+		private async Task<IError?> ExecuteSetup(DbTransaction transaction, string name, HashSet<string> executedHashes)
 		{
 			var setupGoal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(name));
-			if (setupGoal == null) return new Error($"Could not find setup file matching datasource {name}"); ;
-
+			if (setupGoal == null) return new Error($"Could not find setup file matching datasource {name}");
 
 			foreach (var step in setupGoal.GoalSteps)
 			{
+				// Skip steps that have already been executed
+				if (executedHashes.Contains(step.Hash))
+				{
+					continue;
+				}
+
 				if (step.Instruction == null)
 				{
 					step.Instruction = JsonHelper.ParseFilePath<Building.Model.Instruction>(fileSystem, step.AbsolutePrFilePath);
@@ -733,7 +759,7 @@ Be concise"));
 				}
 
 				var gf = step.Instruction.Function as DbGenericFunction;
-				if (gf == null) return new Error($"Could not load generice function from instruction: {step.AbsolutePrFilePath}");
+				if (gf == null) return new Error($"Could not load generic function from instruction: {step.AbsolutePrFilePath}");
 
 				var sql = gf.GetParameter<string>("sql");
 
@@ -746,40 +772,71 @@ Be concise"));
 					}
 					else
 					{
+						// Non-SQL step, mark as executed and continue
+						executedHashes.Add(step.Hash);
 						continue;
 					}
 				}
+
+				// Execute SQL statements (handles multi-statement SQL files)
+				var error = await ExecuteSqlStatements(transaction, sql, step);
+				if (error != null)
+				{
+					return error;
+				}
+
+				// Mark step as executed after successful execution
+				executedHashes.Add(step.Hash);
+			}
+
+			// Save all executed step hashes as JSON array
+			var hashJson = JsonConvert.SerializeObject(executedHashes.ToList());
+			var command = transaction.Connection!.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = @"INSERT INTO __Variables__ (variable, value) VALUES (@var, @value)
+									ON CONFLICT(variable) DO UPDATE SET value = excluded.value, updated = CURRENT_TIMESTAMP";
+			command.Parameters.Add(new SqliteParameter("@var", SetupHashVariable));
+			command.Parameters.Add(new SqliteParameter("@value", hashJson));
+			command.ExecuteNonQuery();
+
+			return null;
+		}
+
+		/// <summary>
+		/// Executes SQL that may contain multiple statements.
+		/// Splits on semicolons followed by newlines to handle triggers and blocks correctly.
+		/// </summary>
+		private async Task<IError?> ExecuteSqlStatements(DbTransaction transaction, string sql, GoalStep step)
+		{
+			// Split on semicolon followed by newline (handles triggers with END; inside)
+			// This regex matches ; followed by optional whitespace and a newline, or ; at end of string
+			var statements = Regex.Split(sql, @";\s*(?=\r?\n|$)")
+				.Select(s => s.Trim())
+				.Where(s => !string.IsNullOrWhiteSpace(s))
+				.ToList();
+
+			foreach (var statement in statements)
+			{
 				try
 				{
-					var result = await transaction.Connection!.ExecuteAsync(sql, transaction: transaction);
-
-					int i = 0;
+					await transaction.Connection!.ExecuteAsync(statement, transaction: transaction);
 				}
 				catch (Microsoft.Data.Sqlite.SqliteException ex)
 				{
 					List<string> ignoreErrorMessages = ["already exists", "duplicate column name"];
 					if (!ignoreErrorMessages.Any(p => ex.Message.Contains(p)))
 					{
-						return new StepError(ex.Message + @$" while running {sql.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
+						return new StepError(ex.Message + @$" while running {statement.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
 					}
-
-					int i = 0;
-					// Error code 1 = "table already exists" in most cases
-					// Ignore and continue
+					// Ignore "already exists" and "duplicate column name" errors for idempotency
 				}
 				catch (Exception ex)
 				{
-					return new StepError(ex.Message, step, Exception: ex);
+					return new StepError(ex.Message + @$" while running {statement.ReplaceLineEndings(" ").MaxLength(150)}", step, Exception: ex);
 				}
 			}
 
-			var command = transaction.Connection.CreateCommand();
-			command.CommandText = @"INSERT INTO __Variables__ (variable, value) VALUES ('SetupHash', @value)
-									ON CONFLICT(variable) DO UPDATE SET value = excluded.value";
-			command.Parameters.Add(new SqliteParameter("@value", setupGoal.Hash));
-			command.ExecuteNonQuery();
 			return null;
-
 		}
 
 		private DataSource ConvertToMemoryDb(DataSource dataSource)

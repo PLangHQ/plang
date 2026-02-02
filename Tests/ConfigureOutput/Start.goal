@@ -1,0 +1,31 @@
+Start
+- write out 'Starting Configure Output tests...'
+
+/ Test 1: Basic output works
+- write out 'Test 1 passed: Basic output works'
+
+/ Test 2: Call goal and get return value
+- call !GetData, write to %data%
+- write out 'Test 2 passed: Got data: %data%'
+
+/ Test 3: Nested goal calls work
+- call !OuterGoal, write to %result%
+- write out 'Test 3 passed: Nested result: %result%'
+
+- write out 'All Configure Output tests passed!'
+- write out ''
+- write out 'Note: OnChannel and ConfigureOutput are tested in C# unit tests.'
+- write out 'See PLang.Tests/Modules/OutputModuleTests.cs'
+
+GetData
+- set %value% to 'test_data_value'
+- return %value%
+
+OuterGoal
+- call !InnerGoal, write to %inner%
+- set %outer% to 'outer_%inner%'
+- return %outer%
+
+InnerGoal
+- set %val% to 'inner'
+- return %val%

@@ -18,7 +18,12 @@
       "Bash(where:*)",
       "Bash(Select-String -Pattern \"\\(Passed|Failed|Skipped|Test Run\\)\")",
       "Bash(Select-Object -Last 5)",
-      "Bash(powershell -Command \"dotnet test PLang.Tests -v q --no-restore 2>&1 | Select-String -Pattern ''Passed|Failed|Test Run|Error'' | Select-Object -Last 10\")"
+      "Bash(powershell -Command \"dotnet test PLang.Tests -v q --no-restore 2>&1 | Select-String -Pattern ''Passed|Failed|Test Run|Error'' | Select-Object -Last 10\")",
+      "Bash(Select-String -Pattern \"error|warning\")",
+      "Bash(Select-Object -First 30)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"error CS\")",
+      "Bash(Select-String -Pattern \"error|Build succeeded\")"
     ]
   }
 }

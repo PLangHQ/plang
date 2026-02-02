@@ -58,6 +58,56 @@ public class EngineTests
     }
 
     [Test]
+    public async Task Goal_EndOfApp_ReturnsGoalWithCorrectName()
+    {
+        // Act
+        var goal = Goal.EndOfApp;
+
+        // Assert
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal.GoalName).IsEqualTo("EndOfApp");
+        await Assert.That(goal.GoalSteps).IsNotNull();
+    }
+
+    [Test]
+    public async Task Goal_EndOfAppStep_ReturnsStepWithCorrectProperties()
+    {
+        // Act
+        var step = Goal.EndOfAppStep;
+
+        // Assert
+        await Assert.That(step).IsNotNull();
+        await Assert.That(step.Goal).IsNotNull();
+        await Assert.That(step.Goal.GoalName).IsEqualTo("EndOfApp");
+        await Assert.That(step.Number).IsEqualTo(0);
+        await Assert.That(step.Text).IsEqualTo("return");
+    }
+
+    [Test]
+    public async Task Goal_EndOfApp_EachCallReturnsNewInstance()
+    {
+        // Act
+        var goal1 = Goal.EndOfApp;
+        var goal2 = Goal.EndOfApp;
+
+        // Assert - each call returns a new instance
+        await Assert.That(goal1).IsNotEqualTo(goal2);
+        await Assert.That(goal1.GoalName).IsEqualTo(goal2.GoalName);
+    }
+
+    [Test]
+    public async Task Goal_EndOfAppStep_EachCallReturnsNewInstance()
+    {
+        // Act
+        var step1 = Goal.EndOfAppStep;
+        var step2 = Goal.EndOfAppStep;
+
+        // Assert - each call returns a new instance
+        await Assert.That(step1).IsNotEqualTo(step2);
+        await Assert.That(step1.Text).IsEqualTo(step2.Text);
+    }
+
+    [Test]
     public async Task Goal_WithSteps_HasCorrectStepCount()
     {
         // Arrange

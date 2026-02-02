@@ -328,7 +328,17 @@ First we will give you the original error, then each error that occured will sho
 				}
 				if (exception != null)
 				{
-					obj.Add("Exception", exception.ToString());
+					var tmp = exception;
+
+					string exceptionString = "";
+					while (tmp != null)
+					{
+						exceptionString += tmp.ToString() + "\n";
+						tmp = tmp.InnerException;
+					}
+
+					obj.Add("Exception", exceptionString);
+
 				}
 				if (detailedError)
 				{
@@ -339,20 +349,33 @@ First we will give you the original error, then each error that occured will sho
 
 			if (exception != null)
 			{
+
+				var tmp = exception;
+
+				string exceptionString = "";
+				while (tmp != null)
+				{
+					exceptionString += tmp.ToString() + "\n";
+					tmp = tmp.InnerException;
+				}
+
 				message += $@"
 
 👨‍💻 For C# Developers:
 	- {FormatLine(exception.Message)}
 
-	StackTrace: {FormatLine(exception.StackTrace)}
+	StackTrace: {FormatLine(exceptionString)}
 ";
 			}
 			if (error.ErrorChain.Count > 0)
 			{
 				foreach (var nextError in error.ErrorChain)
 				{
+					if (nextError == error) continue;
+					
 					message += "\n\n\t\t<==== Next error ===> ";
 					message += nextError.ToFormat();
+					
 				}
 			}
 			return message;

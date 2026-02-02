@@ -51,7 +51,7 @@ public sealed class HttpSink : IOutputSink
 		_props = props;
 		_live = live;
 		_path = context.HttpContext!.Request.Path.Value ?? "/";
-		_transformer = ChooseTransformer(props, context.HttpContext!);
+		_transformer = ChooseTransformer(props, context.HttpContext!, context);
 	}
 
 	public bool IsComplete { get; set; }
@@ -62,12 +62,15 @@ public sealed class HttpSink : IOutputSink
 		if (error != null) return error;
 		if (response is null || !response.Body.CanWrite || IsComplete) return null;
 
+		// Get the effective transformer - may have changed due to ConfigureOutput
+		var transformer = GetEffectiveTransformer(m);
+
 		if (!wasFlushed && !response.HasStarted && response.StatusCode == 200)
 		{
 			response.StatusCode = m.StatusCode == 0 ? 200 : m.StatusCode;
-			response.ContentType = $"{_transformer.ContentType}; charset={_transformer.Encoding.WebName}";
+			response.ContentType = $"{transformer.ContentType}; charset={transformer.Encoding.WebName}";
 
-			if (_transformer is PlangTransformer)
+			if (transformer is PlangTransformer)
 			{
 				response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
 				response.Headers.Pragma = "no-cache";
@@ -80,7 +83,7 @@ public sealed class HttpSink : IOutputSink
 
 		var writer = response.BodyWriter;
 
-		(var length, error) = await _transformer.Transform(context, writer, m);
+		(var length, error) = await transformer.Transform(context, writer, m);
 		if (error != null) return error;
 		try
 		{
@@ -103,16 +106,64 @@ public sealed class HttpSink : IOutputSink
 		return (null, err);
 	}
 
-	static ITransformer ChooseTransformer(WebserverProperties props, HttpContext ctx)
+	/// <summary>
+	/// Gets the effective transformer for a message, checking for explicitly configured content type overrides.
+	/// Only overrides the Accept-header-based transformer if content type was explicitly set via ConfigureOutput.
+	/// </summary>
+	ITransformer GetEffectiveTransformer(OutMessage m)
 	{
-		var accept = ctx.Request.Headers.Accept.FirstOrDefault()
-					 ?? props.DefaultResponseProperties!.ContentType;
-		var enc = Encoding.GetEncoding(props.DefaultResponseProperties!.ResponseEncoding);
+		// Only check for EXPLICIT content type configuration (via ConfigureOutput command)
+		// Don't override Accept-header-based transformer with actor defaults
+		var explicitContentType = context.GetExplicitContentType(m.Actor, m.Channel);
 
-		if (accept.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase)) return new PlangTransformer(enc);
-		if (accept.StartsWith("application/json", StringComparison.OrdinalIgnoreCase)) return new JsonTransformer(enc);
-		if (accept.StartsWith("text/html", StringComparison.OrdinalIgnoreCase)) return new HtmlTransformer(enc);
+		if (!string.IsNullOrEmpty(explicitContentType))
+		{
+			var configuredEncoding = context.GetEffectiveEncoding(m.Actor, m.Channel);
+			var enc = configuredEncoding ?? Encoding.GetEncoding(_props.DefaultResponseProperties!.ResponseEncoding);
+			return CreateTransformerForContentType(explicitContentType, enc);
+		}
+
+		// Fall back to Accept-header-based transformer (chosen in constructor)
+		return _transformer;
+	}
+
+	static ITransformer CreateTransformerForContentType(string contentType, Encoding enc)
+	{
+		if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase) ||
+			contentType.StartsWith("application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+			return new PlangTransformer(enc);
+		if (contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
+			return new JsonTransformer(enc);
+		if (contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
+			return new HtmlTransformer(enc);
 		return new TextTransformer(enc);
+	}
+
+	/// <summary>
+	/// Chooses the initial transformer based on the Accept header.
+	/// This sets the default, which can be overridden by explicit ConfigureOutput calls.
+	/// </summary>
+	static ITransformer ChooseTransformer(WebserverProperties props, HttpContext ctx, PLangContext? plangContext = null)
+	{
+		var acceptHeader = ctx.Request.Headers.Accept.FirstOrDefault() ?? "";
+		var defaultEnc = Encoding.GetEncoding(props.DefaultResponseProperties!.ResponseEncoding);
+
+		// Only use plang/ndjson format if client explicitly requests it
+		if (acceptHeader.Contains("application/plang", StringComparison.OrdinalIgnoreCase) ||
+			acceptHeader.Contains("application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+		{
+			return new PlangTransformer(defaultEnc);
+		}
+
+		// For other requests, choose based on Accept header preference
+		if (acceptHeader.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+		{
+			return new JsonTransformer(defaultEnc);
+		}
+
+		// Default to HTML for browsers (text/html, */* or empty Accept)
+		// This covers standard browser requests
+		return new HtmlTransformer(defaultEnc);
 	}
 
 	OutMessage BuildResponseProperties(OutMessage m)
