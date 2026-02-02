@@ -14,7 +14,7 @@ A common usage of loops in plang is to iterate over a list of items and perform 
 - add 1 to list, write to %numbers%
 - add 2 to list, write to %numbers%
 - add 3 to list, write to %numbers%
-- go through %numbers% call !PrintNumber
+- go through %numbers% call goal PrintNumber
 ```
 
 **C# Method Signature:**
@@ -54,7 +54,7 @@ Here's how a plang code example maps to a .pr file and subsequently to a C# meth
 
 **plang code example:**
 ```plang
-- go through %numbers% call !PrintNumber
+- go through %numbers% call goal PrintNumber
 ```
 
 **Example Instruction .pr file:**

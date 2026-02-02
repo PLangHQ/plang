@@ -1,12 +1,12 @@
 ModulesOverview
-/- call !CreateDetailOverview
-- call !CreateSimpleOverview
+/- call goal CreateDetailOverview
+- call goal CreateSimpleOverview
 
 
 CreateDetailOverview
 - get all '.md'  files in modules/ 
     exclude '_advanced.md', write to %moduleFiles%
-- foreach %moduleFiles% call !CreateDetail item=%file%
+- foreach %moduleFiles% call goal CreateDetail item=%file%
 
 CreateDetail
 - set %moduleName% = %file.Path.Replace(".cs", "").Replace("PLang.Modules", "").Replace("Module", "")%
@@ -19,9 +19,9 @@ CreateDetail
 
 CreateSimpleOverview
 - get all '.md' files in output/modules_overview/, write to %moduleFiles%
-- foreach %moduleFiles% call !CreateSimple item=%file%
+- foreach %moduleFiles% call goal CreateSimple item=%file%
 - get all '.md' files in output/modules_simple/, write to %moduleFiles%
-- foreach %moduleFiles% call !GenerateOverview item=%file%
+- foreach %moduleFiles% call goal GenerateOverview item=%file%
 - write %content% to output/modules_simple/README.md
 
 

@@ -1,0 +1,15 @@
+SetupNostrAsk
+/ Register the channel handler for system actor asks
+- on channel 'system', 'default', call goal ../HandleNostrAsk
+/ Start listening for Nostr messages (runs in background)
+- call goal StartNostrListener async
+
+StartNostrListener
+/ Listen for messages and store in cache
+/ Read npub from config file (not settings - avoids ask loop)
+- read file ../nostr.config, write to %config%
+- listen for new message from %config.NostrAskTarget%, call goal OnNostrMessage
+
+OnNostrMessage
+/ Cache incoming message for the ask handler to retrieve
+- cache %content% for 10 minutes, to 'nostrResponse'

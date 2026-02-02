@@ -1,0 +1,71 @@
+OutputLevels
+/ Tests for different output levels (info, warning, error)
+/ Verifies that output can be written with different severity levels and status codes
+
+- write out 'Testing Output Levels...'
+
+/ Test: Info level output (default)
+- call !TestInfoLevel
+
+/ Test: Warning level output
+- call !TestWarningLevel
+
+/ Test: Error level with status code
+- call !TestErrorLevelWithStatus
+
+/ Test: Custom status codes
+- call !TestCustomStatusCodes
+
+- write out 'Output Levels tests completed!'
+
+TestInfoLevel
+/ Write info level output - the default level
+- write out 'This is an info message', level info
+/ If we get here without error, info level works
+- write out '  - Info level: OK'
+
+TestWarningLevel
+/ Write warning level output
+- write out 'This is a warning message', level warning
+/ If we get here without error, warning level works
+- write out '  - Warning level: OK'
+
+TestErrorLevelWithStatus
+/ Write error level output with 500 status code
+/ Use caching to share state between handler and test
+- cache '' for 10 minutes, to 'errorLevelContentCache'
+- on channel 'user', 'errortest', call !CaptureErrorLevel
+- write out 'Server error occurred', level error, status code 500 to user channel errortest
+- get cache 'errorLevelContentCache', write to %errorLevelContent%
+- if %errorLevelContent% does not contain 'Server error', throw error 'ErrorLevelWithStatus content test failed'
+- write out '  - Error level with status 500: OK'
+
+CaptureErrorLevel
+/ Capture error level output details
+- cache %content% for 10 minutes, to 'errorLevelContentCache'
+
+TestCustomStatusCodes
+/ Test various HTTP-style status codes
+/ Use caching to share state between handler and test
+- cache 0 for 10 minutes, to 'capturedStatusCache'
+- on channel 'user', 'statustest', call !CaptureStatus
+
+/ Test 400 Bad Request
+- write out 'Bad request', level error, status code 400 to user channel statustest
+- get cache 'capturedStatusCache', write to %capturedStatus%
+- if %capturedStatus% is not 400, throw error 'Status 400 test failed, got %capturedStatus%'
+
+/ Test 404 Not Found
+- write out 'Not found', level error, status code 404 to user channel statustest
+- get cache 'capturedStatusCache', write to %capturedStatus%
+- if %capturedStatus% is not 404, throw error 'Status 404 test failed, got %capturedStatus%'
+
+/ Test 503 Service Unavailable
+- write out 'Service unavailable', level error, status code 503 to user channel statustest
+- get cache 'capturedStatusCache', write to %capturedStatus%
+- if %capturedStatus% is not 503, throw error 'Status 503 test failed, got %capturedStatus%'
+
+- write out '  - Custom status codes: OK'
+
+CaptureStatus
+- cache %statusCode% for 10 minutes, to 'capturedStatusCache'

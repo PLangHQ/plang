@@ -1,0 +1,8 @@
+Start
+/ Test: Ask via Nostr messaging
+- write out 'Nostr Ask Test - Starting...'
+- write out 'Waiting for Nostr response (5 min timeout)...'
+- ask 'What is your favorite color?' to system, write to %answer%
+- write out 'Received answer: %answer%'
+- if %answer% is empty, throw error 'No response received'
+- write out 'Test PASSED - Channel handler successfully routed ask through Nostr'

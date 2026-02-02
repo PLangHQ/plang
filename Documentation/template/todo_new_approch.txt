@@ -35,7 +35,7 @@ NewLlmTask
         user: %request.tasks%
         scheme:[{task:string, due_date:date, category:string}]
         write to %taskList%
-- for each %taskList%, call !SaveTask
+- for each %taskList%, call goalSaveTask
 
 SaveTask
 - insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
@@ -43,7 +43,7 @@ SaveTask
 
 in the code apove, we read the system command to the llm, and send the users tasks that he sends in the http request, we define schema and write the result to `%taskList%` variable. then loop through the list and save each item to database.
 
-tip: You can write `for each %taskList%, call !SaveTask %task%=item`, so you can reference the %task% variable in SaveTask goal
+tip: You can write `for each %taskList%, call goalSaveTask %task%=item`, so you can reference the %task% variable in SaveTask goal
 
 Lets test this now, create a new file in `test` folder, `TestNewLlmTask'
 

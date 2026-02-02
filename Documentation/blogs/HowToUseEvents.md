@@ -22,8 +22,8 @@ Lifecycle events allow you to execute specific actions when your application sta
 
 ```plang
 Events
-- before app starts, call !AppStarting
-- before app ends, call !AppEnding
+- before app starts, call goalAppStarting
+- before app ends, call goalAppEnding
 ```
 
 Now, create `AppStarting.goal` and `AppEnding.goal` files in the `events` folder.
@@ -53,8 +53,8 @@ Plang allows you to trigger events before or after specific goals within a direc
 
 ```plang
 Events
-- before each goal in 'api/*', call !AuthenticateUser
-- after each goal, call !Analyze.LogInfoAboutGoal
+- before each goal in 'api/*', call goalAuthenticateUser
+- after each goal, call goalAnalyze.LogInfoAboutGoal
 ```
 
 - **Before each goal in 'api/*'**: Executes `AuthenticateUser` before any goal in the `api` directory.
@@ -66,8 +66,8 @@ Handling errors effectively is crucial. Plang lets you define events that trigge
 
 ```plang
 Events
-- on error in step, call !LoggerStepError
-- on error on goal, call !LoggerGoalError
+- on error in step, call goalLoggerStepError
+- on error on goal, call goalLoggerGoalError
 ```
 
 - **`on error in step`**: Calls `LoggerStepError` when an error occurs in any step.
@@ -81,8 +81,8 @@ Events related to the Plang builder can be defined in a `BuilderEvents.goal` fil
 
 ```plang
 BuilderEvents
-- before each step, call !AnalyzeCode
-- after each step, call !AnalyzeCode
+- before each step, call goalAnalyzeCode
+- after each step, call goalAnalyzeCode
 ```
 
 Plang already uses this build event in its own build. It validates all the goals that exist. You can find it after your first build in `/events/external/plang/builder/CheckGoals.goal`.
@@ -95,7 +95,7 @@ Sometimes, you may want to trigger events only under certain conditions, such as
 
 ```plang
 Events
-- before each step, call !SendDebug, only when start parameter is '--debug'
+- before each step, call goalSendDebug, only when start parameter is '--debug'
 ```
 
 - **Conditional execution**: The `SendDebug` event is triggered only if the `--debug` parameter is passed at startup.

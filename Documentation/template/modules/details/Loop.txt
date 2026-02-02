@@ -9,7 +9,7 @@ you can overwrite each default variable name, e.g.
 
 ```plang
 ...
-- foreach %products%, call !ProcessProduct item=%product%
+- foreach %products%, call goalProcessProduct item=%product%
 
 ProcessProduct
 - if %product.IsActive% ....

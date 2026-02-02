@@ -1,0 +1,3 @@
+GetMethods
+- [plang] GetMethods %modules%, write to %methods%
+- return %methods%

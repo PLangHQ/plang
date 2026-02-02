@@ -5,23 +5,23 @@ To bind event in you application, create folder `events` and file called `Events
 Application Lifecycle Events
 ```plang
 Events
-- before app starts, call !AppStarting
-- before app ends, call !AppEnding
+- before app starts, call goalAppStarting
+- before app ends, call goalAppEnding
 ```
 
 Events with Goals and Steps
 ```plang
 Events
-- before each goal in 'api/*', call !AuthenticateUser
-- after each goal, call !Analyze.LogInfoAboutGoal
+- before each goal in 'api/*', call goalAuthenticateUser
+- after each goal, call goalAnalyze.LogInfoAboutGoal
 ```
 
 Error Handling Events
 
 ```plang
 Events
-- on error in step, call !LoggerStepError
-- on error on goal, call !LoggerGoalError
+- on error in step, call goalLoggerStepError
+- on error on goal, call goalLoggerGoalError
 ```
 
 Take a look into how handle errors on step(./modules/handlers/ErrorHandler.md)
@@ -31,8 +31,8 @@ Take a look into how handle errors on step(./modules/handlers/ErrorHandler.md)
 Binding to plang builder, create a file called `BuilderEvents.goal`
 ```plang
 BuilderEvents
-- before each step, call !AnalyzeCode
-- after each step, call !AnalyzeCode
+- before each step, call goalAnalyzeCode
+- after each step, call goalAnalyzeCode
 ```
 
 
@@ -40,7 +40,7 @@ BuilderEvents
 it is possible to define an event to run only if a parameter is provided at the startup of the app
 ```plang
 Events
-- before each step, call !SendDebug, only when start parameter is '--debug'
+- before each step, call goalSendDebug, only when start parameter is '--debug'
 ```
 This will only bind this event if you start the app like this
 ```bash

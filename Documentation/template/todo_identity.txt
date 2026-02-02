@@ -60,7 +60,7 @@ Lets modify NewTask.goal, like this
 NewTask
 - make sure that %task% and %due_date% is not empty, throw error
 - insert into Todos %task%, %due_date%, %Identity%, write to %id%
-- call !Categorize, dont wait
+- call goalCategorize, dont wait
 - write out %id%
 
 Categorize

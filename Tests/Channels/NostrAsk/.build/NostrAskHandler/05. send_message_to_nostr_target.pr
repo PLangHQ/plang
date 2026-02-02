@@ -1,0 +1,87 @@
+{
+  "Text": "send message to %config.NostrAskTarget%, %question%",
+  "ModuleType": "PLang.Modules.MessageModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to send a message containing the question to a specified Nostr target address. The appropriate function is SendPrivateMessage which requires the content of the message and the receiver's public key. The content is %question% and the receiverPublicKey is %config.NostrAskTarget%.",
+    "Name": "SendPrivateMessage",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "content",
+        "Value": "%question%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "receiverPublicKey",
+        "Value": "%config.NostrAskTarget%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "content": {
+        "Name": "content",
+        "FullTypeName": "System.String"
+      },
+      "receiverPublicKey": {
+        "Name": "receiverPublicKey",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nSend a message containing the question to the specified Nostr target address\n## functions available starts ##\r\n{\"Description\":\"Send and recieve private messages. Get account(public key), set current account for messaging\",\"Methods\":[{\"MethodName\":\"GetPublicKey\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"GetRelays\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"SetCurrentAccount\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"publicKeyOrName\",\"IsRequired\":true}]},{\"Description\":\"goalName should be prefixed by ! and be whole word with possible slash(/)\",\"MethodName\":\"Listen\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"contentVariableName\",\"DefaultValue\":\"content\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"senderVariableName\",\"DefaultValue\":\"sender\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"eventVariableName\",\"DefaultValue\":\"__NosrtEventKey__\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.DateTimeOffset]\",\"Name\":\"listenFromDateTime\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"onlyMessageFromSenders\",\"IsRequired\":false}]},{\"MethodName\":\"SendPrivateMessageToMyself\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true}]},{\"MethodName\":\"SendPrivateMessage\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"receiverPublicKey\",\"IsRequired\":true}]},{\"MethodName\":\"GetPrivateKey\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"SendEmail\",\"Parameters\":[{\"Type\":\"PLang.Modules.MessageModule.Program+EmailMessage\",\"Name\":\"emailMessage\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal. Keep Name as user defines it with path\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"WaitForExecution\",\"Description\":\"Whether to wait for the goal to complete before continuing. Default is true.\",\"IsRequired\":true},{\"Type\":\"System.Int64\",\"Name\":\"DelayWhenNotWaitingInMilliseconds\",\"Description\":\"Delay in milliseconds when not waiting for execution. Default is 50.\",\"IsRequired\":true},{\"Type\":\"System.UInt32\",\"Name\":\"WaitForXMillisecondsBeforeRunningGoal\",\"Description\":\"Wait for X milliseconds before running the goal. Default is 0.\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"Isolated\",\"Description\":\"Run the goal in an isolated container. Default is false.\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"DisableSystemGoals\",\"Description\":\"Disable system/OS goals when running. Default is false.\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.MessageModule.Program+EmailMessage\",\"Name\":\"emailMessage\",\"TypeProperties\":[{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"ToEmails\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Subject\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Body\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"TextBody\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"IsHtml\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"Cc\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"Bcc\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"ReplyTo\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.String]\",\"Name\":\"Headers\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"Attachements\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Service\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"FromEmail\",\"IsRequired\":false}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nconfig.NostrAskTarget (type:object), question (type:object), \r\n## defined variables ##\nFollowing Relay servers are available: [\"wss://relay.damus.io\",\"wss://nostr-pub.wellorder.net\",\"wss://offchain.pub\",\"wss://nos.lol\",\"wss://relay.nostr.band\",\"wss://nostr.wine\",\"wss://purplepag.es\"].\r\nFollowing are Nostr accounts:[]\r\n"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "send message to %config.NostrAskTarget%, %question%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.MessageModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to send a message containing the question to a specified Nostr target address. The appropriate function is SendPrivateMessage which requires the content of the message and the receiver's public key. The content is %question% and the receiverPublicKey is %config.NostrAskTarget%.\",\n  \"Name\": \"SendPrivateMessage\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"content\",\n      \"Value\": \"%question%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"receiverPublicKey\",\n      \"Value\": \"%config.NostrAskTarget%\"\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
+    }
+  ]
+}

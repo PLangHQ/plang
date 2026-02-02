@@ -13,7 +13,7 @@ When writing plang code for blockchain applications, it's crucial to follow best
 ```plang
 - set to mumbai testnet
 - transfer to 0x1234....., ether amount 0.1, gas price 50 gwei, write to %transactionHash%
-- if %transactionHash% is not empty then call !TransactionSuccess, else !TransactionFailed
+- if %transactionHash% is not empty then call goal TransactionSuccess, else goal TransactionFailed
 
 TransactionSuccess
 - write out "Transaction successful with hash: %transactionHash%"
@@ -84,8 +84,8 @@ The following examples demonstrate how to use the Blockchain Module in plang. Th
 ### Listen to Transfer Events on a Smart Contract
 ```plang
 - set chain, matic
-- listen to usdc, Transfer event, call !Transfer
-    if exception is 500, call !WriteOutSetupMessage
+- listen to usdc, Transfer event, call goal Transfer
+    if exception is 500, call goal WriteOutSetupMessage
 
 Transfer
 - write out "from: %from% | to: %to% | value: %value%"
@@ -96,7 +96,7 @@ Transfer
 
 ### Listen to New Blocks
 ```plang
-- listen to new block, call !BlockEvent
+- listen to new block, call goal BlockEvent
 ```
 
 ### Handle New Block Event

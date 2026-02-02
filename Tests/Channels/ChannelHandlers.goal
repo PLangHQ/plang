@@ -1,0 +1,65 @@
+ChannelHandlers
+/ Tests for channel handler registration using 'on channel' syntax
+/ Verifies that handlers can intercept output to specific actor/channel combinations
+
+- write out 'Testing Channel Handler Registration...'
+
+/ Test: Register handler for custom channel
+- call !TestCustomChannelHandler
+
+/ Test: Register handler for system actor
+- call !TestSystemActorHandler
+
+/ Test: Multiple channel handlers
+- call !TestMultipleHandlers
+
+- write out 'Channel Handler tests completed!'
+
+TestCustomChannelHandler
+/ Register a handler for user actor, custom 'audit' channel
+/ Use caching to share state between handler and test
+- cache '' for 10 minutes, to 'auditLogCache'
+- on channel 'user', 'audit', call !AuditHandler
+- write out 'audit entry: user login' to user channel audit
+- get cache 'auditLogCache', write to %auditLog%
+- if %auditLog% does not contain 'audit entry', throw error 'CustomChannelHandler test failed'
+- write out '  - Custom channel handler: OK'
+
+AuditHandler
+/ Handler that captures audit messages
+- cache %content% for 10 minutes, to 'auditLogCache'
+
+TestSystemActorHandler
+/ Register a handler for system actor
+/ Use caching to share state between handler and test
+- cache '' for 10 minutes, to 'traceLogCache'
+- on channel 'system', 'trace', call !TraceHandler
+- write out 'trace: function called' to system channel trace
+- get cache 'traceLogCache', write to %traceLog%
+- if %traceLog% does not contain 'trace:', throw error 'SystemActorHandler test failed'
+- write out '  - System actor handler: OK'
+
+TraceHandler
+/ Handler for system trace messages
+- cache %content% for 10 minutes, to 'traceLogCache'
+
+TestMultipleHandlers
+/ Register multiple handlers for different channels
+/ Use caching to share state between handlers and test
+- cache '' for 10 minutes, to 'metricsDataCache'
+- cache '' for 10 minutes, to 'debugDataCache'
+- on channel 'user', 'metrics', call !MetricsHandler
+- on channel 'user', 'debug', call !DebugHandler
+- write out 'metric: request_count=42' to user channel metrics
+- write out 'debug: processing request' to user channel debug
+- get cache 'metricsDataCache', write to %metricsData%
+- get cache 'debugDataCache', write to %debugData%
+- if %metricsData% does not contain 'metric:', throw error 'MultipleHandlers metrics test failed'
+- if %debugData% does not contain 'debug:', throw error 'MultipleHandlers debug test failed'
+- write out '  - Multiple handlers: OK'
+
+MetricsHandler
+- cache %content% for 10 minutes, to 'metricsDataCache'
+
+DebugHandler
+- cache %content% for 10 minutes, to 'debugDataCache'

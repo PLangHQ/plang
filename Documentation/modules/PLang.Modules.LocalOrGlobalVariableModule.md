@@ -75,21 +75,21 @@ To remove a variable, use the `RemoveVariable` or `RemoveStaticVariable` method.
 To execute a goal when a variable is created, use the `OnCreateVariableListener` method.
 
 ```plang
-- when var 'newUser' is created, call !UserCreated
+- when var 'newUser' is created, call goal UserCreated
 ```
 
 ### On Variable Change
 To execute a goal when a variable changes, use the `OnChangeVariableListener` method.
 
 ```plang
-- when var 'theme' changes, call !ThemeChanged
+- when var 'theme' changes, call goal ThemeChanged
 ```
 
 ### On Variable Removal
 To execute a goal when a variable is removed, use the `OnRemoveVariableListener` method.
 
 ```plang
-- on remove on var 'sessionToken' call !SessionEnded
+- on remove on var 'sessionToken' call goal SessionEnded
 ```
 
 ### Set Default Values on Variables

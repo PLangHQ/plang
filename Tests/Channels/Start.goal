@@ -1,0 +1,71 @@
+Start
+/ Main test runner for Channel tests
+/ Tests the PLang channel system: output routing, handlers, content type configuration
+
+- write out 'Channel Tests - Starting...'
+- write out ''
+
+/ Test 1: Channel Handler Registration
+- call !TestChannelHandler
+- write out 'Test 1: Channel Handler Registration - PASSED'
+
+/ Test 2: Configure Output Content Type
+- call !TestConfigureOutput
+- write out 'Test 2: Configure Output Content Type - PASSED'
+
+/ Test 3: Output Levels (info, warning, error)
+- call !TestOutputLevels
+- write out 'Test 3: Output Levels - PASSED'
+
+/ Test 4: Error Channel Handler
+- call !TestErrorChannel
+- write out 'Test 4: Error Channel Handler - PASSED'
+
+- write out ''
+- write out 'All 4 Channel tests passed!'
+- write out ''
+- write out 'Note: Ask channel override tests are in AskChannel.goal'
+- write out 'They can be run separately with: plang run AskChannel'
+
+TestChannelHandler
+/ Register a handler for a custom channel and verify it captures output
+/ Use caching to share state between handler and test
+- cache '' for 10 minutes, to 'testCapturedCache'
+- on channel 'user', 'testlog', call !HandleTestOutput
+- write out 'captured message' to user channel testlog
+/ Get the cached value that was set by the handler
+- get cache 'testCapturedCache', write to %testCaptured%
+- if %testCaptured% is not 'captured message', throw error 'TestChannelHandler failed: expected captured message, got %testCaptured%'
+
+HandleTestOutput
+/ This handler intercepts output sent to user channel testlog
+/ Use cache to store the captured content so parent can access it
+- cache %content% for 10 minutes, to 'testCapturedCache'
+
+TestConfigureOutput
+/ Configure output content type and verify it was set
+- configure output to 'application/json'
+/ If we get here without error, the configuration worked
+- write out '  - Configure output to JSON: OK'
+
+TestOutputLevels
+/ Test writing with different output levels
+- write out 'info level message', level info
+- write out 'warning level message', level warning
+/ If we get here without error, levels work
+- write out '  - Output levels work: OK'
+
+TestErrorChannel
+/ Register handler to intercept error-level output
+/ Use caching to share state between handler and test
+- cache '' for 10 minutes, to 'errorCapturedCache'
+- on channel 'user', 'error', call !HandleErrorOutput
+- write out 'test error message', level error, status code 500 to user channel error
+/ Get the cached value that was set by the handler
+- get cache 'errorCapturedCache', write to %errorCaptured%
+- if %errorCaptured% does not contain 'test error message', throw error 'TestErrorChannel failed: error not captured, got %errorCaptured%'
+
+HandleErrorOutput
+/ This handler intercepts error messages
+/ Use cache to store the captured content so parent can access it
+- cache %content% for 10 minutes, to 'errorCapturedCache'

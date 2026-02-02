@@ -13,7 +13,7 @@ For simple documentation and examples, please refer to [PLang.Modules.CallGoalMo
 ### Example 1: Calling a Goal Without Parameters
 This is a common usage where a goal is called without any additional parameters.
 ```plang
-- call !BackupDatabase / Calls the BackupDatabase.goal to initiate a database backup
+- call goal BackupDatabase / Calls the BackupDatabase.goal to initiate a database backup
 ```
 C# method signature:
 ```csharp
@@ -24,7 +24,7 @@ Task RunGoal(string goalName, Dictionary<string, object>? parameters = null, boo
 In this example, parameters are passed to the goal being called.
 ```plang
 - set variable %filePath% to 'C:/data/users.csv'
-- call !ProcessFile filePath=%filePath% / Calls the ProcessFile.goal with the filePath parameter
+- call goal ProcessFile filePath=%filePath% / Calls the ProcessFile.goal with the filePath parameter
 ```
 C# method signature:
 ```csharp
@@ -62,7 +62,7 @@ Here's how a plang code example is mapped to a method in `CallGoal` and the resu
 
 plang code example:
 ```plang
-- call !GenerateReport write to %reportStatus%
+- call goal GenerateReport write to %reportStatus%
 ```
 
 This step would map to the following .pr file:

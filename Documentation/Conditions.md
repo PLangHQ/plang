@@ -15,23 +15,23 @@ In Plang, conditions are used to control the flow of your program. They allow yo
 ```plang
 Start
 - if %isAdmin% then
-   - call !ShowAdmin
+   - call goal ShowAdmin
    - write out 'This is admin'
 - if %isUser% then
-   - call !ShowUser
+   - call goal ShowUser
    - write out 'This is user'
 ```
 
-In this example, the program checks if the variable `%isAdmin%` is true. If it is, the program will execute the sub-steps: it will call the `!ShowAdmin` goal and write out "This is admin". Similarly, if `%isUser%` is true, it will call the `!ShowUser` goal and write out "This is user".
+In this example, the program checks if the variable `%isAdmin%` is true. If it is, the program will execute the sub-steps: it will call the `ShowAdmin` goal and write out "This is admin". Similarly, if `%isUser%` is true, it will call the `ShowUser` goal and write out "This is user".
 
 ### Example 2: If Statements Calling Other Goals
 
 ```plang
 Start
-- if %isAdmin% then call !ShowAdmin, else !ShowUser
+- if %isAdmin% then call goal ShowAdmin, else call goal ShowUser
 ```
 
-Here, the program checks if `%isAdmin%` is true. If it is, it calls the `!ShowAdmin` goal. If `%isAdmin%` is false, it calls the `!ShowUser` goal instead. This is a more compact way to handle conditions where you have a clear alternative action.
+Here, the program checks if `%isAdmin%` is true. If it is, it calls the `ShowAdmin` goal. If `%isAdmin%` is false, it calls the `ShowUser` goal instead. This is a more compact way to handle conditions where you have a clear alternative action.
 
 ### Important Note
 

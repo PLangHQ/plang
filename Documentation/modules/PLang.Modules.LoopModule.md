@@ -17,10 +17,10 @@ Suppose you have a list of numbers and you want to print each number until you r
 - add 5 to list, write to %numbers%
 - add 8 to list, write to %numbers%
 - add 12 to list, write to %numbers%
-- go through %numbers% call !PrintNumber, item=%number%, list=%numbers%, key=1
+- go through %numbers% call goal PrintNumber, item=%number%, list=%numbers%, key=1
 
 PrintNumber
-- if %number% <= 10 then call !Print, else !EndLoop
+- if %number% <= 10 then call goal Print, else goal EndLoop
 - write out %number%
 
 !Print
@@ -45,7 +45,7 @@ This example demonstrates how to loop through a list of products and call a goal
 ```plang
 - add {"Name":"Product1", "Price":111} to list, write to %products%
 - add {"Name":"Product2", "Price":222} to list, write to %products%
-- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1
+- go through %products% call goal ShowProduct, item=%product%, list=%products%, key=1
 ```
 
 ### Foreach Loop Through a Dictionary
@@ -55,7 +55,7 @@ This example shows how to loop through a dictionary and call a goal for each key
 - add 'key1', 'Hello', write to %dict%
 - add 'key2', 'PLang', write to %dict%
 - add 'key3', 'World', write to %dict%
-- loop through %dict%, call !PrintDict
+- loop through %dict%, call goal PrintDict
 ```
 
 ### ShowProduct Goal
@@ -85,7 +85,7 @@ This example demonstrates calling the `RunLoop` method with additional parameter
 ```plang
 - add {"Name":"Product3", "Price":333} to list, write to %products%
 - add {"Name":"Product4", "Price":444} to list, write to %products%
-- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1, max size 3mb, expires in 2 weeks
+- go through %products% call goalShowProduct, item=%product%, list=%products%, key=1, max size 3mb, expires in 2 weeks
 ```
 
 In this example, the `RunLoop` method is used to iterate through the `%products%` list, calling the `!ShowProduct` goal for each product. Additional parameters such as `max size` and `expires in` are provided to demonstrate how to pass parameters to the called goal.

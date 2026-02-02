@@ -49,7 +49,7 @@ Let's write out all the files in a folder:
 ```plang
 Files
 - get files in './', write to %files%
-- foreach %files%, call !LoadText
+- foreach %files%, call goal LoadText
 
 LoadText
 - write out 'Reading: %item.path%'
@@ -67,7 +67,7 @@ You can also use loops with HTTP requests. For example, fetching cat facts:
 ```plang
 CatFacts
 - GET https://cat-fact.herokuapp.com/facts, write to %facts%
-- go through %facts% !ShowFact fact=%item%
+- go through %facts% goal ShowFact fact=%item%
 
 ShowFact
 - write out '%fact.text% was created at %fact.createdAt%'
@@ -106,7 +106,7 @@ You can overwrite the default names of these values to make your code clearer or
 ```plang
 Products
 - select everything from products table, newest first, write to %products%
-- go through %products% call !ProcessProduct %productList%=list, %product%=item, %productPosition%=position, %numberOfProducts%=listCount
+- go through %products% call goal ProcessProduct %productList%=list, %product%=item, %productPosition%=position, %numberOfProducts%=listCount
 
 ShowProduct
 - Write out "This is product nr. %productPosition% of %numberOfProducts%, this is the %product%, from %productList%"

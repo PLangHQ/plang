@@ -61,7 +61,7 @@ WebCrawler
 WebCrawler
 - Navigate to URL 'https://example.com/data'
 - Extract content from '.data-row', clear html, write to %dataRows%
-- go through %dataRows%, call !ProcessDataRow
+- go through %dataRows%, call goal ProcessDataRow
 ```
 
 ## Process Data Example

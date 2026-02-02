@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
+using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
 using PLang.Utils;
@@ -70,7 +71,12 @@ if (runtime)
 	// Output return value directly to sink (avoids CallStack requirement)
 	if (result.Variables != null)
 	{
-		var json = JsonConvert.SerializeObject(result.Variables, Formatting.Indented);
+		JsonSerializerSettings jsonSerializer = new JsonSerializerSettings()
+		{
+			ObjectCreationHandling = ObjectCreationHandling.Replace,
+			Converters = { new JsonObjectValueConverter() }
+		};
+var json = JsonConvert.SerializeObject(result.Variables, Formatting.Indented, jsonSerializer);
 		var textMessage = new TextMessage(json);
 		engine.UserSink.SendAsync(textMessage).GetAwaiter().GetResult();
 	}

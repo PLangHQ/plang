@@ -1,7 +1,7 @@
 CheckGoals
 - write out "Validating goals called"
 - get content of all '00. Goal.pr' files, in ../, include subfolder, write into %goalFiles%
-- go throug %goalFiles%, call !CheckGoal item=%goal%
+- go throug %goalFiles%, call goalCheckGoal item=%goal%
 - if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid
 
 CheckGoal

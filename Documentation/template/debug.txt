@@ -56,7 +56,7 @@ then right click the module and select "Extract code"
 
 How does the debugger work
 When --debug parameter is added, you will notice Events folder appear, it 
-will bind to run before each step in the goal files to call !SendDebug.goal
+will bind to run before each step in the goal files to call goalSendDebug.goal
 The SendDebug goal sends a post request to http://localhost:60877/ 
 this server is started as soon as you start you VS code
 the VS code plang extension recieves the data and displays it in the editor

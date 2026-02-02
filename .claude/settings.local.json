@@ -23,7 +23,8 @@
       "Bash(Select-Object -First 30)",
       "Bash(findstr:*)",
       "Bash(Select-String -Pattern \"error CS\")",
-      "Bash(Select-String -Pattern \"error|Build succeeded\")"
+      "Bash(Select-String -Pattern \"error|Build succeeded\")",
+      "Bash(cd:*)"
     ]
   }
 }

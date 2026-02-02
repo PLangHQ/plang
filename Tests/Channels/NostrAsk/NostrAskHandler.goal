@@ -1,0 +1,35 @@
+HandleNostrAsk
+/ Intercepts ask requests to system actor and routes through Nostr
+/ Read npub from config file (not settings - avoids ask loop)
+- read file 'nostr.config', write to %config%
+- if %config.NostrAskTarget% is empty, throw error 'NostrAskTarget not configured in nostr.config'
+
+/ Clear any previous response, initialize elapsed timer
+- remove cache 'nostrResponse'
+- cache 0 for 10 minutes, to 'nostrElapsed'
+
+/ Send the question via Nostr DM
+- send message to %config.NostrAskTarget%, %question%
+- write out 'Sent question via Nostr: %question%'
+
+/ Wait for response with timeout (5 minutes = 300 seconds)
+/ Using cache for state sharing between goals (PLang scope limitation)
+- set %continueWaiting% = true
+- while %continueWaiting% is true, call goal WaitAndCheck
+
+/ Get final response from cache
+- get cache 'nostrResponse', write to %response%
+- if %response% is empty, throw error 'Timeout waiting for Nostr response'
+- return %response%
+
+WaitAndCheck
+/ Called by while loop - waits, checks cache, updates state
+- wait 5 seconds
+- get cache 'nostrElapsed', write to %elapsed%
+- set %elapsed% = %elapsed% + 5
+- cache %elapsed% for 10 minutes, to 'nostrElapsed'
+- get cache 'nostrResponse', write to %response%
+/ Stop waiting if response received or timeout (300 seconds = 5 min)
+- if %response% is not empty, set %continueWaiting% = false
+- if %elapsed% >= 300, set %continueWaiting% = false
+- return %continueWaiting%

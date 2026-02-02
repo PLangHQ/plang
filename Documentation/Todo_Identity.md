@@ -82,7 +82,7 @@ Let's add `%Identity%` into the insert statement. Modify `NewTask.goal` as follo
 NewTask
 - make sure that %task% and %due_date% is not empty, throw error
 - insert into Todos %task%, %due_date%, %Identity%, write to %id%
-- call !Categorize, dont wait
+- call goal Categorize, dont wait
 - write out %id%
 
 Categorize

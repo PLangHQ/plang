@@ -34,7 +34,7 @@ Personally, I like to use `%userId%` in my application. But where does that `%us
 
 ```plang
 CheckIdentity
-- if %Identity% is empty, then call !NotSigned, LoadUser
+- if %Identity% is empty, then call goalNotSigned, LoadUser
 
 NotSigned
 - write out error 'You must sign request to use this service'

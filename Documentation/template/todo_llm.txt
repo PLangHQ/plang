@@ -37,8 +37,8 @@ Lets modify NewTask.goal, like this
 NewTask
 - if %task% or %due_date% is empty, throw error
 - insert into Todos, %task%, %due_date%, write to %id%
-- call !Categorize, dont wait
-- call !Todos
+- call goalCategorize, dont wait
+- call goalTodos
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
@@ -48,7 +48,7 @@ Categorize
 ```
 
 Explaination for plang code: 
-when we say, 'call !Categorize, dont wait', we instruct plang not to wait for the response
+when we say, 'call goalCategorize, dont wait', we instruct plang not to wait for the response
 of the !Categorize goal, this is because it is going to take a few seconds for the LLM to respond
 and we don't want the user to wait.
 

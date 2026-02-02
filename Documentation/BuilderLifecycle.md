@@ -34,7 +34,7 @@ The following example demonstrates how to create a unit test for a step after it
 
 ```plang
 EventsBuild
-- after step is built, call !CreateTest
+- after step is built, call goal CreateTest
 
 CreateTest
 - [llm] system: create unit test for the user intent...
@@ -54,7 +54,7 @@ Another example is checking the validity of variables in a step before it is bui
 
 ```plang
 EventsBuild
-- before step is built, call !CheckVariables
+- before step is built, call goal CheckVariables
 
 CheckVariables
 - write out 'Checking variables'

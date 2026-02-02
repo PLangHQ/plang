@@ -1,0 +1,2 @@
+Events
+- on app start, call goal SetupNostrAsk

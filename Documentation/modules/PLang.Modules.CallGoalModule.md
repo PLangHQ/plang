@@ -20,7 +20,7 @@ Let's say you have a goal that greets users. Instead of writing the greeting log
 
 ```plang
 - set variable %userName% to 'Alice'
-- call !GreetUser name=%userName% / Call the GreetUser goal with the user's name
+- call goal GreetUser name=%userName% / Call the GreetUser goal with the user's name
 ```
 
 In this example, `GreetUser` is a reusable goal that can be called with different user names.
@@ -36,7 +36,7 @@ The `CallGoal` module in PLang allows you to call another goal within your scrip
 This is the most basic form of calling a goal. It simply triggers another goal to run.
 
 ```plang
-- call !HelloWorld / calls HelloWorld.goal
+- call goal HelloWorld / calls HelloWorld.goal
 ```
 
 ## 2. Calling a Goal With Parameters
@@ -46,7 +46,7 @@ Often, you'll need to pass parameters to the goal you're calling. Here's how you
 ```plang
 - set variable %videoPath% to 'myvideo.mov'
 - set variable %outputPath% to 'myvideo.mp4'
-- call !Ffmpeg.ConvertToMp4 inputFile=%videoPath%, outputPath=%outputPath% / Convert a .mov file to .mp4
+- call goal Ffmpeg.ConvertToMp4 inputFile=%videoPath%, outputPath=%outputPath% / Convert a .mov file to .mp4
 ```
 
 ## 3. Calling a Goal With Parameters and Specific Execution Time
@@ -55,7 +55,7 @@ Sometimes, you might want to call a goal at a specific time. Here's an example o
 
 ```plang
 - set variable %greetings% to 'Hello'
-- call !Show %greetings%, %Now% / greetings & Now are parameters
+- call goal Show %greetings%, %Now% / greetings & Now are parameters
 ```
 
 ## 4. Calling a Goal and Waiting for Execution
@@ -63,7 +63,7 @@ Sometimes, you might want to call a goal at a specific time. Here's an example o
 By default, the script will wait for the called goal to finish execution. Here's an example of a call that explicitly waits for completion.
 
 ```plang
-- call !DataBackup / Wait for the backup process to complete
+- call goal DataBackup / Wait for the backup process to complete
 ```
 
 ## 5. Calling a Goal Without Waiting for Execution
@@ -71,7 +71,7 @@ By default, the script will wait for the called goal to finish execution. Here's
 In some cases, you might want to continue executing the current goal without waiting for the called goal to finish.
 
 ```plang
-- call !StartBackgroundTask waitForExecution=false / Start a background task and continue without waiting
+- call goal StartBackgroundTask waitForExecution=false / Start a background task and continue without waiting
 ```
 
 ## 6. Calling a Goal and Handling the Return Value
@@ -79,7 +79,7 @@ In some cases, you might want to continue executing the current goal without wai
 If the called goal returns a value, you might want to capture it for use in subsequent steps.
 
 ```plang
-- call !CalculateSum 5, 10, write to %sumResult% / Calculate the sum of 5 and 10, store the result in %sumResult%
+- call goal CalculateSum 5, 10, write to %sumResult% / Calculate the sum of 5 and 10, store the result in %sumResult%
 - write out 'The sum is %sumResult%'
 ```
 
@@ -88,7 +88,7 @@ If the called goal returns a value, you might want to capture it for use in subs
 You can specify a delay for when the current goal should not wait for the called goal to finish.
 
 ```plang
-- call !SendEmailNotification waitForExecution=false, delayWhenNotWaitingInMilliseconds=5000 / Send an email notification, continue after a 5-second delay
+- call goal SendEmailNotification waitForExecution=false, delayWhenNotWaitingInMilliseconds=5000 / Send an email notification, continue after a 5-second delay
 ```
 
 Remember to replace the placeholders with actual goal names and parameters relevant to your specific use case. The examples provided here are for illustrative purposes and should be adapted to fit the goals and parameters of your PLang scripts.

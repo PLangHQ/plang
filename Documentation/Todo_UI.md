@@ -22,7 +22,7 @@ Create or modify the `Start.goal` file to initiate the window app and call the `
 
 ```plang
 Start
-- start window app, call !Todos
+- start window app, call goal Todos
 ```
 
 ### Step 2: Create UI Folder
@@ -34,7 +34,7 @@ Create a `Todos.goal` file to define the main interface of the Todo app.
 ```plang
 Todos
 - select * from todos, where not completed, newest first, write to %todos%
-- button, name="New task", call !NewTask
+- button, name="New task", call goal NewTask
 - table for %todos%
     header: Task, Due Date
     body:  task, due_date
@@ -48,7 +48,7 @@ Create a `NewTask.goal` file to handle the creation of new tasks.
 ```plang
 NewTask
 - form, inputs for "task" and "due_date"(DateTime)
-- button "Save", call !SaveTask
+- button "Save", call goal SaveTask
 ```
 
 **Explanation**: This code creates a form with inputs for a task and its due date, along with a save button that triggers the `SaveTask` goal.
@@ -61,7 +61,7 @@ SaveTask
 - if %task% or %due_date% is empty
     - show error "task and due date cannot be empty"
 - insert into Todos, %task%, %due_date%
-- call !Todos
+- call goal Todos
 ```
 
 **Explanation**: This code checks if the task or due date is empty, throws an error if so, otherwise inserts the new task into the Todos database and refreshes the Todos view.

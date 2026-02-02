@@ -11,10 +11,10 @@ if with sub steps
 ```plang
 Start
 - if %isAdmin% then
-   - call !ShowAdmin
+   - call goalShowAdmin
    - write out 'This is admin'
 - if %isUser% then
-   - call !ShowUser
+   - call goalShowUser
    - write out 'This is user'
 ```
 
@@ -23,7 +23,7 @@ if statement that call other goals
 
 ```plang
 Start
-- if %isAdmin% then call !ShowAdmin, else !ShowUser
+- if %isAdmin% then call goalShowAdmin, else !ShowUser
 ```
 
 You cannot start steps with `- else` or `- else if`, those will not give any condition statement

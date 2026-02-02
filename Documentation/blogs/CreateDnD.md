@@ -95,7 +95,7 @@ To make the experience more dynamic and tailored, `Start.goal` includes a call t
 ```plang
 GenerateAskUser
 - select * from games order by updated desc, write to %games%
-- foreach item in %games%, call !GenerateItemAskUser
+- foreach item in %games%, call goalGenerateItemAskUser
 
 GenerateItemAskUser
 - append to %askUser%, "\t- %item.id%\t%item.GAME% - %item.BOOKS% - %item.Updated.ToString("f")%"
@@ -109,8 +109,8 @@ After presenting the options, `Start.goal` captures the user's input and directs
 ```plang
 - ask user "%askUser%\n\nType in Story Arc Id or 0 to Create new game"
     , must be number(long), write to %gameId%
-- if %gameId% = 0, then call !CreateNewGame
-- if %gameId% > 0, then call !ShowStoryLine gameId=%gameId%
+- if %gameId% = 0, then call goalCreateNewGame
+- if %gameId% > 0, then call goalShowStoryLine gameId=%gameId%
 ```
 
 Here, the user's choice is processed, leading to either the creation of a new game or the continuation of an existing storyline. This decision-making process is a critical component of the goal, guiding the user through the application's core functionalities.
@@ -127,12 +127,12 @@ Start
 - call goal !GenerateAskUser
 - ask user "%askUser%\n\nType in Story Arc Id or 0 to Create new game"
     , must be number(long), write to %gameId%
-- if %gameId% = 0, then call !CreateNewGame
-- if %gameId% > 0, then call !ShowStoryLine gameId=%gameId%
+- if %gameId% = 0, then call goalCreateNewGame
+- if %gameId% > 0, then call goalShowStoryLine gameId=%gameId%
 
 GenerateAskUser
 - select * from games order by updated desc, write to %games%
-- foreach item in %games%, call !GenerateItemAskUser
+- foreach item in %games%, call goalGenerateItemAskUser
 
 GenerateItemAskUser
 - append to %askUser%, "\t- %item.id%\t%item.GAME% - %item.BOOKS% - %item.Updated.ToString("f")%"
@@ -177,7 +177,7 @@ After laying out the defaults, `CreateNewGame.goal` invites the user to customiz
     Leave it empty if you happy with the defaults.
     '
     write to %answer%
-- if %answer% is not empty call !LoadPreferences
+- if %answer% is not empty call goalLoadPreferences
 ```
 
 The assistant prompts the user to review and potentially modify the default settings. This step empowers the user to shape the game to their liking, enhancing engagement and investment in the game setup process.
@@ -275,7 +275,7 @@ ShowStoryLine
 - ask user "\n(to exit the game, type in 'exit game')
 
     ?:", write to %nextStep%
-- if %nextStep% == 'exit game' or empty (case insensitive), then call !Start, else !CreateStoryLine
+- if %nextStep% == 'exit game' or empty (case insensitive), then call goalStart, else !CreateStoryLine
 ```
 
 This goal retrieves and displays the latest story segment, offering the player a chance to continue the adventure or exit the game. It's a pivotal point where the narrative's progression and player interaction converge.

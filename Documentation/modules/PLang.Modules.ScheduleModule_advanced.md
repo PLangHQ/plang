@@ -31,7 +31,7 @@ Scheduling a recurring task based on a cron expression is a typical use case for
 
 ```plang
 ScheduleRecurringTask
-- every "*/5 * * * *" call !FiveMinuteTask
+- every "*/5 * * * *" call goal FiveMinuteTask
 ```
 
 **C# Method Signature:**

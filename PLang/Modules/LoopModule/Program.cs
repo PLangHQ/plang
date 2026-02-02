@@ -277,6 +277,75 @@ namespace PLang.Modules.LoopModule
 
 		}
 
+		[Description("While loop - repeatedly calls a goal while a condition is true. The called goal can return variables to update the condition.")]
+		[Example("while %count% < 10, call goal IncrementCount", @"condition={Kind:Simple, LeftValue:%count%, Operator:""<"", RightValue:10}, goalToCall={Name:""IncrementCount""}")]
+		[Example("while %isRunning% is true, call goal CheckStatus", @"condition={Kind:Simple, LeftValue:%isRunning%, Operator:""=="", RightValue:true}, goalToCall={Name:""CheckStatus""}")]
+		[Example("while %response% is empty, call goal WaitForResponse", @"condition={Kind:Simple, LeftValue:%response%, Operator:""isEmpty""}, goalToCall={Name:""WaitForResponse""}")]
+		public async Task<IError?> While(Condition condition, [HandlesVariableAttribute] GoalToCallInfo goalToCall, int maxIterations = 10000)
+		{
+			int iterations = 0;
+			while (iterations < maxIterations)
+			{
+				// Reload variables for condition evaluation from current scope
+				var evaluatedCondition = ReloadConditionVariables(condition);
+
+				// Evaluate condition
+				if (!ConditionEngine.Evaluate(evaluatedCondition))
+				{
+					break;
+				}
+
+				// Run the goal
+				var appPath = goal?.RelativeAppStartupFolderPath ?? string.Empty;
+				var result = await pseudoRuntime.RunGoal(engine, contextAccessor, appPath, goalToCall, goal);
+				if (result.Error != null) return result.Error;
+
+				// Merge returned variables back into current scope
+				// This allows the called goal to update condition variables
+				if (memoryStack != null && result.Variables != null && result.Variables is Dictionary<string, object?> returnedVars)
+				{
+					foreach (var kvp in returnedVars)
+					{
+						memoryStack.Put(kvp.Key, kvp.Value);
+					}
+				}
+
+				iterations++;
+			}
+
+			if (iterations >= maxIterations)
+			{
+				return new ProgramError($"While loop exceeded maximum iterations ({maxIterations})");
+			}
+
+			return null;
+		}
+
+		private Condition ReloadConditionVariables(Condition condition)
+		{
+			// If memoryStack is not initialized (e.g., in unit tests), return condition as-is
+			if (memoryStack == null)
+			{
+				return condition;
+			}
+
+			if (condition.Kind == ConditionKind.Simple)
+			{
+				return condition with
+				{
+					LeftValue = memoryStack.LoadVariables(condition.LeftValue),
+					RightValue = memoryStack.LoadVariables(condition.RightValue)
+				};
+			}
+
+			// Compound condition - recursively reload
+			return condition with
+			{
+				LeftValue = memoryStack.LoadVariables(condition.LeftValue),
+				RightValue = memoryStack.LoadVariables(condition.RightValue),
+				Conditions = condition.Conditions?.Select(c => ReloadConditionVariables(c)).ToList()
+			};
+		}
 
 	}
 }

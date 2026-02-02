@@ -12,11 +12,11 @@ You can define events that trigger at specific points in the application's lifec
 
 ```plang
 Events
-- before app starts, call !AppStarting
-- before app ends, call !AppEnding
+- before app starts, call goal AppStarting
+- before app ends, call goal AppEnding
 ```
 
-In this example, the `!AppStarting` event is called before the application starts, and the `!AppEnding` event is called before the application ends.
+In this example, the `AppStarting` event is called before the application starts, and the `AppEnding` event is called before the application ends.
 
 ### Events with Goals and Steps
 
@@ -24,11 +24,11 @@ Events can also be associated with specific goals and steps within your applicat
 
 ```plang
 Events
-- before each goal in 'api/*', call !AuthenticateUser
-- after each goal, call !Analyze.LogInfoAboutGoal
+- before each goal in 'api/*', call goal AuthenticateUser
+- after each goal, call goal Analyze.LogInfoAboutGoal
 ```
 
-This setup ensures that the `!AuthenticateUser` event is called before each goal in the 'api/*' path, and the `!Analyze.LogInfoAboutGoal` event is called after each goal.
+This setup ensures that the `AuthenticateUser` event is called before each goal in the 'api/*' path, and the `Analyze.LogInfoAboutGoal` event is called after each goal.
 
 ### Error Handling Events
 
@@ -36,11 +36,11 @@ Error handling is crucial in any application. Plang allows you to define events 
 
 ```plang
 Events
-- on error in step, call !LoggerStepError
-- on error on goal, call !LoggerGoalError
+- on error in step, call goal LoggerStepError
+- on error on goal, call goal LoggerGoalError
 ```
 
-These events will call `!LoggerStepError` when an error occurs in a step and `!LoggerGoalError` when an error occurs in a goal. For more details on handling errors, refer to [Error Handling Documentation](./modules/handlers/ErrorHandler.md).
+These events will call `LoggerStepError` when an error occurs in a step and `LoggerGoalError` when an error occurs in a goal. For more details on handling errors, refer to [Error Handling Documentation](./modules/handlers/ErrorHandler.md).
 
 ## Builder Events
 
@@ -48,11 +48,11 @@ To bind events to the Plang builder, create a file named `BuilderEvents.goal`:
 
 ```plang
 BuilderEvents
-- before each step, call !AnalyzeCode
-- after each step, call !AnalyzeCode
+- before each step, call goal AnalyzeCode
+- after each step, call goal AnalyzeCode
 ```
 
-This configuration will call the `!AnalyzeCode` event before and after each step during the build process.
+This configuration will call the `AnalyzeCode` event before and after each step during the build process.
 
 ## Conditional Events
 
@@ -60,7 +60,7 @@ You can define events to run only when a specific parameter is provided at the s
 
 ```plang
 Events
-- before each step, call !SendDebug, only when start parameter is '--debug'
+- before each step, call goal SendDebug, only when start parameter is '--debug'
 ```
 
 This event will only be bound if you start the app with the `--debug` parameter:

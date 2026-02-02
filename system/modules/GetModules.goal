@@ -1,0 +1,3 @@
+GetModules
+- [plang] get modules, format:"md", write to %modules%
+- return %modules%

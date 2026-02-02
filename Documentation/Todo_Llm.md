@@ -52,7 +52,7 @@ NewTask
 - if %request.task% and %request.due_date% is empty
     - show error "Task & due_date cannot be empty"
 - insert into Todos, %request.task%, %request.due_date%, write to %id%
-- call !Categorize, dont wait
+- call goal Categorize, dont wait
 - write out %id%
 
 Categorize
@@ -64,7 +64,7 @@ Categorize
 
 ### Explanation
 
-- `call !Categorize, dont wait`: This instructs Plang not to wait for the response from the `!Categorize` goal, allowing the app to continue running while the LLM processes the task categorization.
+- `call goal Categorize, dont wait`: This instructs Plang not to wait for the response from the `Categorize` goal, allowing the app to continue running while the LLM processes the task categorization.
 - `[llm]`: This indicates to Plang that the LLM module should be used. It helps the language detect which module to use.
 - `scheme`: This forces the LLM to return a specific structure, which is automatically loaded as a variable. In this case, `%category%` is used in the next step to update the task's category.
 

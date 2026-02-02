@@ -15,7 +15,7 @@ LLM
 - [llm] system: generate a joke based on the prompt
         user: %prompt%
         write to %joke%
-- if %joke% is not empty then call !JokeReceived, else !NoJokeFound
+- if %joke% is not empty then call goal JokeReceived, else goal NoJokeFound
 ```
 
 In this example, we first set a prompt for the LLM. We then ask the LLM to generate content based on that prompt and store the result in a variable. Finally, we use an if statement to check if a joke was generated and call the appropriate function based on the result.

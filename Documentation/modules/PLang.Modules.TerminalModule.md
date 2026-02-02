@@ -22,7 +22,7 @@ Here's an example that incorporates these best practices:
 ```plang
 BackupLogs
 - run 'tar' with parameters ['-czf', 'logs_backup.tar.gz', '/var/log'], write to %backupResult%
-- if %backupResult% contains 'error' then call !HandleBackupError, else !HandleBackupSuccess
+- if %backupResult% contains 'error' then call goal HandleBackupError, else goal HandleBackupSuccess
 - write out 'Backup completed successfully.'
 ```
 
@@ -50,7 +50,7 @@ Here we run a command with multiple parameters and capture both the output and e
 ```plang
 Terminal
 - run 'ffmpeg' with parameters ['-i', 'input.mp4', '-codec', 'copy', 'output.mkv'], write to %ffmpegOutput%
-- if %ffmpegOutput% contains 'error' then call !HandleError, else !HandleSuccess
+- if %ffmpegOutput% contains 'error' then call goal HandleError, else goal HandleSuccess
 ```
 
 ## 3. Running a Terminal Command with a Working Directory
@@ -91,7 +91,7 @@ Here we monitor the output of a long-running process and react to changes.
 ```plang
 Terminal
 - run 'tail' with parameters ['-f', '/var/log/syslog'], output delta %logDelta%, write to %tailResult%
-- when var %logDelta% changes, call !ProcessLogDelta
+- when var %logDelta% changes, call goal ProcessLogDelta
 ```
 
 ## 7. Handling Errors from Terminal Commands
@@ -101,7 +101,7 @@ This example includes error handling for terminal commands.
 ```plang
 Terminal
 - run 'cp' with parameters ['/missing/file', '/destination'], write to %copyResult%
-- if %copyResult% contains 'error' then call !HandleCopyError, else !HandleCopySuccess
+- if %copyResult% contains 'error' then call goal HandleCopyError, else goal HandleCopySuccess
 ```
 
 ## 8. Running a Command with a Large Output
@@ -111,7 +111,7 @@ When dealing with large outputs, it's important to handle the data efficiently.
 ```plang
 Terminal
 - run 'find' with parameters ['/home/user', '-type', 'f'], write to %findResult%
-- if %findResult% size is greater than '50MB' then call !HandleLargeOutput, else !HandleNormalOutput
+- if %findResult% size is greater than '50MB' then call goal HandleLargeOutput, else goal HandleNormalOutput
 ```
 
 ## 9. Running a Command and Capturing Exit Code
@@ -121,7 +121,7 @@ Capturing the exit code of a command can be crucial for conditional logic based 
 ```plang
 Terminal
 - run 'grep' with parameters ['-r', 'pattern', '/some/dir'], write to %grepResult%
-- if %grepResult% exit code is '0' then call !PatternFound, else !PatternNotFound
+- if %grepResult% exit code is '0' then call goal PatternFound, else goal PatternNotFound
 ```
 
 ## 10. Running a Command with Environment Variables

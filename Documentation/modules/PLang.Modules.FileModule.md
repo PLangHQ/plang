@@ -70,7 +70,7 @@ For practical applications and to see the File module in action, refer to the so
 ### Read an Excel File
 ```plang
 - read 'Employees.xlsx' into %excelData%
-- loop through %excelData%, call !PrintOutExcel
+- loop through %excelData%, call goal PrintOutExcel
 ```
 
 ### Write to an Excel File
@@ -82,7 +82,7 @@ For practical applications and to see the File module in action, refer to the so
 ### Read a CSV File
 ```plang
 - read 'data.csv' into %csvData%
-- loop through %csvData%, call !PrintOutCSV
+- loop through %csvData%, call goal PrintOutCSV
 ```
 
 ### Write to a CSV File
@@ -126,7 +126,7 @@ For practical applications and to see the File module in action, refer to the so
 ## Advanced File Operations
 ### Listen to File Changes
 ```plang
-- listen to 'logs/*.log', call !HandleLogUpdate
+- listen to 'logs/*.log', call goal HandleLogUpdate
 ```
 
 ### Read Binary File and Convert to Base64

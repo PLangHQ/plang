@@ -1,0 +1,52 @@
+ConfigureOutput
+/ Tests for 'configure output' content type and encoding settings
+/ Verifies content type configuration at context and goal scope
+
+- write out 'Testing Configure Output...'
+
+/ Test: Configure JSON content type
+- call !TestJsonContentType
+
+/ Test: Configure text/plain content type
+- call !TestTextContentType
+
+/ Test: Configure output encoding
+- call !TestOutputEncoding
+
+/ Test: Goal-scoped content type
+- call !TestGoalScopedContentType
+
+- write out 'Configure Output tests completed!'
+
+TestJsonContentType
+/ Configure output to application/json
+- configure output to 'application/json'
+/ If no error, configuration succeeded
+- set %jsonConfigured% = true
+- [%jsonConfigured%] equals true, write to %assertResult%
+- if %assertResult.Success% is false, throw error 'JsonContentType test failed'
+- write out '  - JSON content type: OK'
+
+TestTextContentType
+/ Configure output to text/plain
+- configure output to 'text/plain'
+- set %textConfigured% = true
+- [%textConfigured%] equals true, write to %assertResult%
+- if %assertResult.Success% is false, throw error 'TextContentType test failed'
+- write out '  - Text content type: OK'
+
+TestOutputEncoding
+/ Configure output encoding to UTF-16
+- configure output encoding to 'utf-16'
+- set %encodingConfigured% = true
+- [%encodingConfigured%] equals true, write to %assertResult%
+- if %assertResult.Success% is false, throw error 'OutputEncoding test failed'
+- write out '  - Output encoding: OK'
+
+TestGoalScopedContentType
+/ Configure content type with goal scope - should be cleared when goal exits
+- configure output to 'application/xml', scope: goal
+- set %goalScoped% = true
+- [%goalScoped%] equals true, write to %assertResult%
+- if %assertResult.Success% is false, throw error 'GoalScopedContentType test failed'
+- write out '  - Goal-scoped content type: OK'

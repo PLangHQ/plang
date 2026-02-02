@@ -127,19 +127,19 @@ The `CallGoal` in PLang allows for the invocation of other goals within a script
 ### Calling a Simple Goal
 Invoke a goal to perform a specific task without parameters.
 ```plang
-- call !LogCurrentTime
+- call goal LogCurrentTime
 ```
 
 ### Passing Parameters to a Goal
 Execute a goal with parameters to tailor its operation.
 ```plang
-- call !ResizeImage imagePath="path/to/image.jpg", width=800, height=600
+- call goal ResizeImage imagePath="path/to/image.jpg", width=800, height=600
 ```
 
 ### Handling a Goal's Return Value
 Use the result of a goal in subsequent steps.
 ```plang
-- call !CalculateDiscount price=100, discountRate=20, write to %discountedPrice%
+- call goal CalculateDiscount price=100, discountRate=20, write to %discountedPrice%
 - write out "Discounted price: %discountedPrice%"
 ```
 
@@ -351,7 +351,7 @@ The Db facilitates database interactions, enabling data manipulation and managem
 Retrieve all records from the `tasks` table.
 ```plang
 - select * from tasks, write to %tasks%
-- go through %tasks%, call !PrintOut
+- go through %tasks%, call goal PrintOut
 ```
 ### Inserting Data
 Add a new task with a description and due date.
@@ -495,7 +495,7 @@ To set and retrieve a local variable:
 ```
 To monitor variable changes and respond to events:
 ```plang
-- when var 'theme' changes, call !ThemeChanged
+- when var 'theme' changes, call goal ThemeChanged
 ```
 
 [Link to docs](./PLang.Modules.LocalOrGlobalVariableModule.md)
@@ -515,7 +515,7 @@ Loop through a list of products and display each product's name and price:
 ```plang
 - add {"Name":"Product1", "Price":111} to list, write to %products%
 - add {"Name":"Product2", "Price":222} to list, write to %products%
-- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1
+- go through %products% call goal ShowProduct, item=%product%, list=%products%, key=1
 ```
 ShowProduct Goal:
 ```plang
@@ -549,7 +549,7 @@ The Message facilitates secure and private communication, leveraging encryption 
 - **Listen for New Messages:** Automatically process new messages as they arrive.
   ```plang
   Message
-  - listen for new message, call !NewMessage, write content to %messageContent%
+  - listen for new message, call goal NewMessage, write content to %messageContent%
   ```
 
 [Link to docs](./PLang.Modules.MessageModule.md)
@@ -638,9 +638,9 @@ The Schedule in PLang facilitates the organization and execution of tasks based 
 To get started with scheduling tasks in PLang, here are some popular actions:
 
 - **Pause Execution**: `SleepShortDuration - sleep for 1 second`
-- **Schedule a Recurring Task**: `ScheduleRecurringTask - every 1 minute, call !ItIsCalled`
+- **Schedule a Recurring Task**: `ScheduleRecurringTask - every 1 minute, call goal ItIsCalled`
 - **Display Current Time**: `OutputCurrentTime - write out %Now%`
-- **Schedule a Task for a Specific Time**: `ScheduleSpecificTime - at 2.1.2024 22:19:49, call !TaskAtSpecificTime`
+- **Schedule a Task for a Specific Time**: `ScheduleSpecificTime - at 2.1.2024 22:19:49, call goal TaskAtSpecificTime`
 
 [Link to docs](./PLang.Modules.ScheduleModule.md)
 # WebCrawler

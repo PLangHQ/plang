@@ -2,7 +2,7 @@ Modules
 - validate %ModuleName% is not empty
     on error call AskForModuleName and retry
 - get all Program.cs files in ../Plang/Modules/%ModuleName%, include sub dirs, write to %files%
-- foreach %files%, call !GenerateModuleDocumentation file=%item%
+- foreach %files%, call goal GenerateModuleDocumentation file=%item%
 
 AskForModuleName
 - ask "What Module?", write to %ModuleName%

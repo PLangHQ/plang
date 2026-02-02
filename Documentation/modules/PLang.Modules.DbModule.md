@@ -21,7 +21,7 @@ When working with databases in PLang, it's important to follow best practices to
 - set var 'task_due_date' as \%Now\%
 - begin transaction
 - insert into tasks (description, due_date) values (%task_description%, %task_due_date%)
-    on error call !HandleInsertError
+    on error call goal HandleInsertError
 - end transaction
 ```
 In this example, we use descriptive variable names, a transaction to group the insert operation, and error handling to manage any issues that may arise.
@@ -36,7 +36,7 @@ The following examples demonstrate the usage of the PLang Database Module, which
 ### Example 1: Select All Records from a Table
 ```plang
 - select * from items, write to %items%
-- go through %items%, call !PrintOut
+- go through %items%, call goal PrintOut
 ```
 
 ### Example 2: Select with Caching and Retry Logic
@@ -45,7 +45,7 @@ The following examples demonstrate the usage of the PLang Database Module, which
     cache for 10 minutes
     retry 2 times over 1 minute
     write to %tasks%
-- go through %tasks%, call !PrintOut
+- go through %tasks%, call goal PrintOut
 ```
 
 ## Inserting Data

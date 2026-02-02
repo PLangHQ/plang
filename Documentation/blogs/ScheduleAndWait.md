@@ -12,9 +12,9 @@ Let's start with a simple example. Suppose you want to run different processes a
 
 ```plang
 ScheduleTask
-- on monday at 9am, call !ProcessWeekend
-- every weekday at 14:32, call !WeekDayProcess
-- on 1st of every month, call !MontlyProcess
+- on monday at 9am, call goalProcessWeekend
+- every weekday at 14:32, call goalWeekDayProcess
+- on 1st of every month, call goalMontlyProcess
 
 ProcessWeekend
 - write out 'Running ProcessWeekend'
@@ -37,9 +37,9 @@ You can also pass parameters to your scheduled tasks. For instance, if you need 
 
 ```plang
 SemiDailyReport
-- on mondays at 9, call !SendReport days=3
-- on wednesdays at 9, call !SendReport days=2
-- on fridays at 9, call !SendReport days=2
+- on mondays at 9, call goalSendReport days=3
+- on wednesdays at 9, call goalSendReport days=2
+- on fridays at 9, call goalSendReport days=2
 
 SendReport
 - select * from report where created BETWEEN DATE('now', '-%days% days') AND DATE('now'), write to %results%

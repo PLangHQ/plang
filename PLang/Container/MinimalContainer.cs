@@ -19,7 +19,9 @@ using PLang.Services.SigningService;
 using PLang.Services.OutputStream.Sinks;
 using PLang.Building;
 using PLang.Modules;
+using PLang.Modules.MessageModule;
 using PLang.Modules.WebserverModule;
+using Nostr.Client.Client;
 using System.Reflection;
 
 namespace PLang.Container
@@ -315,6 +317,15 @@ namespace PLang.Container
 			// HTTP
 			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
 			container.Register<Services.AppsRepository.IPLangAppsRepository, Services.AppsRepository.PLangAppsRepository>();
+
+			// Nostr messaging
+			container.RegisterSingleton<INostrClient>(factory =>
+			{
+				var moduleSettings = new ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmServiceFactory>());
+				var nostrClientManager = new NostrClientManager();
+				var multi = nostrClientManager.GetClient(moduleSettings.GetRelays());
+				return multi;
+			});
 
 			// Misc
 			container.RegisterSingleton<ICertHelper, CertHelper>();

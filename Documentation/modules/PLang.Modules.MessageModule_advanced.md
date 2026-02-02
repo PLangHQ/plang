@@ -23,7 +23,7 @@ void SendPrivateMessageToMyself(string content)
 ### Example: Listening for New Messages
 Setting up a listener for incoming messages is crucial for real-time applications that need to respond to incoming data.
 ```plang
-- listen for new message, call !NewMessage, write content to %content%, %sender% for sender address
+- listen for new message, call goalNewMessage, write content to %content%, %sender% for sender address
 ```
 **C# Method Signature:**
 ```csharp

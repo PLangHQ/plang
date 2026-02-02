@@ -47,7 +47,7 @@ Scheduling a task to run at regular intervals using a cron expression is a commo
 
 ```plang
 ScheduleRecurringTask
-- every 1 minute, call !ItIsCalled
+- every 1 minute, call goal ItIsCalled
 ```
 
 ## 3. Output Current Time
@@ -65,7 +65,7 @@ Sometimes you may want to schedule a task to run at a specific time in the futur
 
 ```plang
 ScheduleSpecificTime
-- at 2.1.2024 22:19:49, call !TaskAtSpecificTime
+- at 2.1.2024 22:19:49, call goal TaskAtSpecificTime
 ```
 
 ## 5. Schedule a Task with a Delay
@@ -75,7 +75,7 @@ If you need to schedule a task to run after a certain delay, you can use the sle
 ```plang
 ScheduleAfterDelay
 - sleep for 5 minutes
-- call !DelayedTask
+- call goal DelayedTask
 ```
 
 ## 6. Start the Scheduler
@@ -102,7 +102,7 @@ For more complex scheduling, you can specify a cron expression and an optional n
 
 ```plang
 ScheduleWithCronAndNextRun
-- every '0 0/5 * * * ?' starting at 2.1.2024 22:19:49, call !ComplexScheduledTask
+- every '0 0/5 * * * ?' starting at 2.1.2024 22:19:49, call goal ComplexScheduledTask
 ```
 
 ## 9. Schedule a Task with a Cron Expression
@@ -111,7 +111,7 @@ Using just a cron expression, you can schedule a task without specifying the nex
 
 ```plang
 ScheduleWithCron
-- every '0 0/30 * * * ?', call !HalfHourlyTask
+- every '0 0/30 * * * ?', call goal HalfHourlyTask
 ```
 
 ## 10. Schedule a One-Time Task
@@ -120,7 +120,7 @@ To schedule a task that only runs once at a specific time, you can use a cron ex
 
 ```plang
 ScheduleOneTimeTask
-- at '0 15 10 15 * ?', call !AnnualMeetingReminder
+- at '0 15 10 15 * ?', call goal AnnualMeetingReminder
 ```
 
 Remember to replace placeholders like 'default settings', 'engine', 'parser', 'logger', 'runtime', and 'file system' with actual references to your application's components when implementing these examples.

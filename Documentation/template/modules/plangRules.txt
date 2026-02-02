@@ -8,7 +8,7 @@
 - single slash (/) is a start of a comment
 - if statment are in the following format(where IsTrue and IsFalse are goals being called): 
     ```plang
-    - if %variable% then call !IsTrue, else call !IsFalse     
+    - if %variable% then call goalIsTrue, else call goalIsFalse     
     ```
 - else statement as start of step is not legal
     ```plang 

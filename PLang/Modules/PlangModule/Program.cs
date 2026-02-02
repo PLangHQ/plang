@@ -193,8 +193,20 @@ namespace PLang.Modules.PlangModule
 		}
 		public async Task<(object?, IError?)> GetMethods(List<string> modules, string? format = null)
 		{
-			int i = 0;
-			return (null, null);
+			var runtimeModules = typeHelper.GetRuntimeModules();
+
+			var runtime = new Runtime(new());
+			foreach (var module in modules)
+			{
+				var runtimeModule = runtimeModules.FirstOrDefault(p => p.FullName == module);
+
+				var classDescriptionHelper = new ClassDescriptionHelper();
+				var (classDescription, error) = classDescriptionHelper.GetClassDescription(runtimeModule);
+				if (error != null) return (null, error);
+
+				runtime.Modules.Add(new Module(runtimeModule, classDescription));
+			}
+			return (runtime, null);
 		}
 
 		public async Task<(object?, IError?)> ValidateGoal(Goal goal)

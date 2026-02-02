@@ -14,7 +14,7 @@ This can be usefull to build development tools for plang.
 An example would be to create a Goal that builds an unit test for a step after the step has been built.
 ```plang 
 EventsBuild
-- after step is built, call !CreateTest
+- after step is built, call goal CreateTest
 
 CreateTest
 - [llm] system: create unit test for the user intent...
@@ -27,7 +27,7 @@ CreateTest
 Another example would be to analyze if all variables in step are valid or to guide the developer to improve his code.
 ```plang 
 EventsBuild
-- before step is built, call !CheckVariables
+- before step is built, call goal CheckVariables
 
 CheckVariables
 - write out 'Checking variables'

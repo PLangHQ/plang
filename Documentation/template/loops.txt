@@ -35,7 +35,7 @@ Lets write out all the files that is in our folder
 ```plang
 Files
 - get files in './', write to %files%
-- foreach %files%, call !LoadText
+- foreach %files%, call goalLoadText
 
 LoadText
 - write out 'Reading: %item.path%'
@@ -80,7 +80,7 @@ You can overwrite the default names of those values. This can be helpful to make
 ```plang
 Products
 - select everything from products table, newest first, write to %products%
-- go through %products% call !ProcessProduct %productList%=list, %product%=item, %productPosition%=position, %numberOfProducts%=listCount
+- go through %products% call goalProcessProduct %productList%=list, %product%=item, %productPosition%=position, %numberOfProducts%=listCount
 
 ShowProduct
 - write out "This is product nr. %productPosition% of %numberOfProducts%, this is the %product%, from %productList%"

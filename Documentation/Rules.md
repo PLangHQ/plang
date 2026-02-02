@@ -46,7 +46,7 @@ MyApp
     - write out 'Admin logged in'
 - Retrieve the list of todos for %todos% database table
     cache for 3 minutes
-- go through %todos%, call !ProcessTodo
+- go through %todos%, call goal ProcessTodo
 / This is a comment explaining the next steps
 - get https://example.org
     Bearer %Settings.ApiKey%

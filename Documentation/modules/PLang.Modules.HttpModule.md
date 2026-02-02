@@ -23,7 +23,7 @@ Let's look at an example of a simple GET request with error handling:
 ```plang
 Http
 - GET https://httpbin.org/get, write to %getResponse%
-- if %getResponse.status% != 200 then call !HandleError
+- if %getResponse.status% != 200 then call goal HandleError
 - write out 'Status: %getResponse.status%, UserAgent: %getResponse.headers.User-Agent%, ip: %getResponse.origin%'
 ```
 

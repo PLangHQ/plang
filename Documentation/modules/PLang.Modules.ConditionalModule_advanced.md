@@ -12,7 +12,7 @@ For simple documentation and examples, please refer to [PLang.Modules.Conditiona
 ### Example: Checking a Boolean Condition
 This is a common usage where a boolean condition is checked to determine the flow of execution.
 ```plang
-- if %UserIsAdmin% then call !GrantAccess, else !DenyAccess
+- if %UserIsAdmin% then call goal GrantAccess, else goal DenyAccess
 ```
 This plang step checks if the `%UserIsAdmin%` variable is true and calls the `GrantAccess` method; otherwise, it calls the `DenyAccess` method.
 
@@ -55,7 +55,7 @@ Here's how a plang code example maps to a method in the Conditional module and t
 
 #### Plang code example:
 ```plang
-- if %UserIsAdmin% then call !GrantAccess, else !DenyAccess
+- if %UserIsAdmin% then call goal GrantAccess, else goal DenyAccess
 ```
 
 #### Example Instruction .pr file:

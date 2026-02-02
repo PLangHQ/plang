@@ -1,0 +1,70 @@
+AskChannel
+/ Tests for overwriting the ask channel with automated responses
+/ Verifies that ask requests can be intercepted by goal handlers
+
+- write out 'Testing Ask Channel Override...'
+
+/ Test: Basic ask override
+- call !TestBasicAskOverride
+
+/ Test: Ask with different questions
+- call !TestMultipleAsks
+
+/ Test: Ask handler with parameters
+- call !TestAskWithParameters
+
+- write out 'Ask Channel tests completed!'
+
+TestBasicAskOverride
+/ Register handler to intercept default ask channel
+- on channel 'user', 'default', call !BasicAskHandler
+- ask 'Enter your name:', write to %userName%
+- if %userName% is not 'TestUser', throw error 'BasicAskOverride test failed: got %userName%'
+- write out '  - Basic ask override: OK'
+
+BasicAskHandler
+/ Return a fixed test response
+- return 'TestUser'
+
+TestMultipleAsks
+/ Test multiple consecutive asks with the same handler
+/ Use caching to track call count between handler invocations
+- cache 0 for 10 minutes, to 'askCountCache'
+- on channel 'user', 'multiask', call !MultiAskHandler
+
+- ask 'First question?', write to %answer1% on channel multiask
+- ask 'Second question?', write to %answer2% on channel multiask
+- ask 'Third question?', write to %answer3% on channel multiask
+
+- if %answer1% is not 'Response1', throw error 'MultipleAsks answer1 test failed: got %answer1%'
+- if %answer2% is not 'Response2', throw error 'MultipleAsks answer2 test failed: got %answer2%'
+- if %answer3% is not 'Response3', throw error 'MultipleAsks answer3 test failed: got %answer3%'
+- write out '  - Multiple asks: OK'
+
+MultiAskHandler
+/ Return different responses based on call count
+/ Use caching to track the count across invocations
+- get cache 'askCountCache', write to %askCount%
+- set %askCount% = %askCount% + 1
+- cache %askCount% for 10 minutes, to 'askCountCache'
+- if %askCount% equals 1, return 'Response1'
+- if %askCount% equals 2, return 'Response2'
+- return 'Response3'
+
+TestAskWithParameters
+/ Test that ask handler receives the question content
+/ Use caching to share received question between handler and test
+- cache '' for 10 minutes, to 'receivedQuestionCache'
+- on channel 'user', 'paramask', call !ParamAskHandler
+- ask 'What is 2+2?', write to %mathAnswer% on channel paramask
+- get cache 'receivedQuestionCache', write to %receivedQuestion%
+- if %receivedQuestion% does not contain '2+2', throw error 'AskWithParameters question test failed: got %receivedQuestion%'
+- if %mathAnswer% is not '4', throw error 'AskWithParameters answer test failed: got %mathAnswer%'
+- write out '  - Ask with parameters: OK'
+
+ParamAskHandler
+/ Handler that uses the question content
+- cache %question% for 10 minutes, to 'receivedQuestionCache'
+/ Check if question contains math
+- if %question% contains '2+2', return '4'
+- return 'unknown'

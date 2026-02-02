@@ -112,7 +112,7 @@ You can add an event that runs before each goal to check if a user is logged in.
 
 ```plang
 Events
-- before each goal in /api/*, call !ValidateIdentity
+- before each goal in /api/*, call goal ValidateIdentity
 
 ValidateIdentity
 - if %Identity% is empty then
@@ -126,7 +126,7 @@ Determine user access levels based on their unique identity.
 ```plang
 ShowPanel
 - select accessLevel from userPermissions where Identity=%Identity%
-- if %accessLevel% equals 'admin', call !ShowAdminPanel, else !ShowUserPanel
+- if %accessLevel% equals 'admin', call goal ShowAdminPanel, else goal ShowUserPanel
 ```
 
 #### Personalized User Experience
@@ -135,7 +135,7 @@ Tailor content based on user preferences linked to their unique identity.
 ```plang
 Preferences
 - select preferences from userSettings where Identity=%Identity%
-- call !CustomizeContent %preferences%
+- call goal CustomizeContent %preferences%
 ```
 
 ### What is `%MyIdentity%`

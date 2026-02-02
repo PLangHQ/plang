@@ -46,9 +46,9 @@ To send a message to another user, you need their public key. This example assum
 ```
 
 ### Listen for New Messages
-This example sets up a listener for new messages. When a new message is received, it triggers a goal called `!NewMessage`.
+This example sets up a listener for new messages. When a new message is received, it triggers a goal called `NewMessage`.
 ```plang
-- listen for new message, call !NewMessage, write content to %content%, %sender% for sender address
+- listen for new message, call goal NewMessage, write content to %content%, %sender% for sender address
 ```
 
 ### Handle Received Message

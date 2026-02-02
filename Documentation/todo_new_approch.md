@@ -48,7 +48,7 @@ In the real world, creating a todo list is as simple as taking a pen and paper a
            user: %request.tasks%
            scheme:[{task:string, due_date:date, category:string}]
            write to %taskList%
-   - for each %taskList%, call !SaveTask
+   - for each %taskList%, call goal SaveTask
 
    SaveTask
    - insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
@@ -59,7 +59,7 @@ In the real world, creating a todo list is as simple as taking a pen and paper a
    - It defines a schema and writes the result to the `%taskList%` variable.
    - It then loops through the list and saves each item to the database.
 
-   **Tip:** You can write `for each %taskList%, call !SaveTask %task%=item` to reference the `%task%` variable in the `SaveTask` goal.
+   **Tip:** You can write `for each %taskList%, call goal SaveTask %task%=item` to reference the `%task%` variable in the `SaveTask` goal.
 
 ## Testing the New Approach
 

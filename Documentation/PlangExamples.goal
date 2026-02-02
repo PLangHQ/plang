@@ -2,7 +2,7 @@ PlangExamples
 - get content of all *.goal files from '../Tests/',
     include sub folders
     write to %testFiles%
-- foreach %testFiles%, call !AppendFile
+- foreach %testFiles%, call goal AppendFile
 - write to  %content% file output/plangexample.txt
 
 AppendFile
