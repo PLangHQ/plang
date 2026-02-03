@@ -440,7 +440,7 @@ namespace PLang.Runtime
 
 		private async Task<(object? Variables, IError?)> RunSetup(Goal startGoal, PLangContext context)
 		{
-			var setupGoals = prParser.GetAllGoals().Where(p => p.IsSetup).OrderBy(p => !p.GoalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)); //Setup should come first
+			var setupGoals = prParser.GetAllGoals().Where(p => p.IsSetup && p.Visibility == Visibility.Public).OrderBy(p => !p.GoalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)); //Setup should come first
 			if (!setupGoals.Any())
 			{
 				return (null, null);
