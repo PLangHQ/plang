@@ -148,7 +148,8 @@ public class StepBuilder : IStepBuilder
 			{
 				if (handlerError == error) return error;
 
-				return ErrorHelper.GetMultipleBuildError(error, handlerError);
+				error.ErrorChain.Add(handlerError);
+				return error;
 			}
 		}
 

@@ -474,6 +474,8 @@ namespace PLang.Runtime
 
 				settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
 			}
+			if (ov.ValueAs<List<object?>>()?.Count == 0) return (null, null);
+
 			return (ov, null);
 		}
 
@@ -788,11 +790,11 @@ namespace PLang.Runtime
 		}
 
 
-		private IError? FindErrorHandled(MultipleError me)
+		private IError? FindErrorHandled(IError error)
 		{
-			var hasEndGoal = me.ErrorChain.FirstOrDefault(p => p is IErrorHandled);
+			var hasEndGoal = error.ErrorChain.FirstOrDefault(p => p is IErrorHandled);
 			if (hasEndGoal != null) return hasEndGoal;
-			var handledEventError = me.ErrorChain.FirstOrDefault(p => p is HandledEventError) as HandledEventError;
+			var handledEventError = error.ErrorChain.FirstOrDefault(p => p is HandledEventError) as HandledEventError;
 			if (handledEventError != null)
 			{
 				if (handledEventError.InitialError is IErrorHandled) return handledEventError.InitialError;
@@ -884,7 +886,8 @@ namespace PLang.Runtime
 				var (isHandled, handlerError) = await HandleFileAccessError(fare, context);
 				if (handlerError != null)
 				{
-					return (false, ErrorHelper.GetMultipleError(error, handlerError));
+					error.ErrorChain.Add(handlerError);
+					return (false, error);
 				}
 				return (true, null); // Retry the step
 			}
@@ -1031,7 +1034,7 @@ namespace PLang.Runtime
 
 						if (stepError != null)
 						{
-							if (stepError is MultipleError me && !me.IsErrorHandled)
+							if (stepError is Error err && err.ErrorChain.Count > 0 && !err.IsErrorHandled)
 							{
 								return (stepReturnValue, stepError);
 							}

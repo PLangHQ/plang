@@ -182,32 +182,10 @@ namespace PLang.Utils
 		 
 		internal static (Goal?, IError?) GetGoal(string relativeGoalPath, string absoluteAppPath, GoalToCallInfo goalToCall, IReadOnlyList<Goal> appGoals, IReadOnlyList<Goal> systemGoals)
 		{
-			bool debug = false;
-			if (goalToCall.Name == "/user/refund/GetAurBearerToken")
-			{
-				debug = true;
-			}
-
 			Goal? goal;
 			if (!string.IsNullOrEmpty(goalToCall.Path))
 			{
 				goal = appGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-				if (debug)
-				{
-					Console.WriteLine($"isGoalNull: {goal == null} : goalPath:{goalToCall.Path.AdjustPathToOs()}");
-					if (goal == null)
-					{
-						var debugGoal = appGoals.FirstOrDefault(p => p.GoalName.Contains("GetAurBearerToken", StringComparison.OrdinalIgnoreCase));
-						if (debugGoal == null)
-						{
-							Console.WriteLine($"WTF goalname not found");
-						}
-						else
-						{
-							Console.WriteLine($"relativePrPath: {debugGoal.RelativePrPath} should Match goalPath:{goalToCall.Path.AdjustPathToOs()}");
-						}
-					}
-				}
 				if (goal != null) return (goal, null);
 
 				goal = systemGoals.FirstOrDefault(p => p.RelativePrPath.Equals(goalToCall.Path.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
@@ -222,6 +200,33 @@ namespace PLang.Utils
 			{
 				goalName = goalName.Substring(goalName.LastIndexOf(Path.DirectorySeparatorChar) + 1);
 				goalPath = goalToCall.Name.Substring(0, goalToCall.Name.LastIndexOf(goalName)).AdjustPathToOs();
+			}
+
+			// Handle /system/ paths - check app's local system folder first, then fall back to actual system folder
+			var systemPrefix = Path.DirectorySeparatorChar + "system" + Path.DirectorySeparatorChar;
+			if (goalPath.StartsWith(systemPrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				// First try: app's local system folder (allows overrides)
+				var localSystemPath = goalPath.TrimEnd(Path.DirectorySeparatorChar);
+				if (string.IsNullOrEmpty(localSystemPath)) localSystemPath = Path.DirectorySeparatorChar.ToString();
+
+				goal = appGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(localSystemPath, StringComparison.OrdinalIgnoreCase)
+											&& p.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+
+				// Fallback: actual system folder (strip /system/ prefix since systemGoals paths don't include it)
+				var pathWithoutSystemPrefix = goalPath.Substring(systemPrefix.Length);
+				var systemRelativePath = Path.DirectorySeparatorChar + pathWithoutSystemPrefix.TrimEnd(Path.DirectorySeparatorChar);
+				if (systemRelativePath == Path.DirectorySeparatorChar.ToString() + Path.DirectorySeparatorChar.ToString())
+				{
+					systemRelativePath = Path.DirectorySeparatorChar.ToString();
+				}
+
+				goal = systemGoals.FirstOrDefault(p => p.RelativeGoalFolderPath.Equals(systemRelativePath, StringComparison.OrdinalIgnoreCase)
+											&& p.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return (goal, null);
+
+				return (null, new BuilderError($"Could not find {goalToCall.Name}", Retry: false, Key: "GoalNotFound", StatusCode: 404));
 			}
 
 			string relativePath;

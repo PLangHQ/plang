@@ -297,8 +297,8 @@ namespace PLang.Modules.MessageModule
 					if (handlerError != null)
 					{
 						logger.LogError(handlerError.ToString());
+						error.ErrorChain.Add(handlerError);
 					}
-					error = ErrorHelper.GetMultipleError(error, handlerError);
 				}
 
 				return error;

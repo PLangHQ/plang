@@ -88,7 +88,7 @@ namespace PLang
 
 		
 
-		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
+		public async Task<(IEngine? engine, object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
 		{
 			var version = args.FirstOrDefault(p => p == "--version") != null;
 			if (version)
@@ -96,7 +96,7 @@ namespace PLang
 				var assembly = Assembly.GetAssembly(this.GetType());
 
 				Console.WriteLine("plang version: " + assembly.GetName().Version.ToString());
-				return (null, null);
+				return (engine, null, null);
 			}
 
 			if (args.Length > 0 && args[0] == "p")
@@ -104,11 +104,11 @@ namespace PLang
 				if (executeType == ExecuteType.Runtime)
 				{
 					var result2 = await Run2(args[1..]);
-					return (result2.Variables, result2.Error);
+					return result2;
 				} else if (executeType == ExecuteType.Builder)
 				{
 					var buildResult = await Build2(args[1..]);
-					return (buildResult.Variables, buildResult.Error);
+					return buildResult;
 				}
 					
 			}
@@ -139,7 +139,7 @@ namespace PLang
 					WatchFolder(fileSystem.GoalsPath, "*.goal");
 					Console.Read();
 				}
-				return (null, null);
+				return (engine, null, null);
 			}
 
 			if (watch)
@@ -148,7 +148,7 @@ namespace PLang
 			}
 			
 			var result = await Run(debug, test, args);
-			return (result.Variables, result.Error);
+			return result;
 
 		}
 

@@ -1,0 +1,2 @@
+Setup
+- create table testTable, columns: name(string, not null)

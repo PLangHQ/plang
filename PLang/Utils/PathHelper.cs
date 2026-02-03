@@ -83,7 +83,24 @@ namespace PLang.Utils
 			{
 				return pathWithDirSep;
 			}
-			
+
+			// Handle /system/ paths - check app's local system folder first, then fall back to actual system folder
+			var systemPrefix = fileSystem.Path.DirectorySeparatorChar + "system" + fileSystem.Path.DirectorySeparatorChar;
+			if (pathWithDirSep.StartsWith(systemPrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				// First try: app's local system folder (allows overrides)
+				var localSystemPath = JoinRootWithPath(fileSystem, fileSystem.RootDirectory, pathWithDirSep);
+				localSystemPath = fileSystem.Path.GetFullPath(localSystemPath);
+				if (fileSystem.File.Exists(localSystemPath) || fileSystem.Directory.Exists(localSystemPath))
+				{
+					return localSystemPath;
+				}
+
+				// Fallback: actual system folder
+				var pathWithoutSystemPrefix = pathWithDirSep.Substring(systemPrefix.Length);
+				var systemPath = fileSystem.Path.Join(fileSystem.SystemDirectory, pathWithoutSystemPrefix);
+				return fileSystem.Path.GetFullPath(systemPath);
+			}
 
 			if (pathWithDirSep.StartsWith(fileSystem.Path.DirectorySeparatorChar.ToString()))
 			{

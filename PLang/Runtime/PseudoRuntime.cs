@@ -97,11 +97,16 @@ namespace PLang.Runtime
 				// this might not be an issues since all goals are open source and can be easily validated
 				// decision: leave it in to give memory stack to isolated goals
 				var isAsync = !waitForExecution;
+			
 
 				if (isolated || isAsync || CreateNewContainer(goalToRun.AbsoluteGoalFolderPath))
 				{
+
 					isRented = true;
 					runtimeEngine = enginePool.Rent(engine);
+
+					var rentedContextAccessor = runtimeEngine.Container.GetInstance<IPLangContextAccessor>();
+					rentedContextAccessor.Current = context;
 				}
 
 				if (runtimeEvent != null)

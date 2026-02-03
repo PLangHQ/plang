@@ -114,6 +114,31 @@ namespace PLang.Errors
 		[IgnoreWhenInstructed]
 		public bool IsHandled { get; set; } = false;
 
+		public bool IsErrorHandled
+		{
+			get
+			{
+				if (ErrorChain.Count == 0) return this is IErrorHandled;
+				return ErrorChain.LastOrDefault() is IErrorHandled;
+			}
+		}
+
+		public Error Add(IError error)
+		{
+			if (error == null || error == this) return this;
+
+			// Check for duplicate - don't add same error twice
+			if (ErrorChain.Any(e => e == error || (e.Key == error.Key && e.Message == error.Message)))
+			{
+				System.Diagnostics.Debug.WriteLine($"Warning: Attempted to add duplicate error to chain: {error.Key}");
+				return this;
+			}
+
+			ErrorChain.Add(error);
+			Variables.AddRange(error.Variables);
+			return this;
+		}
+
 		public List<ObjectValue> Variables { get; set; } = new();
 
 		public override string? ToString()

@@ -22,12 +22,18 @@ dotnet test PLang.Tests/PLang.Tests.csproj
 # Run specific test
 dotnet test --filter "FullyQualifiedName~TestClassName"
 
-# Build PLang app
+# Build PLang app (must be in app root folder)
 plang build
 
 # Run PLang app
 plang run
 ```
+
+**IMPORTANT: Building PLang Apps**
+- You CANNOT build individual .goal files - you must be in the **root folder** of the PLang app
+- For example, to build system goals: `cd system && plang build`
+- If `plang build` returns errors, **tell the user** so they can help fix it - PLang is still early and may need guidance
+- The `plang` command uses an installed binary, not source code. To test source changes, use `dotnet run --project PlangConsole/PlangConsole.csproj`
 
 ## Project Structure
 
@@ -257,6 +263,83 @@ Cloned per-request for isolation. O(1) cloning via shared collections:
 var cloned = engine.CloneDefaultModuleRegistry();
 cloned.Disable("http");  // Only affects this request
 ```
+
+## PLang Philosophy: Object Passing
+
+PLang is designed around **passing objects directly**, not creating intermediate variables or transforming data until absolutely necessary. This applies to all objects - users, orders, requests, responses, errors, or any other data.
+
+### Core Principles
+
+1. **Pass objects as-is** - Don't destructure or reshape objects mid-flow
+2. **Keep variable names consistent** - Use the same name throughout the call chain
+3. **Defer property access** - Let templates/UI/C# code access properties at the point of use
+4. **Avoid intermediate variables** - Only create new variables when truly needed
+
+### PLang Code: Anti-patterns
+
+```plang
+/ BAD - destructuring object into intermediate variable
+- set %userInfo% = { name=%user.Name%, email=%user.Email% }
+- render profile.html, data=%userInfo%
+
+/ BAD - renaming for no reason
+- set %currentOrder% = %order%
+- call ProcessOrder, o=%currentOrder%
+
+/ BAD - extracting properties unnecessarily
+- set %amount% = %order.TotalAmount%
+- set %customer% = %order.Customer%
+- call ChargeCustomer, amount=%amount%, customer=%customer%
+```
+
+### PLang Code: Correct Patterns
+
+```plang
+/ GOOD - pass object directly to template
+- render profile.html, user=%user%
+
+/ GOOD - pass object directly to goal
+- call ProcessOrder, order=%order%
+
+/ GOOD - chain calls preserving objects
+- call ValidateOrder, order=%order%, write to %validatedOrder%
+- call SubmitOrder, order=%validatedOrder%
+
+/ GOOD - pass object to C# module, let it access properties
+- call ChargeCustomer, order=%order%
+```
+
+### C# Module Design
+
+Design module methods to accept whole objects, not decomposed properties:
+
+```csharp
+// GOOD - method accepts the object, accesses properties internally
+public async Task<IError?> ChargeCustomer(Order order)
+{
+    var amount = order.TotalAmount;
+    var customer = order.Customer;
+    // ... process internally
+}
+
+// BAD - forces PLang to decompose the object
+public async Task<IError?> ChargeCustomer(decimal amount, Customer customer)
+{
+    // Now PLang must extract properties before calling
+}
+```
+
+**Exceptions** - decomposed parameters are appropriate when:
+- The method genuinely operates on independent values (not from one object)
+- Multiple unrelated objects are inputs
+- The method is a low-level utility that shouldn't know about domain objects
+
+### When Variables ARE Appropriate
+
+- Storing return values: `- call GetUser, id=123, write to %user%`
+- Aggregating data from multiple independent sources
+- Loop counters and conditional flags
+- When transformation is the explicit goal
 
 ## File Conventions
 

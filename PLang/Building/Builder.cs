@@ -157,7 +157,7 @@ namespace PLang.Building
 				}
 
 				ReleaseDatabase();
-				ShowBuilderErrors(goals, stopwatch);
+				await ShowBuilderErrors(engine, goals, stopwatch);
 				
 
 				logger.LogDebug($"Done - Finished cleaning, db releasee and inform user - {stopwatch.ElapsedMilliseconds}");
@@ -209,8 +209,7 @@ namespace PLang.Building
 				// If handleError is not null, the error was not handled
 				if (handleError != null)
 				{
-					var me = new MultipleError(error);
-					me.Add(handleError);
+					error.ErrorChain.Add(handleError);
 					logger.LogError(error.ToString());
 				}
 
@@ -229,13 +228,13 @@ namespace PLang.Building
 
 		}
 
-		private void ShowBuilderErrors(List<Goal> goals, Stopwatch stopwatch)
+		private async Task ShowBuilderErrors(IEngine engine, List<Goal> goals, Stopwatch stopwatch)
 		{
 			if (goalBuilder.BuildErrors.Count > 0)
 			{
 				foreach (var buildError in goalBuilder.BuildErrors)
 				{
-					logger.LogWarning(buildError.ToFormat().ToString());
+					await ErrorHelper.OutputError(engine, buildError);
 				}
 
 				logger.LogError($"\n\n❌ Failed to build {goalBuilder.BuildErrors.Count} steps");

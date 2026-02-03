@@ -397,7 +397,8 @@ namespace PLang.Modules
 
 				if (isHandled) return await RunFunction(function);
 
-				return (result, ErrorHelper.GetMultipleError(error, handlerError));
+				if (handlerError != null) error.ErrorChain.Add(handlerError);
+				return (result, error);
 			}
 			if (function.ReturnValues != null)
 			{

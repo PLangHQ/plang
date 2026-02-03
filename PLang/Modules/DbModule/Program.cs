@@ -1647,7 +1647,7 @@ For example:
 
 				if (isInsert && parameterName == "id" && (p.VariableNameOrValue?.ToString() == "auto" || eventSourceFactory.GetType() != typeof(DisableEventSourceRepository)))
 				{
-					var id = p.VariableNameOrValue.ToString();
+					var id = p.VariableNameOrValue?.ToString();
 					if (id == "auto" || string.IsNullOrEmpty(id))
 					{
 						var generator = new IdGenerator(new Random().Next(0, 1023));

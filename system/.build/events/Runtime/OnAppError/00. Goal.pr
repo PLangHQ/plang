@@ -3,20 +3,20 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "write out system error \"%!error%\"",
+      "Text": "call goal /system/errors/Error",
       "Comment": null,
-      "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "write_out_system_error",
-      "Description": "Take the system error stored in the variable %!error% and write it out to the output stream, likely to inform the user or log the error message.",
-      "PrFileName": "01. write_out_system_error.pr",
-      "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\01. write_out_system_error.pr",
+      "ModuleType": "PLang.Modules.CallGoalModule",
+      "Name": "call_system_errors_error_goal",
+      "Description": "Execute the goal located at '/system/errors/Error' to handle an error scenario, likely to throw or log an error or perform error recovery",
+      "PrFileName": "01. call_system_errors_error_goal.pr",
+      "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\01. call_system_errors_error_goal.pr",
       "InstructionHash": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2025-10-03T09:33:04.0504503+00:00",
+      "Generated": "2026-02-03T12:01:23.4242525+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,18 +28,19 @@
       "LineNumber": 2,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d7b90ebea6a69ec76572ebdc235f3202c799f516da3ab01b8bbaf5efc5c9de7a",
+      "Hash": "96c2531f3868cc8266e74e3fea77a9f671bf99d56ae256a8e82577bd437ac9d9",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal",
-      "UserIntent": null
+      "UserIntent": "Invoke a predefined error handling goal named '/system/errors/Error' to manage or report an error condition"
     }
   ],
   "SubGoals": [],
-  "Description": "The OnAppError goal is designed to handle system errors by writing out the specific error message. It captures the error message and outputs it for further analysis or logging.",
+  "Description": "The OnAppError goal is designed to handle application errors by calling the Error goal from the system's error handling module. This goal is triggered whenever an error occurs in the application, allowing for centralized error management.",
   "Visibility": 1,
   "GoalFileName": "OnAppError.goal",
   "PrFileName": "00. Goal.pr",
   "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal",
+  "CurrentPath": null,
   "RelativeGoalFolderPath": "\\events\\Runtime",
   "RelativePrPath": ".build\\events\\Runtime\\OnAppError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Runtime\\OnAppError",
@@ -48,11 +49,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c6849f647c38088cd24b6f9c4f9be1903ef404118978a70c4753611c3750ef78",
-  "IncomingVariablesRequired": {
-    "%!error%": "This variable holds the system error message that needs to be written out."
-  },
+  "Hash": "dfe0c5c7d82284dba0a623e265d3f532feae45d4583487da17bfb65944111b81",
+  "IncomingVariablesRequired": null,
   "DataSourceName": null,
   "IsSetup": false,
-  "IsEvent": false
+  "IsEvent": false,
+  "Event": null
 }

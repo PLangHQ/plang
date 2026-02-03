@@ -608,7 +608,11 @@ namespace PLang.Events
 				if (EventMatchesError(eve, error))
 				{
 					var eventError = await Run(eve, goal, step, error);
-					if (eventError.Error != null) return (eventError.Variables, new MultipleError(error).Add(eventError.Error));
+					if (eventError.Error != null)
+					{
+						error.ErrorChain.Add(eventError.Error);
+						return (eventError.Variables, error);
+					}
 
 					if (eve.OnErrorContinueNextStep) return (eventError.Variables, null);
 
@@ -973,6 +977,10 @@ namespace PLang.Events
 			var goalStep = sourceStep ?? new GoalStep() { Name = $"Event_{evt.EventType}_{evt.EventScope}", RelativeGoalPath = sourceGoal.RelativeGoalPath, Goal = sourceGoal };
 			var runtimeEvent = new RuntimeEvent(evt.Id, evt.EventType, evt.EventScope, goalToCall, goalStep);
 			context.Event = runtimeEvent;
+
+			// todo: bit of confusion here, we add Event to context, we also add it as parameter
+			// so it can be found when user does %!Event%, so it's living in 2 place. Feels wrong.
+			goalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, runtimeEvent);
 
 			logger.LogTrace("Execute event: type={0}, scope={1}, binding={2}, calling={3}", evt.EventType, evt.EventScope, evt.GoalToBindTo, goalToCall);
 

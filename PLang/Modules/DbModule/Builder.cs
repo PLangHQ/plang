@@ -114,8 +114,9 @@ public class Builder : BaseBuilder
 <dataSourceAndTableInfos>";
 			foreach (var table in methodsAndTables.Tables)
 			{
+				var ds = table.DataSource ?? dataSource;
 				system += $@"
-DataSource name: {table.DataSource.NameInStep}
+DataSource name: {ds.NameInStep}
 Table name: {table.Name}
 Columns: {JsonConvert.SerializeObject(table.Columns)}
 ----

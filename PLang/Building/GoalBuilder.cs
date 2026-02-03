@@ -165,9 +165,8 @@ namespace PLang.Building
 			var error = await MissingSettingsHelper.Handle(engine, context, missingSettings);
 			if (error != null)
 			{
-				var me = new MultipleBuildError(validationError);
-				me.Add(error);
-				return (false, me);
+				validationError.Add(error);
+				return (false, validationError);
 			}
 
 			return (!goal.HasChanged, null);

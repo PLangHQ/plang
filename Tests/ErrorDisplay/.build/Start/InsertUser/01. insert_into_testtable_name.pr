@@ -1,0 +1,130 @@
+{
+  "Text": "insert into testTable, name=%item.name%",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": [
+      "testTable"
+    ],
+    "AffectedColumns": {
+      "id": "insert",
+      "name": "insert"
+    },
+    "Warning": null,
+    "Reasoning": "The user wants to insert a new record into the 'testTable' with the 'name' column set to the value of %item.name%. The Insert function is appropriate for this operation. The SQL statement includes the 'id' column as required with a parameter @id of type System.Int64. The 'name' column is set with a parameter @name. The parameters list includes @id with value 'auto' to indicate auto-generation and @name with the value %item.name%.",
+    "Name": "Insert",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "dataSourceName",
+        "Value": "data"
+      },
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "insert into testTable (id, name) values (@id, @name)"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]",
+        "Name": "sqlParameters",
+        "Value": [
+          {
+            "ParameterName": "@id",
+            "VariableNameOrValue": "auto",
+            "TypeFullName": "System.Int64"
+          },
+          {
+            "ParameterName": "@name",
+            "VariableNameOrValue": "%item.name%",
+            "TypeFullName": "System.String"
+          }
+        ]
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "validateAffectedRows",
+        "Value": true
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "IsValidSql": {
+      "SetupHash": "0b41d46ca3c9a9df9924a9484eec0f4f87ed2e8df314244ac7af6408439b9f4f",
+      "SetupRelativePrPath": ".build\\Setup\\00. Goal.pr",
+      "DataSourceName": "data",
+      "Updated": "2026-02-03T09:45:46.0038374+00:00"
+    },
+    "Parameters": {
+      "dataSourceName": {
+        "Name": "dataSourceName",
+        "FullTypeName": "System.String"
+      },
+      "sql": {
+        "Name": "sql",
+        "FullTypeName": "System.String"
+      },
+      "sqlParameters": {
+        "Name": "sqlParameters",
+        "FullTypeName": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]"
+      },
+      "validateAffectedRows": {
+        "Name": "validateAffectedRows",
+        "FullTypeName": "System.Boolean"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables MUST not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameters that is type System.String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\r\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \r\nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\r\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\n<dataSourceAndTableInfos>\r\nDataSource name: data\r\nTable name: testTable\r\nColumns: [{\"Name\":\"id\",\"Type\":\"INTEGER\",\"IsPrimaryKey\":true,\"IsNotNull\":true,\"DefaultValue\":null},{\"Name\":\"name\",\"Type\":\"TEXT\",\"IsPrimaryKey\":false,\"IsNotNull\":true,\"DefaultValue\":null}]\r\n----\r\n</dataSourceAndTableInfos>\r\n\r\nAdditional json Response explaination:\r\n- Datasource(s) to available: data\r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n- for `IN (@parameter)` statements => The parameter type should be System.Array\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- Keep ParameterInfo TypeFullName as sql type, e.g. column that is date/time map it to appropriate c# type, e.g. System.DateTime\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\\n- when user defines to write into come sort of %id%, then choose the method which select id of row back\r\n- ignore on duplicate should set validateAffectedRows=false\n- YOU MUST include ParameterInfo(\"@id\", \"auto\", \"System.Int64\") in your response AND modify the sql to include that column and parameter\n- Make sure to include @id in sql statement and sqlParameters. Missing @id will cause invalid result.\n- Plang will handle retrieving the inserted id, only create the insert statement, nothing regarding retrieving the last id inserted\n- When user is doing upsert(on conflict update), make sure to return the id of the table on the update sql statement\n- When doing insert with a select statement, e.g. `insert into table (column1, column2) select column1, column2 where id=%id%`, the insert statement needs to contain 'id' column and select statement must contain @auto where the id will be inserted. DO NOT confuse the id from the select and insert statements\r\n- Definition for List<ParameterInfo> => ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName)\r\n- use <dataSourceAndTableInfos> to build a valid sql for Microsoft.Data.Sqlite.SqliteConnection\r\n\r\n- The main dataSourceName for database operations is: \"data\". The dataSourceName is provided by external and MUST NOT be modified. Any variable in datasource name will be provided at later time.\r\n\r\nThe dataSourceName is provided by external and MUST NOT be changed in any way. Any variable in dataSourceName will be provided at later time and MUST stay as is.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null, \"TableNames\" : System.Collections.Generic.List`1[System.String] = null, \"AffectedColumns\" : System.Collections.Generic.Dictionary`2[System.String,System.String] = null, \"Warning\" : System.String = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInsert a new record into the database table 'testTable' with the 'name' field set to the value of the variable %item.name%\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Insert into table. Will return affected row count. Choose when user doesn't write result into %variable%\",\"MethodName\":\"Insert\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"validateAffectedRows\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"parameters\",\"Description\":\"ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"TypeFullName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ParameterName\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"VariableNameOrValue\",\"IsRequired\":false}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nitem.name (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "insert into testTable, name=%item.name%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to insert a new record into the 'testTable' with the 'name' column set to the value of %item.name%. The Insert function is appropriate for this operation. The SQL statement includes the 'id' column as required with a parameter @id of type System.Int64. The 'name' column is set with a parameter @name. The parameters list includes @id with value 'auto' to indicate auto-generation and @name with the value %item.name%.\",\n  \"Name\": \"Insert\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"dataSourceName\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"insert into testTable (id, name) values (@id, @name)\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\n      \"Name\": \"sqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@id\",\n          \"VariableNameOrValue\": \"auto\",\n          \"TypeFullName\": \"System.Int64\"\n        },\n        {\n          \"ParameterName\": \"@name\",\n          \"VariableNameOrValue\": \"%item.name%\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"validateAffectedRows\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValues\": null,\n  \"TableNames\": [\n    \"testTable\"\n  ],\n  \"AffectedColumns\": {\n    \"id\": \"insert\",\n    \"name\": \"insert\"\n  },\n  \"Warning\": null\n}",
+      "Tools": null
+    }
+  ]
+}

@@ -12,5 +12,12 @@
     "datetime": "2025-02-02T13:30:00Z",
     "plan": ".claude/plans/NostrAskChannelHandler.md",
     "description": "Private helper to reload variables from memoryStack for condition evaluation each iteration"
+  },
+  {
+    "file": "PLang/Errors/ErrorHelper.cs",
+    "method": "OutputError",
+    "datetime": "2026-02-03T00:00:00Z",
+    "plan": ".claude/plans/ErrorSimplification.md",
+    "description": "Added async OutputError method to call Error.goal for displaying errors, with fallback console output"
   }
 ]

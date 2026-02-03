@@ -1,0 +1,93 @@
+{{ if error.ErrorChain.size > 0 }}
+=== NOTICE! {{ error.ErrorChain.size | math.plus 1 }} errors happened ===
+
+First we will give you the original error, then each error that occurred will show
+
+=== NOTICE! {{ error.ErrorChain.size | math.plus 1 }} errors happened ===
+
+{{ end }}
+🔴 ================== {{ error.Key }}({{ error.StatusCode }}) ==================
+{{ if error.Step }}
+📄 File: {{ error.Step.RelativeGoalPath }}:{{ error.Step.LineNumber }}
+🔢 Line: {{ error.Step.LineNumber }}
+{{ end }}
+🧩 Key:  {{ error.Key }}
+#️⃣ StatusCode: {{ error.StatusCode }}
+🕑 Time: {{ error.CreatedUtc }}
+
+🔍 ================== Error Details ==================
+{{ if error.EventBinding }}
+⚡ Error on event:
+    [{{ error.EventBinding.EventType }}][{{ error.EventBinding.EventScope }}][{{ error.EventBinding.GoalToBindTo }}] - {{ error.EventBinding.GoalStep.Text }}
+
+{{ end }}
+{{ if error.Step }}
+📜 Code snippet:
+    - {{ error.Step.Text | string.replace "\r" "" | string.replace "\t" "" | string.replace "\n" "\n\t\t" | string.truncate 160 }}
+        at {{ error.Step.RelativeGoalPath }}:{{ error.Step.LineNumber }}
+{{ end }}
+
+🧐 Reason: {{ error.Message }}
+
+{{ if error.FixSuggestion }}
+🛠️ Fix Suggestions:
+    {{ error.FixSuggestion }}
+{{ end }}
+
+{{ if error.HelpfulLinks }}
+🔗 Helpful Links:
+    {{ error.HelpfulLinks }}
+{{ end }}
+
+{{ if error.Variables && error.Variables.size > 0 }}
+🏷️ Variables in step:
+{{ for var in error.Variables }}
+    - {{ var.PathAsVariable }} => {{ if var.PathAsVariable | string.starts_with " %Settings." }}*****{{ else }}{{ var.Value | string.truncate 150 }}{{ end }}
+{{ if (var.Value == null || var.Value == "") && var.Parent }}
+      ↳ Parent {{ var.Parent.PathAsVariable }} => {{ var.Parent.Value | string.truncate 300 }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{ if error.Goal && error.Goal.ParentGoal }}
+🛝 Call stack:
+{{ func render_callstack(g) }}
+{{ if g }}
+    {{ g.GoalName }} - {{ g.RelativeGoalPath }}:{{ g.GoalSteps[g.CurrentStepIndex].LineNumber }}
+{{ render_callstack g.ParentGoal }}
+{{ end }}
+{{ end }}
+{{ render_callstack error.Goal }}
+{{ end }}
+
+{{ if error.Step && error.Step.ModuleType }}
+📦 Error Source:
+    - The error occurred in the module: `{{ error.Step.ModuleType }}`{{ if error.GenericFunction }}.`{{ error.GenericFunction.Name }}`{{ end }}
+{{ if error.GenericFunction && error.GenericFunction.Parameters && error.GenericFunction.Parameters.size > 0 }}
+    - Parameters:
+{{ for param in error.GenericFunction.Parameters }}
+        - {{ param.Name }}: {{ if error.ParameterValues && error.ParameterValues[param.Name] }}{{ error.ParameterValues[param.Name] | string.truncate 150 }}{{ else }}[empty]{{ end }}
+{{ end }}
+{{ end }}
+{{ if error.GenericFunction && error.GenericFunction.ReturnValues && error.GenericFunction.ReturnValues.size > 0 }}
+    - Results will be written into:
+{{ for retVal in error.GenericFunction.ReturnValues }}
+        - {{ retVal.VariableName }}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{ if error.Exception }}
+👨‍💻 For C# Developers:
+    - {{ error.Exception.Message }}
+
+    StackTrace: {{ error.Exception.StackTrace }}
+{{ end }}
+
+{{ for nextError in error.ErrorChain }}
+{{ if nextError != error }}
+
+		<=== Next error ===>
+{{ include 'error.html' nextError }}
+{{ end }}
+{{ end }}

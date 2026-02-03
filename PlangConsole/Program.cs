@@ -2,11 +2,13 @@ using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang;
+using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Services.OutputStream.Messages;
+using PLang.Errors;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
@@ -64,21 +66,40 @@ if (runtime)
 	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
 	if (result.Error != null)
 	{
-		var logger = container.GetInstance<ILogger>();
-		logger.LogError(result.Error.ToFormat("text").ToString());
+		await ErrorHelper.OutputError(engine, result.Error);
 	}
 
 	// Output return value directly to sink (avoids CallStack requirement)
 	if (result.Variables != null)
 	{
-		JsonSerializerSettings jsonSerializer = new JsonSerializerSettings()
+
+		// todo: this is not working, reason is, that context is null here when I get engine back
+		// need to find out why that is. We dont want to print out anything if the variable is empty.
+		
+		object? isEmpty = false;
+		(var condition, var error) = result.engine.Modules.Get<PLang.Modules.ConditionalModule.Program>(Goal.EndOfApp);
+		if (condition != null)
 		{
-			ObjectCreationHandling = ObjectCreationHandling.Replace,
-			Converters = { new JsonObjectValueConverter() }
-		};
-var json = JsonConvert.SerializeObject(result.Variables, Formatting.Indented, jsonSerializer);
-		var textMessage = new TextMessage(json);
-		engine.UserSink.SendAsync(textMessage).GetAwaiter().GetResult();
+			(isEmpty, error) = await condition.IsEmpty(result.Variables);
+		}
+
+		// so for now I'll check if it's a list and see if it is empty, we should be using conditional module for it
+		if (result.Variables is ObjectValue ov && ov.Value is IList list && list.Count == 0)
+		{
+			isEmpty = true;
+		}
+
+		if (isEmpty == null || !(bool)isEmpty)
+		{
+			JsonSerializerSettings jsonSerializer = new JsonSerializerSettings()
+			{
+				ObjectCreationHandling = ObjectCreationHandling.Replace,
+				Converters = { new JsonObjectValueConverter() }
+			};
+			var json = JsonConvert.SerializeObject(result.Variables, Formatting.Indented, jsonSerializer);
+			var textMessage = new TextMessage(json);
+			engine.UserSink.SendAsync(textMessage).GetAwaiter().GetResult();
+		}
 	}
 
 	container.Dispose();

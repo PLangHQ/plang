@@ -1,34 +1,68 @@
-﻿using NBitcoin.Protocol;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
-using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Events;
 using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
+using PLang.Models;
 using PLang.Models.Formats;
+using PLang.Runtime;
+using PLang.Utils;
 using static PLang.Modules.BaseBuilder;
 
-namespace PLang.Utils
+namespace PLang.Errors
 {
 	public class ErrorHelper
 	{
-		public static IBuilderError GetMultipleBuildError(IBuilderError initialError, IError? secondError)
+		public static async Task OutputError(IEngine engine, IError error, Goal? parentGoal = null)
 		{
-			if (secondError == null || initialError == secondError) return initialError;
+			try
+			{
+				if (engine?.Context == null)
+				{
+					// Fallback when engine context is not available
+					Console.WriteLine(error.ToFormat("text"));
+					return;
+				}
 
-			var multipleError = new MultipleBuildError(initialError);
-			multipleError.Add(secondError);
-			return multipleError;
-		}
-		public static MultipleError GetMultipleError(IError initialError, IError? secondError)
-		{
-			var multipleError = new MultipleError(initialError);
-			if (secondError == null) return multipleError;
+				// Set error in context as %!error% (reserved variable)
+				engine.Context.AddVariable(error, variableName: ReservedKeywords.Error);
 
-			multipleError.Add(secondError);
-			return multipleError;
+				var goalInfo = new GoalToCallInfo("/errors/Error");
+
+				await engine.RunGoal(goalInfo, parentGoal ?? Goal.EndOfApp, engine.Context);
+			}
+			catch (Exception ex)
+			{
+				// Last resort fallback - simple console output with full exception details
+				Console.WriteLine($"\n=== Error (fallback output - Error.goal failed) ===");
+				Console.WriteLine($"Error: {error.Message}");
+				Console.WriteLine($"  Key: {error.Key}, StatusCode: {error.StatusCode}");
+				if (error.Step != null)
+				{
+					Console.WriteLine($"  At: {error.Step.RelativeGoalPath}:{error.Step.LineNumber}");
+				}
+				if (error.FixSuggestion != null)
+				{
+					Console.WriteLine($"  Fix: {error.FixSuggestion}");
+				}
+
+				// Print exception chain with stack traces
+				Console.WriteLine($"\n--- Exception while running Error.goal ---");
+				var currentEx = ex;
+				while (currentEx != null)
+				{
+					Console.WriteLine($"Exception: {currentEx.GetType().Name}: {currentEx.Message}");
+					Console.WriteLine($"StackTrace: {currentEx.StackTrace}");
+					currentEx = currentEx.InnerException;
+					if (currentEx != null)
+					{
+						Console.WriteLine($"\n--- Inner Exception ---");
+					}
+				}
+			}
 		}
 
 		public static string FormatLine(string? txt, string? lineStarter = null, bool indent = false)
@@ -55,7 +89,7 @@ namespace PLang.Utils
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 			detailedError = true;
-			
+
 			if (error.ErrorChain.Count > 0)
 			{
 				for (int i = 0; i < error.ErrorChain.Count; i++)
@@ -66,17 +100,6 @@ namespace PLang.Utils
 						i = error.ErrorChain.Count;
 					}
 				}
-			}
-
-			if (error is MultipleError me)
-			{
-				string str = ToFormat(contentType, me.InitialError, propertyOrder, extraInfo).ToString();
-				foreach (var item in me.ErrorChain)
-				{
-					if (item is ErrorHandled) continue;
-					str += "\n\n------------\n" + ToFormat(contentType, item, propertyOrder, extraInfo).ToString();
-				}
-				return str;
 			}
 
 			var errorType = error.GetType();
@@ -130,25 +153,25 @@ namespace PLang.Utils
 			string? fixSuggestions = null;
 			if (error.FixSuggestion != null)
 			{
-				fixSuggestions = $@"🛠️  Fix Suggestions:
+				fixSuggestions = $@"Fix Suggestions:
 {FormatLine(error.FixSuggestion, null, true)}";
 			}
 			string? helpfulLinks = null;
 			if (error.HelpfulLinks != null)
 			{
-				helpfulLinks += $@"🔗 Helpful Links:
+				helpfulLinks += $@"Helpful Links:
 {FormatLine(error.HelpfulLinks, null, true)}";
 			}
 
-			string firstLine = $"";
+			string firstLine = "";
 			if (error.ErrorChain.Count > 0)
 			{
 				firstLine += @$"
-🤕 === NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
+=== NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
 
 First we will give you the original error, then each error that occured will show
 
-🤕 === NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
+=== NOTICE! {(error.ErrorChain.Count + 1)} errors happend ===
 
 
 ";
@@ -156,30 +179,30 @@ First we will give you the original error, then each error that occured will sho
 			string eventInfo = null;
 			if (error is IEventError ree)
 			{
-				eventInfo = $"\n⚡Error on event:\n\t [{ree.EventBinding.EventType}][{ree.EventBinding.EventScope}][{ree.EventBinding.GoalToBindTo}] - {ree.EventBinding.GoalStep.Text}\n\n";
+				eventInfo = $"\nError on event:\n\t [{ree.EventBinding.EventType}][{ree.EventBinding.EventScope}][{ree.EventBinding.GoalToBindTo}] - {ree.EventBinding.GoalStep.Text}\n\n";
 			}
 
 			firstLine += $@"
-🔴   ================== {error.Key}({error.StatusCode}) ==================   🔴
+================== {error.Key}({error.StatusCode}) ==================
 ";
 
 			if (step != null)
 			{
-				firstLine += $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
-🔢 Line: {step.LineNumber}
-🧩 Key:  {error.Key}
-#️⃣  StatusCode:  {error.StatusCode}
-🕑 Time: {error.CreatedUtc}
+				firstLine += $@"File: {step.RelativeGoalPath}:{step.LineNumber}
+Line: {step.LineNumber}
+Key:  {error.Key}
+StatusCode:  {error.StatusCode}
+Time: {error.CreatedUtc}
 
-🔍   ================== Error Details ==================   🔍
+================== Error Details ==================
 {eventInfo}
-📜 Code snippet that the error occured:
+Code snippet that the error occured:
 	- {step.Text.Replace("\r", "").Replace("\t", "").Replace("\n", "\n\t\t").MaxLength(160)}
 		at {step.RelativeGoalPath}:{step.LineNumber}
 ";
 				if (!string.IsNullOrWhiteSpace(step.ModuleType))
 				{
-					errorSource = $@"📦 Error Source:
+					errorSource = $@"Error Source:
 	- The error occurred in the module: `{step.ModuleType}`";
 					if (genericFunction != null)
 					{
@@ -190,19 +213,19 @@ First we will give you the original error, then each error that occured will sho
 			}
 			else if (goal != null)
 			{
-				firstLine = $@"📄 File: {goal.RelativeGoalPath}
-🧩 Key:  {error.Key}
-#️⃣  StatusCode:  {error.StatusCode}
-🕑 Time: {error.CreatedUtc}
+				firstLine = $@"File: {goal.RelativeGoalPath}
+Key:  {error.Key}
+StatusCode:  {error.StatusCode}
+Time: {error.CreatedUtc}
 
-🔍   ================== Error Details ==================   🔍
+================== Error Details ==================
 {eventInfo}";
 			}
 
 			string? variables = null;
 			if (error.Variables.Count > 0)
 			{
-				variables = @"🏷️  Variables in step:";
+				variables = @"Variables in step:";
 				foreach (var variable in error.Variables)
 				{
 					string value;
@@ -215,6 +238,20 @@ First we will give you the original error, then each error that occured will sho
 						value = JsonHelper.ToStringIgnoreError(variable.Value).MaxLength(150).ReplaceLineEndings("").Trim();
 					}
 					variables += $"\n\t - {variable.PathAsVariable} => {value}";
+
+					// Show parent object when value is null/empty and parent exists
+					if (string.IsNullOrWhiteSpace(value) && variable.Parent != null)
+					{
+						var parentValue = JsonHelper.ToStringIgnoreError(variable.Parent.Value).MaxLength(300).ReplaceLineEndings(" ").Trim();
+						variables += $"\n\t   Parent {variable.Parent.PathAsVariable} => {parentValue}";
+
+						var overParent = variable.Parent.Parent;
+						if (overParent != null)
+						{
+							parentValue = JsonHelper.ToStringIgnoreError(overParent.Value).MaxLength(300).ReplaceLineEndings(" ").Trim();
+							variables += $"\n\t     Parent {overParent.PathAsVariable} => {parentValue}";
+						}
+					}
 				}
 			}
 			string? callStack = null;
@@ -237,7 +274,7 @@ First we will give you the original error, then each error that occured will sho
 						break;
 					}
 				}
-				callStack = "\n🛝  Call stack:\n\t" + callStack;
+				callStack = "\nCall stack:\n\t" + callStack;
 			}
 
 			if (genericFunction != null)
@@ -273,7 +310,7 @@ First we will give you the original error, then each error that occured will sho
 				if (step != null && !string.IsNullOrEmpty(step.ModuleType))
 				{
 					errorSource = $@"
-📦 Error Source:
+Error Source:
 	- The error occurred in the module: `{step.ModuleType}.{genericFunction.Name}`
 	{paramInfo}
 ".TrimEnd();
@@ -293,7 +330,7 @@ First we will give you the original error, then each error that occured will sho
 
 {firstLine.TrimEnd()}
 
-🧐 Reason: {reasonAndFix}
+Reason: {reasonAndFix}
 
 {variables}
 
@@ -307,7 +344,7 @@ First we will give you the original error, then each error that occured will sho
 			if (error.Key == "PaymentRequired")
 			{
 				message = $@"
-🔴 ======== {error.Key} ========
+======== {error.Key} ========
 {reasonAndFix.Trim()}";
 			}
 
@@ -361,7 +398,7 @@ First we will give you the original error, then each error that occured will sho
 
 				message += $@"
 
-👨‍💻 For C# Developers:
+For C# Developers:
 	- {FormatLine(exception.Message)}
 
 	StackTrace: {FormatLine(exceptionString)}
@@ -372,10 +409,10 @@ First we will give you the original error, then each error that occured will sho
 				foreach (var nextError in error.ErrorChain)
 				{
 					if (nextError == error) continue;
-					
+
 					message += "\n\n\t\t<==== Next error ===> ";
 					message += nextError.ToFormat();
-					
+
 				}
 			}
 			return message;
@@ -458,7 +495,7 @@ Error Message: " + errorChain.Message;
 
 				errorMessage += @$"
 
-This is the previous LLM response: 
+This is the previous LLM response:
 ""Name"": is the name of the method selected
 
 ```json
@@ -489,16 +526,17 @@ This is the previous LLM response:
 					message += $"\t\t - at {ge.Step.RelativeGoalPath}:{ge.Step.LineNumber}";
 				}
 			}
-			else if (errorWithChain is MultipleError me)
+			else if (errorWithChain.ErrorChain.Count > 0)
 			{
-				errors = me.ErrorChain;
-				if (me.InitialError.Step != null)
+				// Handle base Error with ErrorChain
+				errors = errorWithChain.ErrorChain;
+				if (errorWithChain.Step != null)
 				{
-					message += $"\t- {me.InitialError.Message}\n\t\t - at {me.InitialError.Step.RelativeGoalPath}:{me.InitialError.Step.LineNumber}\n";
+					message += $"\t- {errorWithChain.Message}\n\t\t - at {errorWithChain.Step.RelativeGoalPath}:{errorWithChain.Step.LineNumber}\n";
 				}
 				else
 				{
-					message += $"\t- {me.InitialError.Message}\n";
+					message += $"\t- {errorWithChain.Message}\n";
 				}
 
 

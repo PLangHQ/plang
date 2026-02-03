@@ -1,0 +1,6 @@
+Start
+- set %users% = [{"name":"Jane"}, {"name":null}, {"name":"Bob"}]
+- foreach %item% in %users%, call InsertUser
+
+InsertUser
+- insert into testTable, name=%item.name%

@@ -448,6 +448,20 @@ namespace PLang.Building.Parsers
 				if (goal != null) return goal;
 			}
 
+			// Handle /system/ paths - check app's local system folder first, then fall back to actual system folder
+			var systemPrefix = fileSystem.Path.DirectorySeparatorChar + "system" + fileSystem.Path.DirectorySeparatorChar;
+			if (goalNameOrPath.StartsWith(systemPrefix, StringComparison.OrdinalIgnoreCase))
+			{
+				// First try: app's local system folder (allows overrides)
+				goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+
+				// Fallback: actual system folder (strip /system/ prefix since systemGoals paths don't include it)
+				var pathWithoutSystemPrefix = goalNameOrPath.Substring(systemPrefix.Length);
+				goal = systemGoals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", pathWithoutSystemPrefix), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+			}
+
 			// match goal from root, e.g. /Start
 			if (goalNameOrPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 			{

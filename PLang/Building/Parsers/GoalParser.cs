@@ -16,7 +16,7 @@ namespace PLang.Building.Parsers
 	{
 		List<Goal> GetGoals(bool force = false);
 		List<Goal> GetGoalFilesToBuild(bool force = false);
-		List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false);
+		List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isSystem = false);
 		List<App> GetApps(bool includeOs = true);
 	}
 
