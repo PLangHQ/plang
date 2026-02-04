@@ -89,10 +89,10 @@ namespace PLang.Runtime
 		}
 
 		public Goal Goal { get; set; }
-		/*public PLangContext Context
+		public PLangContext Context
 		{
 			get { return contextAccessor.Current; }
-		}*/
+		}
 
 		public static MemoryStack New(IServiceContainer container, IEngine engine)
 		{

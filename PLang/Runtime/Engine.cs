@@ -537,10 +537,16 @@ namespace PLang.Runtime
 			return (errorHandler != null && errorHandler.RunRetryBeforeCallingGoalToCall == isBefore &&
 					errorHandler.RetryHandler != null);
 		}
-
+		public record SubStepToExecute(List<string> PrPaths);
 		private bool HasExecuted(GoalStep step)
 		{
-			if (!step.Execute) return true;
+			if (!step.Execute)
+			{
+				if (!Context.Items.TryGetValue("SubStepToExecute", out object? subSteps) || subSteps == null) return true;
+				
+				bool hasExecuted = !((SubStepToExecute) subSteps).PrPaths.Any(p => p.Equals(step.RelativePrPath));
+				return hasExecuted;
+			}
 			if (!step.RunOnce) return false;
 			if (step.Executed == DateTime.MinValue) return false;
 			if (settings.IsDefaultSystemDbPath && step.Executed != null && step.Executed != DateTime.MinValue) return true;
@@ -560,11 +566,6 @@ namespace PLang.Runtime
 
 		public async Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep step, int stepIndex, PLangContext context)
 		{
-			if (stepIndex < goal.GoalSteps.Count && !goal.GoalSteps[stepIndex].Execute)
-			{
-				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
-				return (null, null);
-			}
 			if (step.Stopwatch == null) step.Stopwatch = Stopwatch.StartNew();
 
 			logger.LogTrace("     - Get runtime type {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
@@ -576,11 +577,11 @@ namespace PLang.Runtime
 			}
 
 			if (step.Instruction == null) LoadInstruction(goal, step);
-			
+			/*
 			context.AddVariable(goal, variableName: ReservedKeywords.Goal);
 			context.AddVariable(step, variableName: ReservedKeywords.Step);
 			context.AddVariable(step.Instruction, variableName: ReservedKeywords.Instruction);
-
+			*/
 			logger.LogTrace("     - Getting instance {ModuleType} - {ElapsedMs}", step.ModuleType, step.Stopwatch.ElapsedMilliseconds);
 
 			BaseProgram? classInstance;
@@ -665,7 +666,13 @@ namespace PLang.Runtime
 					// reset the Execute to false on all steps inside if statement
 					if (step.Indent > 0)
 					{
-						step.Execute = false;
+						context.Items.TryGetValue("SubStepToExecute", out object? subStepToExecute);
+						if (subStepToExecute == null)
+						{
+							subStepToExecute = new SubStepToExecute(new());
+						}
+						((SubStepToExecute)subStepToExecute).PrPaths.Remove(step.RelativePrPath);
+						context.Items["SubStepToExecute"] = subStepToExecute;
 					}
 				}
 			}
@@ -982,6 +989,8 @@ namespace PLang.Runtime
 				for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 				{
 					var step = goal.GoalSteps[stepIndex];
+					if (HasExecuted(step)) continue;
+
 					context.CallingStep = step;
 					goal.CurrentStepIndex = stepIndex;
 					step.Stopwatch = Stopwatch.StartNew();
@@ -992,7 +1001,7 @@ namespace PLang.Runtime
 					try
 					{
 						// Skip if already executed (RunOnce)
-						if (HasExecuted(step)) continue;
+						
 
 						step.UniqueId = Guid.NewGuid().ToString();
 

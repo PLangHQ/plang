@@ -828,6 +828,10 @@ Bad (dont use for):
 			return (result.ToString(p.Format, culture), null);
 		}
 
+		public async Task<object?> Split(string content, string seperator)
+		{
+			return content.Split(seperator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		}
 
 		public async Task<object?> TrimForLlm(object? obj, int maxItemCount = 30, int? maxItemLength = null, string? groupOn = null,
 			int samplesPerGroup = 5, int listLimit = 50, int totalCharsLimit = 2000, bool formatJson = false)

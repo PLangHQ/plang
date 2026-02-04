@@ -1,6 +1,8 @@
 ﻿using AngleSharp.Io.Dom;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.Playwright;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Utils;
@@ -71,7 +73,13 @@ namespace PLang.Models.ObjectValueExtractors
 				if (parent is IObjectValue parentOv)
 				{
 					var propertyValue = parentOv.Properties.FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
-					return propertyValue;
+					if (propertyValue != null)
+					{
+						return propertyValue;
+					}
+
+					return GetReserved(segment.Value, parentOv, memoryStack);
+					
 				}
 			}
 
@@ -89,6 +97,32 @@ namespace PLang.Models.ObjectValueExtractors
 
 			return new ObjectValue(property.Name, newObj, parent: parent, properties: parent.Properties);
 
+		}
+
+		private ObjectValue? GetReserved(string segment, IObjectValue parentOv, MemoryStack? memoryStack)
+		{
+			if (segment != "callstack" || memoryStack == null) return null;
+			
+			if (parentOv.Value is GoalStep step)
+			{
+				List<CallStackFrame> frames = new();
+				CallStackFrame? currentFrame = null;
+				foreach (var frame in memoryStack.Context.CallStack.GetFrames())
+				{
+					frames.Add(frame);
+
+					if (frame.CurrentStep?.Hash == step.Hash)
+					{
+						currentFrame = frame;
+						break;
+					}
+				}
+				
+				var ov = new ObjectValue("callstack", frames, parent: (ObjectValue) parentOv, properties: parentOv.Properties);
+				
+				return ov;
+			}
+			return null;
 		}
 
 		private ObjectValue? CheckConverter(PathSegment segment, MemoryStack? memoryStack)

@@ -28,7 +28,7 @@ namespace PLang.Errors
 				}
 
 				// Set error in context as %!error% (reserved variable)
-				engine.Context.AddVariable(error, variableName: ReservedKeywords.Error);
+				engine.Context.Error = error;
 
 				var goalInfo = new GoalToCallInfo("/errors/Error");
 

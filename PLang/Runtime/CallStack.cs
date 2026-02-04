@@ -243,6 +243,11 @@ public class CallStack
 		return Newtonsoft.Json.JsonConvert.SerializeObject(serializable,
 			indented ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None);
 	}
+
+	public override string ToString()
+	{
+		return ToJson(true);
+	}
 }
 
 public class CallStackFrame : VariableContainer

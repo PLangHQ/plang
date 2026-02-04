@@ -10,7 +10,8 @@ namespace PLang.Utils
 		private static JsonSerializerSettings jsonSerializer = new JsonSerializerSettings()
 		{
 			ObjectCreationHandling = ObjectCreationHandling.Replace,
-			Converters = { new JsonObjectValueConverter() }
+			Converters = { new JsonObjectValueConverter() }, 
+			ReferenceLoopHandling = ReferenceLoopHandling.Ignore
 		};
 
 		public static string? ConvertToString(object? body)

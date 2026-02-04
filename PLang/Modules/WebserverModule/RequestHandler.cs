@@ -798,6 +798,9 @@ namespace PLang.Modules.WebserverModule
 
 			request.Headers.TryGetValue("X-Requested-With", out var ajax);
 			properties.Add(new ObjectValue("IsAjax", ajax.ToString().Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase)));
+			request.Headers.TryGetValue("X-Initial-Request", out var isInitialRequest);
+
+			properties.Add(new ObjectValue("isInitialRequest", (ajax.Count == 0 || isInitialRequest.ToString().Equals("true", StringComparison.OrdinalIgnoreCase))));
 			properties.Add(new ObjectValue("Ip", httpContext.Connection.RemoteIpAddress?.ToString()));
 
 			if (!string.IsNullOrEmpty(request.Headers.UserAgent))

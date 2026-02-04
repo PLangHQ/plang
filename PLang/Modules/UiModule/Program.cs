@@ -294,7 +294,17 @@ IsTemplateFile: set as true when RenderMessage.Content looks like a fileName, e.
 			if (error != null) return (content, error);
 			logger.LogDebug($"           - Have rendered html - {stopwatch.ElapsedMilliseconds}");
 			var sink = context.GetSink(options.RenderMessage.Actor);
-			if (sink is HttpSink hs && !hs.IsFlushed && !memoryStack.Get<bool>("request!IsAjax") && !options.DontRenderMainLayout)
+
+			bool isInitialRequest = memoryStack.Get<bool>("request!isInitialRequest");
+			bool renderLayout = isInitialRequest;
+
+			bool isAjax = memoryStack.Get<bool>("request!IsAjax");
+			if (isAjax && !isInitialRequest)
+			{
+				renderLayout = false;
+			}
+
+			if (renderLayout && !options.DontRenderMainLayout)
 			{
 				var layoutOptions = GetLayoutOptions();
 

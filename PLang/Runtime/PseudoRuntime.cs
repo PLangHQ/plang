@@ -139,9 +139,6 @@ namespace PLang.Runtime
 					}
 				}
 
-				var prevIndent = context.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
-				context.AddVariable((prevIndent + indent), variableName: ReservedKeywords.ParentGoalIndent);
-
 				Task<(object? Variables, IError? Error)> task;
 				if (waitForExecution)
 				{

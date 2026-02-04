@@ -309,6 +309,7 @@ public class ObjectValue : IObjectValue
 		}
 
 	}
+
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
 	[JsonIgnore]

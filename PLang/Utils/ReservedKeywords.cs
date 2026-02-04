@@ -46,7 +46,6 @@
 		public static readonly string Inject_Archiving = "!Inject_Archiving";
 		public static readonly string Inject_OutputStream = "!Inject_OutputStream";
 		public static readonly string Inject_OutputSystemStream = "!Inject_OutputSystemStream";
-		public static readonly string ParentGoalIndent = "!ParentGoalIndent";
 		public static readonly string GoalTree = "!GoalTree";
 		public  static readonly string VariableValue = "!VariableValue";
 		public static readonly string VariableName = "!VariableName";

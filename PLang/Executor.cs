@@ -462,7 +462,7 @@ namespace PLang
 			string goalToRun = "Start.goal";
 			for (int i = 0; args != null && i < args.Length; i++)
 			{
-				if (args[i].StartsWith("--")) continue;
+				//if (args[i].StartsWith("--")) continue;
 				if (args[i].Contains("="))
 				{
 					var value = args[i].Split('=')[1];
@@ -470,10 +470,14 @@ namespace PLang
 					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 
 					var valueAsType = GetValueAsType(value);
-
-					memoryStack.Put(args[i].Split('=')[0].Trim(), valueAsType);
+					var key = args[i].Split('=')[0].Trim();
+					if (key.StartsWith("--"))
+					{
+						key = $"!args.{key.TrimStart("--")}";
+					}
+					memoryStack.Put(key, valueAsType);
 				}
-				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
+				else if (!args[i].StartsWith("--") && args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
 				{
 					goalToRun = args[i].Trim();
 				}

@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Reflection;
 using static PLang.Modules.ConditionalModule.Builder;
 using static PLang.Modules.ConditionalModule.ConditionEvaluator;
+using static PLang.Runtime.Engine;
 using static PLang.Runtime.Startup.ModuleLoader;
 using static PLang.Services.CompilerService.CSharpCompiler;
 
@@ -215,23 +216,28 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 			bool? result = null;
 			if (item == null) result = false;
 
-			if (item is string str)
+			if (contains != null)
 			{
-				result = str.Contains(contains.ToString());
-			}
-			if (item is JObject jObject)
-			{
-				result = jObject.ContainsKey(contains);
-			} else if (item is JArray jArray)
-			{
-				result = jArray.Any(x => x.ToString().Contains(contains));
-			}
-			else if (item is IList list)
-			{
-				result = list.Contains(contains);
-			} else if (item is IPlangComparer comparer)
-			{
-				result = comparer.Contains(contains);
+				if (item is string str)
+				{
+					result = str.Contains(contains.ToString());
+				}
+				else if (item is JObject jObject)
+				{
+					result = jObject.ContainsKey(contains);
+				}
+				else if (item is JArray jArray)
+				{
+					result = jArray.Any(x => x.ToString().Contains(contains));
+				}
+				else if (item is IList list)
+				{
+					result = list.Contains(contains);
+				}
+				else if (item is IPlangComparer comparer)
+				{
+					result = comparer.Contains(contains);
+				}
 			}
 
 			if (isNot) result = !result;
@@ -502,8 +508,17 @@ Logic: convert ""&&"" => ""AND"", ""||"" => ""OR""
 
 				while (isIndent)
 				{
-					nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
-
+					bool execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+					if (execute)
+					{
+						context.Items.TryGetValue("SubStepToExecute", out object? subStepToExecute);
+						if (subStepToExecute == null)
+						{
+							subStepToExecute = new SubStepToExecute(new());							
+						}
+						((SubStepToExecute) subStepToExecute).PrPaths.Add(nextStep.RelativePrPath);
+						context.Items["SubStepToExecute"] = subStepToExecute;
+					}
 					nextStep = nextStep.NextStep;
 					if (nextStep == null) break;
 					isIndent = (goalStep.Indent < nextStep.Indent);

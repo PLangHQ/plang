@@ -577,6 +577,11 @@ public class TypeHelper : ITypeHelper
 			return dto.DateTime;
 		}
 
+		if (targetType == typeof(JToken))
+		{
+			return JToken.FromObject(value);
+		}
+
 		if (IsListOfJToken(value) && targetType == typeof(string))
 		{
 			var jArray2 = new JArray((IEnumerable<JToken>)value);
@@ -646,44 +651,51 @@ public class TypeHelper : ITypeHelper
 			catch { }
 		}
 
-		try
+		if (value is JToken token)
 		{
-			if (value is JToken token)
+			var jsonSerializer = new JsonSerializer()
 			{
-				var jsonSerializer = new JsonSerializer()
-				{
-					NullValueHandling = NullValueHandling.Ignore,
-					DefaultValueHandling = DefaultValueHandling.Populate,
-				};
-				return token.ToObject(targetType, jsonSerializer);
-			}
-
-			return Convert.ChangeType(value, targetType);
+				NullValueHandling = NullValueHandling.Ignore,
+				DefaultValueHandling = DefaultValueHandling.Populate,
+			};
+			return token.ToObject(targetType, jsonSerializer);
 		}
-		catch (Exception ex)
+
+		if (value is IConvertible)
 		{
 			try
 			{
-				var jsonSerializer = new JsonSerializerSettings()
-				{
-					ObjectCreationHandling = ObjectCreationHandling.Replace,
-					Converters = { new JsonObjectValueConverter() }
-				};
-
-				var json = JsonConvert.SerializeObject(value, jsonSerializer);
-
-				return JsonConvert.DeserializeObject(json, targetType);
+				return Convert.ChangeType(value, targetType);
 			}
-			catch
+			catch (Exception ex)
 			{
-				if (targetType.Name == "String")
-				{
-					return StringHelper.ConvertToString(value);
-				}
-				return value;
+				int b = 0;
 			}
-
 		}
+
+		try
+		{
+			var jsonSerializer = new JsonSerializerSettings()
+			{
+				ObjectCreationHandling = ObjectCreationHandling.Replace,
+				Converters = { new JsonObjectValueConverter() }
+			};
+
+			var json = JsonConvert.SerializeObject(value, jsonSerializer);
+			if (targetType == typeof(string)) return json;
+
+			return JsonConvert.DeserializeObject(json, targetType);
+		}
+		catch
+		{
+			if (targetType.Name == "String")
+			{
+				return StringHelper.ConvertToString(value);
+			}
+			return value;
+		}
+
+
 	}
 
 	public static IDictionary ConvertToDictionary(Type targetType, object value, string? variableName = null)

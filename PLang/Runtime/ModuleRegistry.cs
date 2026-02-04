@@ -236,8 +236,14 @@ public class ModuleRegistry : IModuleRegistry
 	/// PLang.Modules.TerminalModule.Program -> "terminal"
 	/// PLang.Modules.HttpModule.Program -> "http"
 	/// </summary>
+	/// 
+	public record type(string ShortName)
+	{
+		string FullName { get; set; }
+	}
 	public static string ExtractShortName(Type moduleType)
 	{
+		
 		var fullName = moduleType.FullName ?? moduleType.Name;
 
 		// Pattern: PLang.Modules.<Name>Module.Program or PLang.Modules.<Name>Module.Builder
