@@ -1,0 +1,14 @@
+Build
+/ Main entry point for the PLang builder
+/ Transforms .goal files (natural language) into .pr files (JSON the Runtime executes)
+/ Parameters: %path% - folder to build (default: ".")
+
+- if %path% is not set then
+    - set %path% = "."
+- write out "Building path: %path%"
+- [plang] call GetApp, write to %app%
+- [plang] GetGoals, fileOrFolderPath=%path%, parser="goal", write to %goals%
+- write out "Found %goals.Count% goals"
+- write out "Goals: %goals%"
+- foreach %goals%, call BuildGoal, item=%goal%
+- [plang] call SaveApp, app=%app%, path=".build/app.pr"

@@ -1,0 +1,18 @@
+BuildStep
+/ Builds a single step - LLM Pass 2
+/ Skips unchanged steps (hash comparison)
+
+- write out "BuildStep: %step.Text%"
+- if %step.Hash% equals %step.PreviousHash% then
+    - write out "  Skipping - unchanged"
+    - return
+- read file "llm/BuildStep.llm", write to %buildStepPrompt%
+- [llm] system: %buildStepPrompt%
+        user: Step: %step.Text%
+              Intent: %step.Intent%
+        scheme: {method: string, data: {type: string, data: object}, return?: string, errors: [string], warnings: [string]}
+        write to %stepResult%
+- write out "  LLM result: %stepResult%"
+- set %step.MethodName% = %stepResult.method%
+- set %step.Parameters% = %stepResult.data%
+- set %step.ReturnVariable% = %stepResult.return%

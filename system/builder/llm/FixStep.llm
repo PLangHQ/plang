@@ -1,0 +1,66 @@
+# Fix Step
+
+You are the PLang builder. The previous step build failed validation. Fix the error.
+
+## Module: %step.Module%
+
+## Available Methods
+
+%methods%
+
+## Validation Error
+
+%!error%
+
+## Instructions
+
+1. Read the validation error carefully
+2. Read the previous result that failed
+3. Fix ONLY what the validation error identifies
+4. Do NOT change fields that passed validation
+5. If the error cannot be fixed, add it to the errors array
+
+## Common Fixes
+
+### "Module not found"
+- Check if the module name is spelled correctly
+- The module might not exist - add error to errors array
+
+### "Method not found"
+- Check if the method name is spelled correctly
+- Review available methods and select the correct one
+
+### "Data type mismatch"
+- Ensure `data.type` matches the method's expected type
+- Convention: `moduleName.methodName` (e.g., "db.select")
+
+### "Missing required field"
+- Add the missing field to `data.data`
+- Check the method's type definition for required fields
+
+### "Invalid field type"
+- Ensure the field value matches the expected type
+- Check if it should be a string, number, array, or object
+
+## Response Format
+
+Return the same schema as BuildStep:
+
+```json
+{
+  "method": "string",
+  "data": {"type": "string", "data": {}},
+  "return": "string or null",
+  "onError": "ErrorHandler or null",
+  "cache": "CacheSettings or null",
+  "cancelAfterSeconds": "int or null",
+  "errors": ["any unrecoverable errors"],
+  "warnings": ["any warnings"]
+}
+```
+
+## Rules
+
+- Only fix what's broken
+- Preserve correct fields from the previous result
+- If truly unfixable, document it in errors and move on

@@ -1,0 +1,96 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace PLang.Runtime2.Serialization;
+
+/// <summary>
+/// JSON serializer using System.Text.Json with stream support.
+/// </summary>
+public sealed class JsonStreamSerializer : ISerializer
+{
+    public string ContentType => "application/json";
+    public string FileExtension => ".json";
+
+    private readonly JsonSerializerOptions _options;
+
+    public JsonStreamSerializer(JsonSerializerOptions? options = null)
+    {
+        _options = options ?? new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = false,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters =
+            {
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            }
+        };
+    }
+
+    public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+    {
+        if (value == null)
+        {
+            await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
+            return;
+        }
+
+        type ??= value.GetType();
+        await JsonSerializer.SerializeAsync(stream, value, type, _options, cancellationToken);
+    }
+
+    public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+    {
+        if (stream.Length == 0)
+            return null;
+
+        return await JsonSerializer.DeserializeAsync(stream, type, _options, cancellationToken);
+    }
+
+    public async Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    {
+        if (stream.Length == 0)
+            return default;
+
+        return await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken);
+    }
+
+    public string Serialize(object? value, Type? type = null)
+    {
+        if (value == null)
+            return "null";
+
+        type ??= value.GetType();
+        return JsonSerializer.Serialize(value, type, _options);
+    }
+
+    public object? Deserialize(string data, Type type)
+    {
+        if (string.IsNullOrEmpty(data) || data == "null")
+            return null;
+
+        return JsonSerializer.Deserialize(data, type, _options);
+    }
+
+    public T? Deserialize<T>(string data)
+    {
+        if (string.IsNullOrEmpty(data) || data == "null")
+            return default;
+
+        return JsonSerializer.Deserialize<T>(data, _options);
+    }
+
+    /// <summary>
+    /// Creates a copy with indented output for pretty printing.
+    /// </summary>
+    public JsonStreamSerializer WithIndentation()
+    {
+        var newOptions = new JsonSerializerOptions(_options)
+        {
+            WriteIndented = true
+        };
+        return new JsonStreamSerializer(newOptions);
+    }
+}

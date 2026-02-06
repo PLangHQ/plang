@@ -1,0 +1,5 @@
+Start
+- set %name% = "Plang"
+- write out %name%
+- set %newVarName% = %name%
+- write out "NewVar: %newVarName%"

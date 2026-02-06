@@ -1,0 +1,11 @@
+{
+  "description": "The Start goal is a simple test that initializes a greeting message and outputs it. It sets the variable %greeting% to a predefined string and then writes that string to the output.",
+  "steps": [],
+  "subGoals": [],
+  "visibility": 1,
+  "hash": "72d9d50456229bd13eb409218c5f9992927e2fd286d163fae69d1d31c8d5c275",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": []
+}

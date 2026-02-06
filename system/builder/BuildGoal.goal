@@ -1,0 +1,17 @@
+BuildGoal
+/ Builds a single goal - two LLM passes:
+/ Pass 1: Module selection (sees entire goal for context)
+/ Pass 2: Step building (per step, parallelized)
+
+- [plang] GetRuntime2Goal %goal%, write to %r2Goal%
+- write out "Building goal: %r2Goal.Name%"
+- read file "llm/SelectActions.llm", load vars, write to %selectActionsPrompt%
+- [llm] system: %selectActionsPrompt%
+        user: %r2Goal%
+        scheme: [{stepIndex: int, action: string, intent: string}]
+        write to %actionAssignments%
+- write out "Action assignments: %actionAssignments%"
+- foreach %actionAssignments%, call AssignAction, item=%assignment%, r2Goal=%r2Goal%
+- write out "Steps count: %r2Goal.Steps.Count%"
+- foreach %r2Goal.Steps%, call BuildStep, item=%step%
+- [plang] call SaveGoal with Runtime2.Core.Goal %r2Goal%

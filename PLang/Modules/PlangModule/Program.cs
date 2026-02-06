@@ -14,12 +14,16 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Runtime2.Mapping;
+using PLang.Runtime2.Modules;
+using PLang.Runtime2.Utility;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using static PLang.Modules.BaseBuilder;
@@ -181,32 +185,430 @@ namespace PLang.Modules.PlangModule
 
 		}
 
+		[Description("Get available Runtime2 modules")]
+		public async Task<(object?, IError?)> GetActions(string? format = null)
+		{
+			var modules = Runtime2.Modules.Modules.Registry.All.ToList();
+			var result = new List<object>();
+
+			foreach (var module in modules)
+			{
+				result.Add(new
+				{
+					Name = module.Name,
+					Aliases = module.Aliases.ToList(),
+					Methods = module.GetMethods().ToList()
+				});
+			}
+
+			if (format?.Equals("md", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				var markdown = new System.Text.StringBuilder();
+				foreach (var mod in result)
+				{
+					var jObj = Newtonsoft.Json.Linq.JObject.FromObject(mod);
+					markdown.AppendLine($"## {jObj["Name"]}");
+					markdown.AppendLine($"Aliases: {string.Join(", ", jObj["Aliases"]?.ToObject<List<string>>() ?? new())}");
+					markdown.AppendLine($"Methods: {string.Join(", ", jObj["Methods"]?.ToObject<List<string>>() ?? new())}");
+					markdown.AppendLine();
+				}
+				return (markdown.ToString(), null);
+			}
+
+			return (result, null);
+		}
+
+		[Description("Load or create app.pr file with GUID id")]
+		public async Task<(AppData?, IError?)> GetApp(string? appPath = null)
+		{
+			var path = GetPath(appPath ?? "");
+			var buildPath = fileSystem.Path.Combine(path, ".build");
+			var appPrPath = fileSystem.Path.Combine(buildPath, "app.pr");
+
+			if (fileSystem.File.Exists(appPrPath))
+			{
+				try
+				{
+					var json = fileSystem.File.ReadAllText(appPrPath);
+					var appData = System.Text.Json.JsonSerializer.Deserialize<AppData>(json, new JsonSerializerOptions
+					{
+						PropertyNameCaseInsensitive = true
+					});
+					return (appData, null);
+				}
+				catch (Exception ex)
+				{
+					return (null, new ProgramError($"Failed to read app.pr: {ex.Message}", goalStep, function));
+				}
+			}
+
+			// Create new app.pr
+			var newAppData = new AppData
+			{
+				Id = Guid.NewGuid().ToString(),
+				Created = DateTime.UtcNow,
+				Updated = DateTime.UtcNow,
+				Name = fileSystem.Path.GetFileName(path),
+				Version = "0.2"
+			};
+
+			try
+			{
+				if (!fileSystem.Directory.Exists(buildPath))
+				{
+					fileSystem.Directory.CreateDirectory(buildPath);
+				}
+
+				var json = System.Text.Json.JsonSerializer.Serialize(newAppData, new JsonSerializerOptions
+				{
+					WriteIndented = true,
+					PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+				});
+				fileSystem.File.WriteAllText(appPrPath, json);
+
+				return (newAppData, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to create app.pr: {ex.Message}", goalStep, function));
+			}
+		}
+
+		[Description("Save app.pr file")]
+		public async Task<(object?, IError?)> SaveApp(AppData app, string? path = null)
+		{
+			if (app == null)
+			{
+				return (null, new ProgramError("App cannot be null", goalStep, function));
+			}
+
+			try
+			{
+				app.Updated = DateTime.UtcNow;
+
+				var appPath = path ?? ".build/app.pr";
+				var absolutePath = GetPath(appPath);
+				var directory = fileSystem.Path.GetDirectoryName(absolutePath);
+
+				if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
+				{
+					fileSystem.Directory.CreateDirectory(directory);
+				}
+
+				var json = System.Text.Json.JsonSerializer.Serialize(app, new JsonSerializerOptions
+				{
+					WriteIndented = true,
+					PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+				});
+				fileSystem.File.WriteAllText(absolutePath, json);
+
+				return (new { Path = absolutePath }, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to save app: {ex.Message}", goalStep, function));
+			}
+		}
+
+		[Description("Validate module, method and data")]
+		public async Task<(object?, IError?)> Validate(string moduleName, string methodName, object? data)
+		{
+			var errors = new List<string>();
+
+			// Validate module exists
+			var moduleType = typeHelper.GetRuntimeType(moduleName);
+			if (moduleType == null)
+			{
+				return (null, new ProgramError($"Module '{moduleName}' not found in registry", goalStep, function));
+			}
+
+			// Validate method exists
+			var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+				.FirstOrDefault(m => m.Name.Equals(methodName, StringComparison.OrdinalIgnoreCase));
+			if (method == null)
+			{
+				return (null, new ProgramError($"Method '{methodName}' not found on module '{moduleName}'", goalStep, function));
+			}
+
+			// Basic data validation - just check it's not null if method has parameters
+			var parameters = method.GetParameters();
+			if (parameters.Length > 0 && data == null)
+			{
+				return (null, new ProgramError($"Method '{methodName}' requires parameters but data is null", goalStep, function));
+			}
+
+			return (new { IsValid = true, Module = moduleName, Method = methodName }, null);
+		}
+
+		[Description("Convert a Building.Model.Goal to Runtime2.Core.Goal")]
+		public async Task<(Runtime2.Core.Goal?, IError?)> GetRuntime2Goal(Goal goal)
+		{
+			if (goal == null)
+			{
+				return (null, new ProgramError("Goal cannot be null", goalStep, function));
+			}
+
+			try
+			{
+				var runtime2Goal = Runtime2.Mapping.GoalMapper.ToRuntime2Goal(goal);
+				return await Task.FromResult((runtime2Goal, (IError?)null));
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to convert goal: {ex.Message}", goalStep, function));
+			}
+		}
+
+		[Description("Save a Runtime2 goal as v0.2 .pr.json file (all steps in one file)")]
+		public async Task<(object?, IError?)> SaveGoal(Runtime2.Core.Goal goal)
+		{
+			if (goal == null)
+			{
+				return (null, new ProgramError("Goal cannot be null", goalStep, function));
+			}
+
+			try
+			{
+				var file = Runtime2.Modules.Modules.Get<Runtime2.Modules.FileModule>();
+				if (file == null)
+				{
+					return (null, new ProgramError("FileModule not available", goalStep, function));
+				}
+
+				// v0.2 saves next to .goal file with .pr.json extension
+				// Path is relative, need to make it absolute
+				var goalPath = goal.Path ?? "";
+				var absoluteGoalPath = System.IO.Path.Combine(Environment.CurrentDirectory, goalPath.TrimStart('\\', '/'));
+				var goalDir = System.IO.Path.GetDirectoryName(absoluteGoalPath) ?? Environment.CurrentDirectory;
+				var goalName = System.IO.Path.GetFileNameWithoutExtension(goalPath);
+				var prPath = System.IO.Path.Combine(goalDir, $"{goalName}.pr.json");
+
+				var result = await file.Save(prPath, goal);
+				if (!result.Success)
+				{
+					return (null, new ProgramError(result.Error?.Message ?? "Failed to save goal", goalStep, function));
+				}
+
+				return (new { Path = prPath, Format = "v0.2" }, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to save goal: {ex.Message}", goalStep, function));
+			}
+		}
+
+		[Description("Save a Building.Model goal to .build folder as v0.2 .pr file (converts to Runtime2 format)")]
 		public async Task<(object?, IError?)> SaveGoal(Goal goal)
 		{
-			int i = 0;
-			return (null, null);
+			if (goal == null)
+			{
+				return (null, new ProgramError("Goal cannot be null", goalStep, function));
+			}
+
+			// Convert and delegate to Runtime2 version
+			var runtime2Goal = Runtime2.Mapping.GoalMapper.ToRuntime2Goal(goal);
+			return await SaveGoal(runtime2Goal);
 		}
+
+		[Description("Save a step/method .pr file")]
 		public async Task<(object?, IError?)> SaveMethod(object methodPr)
 		{
-			int i = 0;
-			return (null, null);
+			if (methodPr == null)
+			{
+				return (null, new ProgramError("Method PR cannot be null", goalStep, function));
+			}
+
+			try
+			{
+				// The methodPr should contain path info and the method data
+				var jObject = methodPr as JObject ?? JObject.FromObject(methodPr);
+
+				var path = jObject["path"]?.ToString() ?? jObject["Path"]?.ToString();
+				if (string.IsNullOrEmpty(path))
+				{
+					return (null, new ProgramError("Method PR must contain a 'path' property", goalStep, function));
+				}
+
+				var absolutePath = GetPath(path);
+				var directory = fileSystem.Path.GetDirectoryName(absolutePath);
+
+				if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
+				{
+					fileSystem.Directory.CreateDirectory(directory);
+				}
+
+				// Remove path from object before saving
+				jObject.Remove("path");
+				jObject.Remove("Path");
+
+				var json = jObject.ToString(Formatting.Indented);
+				fileSystem.File.WriteAllText(absolutePath, json);
+
+				return (new { Path = absolutePath }, null);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError($"Failed to save method: {ex.Message}", goalStep, function));
+			}
 		}
+
+		[Description("Get methods for specified modules")]
 		public async Task<(object?, IError?)> GetMethods(List<string> modules, string? format = null)
 		{
-			int i = 0;
-			return (null, null);
+			if (modules == null || modules.Count == 0)
+			{
+				return (null, new ProgramError("At least one module must be specified", goalStep, function));
+			}
+
+			var result = new List<object>();
+
+			foreach (var moduleName in modules)
+			{
+				var (classDescription, error) = await GetClassDescription(moduleName);
+				if (error != null)
+				{
+					continue; // Skip modules that don't exist
+				}
+
+				if (classDescription != null)
+				{
+					result.Add(new
+					{
+						Module = moduleName,
+						Description = classDescription
+					});
+				}
+			}
+
+			if (format?.Equals("md", StringComparison.OrdinalIgnoreCase) == true)
+			{
+				var markdown = new System.Text.StringBuilder();
+				foreach (var item in result)
+				{
+					var jObj = JObject.FromObject(item);
+					markdown.AppendLine($"## {jObj["Module"]}");
+					markdown.AppendLine();
+					var desc = jObj["Description"] as JObject;
+					if (desc != null)
+					{
+						markdown.AppendLine($"**Description:** {desc["Description"]}");
+						markdown.AppendLine();
+						var methods = desc["Methods"] as JArray;
+						if (methods != null)
+						{
+							foreach (var method in methods)
+							{
+								markdown.AppendLine($"### {method["Name"]}");
+								markdown.AppendLine($"{method["Description"]}");
+								markdown.AppendLine();
+							}
+						}
+					}
+				}
+				return (markdown.ToString(), null);
+			}
+
+			return (result, null);
 		}
 
+		[Description("Validate goal structure")]
 		public async Task<(object?, IError?)> ValidateGoal(Goal goal)
 		{
-			int i = 0;
-			return (null, null);
+			if (goal == null)
+			{
+				return (null, new ProgramError("Goal cannot be null", goalStep, function));
+			}
+
+			var errors = new List<string>();
+			var warnings = new List<string>();
+
+			// Validate goal name
+			if (string.IsNullOrWhiteSpace(goal.GoalName))
+			{
+				errors.Add("Goal name is required");
+			}
+
+			// Validate steps
+			if (goal.GoalSteps == null || goal.GoalSteps.Count == 0)
+			{
+				warnings.Add("Goal has no steps");
+			}
+			else
+			{
+				for (int i = 0; i < goal.GoalSteps.Count; i++)
+				{
+					var step = goal.GoalSteps[i];
+					if (string.IsNullOrWhiteSpace(step.Text))
+					{
+						errors.Add($"Step {i + 1}: Text is required");
+					}
+					if (string.IsNullOrWhiteSpace(step.ModuleType))
+					{
+						warnings.Add($"Step {i + 1}: Module type not set");
+					}
+				}
+			}
+
+			var isValid = errors.Count == 0;
+
+			return (new
+			{
+				IsValid = isValid,
+				Errors = errors,
+				Warnings = warnings
+			}, null);
 		}
 
+		[Description("Validate step method/function")]
 		public async Task<(object?, IError?)> ValidateMethod(GoalStep step, object function)
 		{
-			int i = 0;
-			return (null, null);
+			if (step == null)
+			{
+				return (null, new ProgramError("Step cannot be null", goalStep, this.function));
+			}
+
+			var errors = new List<string>();
+			var warnings = new List<string>();
+
+			// Validate module exists
+			if (!string.IsNullOrEmpty(step.ModuleType))
+			{
+				var moduleType = typeHelper.GetRuntimeType(step.ModuleType);
+				if (moduleType == null)
+				{
+					errors.Add($"Module '{step.ModuleType}' not found");
+				}
+				else if (!string.IsNullOrEmpty(step.Name))
+				{
+					// Validate method exists
+					var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+						.FirstOrDefault(m => m.Name.Equals(step.Name, StringComparison.OrdinalIgnoreCase));
+					if (method == null)
+					{
+						errors.Add($"Method '{step.Name}' not found in module '{step.ModuleType}'");
+					}
+				}
+			}
+
+			// Validate function object if provided
+			if (function != null)
+			{
+				var jFunc = function as JObject ?? JObject.FromObject(function);
+				var functionName = jFunc["FunctionName"]?.ToString() ?? jFunc["Name"]?.ToString();
+				if (string.IsNullOrEmpty(functionName))
+				{
+					warnings.Add("Function name not specified");
+				}
+			}
+
+			var isValid = errors.Count == 0;
+
+			return (new
+			{
+				IsValid = isValid,
+				Errors = errors,
+				Warnings = warnings
+			}, null);
 		}
 		public async Task<(string?, IError?)> GetModules(string? stepText = null, List<string>? excludeModules = null)
 		{

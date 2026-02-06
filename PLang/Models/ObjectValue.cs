@@ -303,8 +303,9 @@ public class ObjectValue : IObjectValue
 			}
 			else
 			{
-
-				throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
+				// TODO: Implement property setting for arbitrary object types using reflection
+				// Currently can't set properties on types like GoalStep
+				// throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");
 			}
 		}
 

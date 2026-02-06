@@ -284,7 +284,7 @@ namespace PLang.Utils
 			{
 				foreach (var genericType in item.GenericTypeArguments)
 				{
-					var propInfos = GetPropertyInfos(method, genericType.GetProperties(), null, genericType);
+					var propInfos = GetPropertyInfos(method, genericType.GetProperties(), null, genericType, depth + 1);
 					if (propInfos == null) continue;
 
 					foreach (var propInfo in propInfos)
@@ -461,11 +461,18 @@ namespace PLang.Utils
 		{
 			if (propertyName != null)
 			{
-				var prop = item.GetProperty(propertyName);
-				var attr = prop?.GetCustomAttribute<DescriptionAttribute>();
-				if (!string.IsNullOrEmpty(attr?.Description))
+				try
 				{
-					return attr?.Description;
+					var prop = item.GetProperty(propertyName);
+					var attr = prop?.GetCustomAttribute<DescriptionAttribute>();
+					if (!string.IsNullOrEmpty(attr?.Description))
+					{
+						return attr?.Description;
+					}
+				}
+				catch (System.Reflection.AmbiguousMatchException)
+				{
+					// Multiple indexers with same name (e.g., this[int] and this[string]) - skip description
 				}
 			}
 
