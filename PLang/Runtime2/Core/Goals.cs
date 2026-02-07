@@ -135,9 +135,12 @@ public sealed class Goals
     /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
     /// </summary>
     public async Task<Return> LoadFromFileAsync(Interfaces.IPLangFileSystem fileSystem, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
-    {
-        try
-        {
+	{
+		//check: we dont need fileSystem object here, use engine.io.read
+	 // these we send in the serialzier, goal.format="json", we can set it in plang with `- set goal.format = "csv"`
+	 // so we dont want to see serializer here, that is not job of this function, that goes to io.read that sends it futher
+		try
+		{
             var json = await fileSystem.File.ReadAllTextAsync(prFilePath, cancellationToken);
             var data = JsonSerializer.Deserialize<GoalData>(json, new JsonSerializerOptions
             {
@@ -146,8 +149,10 @@ public sealed class Goals
 
             if (data == null)
                 return new Return { Error = new Error($"Failed to parse goal file: {prFilePath}") };
-
-            var goal = Goal.FromData(data, prPath: prFilePath);
+			
+			// check: it's not GoalData, it is just Data, and since it just data
+			// we can do data.Value<Goal>();
+			var goal = Goal.FromData(data, prPath: prFilePath);
 
             if (context != null)
                 await goal.Load(context);
@@ -167,8 +172,9 @@ public sealed class Goals
     public async Task<Return> LoadFromDirectoryAsync(Interfaces.IPLangFileSystem fileSystem, string directory, string pattern = "*.pr.json", PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
-        {
-            var files = fileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+		{ 
+			// check: use file.getFiles action
+			var files = fileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
             var loadedCount = 0;
 
             foreach (var file in files)
