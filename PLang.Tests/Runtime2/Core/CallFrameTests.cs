@@ -251,7 +251,7 @@ public class CallFrameTests
     public async Task Complete_SetsPhaseToError_WhenHasErrors()
     {
         var frame = new CallFrame("TestGoal");
-        frame.AddError(new ErrorInfo("Test error"));
+        frame.AddError(new Error("Test error"));
 
         frame.Complete();
 
@@ -262,7 +262,7 @@ public class CallFrameTests
     public async Task AddError_AddsToErrorsList()
     {
         var frame = new CallFrame("TestGoal");
-        var error = new ErrorInfo("Test error");
+        var error = new Error("Test error");
 
         frame.AddError(error);
 

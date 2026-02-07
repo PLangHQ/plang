@@ -1,4 +1,9 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
+using PLang.Runtime2.Context;
+using PLang.Runtime2.Errors;
+using PLang.Runtime2.Utility;
+using Error = PLang.Runtime2.Errors.Error;
 
 namespace PLang.Runtime2.Core;
 
@@ -92,6 +97,11 @@ public sealed class Goals
     public IEnumerable<string> Names => _goals.Keys;
 
     /// <summary>
+    /// Gets all goals as a list.
+    /// </summary>
+    public IReadOnlyList<Goal> Value => _goals.Values.ToList();
+
+    /// <summary>
     /// Gets all goals.
     /// </summary>
     public IEnumerable<Goal> All => _goals.Values;
@@ -120,4 +130,59 @@ public sealed class Goals
     /// Indexer for getting goals by name.
     /// </summary>
     public Goal? this[string name] => Get(name);
+
+    /// <summary>
+    /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
+    /// </summary>
+    public async Task<Return> LoadFromFileAsync(Interfaces.IPLangFileSystem fileSystem, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = await fileSystem.File.ReadAllTextAsync(prFilePath, cancellationToken);
+            var data = JsonSerializer.Deserialize<GoalData>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (data == null)
+                return new Return { Error = new Error($"Failed to parse goal file: {prFilePath}") };
+
+            var goal = Goal.FromData(data, prPath: prFilePath);
+
+            if (context != null)
+                await goal.Load(context);
+
+            Add(goal);
+            return new Return { Value = goal };
+        }
+        catch (Exception ex)
+        {
+            return new Return { Error = Error.FromException(ex) };
+        }
+    }
+
+    /// <summary>
+    /// Loads all goals from a directory.
+    /// </summary>
+    public async Task<Return> LoadFromDirectoryAsync(Interfaces.IPLangFileSystem fileSystem, string directory, string pattern = "*.pr.json", PLangContext? context = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var files = fileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            var loadedCount = 0;
+
+            foreach (var file in files)
+            {
+                var result = await LoadFromFileAsync(fileSystem, file, context, cancellationToken);
+                if (result)
+                    loadedCount++;
+            }
+
+            return new Return { Value = loadedCount };
+        }
+        catch (Exception ex)
+        {
+            return new Return { Error = Error.FromException(ex) };
+        }
+    }
 }

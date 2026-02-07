@@ -222,7 +222,7 @@ public class CallStackTests
     public async Task AddError_AddsToErrorList()
     {
         var stack = new CallStack();
-        var error = new ErrorInfo("Test error");
+        var error = new Error("Test error");
 
         stack.AddError(error);
 
@@ -236,7 +236,7 @@ public class CallStackTests
     {
         var stack = new CallStack();
         stack.Push("TestGoal");
-        var error = new ErrorInfo("Test error");
+        var error = new Error("Test error");
 
         stack.AddError(error);
 
@@ -247,7 +247,7 @@ public class CallStackTests
     public async Task AddError_WhenDisabled_AddsToGlobalListOnly()
     {
         var stack = new CallStack { IsEnabled = false };
-        var error = new ErrorInfo("Test error");
+        var error = new Error("Test error");
 
         stack.AddError(error);
 
@@ -259,8 +259,8 @@ public class CallStackTests
     public async Task GetErrors_ReturnsAllErrors()
     {
         var stack = new CallStack();
-        stack.AddError(new ErrorInfo("Error 1"));
-        stack.AddError(new ErrorInfo("Error 2"));
+        stack.AddError(new Error("Error 1"));
+        stack.AddError(new Error("Error 2"));
 
         var errors = stack.GetErrors();
 
@@ -271,8 +271,8 @@ public class CallStackTests
     public async Task ClearErrors_RemovesAllErrors()
     {
         var stack = new CallStack();
-        stack.AddError(new ErrorInfo("Error 1"));
-        stack.AddError(new ErrorInfo("Error 2"));
+        stack.AddError(new Error("Error 1"));
+        stack.AddError(new Error("Error 2"));
 
         stack.ClearErrors();
 
@@ -394,7 +394,7 @@ public class CallStackTests
         var stack = new CallStack();
         stack.Push("Goal1");
         stack.Push("Goal2");
-        stack.AddError(new ErrorInfo("Error"));
+        stack.AddError(new Error("Error"));
 
         stack.Clear();
 

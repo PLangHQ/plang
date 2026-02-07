@@ -159,9 +159,6 @@ public sealed class StepDataDto
     [JsonPropertyName("intent")]
     public string? Intent { get; set; }
 
-    [JsonPropertyName("data")]
-    public DataDto? Data { get; set; }
-
     [JsonPropertyName("onError")]
     public ErrorHandlerData? OnError { get; set; }
 
@@ -197,7 +194,7 @@ public static class GoalDataConverter
             InputParameters = data.InputParameters,
             Path = path,
             PrPath = prPath,
-            Steps = data.Steps.Select(ToStep).ToList(),
+            Steps = new Steps(data.Steps.Select(ToStep)),
             SubGoals = data.SubGoals ?? new(),
             Errors = data.Errors ?? new(),
             Warnings = data.Warnings ?? new()
@@ -221,13 +218,12 @@ public static class GoalDataConverter
             LineNumber = data.LineNumber,
             Indent = data.Indent,
             Comment = data.Comment,
-            Actions = data.Actions.Select(a => (IAction)a).ToList(),
+            Actions = new Actions(data.Actions),
             OnErrorGoal = data.OnErrorGoal,
             WaitForExecution = data.WaitForExecution,
             Hash = data.Hash,
             PreviousHash = data.PreviousHash,
             Intent = data.Intent,
-            Data = ToData(data.Data),
             OnError = ToErrorHandler(data.OnError),
             Cache = ToCacheSettings(data.Cache),
             Timeout = data.Timeout,
@@ -269,14 +265,13 @@ public static class GoalDataConverter
                 Class = a.Class,
                 Method = a.Method,
                 Parameters = new List<Data>(a.Parameters),
-                Return = a.Return
+                Return = a.Return != null ? new List<Data>(a.Return) : null
             }).ToList(),
             OnErrorGoal = step.OnErrorGoal,
             WaitForExecution = step.WaitForExecution,
             Hash = step.Hash,
             PreviousHash = step.PreviousHash,
             Intent = step.Intent,
-            Data = ToDataDto(step.Data),
             OnError = ToData(step.OnError),
             Cache = ToData(step.Cache),
             Timeout = step.Timeout,

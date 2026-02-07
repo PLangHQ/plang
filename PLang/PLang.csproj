@@ -50,6 +50,11 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\PLang.Generators\PLang.Generators.csproj"
+        OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.4.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Castle.Core" Version="5.2.1" />

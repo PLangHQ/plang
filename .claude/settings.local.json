@@ -7,7 +7,13 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet test:*)",
       "Bash(dotnet run:*)",
-      "Bash(dotnet exec:*)"
+      "Bash(dotnet exec:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PLang\\\\Runtime2\\\\Modules\"\" | grep \".cs \")",
+      "Bash(wc:*)",
+      "Bash(cd:*)",
+      "Bash(dotnet sln add:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"error|Build succeeded|failed\")"
     ]
   }
 }

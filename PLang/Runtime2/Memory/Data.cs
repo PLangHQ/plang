@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using PLang.Attributes;
 using PLang.Runtime2.Utility;
 
@@ -63,50 +65,67 @@ public class Data
     private object? _value;
     private TypeInfo? _typeInfo;
 
+    [JsonPropertyName("name")]
     public string Name { get; }
+
+    [JsonIgnore]
     public string Path { get; }
+
+    [JsonIgnore]
     [LlmIgnore]
     public Data? Parent { get; }
+
+    [JsonIgnore]
     public bool IsInitialized { get; private set; }
+
+    [JsonIgnore]
     public DateTime Created { get; }
+
+    [JsonIgnore]
     public DateTime Updated { get; private set; }
+
+    [JsonIgnore]
     [LlmIgnore]
     public Properties Properties { get; set; }
 
+    [JsonConstructor]
     public Data(string name, object? value = null, TypeInfo? typeInfo = null, Data? parent = null)
     {
         Name = CleanName(name);
-        _value = value;
-        _typeInfo = typeInfo ?? (value != null ? new TypeInfo(value.GetType()) : null);
+        _value = UnwrapJsonElement(value);
+        _typeInfo = typeInfo ?? (_value != null ? new TypeInfo(_value.GetType()) : null);
         Parent = parent;
         Path = BuildPath(parent, Name);
-        IsInitialized = value != null;
+        IsInitialized = _value != null;
         Created = DateTime.UtcNow;
         Updated = Created;
         Properties = new Properties();
     }
 
+    [JsonPropertyName("value")]
     public object? Value
     {
         get => _value;
         set
         {
-            _value = value;
+            _value = UnwrapJsonElement(value);
             Updated = DateTime.UtcNow;
             IsInitialized = true;
-            if (value != null && _typeInfo == null)
+            if (_value != null && _typeInfo == null)
             {
-                _typeInfo = new TypeInfo(value.GetType());
+                _typeInfo = new TypeInfo(_value.GetType());
             }
         }
     }
 
+    [JsonIgnore]
     public TypeInfo? TypeInfo
     {
         get => _typeInfo;
         set => _typeInfo = value;
     }
 
+    [JsonIgnore]
     public Type? ClrType => _typeInfo?.ClrType;
 
     /// <summary>
@@ -228,12 +247,31 @@ public class Data
         return null;
     }
 
+    [JsonIgnore]
     public bool IsEmpty => !IsInitialized || _value == null ||
         (_value is string s && string.IsNullOrEmpty(s));
 
     public static Data Null(string name = "") => new(name, null);
 
     public override string ToString() => _value?.ToString() ?? "(null)";
+
+    private static object? UnwrapJsonElement(object? value)
+    {
+        if (value is JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                JsonValueKind.Undefined => null,
+                _ => element
+            };
+        }
+        return value;
+    }
 
     private static string CleanName(string name)
     {

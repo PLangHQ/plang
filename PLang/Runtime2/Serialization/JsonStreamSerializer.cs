@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace PLang.Runtime2.Serialization;
 
@@ -13,6 +15,7 @@ public sealed class JsonStreamSerializer : ISerializer
     public string FileExtension => ".json";
 
     private readonly JsonSerializerOptions _options;
+    private readonly ConcurrentDictionary<View, JsonStreamSerializer> _viewCache = new();
 
     public JsonStreamSerializer(JsonSerializerOptions? options = null)
     {
@@ -27,6 +30,24 @@ public sealed class JsonStreamSerializer : ISerializer
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
             }
         };
+    }
+
+    /// <summary>
+    /// Returns a serializer that only includes properties tagged with the given view.
+    /// </summary>
+    public JsonStreamSerializer ForView(View view)
+    {
+        return _viewCache.GetOrAdd(view, v =>
+        {
+            var viewOptions = new JsonSerializerOptions(_options)
+            {
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver
+                {
+                    Modifiers = { ViewPropertyFilter.For(v) }
+                }
+            };
+            return new JsonStreamSerializer(viewOptions);
+        });
     }
 
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)

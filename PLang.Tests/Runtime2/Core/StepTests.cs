@@ -15,14 +15,14 @@ public class StepTests
             LineNumber = 10,
             Indent = 2,
             Comment = "This makes an HTTP call",
-            Actions = new List<IAction>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action
                 {
                     Class = "http",
                     Method = "get",
                     Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                    Return = new Return { Variables = new List<Data> { new Data("response") } }
+                    Return = new List<Data> { new Data("response") }
                 }
             },
             OnErrorGoal = "HandleError",
@@ -80,14 +80,14 @@ public class StepTests
             LineNumber = 5,
             Indent = 1,
             Comment = "original comment",
-            Actions = new List<IAction>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action
                 {
                     Class = "variable",
                     Method = "set",
                     Parameters = new List<Data> { new Data("name", "test") },
-                    Return = new Return { Variables = new List<Data> { new Data("result") } }
+                    Return = new List<Data> { new Data("result") }
                 }
             },
             OnErrorGoal = "ErrorHandler",

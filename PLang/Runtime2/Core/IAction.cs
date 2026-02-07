@@ -7,5 +7,5 @@ public interface IAction
     string Class { get; }
     string Method { get; }
     List<Data> Parameters { get; }
-    Return Return { get; }
+    List<Data>? Return { get; }
 }

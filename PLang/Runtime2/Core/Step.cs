@@ -1,55 +1,67 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Memory;
+using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.Core;
 
 /// <summary>
 /// Represents a step within a goal for Runtime2.
 /// </summary>
-public sealed class Step
+public sealed partial class Step
 {
+    [Store, LlmBuilder, Debug, Default]
     public int Index { get; init; }
 
+    [Store, LlmBuilder, Debug, Default]
     public string Text { get; init; } = "";
 
+    [Store, Debug, Default]
     public int LineNumber { get; init; }
 
+    [Store, LlmBuilder, Debug, Default]
     public int Indent { get; init; }
 
+    [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    /// <summary>
-    /// Actions to execute for this step.
-    /// </summary>
-    public List<IAction> Actions { get; init; } = new();
+    [Store, Debug, Default]
+    public Actions Actions { get; init; } = new();
 
+    [Store, Debug, Default]
     public string? OnErrorGoal { get; init; }
 
+    [Store, Debug]
     public string? Hash { get; init; }
 
+    [Store, Debug]
     public string? PreviousHash { get; init; }
 
+    [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
 
-    public Data? Data { get; init; }
-
+    [Store, Debug, Default]
     public ErrorHandler? OnError { get; init; }
 
+    [Store, Debug, Default]
     public CacheSettings? Cache { get; init; }
 
-    /// <summary>
-    /// Timeout in seconds after which to cancel execution.
-    /// </summary>
+    [Store, Debug, Default]
     public int? Timeout { get; init; }
 
+    [Store, Debug]
     public List<Info> Errors { get; init; } = new();
 
+    [Store, Debug]
     public List<Info> Warnings { get; init; } = new();
 
+    [Store, Debug, Default]
     public bool WaitForExecution { get; init; } = true;
 
     [JsonIgnore]
     public Goal? Goal { get; set; }
+
+    [JsonIgnore]
+    public ObjectEvents Events { get; } = new();
 
     public Step Clone()
     {
@@ -60,20 +72,19 @@ public sealed class Step
             LineNumber = LineNumber,
             Indent = Indent,
             Comment = Comment,
-            Actions = Actions.Select(a => (IAction)new Action
+            Actions = new Actions(Actions.Select(a => new Action
             {
                 Class = a.Class,
                 Method = a.Method,
                 Parameters = new List<Data>(a.Parameters),
-                Return = new Return { Variables = a.Return.Variables != null ? new List<Data>(a.Return.Variables) : null }
-            }).ToList(),
+                Return = a.Return != null ? new List<Data>(a.Return) : null
+            })),
             OnErrorGoal = OnErrorGoal,
             WaitForExecution = WaitForExecution,
             Goal = Goal,
             Hash = Hash,
             PreviousHash = PreviousHash,
             Intent = Intent,
-            Data = Data != null ? new Data(Data.Name, Data.Value, Data.TypeInfo) : null,
             OnError = OnError,
             Cache = Cache,
             Timeout = Timeout,

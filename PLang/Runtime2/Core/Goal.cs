@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using PLang.Attributes;
+using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.Core;
 
@@ -14,87 +16,58 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for Runtime2.
 /// </summary>
-public sealed class Goal
+public sealed partial class Goal
 {
-    /// <summary>
-    /// Name of the goal.
-    /// </summary>
+    [Store, LlmBuilder, Debug, Default]
     public string Name { get; init; } = "";
 
-    /// <summary>
-    /// Description of what the goal does.
-    /// </summary>
+    [Store, LlmBuilder, Debug, Default]
     public string? Description { get; init; }
 
-    /// <summary>
-    /// Comment at the top of the goal file.
-    /// </summary>
+    [Store, LlmBuilder, Debug, Default]
     public string? Comment { get; init; }
 
-    /// <summary>
-    /// Steps in this goal.
-    /// </summary>
-    public List<Step> Steps { get; init; } = new();
+    [Store, Debug, Default]
+    public Steps Steps { get; init; } = new();
 
-    /// <summary>
-    /// Sub-goals referenced by this goal.
-    /// </summary>
+    [Store, Debug, Default]
     public List<string> SubGoals { get; init; } = new();
 
-    /// <summary>
-    /// Visibility of this goal.
-    /// </summary>
+    [Store, LlmBuilder, Debug, Default]
     public Visibility Visibility { get; init; } = Visibility.Private;
 
-    /// <summary>
-    /// Relative path to the .goal file from app root.
-    /// </summary>
+    [Store, Debug]
     public string? Path { get; init; }
 
-    /// <summary>
-    /// Relative path to the compiled .pr file from app root.
-    /// </summary>
+    [Store, Debug]
     public string? PrPath { get; init; }
 
-    /// <summary>
-    /// Hash of the goal content (for caching/validation).
-    /// </summary>
+    [Store, Debug]
     public string? Hash { get; init; }
 
-    /// <summary>
-    /// Whether this is a setup goal (runs once per session).
-    /// </summary>
+    [Store, Debug, Default]
     public bool IsSetup { get; init; }
 
-    /// <summary>
-    /// Whether this is an event goal.
-    /// </summary>
+    [Store, Debug, Default]
     public bool IsEvent { get; init; }
 
-    /// <summary>
-    /// Required input parameters.
-    /// </summary>
+    [Store, LlmBuilder, Debug, Default]
     public Dictionary<string, string>? InputParameters { get; init; }
 
-    /// <summary>
-    /// Parent goal (if this is a sub-goal).
-    /// </summary>
     [LlmIgnore]
+    [JsonIgnore]
     public Goal? Parent { get; set; }
 
-    /// <summary>
-    /// Errors encountered during building.
-    /// </summary>
+    [Store, Debug]
     public List<Info> Errors { get; init; } = new();
 
-    /// <summary>
-    /// Warnings from the build process.
-    /// </summary>
+    [Store, Debug]
     public List<Info> Warnings { get; init; } = new();
 
-    /// <summary>
-    /// Gets the full path including parent goals.
-    /// </summary>
+    [JsonIgnore]
+    public ObjectEvents Events { get; } = new();
+
+    [Debug, Default]
     public string FullPath
     {
         get
@@ -105,9 +78,6 @@ public sealed class Goal
         }
     }
 
-    /// <summary>
-    /// Gets the goal as a formatted string.
-    /// </summary>
     public string ToText()
     {
         var lines = new List<string>();
@@ -129,9 +99,6 @@ public sealed class Goal
         return string.Join("\n", lines);
     }
 
-    /// <summary>
-    /// Creates a not-found placeholder goal.
-    /// </summary>
     public static Goal NotFound(string name) => new()
     {
         Name = name,

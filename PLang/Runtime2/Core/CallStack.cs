@@ -11,7 +11,7 @@ namespace PLang.Runtime2.Core;
 public sealed class CallStack
 {
     private readonly ConcurrentStack<CallFrame> _frames = new();
-    private readonly List<ErrorInfo> _errors = new();
+    private readonly List<IError> _errors = new();
     private readonly object _errorLock = new();
 
     /// <summary>
@@ -92,7 +92,7 @@ public sealed class CallStack
     /// <summary>
     /// Adds an error to the current frame and global error list.
     /// </summary>
-    public void AddError(ErrorInfo error)
+    public void AddError(IError error)
     {
         lock (_errorLock)
         {
@@ -108,7 +108,7 @@ public sealed class CallStack
     /// <summary>
     /// Gets all errors that have occurred.
     /// </summary>
-    public IReadOnlyList<ErrorInfo> GetErrors()
+    public IReadOnlyList<IError> GetErrors()
     {
         lock (_errorLock)
         {

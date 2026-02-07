@@ -20,7 +20,7 @@ public class GoalTests
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
             SubGoals = new List<string> { "SubGoal1", "SubGoal2" },
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
@@ -135,7 +135,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
@@ -169,7 +169,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 new Step { Index = 0, Text = "step", Comment = "step comment" }
             }
@@ -186,7 +186,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 new Step { Index = 0, Text = "no indent", Indent = 0 },
                 new Step { Index = 1, Text = "one indent", Indent = 1 },

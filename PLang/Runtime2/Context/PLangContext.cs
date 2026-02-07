@@ -74,6 +74,31 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Actor? Actor { get; internal set; }
 
+    /// <summary>
+    /// System-level event scope.
+    /// </summary>
+    public EventScope System { get; }
+
+    /// <summary>
+    /// User-level event scope.
+    /// </summary>
+    public EventScope User { get; }
+
+    /// <summary>
+    /// Merged view of system + user events with load-event runners.
+    /// </summary>
+    public MergedEvents Events { get; }
+
+    /// <summary>
+    /// The goal currently being executed.
+    /// </summary>
+    public Goal? Goal { get; set; }
+
+    /// <summary>
+    /// The step currently being executed.
+    /// </summary>
+    public Step? Step { get; set; }
+
     public PLangContext(PLangAppContext appContext, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -83,6 +108,9 @@ public sealed class PLangContext : IDisposable
         Depth = parent != null ? parent.Depth + 1 : 0;
         CreatedAt = DateTime.UtcNow;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(appContext.ShutdownToken);
+        System = new EventScope();
+        User = new EventScope();
+        Events = new MergedEvents(System, User, appContext.Events);
     }
 
     /// <summary>

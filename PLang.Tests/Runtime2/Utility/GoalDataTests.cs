@@ -68,14 +68,14 @@ public class StepDataDtoTests
             LineNumber = 10,
             Indent = 2,
             Comment = "step comment",
-            Actions = new List<PLang.Runtime2.Core.Action>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action
                 {
                     Class = "http",
                     Method = "get",
                     Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                    Return = new Return { Variables = new List<Data> { new Data("response") } }
+                    Return = new List<Data> { new Data("response") }
                 }
             },
             OnErrorGoal = "HandleError",
@@ -198,7 +198,7 @@ public class GoalDataConverterTests
                 new StepDataDto
                 {
                     Index = 0, Text = "step 1",
-                    Actions = new List<PLang.Runtime2.Core.Action>
+                    Actions = new Actions
                     {
                         new PLang.Runtime2.Core.Action { Class = "var", Method = "set" }
                     }
@@ -206,7 +206,7 @@ public class GoalDataConverterTests
                 new StepDataDto
                 {
                     Index = 1, Text = "step 2",
-                    Actions = new List<PLang.Runtime2.Core.Action>
+                    Actions = new Actions
                     {
                         new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
                     }
@@ -286,7 +286,7 @@ public class GoalDataConverterTests
             LineNumber = 10,
             Indent = 2,
             Comment = "comment",
-            Actions = new List<PLang.Runtime2.Core.Action>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
             },
@@ -324,7 +324,7 @@ public class GoalDataConverterTests
             Hash = "abc123",
             InputParameters = new Dictionary<string, string> { { "param", "string" } },
             SubGoals = new List<string> { "SubGoal" },
-            Steps = new List<Step> { new Step { Index = 0, Text = "step" } }
+            Steps = new Steps { new Step { Index = 0, Text = "step" } }
         };
 
         var data = GoalDataConverter.ToData(goal);
@@ -351,7 +351,7 @@ public class GoalDataConverterTests
             LineNumber = 10,
             Indent = 2,
             Comment = "comment",
-            Actions = new List<IAction>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
             },
@@ -388,7 +388,7 @@ public class GoalDataConverterTests
                 new StepDataDto
                 {
                     Index = 0, Text = "step 1",
-                    Actions = new List<PLang.Runtime2.Core.Action>
+                    Actions = new Actions
                     {
                         new PLang.Runtime2.Core.Action { Class = "var", Method = "set" }
                     }

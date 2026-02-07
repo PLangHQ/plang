@@ -16,7 +16,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new List<IAction>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action
                 {
@@ -25,7 +25,7 @@ public class EngineTests
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
-                    Return = new Return()
+                    Return = null
                 }
             }
         };
@@ -37,7 +37,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new List<IAction>
+            Actions = new Actions
             {
                 new PLang.Runtime2.Core.Action
                 {
@@ -46,7 +46,7 @@ public class EngineTests
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
-                    Return = new Return { Variables = new List<Data> { new Data(returnVarName) } }
+                    Return = new List<Data> { new Data(returnVarName) }
                 }
             }
         };
@@ -169,9 +169,10 @@ public class EngineTests
 
         await Assert.That(engine.AppContext).IsEqualTo(appContext);
         await Assert.That(engine.RootPath).IsEqualTo("/app");
-        await Assert.That(engine.Modules).IsNotNull();
+        await Assert.That(engine.Actions).IsNotNull();
         await Assert.That(engine.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
+        await Assert.That(engine.FileSystem).IsNotNull();
     }
 
     [Test]
@@ -216,13 +217,13 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomModuleRegistry()
+    public async Task Constructor_AcceptsCustomActionRegistry()
     {
         using var appContext = CreateAppContext();
-        var modules = new ModuleRegistry();
-        await using var engine = new Engine(appContext, modules);
+        var actions = new ActionRegistry();
+        await using var engine = new Engine(appContext, actions);
 
-        await Assert.That(engine.Modules).IsEqualTo(modules);
+        await Assert.That(engine.Actions).IsEqualTo(actions);
     }
 
     [Test]
@@ -236,25 +237,26 @@ public class EngineTests
     }
 
     [Test]
-    public async Task RegisterBuiltInModules_RegistersVariableModule()
+    public async Task RegisterBuiltInModules_RegistersVariableActions()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
 
         engine.RegisterBuiltInModules();
 
-        await Assert.That(engine.Modules.Contains("variable")).IsTrue();
+        await Assert.That(engine.Actions.Contains("variable", "set")).IsTrue();
+        await Assert.That(engine.Actions.Contains("variable", "get")).IsTrue();
     }
 
     [Test]
-    public async Task RegisterBuiltInModules_RegistersOutputModule()
+    public async Task RegisterBuiltInModules_RegistersOutputActions()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
 
         engine.RegisterBuiltInModules();
 
-        await Assert.That(engine.Modules.Contains("output")).IsTrue();
+        await Assert.That(engine.Actions.Contains("output", "write")).IsTrue();
     }
 
     [Test]
@@ -331,13 +333,6 @@ public class EngineTests
         await using var engine = new Engine(appContext);
         var goal = new Goal { Name = "TestGoal" };
         engine.Goals.Add(goal);
-        PLangContext? capturedContext = null;
-        appContext.Events.Register(EventType.BeforeGoal, ctx =>
-        {
-            capturedContext = (PLangContext?)ctx.Data;
-            return GoalResult.SuccessTask();
-        });
-
         using var context = engine.CreateContext();
         await engine.RunGoalAsync(goal, context);
 
@@ -369,7 +364,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
@@ -395,10 +390,10 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
-                // Missing name parameter
+                // Missing name parameter -> will fail
             }
         };
         engine.Goals.Add(goal);
@@ -418,20 +413,20 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "failing step",
-                    Actions = new List<IAction>
+                    Actions = new Actions
                     {
                         new PLang.Runtime2.Core.Action
                         {
                             Class = "variable",
                             Method = "get",
                             Parameters = new List<Data>(),
-                            Return = new Return()
+                            Return = null
                         }
                     },
                     OnError = new ErrorHandler { IgnoreError = true }
@@ -451,21 +446,21 @@ public class EngineTests
     }
 
     [Test]
-    public async Task ExecuteStepAsync_ModuleNotFound_ReturnsError()
+    public async Task StepRunAsync_ActionNotFound_ReturnsError()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
         var step = MakeStep("nonexistent", "method");
         using var context = engine.CreateContext();
 
-        var result = await engine.ExecuteStepAsync(step, context);
+        var result = await step.RunAsync(engine, context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
     }
 
     [Test]
-    public async Task ExecuteStepAsync_SetsReturnVariable()
+    public async Task StepRunAsync_SetsReturnVariable()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
@@ -475,13 +470,13 @@ public class EngineTests
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
         using var context = engine.CreateContext();
-        await engine.ExecuteStepAsync(step, context);
+        await step.RunAsync(engine, context);
 
         await Assert.That(context.MemoryStack.GetValue("source")).IsEqualTo("hello");
     }
 
     [Test]
-    public async Task ExecuteStepAsync_RecordsStep()
+    public async Task StepRunAsync_RecordsStep()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
@@ -491,54 +486,72 @@ public class EngineTests
 
         using var context = engine.CreateContext();
         context.CallStack!.Push("TestGoal");
-        await engine.ExecuteStepAsync(step, context);
+        await step.RunAsync(engine, context);
 
         await Assert.That(context.CallStack.Current!.CurrentStepIndex).IsEqualTo(5);
         await Assert.That(context.CallStack.Current!.CurrentStepText).IsEqualTo("test step");
     }
 
     [Test]
-    public async Task ExecuteStepAsync_ExceptionInModule_ReturnsError()
+    public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
 
-        var throwingModule = new ThrowingModule();
-        engine.Modules.Register(throwingModule);
+        var throwingHandler = new ThrowingHandler();
+        engine.Actions.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
 
-        var result = await engine.ExecuteStepAsync(step, context);
+        var result = await step.RunAsync(engine, context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
     }
 
     [Test]
-    public async Task DisposeAsync_DisposesDisposableModules()
+    public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
     {
         using var appContext = CreateAppContext();
-        var engine = new Engine(appContext);
-        var disposableModule = new DisposableModule();
-        engine.Modules.Register(disposableModule);
+        await using var engine = new Engine(appContext);
 
-        await engine.DisposeAsync();
+        var nonGeneratedHandler = new NonGeneratedHandler();
+        engine.Actions.Register("legacy", "do", nonGeneratedHandler);
 
-        await Assert.That(disposableModule.IsDisposed).IsTrue();
+        var step = MakeStep("legacy", "do");
+        using var context = engine.CreateContext();
+
+        var result = await step.RunAsync(engine, context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("HandlerError");
     }
 
     [Test]
-    public async Task DisposeAsync_DisposesAsyncDisposableModules()
+    public async Task DisposeAsync_DisposesDisposableHandlers()
     {
         using var appContext = CreateAppContext();
         var engine = new Engine(appContext);
-        var asyncDisposableModule = new AsyncDisposableModule();
-        engine.Modules.Register(asyncDisposableModule);
+        var disposableHandler = new DisposableHandler();
+        engine.Actions.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
-        await Assert.That(asyncDisposableModule.IsDisposed).IsTrue();
+        await Assert.That(disposableHandler.IsDisposed).IsTrue();
+    }
+
+    [Test]
+    public async Task DisposeAsync_DisposesAsyncDisposableHandlers()
+    {
+        using var appContext = CreateAppContext();
+        var engine = new Engine(appContext);
+        var asyncDisposableHandler = new AsyncDisposableHandler();
+        engine.Actions.Register("asyncdisposable", "do", asyncDisposableHandler);
+
+        await engine.DisposeAsync();
+
+        await Assert.That(asyncDisposableHandler.IsDisposed).IsTrue();
     }
 
     [Test]
@@ -598,7 +611,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
@@ -625,7 +638,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new List<Step>
+            Steps = new Steps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "system-value" } },
@@ -640,43 +653,66 @@ public class EngineTests
         await Assert.That(engine.System.Context.MemoryStack.GetValue("test")).IsEqualTo("system-value");
     }
 
-    private class DisposableModule : IModule, IDisposable
+    // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
+    private class NonGeneratedHandler : IClass
     {
-        public string Name => "disposable";
-        public IEnumerable<string> Aliases => Array.Empty<string>();
+        public Engine Engine { get; private set; } = null!;
+        public PLangContext Context { get; private set; } = null!;
+        public Type? ParameterType => null;
+
+        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
+    }
+
+    private class DisposableHandler : IClass, ICodeGenerated, IDisposable
+    {
+        public Engine Engine { get; private set; } = null!;
+        public PLangContext Context { get; private set; } = null!;
+        public Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(ModuleContext context) { }
-        public Task<GoalResult> ExecuteAsync(string method, object? parameters) => GoalResult.SuccessTask();
-        public bool CanHandle(string method) => false;
-        public IEnumerable<string> GetMethods() => Array.Empty<string>();
+        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
+        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        {
+            Initialize(engine, context);
+            return ExecuteAsync(null);
+        }
         public void Dispose() => IsDisposed = true;
     }
 
-    private class AsyncDisposableModule : IModule, IAsyncDisposable
+    private class AsyncDisposableHandler : IClass, ICodeGenerated, IAsyncDisposable
     {
-        public string Name => "asyncdisposable";
-        public IEnumerable<string> Aliases => Array.Empty<string>();
+        public Engine Engine { get; private set; } = null!;
+        public PLangContext Context { get; private set; } = null!;
+        public Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(ModuleContext context) { }
-        public Task<GoalResult> ExecuteAsync(string method, object? parameters) => GoalResult.SuccessTask();
-        public bool CanHandle(string method) => false;
-        public IEnumerable<string> GetMethods() => Array.Empty<string>();
+        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
+        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        {
+            Initialize(engine, context);
+            return ExecuteAsync(null);
+        }
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
     }
 
-    private class ThrowingModule : IModule
+    private class ThrowingHandler : IClass, ICodeGenerated
     {
-        public string Name => "throwing";
-        public IEnumerable<string> Aliases => Array.Empty<string>();
+        public Engine Engine { get; private set; } = null!;
+        public PLangContext Context { get; private set; } = null!;
+        public Type? ParameterType => null;
 
-        public void Initialize(ModuleContext context) { }
-        public Task<GoalResult> ExecuteAsync(string method, object? parameters)
+        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public Task<Return> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");
         }
-        public bool CanHandle(string method) => false;
-        public IEnumerable<string> GetMethods() => Array.Empty<string>();
+        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        {
+            Initialize(engine, context);
+            return ExecuteAsync(null);
+        }
     }
 }

@@ -73,102 +73,90 @@ public sealed class IO : IAsyncDisposable
     /// <summary>
     /// Writes data to a channel.
     /// </summary>
-    public async Task<GoalResult> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
+    public async Task<Return> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
     {
         var channel = Get(channelName);
         if (channel == null)
-            return GoalResult.Fail($"Channel '{channelName}' not found", "ChannelNotFound", 404);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
 
         if (!channel.CanWrite)
-            return GoalResult.Fail($"Channel '{channelName}' does not support writing", "ChannelReadOnly", 400);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' does not support writing", "ChannelReadOnly", 400) };
 
         try
         {
             contentType ??= channel.ContentType ?? "application/json";
             var serializer = _serializers.GetOrDefault(contentType);
             await serializer.SerializeAsync(channel.Stream, data, cancellationToken: cancellationToken);
-            return GoalResult.Ok();
+            return new Return();
         }
         catch (Exception ex)
         {
-            return GoalResult.Fail(new ErrorInfo($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError")
-            {
-                Exception = ex
-            });
+            return new Return { Error = new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex } };
         }
     }
 
     /// <summary>
     /// Reads data from a channel.
     /// </summary>
-    public async Task<GoalResult> ReadAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Return> ReadAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
         var channel = Get(channelName);
         if (channel == null)
-            return GoalResult.Fail($"Channel '{channelName}' not found", "ChannelNotFound", 404);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
 
         if (!channel.CanRead)
-            return GoalResult.Fail($"Channel '{channelName}' does not support reading", "ChannelWriteOnly", 400);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' does not support reading", "ChannelWriteOnly", 400) };
 
         try
         {
             var contentType = channel.ContentType ?? "application/json";
             var serializer = _serializers.GetOrDefault(contentType);
             var result = await serializer.DeserializeAsync<T>(channel.Stream, cancellationToken);
-            return GoalResult.Ok(result);
+            return new Return { Value = result };
         }
         catch (Exception ex)
         {
-            return GoalResult.Fail(new ErrorInfo($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError")
-            {
-                Exception = ex
-            });
+            return new Return { Error = new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex } };
         }
     }
 
     /// <summary>
     /// Writes text to a channel.
     /// </summary>
-    public async Task<GoalResult> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
+    public async Task<Return> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
         var channel = Get(channelName);
         if (channel == null)
-            return GoalResult.Fail($"Channel '{channelName}' not found", "ChannelNotFound", 404);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
 
         try
         {
             await channel.WriteTextAsync(text, cancellationToken);
-            return GoalResult.Ok();
+            return new Return();
         }
         catch (Exception ex)
         {
-            return GoalResult.Fail(new ErrorInfo($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError")
-            {
-                Exception = ex
-            });
+            return new Return { Error = new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex } };
         }
     }
 
     /// <summary>
     /// Reads text from a channel.
     /// </summary>
-    public async Task<GoalResult> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Return> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var channel = Get(channelName);
         if (channel == null)
-            return GoalResult.Fail($"Channel '{channelName}' not found", "ChannelNotFound", 404);
+            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
 
         try
         {
             var text = await channel.ReadAllTextAsync(cancellationToken);
-            return GoalResult.Ok(text);
+            return new Return { Value = text };
         }
         catch (Exception ex)
         {
-            return GoalResult.Fail(new ErrorInfo($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError")
-            {
-                Exception = ex
-            });
+            return new Return { Error = new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex } };
         }
     }
 

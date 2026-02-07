@@ -188,16 +188,16 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var modules = Runtime2.Modules.Modules.Registry.All.ToList();
+			var registry = new Runtime2.Modules.ActionRegistry();
+			registry.DiscoverAndRegister(typeof(Runtime2.Core.Engine).Assembly);
 			var result = new List<object>();
 
-			foreach (var module in modules)
+			foreach (var ns in registry.Namespaces)
 			{
 				result.Add(new
 				{
-					Name = module.Name,
-					Aliases = module.Aliases.ToList(),
-					Methods = module.GetMethods().ToList()
+					Name = ns,
+					Methods = registry.GetClasses(ns).ToList()
 				});
 			}
 
@@ -208,7 +208,6 @@ namespace PLang.Modules.PlangModule
 				{
 					var jObj = Newtonsoft.Json.Linq.JObject.FromObject(mod);
 					markdown.AppendLine($"## {jObj["Name"]}");
-					markdown.AppendLine($"Aliases: {string.Join(", ", jObj["Aliases"]?.ToObject<List<string>>() ?? new())}");
 					markdown.AppendLine($"Methods: {string.Join(", ", jObj["Methods"]?.ToObject<List<string>>() ?? new())}");
 					markdown.AppendLine();
 				}
@@ -369,12 +368,6 @@ namespace PLang.Modules.PlangModule
 
 			try
 			{
-				var file = Runtime2.Modules.Modules.Get<Runtime2.Modules.FileModule>();
-				if (file == null)
-				{
-					return (null, new ProgramError("FileModule not available", goalStep, function));
-				}
-
 				// v0.2 saves next to .goal file with .pr.json extension
 				// Path is relative, need to make it absolute
 				var goalPath = goal.Path ?? "";
@@ -383,11 +376,16 @@ namespace PLang.Modules.PlangModule
 				var goalName = System.IO.Path.GetFileNameWithoutExtension(goalPath);
 				var prPath = System.IO.Path.Combine(goalDir, $"{goalName}.pr.json");
 
-				var result = await file.Save(prPath, goal);
-				if (!result.Success)
+				if (!string.IsNullOrEmpty(goalDir) && !System.IO.Directory.Exists(goalDir))
+					System.IO.Directory.CreateDirectory(goalDir);
+
+				var json = System.Text.Json.JsonSerializer.Serialize(goal, new System.Text.Json.JsonSerializerOptions
 				{
-					return (null, new ProgramError(result.Error?.Message ?? "Failed to save goal", goalStep, function));
-				}
+					WriteIndented = true,
+					PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+					DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+				});
+				await System.IO.File.WriteAllTextAsync(prPath, json);
 
 				return (new { Path = prPath, Format = "v0.2" }, null);
 			}

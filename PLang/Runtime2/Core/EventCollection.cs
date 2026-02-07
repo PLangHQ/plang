@@ -1,4 +1,4 @@
-using PLang.Runtime2.Errors;
+using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Core;
 
@@ -14,7 +14,13 @@ public enum EventType
     BeforeStep,
     AfterStep,
     OnError,
-    OnVariableChange
+    OnVariableChange,
+    OnBeforeGoalLoad,
+    OnAfterGoalLoad,
+    OnBeforeStepLoad,
+    OnAfterStepLoad,
+    OnBeforeActionLoad,
+    OnAfterActionLoad
 }
 
 /// <summary>
@@ -26,13 +32,15 @@ public sealed class EventBinding
     public EventType Type { get; }
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
-    public Func<EventContext, Task<GoalResult>> Handler { get; }
+    public Func<PLangContext, Task<Return>> Handler { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
 
+    public List<object> Targets { get; } = new();
+
     public EventBinding(
         EventType type,
-        Func<EventContext, Task<GoalResult>> handler,
+        Func<PLangContext, Task<Return>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         int priority = 0,
@@ -83,26 +91,21 @@ public sealed class EventBinding
 }
 
 /// <summary>
-/// Context passed to event handlers.
-/// </summary>
-public sealed class EventContext
-{
-    public EventType EventType { get; init; }
-    public string? GoalName { get; init; }
-    public int? StepIndex { get; init; }
-    public string? StepText { get; init; }
-    public ErrorInfo? Error { get; init; }
-    public object? Data { get; set; }
-    public bool Cancel { get; set; }
-}
-
-/// <summary>
 /// Manages event bindings and dispatching for Runtime2.
 /// </summary>
 public sealed class EventCollection
 {
     private readonly List<EventBinding> _bindings = new();
     private readonly object _lock = new();
+
+    public StepEventResolver Steps { get; }
+    public GoalEventResolver Goals { get; }
+
+    public EventCollection()
+    {
+        Steps = new StepEventResolver(this);
+        Goals = new GoalEventResolver(this);
+    }
 
     /// <summary>
     /// Registers an event binding.
@@ -122,7 +125,7 @@ public sealed class EventCollection
     /// </summary>
     public string Register(
         EventType type,
-        Func<EventContext, Task<GoalResult>> handler,
+        Func<PLangContext, Task<Return>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         int priority = 0,
@@ -188,9 +191,9 @@ public sealed class EventCollection
     /// <summary>
     /// Dispatches an event to all matching handlers.
     /// </summary>
-    public async Task<GoalResult> DispatchAsync(EventContext context)
+    public async Task<Return> DispatchAsync(PLangContext context, EventType type, string? goalName = null, string? stepText = null)
     {
-        var bindings = GetMatchingBindings(context.EventType, context.GoalName, context.StepText);
+        var bindings = GetMatchingBindings(type, goalName, stepText);
 
         foreach (var binding in bindings)
         {
@@ -200,14 +203,9 @@ public sealed class EventCollection
             {
                 return result;
             }
-
-            if (context.Cancel)
-            {
-                return GoalResult.Ok();
-            }
         }
 
-        return GoalResult.Ok();
+        return new Return();
     }
 
     /// <summary>
@@ -222,5 +220,57 @@ public sealed class EventCollection
                 return _bindings.Count;
             }
         }
+    }
+}
+
+public sealed class StepEventResolver
+{
+    private readonly EventCollection _events;
+    public StepEventResolver(EventCollection events) => _events = events;
+
+    public EventList Before(Step step, string? goalName = null)
+    {
+        var list = new EventList();
+        foreach (var b in _events.GetMatchingBindings(EventType.BeforeStep, goalName, step.Text))
+            list.Add(b);
+        return list;
+    }
+
+    public EventList After(Step step, string? goalName = null)
+    {
+        var list = new EventList();
+        foreach (var b in _events.GetMatchingBindings(EventType.AfterStep, goalName, step.Text))
+            list.Add(b);
+        return list;
+    }
+}
+
+public sealed class GoalEventResolver
+{
+    private readonly EventCollection _events;
+    public GoalEventResolver(EventCollection events) => _events = events;
+
+    public EventList Before(Goal goal)
+    {
+        var list = new EventList();
+        foreach (var b in _events.GetMatchingBindings(EventType.BeforeGoal, goal.Name))
+            list.Add(b);
+        return list;
+    }
+
+    public EventList After(Goal goal)
+    {
+        var list = new EventList();
+        foreach (var b in _events.GetMatchingBindings(EventType.AfterGoal, goal.Name))
+            list.Add(b);
+        return list;
+    }
+
+    public EventList OnError(Goal goal)
+    {
+        var list = new EventList();
+        foreach (var b in _events.GetMatchingBindings(EventType.OnError, goal.Name))
+            list.Add(b);
+        return list;
     }
 }

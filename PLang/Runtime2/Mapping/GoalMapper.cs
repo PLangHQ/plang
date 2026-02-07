@@ -25,7 +25,7 @@ public static class GoalMapper
             InputParameters = oldGoal.IncomingVariablesRequired,
             Path = oldGoal.RelativeGoalPath,
             PrPath = oldGoal.RelativePrPath,
-            Steps = oldGoal.GoalSteps.Select(ToRuntime2Step).ToList(),
+            Steps = new Steps(oldGoal.GoalSteps.Select(ToRuntime2Step)),
             SubGoals = oldGoal.SubGoals ?? new(),
             Errors = new(),
             Warnings = new()
@@ -52,14 +52,14 @@ public static class GoalMapper
             LineNumber = oldStep.LineNumber,
             Indent = oldStep.Indent,
             Comment = oldStep.Comment,
-            Actions = new List<Core.IAction>
+            Actions = new Actions
             {
                 new Core.Action
                 {
                     Class = ExtractActionName(oldStep.ModuleType),
                     Method = oldStep.Name ?? "",
                     Parameters = new(),
-                    Return = new Core.Return()
+                    Return = null
                 }
             },
             OnErrorGoal = oldStep.ErrorHandlers?.FirstOrDefault()?.GoalToCall?.Name,
@@ -67,7 +67,6 @@ public static class GoalMapper
             Hash = oldStep.Hash,
             PreviousHash = null, // Computed during serialization
             Intent = oldStep.UserIntent,
-            Data = null, // Set during step building
             OnError = MapErrorHandler(oldStep.ErrorHandlers?.FirstOrDefault()),
             Cache = MapCacheSettings(oldStep.CacheHandler),
             Timeout = oldStep.CancellationHandler?.CancelExecutionAfterXMilliseconds != null

@@ -73,7 +73,7 @@ public sealed class CallFrame
     /// <summary>
     /// Errors that occurred during execution.
     /// </summary>
-    public List<ErrorInfo> Errors { get; } = new();
+    public List<IError> Errors { get; } = new();
 
     /// <summary>
     /// Associated event (if executing within an event handler).
@@ -150,7 +150,7 @@ public sealed class CallFrame
     /// <summary>
     /// Adds an error to this frame.
     /// </summary>
-    public void AddError(ErrorInfo error)
+    public void AddError(IError error)
     {
         Errors.Add(error);
     }
