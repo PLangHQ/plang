@@ -36,7 +36,7 @@ public sealed class PLangAppContext : IDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public EventCollection Events { get; }
+    public Core.Events Events { get; }
 
     /// <summary>
     /// Serializer registry for the application.
@@ -60,7 +60,7 @@ public sealed class PLangAppContext : IDisposable
         RootPath = rootPath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new EventCollection();
+        Events = new Core.Events();
         Serializers = new SerializerRegistry();
     }
 

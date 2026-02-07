@@ -4,5 +4,5 @@ namespace PLang.Runtime2.Context;
 
 public sealed class EventScope
 {
-    public EventCollection Events { get; } = new();
+    public Core.Events Events { get; } = new();
 }

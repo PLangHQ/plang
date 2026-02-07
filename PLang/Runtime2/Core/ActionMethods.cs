@@ -14,18 +14,13 @@ public sealed partial class Action
 
     public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {
-		// check: Get should just return error if handler is null or is not ICodeGenerated, 
-        var handler = engine.Actions.Get(Class, Method);
-        if (handler == null)
-            return new Return { Error = ActionError.NotFound($"Action '{Class}.{Method}'", context) };
+        var (handler, error) = engine.Actions.GetCodeGenerated(Class, Method, context);
+        if (error != null)
+            return new Return { Error = error };
 
-        if (handler is not ICodeGenerated codeGenerated)
-            return new Return { Error = new ActionError($"Handler '{Class}.{Method}' does not implement ICodeGenerated", context, "HandlerError", 500) { ActionClass = Class, ActionMethod = Method } };
+        var result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
 
-        var result = await codeGenerated.CodeGeneratedExecuteAsync(Parameters, engine, context);
-
-		// check: does it have to be success to write into variables, sometimes you get error after you get the content, discuss
-        if (result.Success && this.Return != null)
+        if (result.Value != null && this.Return != null)
         {
             foreach (var returnVar in this.Return)
                 context.MemoryStack.Set(returnVar.Name, result.Value);

@@ -39,7 +39,7 @@ public sealed class MergedEvents
 {
     private readonly EventScope _system;
     private readonly EventScope _user;
-    private readonly EventCollection? _appEvents;
+    private readonly Core.Events? _appEvents;
 
     public LoadEvents OnBeforeGoalLoad { get; }
     public LoadEvents OnAfterGoalLoad { get; }
@@ -48,7 +48,7 @@ public sealed class MergedEvents
     public LoadEvents OnBeforeActionLoad { get; }
     public LoadEvents OnAfterActionLoad { get; }
 
-    public MergedEvents(EventScope system, EventScope user, EventCollection? appEvents = null)
+    public MergedEvents(EventScope system, EventScope user, Core.Events? appEvents = null)
     {
         _system = system;
         _user = user;

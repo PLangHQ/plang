@@ -50,6 +50,24 @@ public sealed class IO : IAsyncDisposable
     }
 
     /// <summary>
+    /// Gets a channel and validates existence and permissions.
+    /// </summary>
+    private (Channel? Channel, Return? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
+    {
+        var channel = Get(name);
+        if (channel == null)
+            return (null, new Return { Error = new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404) });
+
+        if (requireRead == true && !channel.CanRead)
+            return (null, new Return { Error = new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400) });
+
+        if (requireWrite == true && !channel.CanWrite)
+            return (null, new Return { Error = new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400) });
+
+        return (channel, null);
+    }
+
+    /// <summary>
     /// Registers a channel.
     /// </summary>
     public void Register(Channel channel)
@@ -85,22 +103,18 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
     {
-		// check: this should just return error, it should already check if it is null, maby even Get should take parameter if it should check on CanWrite, 
-		// then we can move both error into Get
-        var channel = Get(channelName);
-        if (channel == null)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
-
-        if (!channel.CanWrite)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' does not support writing", "ChannelReadOnly", 400) };
+        var (channel, error) = GetChannel(channelName, requireWrite: true);
+        if (error != null) return error;
 
         try
         {
-            contentType ??= channel.ContentType ?? "application/json";
-			// check: why is it that IO is doing this??? just engine.Seriazlier.Serialize({stream:stream, data:object, contentType:string, extension:string(for the files), ct:ct});
-			// object based pattern!!!!! 
-            var serializer = _engine.Serializers.GetOrDefault(contentType);
-            await serializer.SerializeAsync(channel.Stream, data, cancellationToken: cancellationToken);
+            await _engine.Serializers.SerializeAsync(new SerializeOptions
+            {
+                Stream = channel!.Stream,
+                Data = data,
+                ContentType = contentType ?? channel.ContentType ?? "application/json",
+                CancellationToken = cancellationToken
+            });
             return new Return();
         }
         catch (Exception ex)
@@ -114,19 +128,17 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
-		// check: this hole method like Read
-        var channel = Get(channelName);
-        if (channel == null)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
-
-        if (!channel.CanRead)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' does not support reading", "ChannelWriteOnly", 400) };
+        var (channel, error) = GetChannel(channelName, requireRead: true);
+        if (error != null) return error;
 
         try
         {
-            var contentType = channel.ContentType ?? "application/json";
-            var serializer = _engine.Serializers.GetOrDefault(contentType);
-            var result = await serializer.DeserializeAsync<T>(channel.Stream, cancellationToken);
+            var result = await _engine.Serializers.DeserializeAsync<T>(new DeserializeOptions
+            {
+                Stream = channel!.Stream,
+                ContentType = channel.ContentType ?? "application/json",
+                CancellationToken = cancellationToken
+            });
             return new Return { Value = result };
         }
         catch (Exception ex)
@@ -140,14 +152,12 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
-		// check: you know what, just fix in all class
-        var channel = Get(channelName);
-        if (channel == null)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
+        var (channel, error) = GetChannel(channelName, requireWrite: true);
+        if (error != null) return error;
 
         try
         {
-            await channel.WriteTextAsync(text, cancellationToken);
+            await channel!.WriteTextAsync(text, cancellationToken);
             return new Return();
         }
         catch (Exception ex)
@@ -161,13 +171,12 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
     {
-        var channel = Get(channelName);
-        if (channel == null)
-            return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
+        var (channel, error) = GetChannel(channelName, requireRead: true);
+        if (error != null) return error;
 
         try
         {
-            var text = await channel.ReadAllTextAsync(cancellationToken);
+            var text = await channel!.ReadAllTextAsync(cancellationToken);
             return new Return { Value = text };
         }
         catch (Exception ex)

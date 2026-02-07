@@ -93,10 +93,7 @@ public sealed class EventBinding
 /// <summary>
 /// Manages event bindings and dispatching for Runtime2.
 /// </summary>
-/// 
-
-// check: cant this be named Events?
-public sealed class EventCollection
+public sealed class Events
 {
     private readonly List<EventBinding> _bindings = new();
     private readonly object _lock = new();
@@ -104,7 +101,7 @@ public sealed class EventCollection
     public StepEventResolver Steps { get; }
     public GoalEventResolver Goals { get; }
 
-    public EventCollection()
+    public Events()
     {
         Steps = new StepEventResolver(this);
         Goals = new GoalEventResolver(this);
@@ -228,8 +225,8 @@ public sealed class EventCollection
 
 public sealed class StepEventResolver
 {
-    private readonly EventCollection _events;
-    public StepEventResolver(EventCollection events) => _events = events;
+    private readonly Events _events;
+    public StepEventResolver(Events events) => _events = events;
 
     public EventList Before(Step step, string? goalName = null)
     {
@@ -250,8 +247,8 @@ public sealed class StepEventResolver
 
 public sealed class GoalEventResolver
 {
-    private readonly EventCollection _events;
-    public GoalEventResolver(EventCollection events) => _events = events;
+    private readonly Events _events;
+    public GoalEventResolver(Events events) => _events = events;
 
     public EventList Before(Goal goal)
     {

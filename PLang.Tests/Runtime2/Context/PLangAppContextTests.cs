@@ -43,7 +43,7 @@ public class PLangAppContextTests
     }
 
     [Test]
-    public async Task Constructor_CreatesEventCollection()
+    public async Task Constructor_CreatesEvents()
     {
         using var context = new PLangAppContext("/app");
 

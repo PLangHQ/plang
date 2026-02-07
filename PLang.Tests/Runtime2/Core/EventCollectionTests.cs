@@ -4,7 +4,7 @@ using PLang.Runtime2.Errors;
 
 namespace PLang.Tests.Runtime2.Core;
 
-public class EventCollectionTests
+public class EventsTests
 {
     private static PLangContext CreateContext()
     {
@@ -15,7 +15,7 @@ public class EventCollectionTests
     [Test]
     public async Task Count_EmptyCollection_ReturnsZero()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
 
         await Assert.That(events.Count).IsEqualTo(0);
     }
@@ -23,7 +23,7 @@ public class EventCollectionTests
     [Test]
     public async Task Register_Binding_IncreasesCount()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var binding = new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
         events.Register(binding);
@@ -34,7 +34,7 @@ public class EventCollectionTests
     [Test]
     public async Task Register_Binding_ReturnsBindingId()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var binding = new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
         var id = events.Register(binding);
@@ -45,7 +45,7 @@ public class EventCollectionTests
     [Test]
     public async Task Register_WithHandler_ReturnsId()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
 
         var id = events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
@@ -56,7 +56,7 @@ public class EventCollectionTests
     [Test]
     public async Task Unregister_ById_RemovesBinding()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var id = events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
         var removed = events.Unregister(id);
@@ -68,7 +68,7 @@ public class EventCollectionTests
     [Test]
     public async Task Unregister_NonexistentId_ReturnsFalse()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
 
         var removed = events.Unregister("nonexistent");
 
@@ -78,7 +78,7 @@ public class EventCollectionTests
     [Test]
     public async Task Clear_RemovesAllBindings()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
         events.Register(EventType.AfterGoal, _ => Task.FromResult(new Return()));
 
@@ -90,7 +90,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetBindings_ReturnsBindingsOfType()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
         events.Register(EventType.AfterGoal, _ => Task.FromResult(new Return()));
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
@@ -103,7 +103,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetBindings_NoMatchingType_ReturnsEmpty()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
         var bindings = events.GetBindings(EventType.OnError);
@@ -114,7 +114,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetMatchingBindings_MatchesGoalPattern()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()), goalNamePattern: "Start");
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()), goalNamePattern: "Other");
 
@@ -126,7 +126,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetMatchingBindings_WildcardPattern_MatchesAll()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()), goalNamePattern: "*");
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
@@ -137,7 +137,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetMatchingBindings_PrefixPattern_MatchesPrefix()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()), goalNamePattern: "User*");
 
         var matchUser = events.GetMatchingBindings(EventType.BeforeGoal, "UserLogin");
@@ -150,7 +150,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetMatchingBindings_NullGoalPattern_MatchesAll()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return()));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
@@ -161,7 +161,7 @@ public class EventCollectionTests
     [Test]
     public async Task GetMatchingBindings_StepPattern_MatchesContaining()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         events.Register(EventType.BeforeStep, _ => Task.FromResult(new Return()), stepPattern: "http");
 
         var matchHttp = events.GetMatchingBindings(EventType.BeforeStep, stepText: "call http endpoint");
@@ -174,7 +174,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_CallsMatchingHandlers()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var called = false;
         events.Register(EventType.BeforeGoal, _ =>
         {
@@ -191,7 +191,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_CallsHandlersInPriorityOrder()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var order = new List<int>();
         events.Register(EventType.BeforeGoal, _ => { order.Add(1); return Task.FromResult(new Return()); }, priority: 1);
         events.Register(EventType.BeforeGoal, _ => { order.Add(3); return Task.FromResult(new Return()); }, priority: 3);
@@ -208,7 +208,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_StopsOnError_WhenStopOnErrorTrue()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var secondCalled = false;
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return { Error = new Error("Error") }), priority: 2, stopOnError: true);
         events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(new Return()); }, priority: 1);
@@ -223,7 +223,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_ContinuesOnError_WhenStopOnErrorFalse()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         var secondCalled = false;
         events.Register(EventType.BeforeGoal, _ => Task.FromResult(new Return { Error = new Error("Error") }), priority: 2, stopOnError: false);
         events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(new Return()); }, priority: 1);
@@ -237,7 +237,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_NoMatchingHandlers_ReturnsOk()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
 
         using var context = CreateContext();
         var result = await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -248,7 +248,7 @@ public class EventCollectionTests
     [Test]
     public async Task DispatchAsync_PassesContextToHandler()
     {
-        var events = new EventCollection();
+        var events = new PLang.Runtime2.Core.Events();
         PLangContext? capturedContext = null;
         events.Register(EventType.BeforeGoal, ctx => { capturedContext = ctx; return Task.FromResult(new Return()); });
 

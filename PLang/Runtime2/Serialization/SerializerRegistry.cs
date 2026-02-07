@@ -102,13 +102,7 @@ public sealed class SerializerRegistry
     /// </summary>
     public T? Deserialize<T>(DeserializeOptions options)
     {
-        ISerializer serializer;
-        if (!string.IsNullOrEmpty(options.ContentType))
-            serializer = GetOrDefault(options.ContentType);
-        else if (!string.IsNullOrEmpty(options.Extension))
-            serializer = GetByExtension(options.Extension) ?? _default;
-        else
-            serializer = _default;
+        var serializer = ResolveSerializer(options.ContentType, options.Extension);
 
         if (options.Value is string str)
             return serializer.Deserialize<T>(str);
@@ -118,6 +112,48 @@ public sealed class SerializerRegistry
 
         return default;
     }
+
+    /// <summary>
+    /// Serializes data to a stream using the appropriate serializer.
+    /// </summary>
+    public Task SerializeAsync(SerializeOptions options)
+    {
+        var serializer = ResolveSerializer(options.ContentType, options.Extension);
+        return serializer.SerializeAsync(options.Stream, options.Data, cancellationToken: options.CancellationToken);
+    }
+
+    /// <summary>
+    /// Deserializes data from a stream using the appropriate serializer.
+    /// </summary>
+    public Task<T?> DeserializeAsync<T>(DeserializeOptions options)
+    {
+        if (options.Stream == null)
+            throw new ArgumentException("Stream is required for async deserialization", nameof(options));
+
+        var serializer = ResolveSerializer(options.ContentType, options.Extension);
+        return serializer.DeserializeAsync<T>(options.Stream, options.CancellationToken);
+    }
+
+    private ISerializer ResolveSerializer(string? contentType, string? extension)
+    {
+        if (!string.IsNullOrEmpty(contentType))
+            return GetOrDefault(contentType);
+        if (!string.IsNullOrEmpty(extension))
+            return GetByExtension(extension) ?? _default;
+        return _default;
+    }
+}
+
+/// <summary>
+/// Options for serialization — carries stream, data, and metadata for serializer selection.
+/// </summary>
+public class SerializeOptions
+{
+    public Stream Stream { get; init; } = null!;
+    public object? Data { get; init; }
+    public string? ContentType { get; init; }
+    public string? Extension { get; init; }
+    public CancellationToken CancellationToken { get; init; }
 }
 
 /// <summary>
@@ -126,6 +162,8 @@ public sealed class SerializerRegistry
 public class DeserializeOptions
 {
     public object? Value { get; init; }
+    public Stream? Stream { get; init; }
     public string? Extension { get; init; }
     public string? ContentType { get; init; }
+    public CancellationToken CancellationToken { get; init; }
 }

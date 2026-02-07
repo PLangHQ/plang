@@ -50,6 +50,22 @@ public sealed class ActionRegistry
         return null;
     }
 
+    /// <summary>
+    /// Gets a handler and validates it implements ICodeGenerated.
+    /// Returns the handler or an error.
+    /// </summary>
+    public (ICodeGenerated? Handler, Errors.IError? Error) GetCodeGenerated(string ns, string className, Context.PLangContext context)
+    {
+        var handler = Get(ns, className);
+        if (handler == null)
+            return (null, Errors.ActionError.NotFound($"Action '{ns}.{className}'", context));
+
+        if (handler is not ICodeGenerated codeGenerated)
+            return (null, new Errors.ActionError($"Handler '{ns}.{className}' does not implement ICodeGenerated", context, "HandlerError", 500) { ActionClass = ns, ActionMethod = className });
+
+        return (codeGenerated, null);
+    }
+
     public bool Contains(string ns, string className)
     {
         return Get(ns, className) != null;
