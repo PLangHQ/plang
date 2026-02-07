@@ -13,7 +13,8 @@
       "Bash(cd:*)",
       "Bash(dotnet sln add:*)",
       "Bash(findstr:*)",
-      "Bash(Select-String -Pattern \"error|Build succeeded|failed\")"
+      "Bash(Select-String -Pattern \"error|Build succeeded|failed\")",
+      "Bash(Select-String -Pattern \"error CS\")"
     ]
   }
 }

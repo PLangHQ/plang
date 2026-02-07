@@ -96,4 +96,36 @@ public sealed class SerializerRegistry
     /// Gets all registered file extensions.
     /// </summary>
     public IEnumerable<string> Extensions => _byExtension.Keys;
+
+    /// <summary>
+    /// Deserializes content using the appropriate serializer, chosen by extension or contentType.
+    /// </summary>
+    public T? Deserialize<T>(DeserializeOptions options)
+    {
+        ISerializer serializer;
+        if (!string.IsNullOrEmpty(options.ContentType))
+            serializer = GetOrDefault(options.ContentType);
+        else if (!string.IsNullOrEmpty(options.Extension))
+            serializer = GetByExtension(options.Extension) ?? _default;
+        else
+            serializer = _default;
+
+        if (options.Value is string str)
+            return serializer.Deserialize<T>(str);
+
+        if (options.Value is T typed)
+            return typed;
+
+        return default;
+    }
+}
+
+/// <summary>
+/// Options for deserialization — carries the raw content and metadata for serializer selection.
+/// </summary>
+public class DeserializeOptions
+{
+    public object? Value { get; init; }
+    public string? Extension { get; init; }
+    public string? ContentType { get; init; }
 }

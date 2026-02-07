@@ -11,16 +11,26 @@ namespace PLang.Runtime2.IO;
 public sealed class IO : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, Channel> _channels = new(StringComparer.OrdinalIgnoreCase);
-    private readonly SerializerRegistry _serializers;
+    private readonly Engine _engine;
 
     // Standard channel names
     public const string StdIn = "stdin";
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public IO(SerializerRegistry? serializers = null)
+    public IO(Engine engine)
     {
-        _serializers = serializers ?? new SerializerRegistry();
+        _engine = engine;
+    }
+
+    /// <summary>
+    /// Reads a file and deserializes its content to the specified type.
+    /// </summary>
+    public async Task<T?> ReadAsync<T>(string filePath, CancellationToken cancellationToken = default)
+    {
+        var content = await _engine.FileSystem.File.ReadAllTextAsync(filePath, cancellationToken);
+        var ext = System.IO.Path.GetExtension(filePath);
+        return _engine.Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
     }
 
     /// <summary>
@@ -85,7 +95,7 @@ public sealed class IO : IAsyncDisposable
         try
         {
             contentType ??= channel.ContentType ?? "application/json";
-            var serializer = _serializers.GetOrDefault(contentType);
+            var serializer = _engine.Serializers.GetOrDefault(contentType);
             await serializer.SerializeAsync(channel.Stream, data, cancellationToken: cancellationToken);
             return new Return();
         }
@@ -98,7 +108,7 @@ public sealed class IO : IAsyncDisposable
     /// <summary>
     /// Reads data from a channel.
     /// </summary>
-    public async Task<Return> ReadAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Return> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
         var channel = Get(channelName);
         if (channel == null)
@@ -110,7 +120,7 @@ public sealed class IO : IAsyncDisposable
         try
         {
             var contentType = channel.ContentType ?? "application/json";
-            var serializer = _serializers.GetOrDefault(contentType);
+            var serializer = _engine.Serializers.GetOrDefault(contentType);
             var result = await serializer.DeserializeAsync<T>(channel.Stream, cancellationToken);
             return new Return { Value = result };
         }

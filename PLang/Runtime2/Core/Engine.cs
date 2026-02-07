@@ -63,6 +63,11 @@ public sealed class Engine : IAsyncDisposable
     public Interfaces.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
+    /// I/O operations (file reading, channels).
+    /// </summary>
+    public Runtime2.IO.IO IO { get; }
+
+    /// <summary>
     /// Whether debug mode is enabled.
     /// </summary>
     public bool IsDebugMode
@@ -99,6 +104,7 @@ public sealed class Engine : IAsyncDisposable
         _serializers = serializers ?? appContext.Serializers;
         _goals = new Goals();
         FileSystem = fileSystem ?? CreateDefaultFileSystem(appContext.RootPath);
+        IO = new Runtime2.IO.IO(this);
     }
 
     /// <summary>
@@ -143,7 +149,7 @@ public sealed class Engine : IAsyncDisposable
     /// </summary>
     public Task<Return> LoadGoalFromFileAsync(string prFilePath, CancellationToken cancellationToken = default)
     {
-        return _goals.LoadFromFileAsync(FileSystem, prFilePath, cancellationToken: cancellationToken);
+        return _goals.LoadFromFileAsync(this, prFilePath, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -151,7 +157,7 @@ public sealed class Engine : IAsyncDisposable
     /// </summary>
     public Task<Return> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr.json", CancellationToken cancellationToken = default)
     {
-        return _goals.LoadFromDirectoryAsync(FileSystem, directory, pattern, cancellationToken: cancellationToken);
+        return _goals.LoadFromDirectoryAsync(this, directory, pattern, cancellationToken: cancellationToken);
     }
 
     /// <summary>

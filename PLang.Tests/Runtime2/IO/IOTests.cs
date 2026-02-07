@@ -1,25 +1,24 @@
+using PLang.Runtime2.Context;
+using PLang.Runtime2.Core;
 using PLang.Runtime2.IO;
-using PLang.Runtime2.Serialization;
 
 namespace PLang.Tests.Runtime2.IO;
 
 public class IOTests
 {
-    [Test]
-    public async Task Constructor_CreatesWithDefaultSerializers()
+    private static PLang.Runtime2.IO.IO CreateIO()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
-
-        // Should not throw
-        await Assert.That(io).IsNotNull();
+        var appContext = new PLangAppContext("/app");
+        var engine = new Engine(appContext);
+        return new PLang.Runtime2.IO.IO(engine);
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomSerializerRegistry()
+    public async Task Constructor_CreatesWithEngine()
     {
-        var serializers = new SerializerRegistry();
-        await using var io = new PLang.Runtime2.IO.IO(serializers);
+        await using var io = CreateIO();
 
+        // Should not throw
         await Assert.That(io).IsNotNull();
     }
 
@@ -44,7 +43,7 @@ public class IOTests
     [Test]
     public async Task Register_AddsChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = Channel.Memory("test");
 
         io.Register(channel);
@@ -55,7 +54,7 @@ public class IOTests
     [Test]
     public async Task Get_ReturnsRegisteredChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = Channel.Memory("test");
         io.Register(channel);
 
@@ -67,7 +66,7 @@ public class IOTests
     [Test]
     public async Task Get_NonexistentChannel_ReturnsNull()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var result = io.Get("nonexistent");
 
@@ -77,7 +76,7 @@ public class IOTests
     [Test]
     public async Task Get_CaseInsensitive()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = Channel.Memory("Test");
         io.Register(channel);
 
@@ -88,7 +87,7 @@ public class IOTests
     [Test]
     public async Task GetOrCreate_ExistingChannel_ReturnsExisting()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = Channel.Memory("test");
         io.Register(channel);
 
@@ -100,7 +99,7 @@ public class IOTests
     [Test]
     public async Task GetOrCreate_NonexistentChannel_CreatesNew()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var result = io.GetOrCreate("test", () => Channel.Memory("test"));
 
@@ -111,7 +110,7 @@ public class IOTests
     [Test]
     public async Task Contains_ExistingChannel_ReturnsTrue()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         io.Register(Channel.Memory("test"));
 
         await Assert.That(io.Contains("test")).IsTrue();
@@ -120,7 +119,7 @@ public class IOTests
     [Test]
     public async Task Contains_NonexistentChannel_ReturnsFalse()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         await Assert.That(io.Contains("nonexistent")).IsFalse();
     }
@@ -128,7 +127,7 @@ public class IOTests
     [Test]
     public async Task RemoveAsync_RemovesChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         io.Register(Channel.Memory("test"));
 
         var removed = await io.RemoveAsync("test");
@@ -140,7 +139,7 @@ public class IOTests
     [Test]
     public async Task RemoveAsync_NonexistentChannel_ReturnsFalse()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var removed = await io.RemoveAsync("nonexistent");
 
@@ -150,7 +149,7 @@ public class IOTests
     [Test]
     public async Task ChannelNames_ReturnsAllNames()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         io.Register(Channel.Memory("channel1"));
         io.Register(Channel.Memory("channel2"));
 
@@ -163,7 +162,7 @@ public class IOTests
     [Test]
     public async Task CreateMemoryChannel_CreatesAndRegistersChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var channel = io.CreateMemoryChannel("test");
 
@@ -174,7 +173,7 @@ public class IOTests
     [Test]
     public async Task CreateMemoryChannel_WithDirection_SetsDirection()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var channel = io.CreateMemoryChannel("test", ChannelDirection.Output);
 
@@ -189,7 +188,7 @@ public class IOTests
         {
             // Use a block scope to ensure IO is disposed before file delete
             {
-                await using var io = new PLang.Runtime2.IO.IO();
+                await using var io = CreateIO();
                 var channel = io.CreateFileChannel("test", tempFile);
 
                 await Assert.That(channel).IsNotNull();
@@ -206,7 +205,7 @@ public class IOTests
     [Test]
     public async Task WriteAsync_WritesToChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
 
         var result = await io.WriteAsync("test", new { Name = "value" });
@@ -217,7 +216,7 @@ public class IOTests
     [Test]
     public async Task WriteAsync_NonexistentChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var result = await io.WriteAsync("nonexistent", "data");
 
@@ -228,7 +227,7 @@ public class IOTests
     [Test]
     public async Task WriteAsync_ReadOnlyChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var stream = new MemoryStream();
         io.Register(Channel.Input("test", stream));
 
@@ -241,13 +240,13 @@ public class IOTests
     [Test]
     public async Task ReadAsync_ReadsFromChannel()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
         await channel.WriteTextAsync("{\"Name\":\"John\"}");
         // Reset stream position for reading
         channel.Stream.Position = 0;
 
-        var result = await io.ReadAsync<TestData>("test");
+        var result = await io.ReadChannelAsync<TestData>("test");
 
         await Assert.That(result.Success).IsTrue();
     }
@@ -255,9 +254,9 @@ public class IOTests
     [Test]
     public async Task ReadAsync_NonexistentChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
-        var result = await io.ReadAsync<string>("nonexistent");
+        var result = await io.ReadChannelAsync<string>("nonexistent");
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelNotFound");
@@ -266,11 +265,11 @@ public class IOTests
     [Test]
     public async Task ReadAsync_WriteOnlyChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var stream = new MemoryStream();
         io.Register(Channel.Output("test", stream));
 
-        var result = await io.ReadAsync<string>("test");
+        var result = await io.ReadChannelAsync<string>("test");
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
@@ -279,7 +278,7 @@ public class IOTests
     [Test]
     public async Task WriteTextAsync_WritesText()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
 
         var result = await io.WriteTextAsync("test", "hello world");
@@ -290,7 +289,7 @@ public class IOTests
     [Test]
     public async Task WriteTextAsync_NonexistentChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var result = await io.WriteTextAsync("nonexistent", "data");
 
@@ -301,7 +300,7 @@ public class IOTests
     [Test]
     public async Task ReadTextAsync_ReadsText()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
         await channel.WriteTextAsync("hello world");
 
@@ -314,7 +313,7 @@ public class IOTests
     [Test]
     public async Task ReadTextAsync_NonexistentChannel_ReturnsError()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
 
         var result = await io.ReadTextAsync("nonexistent");
 
@@ -325,7 +324,7 @@ public class IOTests
     [Test]
     public async Task DisposeAsync_DisposesAllChannels()
     {
-        var io = new PLang.Runtime2.IO.IO();
+        var io = CreateIO();
         var channel1 = io.CreateMemoryChannel("channel1");
         var channel2 = io.CreateMemoryChannel("channel2");
 
@@ -338,7 +337,7 @@ public class IOTests
     [Test]
     public async Task DisposeAsync_ClearsChannelNames()
     {
-        var io = new PLang.Runtime2.IO.IO();
+        var io = CreateIO();
         io.CreateMemoryChannel("test");
 
         await io.DisposeAsync();
@@ -349,7 +348,7 @@ public class IOTests
     [Test]
     public async Task WriteAsync_WithCustomContentType_UsesContentType()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
 
         await io.WriteAsync("test", "hello", "text/plain");
@@ -361,7 +360,7 @@ public class IOTests
     [Test]
     public async Task WriteAsync_UsesChannelContentType()
     {
-        await using var io = new PLang.Runtime2.IO.IO();
+        await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
         channel.ContentType = "text/plain";
 

@@ -37,10 +37,10 @@ public sealed partial class Goal
     public Visibility Visibility { get; init; } = Visibility.Private;
 
     [Store, Debug]
-    public string? Path { get; init; }
+    public string? Path { get; set; }
 
     [Store, Debug]
-    public string? PrPath { get; init; }
+    public string? PrPath { get; set; }
 
     [Store, Debug]
     public string? Hash { get; init; }

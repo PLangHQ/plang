@@ -207,7 +207,6 @@ public async Task Load(PLangContext context)
 // YES: just load
 public async Task Load(PLangContext context)
 {
-    _context = context;
     await Steps.Load(context);
 }
 ```
@@ -222,6 +221,130 @@ step.Actions.Value      -- List<Action>
 engine.Goals.Value      -- IReadOnlyList<Goal>
 ```
 
+## Don't Cache Context on Shared Objects
+
+Goal and Step objects are shared between threads. Storing a reference to `PLangContext` on them creates a race condition — multiple threads running the same goal overwrite each other's context.
+
+### DON'T: Store request-scoped state on shared objects
+
+```csharp
+// NO: _context is shared, multiple threads overwrite it
+public sealed partial class Goal
+{
+    internal PLangContext? _context;
+
+    public ObjectEvents Events => _context?.EventsFor(this) ?? _fallbackEvents;
+}
+
+// Then in RunAsync:
+_context = context;  // RACE: thread A sets this, thread B overwrites it
+```
+
+### DO: Put state directly on the object, or pass context as a parameter
+
+```csharp
+// YES: Events is a direct property, no context needed
+public sealed partial class Goal
+{
+    public ObjectEvents Events { get; } = new();
+}
+
+// Resolve events at load time, store them on the object:
+goal.Events.Add(binding);
+
+// Pass context as a parameter where needed:
+await Events.Before.Run(context);
+```
+
+The rule: if something is per-request (like which context is executing), pass it as a parameter. If something is per-object (like which event bindings apply), store it on the object. Never use a shared object as a cache for request-scoped data.
+
+## Let Objects Carry Their Own Data
+
+When error context is available, store the actual object — don't decompose it into strings.
+
+### DON'T: Extract fields from an object just to store them separately
+
+```csharp
+// NO: extracting Text from Step, creating extra objects
+var error = StepError.FromException(ex, context);
+error = new StepError(error.Message, context, error.Key, error.StatusCode)
+{
+    StepText = step.Text  // decomposing the Step into a string
+};
+```
+
+### DO: Keep the object reference
+
+```csharp
+// YES: store the Step, access .Text when you need it
+public class StepError : Error
+{
+    public Step? Step { get; init; }
+
+    public static StepError FromException(Exception ex, PLangContext context)
+    {
+        return new StepError(ex.Message, context)
+        {
+            Exception = ex,
+            Step = context.Step  // keep the object
+        };
+    }
+}
+```
+
+## Merge Belongs on the Result
+
+When multiple operations produce results that need combining, the merge logic belongs on the result type — it knows its own structure.
+
+```csharp
+// Return knows how to merge with another Return
+public Return Merge(Return other)
+{
+    if (other.Value == null) return this;
+    // merge List<Data> by name, replace-or-append
+    ...
+}
+
+// The collection uses it in a clean loop
+public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken ct)
+{
+    Return merged = new();
+    foreach (var action in this)
+    {
+        var result = await action.RunAsync(engine, context, ct);
+        if (!result.Success) return result;
+        merged = merged.Merge(result);
+    }
+    return merged;
+}
+```
+
+This follows the same principle: the object that owns the data owns the behavior on it.
+
+## Don't Create Wrapper Objects for Data You Already Have
+
+If the handler already receives everything it needs through an existing object, don't create a second object to pass the same data in a different shape.
+
+### DON'T: Create intermediary context objects
+
+```csharp
+// NO: EventContext duplicates what PLangContext already has
+var result = await Events.Before.RunAsync(new EventContext
+{
+    EventType = EventType.BeforeStep,
+    GoalName = context.CurrentGoalName,   // already on context
+    StepIndex = context.CurrentStepIndex, // already on context
+    StepText = Text                       // already on context.Step
+});
+```
+
+### DO: Pass the object that already has the data
+
+```csharp
+// YES: PLangContext already has Goal, Step, CurrentGoalName, CurrentStepIndex
+var result = await Events.Before.Run(context);
+```
+
 ## Summary
 
 1. **Engine is the root** -- everything hangs off it
@@ -232,3 +355,7 @@ engine.Goals.Value      -- IReadOnlyList<Goal>
 6. **Underlying objects get engine** -- any object that needs capabilities reaches them through engine
 7. **No unnecessary DTOs** -- use real types inside the runtime
 8. **Methods stay focused** -- one job per method
+9. **Don't cache request state on shared objects** -- pass context as a parameter, don't store it
+10. **Keep object references** -- store the Step, not step.Text; store the Goal, not goal.Name
+11. **Merge belongs on the result** -- Return.Merge, not a loop in the caller
+12. **Don't create wrapper objects** -- if the data is already on an existing object, pass that object

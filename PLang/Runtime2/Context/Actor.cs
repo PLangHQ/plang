@@ -65,7 +65,7 @@ public sealed class Actor : IAsyncDisposable
             CallStack = new CallStack()
         };
         Context.Actor = this;
-        IO = new IO.IO(engine.Serializers);
+        IO = new IO.IO(engine);
     }
 
     public async ValueTask DisposeAsync()
