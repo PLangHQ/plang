@@ -14,6 +14,7 @@ public sealed partial class Action
 
     public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {
+		// check: Get should just return error if handler is null or is not ICodeGenerated, 
         var handler = engine.Actions.Get(Class, Method);
         if (handler == null)
             return new Return { Error = ActionError.NotFound($"Action '{Class}.{Method}'", context) };
@@ -23,6 +24,7 @@ public sealed partial class Action
 
         var result = await codeGenerated.CodeGeneratedExecuteAsync(Parameters, engine, context);
 
+		// check: does it have to be success to write into variables, sometimes you get error after you get the content, discuss
         if (result.Success && this.Return != null)
         {
             foreach (var returnVar in this.Return)

@@ -93,6 +93,9 @@ public sealed class EventBinding
 /// <summary>
 /// Manages event bindings and dispatching for Runtime2.
 /// </summary>
+/// 
+
+// check: cant this be named Events?
 public sealed class EventCollection
 {
     private readonly List<EventBinding> _bindings = new();

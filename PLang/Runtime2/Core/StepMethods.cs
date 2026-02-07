@@ -7,11 +7,13 @@ public sealed partial class Step
 {
     public async Task Load(PLangContext context)
     {
+		//check: not correct, context.Events.Steps.Before(...)
         await context.Events.OnBeforeStepLoad.Run(context, this, Goal?.Name);
 
         await Actions.Load(context);
 
-        await context.Events.OnAfterStepLoad.Run(context, this, Goal?.Name);
+		//check: not correct, context.Events.Steps.Before(...)
+		await context.Events.OnAfterStepLoad.Run(context, this, Goal?.Name);
     }
 
     public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)

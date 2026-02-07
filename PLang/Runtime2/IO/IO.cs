@@ -85,6 +85,8 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
     {
+		// check: this should just return error, it should already check if it is null, maby even Get should take parameter if it should check on CanWrite, 
+		// then we can move both error into Get
         var channel = Get(channelName);
         if (channel == null)
             return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
@@ -95,6 +97,8 @@ public sealed class IO : IAsyncDisposable
         try
         {
             contentType ??= channel.ContentType ?? "application/json";
+			// check: why is it that IO is doing this??? just engine.Seriazlier.Serialize({stream:stream, data:object, contentType:string, extension:string(for the files), ct:ct});
+			// object based pattern!!!!! 
             var serializer = _engine.Serializers.GetOrDefault(contentType);
             await serializer.SerializeAsync(channel.Stream, data, cancellationToken: cancellationToken);
             return new Return();
@@ -110,6 +114,7 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
+		// check: this hole method like Read
         var channel = Get(channelName);
         if (channel == null)
             return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };
@@ -135,6 +140,7 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public async Task<Return> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
+		// check: you know what, just fix in all class
         var channel = Get(channelName);
         if (channel == null)
             return new Return { Error = new ServiceError($"Channel '{channelName}' not found", "ChannelNotFound", 404) };

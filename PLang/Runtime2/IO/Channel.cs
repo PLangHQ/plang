@@ -78,6 +78,9 @@ public sealed class Channel : IAsyncDisposable, IDisposable
     /// <summary>
     /// Reads all bytes from the channel.
     /// </summary>
+	
+	// check: can we take adventage of the Span<T> Memory<T> thingys, I dont know it well enough
+	// read over full class to see
     public async Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
     {
         if (!CanRead)
