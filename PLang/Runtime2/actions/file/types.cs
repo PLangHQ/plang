@@ -10,7 +10,7 @@ public class @file
     private readonly string _absolutePath;
 
     // Cached lazy values
-    private Data? _content;
+    private Data? _value;
     private long? _size;
 
     public @file(string absolutePath, IPLangFileSystem fileSystem)
@@ -53,20 +53,20 @@ public class @file
     }
 
     /// <summary>
-    /// File content as Data with MIME type set.
+    /// File value as Data with MIME type set.
     /// Text files -> Data.Value is string. Binary files -> Data.Value is byte[].
     /// Reads on first access, cached.
     /// </summary>
-    public Data Content
+    public Data Value
     {
         get
         {
-            if (_content != null) return _content;
+            if (_value != null) return _value;
 
             if (!_fs.File.Exists(_absolutePath))
             {
-                _content = Data.Ok(null);
-                return _content;
+                _value = Data.Ok(null);
+                return _value;
             }
 
             var mime = TypeMapping.GetMimeType(_fs.Path.GetExtension(_absolutePath));
@@ -74,11 +74,11 @@ public class @file
             var clrType = type.ClrType;
 
             if (clrType == typeof(byte[]))
-                _content = Data.Ok((object)_fs.File.ReadAllBytes(_absolutePath), type);
+                _value = Data.Ok((object)_fs.File.ReadAllBytes(_absolutePath), type);
             else
-                _content = Data.Ok((object)_fs.File.ReadAllText(_absolutePath), type);
+                _value = Data.Ok((object)_fs.File.ReadAllText(_absolutePath), type);
 
-            return _content;
+            return _value;
         }
     }
 

@@ -12,7 +12,7 @@ public sealed partial class DeleteHandler : BaseClass<delete>
     protected override Task<Data> ExecuteAsync(delete p)
     {
         var absPath = FileSystem.Path.GetFullPath(p.path);
-
+		//fix, should give error if it doesn't exists, delete record could have property, ignoreIfNotFound with default false
         if (FileSystem.File.Exists(absPath))
         {
             FileSystem.File.Delete(absPath);

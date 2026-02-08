@@ -11,6 +11,7 @@ public sealed partial class ExistsHandler : BaseClass<exists>
 {
     protected override Task<Data> ExecuteAsync(exists p)
     {
+		//fix: is it checking if it exists, dont see that? 
         var absPath = FileSystem.Path.GetFullPath(p.path);
         return SuccessTask(new types.@file(absPath, FileSystem));
     }

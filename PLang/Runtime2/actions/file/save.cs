@@ -21,6 +21,10 @@ public sealed partial class SaveHandler : BaseClass<save>
 
         var ext = FileSystem.Path.GetExtension(absPath);
         await using var stream = FileSystem.File.Create(absPath);
+
+		//fix: I think this wont work, lets think about this....
+		// I have so value to save, it's a file, shouldn't we just write the byte to disk, 
+		// do we need any serializer??
         await Engine.Serializers.SerializeAsync(new SerializeOptions
         {
             Stream = stream, Data = p.value, Extension = ext

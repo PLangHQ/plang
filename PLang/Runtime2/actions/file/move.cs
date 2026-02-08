@@ -21,7 +21,7 @@ public sealed partial class MoveHandler : BaseClass<move>
         {
             FileSystem.Directory.CreateDirectory(destDir);
         }
-
+		// fix: and if file doesn't exists?? we should return error key:FileNotFound
         FileSystem.File.Move(absSource, absDest, p.overwrite);
         return SuccessTask(new types.@file(absDest, FileSystem, source: absSource));
     }
