@@ -75,7 +75,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                         properties.Add(new PropertyInfo(
                             prop.Name,
                             prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            prop.NullableAnnotation == NullableAnnotation.Annotated));
+                            prop.NullableAnnotation == NullableAnnotation.Annotated,
+                            prop.Type.IsValueType));
                     }
                 }
 
@@ -156,9 +157,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // Generate partial handler class implementing ICodeGenerated
-        sb.AppendLine($"partial class {info.HandlerName} : PLang.Runtime2.Modules.ICodeGenerated");
+        sb.AppendLine($"partial class {info.HandlerName} : PLang.Runtime2.actions.ICodeGenerated");
         sb.AppendLine("{");
-        sb.AppendLine("    public System.Threading.Tasks.Task<PLang.Runtime2.Core.Return> CodeGeneratedExecuteAsync(");
+        sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Memory.Data> CodeGeneratedExecuteAsync(");
         sb.AppendLine("        List<PLang.Runtime2.Memory.Data> parameters, PLang.Runtime2.Core.Engine engine, PLang.Runtime2.Context.PLangContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        Initialize(engine, context);");
@@ -167,13 +168,45 @@ public class LazyParamsGenerator : IIncrementalGenerator
         {
             var generatedRecordName = $"{info.ParamTypeName}__Generated";
             sb.AppendLine($"        var lazy = new {generatedRecordName}(parameters, context.MemoryStack);");
-            sb.AppendLine($"        return ExecuteAsync(lazy);");
+
+            // Generate validation for non-nullable reference properties
+            foreach (var prop in info.Properties)
+            {
+                if (prop.IsNullable || prop.IsValueType)
+                    continue;
+
+                if (prop.TypeName == "string" || prop.TypeName == "global::System.String")
+                {
+                    sb.AppendLine($"        if (string.IsNullOrEmpty(lazy.{prop.Name}))");
+                }
+                else
+                {
+                    sb.AppendLine($"        if (lazy.{prop.Name} == null)");
+                }
+                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+                sb.AppendLine($"                \"'{prop.Name}' is required\", \"MissingParameter\", 400));");
+            }
+        }
+
+        sb.AppendLine("        try");
+        sb.AppendLine("        {");
+
+        if (info.Properties.Count > 0)
+        {
+            sb.AppendLine($"            return await ExecuteAsync(lazy);");
         }
         else
         {
-            // 0-property record: just call ExecuteAsync(null)
-            sb.AppendLine($"        return ExecuteAsync(({info.ParamTypeFullName}?)null);");
+            // 0-property record: pass new instance
+            sb.AppendLine($"            return await ExecuteAsync(new {info.ParamTypeFullName}());");
         }
+
+        sb.AppendLine("        }");
+        sb.AppendLine("        catch (System.Exception ex)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+        sb.AppendLine("                ex.Message, \"ServiceError\", 400));");
+        sb.AppendLine("        }");
 
         sb.AppendLine("    }");
         sb.AppendLine("}");
@@ -208,11 +241,13 @@ internal class PropertyInfo
     public string Name { get; }
     public string TypeName { get; }
     public bool IsNullable { get; }
+    public bool IsValueType { get; }
 
-    public PropertyInfo(string name, string typeName, bool isNullable)
+    public PropertyInfo(string name, string typeName, bool isNullable, bool isValueType)
     {
         Name = name;
         TypeName = typeName;
         IsNullable = isNullable;
+        IsValueType = isValueType;
     }
 }

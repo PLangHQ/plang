@@ -1,8 +1,9 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
-using PLang.Runtime2.Modules;
+using PLang.Runtime2.Memory;
+using PLang.Runtime2.actions;
 
-namespace PLang.Tests.Runtime2.Modules;
+namespace PLang.Tests.Runtime2.actions;
 
 public class ActionRegistryTests
 {
@@ -195,8 +196,8 @@ public class ActionRegistryTests
     {
         public Engine Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
-        public Type? ParameterType => null;
+        public System.Type? ParameterType => null;
         public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
-        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 }

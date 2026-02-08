@@ -93,7 +93,58 @@ public static class TypeMapping
             }
         }
 
-        return NameToType.TryGetValue(typeName, out var type) ? type : null;
+        if (NameToType.TryGetValue(typeName, out var type))
+            return type;
+
+        // MIME type resolution
+        if (typeName.Contains('/'))
+        {
+            if (typeName.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+                return typeof(string);
+            if (typeName.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ||
+                typeName.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ||
+                typeName.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+                return typeof(byte[]);
+            if (typeName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
+                return typeof(object);
+            if (typeName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
+                return typeof(byte[]);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the MIME type for a file extension.
+    /// </summary>
+    public static string GetMimeType(string extension)
+    {
+        if (string.IsNullOrWhiteSpace(extension))
+            return "application/octet-stream";
+
+        return extension.ToLowerInvariant().TrimStart('.') switch
+        {
+            "md" => "text/markdown",
+            "json" => "application/json",
+            "xml" => "text/xml",
+            "html" or "htm" => "text/html",
+            "css" => "text/css",
+            "js" => "text/javascript",
+            "csv" => "text/csv",
+            "yaml" or "yml" => "text/yaml",
+            "txt" => "text/plain",
+            "png" => "image/png",
+            "jpg" or "jpeg" => "image/jpeg",
+            "gif" => "image/gif",
+            "svg" => "image/svg+xml",
+            "webp" => "image/webp",
+            "mp3" => "audio/mpeg",
+            "wav" => "audio/wav",
+            "mp4" => "video/mp4",
+            "pdf" => "application/pdf",
+            "zip" => "application/zip",
+            _ => "application/octet-stream"
+        };
     }
 
     /// <summary>

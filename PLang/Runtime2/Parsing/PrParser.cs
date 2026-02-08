@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Utility;
 
@@ -13,7 +14,8 @@ public class PrParser
     {
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
     /// <summary>
@@ -32,18 +34,16 @@ public class PrParser
         try
         {
             var json = File.ReadAllText(prFilePath);
-            var goalData = JsonSerializer.Deserialize<GoalData>(json, JsonOptions);
+            var goal = JsonSerializer.Deserialize<Goal>(json, JsonOptions);
 
-            if (goalData == null)
+            if (goal == null)
                 return null;
 
-            var relativePath = ExtractRelativePath(prFilePath);
+            goal.Path = ExtractRelativePath(prFilePath);
+            goal.PrPath = prFilePath;
+            foreach (var step in goal.Steps) step.Goal = goal;
 
-            return GoalDataConverter.ToGoal(
-                goalData,
-                path: relativePath,
-                prPath: prFilePath
-            );
+            return goal;
         }
         catch (JsonException)
         {

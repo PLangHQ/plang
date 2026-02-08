@@ -1,407 +1,229 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Utility;
 
 namespace PLang.Tests.Runtime2.Utility;
 
-public class GoalDataTests
+public class GoalSerializationTests
 {
-    [Test]
-    public async Task Properties_CanBeSet()
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            Description = "A test goal",
-            Comment = "This is a comment",
-            Visibility = "public",
-            IsSetup = true,
-            IsEvent = false,
-            Hash = "abc123",
-            InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            SubGoals = new List<string> { "SubGoal1" },
-            Steps = new List<StepDataDto>
-            {
-                new StepDataDto { Index = 0, Text = "step 1" }
-            }
-        };
-
-        await Assert.That(data.Name).IsEqualTo("TestGoal");
-        await Assert.That(data.Description).IsEqualTo("A test goal");
-        await Assert.That(data.Comment).IsEqualTo("This is a comment");
-        await Assert.That(data.Visibility).IsEqualTo("public");
-        await Assert.That(data.IsSetup).IsTrue();
-        await Assert.That(data.IsEvent).IsFalse();
-        await Assert.That(data.Hash).IsEqualTo("abc123");
-        await Assert.That(data.InputParameters!.Count).IsEqualTo(1);
-        await Assert.That(data.SubGoals!.Count).IsEqualTo(1);
-        await Assert.That(data.Steps.Count).IsEqualTo(1);
-    }
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
 
     [Test]
-    public async Task Name_DefaultsToEmptyString()
-    {
-        var data = new GoalData();
-
-        await Assert.That(data.Name).IsEqualTo("");
-    }
-
-    [Test]
-    public async Task Steps_DefaultsToEmptyList()
-    {
-        var data = new GoalData();
-
-        await Assert.That(data.Steps).IsNotNull();
-        await Assert.That(data.Steps.Count).IsEqualTo(0);
-    }
-}
-
-public class StepDataDtoTests
-{
-    [Test]
-    public async Task Properties_CanBeSet()
-    {
-        var data = new StepDataDto
-        {
-            Index = 5,
-            Text = "test step",
-            LineNumber = 10,
-            Indent = 2,
-            Comment = "step comment",
-            Actions = new Actions
-            {
-                new PLang.Runtime2.Core.Action
-                {
-                    Class = "http",
-                    Method = "get",
-                    Parameters = new List<Data> { new Data("url", "https://api.example.com") },
-                    Return = new List<Data> { new Data("response") }
-                }
-            },
-            OnErrorGoal = "HandleError",
-            WaitForExecution = false,
-            Timeout = 30
-        };
-
-        await Assert.That(data.Index).IsEqualTo(5);
-        await Assert.That(data.Text).IsEqualTo("test step");
-        await Assert.That(data.LineNumber).IsEqualTo(10);
-        await Assert.That(data.Indent).IsEqualTo(2);
-        await Assert.That(data.Comment).IsEqualTo("step comment");
-        await Assert.That(data.Actions.Count).IsEqualTo(1);
-        await Assert.That(data.Actions[0].Class).IsEqualTo("http");
-        await Assert.That(data.Actions[0].Method).IsEqualTo("get");
-        await Assert.That(data.OnErrorGoal).IsEqualTo("HandleError");
-        await Assert.That(data.WaitForExecution).IsFalse();
-        await Assert.That(data.Timeout).IsEqualTo(30);
-    }
-
-    [Test]
-    public async Task Text_DefaultsToEmptyString()
-    {
-        var data = new StepDataDto();
-
-        await Assert.That(data.Text).IsEqualTo("");
-    }
-
-    [Test]
-    public async Task Actions_DefaultsToEmptyList()
-    {
-        var data = new StepDataDto();
-
-        await Assert.That(data.Actions).IsNotNull();
-        await Assert.That(data.Actions.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task WaitForExecution_DefaultsToTrue()
-    {
-        var data = new StepDataDto();
-
-        await Assert.That(data.WaitForExecution).IsTrue();
-    }
-}
-
-public class GoalDataConverterTests
-{
-    [Test]
-    public async Task ToGoal_ConvertsBasicProperties()
-    {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            Description = "A test goal",
-            Comment = "This is a comment",
-            Hash = "abc123",
-            IsSetup = true,
-            IsEvent = false
-        };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Name).IsEqualTo("TestGoal");
-        await Assert.That(goal.Description).IsEqualTo("A test goal");
-        await Assert.That(goal.Comment).IsEqualTo("This is a comment");
-        await Assert.That(goal.Hash).IsEqualTo("abc123");
-        await Assert.That(goal.IsSetup).IsTrue();
-        await Assert.That(goal.IsEvent).IsFalse();
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsVisibility_Public()
-    {
-        var data = new GoalData { Name = "Test", Visibility = "public" };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsVisibility_Private()
-    {
-        var data = new GoalData { Name = "Test", Visibility = "private" };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Private);
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsVisibility_NullDefaultsToPrivate()
-    {
-        var data = new GoalData { Name = "Test", Visibility = null };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Private);
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsVisibility_CaseInsensitive()
-    {
-        var data = new GoalData { Name = "Test", Visibility = "PUBLIC" };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsSteps()
-    {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            Steps = new List<StepDataDto>
-            {
-                new StepDataDto
-                {
-                    Index = 0, Text = "step 1",
-                    Actions = new Actions
-                    {
-                        new PLang.Runtime2.Core.Action { Class = "var", Method = "set" }
-                    }
-                },
-                new StepDataDto
-                {
-                    Index = 1, Text = "step 2",
-                    Actions = new Actions
-                    {
-                        new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
-                    }
-                }
-            }
-        };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Steps.Count).IsEqualTo(2);
-        await Assert.That(goal.Steps[0].Text).IsEqualTo("step 1");
-        await Assert.That(goal.Steps[1].Text).IsEqualTo("step 2");
-    }
-
-    [Test]
-    public async Task ToGoal_SetsStepGoalReference()
-    {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            Steps = new List<StepDataDto> { new StepDataDto { Index = 0, Text = "step" } }
-        };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.Steps[0].Goal).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task ToGoal_SetsFilePaths()
-    {
-        var data = new GoalData { Name = "TestGoal" };
-
-        var goal = GoalDataConverter.ToGoal(data, "/path/goal.goal", "/path/goal.pr.json");
-
-        await Assert.That(goal.Path).IsEqualTo("/path/goal.goal");
-        await Assert.That(goal.PrPath).IsEqualTo("/path/goal.pr.json");
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsInputParameters()
-    {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            InputParameters = new Dictionary<string, string> { { "name", "string" }, { "age", "int" } }
-        };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.InputParameters!.Count).IsEqualTo(2);
-        await Assert.That(goal.InputParameters["name"]).IsEqualTo("string");
-    }
-
-    [Test]
-    public async Task ToGoal_ConvertsSubGoals()
-    {
-        var data = new GoalData
-        {
-            Name = "TestGoal",
-            SubGoals = new List<string> { "SubGoal1", "SubGoal2" }
-        };
-
-        var goal = GoalDataConverter.ToGoal(data);
-
-        await Assert.That(goal.SubGoals.Count).IsEqualTo(2);
-        await Assert.That(goal.SubGoals[0]).IsEqualTo("SubGoal1");
-    }
-
-    [Test]
-    public async Task ToStep_ConvertsAllProperties()
-    {
-        var data = new StepDataDto
-        {
-            Index = 5,
-            Text = "test step",
-            LineNumber = 10,
-            Indent = 2,
-            Comment = "comment",
-            Actions = new Actions
-            {
-                new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
-            },
-            OnErrorGoal = "ErrorHandler",
-            WaitForExecution = false,
-            Timeout = 30
-        };
-
-        var step = GoalDataConverter.ToStep(data);
-
-        await Assert.That(step.Index).IsEqualTo(5);
-        await Assert.That(step.Text).IsEqualTo("test step");
-        await Assert.That(step.LineNumber).IsEqualTo(10);
-        await Assert.That(step.Indent).IsEqualTo(2);
-        await Assert.That(step.Comment).IsEqualTo("comment");
-        await Assert.That(step.Actions.Count).IsEqualTo(1);
-        await Assert.That(step.Actions[0].Class).IsEqualTo("http");
-        await Assert.That(step.Actions[0].Method).IsEqualTo("get");
-        await Assert.That(step.OnErrorGoal).IsEqualTo("ErrorHandler");
-        await Assert.That(step.WaitForExecution).IsFalse();
-        await Assert.That(step.Timeout).IsEqualTo(30);
-    }
-
-    [Test]
-    public async Task ToData_Goal_ConvertsAllProperties()
+    public async Task Roundtrip_Goal_PreservesBasicProperties()
     {
         var goal = new Goal
         {
             Name = "TestGoal",
             Description = "A test goal",
-            Comment = "comment",
+            Comment = "This is a comment",
             Visibility = Visibility.Public,
             IsSetup = true,
             IsEvent = false,
             Hash = "abc123",
-            InputParameters = new Dictionary<string, string> { { "param", "string" } },
-            SubGoals = new List<string> { "SubGoal" },
-            Steps = new Steps { new Step { Index = 0, Text = "step" } }
+            InputParameters = new Dictionary<string, string> { { "param1", "string" } },
+            SubGoals = new List<string> { "SubGoal1" }
         };
 
-        var data = GoalDataConverter.ToData(goal);
+        var json = JsonSerializer.Serialize(goal, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
 
-        await Assert.That(data.Name).IsEqualTo("TestGoal");
-        await Assert.That(data.Description).IsEqualTo("A test goal");
-        await Assert.That(data.Comment).IsEqualTo("comment");
-        await Assert.That(data.Visibility).IsEqualTo("public");
-        await Assert.That(data.IsSetup).IsTrue();
-        await Assert.That(data.IsEvent).IsFalse();
-        await Assert.That(data.Hash).IsEqualTo("abc123");
-        await Assert.That(data.InputParameters!["param"]).IsEqualTo("string");
-        await Assert.That(data.SubGoals![0]).IsEqualTo("SubGoal");
-        await Assert.That(data.Steps.Count).IsEqualTo(1);
+        await Assert.That(deserialized.Name).IsEqualTo("TestGoal");
+        await Assert.That(deserialized.Description).IsEqualTo("A test goal");
+        await Assert.That(deserialized.Comment).IsEqualTo("This is a comment");
+        await Assert.That(deserialized.Visibility).IsEqualTo(Visibility.Public);
+        await Assert.That(deserialized.IsSetup).IsTrue();
+        await Assert.That(deserialized.IsEvent).IsFalse();
+        await Assert.That(deserialized.Hash).IsEqualTo("abc123");
+        await Assert.That(deserialized.InputParameters!["param1"]).IsEqualTo("string");
+        await Assert.That(deserialized.SubGoals[0]).IsEqualTo("SubGoal1");
     }
 
     [Test]
-    public async Task ToData_Step_ConvertsAllProperties()
+    public async Task Visibility_SerializesAsCamelCaseString()
     {
-        var step = new Step
-        {
-            Index = 5,
-            Text = "test step",
-            LineNumber = 10,
-            Indent = 2,
-            Comment = "comment",
-            Actions = new Actions
-            {
-                new PLang.Runtime2.Core.Action { Class = "http", Method = "get" }
-            },
-            OnErrorGoal = "ErrorHandler",
-            WaitForExecution = false,
-            Timeout = 30
-        };
+        var goalPublic = new Goal { Name = "Test", Visibility = Visibility.Public };
+        var goalPrivate = new Goal { Name = "Test", Visibility = Visibility.Private };
 
-        var data = GoalDataConverter.ToData(step);
+        var jsonPublic = JsonSerializer.Serialize(goalPublic, JsonOptions);
+        var jsonPrivate = JsonSerializer.Serialize(goalPrivate, JsonOptions);
 
-        await Assert.That(data.Index).IsEqualTo(5);
-        await Assert.That(data.Text).IsEqualTo("test step");
-        await Assert.That(data.LineNumber).IsEqualTo(10);
-        await Assert.That(data.Indent).IsEqualTo(2);
-        await Assert.That(data.Comment).IsEqualTo("comment");
-        await Assert.That(data.Actions.Count).IsEqualTo(1);
-        await Assert.That(data.Actions[0].Class).IsEqualTo("http");
-        await Assert.That(data.Actions[0].Method).IsEqualTo("get");
-        await Assert.That(data.OnErrorGoal).IsEqualTo("ErrorHandler");
-        await Assert.That(data.WaitForExecution).IsFalse();
-        await Assert.That(data.Timeout).IsEqualTo(30);
+        await Assert.That(jsonPublic).Contains("\"visibility\":\"public\"");
+        await Assert.That(jsonPrivate).Contains("\"visibility\":\"private\"");
     }
 
     [Test]
-    public async Task Roundtrip_GoalData_PreservesData()
+    public async Task Visibility_DeserializesFromCamelCaseString()
     {
-        var original = new GoalData
+        var json = """{"name":"Test","visibility":"public"}""";
+        var goal = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
+
+        await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
+    }
+
+    [Test]
+    public async Task ErrorOrder_SerializesAsCamelCaseString()
+    {
+        var handler = new ErrorHandler { Order = ErrorOrder.GoalFirst };
+        var json = JsonSerializer.Serialize(handler, JsonOptions);
+
+        await Assert.That(json).Contains("\"goalFirst\"");
+    }
+
+    [Test]
+    public async Task ErrorOrder_RetryFirst_SerializesCorrectly()
+    {
+        var handler = new ErrorHandler { Order = ErrorOrder.RetryFirst };
+        var json = JsonSerializer.Serialize(handler, JsonOptions);
+
+        await Assert.That(json).Contains("\"retryFirst\"");
+    }
+
+    [Test]
+    public async Task Roundtrip_StepsAndActions_Preserved()
+    {
+        var goal = new Goal
         {
             Name = "TestGoal",
-            Description = "A test",
-            Visibility = "public",
-            Steps = new List<StepDataDto>
+            Steps = new Steps
             {
-                new StepDataDto
+                new Step
                 {
-                    Index = 0, Text = "step 1",
+                    Index = 0,
+                    Text = "step 1",
+                    LineNumber = 5,
+                    Indent = 2,
+                    Comment = "step comment",
+                    WaitForExecution = false,
+                    Timeout = 30,
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action { Class = "var", Method = "set" }
+                        new PLang.Runtime2.Core.Action
+                        {
+                            Class = "http",
+                            Method = "get",
+                            Parameters = new List<Data> { new Data("url", "https://api.example.com") },
+                            Return = new List<Data> { new Data("response") }
+                        }
                     }
                 }
             }
         };
 
-        var goal = GoalDataConverter.ToGoal(original);
-        var roundtrip = GoalDataConverter.ToData(goal);
+        var json = JsonSerializer.Serialize(goal, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
 
-        await Assert.That(roundtrip.Name).IsEqualTo(original.Name);
-        await Assert.That(roundtrip.Description).IsEqualTo(original.Description);
-        await Assert.That(roundtrip.Visibility).IsEqualTo(original.Visibility);
-        await Assert.That(roundtrip.Steps.Count).IsEqualTo(original.Steps.Count);
+        await Assert.That(deserialized.Steps.Count).IsEqualTo(1);
+        var step = deserialized.Steps[0];
+        await Assert.That(step.Index).IsEqualTo(0);
+        await Assert.That(step.Text).IsEqualTo("step 1");
+        await Assert.That(step.LineNumber).IsEqualTo(5);
+        await Assert.That(step.Indent).IsEqualTo(2);
+        await Assert.That(step.Comment).IsEqualTo("step comment");
+        await Assert.That(step.WaitForExecution).IsFalse();
+        await Assert.That(step.Timeout).IsEqualTo(30);
+        await Assert.That(step.Actions.Count).IsEqualTo(1);
+        await Assert.That(step.Actions[0].Class).IsEqualTo("http");
+        await Assert.That(step.Actions[0].Method).IsEqualTo("get");
+    }
+
+    [Test]
+    public async Task Roundtrip_ErrorHandler_Preserved()
+    {
+        var goal = new Goal
+        {
+            Name = "TestGoal",
+            Steps = new Steps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "step",
+                    OnError = new ErrorHandler
+                    {
+                        Goal = new GoalToCallInfo { Name = "HandleError", Parameters = new Dictionary<string, object?> { { "msg", "oops" } } },
+                        RetryCount = 3,
+                        RetryOverSeconds = 60,
+                        Order = ErrorOrder.RetryFirst,
+                        IgnoreError = false,
+                        Message = "Something failed",
+                        StatusCode = 500,
+                        Key = "err1"
+                    }
+                }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(goal, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
+
+        var err = deserialized.Steps[0].OnError!;
+        await Assert.That(err.Goal!.Name).IsEqualTo("HandleError");
+        await Assert.That(err.RetryCount).IsEqualTo(3);
+        await Assert.That(err.RetryOverSeconds).IsEqualTo(60);
+        await Assert.That(err.Order).IsEqualTo(ErrorOrder.RetryFirst);
+        await Assert.That(err.IgnoreError).IsFalse();
+        await Assert.That(err.Message).IsEqualTo("Something failed");
+        await Assert.That(err.StatusCode).IsEqualTo(500);
+        await Assert.That(err.Key).IsEqualTo("err1");
+    }
+
+    [Test]
+    public async Task Roundtrip_CacheSettings_Preserved()
+    {
+        var goal = new Goal
+        {
+            Name = "TestGoal",
+            Steps = new Steps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "step",
+                    Cache = new CacheSettings
+                    {
+                        DurationMinutes = 10,
+                        Sliding = true,
+                        Key = "cache1",
+                        Location = "memory"
+                    }
+                }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(goal, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
+
+        var cache = deserialized.Steps[0].Cache!;
+        await Assert.That(cache.DurationMinutes).IsEqualTo(10);
+        await Assert.That(cache.Sliding).IsTrue();
+        await Assert.That(cache.Key).IsEqualTo("cache1");
+        await Assert.That(cache.Location).IsEqualTo("memory");
+    }
+
+    [Test]
+    public async Task JsonIgnore_Properties_AreExcluded()
+    {
+        var goal = new Goal
+        {
+            Name = "TestGoal",
+            Steps = new Steps
+            {
+                new Step { Index = 0, Text = "step" }
+            }
+        };
+        goal.Steps[0].Goal = goal;
+
+        var json = JsonSerializer.Serialize(goal, JsonOptions);
+
+        // Parent, Goal back-ref, and Events should not appear
+        await Assert.That(json).DoesNotContain("\"parent\"");
+        await Assert.That(json).DoesNotContain("\"events\"");
     }
 }

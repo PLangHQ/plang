@@ -1,4 +1,5 @@
 using PLang.Runtime2.Context;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
@@ -15,28 +16,28 @@ public sealed class EventList
 
     public IReadOnlyList<EventBinding> ToList() => _bindings.ToList();
 
-    public async Task<Return> Run(PLangContext context)
+    public async Task<Data> Run(PLangContext context)
     {
-        if (_bindings.Count == 0) return new Return();
+        if (_bindings.Count == 0) return Data.Ok();
         foreach (var binding in _bindings.OrderByDescending(b => b.Priority))
         {
             var result = await binding.Handler(context);
             if (!result.Success && binding.StopOnError) return result;
         }
-        return new Return();
+        return Data.Ok();
     }
 }
 
-public sealed class ObjectEvents
+public sealed class PhaseEvents
 {
-    public EventList Before { get; } = new();
-    public EventList After { get; } = new();
+    public EventList Load { get; } = new();
+    private readonly EventList _runtime = new();
+    public Task<Data> Run(PLangContext context) => _runtime.Run(context);
+    public void Add(EventBinding binding) => _runtime.Add(binding);
+}
 
-    public void Add(EventBinding binding)
-    {
-        if (binding.Type is EventType.BeforeGoal or EventType.BeforeStep)
-            Before.Add(binding);
-        else
-            After.Add(binding);
-    }
+public sealed class EntityEvents
+{
+    public PhaseEvents Before { get; } = new();
+    public PhaseEvents After { get; } = new();
 }

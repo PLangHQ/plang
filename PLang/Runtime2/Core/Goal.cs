@@ -65,7 +65,7 @@ public sealed partial class Goal
     public List<Info> Warnings { get; init; } = new();
 
     [JsonIgnore]
-    public ObjectEvents Events { get; } = new();
+    public EntityEvents Events { get; } = new();
 
     [Debug, Default]
     public string FullPath

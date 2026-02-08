@@ -12,9 +12,9 @@ public class MemoryStack
     public MemoryStack()
     {
         // Register system variables
-        Put(new DynamicData("Now", () => DateTime.Now, TypeInfo.DateTime));
-        Put(new DynamicData("NowUtc", () => DateTime.UtcNow, TypeInfo.DateTime));
-        Put(new DynamicData("GUID", () => Guid.NewGuid(), new TypeInfo(typeof(Guid))));
+        Put(new DynamicData("Now", () => DateTime.Now, Type.DateTime));
+        Put(new DynamicData("NowUtc", () => DateTime.UtcNow, Type.DateTime));
+        Put(new DynamicData("GUID", () => Guid.NewGuid(), Type.FromName("guid")));
     }
 
     /// <summary>
@@ -28,18 +28,18 @@ public class MemoryStack
     /// <summary>
     /// Stores a value with the given name.
     /// </summary>
-    public void Set(string name, object? value, TypeInfo? typeInfo = null)
+    public void Set(string name, object? value, Type? type = null)
     {
         name = CleanName(name);
         if (_variables.TryGetValue(name, out var existing))
         {
             existing.Value = value;
-            if (typeInfo != null)
-                existing.TypeInfo = typeInfo;
+            if (type != null)
+                existing.Type = type;
         }
         else
         {
-            _variables[name] = new Data(name, value, typeInfo);
+            _variables[name] = new Data(name, value, type);
         }
     }
 
@@ -152,7 +152,7 @@ public class MemoryStack
                 !kvp.Key.Equals("NowUtc", StringComparison.OrdinalIgnoreCase) &&
                 !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase))
             {
-                clone._variables[kvp.Key] = new Data(kvp.Value.Name, kvp.Value.Value, kvp.Value.TypeInfo);
+                clone._variables[kvp.Key] = new Data(kvp.Value.Name, kvp.Value.Value, kvp.Value.Type);
             }
         }
         return clone;

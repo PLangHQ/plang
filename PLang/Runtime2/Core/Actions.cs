@@ -1,4 +1,5 @@
 using PLang.Runtime2.Context;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
@@ -15,9 +16,9 @@ public sealed class Actions : List<Action>
             await action.Load(context);
     }
 
-    public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
     {
-        Return merged = new();
+        Data merged = Data.Ok();
         foreach (var action in this)
         {
             var result = await action.RunAsync(engine, context, ct);

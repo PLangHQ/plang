@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Errors;
+using PLang.Runtime2.Memory;
 using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.IO;
@@ -21,6 +22,8 @@ public sealed class IO : IAsyncDisposable
     public IO(Engine engine)
     {
         _engine = engine;
+        Register(new Channel(StdOut, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
+            { ContentType = "text/plain" });
     }
 
     /// <summary>
@@ -52,17 +55,17 @@ public sealed class IO : IAsyncDisposable
     /// <summary>
     /// Gets a channel and validates existence and permissions.
     /// </summary>
-    private (Channel? Channel, Return? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
+    private (Channel? Channel, Data? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
         if (channel == null)
-            return (null, new Return { Error = new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404) });
+            return (null, Data.Fail(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
 
         if (requireRead == true && !channel.CanRead)
-            return (null, new Return { Error = new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400) });
+            return (null, Data.Fail(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
 
         if (requireWrite == true && !channel.CanWrite)
-            return (null, new Return { Error = new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400) });
+            return (null, Data.Fail(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
 
         return (channel, null);
     }
@@ -101,7 +104,7 @@ public sealed class IO : IAsyncDisposable
     /// <summary>
     /// Writes data to a channel.
     /// </summary>
-    public async Task<Return> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
+    public async Task<Data> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
@@ -115,18 +118,18 @@ public sealed class IO : IAsyncDisposable
                 ContentType = contentType ?? channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return new Return();
+            return Data.Ok();
         }
         catch (Exception ex)
         {
-            return new Return { Error = new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex } };
+            return Data.Fail(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Reads data from a channel.
     /// </summary>
-    public async Task<Return> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Data> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -139,18 +142,18 @@ public sealed class IO : IAsyncDisposable
                 ContentType = channel.ContentType ?? "application/json",
                 CancellationToken = cancellationToken
             });
-            return new Return { Value = result };
+            return Data.Ok(result);
         }
         catch (Exception ex)
         {
-            return new Return { Error = new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex } };
+            return Data.Fail(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Writes text to a channel.
     /// </summary>
-    public async Task<Return> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
+    public async Task<Data> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
@@ -158,18 +161,18 @@ public sealed class IO : IAsyncDisposable
         try
         {
             await channel!.WriteTextAsync(text, cancellationToken);
-            return new Return();
+            return Data.Ok();
         }
         catch (Exception ex)
         {
-            return new Return { Error = new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex } };
+            return Data.Fail(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
     /// <summary>
     /// Reads text from a channel.
     /// </summary>
-    public async Task<Return> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<Data> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -177,11 +180,11 @@ public sealed class IO : IAsyncDisposable
         try
         {
             var text = await channel!.ReadAllTextAsync(cancellationToken);
-            return new Return { Value = text };
+            return Data.Ok(text);
         }
         catch (Exception ex)
         {
-            return new Return { Error = new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex } };
+            return Data.Fail(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 

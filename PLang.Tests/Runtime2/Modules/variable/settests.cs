@@ -1,10 +1,11 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules.variable;
-using TypeInfo = PLang.Runtime2.Memory.TypeInfo;
+using PLang.Runtime2.actions.variable;
+using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+using Type = PLang.Runtime2.Memory.Type;
 
-namespace PLang.Tests.Runtime2.Modules.variable;
+namespace PLang.Tests.Runtime2.actions.variable;
 
 public class SetTests
 {
@@ -38,18 +39,33 @@ public class SetTests
         var result = await handler.ExecuteAsync(new set { name = "count", value = 42, type = "int" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(memory.Get("count")!.TypeInfo!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(memory.Get("count")!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
-    public async Task Set_ReturnsValueInResult()
+    public async Task Set_ReturnsTypedVariable()
     {
         var (handler, _) = Create();
 
         var result = await handler.ExecuteAsync(new set { name = "testVar", value = "testValue" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("testValue");
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.name).IsEqualTo("testVar");
+        await Assert.That(v.value).IsEqualTo("testValue");
+    }
+
+    [Test]
+    public async Task Set_WithType_ReturnsTypeInResult()
+    {
+        var (handler, _) = Create();
+
+        var result = await handler.ExecuteAsync(new set { name = "count", value = 42, type = "int" });
+
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.type).IsEqualTo("int");
     }
 
     [Test]
@@ -57,20 +73,9 @@ public class SetTests
     {
         var (handler, _) = Create();
 
-        var result = await handler.ExecuteAsync(null);
+        var result = await handler.ExecuteAsync((object?)null);
 
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidParameters");
-    }
-
-    [Test]
-    public async Task Set_MissingName_ReturnsError()
-    {
-        var (handler, _) = Create();
-
-        var result = await handler.ExecuteAsync(new set { name = "", value = "testValue" });
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidParameters");
+        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 }

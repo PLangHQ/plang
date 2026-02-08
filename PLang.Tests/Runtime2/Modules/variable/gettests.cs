@@ -1,9 +1,10 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules.variable;
+using PLang.Runtime2.actions.variable;
+using VariableResult = PLang.Runtime2.actions.variable.types.variable;
 
-namespace PLang.Tests.Runtime2.Modules.variable;
+namespace PLang.Tests.Runtime2.actions.variable;
 
 public class GetTests
 {
@@ -28,39 +29,35 @@ public class GetTests
         var result = await handler.ExecuteAsync(new get { name = "testVar" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("testValue");
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.name).IsEqualTo("testVar");
+        await Assert.That(v.value).IsEqualTo("testValue");
+        await Assert.That(v.exists).IsTrue();
     }
 
     [Test]
-    public async Task Get_NonexistentVariable_ReturnsNull()
+    public async Task Get_NonexistentVariable_ReturnsNotExists()
     {
         var (handler, _) = Create();
 
         var result = await handler.ExecuteAsync(new get { name = "nonexistent" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsNull();
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.value).IsNull();
+        await Assert.That(v.exists).IsFalse();
     }
 
     [Test]
-    public async Task Get_MissingName_ReturnsError()
+    public async Task Get_NullParameters_ReturnsError()
     {
         var (handler, _) = Create();
 
-        var result = await handler.ExecuteAsync(null);
+        var result = await handler.ExecuteAsync((object?)null);
 
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("MissingName");
-    }
-
-    [Test]
-    public async Task Get_EmptyName_ReturnsError()
-    {
-        var (handler, _) = Create();
-
-        var result = await handler.ExecuteAsync(new get { name = "" });
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("MissingName");
+        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 }

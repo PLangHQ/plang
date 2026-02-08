@@ -1,275 +1,195 @@
 using PLang.Runtime2.Memory;
-using TypeInfo = PLang.Runtime2.Memory.TypeInfo;
+using Type = PLang.Runtime2.Memory.Type;
 
 namespace PLang.Tests.Runtime2.Memory;
 
-public class TypeInfoTests
+public class TypeTests
 {
     [Test]
-    public async Task Constructor_WithStringType_SetsProperties()
+    public async Task Constructor_WithStringValue_SetsValue()
     {
-        var typeInfo = new TypeInfo(typeof(string));
+        var type = new Type("string");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(typeInfo.Name).IsEqualTo("string");
-        await Assert.That(typeInfo.IsNullable).IsTrue();
-        await Assert.That(typeInfo.IsList).IsFalse();
-        await Assert.That(typeInfo.IsDictionary).IsFalse();
-        await Assert.That(typeInfo.ElementType).IsNull();
+        await Assert.That(type.Value).IsEqualTo("string");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
     [Test]
-    public async Task Constructor_WithIntType_SetsProperties()
+    public async Task Constructor_WithIntValue_SetsValue()
     {
-        var typeInfo = new TypeInfo(typeof(int));
+        var type = new Type("int");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(int));
-        await Assert.That(typeInfo.Name).IsEqualTo("int");
-        await Assert.That(typeInfo.IsNullable).IsFalse();
-        await Assert.That(typeInfo.IsList).IsFalse();
-        await Assert.That(typeInfo.IsDictionary).IsFalse();
+        await Assert.That(type.Value).IsEqualTo("int");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
-    public async Task Constructor_WithNullableInt_SetsIsNullableTrue()
+    public async Task FromName_WithString_CreatesType()
     {
-        var typeInfo = new TypeInfo(typeof(int?));
+        var type = Type.FromName("string");
 
-        await Assert.That(typeInfo.IsNullable).IsTrue();
-        await Assert.That(typeInfo.Name).IsEqualTo("int?");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type.Value).IsEqualTo("string");
     }
 
     [Test]
-    public async Task Constructor_WithListType_SetsIsListTrue()
+    public async Task FromName_WithInt_CreatesType()
     {
-        var typeInfo = new TypeInfo(typeof(List<string>));
+        var type = Type.FromName("int");
 
-        await Assert.That(typeInfo.IsList).IsTrue();
-        await Assert.That(typeInfo.IsDictionary).IsFalse();
-        await Assert.That(typeInfo.ElementType).IsNotNull();
-        await Assert.That(typeInfo.ElementType!.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
-    public async Task Constructor_WithIListType_SetsIsListTrue()
+    public async Task FromName_WithList_CreatesType()
     {
-        var typeInfo = new TypeInfo(typeof(IList<int>));
+        var type = Type.FromName("list");
 
-        await Assert.That(typeInfo.IsList).IsTrue();
-        await Assert.That(typeInfo.ElementType).IsNotNull();
-        await Assert.That(typeInfo.ElementType!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(List<object>));
     }
 
     [Test]
-    public async Task Constructor_WithArrayType_SetsIsListTrue()
+    public async Task FromName_WithDict_CreatesType()
     {
-        var typeInfo = new TypeInfo(typeof(int[]));
+        var type = Type.FromName("dict");
 
-        await Assert.That(typeInfo.IsList).IsTrue();
-        await Assert.That(typeInfo.ElementType).IsNotNull();
-        await Assert.That(typeInfo.ElementType!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(Dictionary<string, object>));
     }
 
     [Test]
-    public async Task Constructor_WithDictionaryType_SetsIsDictionaryTrue()
+    public async Task FromName_WithUnknownType_ReturnsNullClrType()
     {
-        var typeInfo = new TypeInfo(typeof(Dictionary<string, object>));
+        var type = Type.FromName("unknowntype");
 
-        await Assert.That(typeInfo.IsDictionary).IsTrue();
-        await Assert.That(typeInfo.IsList).IsFalse();
+        await Assert.That(type.Value).IsEqualTo("unknowntype");
+        await Assert.That(type.ClrType).IsNull();
     }
 
     [Test]
-    public async Task Constructor_WithIDictionaryType_SetsIsDictionaryTrue()
+    public async Task FromMime_WithTextPlain_ReturnsStringClrType()
     {
-        var typeInfo = new TypeInfo(typeof(IDictionary<string, int>));
+        var type = Type.FromMime("text/plain");
 
-        await Assert.That(typeInfo.IsDictionary).IsTrue();
+        await Assert.That(type.Value).IsEqualTo("text/plain");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
     [Test]
-    public async Task FromName_WithString_CreatesTypeInfo()
+    public async Task FromMime_WithTextMarkdown_ReturnsStringClrType()
     {
-        var typeInfo = TypeInfo.FromName("string");
+        var type = Type.FromMime("text/markdown");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(typeInfo.Name).IsEqualTo("string");
+        await Assert.That(type.Value).IsEqualTo("text/markdown");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
     [Test]
-    public async Task FromName_WithInt_CreatesTypeInfo()
+    public async Task FromMime_WithImageJpeg_ReturnsByteArrayClrType()
     {
-        var typeInfo = TypeInfo.FromName("int");
+        var type = Type.FromMime("image/jpeg");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.Value).IsEqualTo("image/jpeg");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
     }
 
     [Test]
-    public async Task FromName_WithList_CreatesTypeInfo()
+    public async Task FromMime_WithApplicationJson_ReturnsObjectClrType()
     {
-        var typeInfo = TypeInfo.FromName("list");
+        var type = Type.FromMime("application/json");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(List<object>));
-        await Assert.That(typeInfo.IsList).IsTrue();
+        await Assert.That(type.Value).IsEqualTo("application/json");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(object));
     }
 
     [Test]
-    public async Task FromName_WithGenericList_CreatesTypeInfo()
+    public async Task FromMime_WithOctetStream_ReturnsByteArrayClrType()
     {
-        var typeInfo = TypeInfo.FromName("list<string>");
+        var type = Type.FromMime("application/octet-stream");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(List<string>));
-        await Assert.That(typeInfo.IsList).IsTrue();
-        await Assert.That(typeInfo.ElementType!.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type.Value).IsEqualTo("application/octet-stream");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
     }
 
     [Test]
-    public async Task FromName_WithDict_CreatesTypeInfo()
+    public async Task String_StaticProperty_ReturnsStringType()
     {
-        var typeInfo = TypeInfo.FromName("dict");
+        var type = Type.String;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(Dictionary<string, object>));
-        await Assert.That(typeInfo.IsDictionary).IsTrue();
+        await Assert.That(type.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(type.Value).IsEqualTo("string");
     }
 
     [Test]
-    public async Task FromName_WithUnknownType_ReturnsObjectType()
+    public async Task Int_StaticProperty_ReturnsIntType()
     {
-        var typeInfo = TypeInfo.FromName("unknowntype");
+        var type = Type.Int;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(object));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(type.Value).IsEqualTo("int");
     }
 
     [Test]
-    public async Task String_StaticProperty_ReturnsStringTypeInfo()
+    public async Task Long_StaticProperty_ReturnsLongType()
     {
-        var typeInfo = TypeInfo.String;
+        var type = Type.Long;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(typeInfo.Name).IsEqualTo("string");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(long));
+        await Assert.That(type.Value).IsEqualTo("long");
     }
 
     [Test]
-    public async Task Int_StaticProperty_ReturnsIntTypeInfo()
+    public async Task Double_StaticProperty_ReturnsDoubleType()
     {
-        var typeInfo = TypeInfo.Int;
+        var type = Type.Double;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(int));
-        await Assert.That(typeInfo.Name).IsEqualTo("int");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(double));
+        await Assert.That(type.Value).IsEqualTo("double");
     }
 
     [Test]
-    public async Task Long_StaticProperty_ReturnsLongTypeInfo()
+    public async Task Bool_StaticProperty_ReturnsBoolType()
     {
-        var typeInfo = TypeInfo.Long;
+        var type = Type.Bool;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(long));
-        await Assert.That(typeInfo.Name).IsEqualTo("long");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(bool));
+        await Assert.That(type.Value).IsEqualTo("bool");
     }
 
     [Test]
-    public async Task Double_StaticProperty_ReturnsDoubleTypeInfo()
+    public async Task DateTime_StaticProperty_ReturnsDateTimeType()
     {
-        var typeInfo = TypeInfo.Double;
+        var type = Type.DateTime;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(double));
-        await Assert.That(typeInfo.Name).IsEqualTo("double");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(DateTime));
+        await Assert.That(type.Value).IsEqualTo("datetime");
     }
 
     [Test]
-    public async Task Bool_StaticProperty_ReturnsBoolTypeInfo()
+    public async Task Object_StaticProperty_ReturnsObjectType()
     {
-        var typeInfo = TypeInfo.Bool;
+        var type = Type.Object;
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(bool));
-        await Assert.That(typeInfo.Name).IsEqualTo("bool");
+        await Assert.That(type.ClrType).IsEqualTo(typeof(object));
+        await Assert.That(type.Value).IsEqualTo("object");
     }
 
     [Test]
-    public async Task DateTime_StaticProperty_ReturnsDateTimeTypeInfo()
+    public async Task ToString_ReturnsValue()
     {
-        var typeInfo = TypeInfo.DateTime;
+        var type = new Type("string");
 
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(DateTime));
-        await Assert.That(typeInfo.Name).IsEqualTo("datetime");
-    }
-
-    [Test]
-    public async Task Object_StaticProperty_ReturnsObjectTypeInfo()
-    {
-        var typeInfo = TypeInfo.Object;
-
-        await Assert.That(typeInfo.ClrType).IsEqualTo(typeof(object));
-        await Assert.That(typeInfo.Name).IsEqualTo("object");
-    }
-
-    [Test]
-    public async Task ToString_ReturnsName()
-    {
-        var typeInfo = new TypeInfo(typeof(string));
-
-        var str = typeInfo.ToString();
+        var str = type.ToString();
 
         await Assert.That(str).IsEqualTo("string");
     }
 
     [Test]
-    public async Task ToString_ForGenericList_ReturnsFormattedName()
+    public async Task ToString_ForMimeType_ReturnsMimeString()
     {
-        var typeInfo = new TypeInfo(typeof(List<int>));
+        var type = Type.FromMime("text/markdown");
 
-        var str = typeInfo.ToString();
+        var str = type.ToString();
 
-        await Assert.That(str).IsEqualTo("list<int>");
-    }
-
-    [Test]
-    public async Task ToString_ForDictionary_ReturnsFormattedName()
-    {
-        var typeInfo = new TypeInfo(typeof(Dictionary<string, int>));
-
-        var str = typeInfo.ToString();
-
-        await Assert.That(str).IsEqualTo("dict<string,int>");
-    }
-
-    [Test]
-    public async Task ElementType_ForNonCollection_IsNull()
-    {
-        var typeInfo = new TypeInfo(typeof(string));
-
-        await Assert.That(typeInfo.ElementType).IsNull();
-    }
-
-    [Test]
-    public async Task ElementType_ForDictionary_IsNull()
-    {
-        var typeInfo = new TypeInfo(typeof(Dictionary<string, int>));
-
-        await Assert.That(typeInfo.ElementType).IsNull();
-    }
-
-    [Test]
-    public async Task IsNullable_ReferenceTypes_IsTrue()
-    {
-        await Assert.That(new TypeInfo(typeof(string)).IsNullable).IsTrue();
-        await Assert.That(new TypeInfo(typeof(object)).IsNullable).IsTrue();
-        await Assert.That(new TypeInfo(typeof(List<int>)).IsNullable).IsTrue();
-    }
-
-    [Test]
-    public async Task IsNullable_ValueTypes_IsFalse()
-    {
-        await Assert.That(new TypeInfo(typeof(int)).IsNullable).IsFalse();
-        await Assert.That(new TypeInfo(typeof(double)).IsNullable).IsFalse();
-        await Assert.That(new TypeInfo(typeof(bool)).IsNullable).IsFalse();
-    }
-
-    [Test]
-    public async Task IsNullable_NullableValueTypes_IsTrue()
-    {
-        await Assert.That(new TypeInfo(typeof(int?)).IsNullable).IsTrue();
-        await Assert.That(new TypeInfo(typeof(double?)).IsNullable).IsTrue();
-        await Assert.That(new TypeInfo(typeof(DateTime?)).IsNullable).IsTrue();
+        await Assert.That(str).IsEqualTo("text/markdown");
     }
 }

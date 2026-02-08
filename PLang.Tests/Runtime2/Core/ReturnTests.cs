@@ -1,14 +1,14 @@
-using PLang.Runtime2.Core;
 using PLang.Runtime2.Errors;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Tests.Runtime2.Core;
 
-public class ReturnTests
+public class DataResultTests
 {
     [Test]
-    public async Task New_NoValue_ReturnsSuccess()
+    public async Task Ok_NoValue_ReturnsSuccess()
     {
-        var result = new Return();
+        var result = Data.Ok();
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNull();
@@ -16,11 +16,11 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task New_WithValue_ReturnsSuccessWithValue()
+    public async Task Ok_WithValue_ReturnsSuccessWithValue()
     {
         var value = "test value";
 
-        var result = new Return { Value = value };
+        var result = Data.Ok(value);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo(value);
@@ -28,20 +28,20 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task New_WithNullValue_ReturnsSuccessWithNull()
+    public async Task Ok_WithNullValue_ReturnsSuccessWithNull()
     {
-        var result = new Return { Value = null };
+        var result = Data.Ok(null);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNull();
     }
 
     [Test]
-    public async Task New_WithError_ReturnsError()
+    public async Task Fail_WithError_ReturnsError()
     {
         var error = new Error("Test error", "TestKey", 500);
 
-        var result = new Return { Error = error };
+        var result = Data.Fail(error);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Value).IsNull();
@@ -50,9 +50,9 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task New_WithErrorMessage_ReturnsErrorWithDefaultKey()
+    public async Task Fail_WithErrorMessage_ReturnsErrorWithDefaultKey()
     {
-        var result = new Return { Error = new Error("Something went wrong") };
+        var result = Data.Fail(new Error("Something went wrong"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -62,9 +62,9 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task New_WithMessageAndKeyAndStatusCode_ReturnsCustomError()
+    public async Task Fail_WithMessageAndKeyAndStatusCode_ReturnsCustomError()
     {
-        var result = new Return { Error = new Error("Not found", "NotFound", 404) };
+        var result = Data.Fail(new Error("Not found", "NotFound", 404));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).IsEqualTo("Not found");
@@ -75,7 +75,7 @@ public class ReturnTests
     [Test]
     public async Task GetValue_WithMatchingType_ReturnsTypedValue()
     {
-        var result = new Return { Value = "hello" };
+        var result = Data.Ok("hello");
 
         var value = result.GetValue<string>();
 
@@ -85,7 +85,7 @@ public class ReturnTests
     [Test]
     public async Task GetValue_WithMismatchedType_ReturnsDefault()
     {
-        var result = new Return { Value = "hello" };
+        var result = Data.Ok("hello");
 
         var value = result.GetValue<int>();
 
@@ -95,7 +95,7 @@ public class ReturnTests
     [Test]
     public async Task GetValue_WithNullValue_ReturnsDefault()
     {
-        var result = new Return();
+        var result = Data.Ok();
 
         var value = result.GetValue<string>();
 
@@ -105,7 +105,7 @@ public class ReturnTests
     [Test]
     public async Task GetValue_WithReferenceType_ReturnsNull()
     {
-        var result = new Return();
+        var result = Data.Ok();
 
         var value = result.GetValue<List<int>>();
 
@@ -115,7 +115,7 @@ public class ReturnTests
     [Test]
     public async Task ImplicitBool_SuccessResult_ReturnsTrue()
     {
-        Return result = new();
+        Data result = Data.Ok();
 
         bool boolValue = result;
 
@@ -125,7 +125,7 @@ public class ReturnTests
     [Test]
     public async Task ImplicitBool_FailureResult_ReturnsFalse()
     {
-        Return result = new() { Error = new Error("error") };
+        Data result = Data.Fail(new Error("error"));
 
         bool boolValue = result;
 
@@ -135,8 +135,8 @@ public class ReturnTests
     [Test]
     public async Task ImplicitBool_CanBeUsedInIfStatement()
     {
-        var successResult = new Return();
-        var failResult = new Return { Error = new Error("error") };
+        var successResult = Data.Ok();
+        var failResult = Data.Fail(new Error("error"));
 
         var successPassed = false;
         var failPassed = true;
@@ -151,7 +151,7 @@ public class ReturnTests
     [Test]
     public async Task ToString_SuccessWithValue_ReturnsValueString()
     {
-        var result = new Return { Value = "test value" };
+        var result = Data.Ok("test value");
 
         var str = result.ToString();
 
@@ -159,19 +159,19 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task ToString_SuccessWithNullValue_ReturnsSuccess()
+    public async Task ToString_SuccessWithNullValue_ReturnsNull()
     {
-        var result = new Return();
+        var result = Data.Ok();
 
         var str = result.ToString();
 
-        await Assert.That(str).IsEqualTo("Success");
+        await Assert.That(str).IsEqualTo("(null)");
     }
 
     [Test]
     public async Task ToString_Failure_ReturnsErrorMessage()
     {
-        var result = new Return { Error = new Error("Something went wrong") };
+        var result = Data.Fail(new Error("Something went wrong"));
 
         var str = result.ToString();
 
@@ -181,7 +181,7 @@ public class ReturnTests
     [Test]
     public async Task GetValue_WithIntegerInObjectValue_ReturnsInteger()
     {
-        var result = new Return { Value = 42 };
+        var result = Data.Ok(42);
 
         var value = result.GetValue<int>();
 
@@ -189,11 +189,11 @@ public class ReturnTests
     }
 
     [Test]
-    public async Task New_WithComplexObject_ReturnsSuccessWithObject()
+    public async Task Ok_WithComplexObject_ReturnsSuccessWithObject()
     {
         var data = new { Name = "Test", Value = 123 };
 
-        var result = new Return { Value = data };
+        var result = Data.Ok(data);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNotNull();
@@ -202,7 +202,7 @@ public class ReturnTests
     [Test]
     public async Task Value_IsMutable()
     {
-        var result = new Return { Value = "initial" };
+        var result = Data.Ok("initial");
         result.Value = "changed";
 
         await Assert.That(result.Value).IsEqualTo("changed");
@@ -211,7 +211,7 @@ public class ReturnTests
     [Test]
     public async Task Error_IsMutable()
     {
-        var result = new Return();
+        var result = Data.Ok();
         await Assert.That(result.Success).IsTrue();
 
         result.Error = new Error("now failed");

@@ -1,5 +1,5 @@
 using PLang.Runtime2.Memory;
-using TypeInfo = PLang.Runtime2.Memory.TypeInfo;
+using Type = PLang.Runtime2.Memory.Type;
 
 namespace PLang.Tests.Runtime2.Memory;
 
@@ -74,15 +74,15 @@ public class MemoryStackTests
     }
 
     [Test]
-    public async Task Set_WithTypeInfo_SetsTypeInfo()
+    public async Task Set_WithType_SetsType()
     {
         var stack = new MemoryStack();
 
-        stack.Set("count", 42, TypeInfo.Int);
+        stack.Set("count", 42, Type.Int);
 
         var ov = stack.Get("count");
-        await Assert.That(ov!.TypeInfo).IsNotNull();
-        await Assert.That(ov!.TypeInfo!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov!.Type).IsNotNull();
+        await Assert.That(ov!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
@@ -98,15 +98,15 @@ public class MemoryStackTests
     }
 
     [Test]
-    public async Task Set_UpdatesTypeInfo()
+    public async Task Set_UpdatesType()
     {
         var stack = new MemoryStack();
-        stack.Set("value", "text", TypeInfo.String);
+        stack.Set("value", "text", Type.String);
 
-        stack.Set("value", 42, TypeInfo.Int);
+        stack.Set("value", 42, Type.Int);
 
         var ov = stack.Get("value");
-        await Assert.That(ov!.TypeInfo!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]

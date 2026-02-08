@@ -1,5 +1,6 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Errors;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
@@ -7,16 +8,15 @@ public sealed partial class Step
 {
     public async Task Load(PLangContext context)
     {
-		//check: not correct, context.Events.Steps.Before(...)
-        await context.Events.OnBeforeStepLoad.Run(context, this, Goal?.Name);
+        context.PopulateLoadEvents(Events, EventType.OnBeforeStepLoad, EventType.OnAfterStepLoad);
+        await Events.Before.Load.Run(context);
 
         await Actions.Load(context);
 
-		//check: not correct, context.Events.Steps.Before(...)
-		await context.Events.OnAfterStepLoad.Run(context, this, Goal?.Name);
+        await Events.After.Load.Run(context);
     }
 
-    public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
+    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         context.Step = this;
         context.CallStack?.RecordStep(Index, Text);
@@ -38,7 +38,7 @@ public sealed partial class Step
         {
             var error = StepError.FromException(ex, context);
             context.CallStack?.AddError(error);
-            return new Return { Error = error };
+            return Data.Fail(error);
         }
     }
 }

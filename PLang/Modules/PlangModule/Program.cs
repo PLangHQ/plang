@@ -15,7 +15,7 @@ using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Runtime2.Mapping;
-using PLang.Runtime2.Modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Utility;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -188,7 +188,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var registry = new Runtime2.Modules.ActionRegistry();
+			var registry = new Runtime2.actions.ActionRegistry();
 			registry.DiscoverAndRegister(typeof(Runtime2.Core.Engine).Assembly);
 			var result = new List<object>();
 

@@ -50,8 +50,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\PLang.Generators\PLang.Generators.csproj"
-        OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\PLang.Generators\PLang.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

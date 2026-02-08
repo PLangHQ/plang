@@ -85,11 +85,6 @@ public sealed class PLangContext : IDisposable
     public EventScope User { get; }
 
     /// <summary>
-    /// Merged view of system + user events with load-event runners.
-    /// </summary>
-    public MergedEvents Events { get; }
-
-    /// <summary>
     /// The goal currently being executed.
     /// </summary>
     public Goal? Goal { get; set; }
@@ -110,7 +105,6 @@ public sealed class PLangContext : IDisposable
         _cts = CancellationTokenSource.CreateLinkedTokenSource(appContext.ShutdownToken);
         System = new EventScope();
         User = new EventScope();
-        Events = new MergedEvents(System, User, appContext.Events);
     }
 
     /// <summary>
@@ -180,6 +174,17 @@ public sealed class PLangContext : IDisposable
         }
 
         return clone;
+    }
+
+    /// <summary>
+    /// Populates load events on an entity's Events from system + user scopes.
+    /// </summary>
+    public void PopulateLoadEvents(Core.EntityEvents events, Core.EventType beforeType, Core.EventType afterType)
+    {
+        foreach (var b in System.Events.GetBindings(beforeType)) events.Before.Load.Add(b);
+        foreach (var b in User.Events.GetBindings(beforeType)) events.Before.Load.Add(b);
+        foreach (var b in System.Events.GetBindings(afterType)) events.After.Load.Add(b);
+        foreach (var b in User.Events.GetBindings(afterType)) events.After.Load.Add(b);
     }
 
     /// <summary>

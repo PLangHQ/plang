@@ -1,69 +1,57 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Attributes;
+using PLang.Runtime2.Core;
+using PLang.Runtime2.Errors;
 using PLang.Runtime2.Utility;
 
 namespace PLang.Runtime2.Memory;
 
 /// <summary>
-/// Type information for Data.
+/// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
+/// CLR type is derived on the fly via TypeMapping.
 /// </summary>
-public sealed class TypeInfo
+public sealed class Type
 {
-    public string Name { get; }
-    public Type ClrType { get; }
-    public bool IsNullable { get; }
-    public bool IsList { get; }
-    public bool IsDictionary { get; }
-    public TypeInfo? ElementType { get; }
+    public string Value { get; }
 
-    public TypeInfo(Type clrType)
-    {
-        ClrType = clrType;
-        Name = TypeMapping.GetTypeName(clrType);
-        IsNullable = Nullable.GetUnderlyingType(clrType) != null || !clrType.IsValueType;
-        IsList = clrType.IsArray || (clrType.IsGenericType &&
-            (clrType.GetGenericTypeDefinition() == typeof(List<>) ||
-             clrType.GetGenericTypeDefinition() == typeof(IList<>)));
-        IsDictionary = clrType.IsGenericType &&
-            (clrType.GetGenericTypeDefinition() == typeof(Dictionary<,>) ||
-             clrType.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+    public Type(string value) { Value = value; }
 
-        if (IsList && clrType.IsGenericType)
-        {
-            ElementType = new TypeInfo(clrType.GetGenericArguments()[0]);
-        }
-        else if (clrType.IsArray)
-        {
-            ElementType = new TypeInfo(clrType.GetElementType()!);
-        }
-    }
+    /// <summary>
+    /// Derive CLR type on the fly via TypeMapping.
+    /// </summary>
+    public System.Type? ClrType => TypeMapping.GetType(Value);
 
-    public static TypeInfo FromName(string typeName)
-    {
-        var type = TypeMapping.GetType(typeName) ?? typeof(object);
-        return new TypeInfo(type);
-    }
+    public static Type String => new("string");
+    public static Type Int => new("int");
+    public static Type Long => new("long");
+    public static Type Double => new("double");
+    public static Type Bool => new("bool");
+    public static Type DateTime => new("datetime");
+    public static Type Object => new("object");
 
-    public static TypeInfo String => new(typeof(string));
-    public static TypeInfo Int => new(typeof(int));
-    public static TypeInfo Long => new(typeof(long));
-    public static TypeInfo Double => new(typeof(double));
-    public static TypeInfo Bool => new(typeof(bool));
-    public static TypeInfo DateTime => new(typeof(DateTime));
-    public static TypeInfo Object => new(typeof(object));
+    /// <summary>
+    /// Factory from MIME type (used by file handlers).
+    /// </summary>
+    public static Type FromMime(string mimeType) => new(mimeType);
 
-    public override string ToString() => Name;
+    /// <summary>
+    /// Factory from PLang type name.
+    /// </summary>
+    public static Type FromName(string typeName) => new(typeName);
+
+    public override string ToString() => Value;
 }
 
 /// <summary>
 /// Wraps a variable value in Runtime2 with metadata.
 /// Name is the variable/parameter name, Value is the data accessed via %name%.
+/// Also serves as the universal result type (replaces Return).
 /// </summary>
 public class Data
 {
     private object? _value;
-    private TypeInfo? _typeInfo;
+    private Type? _type;
 
     [JsonPropertyName("name")]
     public string Name { get; }
@@ -88,16 +76,29 @@ public class Data
     [LlmIgnore]
     public Properties Properties { get; set; }
 
+    // --- Error/Result support (replaces Return) ---
+
+    [JsonIgnore]
+    public IError? Error { get; set; }
+
+    [JsonIgnore]
+    public List<Info>? Warnings { get; set; }
+
+    [JsonIgnore]
+    public bool Success => Error == null;
+
+    public static implicit operator bool(Data d) => d.Success;
+
     [JsonConstructor]
-    public Data(string name, object? value = null, TypeInfo? typeInfo = null, Data? parent = null)
+    public Data(string name, object? value = null, Type? type = null, Data? parent = null)
     {
         Name = CleanName(name);
         _value = UnwrapJsonElement(value);
-        _typeInfo = typeInfo ?? (_value != null ? new TypeInfo(_value.GetType()) : null);
+        _type = type ?? (_value != null ? new Type(TypeMapping.GetTypeName(_value.GetType())) : null);
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = _value != null;
-        Created = DateTime.UtcNow;
+        Created = System.DateTime.UtcNow;
         Updated = Created;
         Properties = new Properties();
     }
@@ -109,24 +110,21 @@ public class Data
         set
         {
             _value = UnwrapJsonElement(value);
-            Updated = DateTime.UtcNow;
+            Updated = System.DateTime.UtcNow;
             IsInitialized = true;
-            if (_value != null && _typeInfo == null)
+            if (_value != null && _type == null)
             {
-                _typeInfo = new TypeInfo(_value.GetType());
+                _type = new Type(TypeMapping.GetTypeName(_value.GetType()));
             }
         }
     }
 
     [JsonIgnore]
-    public TypeInfo? TypeInfo
+    public Type? Type
     {
-        get => _typeInfo;
-        set => _typeInfo = value;
+        get => _type;
+        set => _type = value;
     }
-
-    [JsonIgnore]
-    public Type? ClrType => _typeInfo?.ClrType;
 
     /// <summary>
     /// Gets the value cast to the specified type.
@@ -146,7 +144,7 @@ public class Data
     /// <summary>
     /// Gets the value converted to the specified type.
     /// </summary>
-    public object? GetValue(Type targetType)
+    public object? GetValue(System.Type targetType)
     {
         if (_value == null)
             return null;
@@ -253,7 +251,37 @@ public class Data
 
     public static Data Null(string name = "") => new(name, null);
 
-    public override string ToString() => _value?.ToString() ?? "(null)";
+    // --- Static helpers (replace Return helpers) ---
+
+    public static Data Ok() => new("");
+    public static Data Ok(object? value, Type? type = null) => new("", value, type);
+    public static Data Fail(IError error) => new("") { Error = error };
+
+    /// <summary>
+    /// Merge: combines two Data results (logic from Return.Merge).
+    /// Treats Value as List&lt;Data&gt;, merge by Name (replace-or-append).
+    /// </summary>
+    public Data Merge(Data other)
+    {
+        if (other.Value == null) return this;
+
+        var myData = Value as List<Data> ?? new();
+        var otherData = other.Value as List<Data> ?? new();
+
+        foreach (var data in otherData)
+        {
+            var existing = myData.FindIndex(d => string.Equals(d.Name, data.Name, StringComparison.OrdinalIgnoreCase));
+            if (existing >= 0)
+                myData[existing] = data;
+            else
+                myData.Add(data);
+        }
+
+        return new Data("") { Value = myData };
+    }
+
+    public override string ToString() =>
+        Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
     private static object? UnwrapJsonElement(object? value)
     {
@@ -293,14 +321,33 @@ public class Data
 }
 
 /// <summary>
+/// Generic Data that carries a strongly-typed value.
+/// Inherits from Data, so it satisfies Task&lt;Data&gt; in the interface chain.
+/// </summary>
+public class Data<T> : Data
+{
+    public new T? Value
+    {
+        get => base.Value is T typed ? typed : default;
+        set => base.Value = value;
+    }
+
+    public Data(string name = "", T? value = default, Type? type = null, Data? parent = null)
+        : base(name, value, type, parent) { }
+
+    public static Data<T> Ok(T value, Type? type = null) => new("", value, type);
+    public new static Data<T> Fail(IError error) => new() { Error = error };
+}
+
+/// <summary>
 /// Dynamic Data that computes its value on access.
 /// </summary>
 public class DynamicData : Data
 {
     private readonly Func<object?> _valueFactory;
 
-    public DynamicData(string name, Func<object?> valueFactory, TypeInfo? typeInfo = null)
-        : base(name, null, typeInfo)
+    public DynamicData(string name, Func<object?> valueFactory, Type? type = null)
+        : base(name, null, type)
     {
         _valueFactory = valueFactory;
     }

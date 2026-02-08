@@ -1,9 +1,10 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules.variable;
+using PLang.Runtime2.actions.variable;
+using VariableResult = PLang.Runtime2.actions.variable.types.variable;
 
-namespace PLang.Tests.Runtime2.Modules.variable;
+namespace PLang.Tests.Runtime2.actions.variable;
 
 public class ExistsTests
 {
@@ -28,7 +29,9 @@ public class ExistsTests
         var result = await handler.ExecuteAsync(new exists { name = "testVar" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(true);
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.exists).IsTrue();
     }
 
     [Test]
@@ -39,17 +42,19 @@ public class ExistsTests
         var result = await handler.ExecuteAsync(new exists { name = "nonexistent" });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo(false);
+        var v = result.Value as VariableResult;
+        await Assert.That(v).IsNotNull();
+        await Assert.That(v!.exists).IsFalse();
     }
 
     [Test]
-    public async Task Exists_MissingName_ReturnsError()
+    public async Task Exists_NullParameters_ReturnsError()
     {
         var (handler, _) = Create();
 
-        var result = await handler.ExecuteAsync(null);
+        var result = await handler.ExecuteAsync((object?)null);
 
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("MissingName");
+        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 }

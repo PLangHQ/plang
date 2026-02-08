@@ -1,5 +1,5 @@
 using PLang.Runtime2.Memory;
-using TypeInfo = PLang.Runtime2.Memory.TypeInfo;
+using Type = PLang.Runtime2.Memory.Type;
 
 namespace PLang.Tests.Runtime2.Memory;
 
@@ -32,14 +32,14 @@ public class DataTests
     }
 
     [Test]
-    public async Task Constructor_WithTypeInfo_SetsTypeInfo()
+    public async Task Constructor_WithType_SetsType()
     {
-        var typeInfo = TypeInfo.String;
+        var type = Type.String;
 
-        var ov = new Data("test", "hello", typeInfo);
+        var ov = new Data("test", "hello", type);
 
-        await Assert.That(ov.TypeInfo).IsEqualTo(typeInfo);
-        await Assert.That(ov.ClrType).IsEqualTo(typeof(string));
+        await Assert.That(ov.Type).IsNotNull();
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
     }
 
     [Test]
@@ -47,8 +47,8 @@ public class DataTests
     {
         var ov = new Data("test", 42);
 
-        await Assert.That(ov.TypeInfo).IsNotNull();
-        await Assert.That(ov.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov.Type).IsNotNull();
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
@@ -144,8 +144,8 @@ public class DataTests
 
         ov.Value = 42;
 
-        await Assert.That(ov.TypeInfo).IsNotNull();
-        await Assert.That(ov.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov.Type).IsNotNull();
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
@@ -449,12 +449,12 @@ public class DynamicDataTests
     }
 
     [Test]
-    public async Task Value_WithTypeInfo_SetsTypeInfo()
+    public async Task Value_WithType_SetsType()
     {
-        var dov = new DynamicData("now", () => DateTime.Now, TypeInfo.DateTime);
+        var dov = new DynamicData("now", () => DateTime.Now, Type.DateTime);
 
-        await Assert.That(dov.TypeInfo).IsNotNull();
-        await Assert.That(dov.TypeInfo!.ClrType).IsEqualTo(typeof(DateTime));
+        await Assert.That(dov.Type).IsNotNull();
+        await Assert.That(dov.Type!.ClrType).IsEqualTo(typeof(DateTime));
     }
 
     [Test]

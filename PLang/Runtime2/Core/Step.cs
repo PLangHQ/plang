@@ -61,7 +61,7 @@ public sealed partial class Step
     public Goal? Goal { get; set; }
 
     [JsonIgnore]
-    public ObjectEvents Events { get; } = new();
+    public EntityEvents Events { get; } = new();
 
     public Step Clone()
     {

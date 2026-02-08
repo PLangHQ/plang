@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 
-namespace PLang.Runtime2.Modules;
+namespace PLang.Runtime2.actions;
 
 public sealed class ActionRegistry
 {
@@ -15,7 +15,7 @@ public sealed class ActionRegistry
 
     public void DiscoverAndRegister(Assembly assembly)
     {
-        const string baseNs = "PLang.Runtime2.Modules";
+        const string baseNs = "PLang.Runtime2.actions";
         var types = assembly.GetTypes()
             .Where(t => typeof(IClass).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
 

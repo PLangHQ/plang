@@ -1,5 +1,5 @@
 using PLang.Runtime2.Memory;
-using TypeInfo = PLang.Runtime2.Memory.TypeInfo;
+using Type = PLang.Runtime2.Memory.Type;
 
 namespace PLang.Tests.Runtime2.Memory;
 
@@ -377,26 +377,26 @@ public class PropertiesTests
     }
 
     [Test]
-    public async Task Set_WithTypeInfo_SetsTypeInfo()
+    public async Task Set_WithType_SetsType()
     {
         var props = new Properties();
 
-        props.Set("count", 42, TypeInfo.Int);
+        props.Set("count", 42, Type.Int);
 
-        await Assert.That(props["count"]!.TypeInfo).IsNotNull();
-        await Assert.That(props["count"]!.TypeInfo!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(props["count"]!.Type).IsNotNull();
+        await Assert.That(props["count"]!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
-    public async Task Set_UpdatesExistingTypeInfo()
+    public async Task Set_UpdatesExistingType()
     {
         var props = new Properties();
-        props.Set("value", "text", TypeInfo.String);
+        props.Set("value", "text", Type.String);
 
-        props.Set("value", 42, TypeInfo.Int);
+        props.Set("value", 42, Type.Int);
 
         await Assert.That(props["value"]!.Value).IsEqualTo(42);
-        await Assert.That(props["value"]!.TypeInfo!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(props["value"]!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]

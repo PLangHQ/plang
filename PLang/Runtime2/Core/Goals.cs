@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Errors;
+using PLang.Runtime2.Memory;
 using Error = PLang.Runtime2.Errors.Error;
 
 namespace PLang.Runtime2.Core;
@@ -132,14 +133,14 @@ public sealed class Goals
     /// <summary>
     /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
     /// </summary>
-    public async Task<Return> LoadFromFileAsync(Engine engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromFileAsync(Engine engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
             var goal = await engine.IO.ReadAsync<Goal>(prFilePath, cancellationToken);
 
             if (goal == null)
-                return new Return { Error = new Error($"Failed to parse goal file: {prFilePath}") };
+                return Data.Fail(new Error($"Failed to parse goal file: {prFilePath}"));
 
             goal.PrPath = prFilePath;
 
@@ -150,18 +151,18 @@ public sealed class Goals
                 await goal.Load(context);
 
             Add(goal);
-            return new Return { Value = goal };
+            return Data.Ok(goal);
         }
         catch (Exception ex)
         {
-            return new Return { Error = Error.FromException(ex) };
+            return Data.Fail(Error.FromException(ex));
         }
     }
 
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Return> LoadFromDirectoryAsync(Engine engine, string directory, string pattern = "*.pr.json", PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromDirectoryAsync(Engine engine, string directory, string pattern = "*.pr.json", PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -177,11 +178,11 @@ public sealed class Goals
                     loadedCount++;
             }
 
-            return new Return { Value = loadedCount };
+            return Data.Ok(loadedCount);
         }
         catch (Exception ex)
         {
-            return new Return { Error = Error.FromException(ex) };
+            return Data.Fail(Error.FromException(ex));
         }
     }
 }

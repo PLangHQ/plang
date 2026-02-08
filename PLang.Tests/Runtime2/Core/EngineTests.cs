@@ -1,7 +1,7 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Serialization;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -658,22 +658,22 @@ public class EngineTests
     {
         public Engine Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
-        public Type? ParameterType => null;
+        public System.Type? ParameterType => null;
 
         public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
-        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
     private class DisposableHandler : IClass, ICodeGenerated, IDisposable
     {
         public Engine Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
-        public Type? ParameterType => null;
+        public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
         public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
-        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
-        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -685,12 +685,12 @@ public class EngineTests
     {
         public Engine Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
-        public Type? ParameterType => null;
+        public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
         public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
-        public Task<Return> ExecuteAsync(object? parameters) => Task.FromResult(new Return());
-        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -702,14 +702,14 @@ public class EngineTests
     {
         public Engine Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
-        public Type? ParameterType => null;
+        public System.Type? ParameterType => null;
 
         public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
-        public Task<Return> ExecuteAsync(object? parameters)
+        public Task<Data> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");
         }
-        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

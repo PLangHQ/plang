@@ -1,9 +1,9 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules;
-using PLang.Runtime2.Modules.output;
-using writeRecord = PLang.Runtime2.Modules.output.write;
+using PLang.Runtime2.actions;
+using PLang.Runtime2.actions.output;
+using writeRecord = PLang.Runtime2.actions.output.write;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -296,7 +296,7 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        protected override Task<Return> ExecuteAsync(writeRecord? p)
+        protected override Task<Data> ExecuteAsync(writeRecord? p)
         {
             if (p?.content != null)
                 Lines.Add(p.content.ToString()!);
@@ -304,7 +304,7 @@ public class StartGoalTests
             return SuccessTask();
         }
 
-        public Task<Return> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
         {
             Initialize(engine, context);
             var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "content", StringComparison.OrdinalIgnoreCase));

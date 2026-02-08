@@ -65,18 +65,18 @@ public class Properties : IList<Data>
     /// <summary>
     /// Sets a property value by name.
     /// </summary>
-    public void Set(string name, object? value, TypeInfo? typeInfo = null)
+    public void Set(string name, object? value, Type? type = null)
     {
         var existing = this[name];
         if (existing != null)
         {
             existing.Value = value;
-            if (typeInfo != null)
-                existing.TypeInfo = typeInfo;
+            if (type != null)
+                existing.Type = type;
         }
         else
         {
-            Add(new Data(name, value, typeInfo));
+            Add(new Data(name, value, type));
         }
     }
 

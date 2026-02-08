@@ -1,4 +1,5 @@
 using PLang.Runtime2.Context;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
@@ -32,7 +33,7 @@ public sealed class EventBinding
     public EventType Type { get; }
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
-    public Func<PLangContext, Task<Return>> Handler { get; }
+    public Func<PLangContext, Task<Data>> Handler { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
 
@@ -40,7 +41,7 @@ public sealed class EventBinding
 
     public EventBinding(
         EventType type,
-        Func<PLangContext, Task<Return>> handler,
+        Func<PLangContext, Task<Data>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         int priority = 0,
@@ -125,7 +126,7 @@ public sealed class Events
     /// </summary>
     public string Register(
         EventType type,
-        Func<PLangContext, Task<Return>> handler,
+        Func<PLangContext, Task<Data>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         int priority = 0,
@@ -191,7 +192,7 @@ public sealed class Events
     /// <summary>
     /// Dispatches an event to all matching handlers.
     /// </summary>
-    public async Task<Return> DispatchAsync(PLangContext context, EventType type, string? goalName = null, string? stepText = null)
+    public async Task<Data> DispatchAsync(PLangContext context, EventType type, string? goalName = null, string? stepText = null)
     {
         var bindings = GetMatchingBindings(type, goalName, stepText);
 
@@ -205,7 +206,7 @@ public sealed class Events
             }
         }
 
-        return new Return();
+        return Data.Ok();
     }
 
     /// <summary>

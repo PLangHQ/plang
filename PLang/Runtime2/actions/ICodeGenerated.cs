@@ -2,7 +2,7 @@ using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
 
-namespace PLang.Runtime2.Modules;
+namespace PLang.Runtime2.actions;
 
 /// <summary>
 /// Implemented by generated partial handler classes to support lazy parameter resolution.
@@ -10,6 +10,6 @@ namespace PLang.Runtime2.Modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Return> CodeGeneratedExecuteAsync(
+    Task<Data> CodeGeneratedExecuteAsync(
         List<Data> parameters, Engine engine, PLangContext context);
 }

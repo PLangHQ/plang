@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.Serialization;
 
@@ -5,6 +6,8 @@ namespace PLang.Runtime2.Core;
 
 public sealed partial class Action
 {
+    [JsonIgnore]
+    public EntityEvents Events { get; } = new();
     [Store, LlmBuilder, Debug, Default]
     public string Class { get; init; } = "";
 

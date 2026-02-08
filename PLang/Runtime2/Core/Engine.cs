@@ -1,7 +1,7 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.Core;
@@ -110,11 +110,11 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Runs a goal by name using the User actor by default.
     /// </summary>
-    public async Task<Return> RunGoalAsync(string goalName, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> RunGoalAsync(string goalName, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         var goal = _goals.Get(goalName);
         if (goal == null)
-            return new Return { Error = GoalError.NotFound(goalName) };
+            return Data.Fail(GoalError.NotFound(goalName));
 
         return await RunGoalAsync(goal, context, cancellationToken);
     }
@@ -122,7 +122,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Runs a goal by name using the specified actor.
     /// </summary>
-    public Task<Return> RunGoalAsync(string goalName, Actor actor, CancellationToken cancellationToken = default)
+    public Task<Data> RunGoalAsync(string goalName, Actor actor, CancellationToken cancellationToken = default)
     {
         return RunGoalAsync(goalName, actor.Context, cancellationToken);
     }
@@ -130,7 +130,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Runs a goal using the specified actor.
     /// </summary>
-    public Task<Return> RunGoalAsync(Goal goal, Actor actor, CancellationToken cancellationToken = default)
+    public Task<Data> RunGoalAsync(Goal goal, Actor actor, CancellationToken cancellationToken = default)
     {
         return RunGoalAsync(goal, actor.Context, cancellationToken);
     }
@@ -138,7 +138,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Runs a goal using the User actor's context by default.
     /// </summary>
-    public async Task<Return> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         context ??= User.Context;
         return await goal.RunAsync(this, context, cancellationToken);
@@ -147,7 +147,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Loads a goal from a .pr file. Delegates to Goals.LoadFromFileAsync.
     /// </summary>
-    public Task<Return> LoadGoalFromFileAsync(string prFilePath, CancellationToken cancellationToken = default)
+    public Task<Data> LoadGoalFromFileAsync(string prFilePath, CancellationToken cancellationToken = default)
     {
         return _goals.LoadFromFileAsync(this, prFilePath, cancellationToken: cancellationToken);
     }
@@ -155,7 +155,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Loads all goals from a directory. Delegates to Goals.LoadFromDirectoryAsync.
     /// </summary>
-    public Task<Return> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr.json", CancellationToken cancellationToken = default)
+    public Task<Data> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr.json", CancellationToken cancellationToken = default)
     {
         return _goals.LoadFromDirectoryAsync(this, directory, pattern, cancellationToken: cancellationToken);
     }

@@ -1,9 +1,10 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.Modules.variable;
+using PLang.Runtime2.actions;
+using PLang.Runtime2.actions.variable;
 
-namespace PLang.Tests.Runtime2.Modules.variable;
+namespace PLang.Tests.Runtime2.actions.variable;
 
 public class ClearTests
 {
@@ -26,7 +27,7 @@ public class ClearTests
         memory.Set("var2", "value2");
         var (handler, _) = Create(memory);
 
-        var result = await handler.ExecuteAsync(null);
+        var result = await handler.ExecuteAsync(new NullParams());
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(memory.Contains("var1")).IsFalse();
@@ -40,7 +41,7 @@ public class ClearTests
         memory.Set("userVar", "value");
         var (handler, _) = Create(memory);
 
-        await handler.ExecuteAsync(null);
+        await handler.ExecuteAsync(new NullParams());
 
         await Assert.That(memory.Contains("Now")).IsTrue();
         await Assert.That(memory.Contains("NowUtc")).IsTrue();
