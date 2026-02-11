@@ -14,15 +14,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "Depth before: %!callStack.Depth%\n"
+              "value": "Depth before: %!callStack.Depth%\n",
+              "type": "string"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -45,7 +48,8 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "Inner"
+              "value": "Inner",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -68,15 +72,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "Depth after: %!callStack.Depth%\n"
+              "value": "Depth after: %!callStack.Depth%\n",
+              "type": "string"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -99,7 +106,8 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "Inner"
+              "value": "Inner",
+              "type": "string"
             }
           ],
           "errors": [],

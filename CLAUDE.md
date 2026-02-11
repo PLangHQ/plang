@@ -54,6 +54,12 @@
 - Source generator only runs on PLang project; test mocks must implement `ICodeGenerated` manually
 - In tests: use `System.Type?` (not `Type?`) for CLR type properties to avoid ambiguity with `PLang.Runtime2.Memory.Type`
 
+## Debugging
+In Runtime2 you can get debug/callstack information. This is usefull when step fails and more information is needed. It will give you the variable values and step pr details that might not be available in the error information. 
+- run "plang p !debug" - enabled debugger on all steps
+- run "plang p !debug=Start" - enable debugger on specific goal
+- run "plang p !debug=Start:3" - enable debugger on specific step index
+
 ## Key Files
 - PlangConsole is the executable project (not PLang which is a library)
 - system/builder/*.goal - the new PLang builder written in PLang

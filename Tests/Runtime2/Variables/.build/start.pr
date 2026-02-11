@@ -8,9 +8,38 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "user",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "name": "john",
+                "age": 20,
+                "addresses": [
+                  {
+                    "street": "first street",
+                    "nr": 10
+                  },
+                  {
+                    "street": "second street",
+                    "nr": 2
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -26,9 +55,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.name%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -44,9 +89,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.age%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -62,9 +123,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -80,15 +157,36 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses.street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
       ],
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        {
+          "key": "ambiguousStep",
+          "message": "%user.addresses.street% is ambiguous because addresses is an array and street is a property of array elements."
+        }
+      ],
       "waitForExecution": true
     },
     {
@@ -98,15 +196,36 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses.first.street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
       ],
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        {
+          "key": "ambiguousStep",
+          "message": "%user.addresses.first.street% is ambiguous because \u0027first\u0027 is not a valid property of addresses array."
+        }
+      ],
       "waitForExecution": true
     },
     {
@@ -116,15 +235,36 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses.last.street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
       ],
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        {
+          "key": "ambiguousStep",
+          "message": "%user.addresses.last.street% is ambiguous because \u0027last\u0027 is not a valid property of addresses array."
+        }
+      ],
       "waitForExecution": true
     },
     {
@@ -134,9 +274,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses[0].street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -152,9 +308,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "idx",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -170,9 +342,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses[idx].street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -188,15 +376,36 @@
       "indent": 0,
       "actions": [
         {
-          "module": "",
-          "action": "",
-          "parameters": [],
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%user.addresses.random.street%",
+              "type": "object"
+            },
+            {
+              "name": "Actor",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Channel",
+              "value": "",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
       ],
       "errors": [],
-      "warnings": [],
+      "warnings": [
+        {
+          "key": "ambiguousStep",
+          "message": "%user.addresses.random.street% is ambiguous because \u0027random\u0027 is not a valid property or index of addresses array."
+        }
+      ],
       "waitForExecution": true
     }
   ],

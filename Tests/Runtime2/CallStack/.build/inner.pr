@@ -14,15 +14,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "Inner depth: %!callStack.Depth%"
+              "value": "Inner depth: %!callStack.Depth%",
+              "type": "string"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -46,15 +49,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "%!callStack%"
+              "value": "%!callStack%",
+              "type": "string"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],

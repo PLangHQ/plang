@@ -12,6 +12,7 @@ namespace PLang.Runtime2.Memory;
 /// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
 /// CLR type is derived on the fly via TypeMapping.
 /// </summary>
+[System.ComponentModel.TypeConverter(typeof(PlangTypeConverter))]
 public sealed class Type
 {
     public string Value { get; }
@@ -121,7 +122,9 @@ public class Data
         }
     }
 
-    [JsonIgnore]
+    [JsonPropertyName("type")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonConverter(typeof(TypeJsonConverter))]
     public Type? Type
     {
         get => _type;

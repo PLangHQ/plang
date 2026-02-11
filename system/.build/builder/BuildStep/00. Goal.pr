@@ -34,11 +34,11 @@
       "UserIntent": null
     },
     {
-      "Text": "[llm] system: %buildStepPrompt%\n        user: %step.Serialize.Builder%\n        scheme: {\n                errors?: [{key: string, message: string}],\n                warnings?: [{key: string, message: string}],\n                actions: [{module: string, action: string, parameters?: [{name: string, value?: object}], return?: [{name: string}],\n                    errors?: [{key: string, message: string}],\n                    warnings?: [{key: string, message: string}]}]\n                }\n        on error call HandleBuildStepFailure\n        write to %result%",
+      "Text": "[llm] system: %buildStepPrompt%\n        user: %step.Serialize.Builder%\n        scheme: {\n                errors?: [{key: string, message: string}],\n                warnings?: [{key: string, message: string}],\n                actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                    errors?: [{key: string, message: string}],\n                    warnings?: [{key: string, message: string}]}]\n                }\n        on error call HandleBuildStepFailure\n        write to %result%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
       "Name": "call_llm_with_step_prompt_and_handle_response",
-      "Description": "Send the system prompt stored in %buildStepPrompt% and the user prompt stored in %step.Serialize.Builder% to the language model. The expected response should follow a defined scheme including errors, warnings, and actions with details. If an error occurs during this call, the step should invoke the HandleBuildStepFailure handler. The final response is written to the %result% variable for further processing.",
+      "Description": "Send the system prompt stored in %buildStepPrompt% and the user prompt stored in %step.Serialize.Builder% to the LLM module. The expected response should conform to a specified JSON schema including errors, warnings, and actions with detailed parameters. If an error occurs during this call, the step should invoke the HandleBuildStepFailure handler. The final response is written to the %result% variable for further processing.",
       "PrFileName": "02. call_llm_with_step_prompt_and_handle_response.pr",
       "RelativePrPath": ".build\\builder\\BuildStep\\02. call_llm_with_step_prompt_and_handle_response.pr",
       "InstructionHash": null,
@@ -47,7 +47,7 @@
       "RunOnce": false,
       "Confidence": "Very High",
       "Inconsistency": null,
-      "Generated": "2026-02-10T20:12:39.7175501+00:00",
+      "Generated": "2026-02-11T10:28:50.361144+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": [
@@ -73,10 +73,10 @@
       "LineNumber": 5,
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8bf17c37cd20099d1e3976925341ea4b4e1c196f353a9f6bec26fb4c4f870534",
+      "Hash": "9961cc360d2f326524f2df850bacc6f5e721aa8aa12513c85ba03a68647a9946",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\builder\\BuildStep.goal",
-      "UserIntent": "The user wants to send a prompt and serialized step data to a language model for processing, expecting a structured response with possible errors, warnings, and actions, and handle errors if they occur."
+      "UserIntent": "The user wants to send a prompt and serialized step data to an LLM for processing, expecting a structured response with possible errors, warnings, and actions, and handle errors by calling a failure handler."
     },
     {
       "Text": "set %goal.Steps[stepResult.index].actions% = %result.actions%",
@@ -175,7 +175,7 @@
   "SubGoals": [
     ".build\\builder\\BuildStep\\HandleBuildStepFailure\\00. Goal.pr"
   ],
-  "Description": "The BuildStep goal reads a file containing action suggestions, processes them, and updates the goal's steps with the results. It handles any errors that may occur during the execution of the actions.",
+  "Description": "The BuildStep goal reads a file containing action suggestions, processes the data to generate a prompt, and executes actions based on the prompt. It handles any errors or warnings that may arise during execution and updates the goal's steps with the results.",
   "Visibility": 1,
   "GoalFileName": "BuildStep.goal",
   "PrFileName": "00. Goal.pr",
@@ -189,11 +189,11 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b4512b860bb6d297af72218f354cc934b95d9943fbb85fc653164c988151717f",
+  "Hash": "4c7faeecf087190caf2479d2575e1e04eec254bdfa7ed88384e1feb74e9597e3",
   "IncomingVariablesRequired": {
-    "%buildStepPrompt%": "A prompt that contains the action suggestions loaded from the specified file.",
-    "%step.Serialize.Builder%": "A serialized representation of the step that is being processed.",
-    "%goal%": "The goal object that contains the steps to be updated."
+    "buildStepPrompt": "A string variable that holds the prompt generated from the file 'llm/BuildStep.llm'.",
+    "step.Serialize.Builder": "A user-defined variable that contains the serialized builder information for the step being processed.",
+    "goal": "An object representing the current goal, which includes steps and their associated actions."
   },
   "DataSourceName": null,
   "IsSetup": false,

@@ -13,15 +13,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "%!engine.Name%"
+              "value": "%!engine.Name%",
+              "type": "object"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],

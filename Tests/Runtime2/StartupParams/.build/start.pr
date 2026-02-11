@@ -13,15 +13,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "Hello %name%"
+              "value": "Hello %name%",
+              "type": "string"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],

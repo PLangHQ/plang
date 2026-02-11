@@ -13,19 +13,23 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "LogBefore"
+              "value": "LogBefore",
+              "type": "string"
             },
             {
               "name": "GoalPattern",
-              "value": ".*"
+              "value": ".*",
+              "type": "string"
             },
             {
               "name": "IsRegex",
-              "value": true
+              "value": true,
+              "type": "bool"
             },
             {
               "name": "Priority",
-              "value": 0
+              "value": 0,
+              "type": "int"
             }
           ],
           "errors": [],
@@ -48,19 +52,23 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "LogAfter"
+              "value": "LogAfter",
+              "type": "string"
             },
             {
               "name": "GoalPattern",
-              "value": ".*"
+              "value": ".*",
+              "type": "string"
             },
             {
               "name": "IsRegex",
-              "value": true
+              "value": true,
+              "type": "bool"
             },
             {
               "name": "Priority",
-              "value": 0
+              "value": 0,
+              "type": "int"
             }
           ],
           "errors": [],
@@ -83,19 +91,23 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "OnVarSet"
+              "value": "OnVarSet",
+              "type": "string"
             },
             {
               "name": "ActionPattern",
-              "value": "variable.set"
+              "value": "variable.set",
+              "type": "string"
             },
             {
               "name": "IsRegex",
-              "value": false
+              "value": false,
+              "type": "bool"
             },
             {
               "name": "Priority",
-              "value": 0
+              "value": 0,
+              "type": "int"
             }
           ],
           "errors": [],
@@ -118,15 +130,18 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%name%"
+              "value": "%name%",
+              "type": "string"
             },
             {
               "name": "Value",
-              "value": "hello"
+              "value": "hello",
+              "type": "string"
             },
             {
               "name": "Type",
-              "value": "string"
+              "value": "string",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -149,15 +164,18 @@
           "parameters": [
             {
               "name": "Content",
-              "value": "%name%"
+              "value": "%name%",
+              "type": "object"
             },
             {
               "name": "Actor",
-              "value": ""
+              "value": "",
+              "type": "string"
             },
             {
               "name": "Channel",
-              "value": ""
+              "value": "",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -180,7 +198,8 @@
           "parameters": [
             {
               "name": "GoalName",
-              "value": "TestGoal"
+              "value": "TestGoal",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -194,8 +213,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Start.goal",
-  "prPath": "\\.build\\start.pr",
+  "path": "\\Events\\Start.goal",
+  "prPath": "\\Events\\.build\\start.pr",
   "hash": "20138dfb3333c5de97df97e1d5d015738747efadf807f0fc92c740bde36a2a5e",
   "isSetup": false,
   "isEvent": false,
