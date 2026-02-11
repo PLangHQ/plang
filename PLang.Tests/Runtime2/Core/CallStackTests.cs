@@ -179,11 +179,13 @@ public class CallStackTests
     {
         var stack = new CallStack();
         stack.Push("TestGoal");
+        var step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
 
-        stack.RecordStep(5, "test step");
+        stack.RecordStep(step);
 
-        await Assert.That(stack.Current!.CurrentStepIndex).IsEqualTo(5);
-        await Assert.That(stack.Current!.CurrentStepText).IsEqualTo("test step");
+        await Assert.That(stack.Current!.Step).IsEqualTo(step);
+        await Assert.That(stack.Current!.Step!.Index).IsEqualTo(5);
+        await Assert.That(stack.Current!.Step!.Text).IsEqualTo("test step");
     }
 
     [Test]
@@ -191,8 +193,9 @@ public class CallStackTests
     {
         var stack = new CallStack();
         stack.Push("TestGoal");
+        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
 
-        stack.RecordStep(0, "test step");
+        stack.RecordStep(step);
 
         await Assert.That(stack.Current!.ExecutedSteps.Count).IsEqualTo(1);
     }
@@ -202,8 +205,9 @@ public class CallStackTests
     {
         var stack = new CallStack { IsEnabled = false };
         stack.Push("TestGoal");
+        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
 
-        stack.RecordStep(0, "test step");
+        stack.RecordStep(step);
 
         // No exception and no updates (stack is disabled so no current frame)
     }
@@ -212,8 +216,9 @@ public class CallStackTests
     public async Task RecordStep_NoCurrentFrame_DoesNotThrow()
     {
         var stack = new CallStack();
+        var step = new Step { Index = 0, Text = "test step", LineNumber = 1 };
 
-        stack.RecordStep(0, "test step");
+        stack.RecordStep(step);
 
         await Assert.That(stack.Depth).IsEqualTo(0);
     }
@@ -331,9 +336,9 @@ public class CallStackTests
     {
         var stack = new CallStack();
         stack.Push("Goal1");
-        stack.RecordStep(0, "step1");
+        stack.RecordStep(new Step { Index = 0, Text = "step1" });
         stack.Push("Goal2");
-        stack.RecordStep(0, "step2");
+        stack.RecordStep(new Step { Index = 0, Text = "step2" });
 
         var history = stack.GetExecutionHistory().ToList();
 

@@ -1,0 +1,7 @@
+Start
+- before each goal call LogBefore
+- after each goal call LogAfter
+- before action variable.set call OnVarSet
+- set %name% = "hello"
+- write out %name%
+- call TestGoal
