@@ -1,3 +1,4 @@
+using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.condition;
@@ -6,12 +7,12 @@ namespace PLang.Runtime2.modules.condition;
 public partial class If : IContext
 {
     public partial bool Condition { get; init; }
-    public partial string? GoalIfTrue { get; init; }
-    public partial string? GoalIfFalse { get; init; }
+    public partial GoalCall? GoalIfTrue { get; init; }
+    public partial GoalCall? GoalIfFalse { get; init; }
 
     public async Task<Data> Run()
     {
-        string? goalToCall = Condition ? GoalIfTrue : GoalIfFalse;
+        GoalCall? goalToCall = Condition ? GoalIfTrue : GoalIfFalse;
 
         if (goalToCall != null)
         {

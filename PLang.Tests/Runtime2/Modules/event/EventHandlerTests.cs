@@ -30,7 +30,7 @@ public class EventHandlerTests
         var handler = new BeforeGoal
         {
             Context = context,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "TestGoal",
             IsRegex = false,
             Priority = 0
@@ -55,7 +55,7 @@ public class EventHandlerTests
         var handler = new AfterGoal
         {
             Context = context,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "*",
             IsRegex = false,
             Priority = 0
@@ -78,7 +78,7 @@ public class EventHandlerTests
         var handler = new BeforeStep
         {
             Context = context,
-            GoalToCall = "LogStep",
+            GoalToCall = new GoalCall { Name = "LogStep" },
             GoalPattern = "TestGoal",
             StepPattern = "set*",
             IsRegex = false,
@@ -102,7 +102,7 @@ public class EventHandlerTests
         var handler = new AfterStep
         {
             Context = context,
-            GoalToCall = "LogStep",
+            GoalToCall = new GoalCall { Name = "LogStep" },
             GoalPattern = null,
             StepPattern = null,
             IsRegex = false,
@@ -126,7 +126,7 @@ public class EventHandlerTests
         var handler = new BeforeAction
         {
             Context = context,
-            GoalToCall = "OnVarSet",
+            GoalToCall = new GoalCall { Name = "OnVarSet" },
             ActionPattern = "variable.set",
             IsRegex = false,
             Priority = 0
@@ -150,7 +150,7 @@ public class EventHandlerTests
         var handler = new AfterAction
         {
             Context = context,
-            GoalToCall = "OnAfterAction",
+            GoalToCall = new GoalCall { Name = "OnAfterAction" },
             ActionPattern = "variable.*",
             IsRegex = false,
             Priority = 0
@@ -174,7 +174,7 @@ public class EventHandlerTests
         var beforeHandler = new BeforeGoal
         {
             Context = context,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "*",
             IsRegex = false,
             Priority = 0
@@ -204,7 +204,7 @@ public class EventHandlerTests
         var handler = new BeforeGoal
         {
             Context = context,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "^Admin",
             IsRegex = true,
             Priority = 0
@@ -234,7 +234,7 @@ public class EventHandlerTests
         var handler = new BeforeGoal
         {
             Context = context,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "/admin/*",
             IsRegex = false,
             Priority = 0
@@ -259,7 +259,7 @@ public class EventHandlerTests
         var handler = new BeforeAction
         {
             Context = context,
-            GoalToCall = "OnVar",
+            GoalToCall = new GoalCall { Name = "OnVar" },
             ActionPattern = "variable.*",
             IsRegex = false,
             Priority = 0
@@ -289,7 +289,7 @@ public class EventHandlerTests
         var handler1 = new BeforeGoal
         {
             Context = context1,
-            GoalToCall = "LogGoal",
+            GoalToCall = new GoalCall { Name = "LogGoal" },
             GoalPattern = "TestGoal",
             IsRegex = false,
             Priority = 0

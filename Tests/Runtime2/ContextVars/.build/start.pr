@@ -12,18 +12,18 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "content",
               "value": "%!engine.Name%",
-              "type": "object"
+              "type": "string"
             },
             {
-              "name": "Actor",
+              "name": "actor",
               "value": "user",
-              "type": "enum(user,service,system)"
+              "type": "actor"
             },
             {
-              "name": "Channel",
-              "value": "",
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],

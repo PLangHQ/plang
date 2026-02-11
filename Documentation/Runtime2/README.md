@@ -2,38 +2,22 @@
 
 Runtime2 is PLang's second-generation execution engine. It replaces the v1 module system with an object-based action handler architecture, a universal `Data` result type, and source-generated lazy parameter resolution.
 
-## Architecture Overview
+## The Object Graph
 
-PLang is a natural language programming language. The Runtime loads and executes compiled goals. The Engine is minimal — it loads goals and runs them. `plang.exe` is conceptually just a goal: `- run plang app %data.path%, %data.parameters%, write to %app%` then `%app.wait%`.
-
-### Design Principles
-
-**Object-based architecture**: Action handlers expose typed parameter records and a `CodeGeneratedExecuteAsync` entry point. A source generator creates `ICodeGenerated` implementations that resolve `%var%` references lazily at property access time. This keeps the handler surface uniform across all actions.
-
-**Stream-based IO**: Output and input flow through named channels. `IO` manages a collection of `Channel` objects, each backed by a `Stream`. Channels can be memory-backed, file-backed, or wrap any .NET stream.
-
-**Universal result type**: `Data` is the universal return type — wraps success/failure with `Success`, `Value`, and `Error` properties. Also serves as the variable container (replaces the old `ObjectValue`). Error handling uses result checking (`result.Success`), not exceptions for control flow.
-
-**Actor system**: Three trust levels (User, Service, System), each `Actor` owns a `PLangContext` and `IO` instance.
-
-**Entity events**: Goal, Step, and Action each have `EntityEvents` with Before/After × Load/Run phases, plus a global `Events` system with 14 event types and pattern matching.
-
-**Optional debugging**: CallStack is opt-in per component. When enabled, it activates step tracking with frame history for debugging and audit.
-
-## Component Diagram
+Engine is the root — everything hangs off it:
 
 ```
 Engine (sealed, IAsyncDisposable)
-├── AppContext       (PLangAppContext — app lifetime)
-├── Actions          (ActionRegistry — namespace → class → IClass handler)
+├── AppContext       (PLangAppContext — app lifetime config)
+├── Actions          (ActionRegistry — module.action → handler lookup)
 ├── Serializers      (SerializerRegistry — content-type based)
 ├── Goals            (Goal collection with lazy disk loading)
 ├── FileSystem       (IPLangFileSystem — abstracted filesystem)
 ├── IO               (Channel-based I/O manager)
 └── Actors (lazy)
-    ├── System       (TrustLevel.System = 3)
-    ├── Service      (TrustLevel.Service = 2)
-    └── User         (TrustLevel.User = 1)
+    ├── System       (internal engine operations)
+    ├── Service      (external service operations)
+    └── User         (end user operations)
          └── Context → PLangContext
                         ├── MemoryStack   (variable storage)
                         ├── CallStack     (execution tracking)
@@ -41,82 +25,184 @@ Engine (sealed, IAsyncDisposable)
                         └── Actor         (identity)
 ```
 
+## Entity Hierarchy: Goal → Steps → Actions
+
+```
+Goal (one .pr file)
+ └── Steps : List<Step>  (smart collection, owns RunAsync)
+      └── Actions : List<Action>  (smart collection, owns RunAsync)
+           └── Action → resolves to a Handler (e.g. variable/set → SetHandler)
+```
+
+Each level calls `.Load()` then `.RunAsync()`. Events fire before/after each phase.
+
+## Execution Flow
+
+```
+plang p Start.goal
+  → Engine loads .build/start.pr (JSON → Goal)
+  → Engine.RunGoalAsync(goal, context)
+    → Steps.RunAsync() → for each Step:
+      → Actions.RunAsync() → for each Action:
+        → ActionRegistry finds handler by module+action name
+        → Source-generated code resolves %variables% in params
+        → handler.Run() executes, returns Data
+        → Return values stored in MemoryStack
+```
+
+## Design Principles
+
+**Object-Based Pattern (OBP)**:
+1. **Behavior on owner** — `Steps.RunAsync()` iterates steps, not external code
+2. **Navigate, don't pass** — pass Engine/Context, let caller reach what it needs
+3. **Keep object references** — store `Step`, not `step.Text`; store `Goal`, not `goal.Name`
+4. **Per-request state is a parameter** — PLangContext never cached on shared objects (Goal, Step)
+5. **Smart collections** — Steps, Actions extend `List<T>` and own domain operations (Load, RunAsync)
+
+**Strongly typed**: TypeMapping maps PLang type names to CLR types. Never weaken to `object` without explicit reason.
+
+**Universal result type**: `Data` wraps success/failure with `Value`, `Type`, `Error`, `Success`. Also serves as the variable container. Error handling uses result checking (`data.Success`), not exceptions.
+
+**Stream-based IO**: Output and input flow through named channels backed by streams.
+
+**Entity events**: Goal, Step, and Action each have Before/After × Load/Run phases, plus pattern-matched event bindings.
+
+**Optional debugging**: CallStack is opt-in. When enabled, tracks frames with step history. Use `plang p !debug` to enable.
+
+## Handler Pattern
+
+Handlers are small classes with `[Action("name")]`:
+
+```csharp
+[Action("set")]
+public partial class Set : IContext
+{
+    [VariableName]
+    public partial string Name { get; init; }
+    public partial object? Value { get; init; }
+    public partial string? Type { get; init; }
+
+    public Task<Data> Run()
+    {
+        Context.MemoryStack.Set(Name, Value, Type != null ? Memory.Type.FromName(Type) : null);
+        return Task.FromResult(Data.Ok(new types.variable { name = Name, value = Value, type = Type }));
+    }
+}
+```
+
+The source generator creates a `CodeGeneratedExecuteAsync` partial that resolves `%var%` references at property access time before calling `Run()`.
+
+**Key**: All handlers must implement `ICodeGenerated` — Engine has no fallback path.
+
+## Memory System
+
+- **MemoryStack**: `ConcurrentDictionary<string, Data>`, case-insensitive keys
+- Supports **dot-notation paths**: `user.profile.email` navigates the object graph
+- Supports **array indexing**: `items[0].name`, `items[idx].name` (variable in brackets)
+- Special accessors: `.first`, `.last`, `.random`, `.count`
+- System variables: `%Now%`, `%NowUtc%`, `%GUID%`
+
+## Context System
+
+- **PLangAppContext**: App-lifetime shared state (RootPath, Serializers, Logger)
+- **PLangContext**: Per-request (MemoryStack, CallStack, Actor, current Goal/Step)
+- **Actor**: Identity (System/Service/User), each owns a PLangContext and IO instance
+
+## Builder Pipeline (.goal → .pr)
+
+The builder transforms natural language PLang into JSON execution plans. It runs on the **old v1 engine** and produces Runtime2 artifacts:
+
+```
+Start.goal (natural language)
+  → Build.goal (orchestrator, runs on v1 engine)
+    → GetGoalsV2() parses .goal text → Runtime2 Goal objects
+    → MergeV2PrData() loads existing .pr actions (incremental builds)
+    → Renders goal+actions for LLM via Scriban template
+    → LLM returns {module, action, parameters} for each step
+    → ApplyStep validates & merges
+    → SaveGoal writes .build/start.pr (JSON)
+```
+
+The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operations to the v1 builder engine.
+
+### Build commands
+- `plang build` — old v1 builder (used to build the builder goals in system/)
+- `plang p build` — Runtime2 builder (builds user .goal files)
+
 ## Components
 
 | Component | Description | Detail |
 |-----------|-------------|--------|
-| [Engine](engine.md) | Central orchestrator. Loads goals, manages action handlers and serializers, executes goals via actors | Core orchestrator |
-| [Contexts](contexts.md) | `PLangAppContext` (app lifetime), `PLangContext` (per-request), `Actor` (identity with trust level), `EventScope` | Lifetime management |
-| [IO & Channels](io-channels.md) | Stream-based IO with named channels for input/output operations | `IO`, `Channel` |
-| [Goals & Steps](goals-steps.md) | `Goal`, `Step`, `Action` entities and their collection wrappers (`Goals`, `Steps`, `Actions`) | Execution structure |
-| [Data](goal-result.md) | Universal value container AND result type — replaces both `GoalResult` and `ObjectValue` | Return value + variable pattern |
-| [MemoryStack](memory-stack.md) | Variable storage with `Data` entries, dot-notation path resolution, system variables | Variable management |
-| [CallStack](call-stack.md) | Execution tracking with `CallFrame` entries, max depth 1000 | Debugging support |
-| [Events](events.md) | Entity events (Before/After × Load/Run) + global `Events` with 14 event types and pattern matching | Lifecycle hooks |
-| [Action Handlers](modules.md) | `IClass` interface, `BaseClass` base, `ICodeGenerated`, `ActionRegistry` | Extensibility |
-| [Serializers](serializers.md) | `ISerializer` interface with `SerializerRegistry`, content-type routing | Data format handling |
-| [.pr File Format](pr-file-format.md) | JSON structure for compiled goals (v0.1 `.pr` and v0.2 `.pr.json`) | File specification |
-| [Errors & Exceptions](exceptions.md) | `IError` / `Error` hierarchy + `Runtime2Exception` types | Error handling |
-| [Complete Example](complete-example.md) | End-to-end usage example | Full walkthrough |
+| [Engine](engine.md) | Central orchestrator. Loads goals, manages handlers, executes via actors | Core |
+| [Contexts](contexts.md) | `PLangAppContext` (app), `PLangContext` (request), `Actor` (identity) | Lifetime |
+| [IO & Channels](io-channels.md) | Stream-based IO with named channels | `IO`, `Channel` |
+| [Goals & Steps](goals-steps.md) | `Goal`, `Step`, `Action` entities and collection wrappers | Execution structure |
+| [Data](goal-result.md) | Universal value container AND result type | Return value + variable |
+| [MemoryStack](memory-stack.md) | Variable storage with dot-notation, system variables | Variables |
+| [CallStack](call-stack.md) | Execution tracking with frames, max depth 1000 | Debugging |
+| [Events](events.md) | Entity events + global Events with pattern matching | Lifecycle hooks |
+| [Action Handlers](modules.md) | `IClass`, `BaseClass`, `ICodeGenerated`, `ActionRegistry` | Extensibility |
+| [Serializers](serializers.md) | `ISerializer` with registry, content-type routing | Data formats |
+| [.pr File Format](pr-file-format.md) | JSON structure for compiled goals | File spec |
+| [Errors](exceptions.md) | `IError`/`Error` hierarchy + `Runtime2Exception` | Error handling |
+| [OBP Pattern](plang_object_based_pattern.md) | Object-Based Pattern with code examples | Design guide |
 
-## File Structure Reference
+## File Structure
 
 ```
 PLang/Runtime2/
 ├── Core/
 │   ├── Engine.cs            Central orchestrator
 │   ├── Goal.cs              Goal entity (properties)
-│   ├── GoalMethods.cs       Goal runtime methods (Load, RunAsync, FormatForLlm)
+│   ├── GoalMethods.cs       Goal runtime methods (Load, RunAsync)
 │   ├── Goals.cs             Goal collection with lazy disk loading
+│   ├── GoalCall.cs          Strongly-typed goal reference (name, parameters)
 │   ├── Step.cs              Step entity (properties)
 │   ├── StepMethods.cs       Step runtime methods (Load, RunAsync)
 │   ├── Action.cs            Action entity (properties)
 │   ├── ActionMethods.cs     Action runtime methods (Load, RunAsync)
 │   ├── Actions.cs           Actions : List<Action> with RunAsync
-│   ├── Steps.cs             Steps : List<Step>
+│   ├── Steps.cs             Steps : List<Step> with RunAsync
 │   ├── CallStack.cs         Execution tracking
 │   ├── CallFrame.cs         Stack frame with ExecutionPhase
 │   ├── EventList.cs         EventList, PhaseEvents, EntityEvents
-│   ├── EventCollection.cs   Events, EventBinding, EventType (14 types)
+│   ├── EventCollection.cs   Events, EventBinding, EventType
 │   ├── ErrorHandler.cs      Step error configuration
-│   ├── Info.cs              Info { Key, Message }
 │   └── CacheSettings.cs     Step cache configuration
 ├── Context/
 │   ├── PLangAppContext.cs    App-lifetime state
 │   ├── PLangContext.cs       Per-request state
-│   ├── Actor.cs             Identity with TrustLevel
+│   ├── Actor.cs             Identity (System/Service/User)
 │   └── EventScope.cs        Event scope wrapper
 ├── Memory/
-│   ├── Data.cs              Universal value container + Type class + Data<T> + DynamicData
-│   ├── MemoryStack.cs       Variable storage (ConcurrentDictionary<string, Data>)
+│   ├── Data.cs              Universal container + Type class
+│   ├── MemoryStack.cs       Variable storage (ConcurrentDictionary)
 │   └── Properties.cs        Properties : IList<Data>
 ├── Errors/
-│   ├── IError.cs            Error interface
-│   ├── Error.cs             Base error class
-│   ├── GoalError.cs         Goal-specific errors
-│   ├── StepError.cs         Step-specific errors
-│   ├── ActionError.cs       Action-specific errors
-│   ├── ServiceError.cs      Handler internal errors
-│   └── Exceptions.cs        Runtime2Exception hierarchy
-├── actions/
+│   ├── IError.cs, Error.cs  Error hierarchy
+│   ├── GoalError.cs, StepError.cs, ActionError.cs, ServiceError.cs
+│   └── Exceptions.cs        Runtime2Exception types
+├── modules/
 │   ├── IClass.cs            Handler interface
 │   ├── ICodeGenerated.cs    Source-generated execution interface
 │   ├── BaseClass.cs         Abstract base + BaseClass<TParams>
-│   ├── ActionRegistry.cs    Two-level handler lookup
-│   ├── variable/            variable.set, variable.get, variable.remove, ...
-│   ├── file/                file.save, file.read, file.copy, file.delete, ...
+│   ├── ActionRegistry.cs    Module.action → handler lookup
+│   ├── variable/            variable.set, variable.get, ...
+│   ├── file/                file.save, file.read, file.copy, ...
 │   ├── output/              output.write
-│   └── condition/           condition handlers
+│   ├── condition/           if handler
+│   ├── event/               before/after goal/step/action handlers
+│   └── goal/                goal.call handler
 ├── IO/
 │   ├── IO.cs                Channel manager + file ReadAsync<T>
 │   └── Channel.cs           Stream-backed channel
 ├── Serialization/
 │   ├── ISerializer.cs       Serializer interface
-│   └── SerializerRegistry.cs Content-type routing
+│   ├── JsonStreamSerializer.cs  System.Text.Json implementation
+│   ├── SerializerRegistry.cs    Content-type routing
+│   └── View.cs              [Store], [LlmBuilder], [Debug], [Default] attributes
 ├── Utility/
-│   └── TypeMapping.cs       PLang types + MIME → CLR types
-├── Mapping/
-│   └── GoalMapper.cs        Building.Model → Runtime2.Core conversion
-└── Parsing/
-    └── PrParser.cs          v0.1 .pr and v0.2 .pr.json parser
+│   └── TypeMapping.cs       PLang type names + MIME → CLR types + ConvertTo
+└── Mapping/
+    └── GoalMapper.cs        Building.Model → Runtime2.Core conversion
 ```

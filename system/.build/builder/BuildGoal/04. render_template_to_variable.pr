@@ -1,15 +1,15 @@
 {
-  "Text": "render template \"/system/builder/templates/goalFormatForLlm.template\", write to %goalForLlm%",
+  "Text": "render template \"/system/actions/summary.md\", write to %actionSummary%",
   "ModuleType": "PLang.Modules.TemplateEngineModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to render a template file located at '/system/builder/templates/goalFormatForLlm.template' and store the rendered output into the variable %goalForLlm%. The RenderFile function matches this intent as it renders a file and returns the rendered string, which can be assigned to a variable.",
+    "Reasoning": "The user wants to render a markdown template file located at '/system/actions/summary.md' and store the rendered content into the variable %actionSummary%. The RenderFile function is appropriate here as it renders a file and can return the rendered content as a string to be stored in a variable.",
     "Name": "RenderFile",
     "Parameters": [
       {
         "Type": "System.String",
         "Name": "path",
-        "Value": "/system/builder/templates/goalFormatForLlm.template"
+        "Value": "/system/actions/summary.md"
       },
       {
         "Type": "System.Collections.Generic.Dictionary`2[System.String,System.Object]",
@@ -25,7 +25,7 @@
     "ReturnValues": [
       {
         "Type": "System.String",
-        "VariableName": "%goalForLlm%"
+        "VariableName": "%actionSummary%"
       }
     ]
   },
@@ -45,8 +45,8 @@
       }
     },
     "ReturnValues": {
-      "%goalForLlm%": {
-        "Name": "%goalForLlm%",
+      "%actionSummary%": {
+        "Name": "%actionSummary%",
         "FullTypeName": "System.String"
       }
     }
@@ -83,7 +83,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRender a specified template file and store the rendered output into a variable\n## functions available starts ##\r\n{\"Description\":\"Render template html, files, elements using template engine. plang examples: \\r\\n```\\r\\n- render file.html\\r\\n- render %content% to #main / will render the variable into the element #main\\r\\n- render products.html, %products%, write to %result%\\r\\n```\",\"Methods\":[{\"Description\":\"Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into\",\"MethodName\":\"RenderFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"variables\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"writeToOutputStream\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"RenderContent\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"fullPath\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"variables\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ngoalForLlm (type:object), \r\n## defined variables ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRender a markdown template file and store the rendered content into a variable\n## functions available starts ##\r\n{\"Description\":\"Render template html, files, elements using template engine. plang examples: \\r\\n```\\r\\n- render file.html\\r\\n- render %content% to #main / will render the variable into the element #main\\r\\n- render products.html, %products%, write to %result%\\r\\n```\",\"Methods\":[{\"Description\":\"Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into\",\"MethodName\":\"RenderFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"variables\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"writeToOutputStream\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"RenderContent\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"fullPath\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\"Name\":\"variables\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nactionSummary (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -92,14 +92,14 @@
           "content": [
             {
               "type": "text",
-              "text": "render template \"/system/builder/templates/goalFormatForLlm.template\", write to %goalForLlm%"
+              "text": "render template \"/system/actions/summary.md\", write to %actionSummary%"
             }
           ]
         }
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to render a template file located at '/system/builder/templates/goalFormatForLlm.template' and store the rendered output into the variable %goalForLlm%. The RenderFile function matches this intent as it renders a file and returns the rendered string, which can be assigned to a variable.\",\n  \"Name\": \"RenderFile\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"path\",\n      \"Value\": \"/system/builder/templates/goalFormatForLlm.template\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\n      \"Name\": \"variables\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"writeToOutputStream\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.String\",\n      \"VariableName\": \"%goalForLlm%\"\n    }\n  ]\n}",
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to render a markdown template file located at '/system/actions/summary.md' and store the rendered content into the variable %actionSummary%. The RenderFile function is appropriate here as it renders a file and can return the rendered content as a string to be stored in a variable.\",\n  \"Name\": \"RenderFile\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"path\",\n      \"Value\": \"/system/actions/summary.md\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.Dictionary`2[System.String,System.Object]\",\n      \"Name\": \"variables\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"writeToOutputStream\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.String\",\n      \"VariableName\": \"%actionSummary%\"\n    }\n  ]\n}",
       "Tools": null
     }
   ]

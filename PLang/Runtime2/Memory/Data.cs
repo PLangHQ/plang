@@ -80,6 +80,13 @@ public class Data
 
     // --- Error/Result support (replaces Return) ---
 
+    /// <summary>
+    /// When true, a before-event has handled this action/step/goal.
+    /// The original execution should be skipped and this Data's Value used instead.
+    /// </summary>
+    [JsonIgnore]
+    public bool Handled { get; set; }
+
     [JsonIgnore]
     public IError? Error { get; set; }
 

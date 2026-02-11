@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal writes the current depth of the call stack before and after calling the Inner goal. It outputs the depth before the call and then again after the Inner goal has been executed.",
   "steps": [
     {
       "index": 0,
@@ -13,18 +12,18 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "content",
               "value": "Depth before: %!callStack.Depth%\n",
               "type": "string"
             },
             {
-              "name": "Actor",
+              "name": "actor",
               "value": "user",
-              "type": "string"
+              "type": "actor"
             },
             {
-              "name": "Channel",
-              "value": "",
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -71,18 +70,18 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "content",
               "value": "Depth after: %!callStack.Depth%\n",
               "type": "string"
             },
             {
-              "name": "Actor",
+              "name": "actor",
               "value": "user",
-              "type": "string"
+              "type": "actor"
             },
             {
-              "name": "Channel",
-              "value": "",
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -121,14 +120,11 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\CallStack\\Start.goal",
-  "prPath": "\\CallStack\\.build\\start.pr",
+  "path": "\\Start.goal",
+  "prPath": "\\.build\\start.pr",
   "hash": "6ca1d78db436f64b203279cc93b3f7586f696520593adef279ecdf58102cbbcc",
   "isSetup": false,
   "isEvent": false,
-  "inputParameters": {
-    "!callStack.Depth": "This variable holds the current depth of the call stack and is required to output the depth before and after the Inner goal is called."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

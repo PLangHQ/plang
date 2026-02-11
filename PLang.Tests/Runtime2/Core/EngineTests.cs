@@ -55,7 +55,7 @@ public class EngineTests
     #region Actor Tests
 
     [Test]
-    public async Task System_ReturnsActorWithSystemTrustLevel()
+    public async Task System_ReturnsActorWithCorrectName()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
@@ -63,12 +63,10 @@ public class EngineTests
         var system = engine.System;
 
         await Assert.That(system.Name).IsEqualTo("System");
-        await Assert.That(system.TrustLevel).IsEqualTo(TrustLevel.System);
-        await Assert.That((int)system.TrustLevel).IsEqualTo(3);
     }
 
     [Test]
-    public async Task Service_ReturnsActorWithServiceTrustLevel()
+    public async Task Service_ReturnsActorWithCorrectName()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
@@ -76,12 +74,10 @@ public class EngineTests
         var service = engine.Service;
 
         await Assert.That(service.Name).IsEqualTo("Service");
-        await Assert.That(service.TrustLevel).IsEqualTo(TrustLevel.Service);
-        await Assert.That((int)service.TrustLevel).IsEqualTo(2);
     }
 
     [Test]
-    public async Task User_ReturnsActorWithUserTrustLevel()
+    public async Task User_ReturnsActorWithCorrectName()
     {
         using var appContext = CreateAppContext();
         await using var engine = new Engine(appContext);
@@ -89,8 +85,6 @@ public class EngineTests
         var user = engine.User;
 
         await Assert.That(user.Name).IsEqualTo("User");
-        await Assert.That(user.TrustLevel).IsEqualTo(TrustLevel.User);
-        await Assert.That((int)user.TrustLevel).IsEqualTo(1);
     }
 
     [Test]

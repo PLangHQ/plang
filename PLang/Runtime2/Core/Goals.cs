@@ -82,7 +82,10 @@ public sealed class Goals
         if (cleanName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             cleanName = cleanName[..^5];
 
-        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, ".build", cleanName.ToLowerInvariant() + ".pr");
+        // .pr lives in .build/ next to the .goal file: Variables/.build/start.pr
+        var dir = Engine.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
+        var file = Engine.FileSystem.Path.GetFileName(cleanName);
+        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, dir, ".build", file.ToLowerInvariant() + ".pr");
         if (!Engine.FileSystem.File.Exists(prPath))
             return null;
 
@@ -90,7 +93,13 @@ public sealed class Goals
         if (!loadResult.Success)
             return null;
 
-        return Get(name);
+        // The .pr file caches the goal under its own name/path which may differ
+        // from the caller's search path (e.g. "Start" vs "./Variables/Start").
+        // Return the loaded goal directly and register it under the search path.
+        var loaded = loadResult.Value as Goal;
+        if (loaded != null && !string.IsNullOrEmpty(name))
+            _byPath[name] = loaded;
+        return loaded;
     }
 
     /// <summary>
@@ -160,6 +169,36 @@ public sealed class Goals
     /// Indexer for getting goals by name.
     /// </summary>
     public Goal? this[string name] => Get(name);
+
+    /// <summary>
+    /// Gets a goal by its .pr file path. Loads from disk if not cached.
+    /// </summary>
+    public async Task<Goal?> GetByPrPathAsync(string prPath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(prPath))
+            return null;
+
+        // Check cache first
+        if (_byPath.TryGetValue(prPath, out var cached))
+            return cached;
+
+        // Resolve relative path against root directory
+        var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
+            ? prPath
+            : Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, prPath);
+
+        if (!Engine.FileSystem.File.Exists(absolutePath))
+            return null;
+
+        var loadResult = await LoadFromFileAsync(Engine, absolutePath, cancellationToken: ct);
+        if (!loadResult.Success)
+            return null;
+
+        var loaded = loadResult.Value as Goal;
+        if (loaded != null)
+            _byPath[prPath] = loaded;
+        return loaded;
+    }
 
     public async Task<Data> Run(string name, PLangContext? context = null, CancellationToken cancellationToken = default)
     {

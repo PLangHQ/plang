@@ -12,18 +12,18 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "content",
               "value": "After goal fired",
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "service",
-              "type": "string"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
             },
             {
-              "name": "Channel",
-              "value": "",
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -38,8 +38,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Events\\LogAfter.goal",
-  "prPath": "\\Events\\.build\\logafter.pr",
+  "path": "\\LogAfter.goal",
+  "prPath": "\\.build\\logafter.pr",
   "hash": "440fe9a1c0ef35cbc0d2199db3269ef5a4588202f4992051d7318de4d4e4f4ea",
   "isSetup": false,
   "isEvent": false,

@@ -53,6 +53,15 @@ public sealed class EventBinding
         var result = await Handler(context);
         context.ExitEvent(Id);
 
+        // Check if handler set an override via event.skipAction
+        var @override = context.EventOverride;
+        if (@override != null)
+        {
+            context.EventOverride = null;
+            @override.Handled = true;
+            return @override;
+        }
+
         if (!result.Success && !StopOnError)
             return Data.Ok();
 

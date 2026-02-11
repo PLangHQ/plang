@@ -1,0 +1,4 @@
+Start
+- before action file.read call OverrideFileRead
+- read file "nonexistent.json", write to %content%
+- write out %content%

@@ -6,7 +6,7 @@ namespace PLang.Runtime2.modules.@event;
 [Action("beforeAction")]
 public partial class BeforeAction : IContext
 {
-    public partial string GoalToCall { get; init; }
+    public partial GoalCall GoalToCall { get; init; }
     public partial string? ActionPattern { get; init; }
     [Default(false)]
     public partial bool IsRegex { get; init; }
@@ -33,7 +33,7 @@ public partial class BeforeAction : IContext
         {
             id = binding.Id,
             type = "beforeAction",
-            goalToCall = GoalToCall,
+            goalToCall = GoalToCall.Name,
             pattern = ActionPattern,
             isRegex = IsRegex
         }));

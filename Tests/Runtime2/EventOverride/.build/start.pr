@@ -1,0 +1,100 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "OverrideFileRead",
+                "parameters": {}
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "file.read",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0022nonexistent.json\u0022, write to %content%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "nonexistent.json",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "content"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %content%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%content%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Start.goal",
+  "prPath": "\\.build\\start.pr",
+  "hash": "f08868dabb436d97684c4d8fcf569917a381c2f294bc6747ec46b15e82b9e820",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

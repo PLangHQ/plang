@@ -23,6 +23,7 @@ public sealed class EventList
         {
             var result = await binding.Run(context);
             if (!result.Success) return result;
+            if (result.Handled) return result;
         }
         return Data.Ok();
     }

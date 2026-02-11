@@ -3,30 +3,7 @@ using PLang.Runtime2.Core;
 namespace PLang.Runtime2.Context;
 
 /// <summary>
-/// Trust levels for actors in the system.
-/// Higher values indicate more trust/permissions.
-/// </summary>
-public enum TrustLevel
-{
-    /// <summary>
-    /// End user - least trusted.
-    /// </summary>
-    User = 1,
-
-    /// <summary>
-    /// External service - intermediate trust.
-    /// </summary>
-    Service = 2,
-
-    /// <summary>
-    /// System/app operator - most trusted.
-    /// </summary>
-    System = 3
-}
-
-/// <summary>
 /// Represents an actor in the system with its own context and IO channels.
-/// Actors have different trust levels: System (highest), Service, User (lowest).
 /// </summary>
 public sealed class Actor : IAsyncDisposable
 {
@@ -34,11 +11,6 @@ public sealed class Actor : IAsyncDisposable
     /// Name of the actor ("System", "Service", or "User").
     /// </summary>
     public string Name { get; }
-
-    /// <summary>
-    /// Trust level of this actor.
-    /// </summary>
-    public TrustLevel TrustLevel { get; }
 
     /// <summary>
     /// The PLang execution context owned by this actor.
@@ -67,10 +39,9 @@ public sealed class Actor : IAsyncDisposable
     /// </summary>
     public static string[] ValidValues => ["user", "service", "system"];
 
-    public Actor(string name, TrustLevel trustLevel, Engine engine)
+    public Actor(string name, Engine engine)
     {
         Name = name;
-        TrustLevel = trustLevel;
         Engine = engine;
         Context = new PLangContext(engine.AppContext)
         {

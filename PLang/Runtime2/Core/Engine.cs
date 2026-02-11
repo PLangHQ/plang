@@ -3,6 +3,7 @@ using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
+using System.Text.RegularExpressions;
 
 namespace PLang.Runtime2.Core;
 
@@ -77,22 +78,19 @@ public sealed class Engine : IAsyncDisposable
     }
 
     /// <summary>
-    /// System actor - highest trust level, for app operator operations.
-    /// Created lazily on first access.
+    /// System actor for internal engine operations. Created lazily on first access.
     /// </summary>
-    public Actor System => _system ??= new Actor("System", TrustLevel.System, this);
+    public Actor System => _system ??= new Actor("System", this);
 
     /// <summary>
-    /// Service actor - intermediate trust level, for external service operations.
-    /// Created lazily on first access.
+    /// Service actor for external service operations. Created lazily on first access.
     /// </summary>
-    public Actor Service => _service ??= new Actor("Service", TrustLevel.Service, this);
+    public Actor Service => _service ??= new Actor("Service", this);
 
     /// <summary>
-    /// User actor - lowest trust level, for end user operations.
-    /// Created lazily on first access.
+    /// User actor for end user operations. Created lazily on first access.
     /// </summary>
-    public Actor User => _user ??= new Actor("User", TrustLevel.User, this);
+    public Actor User => _user ??= new Actor("User", this);
 
     public PLangContext Context => User.Context;
     public Memory.MemoryStack MemoryStack => User.Context.MemoryStack;
@@ -136,6 +134,51 @@ public sealed class Engine : IAsyncDisposable
         FileSystem = fileSystem ?? CreateDefaultFileSystem(appContext.RootPath);
         IO = new Runtime2.IO.IO(this);
         RegisterBuiltInModules();
+    }
+
+    /// <summary>
+    /// Runs a goal via a strongly-typed GoalCall. Resolves %var% in Name, tries PrPath first, falls back to name lookup.
+    /// </summary>
+    public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken cancellationToken = default)
+    {
+        context ??= User.Context;
+
+        // Resolve %var% references in the goal name
+        var resolvedName = ResolveVariables(goalCall.Name, context.MemoryStack);
+
+        // Inject GoalCall parameters into the context's MemoryStack
+        if (goalCall.Parameters != null)
+        {
+            foreach (var param in goalCall.Parameters)
+                context.MemoryStack.Set(param.Key, param.Value);
+        }
+
+        // Try PrPath first (when available)
+        if (!string.IsNullOrEmpty(goalCall.PrPath))
+        {
+            var goal = await _goals.GetByPrPathAsync(goalCall.PrPath, cancellationToken);
+            if (goal != null)
+                return await RunGoalAsync(goal, context, cancellationToken);
+        }
+
+        // Fall back to name-based lookup
+        return await _goals.Run(resolvedName, context, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves %variable% patterns in a string using the memory stack.
+    /// </summary>
+    private static string ResolveVariables(string input, MemoryStack memoryStack)
+    {
+        if (string.IsNullOrEmpty(input) || !input.Contains('%'))
+            return input;
+
+        return Regex.Replace(input, @"%([^%]+)%", match =>
+        {
+            var varName = match.Groups[1].Value;
+            var value = memoryStack.GetValue(varName);
+            return value?.ToString() ?? match.Value;
+        });
     }
 
     /// <summary>

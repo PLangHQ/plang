@@ -1,3 +1,8 @@
+using System.Reflection;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using PLang.Runtime2.Serialization;
+
 namespace PLang.Runtime2.Utility;
 
 /// <summary>
@@ -35,6 +40,10 @@ public static class TypeMapping
         ["map"] = typeof(Dictionary<string, object>),
         ["object"] = typeof(object),
         ["dynamic"] = typeof(object),
+        ["json"] = typeof(JsonNode),
+        ["json[]"] = typeof(JsonArray),
+        ["actor"] = typeof(PLang.Runtime2.Context.Actor),
+        ["goal.call"] = typeof(PLang.Runtime2.Core.GoalCall),
 
         // Nullable types
         ["int?"] = typeof(int?),
@@ -60,6 +69,7 @@ public static class TypeMapping
         [typeof(byte)] = "byte",
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
+        [typeof(PLang.Runtime2.Core.GoalCall)] = "goal.call",
     };
 
     /// <summary>
@@ -190,15 +200,28 @@ public static class TypeMapping
             return name;
 
         // Check for ValidValues static property (convention for constrained types)
+        // Return the lowercased type name — callers use GetValidValues() for the values
         var validValuesProp = type.GetProperty("ValidValues",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
         {
-            var values = (string[])validValuesProp.GetValue(null)!;
-            return $"enum({string.Join(",", values)})";
+            return type.Name.ToLowerInvariant();
         }
 
         return type.Name.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Gets the valid values for a constrained type (e.g. Actor → ["user","service","system"]).
+    /// Returns null if the type has no ValidValues convention property.
+    /// </summary>
+    public static string[]? GetValidValues(Type type)
+    {
+        var prop = type.GetProperty("ValidValues",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        if (prop != null && prop.PropertyType == typeof(string[]))
+            return (string[])prop.GetValue(null)!;
+        return null;
     }
 
     /// <summary>
@@ -243,6 +266,31 @@ public static class TypeMapping
             return Enum.ToObject(targetType, value);
         }
 
+        // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
+        if (targetType == typeof(PLang.Runtime2.Core.GoalCall))
+        {
+            if (value is string goalName)
+                return new PLang.Runtime2.Core.GoalCall { Name = goalName };
+            if (value is System.Text.Json.JsonElement je)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Core.GoalCall>(
+                        je.GetRawText(),
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch { return null; }
+            }
+            if (value is IDictionary<string, object?> dict)
+            {
+                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
+                var parameters = dict.TryGetValue("parameters", out var p) && p is IDictionary<string, object?> pDict
+                    ? new Dictionary<string, object?>(pDict)
+                    : null;
+                return new PLang.Runtime2.Core.GoalCall { Name = name, Parameters = parameters };
+            }
+        }
+
         // Use Convert for basic types
         if (IsPrimitive(targetType))
         {
@@ -257,5 +305,54 @@ public static class TypeMapping
         }
 
         return value;
+    }
+
+    /// <summary>
+    /// Returns canonical builder type names (excludes aliases like "text"→"string").
+    /// Keeps shortest name per CLR type, skips nullable variants.
+    /// </summary>
+    public static List<string> GetBuilderTypeNames()
+    {
+        var seen = new HashSet<Type>();
+        var names = new List<string>();
+        foreach (var kvp in NameToType)
+        {
+            if (kvp.Key.EndsWith("?")) continue;
+            if (seen.Contains(kvp.Value)) continue;
+            seen.Add(kvp.Value);
+
+            var validValues = GetValidValues(kvp.Value);
+            if (validValues != null)
+                names.Add($"{kvp.Key}({string.Join("|", validValues)})");
+            else
+                names.Add(kvp.Key);
+        }
+        return names;
+    }
+
+    /// <summary>
+    /// Returns schemas for complex types (goal.call, etc.) based on [LlmBuilder] attributes.
+    /// </summary>
+    public static Dictionary<string, string> GetComplexTypeSchemas()
+    {
+        var schemas = new Dictionary<string, string>();
+        foreach (var kvp in NameToType)
+        {
+            var name = kvp.Key;
+            var type = kvp.Value;
+            if (name.EndsWith("?") || IsPrimitive(type) || type == typeof(object)) continue;
+            if (type.IsArray || type.IsGenericType) continue;
+            if (GetValidValues(type) != null) continue;
+
+            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.Name != "EqualityContract")
+                .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
+                .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
+                .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
+
+            if (props.Any())
+                schemas[name] = $"{{ {string.Join(", ", props)} }}";
+        }
+        return schemas;
     }
 }

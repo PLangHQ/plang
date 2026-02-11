@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %user% = {name:\u0022john\u0022, age:20, addresses:[{street:\u0022first street\u0022, nr:10}, {street:\u0022second street\u0022, nr:2}]}",
+      "text": "set  %user% = {name:\u0022john\u0022, age:20, addresses:[{street:\u0022first street\u0022, nr:10}, {street:\u0022second street\u0022, nr:2}]}",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -13,7 +13,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "user",
+              "value": "%user%",
               "type": "string"
             },
             {
@@ -33,11 +33,6 @@
                 ]
               },
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "errors": [],
@@ -61,17 +56,12 @@
             {
               "name": "Content",
               "value": "%user.name%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
@@ -95,17 +85,12 @@
             {
               "name": "Content",
               "value": "%user.age%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
@@ -129,17 +114,12 @@
             {
               "name": "Content",
               "value": "%user.addresses%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
@@ -163,26 +143,16 @@
             {
               "name": "Content",
               "value": "%user.addresses.street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "possibleTypo",
-              "message": "user.addresses is an array, accessing \u0027street\u0027 directly may be incorrect"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -202,26 +172,16 @@
             {
               "name": "Content",
               "value": "%user.addresses.first.street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "possibleTypo",
-              "message": "user.addresses is an array, \u0027first\u0027 is not a valid index or property"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -241,26 +201,16 @@
             {
               "name": "Content",
               "value": "%user.addresses.last.street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "possibleTypo",
-              "message": "user.addresses is an array, \u0027last\u0027 is not a valid index or property"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -280,17 +230,12 @@
             {
               "name": "Content",
               "value": "%user.addresses[0].street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
@@ -313,18 +258,13 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "idx",
+              "value": "%idx%",
               "type": "string"
             },
             {
               "name": "Value",
               "value": 1,
               "type": "int"
-            },
-            {
-              "name": "Type",
-              "value": "int",
-              "type": "string"
             }
           ],
           "errors": [],
@@ -348,17 +288,12 @@
             {
               "name": "Content",
               "value": "%user.addresses[idx].street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
@@ -382,26 +317,16 @@
             {
               "name": "Content",
               "value": "%user.addresses.random.street%",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
-            },
-            {
-              "name": "Channel",
-              "value": "",
-              "type": "string"
+              "type": "actor"
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "possibleTypo",
-              "message": "\u0027random\u0027 is not a valid index or property of user.addresses array"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -411,9 +336,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Variables\\Start.goal",
-  "prPath": "\\Variables\\.build\\start.pr",
-  "hash": "7ffe030e6d679c0f6b82bfdc352bd2f3ad30b9b66cdeace62945469d06140ffa",
+  "path": "\\Start.goal",
+  "prPath": "\\.build\\start.pr",
+  "hash": "608845c5b99cac53ca412629bce6f94e6a1a660bde2c5cfe1603fd5bcdb9fde1",
   "isSetup": false,
   "isEvent": false,
   "errors": [],

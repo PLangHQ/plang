@@ -99,8 +99,8 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Condition = true,
-            GoalIfTrue = "TrueBranch",
-            GoalIfFalse = "FalseBranch"
+            GoalIfTrue = new GoalCall { Name = "TrueBranch" },
+            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
         var result = await action.Run();
 
@@ -150,8 +150,8 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Condition = false,
-            GoalIfTrue = "TrueBranch",
-            GoalIfFalse = "FalseBranch"
+            GoalIfTrue = new GoalCall { Name = "TrueBranch" },
+            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
         var result = await action.Run();
 
@@ -172,7 +172,7 @@ public class ConditionHandlerTests : IDisposable
         {
             Context = CreateContext(),
             Condition = true,
-            GoalIfTrue = "NonExistentGoal"
+            GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
         };
         var result = await action.Run();
 

@@ -35,7 +35,7 @@ Action level:
 
 Step:
 ```plang
-- sign %payload% with sha256 and verify with %publicKey%, write to %isValid%
+- sign \%payload\% with sha256 and verify with \%publicKey\%, write to \%isValid\%
   <= actions: [{module: "crypto", action: "sign"}, {module: "crypto", action: "verify"}]
 ```
 
@@ -45,16 +45,17 @@ Response:
   "errors": [],
   "warnings": [],
   "actions": [
-    {"module": "crypto", "action": "sign", "data": {"message": "%payload%", "algorithm": "sha256"}, "return": "%signature%"},
-    {"module": "crypto", "action": "verify", "data": {"message": "%payload%", "signature": "%signature%", "publicKey": "%publicKey%"}, "return": "%isValid%"}
+    {"module": "crypto", "action": "sign", "data": {"message": "\%payload\%", "algorithm": "sha256"}, "return": "\%signature\%"},
+    {"module": "crypto", "action": "verify", "data": {"message": "\%payload\%", "signature": "\%signature\%", "publicKey": "\%publicKey\%"}, "return": "\%isValid\%"}
   ]
 }
 ```
 
 ## Rules
 
-- Variables use %name% syntax — preserve them literally in all values including return
-- return includes the % signs (e.g. "%signature%"), omit if none
+- Variables use \%name\% syntax — preserve them literally in all values including return
+- return includes the \% signs (e.g. "\%signature\%"), omit if none
 - Build data objects matching the DTO definitions exactly
 - If you cannot build a valid result, omit the data field and add an error
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
+- Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), json[] (for JSON arrays), list, dict, actor, goal.call. @var params expect \%variable\% values. Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.

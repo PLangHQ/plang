@@ -6,6 +6,7 @@ BuildGoal
 
 - write out "Building goal: %goal.Name%"
 - [plang] get all actions, write to %actions%
+- [plang] get type info, write to %typeInfo%
 - render template "/system/actions/summary.md", write to %actionSummary%
 - render template "/system/builder/templates/goalFormatForLlm.template", write to %goalForLlm%
 - read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%

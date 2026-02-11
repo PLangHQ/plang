@@ -12,18 +12,18 @@
           "action": "write",
           "parameters": [
             {
-              "name": "Content",
+              "name": "content",
               "value": "Before goal fired",
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "service",
-              "type": "string"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
             },
             {
-              "name": "Channel",
-              "value": "",
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -38,8 +38,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Events\\LogBefore.goal",
-  "prPath": "\\Events\\.build\\logbefore.pr",
+  "path": "\\LogBefore.goal",
+  "prPath": "\\.build\\logbefore.pr",
   "hash": "3970fdcc3b851d516ab371375343cce2de93d186a3f82d45e783d3c03cfad41c",
   "isSetup": false,
   "isEvent": false,

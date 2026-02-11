@@ -86,13 +86,38 @@ namespace PLang.Modules.PlangModule
 
 					if (parameterType != null)
 					{
+						var nCtx = new System.Reflection.NullabilityInfoContext();
 						foreach (var prop in parameterType.GetProperties(
 							System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
 						{
-							if (prop.Name == "EqualityContract") continue;
-							if (prop.Name == "Context") continue;
+							if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+
 							var typeName = Runtime2.Utility.TypeMapping.GetTypeName(prop.PropertyType);
-							parameters.Add(new Runtime2.Memory.Data(prop.Name, typeName));
+
+							// Nullable reference types (value types already handled by TypeMapping)
+							bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
+							if (!isNullable && !prop.PropertyType.IsValueType)
+								isNullable = nCtx.Create(prop).WriteState == System.Reflection.NullabilityState.Nullable;
+							if (isNullable && !typeName.EndsWith("?"))
+								typeName += "?";
+
+							// ValidValues — append inline
+							var validValues = Runtime2.Utility.TypeMapping.GetValidValues(prop.PropertyType);
+							if (validValues != null)
+								typeName += $"({string.Join("|", validValues)})";
+
+							// @var marker
+							var hasVar = prop.GetCustomAttribute<Runtime2.modules.VariableNameAttribute>() != null;
+
+							// Default value
+							var defaultAttr = prop.GetCustomAttribute<Runtime2.modules.DefaultAttribute>();
+
+							// Build compact description: "@var string" or "actor(user|service|system) = \"user\""
+							var desc = hasVar ? $"@var {typeName}" : typeName;
+							if (defaultAttr != null)
+								desc += $" = {FormatDefault(defaultAttr.Value)}";
+
+							parameters.Add(new Runtime2.Memory.Data(prop.Name, desc));
 						}
 					}
 
@@ -119,7 +144,42 @@ namespace PLang.Modules.PlangModule
 				return (null, new ProgramError("GetGoals did not return goals"));
 
 			var runtime2Goals = v1Goals.Select(GoalMapper.ToRuntime2Goal).ToList();
+
+			foreach (var r2Goal in runtime2Goals)
+				MergeV2PrData(r2Goal);
+
 			return (runtime2Goals, null);
+		}
+
+		private void MergeV2PrData(Runtime2.Core.Goal goal)
+		{
+			var prPath = goal.PrPath;
+			if (prPath == null || !fileSystem.File.Exists(prPath)) return;
+
+			var prJson = fileSystem.File.ReadAllText(prPath);
+			var prGoal = System.Text.Json.JsonSerializer.Deserialize<Runtime2.Core.Goal>(
+				prJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+			if (prGoal == null) return;
+
+			for (int i = 0; i < goal.Steps.Count; i++)
+			{
+				var prStep = prGoal.Steps.FirstOrDefault(s => s.Text == goal.Steps[i].Text);
+				if (prStep != null && prStep.Actions.Count > 0
+					&& prStep.Actions.Any(a => a.Parameters.Count > 0))
+				{
+					goal.Steps[i].Actions = prStep.Actions;
+				}
+			}
+		}
+
+		[Description("Get type info for builder prompts")]
+		public Task<(object?, IError?)> GetTypeInfo()
+		{
+			var names = TypeMapping.GetBuilderTypeNames();
+			var schemas = TypeMapping.GetComplexTypeSchemas();
+			var schemaLines = schemas.Select(kvp => $"  {kvp.Key}: {kvp.Value}");
+			return Task.FromResult<(object?, IError?)>((
+				new { TypeNames = string.Join(", ", names), TypeSchemas = string.Join("\n", schemaLines) }, null));
 		}
 
 		[Description("Validates actions from llm")]
@@ -144,7 +204,91 @@ namespace PLang.Modules.PlangModule
 					$"Actions not found: {string.Join(", ", notFound)}", goalStep, function,
 					Key: "ActionNotFound"));
 
+			// Resolve PrPath for goalcall parameters
+			ResolveGoalCallPaths(actions);
+
 			return (true, null);
+		}
+
+		private void ResolveGoalCallPaths(Actions actions)
+		{
+			foreach (var action in actions)
+			{
+				if (action.Parameters == null) continue;
+
+				foreach (var param in action.Parameters)
+				{
+					if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					var goalCall = DeserializeGoalCall(param.Value);
+					if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
+						continue;
+
+					// Dynamic name (contains %variable%) — can't resolve at build time
+					if (goalCall.Name.Contains('%'))
+					{
+						param.Value = goalCall;
+						continue;
+					}
+
+					// Try prParser to find matching .pr file
+					var prGoals = prParser.GetAllGoals();
+					var matchedGoal = prGoals.FirstOrDefault(g =>
+						g.GoalName.Equals(goalCall.Name, StringComparison.OrdinalIgnoreCase));
+					if (matchedGoal != null)
+					{
+						goalCall.PrPath = matchedGoal.RelativePrPath;
+						param.Value = goalCall;
+						continue;
+					}
+
+					// Try goalParser to find .goal file and compute expected PrPath
+					try
+					{
+						var goalFiles = goalParser.ParseGoalFile(goalCall.Name);
+						if (goalFiles.Count > 0)
+						{
+							goalCall.PrPath = goalFiles[0].RelativePrPath;
+							param.Value = goalCall;
+							continue;
+						}
+					}
+					catch
+					{
+						// Goal file not found — leave PrPath null
+					}
+
+					// Not found — leave PrPath null (runtime falls back to name lookup)
+					param.Value = goalCall;
+				}
+			}
+		}
+
+		private static Runtime2.Core.GoalCall? DeserializeGoalCall(object? value)
+		{
+			if (value is Runtime2.Core.GoalCall gc)
+				return gc;
+
+			if (value is System.Text.Json.JsonElement je)
+			{
+				try
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<Runtime2.Core.GoalCall>(je.GetRawText(), new JsonSerializerOptions
+					{
+						PropertyNameCaseInsensitive = true
+					});
+				}
+				catch { return null; }
+			}
+
+			if (value is string s)
+			{
+				// Plain string name — wrap in GoalCall
+				return new Runtime2.Core.GoalCall { Name = s };
+			}
+
+			return null;
 		}
 
 		[Description("Merges the llm step result to the step object")]
@@ -1110,6 +1254,14 @@ namespace PLang.Modules.PlangModule
 			}
 			return type;
 		}
+
+		private static string FormatDefault(object? value) => value switch
+		{
+			null => "null",
+			string s => $"\"{s}\"",
+			bool b => b ? "true" : "false",
+			_ => value.ToString() ?? "null"
+		};
 	}
 }
 

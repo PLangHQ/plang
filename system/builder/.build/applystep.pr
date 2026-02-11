@@ -1,0 +1,68 @@
+{
+  "name": "HandleValidationError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
+      "lineNumber": 10,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%goal.Steps[stepResult.index].validationError%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": "%!error%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call BuildStep, step=%goal.Steps[stepResult.index]%",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "BuildStep",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 0,
+  "path": "\\ApplyStep.goal",
+  "prPath": "\\.build\\applystep.pr",
+  "hash": "740696222d70cdd9ef9012b3e56f6b05ff654d2b2372710dbef8386afd2ce83b",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleValidationError"
+}

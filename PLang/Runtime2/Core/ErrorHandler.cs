@@ -17,7 +17,7 @@ public sealed class ErrorHandler
     /// <summary>
     /// Goal to call when an error occurs.
     /// </summary>
-    public GoalToCallInfo? Goal { get; init; }
+    public GoalCall? Goal { get; init; }
 
     /// <summary>
     /// Number of times to retry the step.
@@ -55,18 +55,3 @@ public sealed class ErrorHandler
     public string? Key { get; init; }
 }
 
-/// <summary>
-/// Information about a goal to call (for error handling, conditional calls, etc.).
-/// </summary>
-public sealed class GoalToCallInfo
-{
-    /// <summary>
-    /// Name of the goal to call.
-    /// </summary>
-    public string Name { get; init; } = "";
-
-    /// <summary>
-    /// Parameters to pass to the goal.
-    /// </summary>
-    public Dictionary<string, object?>? Parameters { get; init; }
-}

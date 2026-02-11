@@ -1,3 +1,4 @@
+Notation: @var = value is a %variable% reference | type(a|b) = valid values | = val is default, param is optional
 {{ classes = actions | array.map "Module" | array.uniq }}
 {{ for class_name in classes }}
 # {{ class_name }}

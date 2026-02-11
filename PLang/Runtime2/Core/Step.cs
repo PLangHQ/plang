@@ -25,7 +25,7 @@ public sealed partial class Step
     public string? Comment { get; init; }
 
     [Store, Debug, Default]
-    public Actions Actions { get; init; } = new();
+    public Actions Actions { get; set; } = new();
 
     [Store, Debug, Default]
     public string? OnErrorGoal { get; init; }

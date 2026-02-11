@@ -14,11 +14,20 @@ public sealed partial class Action
         var beforeResult = await events.Before.Run(context);
         if (!beforeResult) return beforeResult;
 
-        var (handler, error) = engine.Actions.GetCodeGenerated(Module, ActionName, context);
-        if (error != null)
-            return Data.Fail(error);
+        Data result;
+        if (beforeResult.Handled)
+        {
+            // Before-event provided an override — skip action handler
+            result = beforeResult;
+        }
+        else
+        {
+            var (handler, error) = engine.Actions.GetCodeGenerated(Module, ActionName, context);
+            if (error != null)
+                return Data.Fail(error);
 
-        var result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
+            result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
+        }
 
         if (result.Value != null && this.Return != null)
         {

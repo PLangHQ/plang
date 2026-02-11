@@ -95,6 +95,12 @@ public sealed class PLangContext : IDisposable
     public Step? Step { get; set; }
 
     /// <summary>
+    /// Set by event.skipAction to override the current action's result.
+    /// Cleared by EventBinding.Run after reading.
+    /// </summary>
+    public Data? EventOverride { get; set; }
+
+    /// <summary>
     /// Direct reference to the Engine. Set by RegisterContextVariables().
     /// </summary>
     public Engine? Engine { get; private set; }

@@ -119,14 +119,15 @@ public static class GoalMapper
         };
     }
 
-    private static Core.GoalToCallInfo? MapGoalToCallInfo(PLang.Models.GoalToCallInfo? oldInfo)
+    private static Core.GoalCall? MapGoalToCallInfo(PLang.Models.GoalToCallInfo? oldInfo)
     {
         if (oldInfo == null) return null;
 
-        return new Core.GoalToCallInfo
+        return new Core.GoalCall
         {
             Name = oldInfo.Name,
-            Parameters = oldInfo.Parameters
+            Parameters = oldInfo.Parameters,
+            PrPath = oldInfo.Path
         };
     }
 

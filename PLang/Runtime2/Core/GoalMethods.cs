@@ -36,6 +36,7 @@ public sealed partial class Goal
 
         var beforeResult = await events.Before.Run(context);
         if (!beforeResult) return beforeResult;
+        if (beforeResult.Handled) return beforeResult;
 
         context.CallStack?.Push(Name, Path);
 

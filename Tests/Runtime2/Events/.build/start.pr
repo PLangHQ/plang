@@ -13,12 +13,15 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "LogBefore",
-              "type": "string"
+              "value": {
+                "name": "LogBefore",
+                "parameters": {}
+              },
+              "type": "goal.call"
             },
             {
               "name": "GoalPattern",
-              "value": ".*",
+              "value": "*",
               "type": "string"
             },
             {
@@ -52,12 +55,15 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "LogAfter",
-              "type": "string"
+              "value": {
+                "name": "LogAfter",
+                "parameters": {}
+              },
+              "type": "goal.call"
             },
             {
               "name": "GoalPattern",
-              "value": ".*",
+              "value": "*",
               "type": "string"
             },
             {
@@ -91,8 +97,11 @@
           "parameters": [
             {
               "name": "GoalToCall",
-              "value": "OnVarSet",
-              "type": "string"
+              "value": {
+                "name": "OnVarSet",
+                "parameters": {}
+              },
+              "type": "goal.call"
             },
             {
               "name": "ActionPattern",
@@ -130,17 +139,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "name",
+              "value": "%name%",
               "type": "string"
             },
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
               "type": "string"
             }
           ],
@@ -170,11 +174,11 @@
             {
               "name": "Actor",
               "value": "user",
-              "type": "string"
+              "type": "actor(user|service|system)"
             },
             {
               "name": "Channel",
-              "value": "",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -213,8 +217,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Events\\Start.goal",
-  "prPath": "\\Events\\.build\\start.pr",
+  "path": "\\Start.goal",
+  "prPath": "\\.build\\start.pr",
   "hash": "20138dfb3333c5de97df97e1d5d015738747efadf807f0fc92c740bde36a2a5e",
   "isSetup": false,
   "isEvent": false,
