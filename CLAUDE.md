@@ -12,6 +12,7 @@
         4. **Per-request state is a parameter, per-object state is a property** — Never cache `PLangContext` on shared objects like `Goal` or `Step`. Pass context through method parameters; store only structural data (like `EntityEvents`) as properties.
         5. **Collections are smart wrappers** — Collection types (`Steps`, `Actions`) inherit `List<T>` and own domain operations (`Load`, `RunAsync`, `Merge`). Parents delegate to these methods — they never iterate directly.
 - Use System.Text.Json instead of Newtonsoft. When Newtonsoft is noticed in Runtime2 code, suggest change (don't change automatically).
+- Plang is strongly typed. The stronger typed plang and c# can communicate on the more stable everything will become
 
 ## Build Commands
 - Always run `plang p build` without specifying a goal name - it builds everything

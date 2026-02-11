@@ -65,7 +65,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -99,7 +99,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -133,7 +133,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -167,7 +167,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -177,16 +177,16 @@
             }
           ],
           "errors": [],
-          "warnings": []
+          "warnings": [
+            {
+              "key": "possibleTypo",
+              "message": "user.addresses is an array, accessing \u0027street\u0027 directly may be incorrect"
+            }
+          ]
         }
       ],
       "errors": [],
-      "warnings": [
-        {
-          "key": "ambiguousStep",
-          "message": "%user.addresses.street% is ambiguous because addresses is an array and street is a property of array elements."
-        }
-      ],
+      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -206,7 +206,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -216,16 +216,16 @@
             }
           ],
           "errors": [],
-          "warnings": []
+          "warnings": [
+            {
+              "key": "possibleTypo",
+              "message": "user.addresses is an array, \u0027first\u0027 is not a valid index or property"
+            }
+          ]
         }
       ],
       "errors": [],
-      "warnings": [
-        {
-          "key": "ambiguousStep",
-          "message": "%user.addresses.first.street% is ambiguous because \u0027first\u0027 is not a valid property of addresses array."
-        }
-      ],
+      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -245,7 +245,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -255,16 +255,16 @@
             }
           ],
           "errors": [],
-          "warnings": []
+          "warnings": [
+            {
+              "key": "possibleTypo",
+              "message": "user.addresses is an array, \u0027last\u0027 is not a valid index or property"
+            }
+          ]
         }
       ],
       "errors": [],
-      "warnings": [
-        {
-          "key": "ambiguousStep",
-          "message": "%user.addresses.last.street% is ambiguous because \u0027last\u0027 is not a valid property of addresses array."
-        }
-      ],
+      "warnings": [],
       "waitForExecution": true
     },
     {
@@ -284,7 +284,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -352,7 +352,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -386,7 +386,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -396,16 +396,16 @@
             }
           ],
           "errors": [],
-          "warnings": []
+          "warnings": [
+            {
+              "key": "possibleTypo",
+              "message": "\u0027random\u0027 is not a valid index or property of user.addresses array"
+            }
+          ]
         }
       ],
       "errors": [],
-      "warnings": [
-        {
-          "key": "ambiguousStep",
-          "message": "%user.addresses.random.street% is ambiguous because \u0027random\u0027 is not a valid property or index of addresses array."
-        }
-      ],
+      "warnings": [],
       "waitForExecution": true
     }
   ],

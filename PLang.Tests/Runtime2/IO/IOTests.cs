@@ -354,7 +354,7 @@ public class IOTests
         await io.WriteAsync("test", data: "hello", contentType: "text/plain");
 
         var text = await channel.ReadAllTextAsync();
-        await Assert.That(text).IsEqualTo("hello");
+        await Assert.That(text).IsEqualTo("hello" + Environment.NewLine);
     }
 
     [Test]
@@ -367,7 +367,7 @@ public class IOTests
         await io.WriteAsync("test", "hello");
 
         var text = await channel.ReadAllTextAsync();
-        await Assert.That(text).IsEqualTo("hello");
+        await Assert.That(text).IsEqualTo("hello" + Environment.NewLine);
     }
 
     private class TestData

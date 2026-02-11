@@ -19,7 +19,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
@@ -77,7 +77,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {

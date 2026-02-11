@@ -186,7 +186,19 @@ public static class TypeMapping
             return $"list<{GetTypeName(elementType)}>";
         }
 
-        return TypeToName.TryGetValue(type, out var name) ? name : type.Name.ToLowerInvariant();
+        if (TypeToName.TryGetValue(type, out var name))
+            return name;
+
+        // Check for ValidValues static property (convention for constrained types)
+        var validValuesProp = type.GetProperty("ValidValues",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
+        {
+            var values = (string[])validValuesProp.GetValue(null)!;
+            return $"enum({string.Join(",", values)})";
+        }
+
+        return type.Name.ToLowerInvariant();
     }
 
     /// <summary>
@@ -220,6 +232,16 @@ public static class TypeMapping
         var underlying = Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
             return ConvertTo(value, underlying);
+
+        // Handle enum types
+        if (targetType.IsEnum)
+        {
+            if (value is string s)
+                return Enum.Parse(targetType, s, ignoreCase: true);
+            if (value.GetType().IsEnum)
+                return value;
+            return Enum.ToObject(targetType, value);
+        }
 
         // Use Convert for basic types
         if (IsPrimitive(targetType))

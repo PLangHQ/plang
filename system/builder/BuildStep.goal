@@ -2,6 +2,7 @@ BuildStep
 / Builds a step that needs detailed action info
 / Action suggestions (module + action) already on step from BuildGoal
 - read file "llm/BuildStep.llm", load vars, write to %buildStepPrompt%
+- write out "# BuildStep\n## System\n%buildStepPrompt%\n## User:\n%step.Serialize.Builder%"
 - [llm] system: %buildStepPrompt%
         user: %step.Serialize.Builder%
         scheme: {

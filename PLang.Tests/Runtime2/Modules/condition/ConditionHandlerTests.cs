@@ -109,7 +109,7 @@ public class ConditionHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("true-branch");
+        await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
     }
 
     [Test]
@@ -160,7 +160,7 @@ public class ConditionHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("false-branch");
+        await Assert.That(output).IsEqualTo("false-branch" + System.Environment.NewLine);
     }
 
     [Test]
@@ -277,6 +277,6 @@ public class ConditionHandlerTests : IDisposable
         // Assert: output.write was called by the condition's true branch
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("file exists!");
+        await Assert.That(output).IsEqualTo("file exists!" + System.Environment.NewLine);
     }
 }

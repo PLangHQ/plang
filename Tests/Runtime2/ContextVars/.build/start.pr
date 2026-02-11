@@ -18,8 +18,8 @@
             },
             {
               "name": "Actor",
-              "value": "",
-              "type": "string"
+              "value": "user",
+              "type": "enum(user,service,system)"
             },
             {
               "name": "Channel",

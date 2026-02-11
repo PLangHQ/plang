@@ -396,7 +396,7 @@ public class FileHandlerTests : IDisposable
         // Assert: output.write wrote "True" to our capture stream
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("True");
+        await Assert.That(output).IsEqualTo("True" + System.Environment.NewLine);
     }
 
     [Test]
@@ -465,6 +465,6 @@ public class FileHandlerTests : IDisposable
         // Output should be "False"
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("False");
+        await Assert.That(output).IsEqualTo("False" + System.Environment.NewLine);
     }
 }

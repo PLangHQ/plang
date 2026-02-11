@@ -14,12 +14,12 @@
             {
               "name": "Content",
               "value": "Hello %name%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actor",
-              "value": "",
-              "type": "string"
+              "value": "user",
+              "type": "enum"
             },
             {
               "name": "Channel",

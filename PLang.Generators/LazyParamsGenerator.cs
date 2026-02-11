@@ -178,13 +178,23 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isVariableName = prop.GetAttributes().Any(a =>
                     a.AttributeClass?.Name == "VariableNameAttribute");
 
+                // Check if type has static Resolve(string, Engine) method
+                var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
+                    && namedType.GetMembers("Resolve")
+                        .OfType<IMethodSymbol>()
+                        .Any(m => m.IsStatic
+                            && m.Parameters.Length == 2
+                            && m.Parameters[0].Type.SpecialType == SpecialType.System_String
+                            && m.Parameters[1].Type.Name == "Engine");
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     prop.NullableAnnotation == NullableAnnotation.Annotated,
                     prop.Type.IsValueType,
                     defaultValue,
-                    isVariableName));
+                    isVariableName,
+                    isEngineResolvable));
             }
         }
 
@@ -222,6 +232,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Resolution state
         sb.AppendLine("    private List<PLang.Runtime2.Memory.Data>? __parameters;");
         sb.AppendLine("    private PLang.Runtime2.Memory.MemoryStack? __memoryStack;");
+        sb.AppendLine("    private PLang.Runtime2.Core.Engine? __engine;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -243,7 +254,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
             // Build the get expression
             var paramName = prop.Name.ToLowerInvariant();
             string resolveExpr;
-            if (prop.IsVariableName)
+            if (prop.IsEngineResolvable)
+            {
+                // Engine-resolvable types: resolve raw string then call Type.Resolve(string, Engine)
+                var rawStr = $"__Resolve<string>(\"{paramName}\")";
+                if (prop.DefaultValue != null)
+                    rawStr = $"({rawStr} ?? {prop.DefaultValue})";
+                resolveExpr = $"{prop.TypeName}.Resolve({rawStr}, __engine!)!";
+            }
+            else if (prop.IsVariableName)
             {
                 // [VariableName] — strip % markers instead of resolving from memory
                 resolveExpr = $"__StripPercent(\"{paramName}\")!";
@@ -285,6 +304,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    {");
         sb.AppendLine("        __parameters = parameters;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
+        sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        var __step = context.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Core.CallFrame>)System.Array.Empty<PLang.Runtime2.Core.CallFrame>();");
 
@@ -297,7 +317,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
-            if (prop.IsNullable || prop.DefaultValue != null || prop.IsVariableName)
+            if (prop.IsNullable || prop.DefaultValue != null || prop.IsEngineResolvable)
                 continue;
 
             if (!prop.IsValueType)
@@ -574,9 +594,11 @@ internal class ActionPropertyInfo
     public bool IsValueType { get; }
     public string? DefaultValue { get; }
     public bool IsVariableName { get; }
+    public bool IsEngineResolvable { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
-        bool isValueType, string? defaultValue, bool isVariableName = false)
+        bool isValueType, string? defaultValue, bool isVariableName = false,
+        bool isEngineResolvable = false)
     {
         Name = name;
         TypeName = typeName;
@@ -584,5 +606,6 @@ internal class ActionPropertyInfo
         IsValueType = isValueType;
         DefaultValue = defaultValue;
         IsVariableName = isVariableName;
+        IsEngineResolvable = isEngineResolvable;
     }
 }

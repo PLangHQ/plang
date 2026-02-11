@@ -55,6 +55,18 @@ public sealed class Actor : IAsyncDisposable
     /// </summary>
     public Engine Engine { get; }
 
+    /// <summary>
+    /// Resolves an actor by name using the engine.
+    /// Convention: types with this signature are auto-resolved by the source generator.
+    /// </summary>
+    public static Actor? Resolve(string name, Engine engine) => engine.GetActor(name).Actor;
+
+    /// <summary>
+    /// Valid values for LLM action summaries.
+    /// Convention: types with this property get their values shown in builder summaries.
+    /// </summary>
+    public static string[] ValidValues => ["user", "service", "system"];
+
     public Actor(string name, TrustLevel trustLevel, Engine engine)
     {
         Name = name;

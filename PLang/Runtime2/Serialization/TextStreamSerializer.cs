@@ -31,7 +31,7 @@ public sealed class TextStreamSerializer : ISerializer
         }
         else
         {
-            await _jsonFallback.SerializeAsync(stream, value + Environment.NewLine, type, cancellationToken);
+            await _jsonFallback.SerializeAsync(stream, value, type, cancellationToken);
         }
     }
 

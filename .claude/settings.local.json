@@ -53,7 +53,9 @@
       "Bash(\"C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net10.0\\\\plang.exe\" p '!debug')",
       "Bash(\"C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net10.0\\\\plang.exe\" p \"\\\\!debug\")",
       "Bash(git status:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(\"C:/Users/Ingi Gauti/source/repos/plang/PlangConsole/bin/Debug/net10.0/plang.exe\" p build)",
+      "Bash(\"C:/Users/Ingi Gauti/source/repos/plang/PlangConsole/bin/Debug/net10.0/plang.exe\" p)"
     ]
   }
 }

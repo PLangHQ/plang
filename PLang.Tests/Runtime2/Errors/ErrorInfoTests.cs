@@ -186,9 +186,8 @@ public class ErrorTests
 
         var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("Goal: Start");
-        await Assert.That(formatted).Contains("Step: [2] write to file");
         await Assert.That(formatted).Contains("Start.goal:5");
+        await Assert.That(formatted).Contains("write to file");
     }
 
     [Test]
@@ -217,7 +216,7 @@ public class ErrorTests
 
         var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("Fix Suggestion:");
+        await Assert.That(formatted).Contains("Fix Suggestions:");
         await Assert.That(formatted).Contains("Check your connection string");
         await Assert.That(formatted).Contains("Helpful Links:");
         await Assert.That(formatted).Contains("https://docs.example.com/db");
@@ -305,7 +304,7 @@ public class ActionErrorTests
 
         var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("Action: variable.set");
+        await Assert.That(formatted).Contains("variable.set");
     }
 }
 

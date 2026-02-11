@@ -268,11 +268,11 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text).IsEqualTo("hello world");
+        await Assert.That(text).IsEqualTo("hello world" + Environment.NewLine);
     }
 
     [Test]
-    public async Task SerializeAsync_Null_WritesEmptyString()
+    public async Task SerializeAsync_Null_WritesNewLine()
     {
         var serializer = new TextStreamSerializer();
         using var stream = new MemoryStream();
@@ -281,7 +281,7 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var text = Encoding.UTF8.GetString(stream.ToArray());
-        await Assert.That(text).IsEqualTo("");
+        await Assert.That(text).IsEqualTo(Environment.NewLine);
     }
 
     [Test]
@@ -340,7 +340,7 @@ public class TextStreamSerializerTests
         stream.Position = 0;
         var result = await serializer.DeserializeAsync<string>(stream);
 
-        await Assert.That(result).IsEqualTo(original);
+        await Assert.That(result).IsEqualTo(original + Environment.NewLine);
     }
 
     [Test]
@@ -353,6 +353,6 @@ public class TextStreamSerializerTests
 
         stream.Position = 0;
         var bytes = stream.ToArray();
-        await Assert.That(Encoding.ASCII.GetString(bytes)).IsEqualTo("test");
+        await Assert.That(Encoding.ASCII.GetString(bytes)).IsEqualTo("test" + Environment.NewLine);
     }
 }

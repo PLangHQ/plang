@@ -130,7 +130,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%name%",
+              "value": "name",
               "type": "string"
             },
             {
@@ -169,7 +169,7 @@
             },
             {
               "name": "Actor",
-              "value": "",
+              "value": "user",
               "type": "string"
             },
             {
