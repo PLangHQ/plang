@@ -75,13 +75,23 @@ public class ErrorTests
     }
 
     [Test]
-    public async Task InnerError_CanBeSet()
+    public async Task ErrorChain_IsEmptyByDefault()
     {
-        var inner = new Error("Inner error");
-        var error = new Error("Outer error") { InnerError = inner };
+        var error = new Error("Error");
 
-        await Assert.That(error.InnerError).IsNotNull();
-        await Assert.That(error.InnerError!.Message).IsEqualTo("Inner error");
+        await Assert.That(error.ErrorChain).IsNotNull();
+        await Assert.That(error.ErrorChain.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ErrorChain_CanAppendErrors()
+    {
+        var error1 = new Error("Original error");
+        var error2 = new Error("Error during handling");
+        error1.ErrorChain.Add(error2);
+
+        await Assert.That(error1.ErrorChain.Count).IsEqualTo(1);
+        await Assert.That(error1.ErrorChain[0].Message).IsEqualTo("Error during handling");
     }
 
     [Test]
@@ -109,7 +119,7 @@ public class ErrorTests
     }
 
     [Test]
-    public async Task FromException_WithInnerException_CreatesNestedError()
+    public async Task FromException_WithInnerException_WalksClrChain()
     {
         var inner = new InvalidOperationException("Inner");
         var outer = new Exception("Outer", inner);
@@ -117,18 +127,19 @@ public class ErrorTests
         var error = Error.FromException(outer);
 
         await Assert.That(error.Message).IsEqualTo("Outer");
-        await Assert.That(error.InnerError).IsNotNull();
-        await Assert.That(error.InnerError!.Message).IsEqualTo("Inner");
+        await Assert.That(error.Exception).IsNotNull();
+        await Assert.That(error.Exception!.InnerException).IsNotNull();
+        await Assert.That(error.Exception!.InnerException!.Message).IsEqualTo("Inner");
     }
 
     [Test]
-    public async Task FromException_WithNoInnerException_HasNullInnerError()
+    public async Task FromException_WithNoInnerException_HasNullException()
     {
         var ex = new Exception("Single error");
 
         var error = Error.FromException(ex);
 
-        await Assert.That(error.InnerError).IsNull();
+        await Assert.That(error.Exception!.InnerException).IsNull();
     }
 
     [Test]
@@ -142,36 +153,88 @@ public class ErrorTests
     }
 
     [Test]
-    public async Task FromException_DeeplyNestedExceptions_CreatesChain()
+    public async Task Step_CanBeSet()
     {
-        var level3 = new Exception("Level 3");
-        var level2 = new Exception("Level 2", level3);
-        var level1 = new Exception("Level 1", level2);
+        var step = new Step { Index = 0, Text = "do something" };
+        var goal = new Goal { Name = "TestGoal" };
+        step.Goal = goal;
+        var error = new Error("Error", step);
 
-        var error = Error.FromException(level1);
-
-        await Assert.That(error.Message).IsEqualTo("Level 1");
-        await Assert.That(error.InnerError!.Message).IsEqualTo("Level 2");
-        await Assert.That(error.InnerError!.InnerError!.Message).IsEqualTo("Level 3");
-        await Assert.That(error.InnerError!.InnerError!.InnerError).IsNull();
+        await Assert.That(error.Step).IsNotNull();
+        await Assert.That(error.Step!.Goal!.Name).IsEqualTo("TestGoal");
     }
 
     [Test]
-    public async Task GoalName_CanBeSet()
+    public async Task Format_IncludesKeyAndStatusCode()
     {
-        var error = new Error("Error") { GoalName = "TestGoal" };
+        var step = new Step { Index = 0, Text = "set name" };
+        var error = new Error("Something went wrong", step, "TestKey", 500);
 
-        await Assert.That(error.GoalName).IsEqualTo("TestGoal");
+        var formatted = error.Format();
+
+        await Assert.That(formatted).Contains("TestKey(500)");
+        await Assert.That(formatted).Contains("Something went wrong");
     }
 
     [Test]
-    public async Task StepIndex_CanBeSet()
+    public async Task Format_IncludesGoalAndStep()
     {
-        var error = new Error("Error") { StepIndex = 3 };
+        var goal = new Goal { Name = "Start", Path = "Start.goal" };
+        var step = new Step { Index = 2, Text = "write to file", LineNumber = 5 };
+        step.Goal = goal;
+        var error = new Error("File not found", step);
 
-        await Assert.That(error.StepIndex).IsEqualTo(3);
+        var formatted = error.Format();
+
+        await Assert.That(formatted).Contains("Goal: Start");
+        await Assert.That(formatted).Contains("Step: [2] write to file");
+        await Assert.That(formatted).Contains("Start.goal:5");
     }
 
+    [Test]
+    public async Task Format_IncludesErrorChain()
+    {
+        var step = new Step { Index = 0, Text = "do something" };
+        var error1 = new Error("Original error", step);
+        var error2 = new Error("Handler error", step, "HandlerError", 500);
+        error1.ErrorChain.Add(error2);
+
+        var formatted = error1.Format();
+
+        await Assert.That(formatted).Contains("Error during error handling [1]");
+        await Assert.That(formatted).Contains("HandlerError(500)");
+    }
+
+    [Test]
+    public async Task Format_IncludesFixSuggestionAndLinks()
+    {
+        var step = new Step { Index = 0, Text = "connect db" };
+        var error = new Error("Connection failed", step)
+        {
+            FixSuggestion = "Check your connection string",
+            HelpfulLinks = "https://docs.example.com/db"
+        };
+
+        var formatted = error.Format();
+
+        await Assert.That(formatted).Contains("Fix Suggestion:");
+        await Assert.That(formatted).Contains("Check your connection string");
+        await Assert.That(formatted).Contains("Helpful Links:");
+        await Assert.That(formatted).Contains("https://docs.example.com/db");
+    }
+
+    [Test]
+    public async Task Format_IncludesException()
+    {
+        var step = new Step { Index = 0, Text = "call api" };
+        var ex = new InvalidOperationException("Boom");
+        var error = new Error("API call failed", step) { Exception = ex };
+
+        var formatted = error.Format();
+
+        await Assert.That(formatted).Contains("Exception:");
+        await Assert.That(formatted).Contains("InvalidOperationException: Boom");
+    }
 }
 
 public class GoalErrorTests
@@ -192,7 +255,6 @@ public class GoalErrorTests
         await Assert.That(error.Message).IsEqualTo("Goal 'Start' not found");
         await Assert.That(error.Key).IsEqualTo("NotFound");
         await Assert.That(error.StatusCode).IsEqualTo(404);
-        await Assert.That(error.GoalName).IsEqualTo("Start");
     }
 
     [Test]
@@ -227,12 +289,23 @@ public class ActionErrorTests
     }
 
     [Test]
-    public async Task ActionClass_CanBeSet()
+    public async Task ActionModule_CanBeSet()
     {
-        var error = new ActionError("Error") { ActionClass = "variable", ActionMethod = "set" };
+        var error = new ActionError("Error") { ActionModule = "variable", ActionName = "set" };
 
-        await Assert.That(error.ActionClass).IsEqualTo("variable");
-        await Assert.That(error.ActionMethod).IsEqualTo("set");
+        await Assert.That(error.ActionModule).IsEqualTo("variable");
+        await Assert.That(error.ActionName).IsEqualTo("set");
+    }
+
+    [Test]
+    public async Task FormatExtra_IncludesAction()
+    {
+        var step = new Step { Index = 1, Text = "set name to John" };
+        var error = new ActionError("Missing param", step) { ActionModule = "variable", ActionName = "set" };
+
+        var formatted = error.Format();
+
+        await Assert.That(formatted).Contains("Action: variable.set");
     }
 }
 

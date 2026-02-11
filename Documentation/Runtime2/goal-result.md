@@ -1,80 +1,158 @@
-# GoalResult
+# Data — Universal Value Container and Result Type
 
-The universal return type for all Runtime operations. Wraps success/failure with value and error information.
+`PLang.Runtime2.Memory.Data` is the universal type in Runtime2. It serves as both the **variable container** (stored in MemoryStack) and the **result type** (returned from all operations). It replaces the old `GoalResult`, `ObjectValue`, and `Return` types.
 
-## API Surface
+## Data Class
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Variable/parameter name (auto-cleaned of `%` markers) |
+| `Value` | `object?` | The stored value (auto-unwraps `JsonElement`) |
+| `Type` | `Type?` | PLang type descriptor |
+| `Path` | `string` | Full path (parent-qualified, e.g. `user.address.city`) |
+| `Parent` | `Data?` | Parent data for nested structures |
+| `IsInitialized` | `bool` | Whether a value has been set |
+| `IsEmpty` | `bool` | Not initialized, null, or empty string |
+| `Created` | `DateTime` | When the data was created (UTC) |
+| `Updated` | `DateTime` | When the value was last set (UTC) |
+| `Properties` | `Properties` | Named property collection |
+| `Error` | `IError?` | Error information (if failed result) |
+| `Warnings` | `List<Info>?` | Warning messages |
+| `Success` | `bool` | `true` if `Error == null` |
+
+### Implicit bool Conversion
 
 ```csharp
-public readonly struct GoalResult
+// Data can be used directly in if statements
+public static implicit operator bool(Data d) => d.Success;
+
+var result = await engine.RunGoalAsync("Start");
+if (result)  // checks Success
 {
-    // Properties
-    public bool Success { get; }
-    public object? Value { get; }
-    public ErrorInfo? Error { get; }
-
-    // Static factories
-    public static GoalResult Ok(object? value = null)
-    public static GoalResult Fail(string message, string key = "Error", int statusCode = 400)
-    public static GoalResult Fail(ErrorInfo error)
-
-    // Async helpers
-    public static Task<GoalResult> SuccessTask(object? value = null)
-    public static Task<GoalResult> FailTask(string message, string key = "Error", int statusCode = 400)
-
-    // Value access
-    public T? GetValue<T>()
-
-    // Implicit conversion
-    public static implicit operator bool(GoalResult result) => result.Success
+    // success path
 }
 ```
 
-## Behavior & Rules
+### Constructor
 
-### Success Results
+```csharp
+public Data(string name, object? value = null, Type? type = null, Data? parent = null)
+```
 
-- `GoalResult.Ok()` — success with no value
-- `GoalResult.Ok(value)` — success with value
-- `Success` is `true`, `Error` is `null`
-
-### Failure Results
-
-- `GoalResult.Fail(message)` — failure with message
-- `GoalResult.Fail(message, key, statusCode)` — failure with full error info
-- `GoalResult.Fail(errorInfo)` — failure with pre-constructed ErrorInfo
-- `Success` is `false`, `Value` is `null`
+- `name` is auto-cleaned: trimmed, `%` markers stripped
+- `value` is auto-unwrapped if it's a `JsonElement`
+- `type` is auto-derived from value if not provided (via `TypeMapping`)
+- `path` is computed from parent chain
 
 ### Value Access
 
-- `GetValue<T>()` — returns value cast to T, or default if not compatible
-- Implicit bool conversion allows `if (result)` syntax
+```csharp
+T? GetValue<T>()                  // Cast or convert to T
+object? GetValue(System.Type t)   // Convert to target type
+Data? GetChild(string path)       // Navigate by dot notation or index
+```
 
-### Struct Semantics
+`GetChild` supports:
+- Dot notation: `"address.city"`
+- Array indexing: `"[0]"` or `"items[2].name"`
+- Dictionary key access
+- Object property access via reflection
 
-- `GoalResult` is a `readonly struct` for stack allocation
-- Default value has `Success = false`, `Value = null`, `Error = null`
+### Static Factories
+
+```csharp
+// Success results
+Data.Ok()                          // Success with no value
+Data.Ok(value)                     // Success with value
+Data.Ok(value, type)               // Success with value and type
+
+// Failure results
+Data.Fail(error)                   // Failure with IError
+
+// Null/empty
+Data.Null(name)                    // Uninitialized Data
+```
+
+### Merge
+
+```csharp
+Data Merge(Data other)
+```
+
+Treats `Value` as `List<Data>`, merges by name (replace-or-append). Used by `Actions.RunAsync` to combine results from sequential action executions.
+
+## Type Class
+
+`PLang.Runtime2.Memory.Type` — PLang type descriptor.
+
+```csharp
+public sealed class Type
+{
+    public string Value { get; }           // "string", "int", "text/markdown", etc.
+    public System.Type? ClrType { get; }   // Derived via TypeMapping
+
+    // Static factories
+    public static Type String => new("string");
+    public static Type Int => new("int");
+    public static Type Long => new("long");
+    public static Type Double => new("double");
+    public static Type Bool => new("bool");
+    public static Type DateTime => new("datetime");
+    public static Type Object => new("object");
+
+    public static Type FromMime(string mimeType)  // e.g., "text/markdown"
+    public static Type FromName(string typeName)   // e.g., "string"
+}
+```
+
+`Type.Value` is a string that can be a PLang type name (`"string"`, `"int"`) or a MIME type (`"text/markdown"`, `"image/jpeg"`). `ClrType` is derived on the fly via `TypeMapping.GetType()`.
+
+## Data\<T\> — Generic Variant
+
+Strongly-typed `Data` that inherits from `Data`:
+
+```csharp
+public class Data<T> : Data
+{
+    public new T? Value { get; set; }
+
+    public static Data<T> Ok(T value, Type? type = null)
+    public new static Data<T> Fail(IError error)
+}
+```
+
+## DynamicData — Computed Values
+
+`Data` variant that computes its value lazily via a factory function:
+
+```csharp
+public class DynamicData : Data
+{
+    public new object? Value => _valueFactory();  // computed on each access
+
+    public DynamicData(string name, Func<object?> valueFactory, Type? type = null)
+}
+```
+
+Used for system variables like `Now`, `NowUtc`, `GUID` in `MemoryStack`.
 
 ## Code Examples
 
-### Creating Results
+### Creating Variables
 
 ```csharp
-// Success
-var success = GoalResult.Ok();
-var successWithValue = GoalResult.Ok(new User { Name = "John" });
-
-// Failure
-var notFound = GoalResult.Fail("User not found", "NotFound", 404);
-var badRequest = GoalResult.Fail("Invalid email format", "ValidationError", 400);
-var serverError = GoalResult.Fail(ErrorInfo.FromException(ex));
+var name = new Data("name", "John");
+var age = new Data("age", 30, Type.Int);
+var scores = new Data("scores", new List<int> { 85, 92, 78 });
 ```
 
 ### Checking Results
 
 ```csharp
-var result = await engine.RunGoalAsync("CreateUser", context);
+var result = await engine.RunGoalAsync("CreateUser");
 
-// Explicit check
 if (result.Success)
 {
     var user = result.GetValue<User>();
@@ -84,125 +162,43 @@ else
 {
     Console.WriteLine($"Error: {result.Error?.Message}");
 }
-
-// Implicit bool conversion
-if (result)
-{
-    // success path
-}
 ```
 
-### Async Helpers
+### Navigating Nested Data
 
 ```csharp
-public class MyModule : IModule
-{
-    public Task<GoalResult> ExecuteAsync(string method, object? parameters)
-    {
-        if (method == "ping")
-            return GoalResult.SuccessTask("pong");
-
-        return GoalResult.FailTask($"Unknown method: {method}", "NotFound", 404);
-    }
-}
+var data = new Data("user", new { Name = "John", Address = new { City = "NYC" } });
+var city = data.GetChild("Address.City");  // Data with Value = "NYC"
 ```
 
-### Chaining Results
+### JsonElement Auto-Unwrap
 
-```csharp
-var result = await engine.RunGoalAsync("Step1", context);
-if (!result)
-    return result; // propagate failure
-
-result = await engine.RunGoalAsync("Step2", context);
-if (!result)
-    return result;
-
-return GoalResult.Ok("All steps completed");
-```
-
-## ErrorInfo
-
-Detailed error information for failure results.
-
-### API Surface
-
-```csharp
-public sealed class ErrorInfo
-{
-    // Properties
-    public string Id { get; }
-    public string Message { get; }
-    public string Key { get; }
-    public int StatusCode { get; }
-    public string? FixSuggestion { get; init; }
-    public string? HelpfulLinks { get; init; }
-    public DateTime CreatedUtc { get; }
-    public Exception? Exception { get; init; }
-    public ErrorInfo? InnerError { get; init; }
-
-    // Constructor
-    public ErrorInfo(string message, string key = "Error", int statusCode = 400)
-
-    // Static factories
-    public static ErrorInfo FromException(Exception ex, string key = "Exception", int statusCode = 500)
-    public static ErrorInfo NotFound(string what)
-    public static ErrorInfo InvalidInput(string message)
-    public static ErrorInfo Unauthorized(string message = "Unauthorized")
-}
-```
-
-### Behavior & Rules
-
-- `Id` — unique 12-character identifier
-- `Key` — error category for programmatic handling
-- `StatusCode` — HTTP-like status code
-- `FromException` recursively wraps inner exceptions
-- `InnerError` allows error chaining
-
-### Code Examples
-
-```csharp
-// Create error info
-var error = new ErrorInfo("User not found", "NotFound", 404)
-{
-    FixSuggestion = "Check the user ID and try again",
-    HelpfulLinks = "https://docs.plang.dev/errors/not-found"
-};
-
-// From exception
-try
-{
-    // operation that throws
-}
-catch (Exception ex)
-{
-    return GoalResult.Fail(ErrorInfo.FromException(ex));
-}
-
-// Convenience factories
-var notFound = ErrorInfo.NotFound("User");           // "User not found", 404
-var invalid = ErrorInfo.InvalidInput("Bad email");   // "Bad email", 400
-var unauth = ErrorInfo.Unauthorized();               // "Unauthorized", 401
-```
+When deserializing from JSON, `JsonElement` values are automatically unwrapped to native .NET types:
+- `JsonValueKind.String` → `string`
+- `JsonValueKind.Number` → `long` or `double`
+- `JsonValueKind.True/False` → `bool`
+- `JsonValueKind.Null/Undefined` → `null`
 
 ## Error Philosophy
 
-The Runtime prefers `GoalResult.Fail` over exceptions for expected failures:
+The Runtime prefers `Data.Fail` over exceptions for expected failures:
 
 | Scenario | Approach |
 |----------|----------|
-| Goal not found | `GoalResult.Fail("NotFound")` |
-| Validation error | `GoalResult.Fail("ValidationError")` |
-| Module method error | `GoalResult.Fail(...)` |
-| Null reference in user code | Exception wrapped in `GoalResult.Fail` |
+| Goal not found | `Data.Fail(GoalError.NotFound(name))` |
+| Action handler error | `Data.Fail(ActionError.NotFound(...))` |
+| Validation error | `Data.Fail(new Error("message"))` |
+| Step execution error | `Data.Fail(StepError.FromException(ex, context))` |
 | Stack overflow | `CallStackOverflowException` thrown |
 
-Exceptions are for truly exceptional cases (programming errors, resource exhaustion). Expected operational errors use `GoalResult`.
+Exceptions are for truly exceptional cases (programming errors, resource exhaustion). Expected operational errors use `Data.Fail`.
 
 ## Relationships
 
 - Returned by [Engine](engine.md) methods
-- Returned by [Module](modules.md) `ExecuteAsync`
+- Returned by [Action handlers](modules.md) via `CodeGeneratedExecuteAsync`
 - Returned by [IO](io-channels.md) read/write operations
-- Contains [ErrorInfo](#errorinfo) for failures
+- Stored in [MemoryStack](memory-stack.md) as variable entries
+- Contains [IError](exceptions.md) for failures
+- Uses [Type](#type-class) for type metadata
+- Uses [TypeMapping](modules.md) for type derivation and conversion

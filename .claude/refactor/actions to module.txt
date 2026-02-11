@@ -1,0 +1,62 @@
+
+## Refactor: Rename "actions" to "modules" and fix .pr JSON field names
+
+### Context
+
+The PLang Runtime2 has a naming inconsistency. The architecture is: **modules** contain **actions**, where each action is a single C# class with one `ExecuteAsync`. But the current code calls the top-level folder `actions/`, and the .pr JSON uses `"action"` for what is really the module name and `"method"` for what is really the action name.
+
+### Changes needed
+
+**1. Rename folder `PLang/Runtime2/actions/` → `PLang/Runtime2/modules/`**
+
+Update all `namespace PLang.Runtime2.actions.*` → `namespace PLang.Runtime2.modules.*` across every file in that folder tree. Update all `using` statements that reference `PLang.Runtime2.actions` throughout the codebase.
+
+**2. Rename .pr JSON fields**
+
+In `Action.cs` (the entity class in `PLang/Runtime2/Core/`):
+- The property currently called `Class` with `[JsonPropertyName("action")]` → rename property to `Module` with `[JsonPropertyName("module")]`
+- The property currently called `Method` with `[JsonPropertyName("method")]` → rename property to `Action` (or `ActionName` if there's a conflict with the class name) with `[JsonPropertyName("action")]`
+
+**3. Update ActionRegistry**
+
+- Keep the class named `ActionRegistry` — it registers action handlers, that's still correct
+- Update its internal API to use `module`/`action` terminology instead of `namespace`/`className`/`methodName` in parameter names and comments
+- `Register(string namespaceName, string className, ...)` → `Register(string module, string actionName, ...)`
+- `Get(string namespaceName, string className)` → `Get(string module, string actionName)`
+- `GetCodeGenerated(string className, string methodName)` → `GetCodeGenerated(string module, string actionName)`
+- `Namespaces` property → `Modules`
+- `ClassNames(string namespaceName)` → `ActionNames(string module)`
+
+**4. Update all call sites**
+
+Everywhere in the codebase that references `action.Class`, `action.Method`, the old parameter names on ActionRegistry, etc. — update to the new names. Key places to check:
+- `ActionMethods.cs` — the `RunAsync` that calls `ActionRegistry.GetCodeGenerated(Class, Method)`
+- `Engine.cs` — `RegisterBuiltInModules()` already uses the right name, but check all references
+- `GoalMapper.cs` — maps from Building.Model to Runtime2, field names may need updating
+- `PrParser.cs` — if it does any manual field handling
+- Source generator `PLang.Generators/LazyParamsGenerator.cs` — if it references namespace/class conventions
+- Any test files
+
+**5. Do NOT rename**
+
+- `IClass`, `BaseClass`, `BaseClass<T>` — these describe the action handler pattern, still correct
+- `ICodeGenerated` — still correct
+- The C# entity class `Action` in `PLang/Runtime2/Core/Action.cs` — it represents a step's action binding, still correct
+- Individual handler class names like `CopyHandler`, `SetHandler` — still correct
+- Record names like `copy`, `set`, `@if` — still correct
+
+### Verification
+
+After refactoring, the .pr JSON should look like:
+```json
+{
+  "module": "file",
+  "action": "copy",
+  "parameters": [
+    { "name": "source", "value": "/tmp/a.txt" },
+    { "name": "destination", "value": "/tmp/b.txt" }
+  ]
+}
+```
+
+Make sure the solution builds and all tests pass.

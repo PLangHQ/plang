@@ -1,0 +1,80 @@
+{
+  "name": "Inner",
+  "description": "The Inner goal is designed to output the current depth of the call stack. It retrieves the depth using the call stack\u0027s Depth property and prints it in the format \u0027Inner depth: [depth_value]\u0027.",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Inner depth: %!callStack.Depth%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "Inner depth: %!callStack.Depth%"
+            },
+            {
+              "name": "Actor",
+              "value": ""
+            },
+            {
+              "name": "Channel",
+              "value": ""
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "hash": "c93a408523d196b077d5104a57a5fd8d4ce11f84e3fe491b8c924590dc007625",
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out %!callStack%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%!callStack%"
+            },
+            {
+              "name": "Actor",
+              "value": ""
+            },
+            {
+              "name": "Channel",
+              "value": ""
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\CallStack\\Inner.goal",
+  "prPath": "\\CallStack\\.build\\inner.pr",
+  "hash": "52ff33cb8a1a04394f6719f7673e978785d8c953ec09b0229eed9f74e8ce6d0a",
+  "isSetup": false,
+  "isEvent": false,
+  "inputParameters": {},
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Inner"
+}

@@ -1,18 +1,30 @@
 BuildStep
-/ Builds a single step - LLM Pass 2
-/ Skips unchanged steps (hash comparison)
-
-- write out "BuildStep: %step.Text%"
-- if %step.Hash% equals %step.PreviousHash% then
-    - write out "  Skipping - unchanged"
-    - return
-- read file "llm/BuildStep.llm", write to %buildStepPrompt%
+/ Builds a step that needs detailed action info
+/ Action suggestions (module + action) already on step from BuildGoal
+- read file "llm/BuildStep.llm", load vars, write to %buildStepPrompt%
 - [llm] system: %buildStepPrompt%
-        user: Step: %step.Text%
-              Intent: %step.Intent%
-        scheme: {method: string, data: {type: string, data: object}, return?: string, errors: [string], warnings: [string]}
-        write to %stepResult%
-- write out "  LLM result: %stepResult%"
-- set %step.MethodName% = %stepResult.method%
-- set %step.Parameters% = %stepResult.data%
-- set %step.ReturnVariable% = %stepResult.return%
+        user: %step.Serialize.Builder%
+        scheme: {
+                errors?: [{key: string, message: string}],
+                warnings?: [{key: string, message: string}],
+                actions: [{module: string, action: string, parameters?: [{name: string, value?: object}], return?: [{name: string}],
+                    errors?: [{key: string, message: string}],
+                    warnings?: [{key: string, message: string}]}]
+                }
+        on error call HandleBuildStepFailure
+        write to %result%
+- set %goal.Steps[stepResult.index].actions% = %result.actions%
+- set %goal.Steps[stepResult.index].actions.errors% = null
+- set %goal.Steps[stepResult.index].errors% = null
+
+
+HandleBuildStepFailure
+- if %!error.StatusCode% = 402 then
+    - throw %!error%
+- if %!error.StatusCode% >= 500 then
+    - throw %!error%
+- append %!error% to %step.errors%
+- if %!error.retryCount% > 3 then
+    - end goal and previous 2
+- write out "  Retry %!error.retryCount%/3: %!error.Message%"
+- call BuildStep

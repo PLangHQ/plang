@@ -1,22 +1,20 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions;
-using PLang.Runtime2.actions.variable;
+using PLang.Runtime2.modules.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
 public class ClearTests
 {
-    private (ClearHandler handler, MemoryStack memory) Create(MemoryStack? memoryStack = null)
+    private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
     {
-        var handler = new ClearHandler();
         var appContext = new PLangAppContext("/app");
         var memory = memoryStack ?? new MemoryStack();
         var context = new PLangContext(appContext, memory);
         var engine = new Engine(appContext);
-        handler.Initialize(engine, context);
-        return (handler, memory);
+        context.RegisterContextVariables(engine);
+        return (context, memory);
     }
 
     [Test]
@@ -25,9 +23,10 @@ public class ClearTests
         var memory = new MemoryStack();
         memory.Set("var1", "value1");
         memory.Set("var2", "value2");
-        var (handler, _) = Create(memory);
+        var (context, _) = CreateContext(memory);
 
-        var result = await handler.ExecuteAsync(new NullParams());
+        var action = new Clear { Context = context };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(memory.Contains("var1")).IsFalse();
@@ -39,9 +38,10 @@ public class ClearTests
     {
         var memory = new MemoryStack();
         memory.Set("userVar", "value");
-        var (handler, _) = Create(memory);
+        var (context, _) = CreateContext(memory);
 
-        await handler.ExecuteAsync(new NullParams());
+        var action = new Clear { Context = context };
+        await action.Run();
 
         await Assert.That(memory.Contains("Now")).IsTrue();
         await Assert.That(memory.Contains("NowUtc")).IsTrue();

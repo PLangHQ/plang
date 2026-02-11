@@ -94,6 +94,11 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Step? Step { get; set; }
 
+    /// <summary>
+    /// Direct reference to the Engine. Set by RegisterContextVariables().
+    /// </summary>
+    public Engine? Engine { get; private set; }
+
     public PLangContext(PLangAppContext appContext, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -105,6 +110,29 @@ public sealed class PLangContext : IDisposable
         _cts = CancellationTokenSource.CreateLinkedTokenSource(appContext.ShutdownToken);
         System = new EventScope();
         User = new EventScope();
+    }
+
+    /// <summary>
+    /// Registers context variables (prefixed with !) on the memory stack.
+    /// Called after Engine is available.
+    /// </summary>
+    public void RegisterContextVariables(Engine engine)
+    {
+        Engine = engine;
+        var ms = MemoryStack;
+
+        // Static references (same object for lifetime of context)
+        ms.Put(new Data("!engine", engine));
+        ms.Put(new Data("!context", this));
+        ms.Put(new Data("!memoryStack", ms));
+        ms.Put(new Data("!fileSystem", engine.FileSystem));
+        ms.Put(new Data("!callStack", CallStack));
+        ms.Put(new Data("!io", engine.IO));
+        ms.Put(new Data("!serializers", engine.Serializers));
+
+        // Dynamic references (change per goal/step)
+        ms.Put(new DynamicData("!goal", () => Goal));
+        ms.Put(new DynamicData("!step", () => Step));
     }
 
     /// <summary>
@@ -176,15 +204,84 @@ public sealed class PLangContext : IDisposable
         return clone;
     }
 
+    private readonly ConcurrentDictionary<object, object> _eventContainers = new();
+    private readonly HashSet<string> _activeEventBindings = new();
+
     /// <summary>
-    /// Populates load events on an entity's Events from system + user scopes.
+    /// Returns true if the event binding is not already running, and marks it as active.
+    /// Used to prevent re-entrant event handler execution.
     /// </summary>
-    public void PopulateLoadEvents(Core.EntityEvents events, Core.EventType beforeType, Core.EventType afterType)
+    internal bool TryEnterEvent(string bindingId) => _activeEventBindings.Add(bindingId);
+
+    /// <summary>
+    /// Marks an event binding as no longer active.
+    /// </summary>
+    internal void ExitEvent(string bindingId) => _activeEventBindings.Remove(bindingId);
+
+    /// <summary>
+    /// Resolves per-context events for a Goal. Lazy-resolves from User.Events on first call, cached on context.
+    /// </summary>
+    public Core.GoalStepEvents EventsFor(Core.Goal goal)
     {
-        foreach (var b in System.Events.GetBindings(beforeType)) events.Before.Load.Add(b);
-        foreach (var b in User.Events.GetBindings(beforeType)) events.Before.Load.Add(b);
-        foreach (var b in System.Events.GetBindings(afterType)) events.After.Load.Add(b);
-        foreach (var b in User.Events.GetBindings(afterType)) events.After.Load.Add(b);
+        return (Core.GoalStepEvents)_eventContainers.GetOrAdd(goal, _ =>
+        {
+            var events = new Core.GoalStepEvents();
+            var userEvents = User.Events;
+
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeGoalLoad, goalName: goal.Name))
+                events.Load.Before.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterGoalLoad, goalName: goal.Name))
+                events.Load.After.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeGoal, goalName: goal.Name))
+                events.Before.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterGoal, goalName: goal.Name))
+                events.After.Add(b);
+
+            return events;
+        });
+    }
+
+    /// <summary>
+    /// Resolves per-context events for a Step. Lazy-resolves from User.Events on first call, cached on context.
+    /// </summary>
+    public Core.GoalStepEvents EventsFor(Core.Step step)
+    {
+        return (Core.GoalStepEvents)_eventContainers.GetOrAdd(step, _ =>
+        {
+            var events = new Core.GoalStepEvents();
+            var userEvents = User.Events;
+            var goalName = step.Goal?.Name;
+
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
+                events.Load.Before.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
+                events.Load.After.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeStep, goalName: goalName, stepText: step.Text))
+                events.Before.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterStep, goalName: goalName, stepText: step.Text))
+                events.After.Add(b);
+
+            return events;
+        });
+    }
+
+    /// <summary>
+    /// Resolves per-context events for an Action. Lazy-resolves from User.Events on first call, cached on context.
+    /// </summary>
+    public Core.ActionEvents EventsFor(Core.Action action)
+    {
+        return (Core.ActionEvents)_eventContainers.GetOrAdd(action, _ =>
+        {
+            var events = new Core.ActionEvents();
+            var userEvents = User.Events;
+
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
+                events.Before.Add(b);
+            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterAction, module: action.Module, actionName: action.ActionName))
+                events.After.Add(b);
+
+            return events;
+        });
     }
 
     /// <summary>

@@ -1,17 +1,40 @@
 BuildGoal
-/ Builds a single goal - two LLM passes:
-/ Pass 1: Module selection (sees entire goal for context)
-/ Pass 2: Step building (per step, parallelized)
+/ Builds a single goal - single LLM pass
+/ LLM sees entire goal + compact action summary with DTOs
+/ Returns complete [{module, action, data, return}] for all steps
+/ Falls back to BuildStep only for steps that return needsDetail: true
 
-- [plang] GetRuntime2Goal %goal%, write to %r2Goal%
-- write out "Building goal: %r2Goal.Name%"
-- read file "llm/SelectActions.llm", load vars, write to %selectActionsPrompt%
-- [llm] system: %selectActionsPrompt%
-        user: %r2Goal%
-        scheme: [{stepIndex: int, action: string, intent: string}]
-        write to %actionAssignments%
-- write out "Action assignments: %actionAssignments%"
-- foreach %actionAssignments%, call AssignAction, item=%assignment%, r2Goal=%r2Goal%
-- write out "Steps count: %r2Goal.Steps.Count%"
-- foreach %r2Goal.Steps%, call BuildStep, item=%step%
-- [plang] call SaveGoal with Runtime2.Core.Goal %r2Goal%
+- write out "Building goal: %goal.Name%"
+- [plang] get all actions, write to %actions%
+- render template "/system/actions/summary.md", write to %actionSummary%
+- render template "/system/builder/templates/goalFormatForLlm.template", write to %goalForLlm%
+- write out "## Action Summary\n%actionSummary%\nGoal for llm:\n%goalForLlm%"
+- read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%
+- [llm] system: %buildGoalPrompt%
+        user: %goalForLlm%
+         scheme: {
+            errors?: [{key: string, message: string}],
+            warnings?: [{key: string, message: string}],
+            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,
+                  errors?: [{key: string, message: string}],
+                  warnings?: [{key: string, message: string}],
+                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object}], return?: [{name: string}],
+                              errors?: [{key: string, message: string}],
+                              warnings?: [{key: string, message: string}]}]}]
+                }
+        on error HandleBuildGoalFailure
+        write to %stepResults%
+- foreach %stepResults.steps%, call ApplyStep, item=%stepResult%
+- [plang] call SaveGoal %goal%
+
+
+HandleBuildGoalFailure
+- if %!error.StatusCode% = 402 then
+    - throw %!error%
+- if %!error.StatusCode% >= 500 then
+    - throw %!error%
+- append %!error% to %goal.errors%
+- if %!error.retryCount% > 3 then
+    - throw %!error%
+- write out "  Retry %!error.retryCount%/3: %!error.Message%"
+- call BuildGoal

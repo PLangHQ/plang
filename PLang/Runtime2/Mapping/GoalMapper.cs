@@ -56,8 +56,8 @@ public static class GoalMapper
             {
                 new Core.Action
                 {
-                    Class = ExtractActionName(oldStep.ModuleType),
-                    Method = oldStep.Name ?? "",
+                    Module = ExtractActionName(oldStep.ModuleType),
+                    ActionName = oldStep.Name ?? "",
                     Parameters = new(),
                     Return = null
                 }
@@ -72,7 +72,7 @@ public static class GoalMapper
             Timeout = oldStep.CancellationHandler?.CancelExecutionAfterXMilliseconds != null
                 ? (int)(oldStep.CancellationHandler.CancelExecutionAfterXMilliseconds / 1000)
                 : null,
-            Errors = oldStep.ValidationErrors?.Select(e => new Core.Info { Text = e.Message }).ToList() ?? new(),
+            Errors = oldStep.ValidationErrors?.Select(e => new Core.Info { Message = e.Message }).ToList() ?? new(),
             Warnings = new()
         };
     }

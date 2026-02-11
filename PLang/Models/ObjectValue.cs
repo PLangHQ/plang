@@ -303,6 +303,16 @@ public class ObjectValue : IObjectValue
 			}
 			else
 			{
+				var index = Properties.FirstOrDefault(p => p.Name == "index");
+				if (index != null && parentReference is IList list)
+				{
+					list[index.ValueAs<int>()] = value;
+					Parent.Value = list;
+				} else 
+				{
+					//throw new Exception("Setting parent variable. Not sure what to");
+				}
+				int i = 0; 
 				// TODO: Implement property setting for arbitrary object types using reflection
 				// Currently can't set properties on types like GoalStep
 				// throw new NotImplementedException($"The type {parentValue.GetType()} is not yet implemented. {ErrorReporting.CreateIssueNotImplemented}");

@@ -1,6 +1,0 @@
-HandleBuildStepFailure
-/ Records the error on the step and exits back to BuildGoal
-/ The goal still gets saved with whatever steps succeeded
-
-- set %step.Errors% = [%!error%]
-- end goal and previous 2

@@ -87,7 +87,7 @@ public class CommandLineParser
 		foreach (Match match in matches)
 		{
 			bool hasExclaim = match.Groups[1].Success;
-			string key = match.Groups[0].Value;
+			string key = match.Groups[2].Value;
 
 			// Determine value
 			string? rawValue = match.Groups[3].Success ? match.Groups[3].Value :

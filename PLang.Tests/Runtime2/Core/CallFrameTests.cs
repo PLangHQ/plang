@@ -51,11 +51,11 @@ public class CallFrameTests
     }
 
     [Test]
-    public async Task Constructor_DefaultsCurrentStepIndexToNegativeOne()
+    public async Task Constructor_DefaultsStepToNull()
     {
         var frame = new CallFrame("TestGoal");
 
-        await Assert.That(frame.CurrentStepIndex).IsEqualTo(-1);
+        await Assert.That(frame.Step).IsNull();
     }
 
     [Test]
@@ -104,23 +104,16 @@ public class CallFrameTests
     }
 
     [Test]
-    public async Task CurrentStepIndex_CanBeSet()
+    public async Task Step_CanBeSet()
     {
         var frame = new CallFrame("TestGoal");
+        var step = new Step { Index = 5, Text = "call http endpoint", LineNumber = 6 };
 
-        frame.CurrentStepIndex = 5;
+        frame.Step = step;
 
-        await Assert.That(frame.CurrentStepIndex).IsEqualTo(5);
-    }
-
-    [Test]
-    public async Task CurrentStepText_CanBeSet()
-    {
-        var frame = new CallFrame("TestGoal");
-
-        frame.CurrentStepText = "call http endpoint";
-
-        await Assert.That(frame.CurrentStepText).IsEqualTo("call http endpoint");
+        await Assert.That(frame.Step).IsEqualTo(step);
+        await Assert.That(frame.Step!.Index).IsEqualTo(5);
+        await Assert.That(frame.Step!.Text).IsEqualTo("call http endpoint");
     }
 
     [Test]
@@ -338,7 +331,7 @@ public class CallFrameTests
     public async Task GetStackTrace_IncludesStepIndex()
     {
         var frame = new CallFrame("TestGoal");
-        frame.CurrentStepIndex = 5;
+        frame.Step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
 
         var trace = frame.GetStackTrace();
 

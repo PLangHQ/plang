@@ -6,22 +6,27 @@ namespace PLang.Runtime2.Core;
 
 public sealed partial class Step
 {
-    public async Task Load(PLangContext context)
+    public async Task<Data> Load(PLangContext context)
     {
-        context.PopulateLoadEvents(Events, EventType.OnBeforeStepLoad, EventType.OnAfterStepLoad);
-        await Events.Before.Load.Run(context);
+        var events = context.EventsFor(this);
+        var before = await events.Load.Before.Run(context);
+        if (!before.Success) return before;
 
-        await Actions.Load(context);
+        var actionsResult = await Actions.Load(context);
+        if (!actionsResult.Success) return actionsResult;
 
-        await Events.After.Load.Run(context);
+        var after = await events.Load.After.Run(context);
+        return after;
     }
 
     public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         context.Step = this;
-        context.CallStack?.RecordStep(Index, Text);
+        context.CallStack?.RecordStep(this);
 
-        var beforeResult = await Events.Before.Run(context);
+        var events = context.EventsFor(this);
+
+        var beforeResult = await events.Before.Run(context);
         if (!beforeResult) return beforeResult;
 
         try
@@ -29,7 +34,7 @@ public sealed partial class Step
             var result = await Actions.RunAsync(engine, context, cancellationToken);
             if (!result.Success) return result;
 
-            var afterResult = await Events.After.Run(context);
+            var afterResult = await events.After.Run(context);
             if (!afterResult) return afterResult;
 
             return result;

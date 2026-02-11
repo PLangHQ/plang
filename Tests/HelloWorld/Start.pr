@@ -1,0 +1,38 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Hello PLang World!\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "action": "output",
+          "method": "write",
+          "parameters": [
+            {
+              "name": "content",
+              "value": "Hello PLang World!"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Start.goal",
+  "prPath": "\\Start.pr",
+  "hash": "fd7397d65c72169526bba8f16db9e236696a62fb1aec72bdaf8e110696ee4a12",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

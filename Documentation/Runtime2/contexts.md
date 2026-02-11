@@ -1,44 +1,38 @@
 # Contexts
 
-Two context types manage state at different lifetimes: `PLangAppContext` for application lifetime and `PLangContext` for per-request/execution lifetime.
+Runtime2 has a layered context system: app-level shared state, per-request execution state, actor identity, and event scopes.
+
+---
 
 ## PLangAppContext
 
-Application-level context created once and shared across all executions.
+`PLang.Runtime2.Context.PLangAppContext` — **sealed, IDisposable**. One per application lifetime.
 
-### API Surface
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Id` | `string` | Unique identifier |
+| `RootPath` | `string` | Application root directory |
+| `Environment` | `string` | Environment name (e.g. `"development"`, `"production"`) |
+| `StartedAt` | `DateTime` | When the app started |
+| `Events` | `Events` | Global event system (14 event types with pattern matching) |
+| `Serializers` | `SerializerRegistry` | Content-type → serializer lookup |
+| `IsDebugMode` | `bool` | Debug flag |
+| `ShutdownToken` | `CancellationToken` | Signals app shutdown |
+| `Uptime` | `TimeSpan` | Computed from `StartedAt` |
+| `Keys` | `IEnumerable<string>` | All stored keys |
+
+### Methods
 
 ```csharp
-public sealed class PLangAppContext : IDisposable
-{
-    // Properties
-    public string RootPath { get; }
-    public bool IsDebugMode { get; set; }
-    public EventCollection Events { get; }
-
-    // State management
-    public T? Get<T>(string key)
-    public void Set<T>(string key, T value)
-    public T GetOrCreate<T>(string key, Func<T> factory)
-    public bool Remove(string key)
-    public bool Contains(string key)
-
-    // Constructor
-    public PLangAppContext(string rootPath)
-
-    // Disposal
-    public void Dispose()
-}
+T? Get<T>(string key)                          // Retrieve typed value
+void Set<T>(string key, T value)               // Store typed value
+T GetOrCreate<T>(string key, Func<T> factory)  // Lazy init (atomic)
+bool ContainsKey(string key)
+bool Remove(string key)
+void RequestShutdown()                         // Triggers ShutdownToken
 ```
-
-### Behavior & Rules
-
-- Created once at application startup
-- `RootPath` — base directory for the PLang application
-- `IsDebugMode` — enables/disables debug features globally
-- `Events` — application-wide event registry (see [Events](events.md))
-- State storage is thread-safe via `ConcurrentDictionary`
-- `GetOrCreate<T>` atomically gets or creates a value
 
 ### Code Example
 
@@ -50,87 +44,118 @@ appContext.IsDebugMode = true;
 appContext.Set("config", new AppConfig());
 var config = appContext.Get<AppConfig>("config");
 
-// Or use GetOrCreate for lazy initialization
+// Lazy initialization
 var cache = appContext.GetOrCreate("cache", () => new ConcurrentDictionary<string, object>());
+
+// Graceful shutdown
+appContext.RequestShutdown();
 ```
+
+---
 
 ## PLangContext
 
-Per-request context created for each goal execution.
+`PLang.Runtime2.Context.PLangContext` — **sealed, IDisposable**. One per request / goal execution.
 
-### API Surface
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Id` | `string` | Unique identifier |
+| `AppContext` | `PLangAppContext` | Parent app context |
+| `MemoryStack` | `MemoryStack` | Variable storage for this context |
+| `CallStack` | `CallStack?` | Execution tracking (optional) |
+| `IsAsync` | `bool` | Whether running async |
+| `CurrentGoalName` | `string?` | Currently executing goal |
+| `CurrentStepIndex` | `int` | Current step index |
+| `CreatedAt` | `DateTime` | Context creation time |
+| `CancellationToken` | `CancellationToken` | Cancellation support |
+| `Parent` | `PLangContext?` | Parent context (for nested calls) |
+| `Depth` | `int` | Nesting depth |
+| `Actor` | `Actor?` | The actor executing this context |
+| `System` | `EventScope` | System-level event scope |
+| `User` | `EventScope` | User-level event scope |
+| `Goal` | `Goal?` | Currently executing goal |
+| `Step` | `Step?` | Currently executing step |
+| `Duration` | `TimeSpan` | Computed elapsed time |
+
+### Methods
 
 ```csharp
-public sealed class PLangContext : IDisposable
+T? Get<T>(string key)                    // Context-scoped storage
+void Set<T>(string key, T value)
+PLangContext CreateChild()               // New context inheriting parent
+PLangContext Clone()                     // Deep copy
+void PopulateLoadEvents(Goal goal)       // Wire entity events from global event bindings
+void Cancel()                            // Cancel execution
+```
+
+### Context Hierarchy
+
+```
+PLangAppContext (app lifetime)
+  └─ PLangContext (per request)
+       ├─ MemoryStack (variables)
+       ├─ CallStack (execution tracking)
+       ├─ System EventScope
+       ├─ User EventScope
+       ├─ Actor (identity)
+       └─ PLangContext (child, for sub-goal calls)
+            └─ ...
+```
+
+---
+
+## Actor
+
+`PLang.Runtime2.Context.Actor` — **sealed, IAsyncDisposable**. Represents an execution identity with a trust level.
+
+### TrustLevel
+
+```csharp
+public enum TrustLevel
 {
-    // Properties
-    public PLangAppContext AppContext { get; }
-    public MemoryStack MemoryStack { get; }
-    public CallStack? CallStack { get; }
-    public string? CurrentGoalName { get; set; }
-    public CancellationToken CancellationToken { get; }
-
-    // Constructor
-    public PLangContext(
-        PLangAppContext appContext,
-        MemoryStack? memoryStack = null,
-        CallStack? callStack = null,
-        CancellationToken cancellationToken = default)
-
-    // Child context creation
-    public PLangContext CreateChild(MemoryStack? memoryStack = null)
-
-    // Disposal
-    public void Dispose()
+    User = 1,     // User-initiated, lowest trust
+    Service = 2,  // Service-level operations
+    System = 3    // Internal engine, highest trust
 }
 ```
 
-### Behavior & Rules
+### Properties
 
-- Created per goal execution via `engine.CreateContext()`
-- `MemoryStack` — variable storage for this execution (see [MemoryStack](memory-stack.md))
-- `CallStack` — execution tracking, may be null if disabled (see [CallStack](call-stack.md))
-- `CurrentGoalName` — set by engine during goal execution
-- `CancellationToken` — for cooperative cancellation
-- `CreateChild()` creates a nested context sharing the same `AppContext`
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Actor name |
+| `TrustLevel` | `TrustLevel` | Trust level |
+| `Context` | `PLangContext` | Owned context |
+| `IO` | `IO` | Owned I/O manager |
+| `Engine` | `Engine` | Parent engine |
 
-### Context Lifecycle
+The engine lazily creates three actors:
+- `Engine.System` — `TrustLevel.System`
+- `Engine.Service` — `TrustLevel.Service`
+- `Engine.User` — `TrustLevel.User`
 
-```
-engine.CreateContext()
-    → new PLangContext(appContext, memoryStack, callStack)
-    → engine.RunGoalAsync(goal, context)
-        → context.CurrentGoalName = goal.Name
-        → context.CallStack.Push(goal.Name)
-        → execute steps
-        → context.CallStack.Pop()
-    → context.Dispose()
-```
+`Engine.Context` is a shortcut for `Engine.User.Context`.
 
-### Code Example
+---
 
-```csharp
-// Engine creates context
-using var context = engine.CreateContext();
+## EventScope
 
-// Or with pre-populated memory
-var memory = new MemoryStack();
-memory.Set("input", "value");
-using var context = engine.CreateContext(memory);
-
-// Access during execution
-var value = context.MemoryStack.GetValue("input");
-var depth = context.CallStack?.Depth ?? 0;
-```
-
-### Child Contexts
+`PLang.Runtime2.Context.EventScope` — lightweight wrapper holding an `Events` instance.
 
 ```csharp
-// Create child context for nested goal execution
-using var child = context.CreateChild();
-// or with separate memory
-using var child = context.CreateChild(new MemoryStack());
+public record EventScope
+{
+    public Events Events { get; init; } = new();
+}
 ```
+
+Each `PLangContext` has two scopes:
+- `System` — for system-level event bindings
+- `User` — for user-level event bindings
+
+---
 
 ## Console vs Web Request Flow
 
@@ -138,24 +163,21 @@ using var child = context.CreateChild(new MemoryStack());
 
 ```
 Application starts
-    → new PLangAppContext("/app")
-    → new Engine(appContext)
-
-User runs goal
-    → engine.CreateContext()
-    → engine.RunGoalAsync(goalName, context)
-    → context.Dispose()
+    → new Engine(fileSystem)
+    → engine.LoadGoalsFromDirectoryAsync(buildDir)
+    → engine.RunGoalAsync("Start")        // uses Engine.User.Context
+    → engine.DisposeAsync()
 ```
 
 ### Web Request (conceptual)
 
 ```
 Application starts
-    → new PLangAppContext("/app")
-    → new Engine(appContext)
+    → new Engine(fileSystem)
+    → engine.LoadGoalsFromDirectoryAsync(buildDir)
 
 Request arrives
-    → engine.CreateContext()
+    → engine.CreateContext("request-123")
     → context.MemoryStack.Set("request", httpRequest)
     → engine.RunGoalAsync("HandleRequest", context)
     → context.Dispose()
@@ -163,7 +185,8 @@ Request arrives
 
 ## Relationships
 
-- `PLangAppContext` holds [EventCollection](events.md)
+- `PLangAppContext` holds global [Events](events.md) system
 - `PLangContext` holds [MemoryStack](memory-stack.md) and [CallStack](call-stack.md)
 - [Engine](engine.md) creates `PLangContext` via `CreateContext()`
-- Both contexts are referenced by [Modules](modules.md) via `ModuleContext`
+- [Actor](contexts.md) owns a `PLangContext` and `IO`
+- Action handlers receive `PLangContext` via `CodeGeneratedExecuteAsync`

@@ -1,150 +1,108 @@
 # Engine
 
-The central execution object. Orchestrates goal execution, manages module and serializer registries, and creates execution contexts.
+`PLang.Runtime2.Core.Engine` is the central orchestrator. It is a **sealed** class (not partial) implementing `IAsyncDisposable`.
 
-## API Surface
+## Properties
 
-```csharp
-public partial class Engine : IAsyncDisposable
-{
-    // Properties
-    public string Id { get; }
-    public string Name { get; set; }
-    public string RootPath { get; }
-    public PLangAppContext AppContext { get; }
-    public ModuleRegistry Modules { get; }
-    public SerializerRegistry Serializers { get; }
-    public Goals Goals { get; }
-    public bool IsDebugMode { get; set; }
+| Property | Type | Description |
+|----------|------|-------------|
+| `Id` | `string` | Unique 12-char identifier from `Guid.NewGuid().ToString("N")[..12]` |
+| `Name` | `string` | Human-readable name (default `"plang"`) |
+| `RootPath` | `string` | Root directory of the PLang app |
+| `AppContext` | `PLangAppContext` | App-lifetime shared state |
+| `Actions` | `ActionRegistry` | Two-level handler lookup (namespace → class → `IClass`) |
+| `Serializers` | `SerializerRegistry` | Content-type → serializer routing |
+| `Goals` | `Goals` | Goal collection with lazy disk loading |
+| `FileSystem` | `IPLangFileSystem` | Abstracted filesystem (never use `System.IO` directly) |
+| `IO` | `IO` | Channel-based I/O manager |
+| `IsDebugMode` | `bool` | Debug flag |
 
-    // Constructor
-    public Engine(
-        PLangAppContext appContext,
-        ModuleRegistry? modules = null,
-        SerializerRegistry? serializers = null)
+## Actors (Lazy)
 
-    // Context creation
-    public PLangContext CreateContext(MemoryStack? memoryStack = null)
+The engine creates three actors lazily, each with its own `PLangContext` and trust level:
 
-    // Goal execution
-    public Task<GoalResult> RunGoalAsync(string goalName, CancellationToken cancellationToken = default)
-    public Task<GoalResult> RunGoalAsync(Goal goal, PLangContext context, CancellationToken cancellationToken = default)
-
-    // Step execution
-    public Task<GoalResult> ExecuteStepAsync(Step step, PLangContext context, CancellationToken cancellationToken = default)
-
-    // Built-in modules
-    public void RegisterBuiltInModules()
-
-    // Disposal
-    public async ValueTask DisposeAsync()
-}
-```
-
-## Behavior & Rules
-
-### Construction
-
-The Engine requires a `PLangAppContext` and optionally accepts custom module and serializer registries:
-
-- `Id` — 12-character unique identifier generated from `Guid.NewGuid().ToString("N")[..12]`
-- `Name` — defaults to `"Runtime2"`, can be changed
-- `RootPath` — inherited from `AppContext.RootPath`
-- `IsDebugMode` — mirrors `AppContext.IsDebugMode`
-
-### Context Creation
-
-`CreateContext()` creates a new `PLangContext` for executing goals:
-
-- Accepts optional `MemoryStack` to pre-populate variables
-- Creates fresh `CallStack` for execution tracking
-- Context is disposable and should be disposed after use
-
-### Goal Execution
-
-`RunGoalAsync` executes a goal by name or reference:
-
-1. Looks up goal by name if string provided
-2. Returns `GoalResult.Fail("NotFound")` if goal doesn't exist
-3. Checks cancellation token before execution
-4. Sets `context.CurrentGoalName` to the goal name
-5. Pushes a `CallFrame` onto the `CallStack`
-6. Fires `EventType.BeforeGoal` event
-7. Iterates through steps, executing each via `ExecuteStepAsync`
-8. If a step fails and `step.CatchError` is false, returns immediately
-9. Fires `EventType.AfterGoal` event
-10. Pops the `CallFrame`
-11. Returns final `GoalResult`
-
-### Step Execution
-
-`ExecuteStepAsync` executes a single step:
-
-1. Looks up module by `step.ModuleName`
-2. Returns `GoalResult.Fail("ModuleNotFound")` if not registered
-3. Creates `ModuleContext` with engine, goal, step, and context references
-4. Calls `module.Initialize(moduleContext)`
-5. Records step in `CallStack.Current` if available
-6. Calls `module.ExecuteAsync(step.MethodName, step.Parameters)`
-7. If `step.ReturnVariable` is set and result is success, stores value in `MemoryStack`
-8. Returns result, catching exceptions as `GoalResult.Fail`
-
-### Built-in Modules
-
-`RegisterBuiltInModules()` registers the `VariableModule` with name `"variable"`.
-
-### Disposal
-
-`DisposeAsync` disposes all registered modules that implement `IDisposable` or `IAsyncDisposable`. Safe to call multiple times.
-
-## Code Examples
-
-### Bootstrap Example
+| Actor | Trust Level | Purpose |
+|-------|-------------|---------|
+| `System` | `TrustLevel.System` (3) | Internal engine operations |
+| `Service` | `TrustLevel.Service` (2) | Service-level operations |
+| `User` | `TrustLevel.User` (1) | User-initiated operations |
 
 ```csharp
-using var appContext = new PLangAppContext("/app");
-await using var engine = new Engine(appContext);
-engine.RegisterBuiltInModules();
-
-// Load goals from .pr files
-// engine.Goals.Add(loadedGoal);
-
-using var context = engine.CreateContext();
-var result = await engine.RunGoalAsync("CreateUser", context);
-
-if (result.Success)
-{
-    Console.WriteLine($"Result: {result.Value}");
-}
-else
-{
-    Console.WriteLine($"Error: {result.Error?.Message}");
-}
+// Convenience — Engine.Context is the User actor's context
+public PLangContext Context => User.Context;
+public MemoryStack MemoryStack => Context.MemoryStack;
 ```
 
-### Custom Module Registration
+## Constructors
 
 ```csharp
-await using var engine = new Engine(appContext);
-engine.Modules.Register(new MyCustomModule());
+// Minimal — filesystem only
+public Engine(IPLangFileSystem fileSystem)
+
+// Full — all dependencies injectable
+public Engine(
+    PLangAppContext appContext,
+    ActionRegistry? actions = null,
+    SerializerRegistry? serializers = null,
+    IPLangFileSystem? fileSystem = null)
 ```
 
-### Pre-populated Variables
+Both constructors call `RegisterBuiltInModules()` which uses reflection to discover all `IClass` implementations in the assembly and register them with the `ActionRegistry`.
+
+## Goal Execution
 
 ```csharp
-var memoryStack = new MemoryStack();
-memoryStack.Set("userId", 123);
-memoryStack.Set("userName", "John");
-
-using var context = engine.CreateContext(memoryStack);
-var result = await engine.RunGoalAsync("ProcessUser", context);
+// Four overloads — all delegate to the core implementation
+Task<Data> RunGoalAsync(string goalName, CancellationToken ct = default)
+Task<Data> RunGoalAsync(Goal goal, CancellationToken ct = default)
+Task<Data> RunGoalAsync(string goalName, PLangContext context, CancellationToken ct = default)
+Task<Data> RunGoalAsync(Goal goal, PLangContext context, CancellationToken ct = default)
 ```
+
+Execution path:
+1. Resolve goal by name via `Goals.GetAsync()` (loads from disk if not cached)
+2. Returns `Data.Fail(GoalError.NotFound(name))` if goal doesn't exist
+3. Call `goal.RunAsync(engine, context, ct)`
+4. Returns `Data` — check `Data.Success` / `Data.Error`
+
+## Goal Loading
+
+```csharp
+// Load a single .pr file
+Task<Data> LoadGoalFromFileAsync(string prFilePath, PLangContext? context = null, CancellationToken ct = default)
+
+// Load all .pr files from a directory
+Task<Data> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr", PLangContext? context = null, CancellationToken ct = default)
+```
+
+These delegate to `Goals.LoadFromFileAsync` / `Goals.LoadFromDirectoryAsync`.
+
+## Context Creation
+
+```csharp
+PLangContext CreateContext(string? name = null)
+```
+
+Creates a new `PLangContext` with the engine's `AppContext`, a fresh `MemoryStack`, and an optional name.
+
+## Lifecycle
+
+```csharp
+await using var engine = new Engine(fileSystem);
+await engine.LoadGoalsFromDirectoryAsync(buildDir);
+var result = await engine.RunGoalAsync("Start");
+if (!result.Success)
+    Console.Error.WriteLine(result.Error?.Message);
+```
+
+`DisposeAsync` cleans up actors and their contexts.
 
 ## Relationships
 
 - Creates [PLangContext](contexts.md) via `CreateContext()`
 - Holds reference to [PLangAppContext](contexts.md) for app-level configuration
-- Uses [ModuleRegistry](modules.md) to look up modules
+- Uses [ActionRegistry](modules.md) to look up action handlers
 - Uses [SerializerRegistry](serializers.md) for data format handling
 - Stores [Goals](goals-steps.md) collection
-- Returns [GoalResult](goal-result.md) from execution methods
+- Returns [Data](goal-result.md) from execution methods
+- Owns three [Actors](contexts.md) with different trust levels

@@ -1,9 +1,7 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions;
-using PLang.Runtime2.actions.output;
-using writeRecord = PLang.Runtime2.actions.output.write;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -259,8 +257,8 @@ public class StartGoalTests
             {
                 new PLang.Runtime2.Core.Action
                 {
-                    Class = actionClass,
-                    Method = method,
+                    Module = actionClass,
+                    ActionName = method,
                     Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
                     Return = null
                 }
@@ -290,19 +288,23 @@ public class StartGoalTests
 
     /// <summary>
     /// A test handler that captures written content instead of writing to Console.
-    /// Implements ICodeGenerated manually since the source generator doesn't run on test projects.
+    /// Implements IClass + ICodeGenerated manually since the source generator doesn't run on test projects.
     /// </summary>
-    private class CapturingWriteHandler : BaseClass<writeRecord>, ICodeGenerated
+    private class CapturingWriteHandler : IClass, ICodeGenerated
     {
         public List<string> Lines { get; } = new();
 
-        protected override Task<Data> ExecuteAsync(writeRecord? p)
-        {
-            if (p?.content != null)
-                Lines.Add(p.content.ToString()!);
+        public Engine Engine { get; private set; } = null!;
+        public PLangContext Context { get; private set; } = null!;
+        public System.Type? ParameterType => null;
 
-            return SuccessTask();
+        public void Initialize(Engine engine, PLangContext context)
+        {
+            Engine = engine;
+            Context = context;
         }
+
+        public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
         public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
         {
@@ -318,7 +320,9 @@ public class StartGoalTests
                     content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
                         m => context.MemoryStack.GetValue(m.Groups[1].Value)?.ToString() ?? "");
             }
-            return ExecuteAsync(new writeRecord { content = content! });
+            if (content != null)
+                Lines.Add(content.ToString()!);
+            return Task.FromResult(Data.Ok());
         }
     }
 

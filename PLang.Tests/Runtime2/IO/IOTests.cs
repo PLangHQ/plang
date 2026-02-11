@@ -351,7 +351,7 @@ public class IOTests
         await using var io = CreateIO();
         var channel = io.CreateMemoryChannel("test");
 
-        await io.WriteAsync("test", "hello", "text/plain");
+        await io.WriteAsync("test", data: "hello", contentType: "text/plain");
 
         var text = await channel.ReadAllTextAsync();
         await Assert.That(text).IsEqualTo("hello");

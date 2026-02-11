@@ -1,31 +1,31 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions.variable;
-using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+using PLang.Runtime2.modules.variable;
+using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 using Type = PLang.Runtime2.Memory.Type;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
 public class SetTests
 {
-    private (SetHandler handler, MemoryStack memory) Create(MemoryStack? memoryStack = null)
+    private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
     {
-        var handler = new SetHandler();
         var appContext = new PLangAppContext("/app");
         var memory = memoryStack ?? new MemoryStack();
         var context = new PLangContext(appContext, memory);
         var engine = new Engine(appContext);
-        handler.Initialize(engine, context);
-        return (handler, memory);
+        context.RegisterContextVariables(engine);
+        return (context, memory);
     }
 
     [Test]
     public async Task Set_SetsVariable()
     {
-        var (handler, memory) = Create();
+        var (context, memory) = CreateContext();
 
-        var result = await handler.ExecuteAsync(new set { name = "testVar", value = "testValue" });
+        var action = new Set { Context = context, Name = "testVar", Value = "testValue" };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(memory.GetValue("testVar")).IsEqualTo("testValue");
@@ -34,9 +34,10 @@ public class SetTests
     [Test]
     public async Task Set_WithType_SetsTypeInfo()
     {
-        var (handler, memory) = Create();
+        var (context, memory) = CreateContext();
 
-        var result = await handler.ExecuteAsync(new set { name = "count", value = 42, type = "int" });
+        var action = new Set { Context = context, Name = "count", Value = 42, Type = "int" };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(memory.Get("count")!.Type!.ClrType).IsEqualTo(typeof(int));
@@ -45,9 +46,10 @@ public class SetTests
     [Test]
     public async Task Set_ReturnsTypedVariable()
     {
-        var (handler, _) = Create();
+        var (context, _) = CreateContext();
 
-        var result = await handler.ExecuteAsync(new set { name = "testVar", value = "testValue" });
+        var action = new Set { Context = context, Name = "testVar", Value = "testValue" };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var v = result.Value as VariableResult;
@@ -59,23 +61,13 @@ public class SetTests
     [Test]
     public async Task Set_WithType_ReturnsTypeInResult()
     {
-        var (handler, _) = Create();
+        var (context, _) = CreateContext();
 
-        var result = await handler.ExecuteAsync(new set { name = "count", value = 42, type = "int" });
+        var action = new Set { Context = context, Name = "count", Value = 42, Type = "int" };
+        var result = await action.Run();
 
         var v = result.Value as VariableResult;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.type).IsEqualTo("int");
-    }
-
-    [Test]
-    public async Task Set_NullParameters_ReturnsError()
-    {
-        var (handler, _) = Create();
-
-        var result = await handler.ExecuteAsync((object?)null);
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 }

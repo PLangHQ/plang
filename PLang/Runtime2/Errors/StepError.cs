@@ -1,5 +1,4 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
 
 namespace PLang.Runtime2.Errors;
 
@@ -9,10 +8,11 @@ namespace PLang.Runtime2.Errors;
 /// </summary>
 public class StepError : Error
 {
-    public Step? Step { get; init; }
-
     public StepError(string message, string key = "StepError", int statusCode = 400)
         : base(message, key, statusCode) { }
+
+    public StepError(string message, Core.Step step, string key = "StepError", int statusCode = 400)
+        : base(message, step, key, statusCode) { }
 
     public StepError(string message, PLangContext context, string key = "StepError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
@@ -21,9 +21,7 @@ public class StepError : Error
     {
         return new StepError(ex.Message, context, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null,
-            Step = context.Step
+            Exception = ex
         };
     }
 }

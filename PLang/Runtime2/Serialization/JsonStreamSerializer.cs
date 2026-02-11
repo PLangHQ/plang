@@ -59,7 +59,7 @@ public sealed class JsonStreamSerializer : ISerializer
         }
 
         type ??= value.GetType();
-        await JsonSerializer.SerializeAsync(stream, value, type, _options, cancellationToken);
+        await JsonSerializer.SerializeAsync(stream, value + Environment.NewLine, type, _options, cancellationToken);
     }
 
     public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)

@@ -13,16 +13,26 @@ public interface IError
     string? HelpfulLinks { get; }
     DateTime CreatedUtc { get; }
     Exception? Exception { get; }
-    IError? InnerError { get; }
 
     /// <summary>
-    /// Goal name where the error occurred (if known).
+    /// Chain of errors that occurred during error handling.
+    /// Original error stays as root, subsequent errors are appended.
     /// </summary>
-    string? GoalName { get; }
+    List<IError> ErrorChain { get; }
 
     /// <summary>
-    /// Step index where the error occurred (if known).
+    /// The step where the error occurred. Navigate to goal, line number, etc. via Step.Goal.
     /// </summary>
-    int? StepIndex { get; }
+    Core.Step? Step { get; }
 
+    /// <summary>
+    /// Snapshot of the call stack frames at the time the error was created.
+    /// Reads bottom-up: first frame is the root goal, last frame is where the error occurred.
+    /// </summary>
+    IReadOnlyList<Core.CallFrame> CallFrames { get; }
+
+    /// <summary>
+    /// Formats this error for display. Called only at the final display point, never during propagation.
+    /// </summary>
+    string Format();
 }

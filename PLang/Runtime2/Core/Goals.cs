@@ -14,24 +14,30 @@ public sealed class Goals
 {
     private readonly ConcurrentDictionary<string, Goal> _goals = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Goal> _byPath = new(StringComparer.OrdinalIgnoreCase);
+    internal Engine Engine { get; set; } = null!;
 
     /// <summary>
     /// Adds a goal to the collection.
     /// </summary>
     public void Add(Goal goal)
     {
+        goal.Engine = Engine;
         _goals[goal.Name] = goal;
         if (!string.IsNullOrEmpty(goal.Path))
             _byPath[goal.Path] = goal;
     }
 
     /// <summary>
-    /// Gets a goal by name.
+    /// Gets a goal by name from cache only.
     /// </summary>
     public Goal? Get(string name)
     {
         if (string.IsNullOrEmpty(name))
             return null;
+
+        // Normalize: strip .goal extension
+        if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
+            name = name[..^5];
 
         // Try exact match first
         if (_goals.TryGetValue(name, out var goal))
@@ -60,6 +66,31 @@ public sealed class Goals
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Gets a goal by name. Loads the .pr file from disk if not already cached.
+    /// </summary>
+    public async Task<Goal?> GetAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var goal = Get(name);
+        if (goal != null)
+            return goal;
+
+        // Not cached — try to load the .pr file
+        var cleanName = name ?? "";
+        if (cleanName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
+            cleanName = cleanName[..^5];
+
+        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, ".build", cleanName.ToLowerInvariant() + ".pr");
+        if (!Engine.FileSystem.File.Exists(prPath))
+            return null;
+
+        var loadResult = await LoadFromFileAsync(Engine, prPath, cancellationToken: cancellationToken);
+        if (!loadResult.Success)
+            return null;
+
+        return Get(name);
     }
 
     /// <summary>
@@ -130,6 +161,20 @@ public sealed class Goals
     /// </summary>
     public Goal? this[string name] => Get(name);
 
+    public async Task<Data> Run(string name, PLangContext? context = null, CancellationToken cancellationToken = default)
+    {
+        var goal = await GetAsync(name, cancellationToken);
+        if (goal == null)
+            return Data.Fail(GoalError.NotFound(name));
+
+        context ??= Engine.Context;
+
+        var loadResult = await goal.Load(context);
+        if (!loadResult.Success) return loadResult;
+
+        return await goal.RunAsync(Engine, context, cancellationToken);
+    }
+
     /// <summary>
     /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
     /// </summary>
@@ -148,7 +193,10 @@ public sealed class Goals
                 step.Goal = goal;
 
             if (context != null)
-                await goal.Load(context);
+            {
+                var loadResult = await goal.Load(context);
+                if (!loadResult.Success) return loadResult;
+            }
 
             Add(goal);
             return Data.Ok(goal);
@@ -162,7 +210,7 @@ public sealed class Goals
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data> LoadFromDirectoryAsync(Engine engine, string directory, string pattern = "*.pr.json", PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromDirectoryAsync(Engine engine, string directory, string pattern = "*.pr", PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
         {

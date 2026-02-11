@@ -7,16 +7,26 @@ namespace PLang.Runtime2.Core;
 public sealed partial class Action
 {
     [JsonIgnore]
-    public EntityEvents Events { get; } = new();
+    public System.Type? ParameterSchema { get; init; }
     [Store, LlmBuilder, Debug, Default]
-    public string Class { get; init; } = "";
+    [JsonPropertyName("module")]
+    [Newtonsoft.Json.JsonProperty("module")]
+    public string Module { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
-    public string Method { get; init; } = "";
+    [JsonPropertyName("action")]
+    [Newtonsoft.Json.JsonProperty("action")]
+    public string ActionName { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public List<Data> Parameters { get; init; } = new();
 
     [Store, LlmBuilder, Debug, Default]
     public List<Data>? Return { get; init; }
+
+    [Store, LlmBuilder, Debug, Default]
+    public List<Info> Errors { get; init; } = new();
+
+    [Store, LlmBuilder, Debug, Default]
+    public List<Info> Warnings { get; init; } = new();
 }

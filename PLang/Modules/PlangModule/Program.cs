@@ -14,8 +14,9 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
+using Actions = PLang.Runtime2.Core.Actions;
 using PLang.Runtime2.Mapping;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using PLang.Runtime2.Utility;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -51,6 +52,128 @@ namespace PLang.Modules.PlangModule
 			this.prParser = prParser;
 			this.fileAccessHandler = fileAccessHandler;
 		}
+
+
+
+		[Description("Get all actions available from the registry")]
+		public async Task<(Actions?, IError?)> GetActions()
+		{
+			var registry = new Runtime2.modules.ActionRegistry();
+			registry.DiscoverAndRegister(typeof(Runtime2.modules.BaseClass).Assembly);
+
+			var actions = new Runtime2.Core.Actions(this.context);
+
+			foreach (var ns in registry.Modules)
+			{
+				foreach (var className in registry.GetActions(ns))
+				{
+					var parameters = new List<Runtime2.Memory.Data>();
+					System.Type? parameterType = null;
+
+					// Try IClass-based handler first
+					var handler = registry.Get(ns, className);
+					if (handler != null)
+					{
+						parameterType = handler.ParameterType;
+					}
+					else
+					{
+						// Fall back to [Action]-attributed type
+						var actionType = registry.GetActionType(ns, className);
+						if (actionType == null) continue;
+						parameterType = actionType;
+					}
+
+					if (parameterType != null)
+					{
+						foreach (var prop in parameterType.GetProperties(
+							System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+						{
+							if (prop.Name == "EqualityContract") continue;
+							if (prop.Name == "Context") continue;
+							var typeName = Runtime2.Utility.TypeMapping.GetTypeName(prop.PropertyType);
+							parameters.Add(new Runtime2.Memory.Data(prop.Name, typeName));
+						}
+					}
+
+					actions.Add(new Runtime2.Core.Action
+					{
+						Module = ns,
+						ActionName = className,
+						ParameterSchema = parameterType,
+						Parameters = parameters
+					});
+				}
+			}
+
+			return (actions, null);
+		}
+
+
+		[Description("Get goals formatted for Runtime2")]
+		public async Task<(List<Runtime2.Core.Goal>? Goals, IError? Error)> GetGoalsV2(string path, string parser)
+		{
+			var (goalsObj, error) = await GetGoals(path, visibility: "public_and_private", parser: parser);
+			if (error != null) return (null, error);
+			if (goalsObj is not List<Goal> v1Goals)
+				return (null, new ProgramError("GetGoals did not return goals"));
+
+			var runtime2Goals = v1Goals.Select(GoalMapper.ToRuntime2Goal).ToList();
+			return (runtime2Goals, null);
+		}
+
+		[Description("Validates actions from llm")]
+		public async Task<(bool isValid, IError? Error)> ValidateActions(Actions actions)
+		{
+			if (actions == null || actions.Count == 0)
+				return (false, new ProgramError("No actions provided", goalStep, function,
+					Key: "NoActionsProvided"));
+
+			var registry = new Runtime2.modules.ActionRegistry();
+			registry.DiscoverAndRegister(typeof(Runtime2.modules.BaseClass).Assembly);
+
+			var notFound = new List<string>();
+			foreach (var action in actions)
+			{
+				if (!registry.Contains(action.Module, action.ActionName))
+					notFound.Add($"{action.Module}.{action.ActionName}");
+			}
+
+			if (notFound.Count > 0)
+				return (false, new ProgramError(
+					$"Actions not found: {string.Join(", ", notFound)}", goalStep, function,
+					Key: "ActionNotFound"));
+
+			return (true, null);
+		}
+
+		[Description("Merges the llm step result to the step object")]
+		public async Task<(Runtime2.Core.Step? Step, IError? Error)> MergeStep(Runtime2.Core.Step step, Runtime2.Core.Step stepFromLlm)
+		{
+			if (step == null)
+				return (null, new ProgramError("Step cannot be null", goalStep, function, Key: "MergeError"));
+			if (stepFromLlm == null)
+				return (null, new ProgramError("Step result from LLM cannot be null", goalStep, function, Key: "MergeError"));
+
+			// Copy actions from LLM result to target step
+			step.Actions.Clear();
+			step.Actions.AddRange(stepFromLlm.Actions);
+
+			// Copy errors/warnings from LLM result
+			if (stepFromLlm.Errors.Count > 0)
+			{
+				step.Errors.Clear();
+				step.Errors.AddRange(stepFromLlm.Errors);
+			}
+			if (stepFromLlm.Warnings.Count > 0)
+			{
+				step.Warnings.Clear();
+				step.Warnings.AddRange(stepFromLlm.Warnings);
+			}
+
+			return (step, null);
+		}
+
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private. parser=pr|goal")]
 		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", List<string>? propertiesToExtract = null, string parser = "pr")
@@ -188,16 +311,16 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var registry = new Runtime2.actions.ActionRegistry();
+			var registry = new Runtime2.modules.ActionRegistry();
 			registry.DiscoverAndRegister(typeof(Runtime2.Core.Engine).Assembly);
 			var result = new List<object>();
 
-			foreach (var ns in registry.Namespaces)
+			foreach (var ns in registry.Modules)
 			{
 				result.Add(new
 				{
 					Name = ns,
-					Methods = registry.GetClasses(ns).ToList()
+					Methods = registry.GetActions(ns).ToList()
 				});
 			}
 
@@ -358,7 +481,7 @@ namespace PLang.Modules.PlangModule
 			}
 		}
 
-		[Description("Save a Runtime2 goal as v0.2 .pr.json file (all steps in one file)")]
+		[Description("Save a Runtime2 goal as v0.2 .pr file (all steps in one file)")]
 		public async Task<(object?, IError?)> SaveGoal(Runtime2.Core.Goal goal)
 		{
 			if (goal == null)
@@ -368,16 +491,11 @@ namespace PLang.Modules.PlangModule
 
 			try
 			{
-				// v0.2 saves next to .goal file with .pr.json extension
-				// Path is relative, need to make it absolute
-				var goalPath = goal.Path ?? "";
-				var absoluteGoalPath = System.IO.Path.Combine(Environment.CurrentDirectory, goalPath.TrimStart('\\', '/'));
-				var goalDir = System.IO.Path.GetDirectoryName(absoluteGoalPath) ?? Environment.CurrentDirectory;
-				var goalName = System.IO.Path.GetFileNameWithoutExtension(goalPath);
-				var prPath = System.IO.Path.Combine(goalDir, $"{goalName}.pr.json");
-
-				if (!string.IsNullOrEmpty(goalDir) && !System.IO.Directory.Exists(goalDir))
-					System.IO.Directory.CreateDirectory(goalDir);
+				// v0.2: Goal knows its own PrPath
+				var prPath = goal.PrPath;
+				var dir = fileSystem.Path.GetDirectoryName(prPath);
+				if (!string.IsNullOrEmpty(dir) && !fileSystem.Directory.Exists(dir))
+					fileSystem.Directory.CreateDirectory(dir);
 
 				var json = System.Text.Json.JsonSerializer.Serialize(goal, new System.Text.Json.JsonSerializerOptions
 				{
@@ -385,7 +503,8 @@ namespace PLang.Modules.PlangModule
 					PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
 					DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
 				});
-				await System.IO.File.WriteAllTextAsync(prPath, json);
+
+				await fileSystem.File.WriteAllTextAsync(prPath, json);
 
 				return (new { Path = prPath, Format = "v0.2" }, null);
 			}
@@ -395,18 +514,7 @@ namespace PLang.Modules.PlangModule
 			}
 		}
 
-		[Description("Save a Building.Model goal to .build folder as v0.2 .pr file (converts to Runtime2 format)")]
-		public async Task<(object?, IError?)> SaveGoal(Goal goal)
-		{
-			if (goal == null)
-			{
-				return (null, new ProgramError("Goal cannot be null", goalStep, function));
-			}
-
-			// Convert and delegate to Runtime2 version
-			var runtime2Goal = Runtime2.Mapping.GoalMapper.ToRuntime2Goal(goal);
-			return await SaveGoal(runtime2Goal);
-		}
+	
 
 		[Description("Save a step/method .pr file")]
 		public async Task<(object?, IError?)> SaveMethod(object methodPr)

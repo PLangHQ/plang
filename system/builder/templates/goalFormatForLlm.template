@@ -1,0 +1,11 @@
+{{ if goal.Comment }}/ {{ goal.Comment }}
+{{ end }}{{ goal.Name }}
+{{ for step in goal.Steps }}{{ if step.Comment }}/ {{ step.Comment }}
+{{ end }}{{ " " | string.pad_left step.Indent }}- {{ step.Text }}  <= pr: {{ if step.Actions.Count > 0 }}{"actions":[{{ for a in step.Actions }}{"module":"{{ a.Class }}","action":"{{ a.Method }}","parameters":[{{ for p in a.Parameters }}{"name":"{{ p.Name }}","value":"{{ p.Value }}"}{{ if !for.last }},{{ end }}{{ end }}]{{ if a.Return }},"return":[{{ for r in a.Return }}{"name":"{{ r.Name }}"}{{ if !for.last }},{{ end }}{{ end }}]{{ end }}}{{ if !for.last }},{{ end }}{{ end }}]}{{ else }}null{{ end }}
+{{ end }}{{ if goal.Errors.size > 0 }}
+errors:
+{{ for e in goal.Errors }}- {key: "{{ e.Key }}", message: "{{ e.Message }}"}
+{{ end }}{{ end }}{{ if goal.Warnings.size > 0 }}
+warnings:
+{{ for w in goal.Warnings }}- {key: "{{ w.Key }}", message: "{{ w.Message }}"}
+{{ end }}{{ end }}

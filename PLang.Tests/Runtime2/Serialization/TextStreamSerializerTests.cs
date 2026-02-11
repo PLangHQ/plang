@@ -74,14 +74,16 @@ public class TextStreamSerializerTests
     }
 
     [Test]
-    public async Task Serialize_Object_ReturnsToString()
+    public async Task Serialize_Object_ReturnsJson()
     {
         var serializer = new TextStreamSerializer();
         var obj = new { Name = "test" };
 
         var result = serializer.Serialize(obj);
 
-        await Assert.That(result).Contains("Name");
+        // Complex types fall back to JSON serialization (camelCase)
+        await Assert.That(result).Contains("name");
+        await Assert.That(result).Contains("test");
     }
 
     [Test]

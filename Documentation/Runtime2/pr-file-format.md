@@ -1,18 +1,28 @@
 # .pr File Format
 
-The `.pr` file format is the compiled goal format — JSON files that the Runtime loads and executes.
+The `.pr` file format is the compiled goal format — JSON files that the Runtime loads and executes. Runtime2 supports two versions.
 
-## Structure
+## Format Versions
+
+| Version | Extension | Structure | Location |
+|---------|-----------|-----------|----------|
+| v0.1 | `.pr` | One file per step, in numbered subdirectories | `.build/{GoalName}/00. Goal.pr`, `01. step_name.pr` |
+| v0.2 | `.pr.json` | Single file with all steps | Saved next to the `.goal` file as `{name}.pr.json` |
+
+`PrParser` handles both formats transparently.
+
+## v0.2 Structure (Current)
 
 ```json
 {
   "name": "CreateUser",
   "description": "Creates a new user account",
-  "comment": "Internal documentation",
+  "comment": null,
   "visibility": "public",
   "isSetup": false,
   "isEvent": false,
   "hash": "abc123def456",
+  "path": "CreateUser.goal",
   "inputParameters": {
     "name": "string",
     "email": "string"
@@ -24,37 +34,45 @@ The `.pr` file format is the compiled goal format — JSON files that the Runtim
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "module": "validation",
-      "method": "notEmpty",
-      "parameters": {
-        "value": "%name%",
-        "errorMessage": "Name is required"
-      },
-      "returnVariable": null,
-      "catchError": false,
-      "onErrorGoal": null,
+      "actions": [
+        {
+          "action": "condition",
+          "method": "evaluate",
+          "parameters": [
+            { "name": "expression", "value": "%name% != null && %name% != ''" },
+            { "name": "errorMessage", "value": "Name is required" }
+          ],
+          "return": null
+        }
+      ],
+      "hash": "step_hash_1",
+      "previousHash": null,
+      "intent": "Validate that name is not empty",
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "insert into users, name=%name%, email=%email%, write to %user%",
+      "text": "set %greeting% to 'Hello %name%'",
       "lineNumber": 3,
       "indent": 0,
-      "module": "db",
-      "method": "insert",
-      "parameters": {
-        "table": "users",
-        "data": {
-          "name": "%name%",
-          "email": "%email%"
+      "actions": [
+        {
+          "action": "variable",
+          "method": "set",
+          "parameters": [
+            { "name": "name", "value": "greeting" },
+            { "name": "value", "value": "Hello %name%" }
+          ],
+          "return": null
         }
-      },
-      "returnVariable": "user",
-      "catchError": false,
+      ],
+      "hash": "step_hash_2",
       "waitForExecution": true
     }
   ],
-  "subGoals": ["ValidateEmail", "SendWelcomeEmail"]
+  "subGoals": [],
+  "errors": [],
+  "warnings": []
 }
 ```
 
@@ -64,14 +82,17 @@ The `.pr` file format is the compiled goal format — JSON files that the Runtim
 |----------|------|-------------|
 | `name` | string | Goal identifier, used for lookup |
 | `description` | string? | Human-readable description |
-| `comment` | string? | Internal documentation comment |
-| `visibility` | string? | `"public"` or `"private"` (default) |
+| `comment` | string? | Builder documentation comment |
+| `visibility` | string | `"public"` or `"private"` (default) |
 | `isSetup` | bool | If true, runs during app initialization |
 | `isEvent` | bool | If true, goal is an event handler |
 | `hash` | string? | Content hash for change detection |
+| `path` | string? | Relative path to source `.goal` file |
 | `inputParameters` | object? | Expected parameters as `name → type` mapping |
 | `steps` | array | Ordered list of step objects |
-| `subGoals` | array? | Names of referenced sub-goals |
+| `subGoals` | array | Names of referenced sub-goals |
+| `errors` | array | Build errors (list of `{ key, message }`) |
+| `warnings` | array | Build warnings (list of `{ key, message }`) |
 
 ## Step Properties
 
@@ -82,104 +103,114 @@ The `.pr` file format is the compiled goal format — JSON files that the Runtim
 | `lineNumber` | int | Line number in source .goal file |
 | `indent` | int | Indentation level |
 | `comment` | string? | Step comment |
-| `module` | string | Module name to handle this step |
-| `method` | string | Method name on the module |
-| `parameters` | object? | Method parameters |
-| `returnVariable` | string? | Variable to store result |
-| `catchError` | bool | If true, continue on error |
+| `actions` | array | Action bindings (see below) |
+| `hash` | string? | Content hash |
+| `previousHash` | string? | Previous build hash |
+| `intent` | string? | LLM-inferred intent |
 | `onErrorGoal` | string? | Goal to run if step fails |
+| `onError` | object? | Error handler configuration |
+| `cache` | object? | Caching configuration |
+| `timeout` | int? | Timeout in milliseconds |
 | `waitForExecution` | bool | If true (default), wait for completion |
+| `errors` | array | Build errors |
+| `warnings` | array | Build warnings |
+
+## Action Properties
+
+| Property | JSON Name | Type | Description |
+|----------|-----------|------|-------------|
+| `Class` | `action` | string | Handler class/namespace name |
+| `Method` | `method` | string | Handler method name |
+| `Parameters` | `parameters` | array | List of `{ name, value }` Data objects |
+| `Return` | `return` | array? | List of `{ name, value }` return variable mappings |
+| `Errors` | `errors` | array | Build errors |
+| `Warnings` | `warnings` | array | Build warnings |
+
+Note: The `Class` property is serialized as `"action"` in JSON via `[JsonPropertyName("action")]`.
+
+## Parameters and Return Format
+
+Parameters and return values are serialized as `List<Data>`:
+
+```json
+"parameters": [
+  { "name": "name", "value": "greeting" },
+  { "name": "value", "value": "Hello World" },
+  { "name": "type", "value": "string" }
+]
+```
+
+Return variables map action outputs to MemoryStack variables:
+
+```json
+"return": [
+  { "name": "result", "value": null }
+]
+```
 
 ## Variable Syntax
 
-Variables in `text` and `parameters` use `%variable%` syntax:
+Variables in `text` and parameter values use `%variable%` syntax:
 
 ```json
 {
-  "text": "insert into users, name=%name%, email=%email%, write to %user%",
-  "parameters": {
-    "table": "users",
-    "data": {
-      "name": "%name%",
-      "email": "%email%"
+  "text": "set %greeting% to 'Hello %name%'",
+  "actions": [
+    {
+      "action": "variable",
+      "method": "set",
+      "parameters": [
+        { "name": "name", "value": "greeting" },
+        { "name": "value", "value": "Hello %name%" }
+      ]
     }
-  },
-  "returnVariable": "user"
+  ]
 }
 ```
 
-At runtime, `%name%` and `%email%` are resolved from `MemoryStack`.
+At runtime, `%name%` is resolved from `MemoryStack` via the source-generated lazy parameter records.
 
-## Type Hints
-
-Type hints can be embedded in variable syntax:
+## ErrorHandler (onError)
 
 ```json
-{
-  "text": "set %count%(type:int) to 0",
-  "parameters": {
-    "name": "count",
-    "value": 0,
-    "type": "int"
-  }
+"onError": {
+  "goal": {
+    "name": "HandleError",
+    "parameters": { "error": "%error%" }
+  },
+  "retryCount": 3,
+  "retryOverSeconds": 10,
+  "order": "before",
+  "ignoreError": false,
+  "message": "Step failed",
+  "statusCode": 500,
+  "key": "StepError"
 }
 ```
 
-## GoalData and StepData DTOs
+## CacheSettings (cache)
 
-The Runtime uses DTOs for deserialization:
-
-```csharp
-public sealed class GoalData
-{
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = "";
-
-    [JsonPropertyName("steps")]
-    public List<StepData> Steps { get; set; } = new();
-
-    // ... other properties
-}
-
-public sealed class StepData
-{
-    [JsonPropertyName("index")]
-    public int Index { get; set; }
-
-    [JsonPropertyName("module")]
-    public string ModuleName { get; set; } = "";
-
-    [JsonPropertyName("method")]
-    public string MethodName { get; set; } = "";
-
-    // ... other properties
+```json
+"cache": {
+  "durationMinutes": 30,
+  "sliding": true,
+  "key": "user_%userId%",
+  "location": "memory"
 }
 ```
 
-## GoalDataConverter
+## PrParser
 
-Converts between DTOs and runtime objects:
+`PLang.Runtime2.Parsing.PrParser` handles both v0.1 and v0.2 formats:
 
 ```csharp
-public static class GoalDataConverter
+public static class PrParser
 {
-    public static Goal ToGoal(GoalData data, string? filePath = null, string? prFilePath = null, string? relativePath = null)
-    public static Step ToStep(StepData data)
-    public static GoalData ToData(Goal goal)
-    public static StepData ToData(Step step)
+    Goal? ParsePrFile(string filePath, IPLangFileSystem fs)
+    List<Goal> GetAllGoals(string rootPath, IPLangFileSystem fs)
+    AppData? LoadAppData(string rootPath, IPLangFileSystem fs)
+    void SaveAppData(string rootPath, AppData data, IPLangFileSystem fs)
 }
-```
-
-### Usage
-
-```csharp
-// Load from .pr file
-var json = await File.ReadAllTextAsync("goal.pr");
-var goalData = JsonSerializer.Deserialize<GoalData>(json);
-var goal = GoalDataConverter.ToGoal(goalData, filePath: "goal.goal", prFilePath: "goal.pr");
-
-// Add to engine
-engine.Goals.Add(goal);
 ```
 
 ## File Naming Convention
@@ -187,76 +218,28 @@ engine.Goals.Add(goal);
 | File | Purpose |
 |------|---------|
 | `CreateUser.goal` | Source PLang file |
-| `CreateUser.pr` | Compiled runtime file |
-| `.build/CreateUser.pr` | Typical output location |
+| `.build/createuser.pr` | v0.1 compiled file |
+| `CreateUser.pr.json` | v0.2 compiled file (next to .goal) |
 
-## Example: Complete .pr File
+## Loading .pr Files
 
-```json
-{
-  "name": "ProcessOrder",
-  "description": "Processes a customer order",
-  "visibility": "public",
-  "inputParameters": {
-    "orderId": "string",
-    "customerId": "string"
-  },
-  "steps": [
-    {
-      "index": 0,
-      "text": "select * from orders where id=%orderId%, write to %order%",
-      "lineNumber": 2,
-      "module": "db",
-      "method": "select",
-      "parameters": {
-        "sql": "SELECT * FROM orders WHERE id = @orderId",
-        "parameters": { "orderId": "%orderId%" }
-      },
-      "returnVariable": "order"
-    },
-    {
-      "index": 1,
-      "text": "if %order% is null then return error 'Order not found'",
-      "lineNumber": 3,
-      "module": "condition",
-      "method": "if",
-      "parameters": {
-        "condition": "%order% == null",
-        "then": { "return": { "error": "Order not found" } }
-      }
-    },
-    {
-      "index": 2,
-      "text": "call ValidateInventory %order.items%",
-      "lineNumber": 4,
-      "module": "goal",
-      "method": "call",
-      "parameters": {
-        "goalName": "ValidateInventory",
-        "parameters": { "items": "%order.items%" }
-      },
-      "catchError": true,
-      "onErrorGoal": "HandleInventoryError"
-    },
-    {
-      "index": 3,
-      "text": "update orders set status='processed' where id=%orderId%",
-      "lineNumber": 5,
-      "module": "db",
-      "method": "update",
-      "parameters": {
-        "sql": "UPDATE orders SET status = 'processed' WHERE id = @orderId",
-        "parameters": { "orderId": "%orderId%" }
-      }
-    }
-  ],
-  "subGoals": ["ValidateInventory", "HandleInventoryError"]
-}
+```csharp
+// Via Engine
+await engine.LoadGoalFromFileAsync("path/to/.build/start.pr");
+await engine.LoadGoalsFromDirectoryAsync(".build");
+
+// Via Goals collection
+await engine.Goals.LoadFromFileAsync(engine, prFilePath);
+await engine.Goals.LoadFromDirectoryAsync(engine, buildDir);
+
+// Direct parsing
+var goal = PrParser.ParsePrFile(prFilePath, engine.FileSystem);
 ```
 
 ## Relationships
 
-- Loaded by [Engine](engine.md) into [Goals](goals-steps.md) collection
-- Deserialized by [JsonStreamSerializer](serializers.md)
-- Converted to [Goal](goals-steps.md) and [Step](goals-steps.md) objects via `GoalDataConverter`
+- Loaded by [Engine](engine.md) via [Goals](goals-steps.md) collection
+- Deserialized by [SerializerRegistry](serializers.md) (via IO.ReadAsync)
+- Maps to [Goal](goals-steps.md), [Step](goals-steps.md), and [Action](goals-steps.md) objects
 - Variables resolved from [MemoryStack](memory-stack.md) at runtime
+- `GoalMapper` converts from `Building.Model` to `Runtime2.Core` types

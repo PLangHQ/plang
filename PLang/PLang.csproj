@@ -7,7 +7,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>PLangLibrary</AssemblyName>
-    <SelfContained>true</SelfContained>
     <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
     <SignAssembly>False</SignAssembly>
     <FileVersion>$(Version)</FileVersion>
@@ -30,10 +29,11 @@
 	</PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <Deterministic>True</Deterministic>
   </PropertyGroup>
-
+	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
+		<RunAnalyzers>false</RunAnalyzers>
+	</PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <Deterministic>True</Deterministic>

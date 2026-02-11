@@ -1,0 +1,3 @@
+Inner
+- write out "Inner depth: %!callStack.Depth%"
+- write out %!callStack%

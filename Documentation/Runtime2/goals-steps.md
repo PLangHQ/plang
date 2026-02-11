@@ -1,279 +1,241 @@
-# Goals, Steps & Execution
+# Goals, Steps, and Actions
 
-Goals are the primary execution units in PLang. Each goal contains a sequence of steps that execute in order.
+These are the three entity types that form the execution model. Each is a **sealed partial class** split across a properties file and a methods file.
 
-## Goals Collection
+---
 
-Manages the collection of goals loaded into the engine.
+## Goal
 
-### API Surface
+`PLang.Runtime2.Core.Goal` — sealed partial class (`Goal.cs` + `GoalMethods.cs`).
 
-```csharp
-public sealed class Goals
-{
-    // Properties
-    public int Count { get; }
-    public IEnumerable<string> Names { get; }
-    public IEnumerable<Goal> All { get; }
-    public IEnumerable<Goal> Public { get; }
-    public IEnumerable<Goal> Setup { get; }
-    public IEnumerable<Goal> Events { get; }
+### Properties (Goal.cs)
 
-    // Indexer
-    public Goal? this[string name] { get; }
+| Property | Type | Stored | Description |
+|----------|------|--------|-------------|
+| `Name` | `string` | Yes | Goal name (from file heading) |
+| `Description` | `string?` | Yes | Optional description |
+| `Comment` | `string?` | Yes | Builder comment |
+| `Steps` | `Steps` | Yes | Ordered step collection |
+| `SubGoals` | `List<string>` | Yes | Referenced sub-goal names |
+| `Visibility` | `Visibility` | Yes | `Private` (0) or `Public` (1) |
+| `Path` | `string?` | Yes | Relative path to `.goal` file |
+| `PrPath` | `string?` | Yes | Computed from `Path` (inserts `.build/`, lowercases, `.pr` extension) |
+| `Hash` | `string?` | Yes | Content hash for change detection |
+| `IsSetup` | `bool` | Yes | Runs during setup phase |
+| `IsEvent` | `bool` | Yes | This goal is an event handler |
+| `InputParameters` | `Dictionary<string, string>?` | Yes | Named input parameters |
+| `Parent` | `Goal?` | No | Parent goal (`[JsonIgnore]`) |
+| `Engine` | `Engine?` | No | Engine reference (`[JsonIgnore]`) |
+| `Events` | `EntityEvents` | No | Before/After × Load/Run event lists |
+| `Errors` | `List<Info>` | Yes | Build errors |
+| `Warnings` | `List<Info>` | Yes | Build warnings |
+| `FullPath` | `string` | No | Computed: `Parent.FullPath/Name` |
 
-    // Methods
-    public void Add(Goal goal)
-    public Goal? Get(string name)
-    public bool Contains(string name)
-    public bool Remove(string name)
-    public void Clear()
-}
+### PrPath Computation
+
+`PrPath` is a computed property derived from `Path`. It inserts `.build` as a subfolder and lowercases the filename:
+
+```
+Path = "users/CreateUser.goal"  →  PrPath = "users/.build/createuser.pr"
+Path = "Start.goal"             →  PrPath = ".build\start.pr"
 ```
 
-### Behavior & Rules
+The setter is empty — PrPath is always derived from Path.
 
-- Goal lookup is case-insensitive
-- `Get(name)` tries multiple variations:
-  - Exact name
-  - With `.goal` extension
-  - With leading slash trimmed
-  - With backslashes converted to forward slashes
-- `Add` registers goal by name, `RelativePath`, and `FilePath`
-- Adding a goal with the same name replaces the existing one
-- `Public` returns goals with `Visibility == GoalVisibility.Public`
-- `Setup` returns goals with `IsSetup == true`
-- `Events` returns goals with `IsEvent == true`
-
-### Code Examples
+### Methods (GoalMethods.cs)
 
 ```csharp
-var goals = new Goals();
+// Load phase — wires events, calls Steps.Load
+Task Load(PLangContext context)
 
-// Add goals
-goals.Add(new Goal { Name = "CreateUser" });
-goals.Add(new Goal { Name = "DeleteUser", RelativePath = "users/delete" });
+// Run phase — executes all steps sequentially
+Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
 
-// Lookup
-var goal = goals.Get("CreateUser");       // by name
-var goal2 = goals.Get("users/delete");     // by relative path
-var goal3 = goals["CreateUser"];           // via indexer
+// Format for LLM consumption (Scriban template or fallback)
+string FormatForLlm()
 
-// Check existence
-if (goals.Contains("CreateUser"))
-{
-    // goal exists
-}
+// Convert back to goal text
+string ToText()
 
-// Iterate
-foreach (var g in goals.All)
-{
-    Console.WriteLine(g.Name);
-}
+// Factory for not-found placeholder
+static Goal NotFound(string name)
 ```
 
-## Goal Class
+**Load sequence:**
+1. `PopulateLoadEvents(goal)` — wire entity events from global bindings
+2. `Before.Load.Run()` — fire before-load events
+3. `Steps.Load(context)` — load each step
+4. `After.Load.Run()` — fire after-load events
 
-Represents a single goal — a named unit of execution containing steps.
+**Run sequence:**
+1. Set `context.Goal` and `context.CurrentGoalName`
+2. Check cancellation
+3. `Before.Run` events
+4. `CallStack.Push(frame)`
+5. Iterate steps → `step.RunAsync(engine, context, ct)`
+6. `After.Run` events
+7. `CallStack.Pop()`
+8. Return `Data.Ok()`
 
-### API Surface
+---
+
+## Step
+
+`PLang.Runtime2.Core.Step` — sealed partial class (`Step.cs` + `StepMethods.cs`).
+
+### Properties (Step.cs)
+
+| Property | Type | Stored | Description |
+|----------|------|--------|-------------|
+| `Index` | `int` | Yes | Position in goal (0-based) |
+| `Text` | `string` | Yes | The PLang step text |
+| `LineNumber` | `int` | Yes | Line in source file |
+| `Indent` | `int` | Yes | Indentation level |
+| `Comment` | `string?` | Yes | Builder comment |
+| `Actions` | `Actions` | Yes | Action bindings for this step |
+| `OnErrorGoal` | `string?` | Yes | Goal to call on error |
+| `Hash` | `string?` | Yes | Content hash |
+| `PreviousHash` | `string?` | Yes | Previous build hash |
+| `Intent` | `string?` | Yes | LLM-inferred intent |
+| `OnError` | `ErrorHandler?` | Yes | Error handling configuration |
+| `Cache` | `CacheSettings?` | Yes | Caching configuration |
+| `Timeout` | `int?` | Yes | Timeout in milliseconds |
+| `Errors` | `List<Info>` | Yes | Build errors |
+| `Warnings` | `List<Info>` | Yes | Build warnings |
+| `WaitForExecution` | `bool` | Yes | Whether to await completion |
+| `Goal` | `Goal?` | No | Parent goal (`[JsonIgnore]`) |
+| `Events` | `EntityEvents` | No | Before/After × Load/Run event lists |
+
+**Important:** Steps do NOT have `ModuleName` or `MethodName` directly. The module/method binding is on each `Action` within the step's `Actions` collection.
+
+### Methods (StepMethods.cs)
 
 ```csharp
-public enum GoalVisibility
-{
-    Private,
-    Public
-}
-
-public partial class Goal
-{
-    // Identity
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public string? Comment { get; set; }
-    public string? Hash { get; set; }
-
-    // Paths
-    public string? FilePath { get; set; }
-    public string? PrFilePath { get; set; }
-    public string? RelativePath { get; set; }
-
-    // Configuration
-    public GoalVisibility Visibility { get; set; }
-    public bool IsSetup { get; set; }
-    public bool IsEvent { get; set; }
-    public Dictionary<string, string>? InputParameters { get; set; }
-
-    // Execution
-    public List<Step> Steps { get; set; }
-    public List<string> SubGoals { get; set; }
-
-    // Methods
-    public string ToText()
-    public string FullPath { get; }
-}
+Task Load(PLangContext context)
+Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+Step Clone()
 ```
 
-### Behavior & Rules
+**Run sequence:**
+1. Set `context.Step`
+2. `CallStack.RecordStep()`
+3. `Before.Run` events
+4. `Actions.RunAsync(engine, context, ct)` — executes all actions
+5. `After.Run` events
+6. Catches exceptions → wraps as `StepError`
 
-- `Name` — the goal identifier used for lookup
-- `Visibility` — `Private` (default) or `Public`
-- `IsSetup` — if true, goal runs during application initialization
-- `IsEvent` — if true, goal is an event handler
-- `InputParameters` — expected parameters as `name → type` mapping
-- `Steps` — ordered list of steps to execute
-- `SubGoals` — names of sub-goals referenced by this goal
-- `FullPath` — computed from `RelativePath` or `Name`
-- `ToText()` — returns human-readable representation
+---
 
-### Code Example
+## Action
+
+`PLang.Runtime2.Core.Action` — sealed partial class (`Action.cs` + `ActionMethods.cs`).
+
+### Properties (Action.cs)
+
+| Property | Type | Stored | JSON Name | Description |
+|----------|------|--------|-----------|-------------|
+| `Class` | `string` | Yes | `"action"` | Handler class name |
+| `Method` | `string` | Yes | `"method"` | Handler method name |
+| `Parameters` | `List<Data>` | Yes | `"parameters"` | Input parameters |
+| `Return` | `List<Data>?` | Yes | `"return"` | Return variable mappings |
+| `Errors` | `List<Info>` | Yes | | Build errors |
+| `Warnings` | `List<Info>` | Yes | | Build warnings |
+| `Events` | `EntityEvents` | No | | Entity events (`[JsonIgnore]`) |
+| `ParameterSchema` | `System.Type?` | No | | CLR type for parameter record (`[JsonIgnore]`) |
+
+Note: `Class` is serialized as `"action"` in JSON via `[JsonPropertyName("action")]`.
+
+### Methods (ActionMethods.cs)
 
 ```csharp
-var goal = new Goal
-{
-    Name = "CreateUser",
-    Description = "Creates a new user account",
-    Visibility = GoalVisibility.Public,
-    InputParameters = new Dictionary<string, string>
-    {
-        ["name"] = "string",
-        ["email"] = "string"
-    },
-    Steps = new List<Step>
-    {
-        new Step { Index = 0, Text = "validate input", ModuleName = "validation", MethodName = "validate" },
-        new Step { Index = 1, Text = "insert user", ModuleName = "db", MethodName = "insert" }
-    }
-};
+Task Load(PLangContext context)
+Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
 ```
 
-## Step Class
+**Run sequence:**
+1. `ActionRegistry.GetCodeGenerated(Class, Method)` — find handler
+2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, engine, context)`
+3. Store `Return` variables in `MemoryStack`
 
-Represents a single step within a goal.
+---
 
-### API Surface
+## Collections
+
+### Goals
+
+`Goals` — wraps dual `ConcurrentDictionary` (by name and by path). Case-insensitive.
 
 ```csharp
-public partial class Step
-{
-    // Identity
-    public int Index { get; set; }
-    public string Text { get; set; }
-    public int LineNumber { get; set; }
-    public int Indent { get; set; }
-    public string? Comment { get; set; }
+Goal? Get(string name)                  // Cache only, tries variations (strip .goal, path separators)
+Task<Goal?> GetAsync(string name, ...)  // Lazy disk load if not cached
+void Add(Goal goal)                     // Registers by name and path
+bool Remove(string name)
+Task<Data> Run(string name, ...)        // GetAsync + RunAsync
+Task<Data> LoadFromFileAsync(...)       // Deserialize .pr, wire step.Goal, Add
+Task<Data> LoadFromDirectoryAsync(...)  // Load all .pr files recursively
 
-    // Execution
-    public string ModuleName { get; set; }
-    public string MethodName { get; set; }
-    public object? Parameters { get; set; }
-    public string? ReturnVariable { get; set; }
-
-    // Error handling
-    public bool CatchError { get; set; }
-    public string? OnErrorGoal { get; set; }
-    public bool WaitForExecution { get; set; }
-
-    // Reference
-    public Goal? Goal { get; set; }
-
-    // Methods
-    public Step Clone()
-}
+// Filtered views
+IEnumerable<Goal> Public               // Visibility == Public
+IEnumerable<Goal> Setup                // IsSetup == true
+IEnumerable<Goal> Events               // IsEvent == true
+IReadOnlyList<Goal> Value              // All goals as list
+int Count
 ```
 
-### Behavior & Rules
+### Steps
 
-- `Index` — zero-based position in the goal's step list
-- `Text` — original PLang natural language text
-- `ModuleName` — which module handles this step
-- `MethodName` — which method on the module
-- `Parameters` — method parameters (typically `Dictionary<string, object?>`)
-- `ReturnVariable` — if set, stores result in this variable name
-- `CatchError` — if true, continue execution on error
-- `OnErrorGoal` — goal to run if step fails
-- `WaitForExecution` — if true (default), wait for step completion
-- `Goal` — back-reference to parent goal (set after loading)
-- `Clone()` — creates a shallow copy
-
-### Code Example
+`Steps : List<Step>` — thin wrapper.
 
 ```csharp
-var step = new Step
-{
-    Index = 0,
-    Text = "insert into users, name=%name%, email=%email%, write to %user%",
-    LineNumber = 2,
-    ModuleName = "db",
-    MethodName = "insert",
-    Parameters = new Dictionary<string, object?>
-    {
-        ["table"] = "users",
-        ["columns"] = new { name = "%name%", email = "%email%" }
-    },
-    ReturnVariable = "user",
-    CatchError = false
-};
+List<Step> Value { get; }
+Task Load(PLangContext context)         // Load each step
 ```
+
+### Actions
+
+`Actions : List<Action>` — sequential execution with merge.
+
+```csharp
+List<Action> Value { get; }
+Task Load(PLangContext context)
+Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct)
+Task<(string?, IError?)> Summary()     // Render action summary via Scriban template
+```
+
+`RunAsync` executes actions sequentially, merging results via `Data.Merge()`. Stops on first failure (fail-fast).
 
 ## Execution Flow
 
 ```
 Engine.RunGoalAsync(goalName, context)
     │
-    ├── goals.Get(goalName)
-    │   └── returns null → GoalResult.Fail("NotFound")
+    ├── Goals.GetAsync(goalName)
+    │   └── returns null → Data.Fail(GoalError.NotFound)
     │
-    ├── context.CurrentGoalName = goal.Name
-    │
-    ├── context.CallStack?.Push(goal.Name)
-    │
-    ├── appContext.Events.DispatchAsync(EventType.BeforeGoal, context)
-    │
-    ├── foreach step in goal.Steps
-    │   │
-    │   └── Engine.ExecuteStepAsync(step, context)
-    │       │
-    │       ├── modules.Get(step.ModuleName)
-    │       │   └── returns null → GoalResult.Fail("ModuleNotFound")
-    │       │
-    │       ├── module.Initialize(moduleContext)
-    │       │
-    │       ├── callStack?.Current?.RecordStep(step.Index, step.Text)
-    │       │
-    │       ├── module.ExecuteAsync(step.MethodName, step.Parameters)
-    │       │   └── exception → GoalResult.Fail(exception)
-    │       │
-    │       ├── if step.ReturnVariable && result.Success
-    │       │   └── memoryStack.Set(step.ReturnVariable, result.Value)
-    │       │
-    │       └── if !result.Success && !step.CatchError
-    │           └── return result (stop execution)
-    │
-    ├── appContext.Events.DispatchAsync(EventType.AfterGoal, context)
-    │
-    ├── context.CallStack?.Pop()
-    │
-    └── return GoalResult.Ok(lastResult)
+    └── Goal.RunAsync(engine, context)
+        ├── context.Goal = goal
+        ├── Before.Run events
+        ├── CallStack.Push(frame)
+        ├── foreach step in Steps
+        │   └── Step.RunAsync(engine, context)
+        │       ├── context.Step = step
+        │       ├── CallStack.RecordStep()
+        │       ├── Before.Run events
+        │       ├── Actions.RunAsync(engine, context)
+        │       │   └── foreach action in Actions
+        │       │       ├── ActionRegistry.GetCodeGenerated(action.Class, action.Method)
+        │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, engine, context)
+        │       │       └── Store Return vars in MemoryStack
+        │       └── After.Run events
+        ├── After.Run events
+        └── CallStack.Pop()
 ```
-
-## PLang Usage
-
-```plang
-CreateUser
-- validate %name% is not empty
-- validate %email% is valid email
-- insert into users, name=%name%, email=%email%, write to %user%
-- return %user%
-```
-
-This compiles to a Goal with four Steps, each mapped to a module and method.
 
 ## Relationships
 
 - `Goals` is stored in [Engine](engine.md)
-- `Goal` contains `Step` instances
-- `Step` references modules from [ModuleRegistry](modules.md)
-- Step execution stores results in [MemoryStack](memory-stack.md)
+- `Goal` contains `Step` instances, each containing `Action` instances
+- `Action` references handlers from [ActionRegistry](modules.md)
+- Action execution stores results in [MemoryStack](memory-stack.md)
 - Execution is tracked via [CallStack](call-stack.md)
-- Events fire through [EventCollection](events.md)
+- Entity events fire through [EntityEvents](events.md)

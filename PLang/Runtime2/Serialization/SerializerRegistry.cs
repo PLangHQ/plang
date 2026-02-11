@@ -12,7 +12,7 @@ public sealed class SerializerRegistry
     public SerializerRegistry()
     {
         var json = new JsonStreamSerializer();
-        var text = new TextStreamSerializer();
+        var text = new TextStreamSerializer(jsonFallback: json);
 
         Register(json);
         Register(text);

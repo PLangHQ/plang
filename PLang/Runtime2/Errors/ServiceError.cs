@@ -11,6 +11,12 @@ public class ServiceError : Error
     public ServiceError(string message, string key = "ServiceError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
+    public ServiceError(string message, Core.Step step, string key = "ServiceError", int statusCode = 400)
+        : base(message, step, key, statusCode) { }
+
+    public ServiceError(string message, Core.Step step, IReadOnlyList<Core.CallFrame> callFrames, string key = "ServiceError", int statusCode = 400)
+        : base(message, step, callFrames, key, statusCode) { }
+
     public ServiceError(string message, PLangContext context, string key = "ServiceError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
@@ -18,8 +24,7 @@ public class ServiceError : Error
     {
         return new ServiceError(ex.Message, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null
+            Exception = ex
         };
     }
 
@@ -27,8 +32,7 @@ public class ServiceError : Error
     {
         return new ServiceError(ex.Message, context, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null
+            Exception = ex
         };
     }
 }

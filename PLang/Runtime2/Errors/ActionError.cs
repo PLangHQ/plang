@@ -1,3 +1,4 @@
+using System.Text;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -9,11 +10,14 @@ namespace PLang.Runtime2.Errors;
 /// </summary>
 public class ActionError : Error
 {
-    public string? ActionClass { get; init; }
-    public string? ActionMethod { get; init; }
+    public string? ActionModule { get; init; }
+    public string? ActionName { get; init; }
 
     public ActionError(string message, string key = "ActionError", int statusCode = 400)
         : base(message, key, statusCode) { }
+
+    public ActionError(string message, Core.Step step, string key = "ActionError", int statusCode = 400)
+        : base(message, step, key, statusCode) { }
 
     public ActionError(string message, PLangContext context, string key = "ActionError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
@@ -22,8 +26,7 @@ public class ActionError : Error
     {
         return new ActionError(ex.Message, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null
+            Exception = ex
         };
     }
 
@@ -31,11 +34,20 @@ public class ActionError : Error
     {
         return new ActionError(ex.Message, context, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null
+            Exception = ex
         };
     }
 
     public static ActionError NotFound(string what) => new($"{what} not found", "ActionNotFound", 404);
     public static ActionError NotFound(string what, PLangContext context) => new($"{what} not found", context, "ActionNotFound", 404);
+
+    protected override void FormatExtra(StringBuilder sb, string indent)
+    {
+        if (ActionModule != null || ActionName != null)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}\ud83d\udce6 Error Source:");
+            sb.AppendLine($"{indent}    - The error occurred in the module: `{ActionModule}.{ActionName}`");
+        }
+    }
 }

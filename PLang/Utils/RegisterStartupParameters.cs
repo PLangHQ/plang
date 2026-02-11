@@ -32,7 +32,7 @@ namespace PLang.Utils
 			if (strictbuild)
 			{
 				AppContext.SetSwitch(ReservedKeywords.StrictBuild, true);
-			}
+			} 
 			var detailerror = args.FirstOrDefault(p => p == "--detailerror") != null;
 			if (detailerror) 
 			{

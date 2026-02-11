@@ -19,8 +19,8 @@ public class StepTests
             {
                 new PLang.Runtime2.Core.Action
                 {
-                    Class = "http",
-                    Method = "get",
+                    Module = "http",
+                    ActionName = "get",
                     Parameters = new List<Data> { new Data("url", "https://api.example.com") },
                     Return = new List<Data> { new Data("response") }
                 }
@@ -35,8 +35,8 @@ public class StepTests
         await Assert.That(step.Indent).IsEqualTo(2);
         await Assert.That(step.Comment).IsEqualTo("This makes an HTTP call");
         await Assert.That(step.Actions.Count).IsEqualTo(1);
-        await Assert.That(step.Actions[0].Class).IsEqualTo("http");
-        await Assert.That(step.Actions[0].Method).IsEqualTo("get");
+        await Assert.That(step.Actions[0].Module).IsEqualTo("http");
+        await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
         await Assert.That(step.OnErrorGoal).IsEqualTo("HandleError");
         await Assert.That(step.WaitForExecution).IsFalse();
     }
@@ -84,8 +84,8 @@ public class StepTests
             {
                 new PLang.Runtime2.Core.Action
                 {
-                    Class = "variable",
-                    Method = "set",
+                    Module = "variable",
+                    ActionName = "set",
                     Parameters = new List<Data> { new Data("name", "test") },
                     Return = new List<Data> { new Data("result") }
                 }
@@ -103,8 +103,8 @@ public class StepTests
         await Assert.That(clone.Indent).IsEqualTo(original.Indent);
         await Assert.That(clone.Comment).IsEqualTo(original.Comment);
         await Assert.That(clone.Actions.Count).IsEqualTo(1);
-        await Assert.That(clone.Actions[0].Class).IsEqualTo("variable");
-        await Assert.That(clone.Actions[0].Method).IsEqualTo("set");
+        await Assert.That(clone.Actions[0].Module).IsEqualTo("variable");
+        await Assert.That(clone.Actions[0].ActionName).IsEqualTo("set");
         await Assert.That(clone.OnErrorGoal).IsEqualTo(original.OnErrorGoal);
         await Assert.That(clone.WaitForExecution).IsEqualTo(original.WaitForExecution);
         await Assert.That(clone.Goal).IsEqualTo(original.Goal);

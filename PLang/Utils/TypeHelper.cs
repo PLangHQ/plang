@@ -756,7 +756,17 @@ public class TypeHelper : ITypeHelper
 		var elemType =
 			targetType.IsArray
 				? targetType.GetElementType()!
-				: targetType.GetGenericArguments().FirstOrDefault() ?? typeof(object);
+				: targetType.GetGenericArguments().FirstOrDefault() ?? null;
+
+		if (elemType == null)
+		{
+			var baseType = targetType.BaseType;
+			elemType = baseType.IsArray
+				? baseType.GetElementType()!
+				: baseType.GetGenericArguments().FirstOrDefault() ?? null;
+		}
+
+		if (elemType == null) throw new Exception($"Could not find type on {targetType}");
 
 		// Normalize value into IEnumerable<object>
 		var values = value is System.Collections.IEnumerable e && value is not string

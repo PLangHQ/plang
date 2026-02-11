@@ -1,22 +1,21 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions.variable;
-using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+using PLang.Runtime2.modules.variable;
+using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
 public class RemoveTests
 {
-    private (RemoveHandler handler, MemoryStack memory) Create(MemoryStack? memoryStack = null)
+    private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
     {
-        var handler = new RemoveHandler();
         var appContext = new PLangAppContext("/app");
         var memory = memoryStack ?? new MemoryStack();
         var context = new PLangContext(appContext, memory);
         var engine = new Engine(appContext);
-        handler.Initialize(engine, context);
-        return (handler, memory);
+        context.RegisterContextVariables(engine);
+        return (context, memory);
     }
 
     [Test]
@@ -24,9 +23,10 @@ public class RemoveTests
     {
         var memory = new MemoryStack();
         memory.Set("testVar", "testValue");
-        var (handler, _) = Create(memory);
+        var (context, _) = CreateContext(memory);
 
-        var result = await handler.ExecuteAsync(new remove { name = "testVar" });
+        var action = new Remove { Context = context, Name = "testVar" };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var v = result.Value as VariableResult;
@@ -38,24 +38,14 @@ public class RemoveTests
     [Test]
     public async Task Remove_NonexistentVariable_ReturnsFalse()
     {
-        var (handler, _) = Create();
+        var (context, _) = CreateContext();
 
-        var result = await handler.ExecuteAsync(new remove { name = "nonexistent" });
+        var action = new Remove { Context = context, Name = "nonexistent" };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var v = result.Value as VariableResult;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.exists).IsFalse();
-    }
-
-    [Test]
-    public async Task Remove_NullParameters_ReturnsError()
-    {
-        var (handler, _) = Create();
-
-        var result = await handler.ExecuteAsync((object?)null);
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 }

@@ -1,0 +1,46 @@
+{
+  "name": "OnVarSet",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Variable set event fired\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "Variable set event fired"
+            },
+            {
+              "name": "Actor",
+              "value": ""
+            },
+            {
+              "name": "Channel",
+              "value": ""
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\OnVarSet.goal",
+  "prPath": "\\.build\\onvarset.pr",
+  "hash": "bcc08541d2a032d3b45309378b304a58d0cc905ba7061ded2f3480acf8cd848f",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "OnVarSet"
+}

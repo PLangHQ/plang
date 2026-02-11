@@ -1,4 +1,0 @@
-AssignAction
-/ Assigns action and intent from LLM Pass 1 to the step
-- set %r2Goal.Steps[%assignment.stepIndex%].ActionName% = %assignment.action%
-- set %r2Goal.Steps[%assignment.stepIndex%].Intent% = %assignment.intent%

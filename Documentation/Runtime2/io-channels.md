@@ -1,82 +1,70 @@
 # IO & Channels
 
-Stream-based IO with named channels for input/output operations.
+Stream-based IO with named channels for input/output operations. The `IO` class also provides file deserialization.
 
 ## IO Class
 
-Manages a collection of named channels.
+`PLang.Runtime2.IO.IO` — manages channels and provides file I/O.
 
 ### API Surface
 
 ```csharp
 public sealed class IO : IAsyncDisposable
 {
-    // Constants
-    public const string StdIn = "stdin";
-    public const string StdOut = "stdout";
-    public const string StdErr = "stderr";
-
     // Constructor
-    public IO(SerializerRegistry? serializers = null)
+    public IO(Engine engine)
+
+    // File operations (convenience — uses Engine.Serializers)
+    Task<T?> ReadAsync<T>(string filePath, CancellationToken ct = default)
 
     // Channel management
-    public Channel? Get(string name)
-    public Channel GetOrCreate(string name, Func<Channel> factory)
-    public void Register(Channel channel)
-    public Task<bool> RemoveAsync(string name)
-    public bool Contains(string name)
-    public IEnumerable<string> ChannelNames { get; }
+    Channel? Get(string name)
+    Channel GetOrCreate(string name, Func<Channel> factory)
+    void Register(Channel channel)
+    Task<bool> RemoveAsync(string name)
+    bool Contains(string name)
+    IEnumerable<string> ChannelNames { get; }
 
-    // Channel factories
-    public Channel CreateMemoryChannel(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
-    public Channel CreateFileChannel(string name, string path, FileMode mode = FileMode.OpenOrCreate)
-
-    // Read/Write operations
-    public Task<GoalResult> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
-    public Task<GoalResult> ReadAsync<T>(string channelName, CancellationToken cancellationToken = default)
-    public Task<GoalResult> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
-    public Task<GoalResult> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
+    // Channel read/write (returns Data, not GoalResult)
+    Task<Data> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken ct = default)
+    Task<Data> ReadChannelAsync<T>(string channelName, CancellationToken ct = default)
+    Task<Data> WriteTextAsync(string channelName, string text, CancellationToken ct = default)
+    Task<Data> ReadTextAsync(string channelName, CancellationToken ct = default)
 
     // Disposal
-    public ValueTask DisposeAsync()
+    ValueTask DisposeAsync()
 }
 ```
 
 ### Behavior & Rules
 
-- Channel names are case-insensitive
-- `WriteAsync` uses channel's `ContentType` or defaults to `"application/json"`
-- `ReadAsync` returns `GoalResult.Fail("ChannelNotFound")` if channel doesn't exist
-- `WriteAsync` returns `GoalResult.Fail("ChannelReadOnly")` if channel is input-only
-- `ReadAsync` returns `GoalResult.Fail("ChannelWriteOnly")` if channel is output-only
+- `IO` takes `Engine` in its constructor (not just `SerializerRegistry`)
+- `ReadAsync<T>` reads a file from disk and deserializes using the appropriate serializer
+- Channel operations return `Data` (not `GoalResult`)
+- `WriteAsync` returns `Data.Fail` if channel doesn't exist or is read-only
+- `ReadChannelAsync` returns `Data.Fail` if channel doesn't exist or is write-only
 - `DisposeAsync` disposes all registered channels
 
 ### Code Examples
 
 ```csharp
-await using var io = new IO();
+// IO is created per Actor (not standalone)
+var io = actor.IO;
 
-// Create channels
-var debugChannel = io.CreateMemoryChannel("debug");
-var logChannel = io.CreateFileChannel("log", "/var/log/app.log");
+// Read a file
+var goal = await io.ReadAsync<Goal>("path/to/.build/start.pr");
 
-// Write data
-await io.WriteAsync("debug", new { level = "info", message = "Started" });
-await io.WriteTextAsync("log", "Application started\n");
-
-// Read data
-var result = await io.ReadAsync<LogEntry>("debug");
-if (result.Success)
-{
-    var entry = result.GetValue<LogEntry>();
-}
+// Channel operations
+var result = await io.WriteTextAsync("stdout", "Hello, World!");
+if (!result.Success)
+    Console.Error.WriteLine(result.Error?.Message);
 ```
 
 ## Channel Class
 
-Represents a named I/O channel backed by a Stream.
+`PLang.Runtime2.IO.Channel` — represents a named I/O channel backed by a Stream.
 
-### API Surface
+### ChannelDirection
 
 ```csharp
 public enum ChannelDirection
@@ -85,61 +73,39 @@ public enum ChannelDirection
     Output,
     Bidirectional
 }
-
-public sealed class Channel : IAsyncDisposable, IDisposable
-{
-    // Properties
-    public string Name { get; }
-    public Stream Stream { get; }
-    public ChannelDirection Direction { get; }
-    public string? ContentType { get; set; }
-    public bool IsOpen { get; }
-    public DateTime Created { get; }
-    public IDictionary<string, object> Metadata { get; }
-    public bool CanRead { get; }
-    public bool CanWrite { get; }
-
-    // Constructor
-    public Channel(string name, Stream stream, ChannelDirection direction = ChannelDirection.Bidirectional, bool ownsStream = true)
-
-    // Static factories
-    public static Channel Input(string name, Stream stream)
-    public static Channel Output(string name, Stream stream)
-    public static Channel Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
-    public static Channel File(string name, string path, FileMode mode = FileMode.OpenOrCreate)
-
-    // Read operations
-    public Task<byte[]> ReadAllBytesAsync(CancellationToken cancellationToken = default)
-    public Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
-
-    // Write operations
-    public Task WriteBytesAsync(byte[] data, CancellationToken cancellationToken = default)
-    public Task WriteTextAsync(string text, CancellationToken cancellationToken = default)
-
-    // Lifecycle
-    public void Close()
-    public void Dispose()
-    public ValueTask DisposeAsync()
-}
 ```
 
-### Behavior & Rules
+### Properties
 
-- `CanRead` returns `true` if `IsOpen && Direction != Output && Stream.CanRead`
-- `CanWrite` returns `true` if `IsOpen && Direction != Input && Stream.CanWrite`
-- `ownsStream` parameter controls whether the channel disposes the stream
-- `Metadata` dictionary is case-insensitive
-- `ReadAllBytesAsync` on `MemoryStream` uses `ToArray()` for efficiency
-- `Close()` and `Dispose()` are idempotent
+| Property | Type | Description |
+|----------|------|-------------|
+| `Name` | `string` | Channel identifier |
+| `Stream` | `Stream` | Backing stream |
+| `Direction` | `ChannelDirection` | Read/write direction |
+| `ContentType` | `string?` | MIME type for serialization |
+| `IsOpen` | `bool` | Whether channel is open |
+| `Created` | `DateTime` | When the channel was created |
+| `Metadata` | `IDictionary<string, object>` | Arbitrary metadata |
+| `CanRead` | `bool` | `IsOpen && Direction != Output && Stream.CanRead` |
+| `CanWrite` | `bool` | `IsOpen && Direction != Input && Stream.CanWrite` |
 
 ### Static Factories
 
-| Factory | Direction | Stream Type |
-|---------|-----------|-------------|
-| `Input(name, stream)` | Input | Provided stream |
-| `Output(name, stream)` | Output | Provided stream |
-| `Memory(name)` | Bidirectional | MemoryStream |
-| `File(name, path, mode)` | Based on mode | FileStream |
+```csharp
+Channel.Input(string name, Stream stream)        // Input-only
+Channel.Output(string name, Stream stream)       // Output-only
+Channel.Memory(string name, ChannelDirection dir) // Memory-backed
+Channel.File(string name, string path, FileMode) // File-backed
+```
+
+### Read/Write Operations
+
+```csharp
+Task<byte[]> ReadAllBytesAsync(CancellationToken ct = default)
+Task<string> ReadAllTextAsync(CancellationToken ct = default)
+Task WriteBytesAsync(byte[] data, CancellationToken ct = default)
+Task WriteTextAsync(string text, CancellationToken ct = default)
+```
 
 ### Code Examples
 
@@ -160,50 +126,20 @@ var inputChannel = Channel.Input("request", httpRequest.Body);
 var body = await inputChannel.ReadAllTextAsync();
 ```
 
-## ChannelData Class
+## Actor Ownership
 
-Represents data that can be sent/received through a channel with metadata.
+Each `Actor` has its own `IO` instance. The engine creates three actors with separate I/O:
 
-### API Surface
-
-```csharp
-public sealed class ChannelData
-{
-    // Properties
-    public object? Value { get; }
-    public string? ContentType { get; }
-    public IDictionary<string, string>? Metadata { get; }
-    public DateTime Timestamp { get; }
-    public bool IsEmpty { get; }
-
-    // Constructor
-    public ChannelData(object? value, string? contentType = null, IDictionary<string, string>? metadata = null)
-
-    // Static factories
-    public static ChannelData Json(object? value)
-    public static ChannelData Text(string? value)
-    public static ChannelData Binary(byte[]? value)
-
-    // Value access
-    public T? GetValue<T>()
-}
 ```
-
-### Code Examples
-
-```csharp
-// Create channel data
-var jsonData = ChannelData.Json(new { name = "John", age = 30 });
-var textData = ChannelData.Text("Hello, World!");
-var binaryData = ChannelData.Binary(fileBytes);
-
-// Access value
-var person = jsonData.GetValue<Person>();
+Engine.System.IO   → System actor's channels
+Engine.Service.IO  → Service actor's channels
+Engine.User.IO     → User actor's channels
 ```
 
 ## Relationships
 
-- `IO` uses [SerializerRegistry](serializers.md) for content-type based serialization
-- `IO.WriteAsync` and `IO.ReadAsync` return [GoalResult](goal-result.md)
+- `IO` uses [SerializerRegistry](serializers.md) via Engine for content-type based serialization
+- `IO.WriteAsync` and `IO.ReadChannelAsync` return [Data](goal-result.md)
+- `IO.ReadAsync<T>` is used by [Goals](goals-steps.md) for loading `.pr` files
 - `Channel` wraps standard .NET `Stream`
-- Standard channel names (`stdin`, `stdout`, `stderr`) align with console conventions
+- Each [Actor](contexts.md) owns an `IO` instance

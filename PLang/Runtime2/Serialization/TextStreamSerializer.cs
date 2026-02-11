@@ -4,6 +4,8 @@ namespace PLang.Runtime2.Serialization;
 
 /// <summary>
 /// Plain text serializer - converts objects to their string representation.
+/// Falls back to JSON for complex types so that e.g. List&lt;T&gt; outputs proper JSON
+/// instead of "System.Collections.Generic.List`1[...]".
 /// </summary>
 public sealed class TextStreamSerializer : ISerializer
 {
@@ -11,17 +13,26 @@ public sealed class TextStreamSerializer : ISerializer
     public string FileExtension => ".txt";
 
     private readonly Encoding _encoding;
+    private readonly JsonStreamSerializer _jsonFallback;
 
-    public TextStreamSerializer(Encoding? encoding = null)
+    public TextStreamSerializer(Encoding? encoding = null, JsonStreamSerializer? jsonFallback = null)
     {
         _encoding = encoding ?? Encoding.UTF8;
+        _jsonFallback = jsonFallback ?? new JsonStreamSerializer();
     }
 
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
     {
-        var text = value?.ToString() ?? "";
-        var bytes = _encoding.GetBytes(text);
-        await stream.WriteAsync(bytes, cancellationToken);
+        if (IsSimpleType(value))
+        {
+            var text = value?.ToString() ?? "";
+            var bytes = _encoding.GetBytes(text + Environment.NewLine);
+            await stream.WriteAsync(bytes, cancellationToken);
+        }
+        else
+        {
+            await _jsonFallback.SerializeAsync(stream, value + Environment.NewLine, type, cancellationToken);
+        }
     }
 
     public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
@@ -39,7 +50,8 @@ public sealed class TextStreamSerializer : ISerializer
 
     public string Serialize(object? value, Type? type = null)
     {
-        return value?.ToString() ?? "";
+        if (IsSimpleType(value)) return value?.ToString() ?? "";
+        return _jsonFallback.Serialize(value, type);
     }
 
     public object? Deserialize(string data, Type type)
@@ -51,6 +63,15 @@ public sealed class TextStreamSerializer : ISerializer
     {
         var result = ConvertFromString(data, typeof(T));
         return result is T typed ? typed : default;
+    }
+
+    private static bool IsSimpleType(object? value)
+    {
+        if (value == null) return true;
+        var t = value.GetType();
+        return t.IsPrimitive || t == typeof(string) || t == typeof(decimal)
+            || t == typeof(DateTime) || t == typeof(DateTimeOffset)
+            || t == typeof(Guid) || t.IsEnum;
     }
 
     private static object? ConvertFromString(string text, Type type)

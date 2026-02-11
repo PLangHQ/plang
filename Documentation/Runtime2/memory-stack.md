@@ -1,55 +1,57 @@
 # MemoryStack & Variables
 
-Variable storage with type metadata and system variables. Variables set in PLang steps are stored here.
+Variable storage using `Data` entries with type metadata, dot-notation path resolution, and system variables.
 
 ## MemoryStack
+
+`PLang.Runtime2.Memory.MemoryStack` — `ConcurrentDictionary<string, Data>` under the hood.
 
 ### API Surface
 
 ```csharp
 public sealed class MemoryStack
 {
-    // System variables (read-only)
-    public DateTime Now { get; }
-    public DateTime NowUtc { get; }
-    public string NewGuid { get; }
-
-    // Variable operations
-    public void Set(string name, object? value, TypeInfo? typeInfo = null)
-    public ObjectValue? Get(string name)
-    public object? GetValue(string name)
-    public T? GetValue<T>(string name)
-    public bool TryGet(string name, out ObjectValue? value)
-    public bool Contains(string name)
-    public bool Remove(string name)
-    public void Clear()
+    // Core operations
+    void Put(Data data)                           // Add/replace a Data entry
+    void Set(string name, object? value, Type? type = null)  // Create and add
+    Data? Get(string name)                        // Get Data by name (dot-notation path support)
+    T? Get<T>(string name)                        // Get typed value
+    object? GetValue(string name)                 // Get raw value
+    bool Contains(string name)
+    bool Remove(string name)
+    void Clear()
 
     // Enumeration
-    public IEnumerable<string> GetNames()
-    public IEnumerable<ObjectValue> GetAll()
+    IEnumerable<string> GetNames()
+    IEnumerable<Data> GetAll()
 
     // Cloning
-    public MemoryStack Clone()
+    MemoryStack Clone()
+
+    // Conversion
+    Dictionary<string, object?> ToDictionary()
 }
 ```
 
 ### Behavior & Rules
 
-- Variable names are case-insensitive
+- Variable names are **case-insensitive**
 - Thread-safe via `ConcurrentDictionary`
-- `Set` creates or updates a variable with optional type information
-- `Get` returns `ObjectValue` wrapper, `GetValue` returns the raw value
+- `Put(data)` adds a `Data` object directly
+- `Set(name, value, type)` creates a new `Data` and puts it
+- `Get(name)` supports dot-notation paths (e.g., `"user.address.city"`) — splits on first `.` and delegates to `Data.GetChild()`
 - `Clone()` creates a shallow copy of all variables
+- `ToDictionary()` returns `Dictionary<string, object?>` of all variable values
 
 ### System Variables
+
+Registered as `DynamicData` (computed on each access):
 
 | Variable | Description | Returns |
 |----------|-------------|---------|
 | `Now` | Current local time | `DateTime.Now` |
 | `NowUtc` | Current UTC time | `DateTime.UtcNow` |
-| `NewGuid` | New unique identifier | `Guid.NewGuid().ToString()` |
-
-System variables are computed on each access.
+| `GUID` | New unique identifier | `Guid.NewGuid().ToString()` |
 
 ### Code Examples
 
@@ -58,13 +60,17 @@ var memory = new MemoryStack();
 
 // Set variables
 memory.Set("name", "John");
-memory.Set("age", 30);
-memory.Set("scores", new List<int> { 85, 92, 78 }, new TypeInfo("list<int>"));
+memory.Set("age", 30, Type.Int);
+memory.Set("scores", new List<int> { 85, 92, 78 });
 
 // Get variables
-var name = memory.GetValue<string>("name");     // "John"
-var age = memory.GetValue<int>("age");          // 30
-var obj = memory.Get("name");                   // ObjectValue
+var nameData = memory.Get("name");         // Data { Name = "name", Value = "John" }
+var name = memory.Get<string>("name");     // "John"
+var age = memory.GetValue("age");          // 30 (as object)
+
+// Dot-notation path resolution
+memory.Set("user", new { Name = "John", Address = new { City = "NYC" } });
+var city = memory.Get("user.Address.City");  // Data { Value = "NYC" }
 
 // Check existence
 if (memory.Contains("name"))
@@ -75,144 +81,50 @@ if (memory.Contains("name"))
 // Remove
 memory.Remove("age");
 
-// System variables
-var now = memory.Now;
-var guid = memory.NewGuid;
+// System variables (always available)
+var now = memory.Get("Now");     // DynamicData, Value = DateTime.Now
+var guid = memory.Get("GUID");   // DynamicData, Value = new Guid each access
 
 // Clone
 var copy = memory.Clone();
+
+// IMemoryStackAccessor/MemoryStackAccessor
+// AsyncLocal-based accessor for implicit MemoryStack threading
 ```
 
-## ObjectValue
+## Data (as Variable Container)
 
-Wraps a variable value with name and type metadata.
+Each variable in MemoryStack is stored as a `Data` object. See [Data](goal-result.md) for full documentation.
 
-### API Surface
-
-```csharp
-public class ObjectValue
-{
-    // Properties
-    public string Name { get; }
-    public object? Value { get; set; }
-    public TypeInfo? TypeInfo { get; set; }
-
-    // Constructor
-    public ObjectValue(string name, object? value = null, TypeInfo? typeInfo = null)
-
-    // Value access
-    public T? GetValue<T>()
-    public ObjectValue? GetChild(string path)
-
-    // Child properties
-    public Properties Children { get; }
-}
-```
-
-### Behavior & Rules
-
-- `Name` — variable identifier
+Key properties for variable use:
+- `Name` — variable identifier (auto-cleaned of `%` markers)
 - `Value` — the stored value
-- `TypeInfo` — optional type metadata
-- `GetValue<T>()` — returns value cast to T
-- `GetChild(path)` — navigates to child property by dot-separated path
-- `Children` — collection of child properties
-
-### Code Examples
-
-```csharp
-var obj = new ObjectValue("user", new { Name = "John", Age = 30 });
-
-// Get typed value
-var user = obj.GetValue<User>();
-
-// Navigate to child
-var nameChild = obj.GetChild("Name");
-```
-
-## DynamicObjectValue
-
-Extends ObjectValue with dynamic property access for object/dictionary values.
-
-```csharp
-var dynamic = new DynamicObjectValue("data", new Dictionary<string, object>
-{
-    ["name"] = "John",
-    ["address"] = new { City = "NYC", Zip = "10001" }
-});
-
-// Access nested properties
-var city = dynamic.GetChild("address.City");
-```
-
-## TypeInfo
-
-Type metadata for variables.
-
-### API Surface
-
-```csharp
-public sealed class TypeInfo
-{
-    // Properties
-    public string Name { get; }
-    public Type? ClrType { get; }
-    public bool IsList { get; }
-    public bool IsDictionary { get; }
-    public bool IsNullable { get; }
-
-    // Constructor
-    public TypeInfo(string name)
-
-    // Static factories
-    public static TypeInfo FromType(Type type)
-    public static TypeInfo FromType<T>()
-}
-```
-
-### Code Examples
-
-```csharp
-var stringType = new TypeInfo("string");
-var listType = new TypeInfo("list<int>");
-var dictType = new TypeInfo("dict<string,object>");
-
-// From CLR type
-var typeInfo = TypeInfo.FromType<List<string>>();  // "list<string>"
-```
+- `Type` — PLang type descriptor
+- `Path` — parent-qualified path (e.g., `user.address.city`)
+- `GetChild(path)` — navigate to nested properties
+- `GetValue<T>()` — get typed value
 
 ## Properties
 
-A collection of ObjectValue items with named access.
-
-### API Surface
+`PLang.Runtime2.Memory.Properties : IList<Data>` — named collection of `Data` items.
 
 ```csharp
-public class Properties : IList<ObjectValue>
+public class Properties : IList<Data>
 {
-    // Indexers
-    public ObjectValue this[int index] { get; set; }
-    public ObjectValue? this[string name] { get; set; }
+    // Named access
+    Data? this[string name] { get; set; }
 
-    // Methods
-    public T? Get<T>(string name)
-    public void Set(string name, object? value, TypeInfo? typeInfo = null)
-    public bool Remove(string name)
-    public bool Contains(string name)
-    public Dictionary<string, object?> ToDictionary()
+    // Typed access
+    T? Get<T>(string name)
+    void Set(string name, object? value)
+    bool Remove(string name)
+
+    // Conversion
+    Dictionary<string, object?> ToDictionary()
 }
 ```
 
-### Code Examples
-
-```csharp
-var props = new Properties();
-props.Set("name", "John");
-props.Set("age", 30);
-
-var name = props.Get<string>("name");
-var dict = props.ToDictionary();
-```
+Used by `Data.Properties` for attaching metadata to variables.
 
 ## Variable Syntax in PLang
 
@@ -226,11 +138,13 @@ CreateUser
 - log "Created user %user.id%"
 ```
 
-The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `MemoryStack.GetValue` with dot-notation path navigation.
+The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `MemoryStack.Get()` with dot-notation path navigation. The source generator creates lazy parameter records (`*__Generated`) that resolve `%var%` references at property access time.
 
 ## Relationships
 
 - Stored in [PLangContext](contexts.md)
-- Used by [Engine](engine.md) to store step return values
-- Used by [VariableModule](modules.md) for variable operations
+- Variables are [Data](goal-result.md) objects
+- Used by [Engine](engine.md) to store action return values
+- Used by action handlers (e.g., `variable.set`) for variable operations
 - Cloned for [CallStack](call-stack.md) change tracking when debugging
+- Type metadata uses [Type](goal-result.md) and [TypeMapping](modules.md)

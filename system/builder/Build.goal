@@ -3,12 +3,10 @@ Build
 / Transforms .goal files (natural language) into .pr files (JSON the Runtime executes)
 / Parameters: %path% - folder to build (default: ".")
 
-- if %path% is not set then
-    - set %path% = "."
+- set default %path% = "."
 - write out "Building path: %path%"
 - [plang] call GetApp, write to %app%
-- [plang] GetGoals, fileOrFolderPath=%path%, parser="goal", write to %goals%
+- [plang] GetGoalsV2, fileOrFolderPath=%path%, parser="goal", write to %goals%
 - write out "Found %goals.Count% goals"
-- write out "Goals: %goals%"
 - foreach %goals%, call BuildGoal, item=%goal%
-- [plang] call SaveApp, app=%app%, path=".build/app.pr"
+- [plang] call SaveApp, app=%app%

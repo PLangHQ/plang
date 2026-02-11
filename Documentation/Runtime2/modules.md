@@ -1,248 +1,194 @@
-# Modules
+# Action Handlers
 
-Modules provide the executable functionality for PLang steps. Each module exposes methods that can be called from PLang code.
+Action handlers provide the executable functionality for PLang steps. Each handler class exposes typed parameter records and a source-generated `CodeGeneratedExecuteAsync` entry point.
 
-## IModule Interface
+## IClass Interface
 
-### API Surface
+`PLang.Runtime2.modules.IClass` — base interface for all action handlers.
 
 ```csharp
-public interface IModule
+public interface IClass
 {
-    // Identity
-    string Name { get; }
-    IEnumerable<string> Aliases { get; }
+    Engine Engine { get; set; }
+    PLangContext Context { get; set; }
+    System.Type ParameterType { get; }
 
-    // Lifecycle
-    void Initialize(ModuleContext context);
-
-    // Execution
-    Task<GoalResult> ExecuteAsync(string method, object? parameters);
-
-    // Discovery
-    bool CanHandle(string method);
-    IEnumerable<string> GetMethods();
+    Task Initialize(PLangContext context);
+    Task<Data> ExecuteAsync(string method, List<Data> parameters);
 }
 ```
 
-### Behavior & Rules
+## ICodeGenerated Interface
 
-- `Name` — primary identifier for the module
-- `Aliases` — alternative names (e.g., "db" as alias for "database")
-- `Initialize` — called before each `ExecuteAsync` with current execution context
-- `ExecuteAsync` — single entry point, dispatches based on method name
-- `CanHandle` — returns true if module supports the given method
-- `GetMethods` — returns all supported method names
-
-## ModuleContext
-
-Provided to modules during initialization.
+`PLang.Runtime2.modules.ICodeGenerated` — source-generated dispatch interface. **Required** on all handlers — Engine has no fallback path.
 
 ```csharp
-public sealed class ModuleContext
+public interface ICodeGenerated
 {
-    public Engine Engine { get; }
-    public PLangContext Context { get; }
-    public Goal? Goal { get; }
-    public Step? Step { get; }
+    Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context);
 }
 ```
 
-## BaseModule
+The PLang source generator (`PLang.Generators/LazyParamsGenerator.cs`) scans handler classes and generates a partial implementation that:
+1. Creates a `*__Generated` record from the parameter list
+2. Resolves `%var%` references lazily at property access time
+3. Dispatches to the correct handler method based on the action's `Method` name
 
-Abstract base class with common module functionality.
+## BaseClass
 
-### API Surface
+`PLang.Runtime2.modules.BaseClass` — abstract base class with common handler functionality.
 
 ```csharp
-public abstract class BaseModule : IModule
+public abstract class BaseClass : IClass
 {
-    // Properties
-    public abstract string Name { get; }
-    public virtual IEnumerable<string> Aliases => Array.Empty<string>();
+    // From IClass
+    public Engine Engine { get; set; }
+    public PLangContext Context { get; set; }
+    public abstract System.Type ParameterType { get; }
 
-    // Context access
-    protected Engine Engine { get; private set; }
-    protected PLangContext Context { get; private set; }
-    protected Goal? Goal { get; private set; }
-    protected Step? Step { get; private set; }
+    // Convenience properties
     protected MemoryStack MemoryStack => Context.MemoryStack;
 
-    // Lifecycle
-    public void Initialize(ModuleContext context)
-
-    // Execution (must be implemented)
-    public abstract Task<GoalResult> ExecuteAsync(string method, object? parameters);
-
-    // Discovery
-    public virtual bool CanHandle(string method) => false;
-    public virtual IEnumerable<string> GetMethods() => Array.Empty<string>();
+    // Result helpers
+    protected Data Success(object? value = null)
+    protected Data Error(string message, string key = "Error", int statusCode = 400)
+    protected Task<Data> SuccessTask(object? value = null)
+    protected Task<Data> ErrorTask(string message, string key = "Error", int statusCode = 400)
 }
 ```
 
-## ModuleRegistry
+### BaseClass\<TParams\>
 
-Manages registered modules.
-
-### API Surface
+Generic variant that provides typed parameter access:
 
 ```csharp
-public sealed class ModuleRegistry
+public abstract class BaseClass<TParams> : BaseClass
+{
+    public override System.Type ParameterType => typeof(TParams);
+}
+```
+
+## ActionRegistry
+
+`PLang.Runtime2.modules.ActionRegistry` — two-level `ConcurrentDictionary` for handler lookup.
+
+```csharp
+public sealed class ActionRegistry
 {
     // Registration
-    public void Register(IModule module)
-    public bool Unregister(string name)
+    void Register(string namespaceName, string className, IClass handler)
+    void DiscoverAndRegister(Assembly assembly)   // Reflection-based discovery
 
     // Lookup
-    public IModule? Get(string name)
-    public bool Contains(string name)
-    public IModule? FindByMethod(string method)
+    IClass? Get(string namespaceName, string className)
+    ICodeGenerated? GetCodeGenerated(string className, string methodName)
 
     // Enumeration
-    public IEnumerable<string> Names { get; }
-    public IEnumerable<IModule> All { get; }
+    IEnumerable<string> Namespaces { get; }
+    IEnumerable<string> ClassNames(string namespaceName)
 }
 ```
 
 ### Behavior & Rules
 
-- Name lookup is case-insensitive
-- Registers module by `Name` and all `Aliases`
-- `FindByMethod` iterates modules calling `CanHandle`
+- Two-level structure: `namespace → className → IClass`
+- `DiscoverAndRegister` scans an assembly for all types implementing `IClass`
+- `GetCodeGenerated` finds the handler and casts to `ICodeGenerated`
+- Lookup is case-insensitive
+- Engine calls `RegisterBuiltInModules()` in constructor, which calls `DiscoverAndRegister(Assembly.GetExecutingAssembly())`
 
-## Creating a Module
+## Creating an Action Handler
 
-### C# Implementation
+### Handler Pattern
+
+Each action handler consists of:
+1. A **parameter record** (lowercase name matching the action) — defines the typed parameters
+2. A **handler class** (PascalCase + "Handler") — contains the execution logic as a `partial class`
+3. A **source-generated partial** — implements `ICodeGenerated` with lazy parameter resolution
+
+### Example: variable.set
 
 ```csharp
-public class DbModule : BaseModule
+// PLang/Runtime2/actions/variable/set.cs
+
+namespace PLang.Runtime2.modules.variable;
+
+// Parameter record — defines the action's typed parameters
+public record set(string name, object? value, string? type);
+
+// Handler class — contains execution logic
+public partial class SetHandler : BaseClass<set>
 {
-    public override string Name => "db";
-    public override IEnumerable<string> Aliases => new[] { "database", "sql" };
-
-    public override async Task<GoalResult> ExecuteAsync(string method, object? parameters)
+    public Data Execute(set parameters)
     {
-        return method.ToLowerInvariant() switch
-        {
-            "insert" => await InsertAsync(parameters),
-            "select" => await SelectAsync(parameters),
-            "update" => await UpdateAsync(parameters),
-            "delete" => await DeleteAsync(parameters),
-            _ => GoalResult.Fail($"Unknown method: {method}", "MethodNotFound", 404)
-        };
+        var type = parameters.type != null
+            ? new Memory.Type(parameters.type)
+            : null;
+
+        MemoryStack.Set(parameters.name, parameters.value, type);
+        return Success();
     }
-
-    public override bool CanHandle(string method)
-    {
-        return method.ToLowerInvariant() is "insert" or "select" or "update" or "delete";
-    }
-
-    public override IEnumerable<string> GetMethods()
-    {
-        return new[] { "insert", "select", "update", "delete" };
-    }
-
-    private async Task<GoalResult> InsertAsync(object? parameters)
-    {
-        // Extract parameters
-        var dict = parameters as Dictionary<string, object?>;
-        var table = dict?["table"]?.ToString();
-        var data = dict?["data"];
-
-        // Perform insert
-        var id = await _database.InsertAsync(table, data);
-
-        return GoalResult.Ok(new { id });
-    }
-
-    // ... other methods
 }
 ```
 
-### Registration
+The source generator creates a `SetHandler` partial that implements `ICodeGenerated`:
 
 ```csharp
-await using var engine = new Engine(appContext);
-engine.Modules.Register(new DbModule());
-```
-
-### PLang Usage
-
-```plang
-CreateUser
-- insert into users, name=%name%, email=%email%, write to %user%
-- select * from users where id=%user.id%, return 1, write to %result%
-```
-
-The compiler maps this to:
-- Module: `db`
-- Method: `insert` / `select`
-- Parameters: extracted from the natural language
-
-## Built-in VariableModule
-
-Provides variable manipulation operations.
-
-```csharp
-public class VariableModule : BaseModule
+// Auto-generated (conceptual)
+public partial class SetHandler : ICodeGenerated
 {
-    public override string Name => "variable";
+    // Generated record that resolves %var% at property access
+    public sealed record set__Generated(/* ... */) : set(/* ... */);
 
-    public override Task<GoalResult> ExecuteAsync(string method, object? parameters)
+    public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
     {
-        return method.ToLowerInvariant() switch
-        {
-            "set" => SetAsync(parameters),
-            "get" => GetAsync(parameters),
-            "remove" => RemoveAsync(parameters),
-            "exists" => ExistsAsync(parameters),
-            "clear" => ClearAsync(),
-            _ => GoalResult.FailTask($"Unknown method: {method}")
-        };
+        Engine = engine;
+        Context = context;
+
+        // Create lazy params that resolve %var% from MemoryStack
+        var p = new set__Generated(/* map parameters by name */);
+
+        return Task.FromResult(Execute(p));
     }
-
-    private Task<GoalResult> SetAsync(object? parameters)
-    {
-        var dict = parameters as Dictionary<string, object?>;
-        var name = dict?["name"]?.ToString();
-        var value = dict?["value"];
-
-        if (string.IsNullOrEmpty(name))
-            return GoalResult.FailTask("Variable name is required");
-
-        MemoryStack.Set(name, value);
-        return GoalResult.SuccessTask();
-    }
-
-    // ... other methods
 }
 ```
 
-### PLang Usage
+### Handler Naming Convention
 
-```plang
-SetVariables
-- set variable %name% to "John"
-- set variable %count% to 0
-- get variable %name%, write to %result%
-- remove variable %temp%
-- if variable %flag% exists then call HandleFlag
-- clear all variables
+| Component | Convention | Example |
+|-----------|-----------|---------|
+| Parameter record | Lowercase action name | `set`, `save`, `read` |
+| Handler class | PascalCase + "Handler" | `SetHandler`, `SaveHandler`, `ReadHandler` |
+| Namespace | `PLang.Runtime2.modules.{module}` | `PLang.Runtime2.modules.variable` |
+| File | `{action}.cs` | `set.cs`, `save.cs` |
+
+### Action Reference in .pr JSON
+
+```json
+{
+  "action": "variable",
+  "method": "set",
+  "parameters": [
+    { "name": "name", "value": "greeting" },
+    { "name": "value", "value": "Hello World" }
+  ]
+}
 ```
+
+The `"action"` field maps to the handler namespace/class, and `"method"` maps to the handler method.
 
 ## TypeMapping
 
-Maps between PLang type names and .NET types.
-
-### API Surface
+`PLang.Runtime2.Utility.TypeMapping` — maps between PLang type names, MIME types, and .NET types.
 
 ```csharp
 public static class TypeMapping
 {
-    public static Type? GetType(string typeName)
-    public static string GetTypeName(Type type)
-    public static bool IsPrimitive(Type type)
-    public static object? ConvertTo(object? value, Type targetType)
+    System.Type? GetType(string typeName)         // PLang name → CLR type
+    string GetTypeName(System.Type type)          // CLR type → PLang name
+    bool IsPrimitive(System.Type type)
+    object? ConvertTo(object? value, System.Type targetType)
+    string? GetMimeType(string typeName)          // PLang name → MIME type
 }
 ```
 
@@ -254,7 +200,7 @@ public static class TypeMapping
 | `int`, `integer` | `int` |
 | `long` | `long` |
 | `float` | `float` |
-| `double` | `double` |
+| `double`, `number` | `double` |
 | `decimal` | `decimal` |
 | `bool`, `boolean` | `bool` |
 | `datetime`, `date` | `DateTime` |
@@ -264,24 +210,22 @@ public static class TypeMapping
 | `list<T>` | `List<T>` |
 | `dict`, `dictionary`, `map` | `Dictionary<string, object>` |
 | `dict<K,V>` | `Dictionary<K,V>` |
+| MIME types (e.g., `text/markdown`) | Mapped via TypeMapping |
 
-### Code Examples
+## Built-in Action Handlers
 
-```csharp
-// Get .NET type from PLang name
-var type = TypeMapping.GetType("list<int>");  // typeof(List<int>)
-
-// Get PLang name from .NET type
-var name = TypeMapping.GetTypeName(typeof(Dictionary<string, int>));  // "dict<string,int>"
-
-// Convert values
-var result = TypeMapping.ConvertTo("123", typeof(int));  // 123
-```
+| Namespace | Actions | Purpose |
+|-----------|---------|---------|
+| `variable` | `set`, `get`, `remove`, `exists`, `clear` | Variable operations |
+| `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
+| `output` | `write` | Console/channel output |
+| `condition` | Condition evaluation | If/else logic |
 
 ## Relationships
 
-- Registered in [Engine](engine.md) via `Modules` property
-- Receive [ModuleContext](#modulecontext) during execution
+- Registered in [Engine](engine.md) via `Actions` property (`ActionRegistry`)
+- Receive `PLangContext` via `CodeGeneratedExecuteAsync`
 - Access [MemoryStack](memory-stack.md) for variable operations
-- Return [GoalResult](goal-result.md) from `ExecuteAsync`
-- Referenced by [Step](goals-steps.md) via `ModuleName`
+- Return [Data](goal-result.md) from execution
+- Referenced by [Action](goals-steps.md) via `Class` and `Method`
+- Source generator in `PLang.Generators/LazyParamsGenerator.cs`

@@ -503,6 +503,20 @@ namespace PLang.Building.Parsers
 
 			return systemGoals;
 		}
+		public void AddSystemGoals(IEnumerable<Goal> goals)
+		{
+			if (this.systemGoals is List<Goal> list)
+			{
+				foreach (var goal in goals)
+				{
+					if (!list.Any(p => p.RelativePrPath == goal.RelativePrPath))
+					{
+						list.Add(goal);
+					}
+				}
+			}
+		}
+
 		public List<Goal> GetApps()
 		{
 			var groupedGoals = GetAllGoals().GroupBy(p => p.AppName);

@@ -1,0 +1,213 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %user% = {name:\u0022john\u0022, age:20, addresses:[{street:\u0022first street\u0022, nr:10}, {street:\u0022second street\u0022, nr:2}]}",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out %user.name%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out %user.age%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out %user.addresses%",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out %user.addresses.street%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write out %user.addresses.first.street%",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "write out %user.addresses.last.street%",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "write out %user.addresses[0].street%",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "set %idx% = 1",
+      "lineNumber": 10,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "write out %user.addresses[idx].street%",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "write out %user.addresses.random.street%",
+      "lineNumber": 12,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "",
+          "action": "",
+          "parameters": [],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Variables\\Start.goal",
+  "prPath": "\\Variables\\.build\\start.pr",
+  "hash": "7ffe030e6d679c0f6b82bfdc352bd2f3ad30b9b66cdeace62945469d06140ffa",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

@@ -1,5 +1,0 @@
-Start
-/ Simple test that sets a variable
-
-- set %greeting% = "Hello from PLang builder!"
-- write out %greeting%

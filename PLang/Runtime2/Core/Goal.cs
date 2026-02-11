@@ -40,7 +40,20 @@ public sealed partial class Goal
     public string? Path { get; set; }
 
     [Store, Debug]
-    public string? PrPath { get; set; }
+    public string? PrPath
+    {
+        get
+        {
+            if (Path == null) return null;
+            var sepIndex = Path.LastIndexOfAny(new[] { '\\', '/' });
+            var dir = sepIndex >= 0 ? Path[..(sepIndex + 1)] : "";
+            var fileName = sepIndex >= 0 ? Path[(sepIndex + 1)..] : Path;
+            var dotIndex = fileName.LastIndexOf('.');
+            var baseName = dotIndex >= 0 ? fileName[..dotIndex] : fileName;
+            return dir + ".build" + (sepIndex >= 0 ? Path[sepIndex].ToString() : "\\") + baseName.ToLowerInvariant() + ".pr";
+        }
+        set { } // PrPath is derived from Path
+    }
 
     [Store, Debug]
     public string? Hash { get; init; }
@@ -58,14 +71,15 @@ public sealed partial class Goal
     [JsonIgnore]
     public Goal? Parent { get; set; }
 
+    [LlmIgnore]
+    [JsonIgnore]
+    public Engine? Engine { get; set; }
+
     [Store, Debug]
     public List<Info> Errors { get; init; } = new();
 
     [Store, Debug]
     public List<Info> Warnings { get; init; } = new();
-
-    [JsonIgnore]
-    public EntityEvents Events { get; } = new();
 
     [Debug, Default]
     public string FullPath
@@ -105,5 +119,4 @@ public sealed partial class Goal
         Description = "Goal not found"
     };
 
-    public override string ToString() => Name;
 }

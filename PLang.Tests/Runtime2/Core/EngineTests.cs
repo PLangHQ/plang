@@ -1,7 +1,7 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -20,8 +20,8 @@ public class EngineTests
             {
                 new PLang.Runtime2.Core.Action
                 {
-                    Class = actionClass,
-                    Method = method,
+                    Module = actionClass,
+                    ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
@@ -41,8 +41,8 @@ public class EngineTests
             {
                 new PLang.Runtime2.Core.Action
                 {
-                    Class = actionClass,
-                    Method = method,
+                    Module = actionClass,
+                    ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
@@ -423,8 +423,8 @@ public class EngineTests
                     {
                         new PLang.Runtime2.Core.Action
                         {
-                            Class = "variable",
-                            Method = "get",
+                            Module = "variable",
+                            ActionName = "get",
                             Parameters = new List<Data>(),
                             Return = null
                         }
@@ -488,8 +488,9 @@ public class EngineTests
         context.CallStack!.Push("TestGoal");
         await step.RunAsync(engine, context);
 
-        await Assert.That(context.CallStack.Current!.CurrentStepIndex).IsEqualTo(5);
-        await Assert.That(context.CallStack.Current!.CurrentStepText).IsEqualTo("test step");
+        await Assert.That(context.CallStack.Current!.Step).IsNotNull();
+        await Assert.That(context.CallStack.Current!.Step!.Index).IsEqualTo(5);
+        await Assert.That(context.CallStack.Current!.Step!.Text).IsEqualTo("test step");
     }
 
     [Test]

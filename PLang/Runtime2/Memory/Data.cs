@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using PLang.Attributes;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Errors;
+using PLang.Runtime2.Memory.Navigators;
 using PLang.Runtime2.Utility;
 
 namespace PLang.Runtime2.Memory;
@@ -90,6 +91,7 @@ public class Data
     public static implicit operator bool(Data d) => d.Success;
 
     [JsonConstructor]
+    [Newtonsoft.Json.JsonConstructor]
     public Data(string name, object? value = null, Type? type = null, Data? parent = null)
     {
         Name = CleanName(name);
@@ -104,7 +106,7 @@ public class Data
     }
 
     [JsonPropertyName("value")]
-    public object? Value
+    public virtual object? Value
     {
         get => _value;
         set
@@ -212,37 +214,8 @@ public class Data
 
     private object? GetChildValue(string key)
     {
-        if (_value == null)
-            return null;
-
-        // Handle dictionary-like objects
-        if (_value is IDictionary<string, object?> dict)
-        {
-            return dict.TryGetValue(key, out var val) ? val : null;
-        }
-
-        if (_value is System.Collections.IDictionary idict)
-        {
-            return idict.Contains(key) ? idict[key] : null;
-        }
-
-        // Handle list/array indexing
-        if (int.TryParse(key, out var index))
-        {
-            if (_value is System.Collections.IList list && index >= 0 && index < list.Count)
-            {
-                return list[index];
-            }
-        }
-
-        // Handle object properties via reflection
-        var prop = _value.GetType().GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop != null)
-        {
-            return prop.GetValue(_value);
-        }
-
-        return null;
+        if (_value == null) return null;
+        return ValueNavigators.Navigate(_value, key);
     }
 
     [JsonIgnore]
@@ -295,10 +268,64 @@ public class Data
                 JsonValueKind.False => false,
                 JsonValueKind.Null => null,
                 JsonValueKind.Undefined => null,
+                JsonValueKind.Object => UnwrapJsonObject(element),
+                JsonValueKind.Array => UnwrapJsonArray(element),
                 _ => element
             };
         }
+
+        // Convert Newtonsoft JToken to CLR types (v1 runtime compatibility shim).
+        // Detected by namespace so Runtime2 has no Newtonsoft import.
+        if (value != null && value.GetType().Namespace == "Newtonsoft.Json.Linq")
+        {
+            return UnwrapNewtonsoftToken(value);
+        }
+
         return value;
+    }
+
+    /// <summary>
+    /// Converts a Newtonsoft JToken to plain CLR types without importing Newtonsoft.
+    /// JValue → extract underlying CLR value via reflection.
+    /// JObject/JArray → round-trip through JSON string → System.Text.Json.
+    /// </summary>
+    private static object? UnwrapNewtonsoftToken(object value)
+    {
+        var typeName = value.GetType().Name;
+
+        // JValue holds a CLR primitive in its Value property
+        if (typeName == "JValue")
+        {
+            var underlying = value.GetType().GetProperty("Value")?.GetValue(value);
+            return underlying;
+        }
+
+        // JObject/JArray → serialize to JSON string, re-parse with System.Text.Json
+        var json = value.ToString();
+        if (string.IsNullOrEmpty(json)) return null;
+
+        using var doc = JsonDocument.Parse(json);
+        return UnwrapJsonElement(doc.RootElement);
+    }
+
+    private static Dictionary<string, object?> UnwrapJsonObject(JsonElement element)
+    {
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var prop in element.EnumerateObject())
+        {
+            dict[prop.Name] = UnwrapJsonElement(prop.Value);
+        }
+        return dict;
+    }
+
+    private static List<object?> UnwrapJsonArray(JsonElement element)
+    {
+        var list = new List<object?>();
+        foreach (var item in element.EnumerateArray())
+        {
+            list.Add(UnwrapJsonElement(item));
+        }
+        return list;
     }
 
     private static string CleanName(string name)
@@ -352,5 +379,5 @@ public class DynamicData : Data
         _valueFactory = valueFactory;
     }
 
-    public new object? Value => _valueFactory();
+    public override object? Value => _valueFactory();
 }

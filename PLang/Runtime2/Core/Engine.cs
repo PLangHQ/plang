@@ -1,7 +1,7 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.Core;
@@ -94,6 +94,36 @@ public sealed class Engine : IAsyncDisposable
     /// </summary>
     public Actor User => _user ??= new Actor("User", TrustLevel.User, this);
 
+    public PLangContext Context => User.Context;
+    public Memory.MemoryStack MemoryStack => User.Context.MemoryStack;
+
+    /// <summary>
+    /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
+    /// </summary>
+    public (Actor? Actor, IError? Error) GetActor(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return (null, new ActionError("Actor name is required", "ActorRequired", 400));
+
+        var actor = name.ToLowerInvariant() switch
+        {
+            "system" => System,
+            "service" => Service,
+            "user" => User,
+            _ => (Actor?)null
+        };
+
+        if (actor == null)
+            return (null, new ActionError($"Unknown actor '{name}'", "UnknownActor", 400));
+
+        return (actor, null);
+    }
+
+    public Engine(Interfaces.IPLangFileSystem fileSystem)
+        : this(new PLangAppContext(fileSystem.RootDirectory), fileSystem: fileSystem)
+    {
+    }
+
     public Engine(PLangAppContext appContext, ActionRegistry? actions = null,
         SerializerRegistry? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null)
     {
@@ -102,21 +132,18 @@ public sealed class Engine : IAsyncDisposable
         _appContext = appContext;
         _actions = actions ?? new ActionRegistry();
         _serializers = serializers ?? appContext.Serializers;
-        _goals = new Goals();
+        _goals = new Goals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(appContext.RootPath);
         IO = new Runtime2.IO.IO(this);
+        RegisterBuiltInModules();
     }
 
     /// <summary>
     /// Runs a goal by name using the User actor by default.
     /// </summary>
-    public async Task<Data> RunGoalAsync(string goalName, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public Task<Data> RunGoalAsync(string goalName, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
-        var goal = _goals.Get(goalName);
-        if (goal == null)
-            return Data.Fail(GoalError.NotFound(goalName));
-
-        return await RunGoalAsync(goal, context, cancellationToken);
+        return _goals.Run(goalName, context, cancellationToken);
     }
 
     /// <summary>
@@ -141,6 +168,10 @@ public sealed class Engine : IAsyncDisposable
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         context ??= User.Context;
+
+        var loadResult = await goal.Load(context);
+        if (!loadResult.Success) return loadResult;
+
         return await goal.RunAsync(this, context, cancellationToken);
     }
 
@@ -155,7 +186,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Loads all goals from a directory. Delegates to Goals.LoadFromDirectoryAsync.
     /// </summary>
-    public Task<Data> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr.json", CancellationToken cancellationToken = default)
+    public Task<Data> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr", CancellationToken cancellationToken = default)
     {
         return _goals.LoadFromDirectoryAsync(this, directory, pattern, cancellationToken: cancellationToken);
     }
@@ -169,6 +200,7 @@ public sealed class Engine : IAsyncDisposable
         {
             CallStack = new CallStack()
         };
+        context.RegisterContextVariables(this);
         return context;
     }
 

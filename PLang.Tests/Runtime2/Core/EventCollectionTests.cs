@@ -277,7 +277,7 @@ public class EventBindingTests
     public async Task Constructor_SetsProperties()
     {
         Func<PLangContext, Task<Data>> handler = _ => Task.FromResult(Data.Ok());
-        var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", 10, false);
+        var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", null, 10, false);
 
         await Assert.That(binding.Type).IsEqualTo(EventType.AfterStep);
         await Assert.That(binding.GoalNamePattern).IsEqualTo("TestGoal");

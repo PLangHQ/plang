@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using Org.BouncyCastle.Crypto;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Utils;
@@ -30,11 +31,7 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			IList? list = null;
 			if (obj is JValue) obj = obj.ToString();
-			if (obj is not JToken && obj is IList tmp && tmp.Count > 0)
-			{
-				list = tmp;
-				obj = list[0];
-			}
+			
 			if (obj == null) return ObjectValue.Null;
 
 			string methodDescription = segment.Value;
@@ -47,6 +44,14 @@ namespace PLang.Models.ObjectValueExtractors
 			splitParams.ForEach(p => paramValues.Add(p));
 
 			(var methods, obj) = GetMethodsOnType(obj, methodName, paramValues);
+			if (!methods.Any() && obj is not JToken && obj is IList tmp && tmp.Count > 0)
+			{
+				list = tmp;
+				obj = list[0];
+
+				(methods, obj) = GetMethodsOnType(obj, methodName, paramValues);
+			}
+
 
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 			if (!methods.Any() && isBuilder)
@@ -204,7 +209,7 @@ namespace PLang.Models.ObjectValueExtractors
 					var resultProperty = taskType.GetProperty("Result");
 					if (resultProperty != null)
 					{
-						result = resultProperty.GetValue(obj);
+						result = resultProperty.GetValue(task);
 					}
 					else
 					{
@@ -216,13 +221,18 @@ namespace PLang.Models.ObjectValueExtractors
 			return result;
 		}
 
+		private static int CountUserParams(MethodInfo method)
+		{
+			return method.GetParameters().Count(p => p.ParameterType != typeof(PLangContext));
+		}
+
 		private (IEnumerable<MethodInfo>, object? obj) GetMethodsOnType(object obj, string methodName, List<object> paramValues)
 		{
 			var type = obj.GetType();
-			var methods = type.GetMethods().Where(p => !p.IsStatic && p.Name.ToLower() == methodName.ToLower() && p.GetParameters().Length == paramValues.Count);
+			var methods = type.GetMethods().Where(p => !p.IsStatic && p.Name.ToLower() == methodName.ToLower() && CountUserParams(p) == paramValues.Count);
 			if (methods.Any()) return (methods, obj);
 
-			methods = type.GetMethods().Where(p => p.IsStatic && p.Name.ToLower() == methodName.ToLower() && p.GetParameters().Length == paramValues.Count);
+			methods = type.GetMethods().Where(p => p.IsStatic && p.Name.ToLower() == methodName.ToLower() && CountUserParams(p) == paramValues.Count);
 			if (methods.Any())
 			{
 				paramValues.Insert(0, obj);
@@ -279,12 +289,18 @@ namespace PLang.Models.ObjectValueExtractors
 			object?[] convertedParams = new object[parameters.Length];
 			try
 			{
+				int userParamIndex = 0;
 				for (int i = 0; i < parameters.Length; i++)
 				{
 					var paramType = parameters[i].ParameterType;
+					if (paramType == typeof(PLangContext))
+					{
+						convertedParams[i] = memoryStack?.Context;
+						continue;
+					}
 					if (paramType == typeof(string))
 					{
-						var paramValue = paramValues[i].ToString().Trim()
+						var paramValue = paramValues[userParamIndex].ToString().Trim()
 								.Replace("\\\\", "\\").Replace("\\\"", "\"");
 						if (paramValue.StartsWith("\"") && paramValue.EndsWith("\""))
 						{
@@ -292,18 +308,18 @@ namespace PLang.Models.ObjectValueExtractors
 						}
 						convertedParams[i] = paramValue;
 					}
-					else if (paramValues[i].GetType() == paramType)
+					else if (paramValues[userParamIndex].GetType() == paramType)
 					{
-						convertedParams[i] = paramValues[i];
+						convertedParams[i] = paramValues[userParamIndex];
 					}
-					else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[i] is IEnumerable)
+					else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[userParamIndex] is IEnumerable)
 					{
-						convertedParams[i] = paramValues[i];
-						method = method.MakeGenericMethod(paramValues[i].GetType().GetGenericArguments()[0]);
+						convertedParams[i] = paramValues[userParamIndex];
+						method = method.MakeGenericMethod(paramValues[userParamIndex].GetType().GetGenericArguments()[0]);
 					}
 					else
 					{
-						string strValue = paramValues[i].ToString() ?? "";
+						string strValue = paramValues[userParamIndex].ToString() ?? "";
 						if (strValue.StartsWith("\"") && strValue.EndsWith("\""))
 						{
 							if (paramType.Name == "Char" && strValue.Length == 3)
@@ -322,7 +338,7 @@ namespace PLang.Models.ObjectValueExtractors
 						}
 						else if (memoryStack != null)
 						{
-							object? value = (VariableHelper.IsVariable(paramValues[i])) ? memoryStack.Get(paramValues[i].ToString()) : paramValues[i];
+							object? value = (VariableHelper.IsVariable(paramValues[userParamIndex])) ? memoryStack.Get(paramValues[userParamIndex].ToString()) : paramValues[userParamIndex];
 
 							if (value != null)
 							{
@@ -330,15 +346,15 @@ namespace PLang.Models.ObjectValueExtractors
 							}
 							else
 							{
-								convertedParams[i] = TypeHelper.ConvertToType(paramValues[i], paramType);
+								convertedParams[i] = TypeHelper.ConvertToType(paramValues[userParamIndex], paramType);
 							}
 						}
 						else
 						{
-							convertedParams[i] = TypeHelper.ConvertToType(paramValues[i], paramType);
+							convertedParams[i] = TypeHelper.ConvertToType(paramValues[userParamIndex], paramType);
 						}
 					}
-
+					userParamIndex++;
 				}
 			}
 			catch (Exception ex)

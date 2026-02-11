@@ -45,14 +45,14 @@ namespace PLang.Models.ObjectValueExtractors
 
 			if (list == null) return null;
 
-			int index = 0;
+			long index = 0;
 
 			if (segment.Type == SegmentType.Path)
 			{
 				/*
 				// check for list.count, list.first, list.last, ...
 				var value = IsProperty(segment.Value);
-				if (value != null)
+				if (value != null) 
 				{
 					return new ObjectValue(segment.Value, value, parent: parent, properties: parent.Properties);
 				}*/
@@ -63,15 +63,18 @@ namespace PLang.Models.ObjectValueExtractors
 				return extractor.Extract(segment, memoryStack);
 			}
 
-			if (!int.TryParse(segment.Value, out index))
+			if (!long.TryParse(segment.Value, out index))
 			{
 				if (memoryStack == null) throw new Exception("MemoryStack cannot be null when searching for variable in " + segment.Value);
+				
+				index = memoryStack.Get<long>(segment.Value);
 
-				index = memoryStack.Get<int>(segment.Value);
-			}
+			} 
+			var properties = new Properties();
+			properties.AddRange(parent.Properties);
+			properties.Add(new ObjectValue("index", index));
 
-
-			return new ObjectValue(segment.Value, list.ElementAtOrDefault(index), parent: parent, properties: parent.Properties, segmentType: segment.Type);
+			return new ObjectValue(segment.Value, list.ElementAtOrDefault((int)index), parent: parent, properties: properties, segmentType: segment.Type);
 
 		}
 

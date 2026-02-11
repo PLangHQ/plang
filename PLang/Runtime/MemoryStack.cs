@@ -89,10 +89,10 @@ namespace PLang.Runtime
 		}
 
 		public Goal Goal { get; set; }
-		/*public PLangContext Context
+		public PLangContext Context
 		{
 			get { return contextAccessor.Current; }
-		}*/
+		}
 
 		public static MemoryStack New(IServiceContainer container, IEngine engine)
 		{
@@ -1687,13 +1687,19 @@ namespace PLang.Runtime
 				try
 				{
 					var parameters = method.GetParameters();
-					var convertedParams = new object[paramValues.Count];
-					for (int i = 0; i < paramValues.Count; i++)
+					var convertedParams = new object[parameters.Length];
+					int userParamIndex = 0;
+					for (int i = 0; i < parameters.Length; i++)
 					{
 						var paramType = parameters[i].ParameterType;
+						if (paramType == typeof(PLangContext))
+						{
+							convertedParams[i] = contextAccessor.Current;
+							continue;
+						}
 						if (paramType == typeof(string))
 						{
-							var paramValue = paramValues[i].ToString().Trim()
+							var paramValue = paramValues[userParamIndex].ToString().Trim()
 									.Replace("\\\\", "\\").Replace("\\\"", "\"");
 							if (paramValue.StartsWith("\"") && paramValue.EndsWith("\""))
 							{
@@ -1701,18 +1707,18 @@ namespace PLang.Runtime
 							}
 							convertedParams[i] = paramValue;
 						}
-						else if (paramValues[i].GetType() == paramType)
+						else if (paramValues[userParamIndex].GetType() == paramType)
 						{
-							convertedParams[i] = paramValues[i];
+							convertedParams[i] = paramValues[userParamIndex];
 						}
-						else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[i] is IEnumerable)
+						else if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(IEnumerable<>) && paramValues[userParamIndex] is IEnumerable)
 						{
-							convertedParams[i] = paramValues[i];
-							method = method.MakeGenericMethod(paramValues[i].GetType().GetGenericArguments()[0]);
+							convertedParams[i] = paramValues[userParamIndex];
+							method = method.MakeGenericMethod(paramValues[userParamIndex].GetType().GetGenericArguments()[0]);
 						}
 						else
 						{
-							string strValue = paramValues[i].ToString() ?? "";
+							string strValue = paramValues[userParamIndex].ToString() ?? "";
 							if (strValue.StartsWith("\"") && strValue.EndsWith("\""))
 							{
 								if (paramType.Name == "Char" && strValue.Length == 3)
@@ -1723,17 +1729,18 @@ namespace PLang.Runtime
 							}
 							else
 							{
-								var value = Get(paramValues[i].ToString());
+								var value = Get(paramValues[userParamIndex].ToString());
 								if (value != null)
 								{
 									convertedParams[i] = Convert.ChangeType(value, paramType);
 								}
 								else
 								{
-									convertedParams[i] = Convert.ChangeType(paramValues[i], paramType);
+									convertedParams[i] = Convert.ChangeType(paramValues[userParamIndex], paramType);
 								}
 							}
 						}
+						userParamIndex++;
 					}
 
 					var result = method.Invoke(obj, convertedParams);
@@ -1747,7 +1754,7 @@ namespace PLang.Runtime
 							var resultProperty = taskType.GetProperty("Result");
 							if (resultProperty != null)
 							{
-								obj = resultProperty.GetValue(obj);
+								obj = resultProperty.GetValue(task);
 							}
 							else
 							{
@@ -1778,11 +1785,16 @@ namespace PLang.Runtime
 			return objValue;
 		}
 
+		private static int CountUserParams(MethodInfo method)
+		{
+			return method.GetParameters().Count(p => p.ParameterType != typeof(PLangContext));
+		}
+
 		private IEnumerable<MethodInfo> GetMethodsOnType(Type type, string methodName, List<object> paramValues, object obj)
 		{
 
 
-			var methods = type.GetMethods().Where(p => p.Name.ToLower() == methodName.ToLower() && p.GetParameters().Length == paramValues.Count);
+			var methods = type.GetMethods().Where(p => p.Name.ToLower() == methodName.ToLower() && CountUserParams(p) == paramValues.Count);
 			if (methods.Count() == 0)
 			{
 				methods = GetExtensionMethods(type, methodName, obj);

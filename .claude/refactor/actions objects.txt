@@ -1,0 +1,149 @@
+Here’s a paste-ready markdown doc you can drop into Claude Code CLI (or your repo) to explain the approach.
+
+````md
+# PLang Action Authoring: “Single-Type Action” via `partial` + Source Generator
+
+## Goal
+Make action extensions feel natural for beginners (no generics, no `override`, no `BaseClass<T>`), while preserving the same runtime shape the framework expects.
+
+We do this by letting authors write **one class** that contains both:
+- the **inputs** (properties), and
+- the **implementation** (`Execute` method)
+
+Then a **source generator** produces the “framework wrapper” code behind the scenes.
+
+---
+
+## What an author writes (beginner-friendly)
+
+```csharp
+using PLang.Runtime2.Memory;
+
+namespace PLang.Runtime2.actions.file;
+
+[Action("copy")] // name is optional if you want to infer from class name
+public partial class Copy
+{
+    // Inputs
+    public string Source { get; init; } = null!;
+    public string Destination { get; init; } = null!;
+    public bool Overwrite { get; init; }
+
+    // Implementation
+    public Task<Data> Run(Copy p)
+    {
+        // implementaiont
+    }
+}
+````
+
+Key point: the class is `partial`. The framework will add another partial “slice” at compile-time.
+
+---
+
+## What the framework generates (advanced, hidden from authors)
+
+The generator emits a partial declaration that makes the author’s `Copy` class conform to the framework runtime contract.
+
+Conceptually, it generates something like:
+
+```csharp
+namespace PLang.Runtime2.actions.file;
+
+public sealed partial class Copy : BaseClass<Copy>
+{
+    protected override Task<Data> RunAsync(Copy p) => Run(p);
+}
+```
+
+Authors never write `BaseClass<T>` or `override`. They just implement `Run`.
+
+> NOTE: This works because both parts are `partial` and define the same type. The generated part supplies the base class + override.
+
+---
+
+## Why this is better for novices
+
+* No generics
+* No inheritance boilerplate
+* No `ExecuteAsync` / `override` pattern to understand
+* One file contains the entire action: inputs + behavior
+* Class name matches action name (`Copy` feels natural)
+
+---
+
+## Required conventions / rules (enforced by generator)
+
+To keep this predictable and beginner-proof, the generator should validate:
+
+1. **Exactly one `[Action]` attribute** per action type.
+2. **Exactly one execution method**:
+
+   * preferred signature: `Task<Data> Execute(<ActionType> p)`
+   * where `<ActionType>` is the containing type (e.g., `Copy`).
+3. The action type **must be `partial`**.
+4. The action type **must not already declare a base type** (the generator supplies it).
+5. `Execute` must be an **instance** method (not static), and accessible (public/internal is fine depending on policy).
+6. If the author violates conventions, generator emits clear diagnostics:
+
+   * “Action type must be partial”
+   * “Action type already has a base class; remove it”
+   * “Expected exactly one Execute method with signature …”
+
+Optional:
+
+* Allow `ValueTask<Data>` as well as `Task<Data>`.
+* Allow `Execute()` overloads only if the main one is unambiguous.
+
+---
+
+## Naming + casing guidance
+
+Prefer standard .NET casing:
+
+* Action type: `Copy`, `Move`, `Delete`
+* Properties: `Source`, `Destination`, `Overwrite`
+
+If you need the external action name to be lowercase (e.g., `"copy"`), keep that as attribute metadata:
+
+```csharp
+[Action("copy")]
+public partial class Copy { ... }
+```
+
+---
+
+## Runtime behavior
+
+At runtime, the framework still deals with actions the same way it always has:
+
+* It instantiates the generated `BaseClass<T>`-compatible type.
+* Calls `ExecuteAsync(T p)`.
+* Which forwards to the author’s `Execute`.
+
+So you keep:
+
+* the same dispatch model
+* the same Data/Error helpers
+* the same framework infrastructure
+
+But authors see a simple C# class.
+
+---
+
+## Implementation plan (high level)
+
+1. Define `[Action]` attribute (optionally taking a string name).
+2. Write a Roslyn source generator that:
+
+   * finds types annotated with `[Action]`
+   * validates the rules above
+   * emits a partial type that inherits `BaseClass<T>` and implements `ExecuteAsync` forwarding to `Execute`
+3. Framework registration:
+
+   * optionally, generator also emits an action registry/map for fast startup
+   * or rely on existing discovery (but prefer generated registry to avoid reflection/AOT issues)
+
+---
+
+

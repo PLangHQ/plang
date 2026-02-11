@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Memory;
 
@@ -20,8 +21,8 @@ public enum EventType
     OnAfterGoalLoad,
     OnBeforeStepLoad,
     OnAfterStepLoad,
-    OnBeforeActionLoad,
-    OnAfterActionLoad
+    BeforeAction,
+    AfterAction
 }
 
 /// <summary>
@@ -33,27 +34,50 @@ public sealed class EventBinding
     public EventType Type { get; }
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
+    public string? ActionPattern { get; }
     public Func<PLangContext, Task<Data>> Handler { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
+    public bool IsRegex { get; }
 
     public List<object> Targets { get; } = new();
+
+    /// <summary>
+    /// Runs this binding's handler, skipping if already executing (re-entry guard).
+    /// </summary>
+    public async Task<Data> Run(PLangContext context)
+    {
+        if (!context.TryEnterEvent(Id))
+            return Data.Ok();
+
+        var result = await Handler(context);
+        context.ExitEvent(Id);
+
+        if (!result.Success && !StopOnError)
+            return Data.Ok();
+
+        return result;
+    }
 
     public EventBinding(
         EventType type,
         Func<PLangContext, Task<Data>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
+        string? actionPattern = null,
         int priority = 0,
-        bool stopOnError = true)
+        bool stopOnError = true,
+        bool isRegex = false)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
         Type = type;
         GoalNamePattern = goalNamePattern;
         StepPattern = stepPattern;
+        ActionPattern = actionPattern;
         Handler = handler;
         Priority = priority;
         StopOnError = stopOnError;
+        IsRegex = isRegex;
     }
 
     /// <summary>
@@ -66,6 +90,9 @@ public sealed class EventBinding
 
         if (GoalNamePattern == "*")
             return true;
+
+        if (IsRegex)
+            return Regex.IsMatch(goalName, GoalNamePattern, RegexOptions.IgnoreCase);
 
         if (GoalNamePattern.EndsWith("*"))
         {
@@ -87,7 +114,36 @@ public sealed class EventBinding
         if (StepPattern == "*")
             return true;
 
+        if (IsRegex)
+            return Regex.IsMatch(stepText, StepPattern, RegexOptions.IgnoreCase);
+
         return stepText.Contains(StepPattern, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Checks if this binding matches the given module and action name.
+    /// Supports exact match ("variable.set") and wildcard ("variable.*").
+    /// </summary>
+    public bool MatchesAction(string module, string actionName)
+    {
+        if (string.IsNullOrEmpty(ActionPattern))
+            return true;
+
+        if (ActionPattern == "*")
+            return true;
+
+        var fullName = $"{module}.{actionName}";
+
+        if (IsRegex)
+            return Regex.IsMatch(fullName, ActionPattern, RegexOptions.IgnoreCase);
+
+        if (ActionPattern.EndsWith(".*"))
+        {
+            var prefix = ActionPattern[..^2];
+            return module.Equals(prefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return string.Equals(fullName, ActionPattern, StringComparison.OrdinalIgnoreCase);
     }
 }
 
@@ -98,15 +154,6 @@ public sealed class Events
 {
     private readonly List<EventBinding> _bindings = new();
     private readonly object _lock = new();
-
-    public StepEventResolver Steps { get; }
-    public GoalEventResolver Goals { get; }
-
-    public Events()
-    {
-        Steps = new StepEventResolver(this);
-        Goals = new GoalEventResolver(this);
-    }
 
     /// <summary>
     /// Registers an event binding.
@@ -129,10 +176,12 @@ public sealed class Events
         Func<PLangContext, Task<Data>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
+        string? actionPattern = null,
         int priority = 0,
-        bool stopOnError = true)
+        bool stopOnError = true,
+        bool isRegex = false)
     {
-        return Register(new EventBinding(type, handler, goalNamePattern, stepPattern, priority, stopOnError));
+        return Register(new EventBinding(type, handler, goalNamePattern, stepPattern, actionPattern, priority, stopOnError, isRegex));
     }
 
     /// <summary>
@@ -175,9 +224,14 @@ public sealed class Events
     }
 
     /// <summary>
-    /// Gets matching bindings for a goal/step.
+    /// Gets matching bindings for a goal/step/action.
     /// </summary>
-    public IReadOnlyList<EventBinding> GetMatchingBindings(EventType type, string? goalName = null, string? stepText = null)
+    public IReadOnlyList<EventBinding> GetMatchingBindings(
+        EventType type,
+        string? goalName = null,
+        string? stepText = null,
+        string? module = null,
+        string? actionName = null)
     {
         lock (_lock)
         {
@@ -185,6 +239,7 @@ public sealed class Events
                 .Where(b => b.Type == type)
                 .Where(b => goalName == null || b.MatchesGoal(goalName))
                 .Where(b => stepText == null || b.MatchesStep(stepText))
+                .Where(b => module == null || actionName == null || b.MatchesAction(module, actionName))
                 .ToList();
         }
     }
@@ -192,9 +247,15 @@ public sealed class Events
     /// <summary>
     /// Dispatches an event to all matching handlers.
     /// </summary>
-    public async Task<Data> DispatchAsync(PLangContext context, EventType type, string? goalName = null, string? stepText = null)
+    public async Task<Data> DispatchAsync(
+        PLangContext context,
+        EventType type,
+        string? goalName = null,
+        string? stepText = null,
+        string? module = null,
+        string? actionName = null)
     {
-        var bindings = GetMatchingBindings(type, goalName, stepText);
+        var bindings = GetMatchingBindings(type, goalName, stepText, module, actionName);
 
         foreach (var binding in bindings)
         {
@@ -221,57 +282,5 @@ public sealed class Events
                 return _bindings.Count;
             }
         }
-    }
-}
-
-public sealed class StepEventResolver
-{
-    private readonly Events _events;
-    public StepEventResolver(Events events) => _events = events;
-
-    public EventList Before(Step step, string? goalName = null)
-    {
-        var list = new EventList();
-        foreach (var b in _events.GetMatchingBindings(EventType.BeforeStep, goalName, step.Text))
-            list.Add(b);
-        return list;
-    }
-
-    public EventList After(Step step, string? goalName = null)
-    {
-        var list = new EventList();
-        foreach (var b in _events.GetMatchingBindings(EventType.AfterStep, goalName, step.Text))
-            list.Add(b);
-        return list;
-    }
-}
-
-public sealed class GoalEventResolver
-{
-    private readonly Events _events;
-    public GoalEventResolver(Events events) => _events = events;
-
-    public EventList Before(Goal goal)
-    {
-        var list = new EventList();
-        foreach (var b in _events.GetMatchingBindings(EventType.BeforeGoal, goal.Name))
-            list.Add(b);
-        return list;
-    }
-
-    public EventList After(Goal goal)
-    {
-        var list = new EventList();
-        foreach (var b in _events.GetMatchingBindings(EventType.AfterGoal, goal.Name))
-            list.Add(b);
-        return list;
-    }
-
-    public EventList OnError(Goal goal)
-    {
-        var list = new EventList();
-        foreach (var b in _events.GetMatchingBindings(EventType.OnError, goal.Name))
-            list.Add(b);
-        return list;
     }
 }

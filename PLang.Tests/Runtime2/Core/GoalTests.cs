@@ -1,4 +1,5 @@
 using PLang.Runtime2.Core;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -32,7 +33,7 @@ public class GoalTests
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
         await Assert.That(goal.Visibility).IsEqualTo(Visibility.Public);
         await Assert.That(goal.Path).IsEqualTo("/path/to/goal.goal");
-        await Assert.That(goal.PrPath).IsEqualTo("/path/to/goal.pr.json");
+        await Assert.That(goal.PrPath).IsEqualTo("/path/to/.build/goal.pr");
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
         await Assert.That(goal.IsEvent).IsFalse();
@@ -211,13 +212,166 @@ public class GoalTests
     }
 
     [Test]
-    public async Task ToString_ReturnsName()
+    public async Task ToString_ReturnsTypeName()
     {
         var goal = new Goal { Name = "TestGoal" };
 
         var str = goal.ToString();
 
-        await Assert.That(str).IsEqualTo("TestGoal");
+        // Goal does not override ToString; returns default type name
+        await Assert.That(str).IsEqualTo("PLang.Runtime2.Core.Goal");
+    }
+
+    [Test]
+    public async Task FormatForLlm_BasicGoal_ContainsNameAndSteps()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new Steps
+            {
+                new Step { Index = 0, Text = "write out \"hello\"" },
+                new Step { Index = 1, Text = "set %name% = \"world\"" }
+            }
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("Start");
+        await Assert.That(result).Contains("- write out \"hello\"  <= pr: null");
+        await Assert.That(result).Contains("- set %name% = \"world\"  <= pr: null");
+    }
+
+    [Test]
+    public async Task FormatForLlm_WithActions_ShowsActionsJson()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new Steps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "write out \"hello\"",
+                    Actions = new Actions(new[]
+                    {
+                        new PLang.Runtime2.Core.Action
+                        {
+                            Module = "output",
+                            ActionName = "write",
+                            Parameters = new List<Data> { new("content", "hello") }
+                        }
+                    })
+                }
+            }
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("Start");
+        await Assert.That(result).Contains("\"module\":\"output\"");
+        await Assert.That(result).Contains("\"action\":\"write\"");
+        await Assert.That(result).Contains("\"name\":\"content\"");
+    }
+
+    [Test]
+    public async Task FormatForLlm_WithComment_IncludesComment()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Comment = "This is the main goal",
+            Steps = new Steps()
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("/ This is the main goal");
+        await Assert.That(result).Contains("Start");
+    }
+
+    [Test]
+    public async Task FormatForLlm_WithErrors_IncludesErrors()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new Steps(),
+            Errors = new List<Info>
+            {
+                new() { Key = "step1", Message = "Invalid JSON response" }
+            }
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("errors:");
+        await Assert.That(result).Contains("step1");
+        await Assert.That(result).Contains("Invalid JSON response");
+    }
+
+    [Test]
+    public async Task FormatForLlm_WithReturn_IncludesReturn()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new Steps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "select * from users, write to %users%",
+                    Actions = new Actions(new[]
+                    {
+                        new PLang.Runtime2.Core.Action
+                        {
+                            Module = "db",
+                            ActionName = "select",
+                            Parameters = new List<Data> { new("sql", "select * from users") },
+                            Return = new List<Data> { new("users") }
+                        }
+                    })
+                }
+            }
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("\"return\":[{\"name\":\"users\"}]");
+    }
+
+    [Test]
+    public async Task FormatForLlm_MixedSteps_BuiltAndUnbuilt()
+    {
+        var goal = new Goal
+        {
+            Name = "Start",
+            Steps = new Steps
+            {
+                new Step
+                {
+                    Index = 0,
+                    Text = "write out \"hello\"",
+                    Actions = new Actions(new[]
+                    {
+                        new PLang.Runtime2.Core.Action
+                        {
+                            Module = "output",
+                            ActionName = "write",
+                            Parameters = new List<Data> { new("content", "hello") }
+                        }
+                    })
+                },
+                new Step { Index = 1, Text = "set %name% = \"world\"" }
+            }
+        };
+
+        var result = await goal.FormatForLlm();
+
+        await Assert.That(result).Contains("\"module\":\"output\"");
+        await Assert.That(result).Contains("set %name% = \"world\"  <= pr: null");
     }
 }
 

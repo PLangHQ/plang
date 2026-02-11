@@ -60,9 +60,6 @@ public sealed partial class Step
     [JsonIgnore]
     public Goal? Goal { get; set; }
 
-    [JsonIgnore]
-    public EntityEvents Events { get; } = new();
-
     public Step Clone()
     {
         return new Step
@@ -74,8 +71,8 @@ public sealed partial class Step
             Comment = Comment,
             Actions = new Actions(Actions.Select(a => new Action
             {
-                Class = a.Class,
-                Method = a.Method,
+                Module = a.Module,
+                ActionName = a.ActionName,
                 Parameters = new List<Data>(a.Parameters),
                 Return = a.Return != null ? new List<Data>(a.Return) : null
             })),

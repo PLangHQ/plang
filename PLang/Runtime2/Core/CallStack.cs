@@ -75,7 +75,7 @@ public sealed class CallStack
     /// <summary>
     /// Records a step execution in the current frame.
     /// </summary>
-    public void RecordStep(int index, string text)
+    public void RecordStep(Step step)
     {
         if (!IsEnabled)
             return;
@@ -83,9 +83,8 @@ public sealed class CallStack
         var frame = Current;
         if (frame != null)
         {
-            frame.CurrentStepIndex = index;
-            frame.CurrentStepText = text;
-            frame.RecordStep(index, text);
+            frame.Step = step;
+            frame.RecordStep(step.Index, step.Text);
         }
     }
 
@@ -200,8 +199,8 @@ public sealed class CallStack
                 GoalName = f.GoalName,
                 GoalPath = f.GoalPath,
                 Phase = f.Phase.ToString(),
-                CurrentStepIndex = f.CurrentStepIndex,
-                CurrentStepText = f.CurrentStepText,
+                CurrentStepIndex = f.Step?.Index ?? -1,
+                CurrentStepText = f.Step?.Text,
                 StartedAt = f.StartedAt,
                 Duration = f.Duration,
                 Depth = f.Depth,

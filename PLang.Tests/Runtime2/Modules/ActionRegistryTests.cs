@@ -1,9 +1,9 @@
 using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
-namespace PLang.Tests.Runtime2.actions;
+namespace PLang.Tests.Runtime2.modules;
 
 public class ActionRegistryTests
 {
@@ -101,7 +101,7 @@ public class ActionRegistryTests
         registry.Register("variable", "set", new MockHandler());
         registry.Register("variable", "get", new MockHandler());
 
-        var classes = registry.GetClasses("variable").ToList();
+        var classes = registry.GetActions("variable").ToList();
 
         await Assert.That(classes).Contains("set");
         await Assert.That(classes).Contains("get");
@@ -112,7 +112,7 @@ public class ActionRegistryTests
     {
         var registry = new ActionRegistry();
 
-        var classes = registry.GetClasses("nonexistent").ToList();
+        var classes = registry.GetActions("nonexistent").ToList();
 
         await Assert.That(classes.Count).IsEqualTo(0);
     }
@@ -124,7 +124,7 @@ public class ActionRegistryTests
         registry.Register("variable", "set", new MockHandler());
         registry.Register("output", "write", new MockHandler());
 
-        var namespaces = registry.Namespaces.ToList();
+        var namespaces = registry.Modules.ToList();
 
         await Assert.That(namespaces).Contains("variable");
         await Assert.That(namespaces).Contains("output");

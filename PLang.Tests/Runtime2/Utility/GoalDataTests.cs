@@ -106,8 +106,8 @@ public class GoalSerializationTests
                     {
                         new PLang.Runtime2.Core.Action
                         {
-                            Class = "http",
-                            Method = "get",
+                            Module = "http",
+                            ActionName = "get",
                             Parameters = new List<Data> { new Data("url", "https://api.example.com") },
                             Return = new List<Data> { new Data("response") }
                         }
@@ -129,8 +129,8 @@ public class GoalSerializationTests
         await Assert.That(step.WaitForExecution).IsFalse();
         await Assert.That(step.Timeout).IsEqualTo(30);
         await Assert.That(step.Actions.Count).IsEqualTo(1);
-        await Assert.That(step.Actions[0].Class).IsEqualTo("http");
-        await Assert.That(step.Actions[0].Method).IsEqualTo("get");
+        await Assert.That(step.Actions[0].Module).IsEqualTo("http");
+        await Assert.That(step.Actions[0].ActionName).IsEqualTo("get");
     }
 
     [Test]

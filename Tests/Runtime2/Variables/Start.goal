@@ -1,0 +1,12 @@
+Start
+- set %user% = {name:"john", age:20, addresses:[{street:"first street", nr:10}, {street:"second street", nr:2}]}
+- write out %user.name%
+- write out %user.age%
+- write out %user.addresses%
+- write out %user.addresses.street%
+- write out %user.addresses.first.street%
+- write out %user.addresses.last.street%
+- write out %user.addresses[0].street%
+- set %idx% = 1
+- write out %user.addresses[idx].street%
+- write out %user.addresses.random.street%

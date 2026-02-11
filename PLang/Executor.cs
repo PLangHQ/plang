@@ -1,6 +1,4 @@
 ﻿using LightInject;
-using NBitcoin.Secp256k1;
-using Newtonsoft.Json;
 using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -8,14 +6,10 @@ using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Handlers;
 using PLang.Interfaces;
-using PLang.Models;
-using PLang.Modules;
-using PLang.Resources;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.IO.Abstractions;
-using System.IO.Compression;
 using System.Reflection;
 using static PLang.Executor;
 
@@ -88,7 +82,7 @@ namespace PLang
 
 		
 
-		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
+		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType, CancellationToken cancellationToken = default)
 		{
 			var version = args.FirstOrDefault(p => p == "--version") != null;
 			if (version)
@@ -103,8 +97,8 @@ namespace PLang
 			{
 				if (executeType == ExecuteType.Runtime)
 				{
-					var result2 = await Run2(args[1..]);
-					return (result2.Variables, result2.Error);
+					var result2 = await Run2(args[1..], cancellationToken);
+					return (result2.Value, null);
 				} else if (executeType == ExecuteType.Builder)
 				{
 					var buildResult = await Build2(args[1..]);
@@ -304,134 +298,56 @@ namespace PLang
 		{
 			var result = CommandLineParser.Parse(args);
 
-			// parse args => dict<string, object>
-			var goalInfo = new GoalToCallInfo("Build")
-			{
-				Parameters = result.parameters,
-				Path = $".build{System.IO.Path.DirectorySeparatorChar}Build{System.IO.Path.DirectorySeparatorChar}00. Goal.pr"
-			};
-			return await Run2(goalInfo);
-		}
+			// Load the new builder goal from system/builder/.build/
+			var prFilePath = System.IO.Path.Join(fileSystem.SystemDirectory, ".build", "Build", "00. Goal.pr");
+			var prParser = container.GetInstance<PrParser>();
+			var goal = prParser.ParsePrFile(prFilePath);
+			if (goal == null)
+				return (null, null, new Error($"Could not load builder goal from {prFilePath}"));
 
-		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run2(string[] args)
-		{
-			// parse args => dict<string, object>
-			var result = CommandLineParser.Parse(args);
-			var goalInfo = new GoalToCallInfo(result.goalName)
-			{
-				Parameters = result.parameters,
-				Path = $".build{System.IO.Path.DirectorySeparatorChar}Run{System.IO.Path.DirectorySeparatorChar}00. Goal.pr"
-			};
+			// Load all builder sub-goals so the engine can resolve them at runtime
+			var builderDir = System.IO.Path.Join(fileSystem.SystemDirectory, "builder");
+			var builderGoals = prParser.LoadAllGoalsByPath(builderDir);
+			prParser.AddSystemGoals(builderGoals);
 
-			return await Run2(goalInfo);
-		}
-		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run2(GoalToCallInfo goalInfo)
-		{
 			var engine = container.GetInstance<IEngine>();
 			engine.Init(container);
-			
-			var prParser = container.GetInstance<PrParser>();
-			var (goal, error) = prParser.GetGoal(goalInfo);
-			if (error != null) return (null, null, error);
-
-			var step = (goal!.GoalSteps.Count > 0) ? goal?.GoalSteps[0] : GetDefaultStep();
-			
-			if (step.Instruction == null)
-			{
-				step.Instruction = prParser.ParseInstructionFile(step!)!;
-			}
 
 			var msa = container.GetInstance<IMemoryStackAccessor>();
 			var memoryStack = MemoryStack.New(container, engine);
 			msa.Current = memoryStack;
 
+			// Set parameters from command line
+			foreach (var param in result.parameters)
+			{
+				memoryStack.Put(param.Key, param.Value);
+			}
+
 			var context = new PLangContext(memoryStack, engine, ExecutionMode.Console);
 			var contextAccessor = container.GetInstance<IPLangContextAccessor>();
 			contextAccessor.Current = context;
-			context.CallStack = new CallStack();
 
-			var classInstance = container.GetInstance(typeof(Modules.CallGoalModule.Program)) as BaseProgram;
-			classInstance.Init(container, goal, step, step.Instruction, contextAccessor);
-
-			var task = classInstance.Run();
-			await task;
-			var result = task.Result;
-
-			return (engine, result.ReturnValue, result.Error);
+			// Use Engine.RunGoal which properly resolves module types per step
+			var (vars, error) = await engine.RunGoal(goal, context);
+			return (engine, vars, error);
 		}
 
-		private GoalStep GetDefaultStep()
+		public async Task<Runtime2.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
 		{
-			var goalStep = new GoalStep();
-			goalStep.Name = "Run";
-			goalStep.Instruction = GetDefaultInstruction(goalStep);
-			return goalStep;
-		}
+			var (goalName, parameters) = CommandLineParser.Parse(args);
 
-		private Building.Model.Instruction GetDefaultInstruction(GoalStep goalStep)
-		{
-			return JsonConvert.DeserializeObject<Building.Model.Instruction>(@"""
-{
-  ""Text"": ""call goal %goalName% %parameters%"",
-  ""ModuleType"": ""PLang.Modules.CallGoalModule"",
-  ""GenericFunctionType"": ""PLang.Modules.BaseBuilder+GenericFunction"",
-  ""Function"": {
-    ""Reasoning"": ""The user wants to call a goal dynamically with a goal name and parameters provided as variables. The RunGoal function is designed to call goals with a specified name and parameters, matching the user's intent exactly."",
-    ""Name"": ""RunGoal"",
-    ""Parameters"": [
-      {
-        ""Type"": ""PLang.Models.GoalToCallInfo"",
-        ""Name"": ""goalInfo"",
-        ""Value"": {
-          ""Name"": ""%goalName%"",
-          ""Parameters"": ""%parameters%""
-        }
-      },
-      {
-        ""Type"": ""System.Boolean"",
-        ""Name"": ""waitForExecution"",
-        ""Value"": true
-      },
-      {
-        ""Type"": ""System.Int32"",
-        ""Name"": ""delayWhenNotWaitingInMilliseconds"",
-        ""Value"": 50
-      },
-      {
-        ""Type"": ""System.UInt32"",
-        ""Name"": ""waitForXMillisecondsBeforeRunningGoal"",
-        ""Value"": 0
-      },
-      {
-        ""Type"": ""System.Boolean"",
-        ""Name"": ""keepMemoryStackOnAsync"",
-        ""Value"": false
-      },
-      {
-        ""Type"": ""System.Boolean"",
-        ""Name"": ""isolated"",
-        ""Value"": false
-      },
-      {
-        ""Type"": ""System.Boolean"",
-        ""Name"": ""disableSystemGoals"",
-        ""Value"": false
-      },
-      {
-        ""Type"": ""System.Boolean"",
-        ""Name"": ""isEvent"",
-        ""Value"": false
-      }
-    ],
-    ""ReturnValues"": null
-  },
-  ""Properties"": null,
-  ""BuilderVersion"": ""0.1.18.1"",
-  ""Hash"": null,
-  ""SignedMessage"": null
-}
+			var engine = new Runtime2.Core.Engine(fileSystem);
 
-""");
+			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
+			{
+				Runtime2.Core.DebugMode.Apply(engine, debugValue);
+				parameters.Remove("debug");
+			}
+
+			foreach (var param in parameters)
+				engine.MemoryStack.Set(param.Key, param.Value);
+
+			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);
 		}
 
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)

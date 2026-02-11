@@ -11,6 +11,9 @@ public class GoalError : Error
     public GoalError(string message, string key = "GoalError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
+    public GoalError(string message, Core.Step step, string key = "GoalError", int statusCode = 400)
+        : base(message, step, key, statusCode) { }
+
     public GoalError(string message, PLangContext context, string key = "GoalError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
 
@@ -18,12 +21,11 @@ public class GoalError : Error
     {
         return new GoalError(ex.Message, key, statusCode)
         {
-            Exception = ex,
-            InnerError = ex.InnerException != null ? Error.FromException(ex.InnerException) : null
+            Exception = ex
         };
     }
 
-    public static GoalError NotFound(string goalName) => new($"Goal '{goalName}' not found", "NotFound", 404) { GoalName = goalName };
+    public static GoalError NotFound(string goalName) => new($"Goal '{goalName}' not found", "NotFound", 404);
     public static GoalError Cancelled() => new("Execution cancelled", "Cancelled", 499);
     public static GoalError Cancelled(PLangContext context) => new("Execution cancelled", context, "Cancelled", 499);
 }

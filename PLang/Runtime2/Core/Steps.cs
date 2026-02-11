@@ -1,4 +1,5 @@
 using PLang.Runtime2.Context;
+using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
@@ -9,9 +10,13 @@ public sealed class Steps : List<Step>
 
     public List<Step> Value => this;
 
-    public async Task Load(PLangContext context)
+    public async Task<Data> Load(PLangContext context)
     {
         foreach (var step in this)
-            await step.Load(context);
+        {
+            var result = await step.Load(context);
+            if (!result.Success) return result;
+        }
+        return Data.Ok();
     }
 }

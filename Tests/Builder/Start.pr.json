@@ -7,8 +7,8 @@
       "lineNumber": 2,
       "actions": [
         {
-          "class": "variable",
-          "method": "set",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             { "name": "name", "value": "name" },
             { "name": "value", "value": "Plang" }
@@ -22,8 +22,8 @@
       "lineNumber": 3,
       "actions": [
         {
-          "class": "output",
-          "method": "write",
+          "module": "output",
+          "action": "write",
           "parameters": [
             { "name": "content", "value": "%name%" }
           ]
@@ -36,8 +36,8 @@
       "lineNumber": 4,
       "actions": [
         {
-          "class": "variable",
-          "method": "set",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             { "name": "name", "value": "newVarName" },
             { "name": "value", "value": "%name%" }
@@ -51,8 +51,8 @@
       "lineNumber": 5,
       "actions": [
         {
-          "class": "output",
-          "method": "write",
+          "module": "output",
+          "action": "write",
           "parameters": [
             { "name": "content", "value": "NewVar: %newVarName%" }
           ]

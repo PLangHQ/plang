@@ -18,3 +18,7 @@
 /publish
 /PlangConsole/os
 
+# Coverage reports
+coverage-report/
+coverage.cobertura.xml
+

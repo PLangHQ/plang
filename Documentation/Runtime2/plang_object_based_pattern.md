@@ -28,9 +28,11 @@ Every handler that needs the engine gets a reference to it and navigates from th
 // A handler reaches IO and FileSystem through Engine
 public sealed partial class WriteHandler : BaseClass<write>
 {
-    protected override async Task<Return> ExecuteAsync(write p)
+    protected override async Task<Data> ExecuteAsync(write p)
     {
-        return await Engine.IO.WriteTextAsync(IO.IO.StdOut, p.content?.ToString());
+        var result = await Engine.IO.WriteTextAsync(Runtime2.IO.IO.StdOut, p.content?.ToString());
+        if (!result.Success) return result;
+        return Success(new types.output { content = p.content, channel = Runtime2.IO.IO.StdOut });
     }
 }
 ```
@@ -102,9 +104,9 @@ public sealed class Actions : List<Action>
             await action.Load(context);
     }
 
-    public async Task<Return> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
+    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = default)
     {
-        Return merged = new();
+        Data merged = Data.Ok();
         foreach (var action in this)
         {
             var result = await action.RunAsync(engine, context, ct);
@@ -150,14 +152,14 @@ public sealed class EventList
 {
     public int Count { get; }
     public void Add(EventBinding binding);
-    public async Task<Return> Run(PLangContext context);
+    public async Task<Data> Run(PLangContext context);
 }
 
 // Two phases: Load-time events and Runtime events
 public sealed class PhaseEvents
 {
     public EventList Load { get; }          // runs during entity.Load()
-    public Task<Return> Run(PLangContext context);  // runs during entity.RunAsync()
+    public Task<Data> Run(PLangContext context);  // runs during entity.RunAsync()
     public void Add(EventBinding binding);          // adds a runtime binding
 }
 
@@ -275,18 +277,191 @@ Engine.FileSystem.Directory.Exists(path)
 var (handler, error) = engine.Actions.GetCodeGenerated("variable", "set", context);
 ```
 
-## 6. Return Owns Its Composition
+### Goal navigation
 
-When multiple actions produce results, the merge logic lives on `Return` — it knows how to combine `List<Data>` by name:
+Handlers can call other goals through `Engine.RunGoalAsync`. This is how control-flow actions like `condition.if` work — the handler evaluates a condition and delegates to a named goal:
 
 ```csharp
-public class Return
+// condition.if handler delegates to a goal
+var result = await Engine.RunGoalAsync(goalName, Context, CancellationToken);
+```
+
+The handler passes its own `Context`, so the called goal shares the same `MemoryStack`. This means variables set by earlier steps (e.g., `%fileResult.Exists%` from `file.exists`) are visible inside the called goal.
+
+### Handler naming conventions
+
+Records and handlers follow a consistent naming scheme:
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| **Record** (parameters) | lowercase action name | `set`, `save`, `exists`, `@if` |
+| **Handler** (execution) | PascalCase + `Handler` suffix, `partial` | `SetHandler`, `SaveHandler`, `IfHandler` |
+| **Namespace** | `PLang.Runtime2.modules.{module}` | `modules.condition`, `modules.file` |
+| **Registry key** | `{module}.{record}` | `condition.if`, `file.exists` |
+
+When a record name collides with a C# keyword, prefix it with `@`:
+
+```csharp
+public record @if               // type name is "if" at runtime
+{
+    public virtual bool condition { get; init; }
+}
+
+public sealed partial class IfHandler : BaseClass<@if> { ... }
+```
+
+The source generator strips the `@` prefix, so the action registry key becomes `"if"` and PLang references it as `condition.if`. This pattern applies to any future keyword-named actions (`@switch`, `@for`, `@while`, etc.).
+
+## 6. What You Can Access: Context and Engine
+
+During execution every handler has two roots: `Engine` (system capabilities) and `Context` (request state). Together they determine what is reachable at any point.
+
+### Engine (system-level, shared)
+
+```
+Engine
+  .AppContext         PLangAppContext — app config, global events, serializers, RootPath
+  .Actions            ActionRegistry — discover and resolve handlers
+  .Serializers        SerializerRegistry — serialize / deserialize
+  .Goals              Goals — loaded goals, lookup by name
+  .FileSystem         IPLangFileSystem — sandboxed file I/O
+  .IO                 IO — channel-based I/O (stdin, stdout, stderr, custom)
+  .System / .Service / .User   Actor — trust-level identities (lazy)
+  .IsDebugMode        bool
+```
+
+### PLangContext (request-level, per-execution)
+
+```
+Context
+  .Id                 string — unique execution id
+  .AppContext          PLangAppContext — back-reference to app context
+  .MemoryStack         MemoryStack — all %variables% for this execution
+  .CallStack           CallStack? — goal/step call frames, stack trace, errors
+  .Goal                Goal? — the goal currently executing
+  .Step                Step? — the step currently executing
+  .CurrentGoalName     string? — shortcut to current goal name
+  .CurrentStepIndex    int? — shortcut to current step index
+  .Actor               Actor? — the actor that owns this context
+  .Parent              PLangContext? — parent context (for nested calls)
+  .Depth               int — nesting depth (0 = root)
+  .IsAsync             bool — whether this is an async execution
+  .CancellationToken   CancellationToken — linked to AppContext.ShutdownToken
+  .CreatedAt           DateTime
+  .Duration            TimeSpan
+  .System              EventScope — system-level event bindings
+  .User                EventScope — user-level event bindings
+  [key]                object? — arbitrary key-value store (Get<T>, Set<T>)
+```
+
+### MemoryStack (variables)
+
+```
+MemoryStack
+  .Set(name, value, type?)     store a variable
+  .Get(name)                   get by name — supports dot notation: "user.Name", "items[0].Value"
+  .Get<T>(name)                get typed value
+  .GetValue(name)              get raw object
+  .Contains(name)              check existence
+  .Remove(name)                remove
+  .GetAll()                    all variables ordered by last update
+  .Clone()                     shallow copy (for child contexts)
+```
+
+Built-in system variables (always present): `%Now%`, `%NowUtc%`, `%GUID%` (dynamic, computed on access).
+
+### CallStack (execution trace)
+
+```
+CallStack
+  .Current             CallFrame? — top frame
+  .Depth               int
+  .Push(goalName)      push new frame
+  .Pop()               complete and pop
+  .RecordStep(index, text)
+  .AddError(error)
+  .GetErrors()         all errors across frames
+  .GetStackTrace()     formatted string
+  .ContainsGoal(name)  recursion check
+  .IsInEvent           bool — currently inside an event handler
+```
+
+### PLangAppContext (app-level, shared across all requests)
+
+```
+AppContext
+  .Id                  string — app instance id
+  .RootPath            string — app root directory
+  .Environment         string — "production", "development", etc.
+  .Events              Events — global event collection
+  .Serializers         SerializerRegistry
+  .IsDebugMode         bool
+  .ShutdownToken       CancellationToken
+  .StartedAt           DateTime
+  .Uptime              TimeSpan
+  [key]                object? — arbitrary key-value store (Get<T>, Set<T>, GetOrCreate<T>)
+```
+
+### BaseClass convenience properties
+
+Handlers extend `BaseClass<TParams>` which exposes shortcuts so you don't always navigate manually:
+
+```csharp
+protected MemoryStack MemoryStack => Context.MemoryStack;
+protected PLangAppContext AppContext => Context.AppContext;
+protected CancellationToken CancellationToken => Context.CancellationToken;
+protected IPLangFileSystem FileSystem => Engine.FileSystem;
+
+// Variable helpers
+protected Data? GetVariable(string name) => MemoryStack.Get(name);
+protected T? GetVariable<T>(string name) => MemoryStack.Get<T>(name);
+protected void SetVariable(string name, object? value, Type? type = null)
+    => MemoryStack.Set(name, value, type);
+
+// Result helpers
+protected static Data Success() => Data.Ok();
+protected static Data Success(object? value) => Data.Ok(value);
+protected static Data Error(string message, ...) => Data.Fail(...);
+```
+
+### What can I access at this point?
+
+Given `Engine` + `Context`, a handler can reach:
+
+| Need | Navigation |
+|------|-----------|
+| Read/write a variable | `MemoryStack.Get("name")` / `MemoryStack.Set("name", value)` |
+| Read a variable with dot path | `MemoryStack.Get("fileResult.Exists")` |
+| Write to stdout | `Engine.IO.WriteTextAsync(IO.StdOut, text)` |
+| Read/write files | `Engine.FileSystem.File.ReadAllTextAsync(path)` |
+| Call another goal | `Engine.RunGoalAsync(goalName, Context, CancellationToken)` |
+| Resolve a handler | `Engine.Actions.GetCodeGenerated("module", "method", Context)` |
+| Serialize data | `Engine.Serializers.SerializeAsync(options)` |
+| Check current goal/step | `Context.Goal`, `Context.Step` |
+| Check call depth | `Context.Depth`, `Context.CallStack.Depth` |
+| Detect recursion | `Context.CallStack.ContainsGoal("GoalName")` |
+| Get app root path | `Engine.RootPath` or `Context.AppContext.RootPath` |
+| Check environment | `Context.AppContext.Environment` |
+| Store request-scoped data | `Context["key"] = value` / `Context.Get<T>("key")` |
+| Store app-scoped data | `Context.AppContext["key"] = value` |
+| Cancel execution | `Context.Cancel()` |
+
+## 7. Data Owns Its Composition
+
+`Data` is the universal result type. It carries `Value`, `Error`, `Success`, and static helpers `Ok()` and `Fail()`. When multiple actions produce results, the merge logic lives on `Data` — it knows how to combine `List<Data>` by name:
+
+```csharp
+public class Data
 {
     public object? Value { get; set; }
     public IError? Error { get; set; }
     public bool Success => Error == null;
 
-    public Return Merge(Return other)
+    public static Data Ok() => new("");
+    public static Data Ok(object? value) => new("", value);
+    public static Data Fail(IError error) => new("") { Error = error };
+
+    public Data Merge(Data other)
     {
         if (other.Value == null) return this;
 
@@ -303,14 +478,14 @@ public class Return
                 myData.Add(data);           // append new
         }
 
-        return new Return { Value = myData };
+        return new Data("") { Value = myData };
     }
 }
 ```
 
-The `Actions` collection uses `Merge` in its loop — it never inspects the return structure directly.
+The `Actions` collection uses `Merge` in its loop — it never inspects the data structure directly.
 
-## 7. Do and Don't
+## 8. Do and Don't
 
 ### DO: Put behavior on the object that owns the data
 
@@ -393,7 +568,7 @@ var result = await Events.Before.RunAsync(new EventContext
 var result = await Events.Before.Run(context);
 ```
 
-## 8. Context Rules
+## 9. Context Rules
 
 ### Don't cache context on shared objects
 
@@ -428,17 +603,17 @@ await Events.Before.Run(context);   // context passed as parameter
 
 These are set after deserialization (e.g., `step.Goal = goal` during goal loading) and excluded from serialization to avoid circular references.
 
-## 9. Summary
+## 10. Summary
 
 1. **Engine is the root** — everything hangs off it: IO, Goals, Actions, Serializers, FileSystem, Actors
 2. **Properties navigate** — `engine.IO.WriteTextAsync(...)`, `engine.Goals.Get(...)`, `goal.Events.Before.Run(...)`
 3. **Collections own their loops** — `Steps.Load()`, `Actions.RunAsync()`, not a foreach in Goal or Step
-4. **Methods belong on the owner** — Goals loads goals, Steps loads steps, Return merges returns
+4. **Methods belong on the owner** — Goals loads goals, Steps loads steps, Data merges results
 5. **Read like sentences** — `goal.Events.Before.Load.Run(context)` reads naturally
 6. **Events are entity-owned** — `EntityEvents` with `PhaseEvents` (Before/After) and phase split (Load/Runtime)
 7. **Handlers navigate through Engine** — IO channels, FileSystem, Serializers are all reachable from Engine
 8. **No unnecessary DTOs** — use real types inside the runtime, DTOs only at serialization boundaries
 9. **Don't cache request state on shared objects** — pass `PLangContext` as a parameter, don't store it
 10. **Keep object references** — `StepError.Step`, not `StepError.StepText`
-11. **Return owns merge** — `Return.Merge()` combines `List<Data>` by name
+11. **Data owns merge** — `Data.Merge()` combines `List<Data>` by name
 12. **Don't create wrapper objects** — if the data is on `PLangContext`, pass `PLangContext`

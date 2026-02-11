@@ -1,4 +1,0 @@
-AssignModule
-/ Assigns module and intent from LLM Pass 1 to the step
-- set %goal.steps[position].ModuleName% = %assignment.module%
-- set %goal.steps[position].intent% = %assignment.intent%

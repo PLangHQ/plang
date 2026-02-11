@@ -21,23 +21,28 @@ public sealed class EventList
         if (_bindings.Count == 0) return Data.Ok();
         foreach (var binding in _bindings.OrderByDescending(b => b.Priority))
         {
-            var result = await binding.Handler(context);
-            if (!result.Success && binding.StopOnError) return result;
+            var result = await binding.Run(context);
+            if (!result.Success) return result;
         }
         return Data.Ok();
     }
 }
 
-public sealed class PhaseEvents
+public sealed class BeforeAfterEvents
 {
-    public EventList Load { get; } = new();
-    private readonly EventList _runtime = new();
-    public Task<Data> Run(PLangContext context) => _runtime.Run(context);
-    public void Add(EventBinding binding) => _runtime.Add(binding);
+    public EventList Before { get; } = new();
+    public EventList After { get; } = new();
 }
 
-public sealed class EntityEvents
+public sealed class GoalStepEvents
 {
-    public PhaseEvents Before { get; } = new();
-    public PhaseEvents After { get; } = new();
+    public BeforeAfterEvents Load { get; } = new();
+    public EventList Before { get; } = new();
+    public EventList After { get; } = new();
+}
+
+public sealed class ActionEvents
+{
+    public EventList Before { get; } = new();
+    public EventList After { get; } = new();
 }

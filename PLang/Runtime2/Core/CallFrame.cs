@@ -46,14 +46,9 @@ public sealed class CallFrame
     public ExecutionPhase Phase { get; set; }
 
     /// <summary>
-    /// Index of the currently executing step.
+    /// The step currently being executed in this frame.
     /// </summary>
-    public int CurrentStepIndex { get; set; }
-
-    /// <summary>
-    /// Text of the currently executing step.
-    /// </summary>
-    public string? CurrentStepText { get; set; }
+    public Step? Step { get; set; }
 
     /// <summary>
     /// Parent frame (caller).
@@ -92,7 +87,6 @@ public sealed class CallFrame
         GoalPath = goalPath;
         Parent = parent;
         Phase = ExecutionPhase.None;
-        CurrentStepIndex = -1;
         StartedAt = DateTime.UtcNow;
         Indent = parent != null ? parent.Indent + 1 : 0;
         _stopwatch = Stopwatch.StartNew();
@@ -184,8 +178,8 @@ public sealed class CallFrame
     public string GetStackTrace()
     {
         var trace = $"  at {GoalName}";
-        if (CurrentStepIndex >= 0)
-            trace += $" (step {CurrentStepIndex + 1})";
+        if (Step != null)
+            trace += $" (step {Step.Index + 1})";
         if (!string.IsNullOrEmpty(GoalPath))
             trace += $" in {GoalPath}";
         trace += $" [{Duration.TotalMilliseconds:F1}ms]";

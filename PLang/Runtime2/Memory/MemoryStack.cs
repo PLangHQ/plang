@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 
 namespace PLang.Runtime2.Memory;
 
@@ -52,6 +53,10 @@ public class MemoryStack
             return null;
 
         name = CleanName(name);
+
+        // Resolve variable references inside bracket indices: [idx] → [1]
+        if (name.Contains('['))
+            name = ResolveVariablesInPath(name);
 
         // Handle paths like "user.name" or "items[0].value"
         var rootName = GetRootName(name);
@@ -147,10 +152,11 @@ public class MemoryStack
         var clone = new MemoryStack();
         foreach (var kvp in _variables)
         {
-            // Clone non-system variables
+            // Skip system variables (dynamic vars and ! prefix context vars)
             if (!kvp.Key.Equals("Now", StringComparison.OrdinalIgnoreCase) &&
                 !kvp.Key.Equals("NowUtc", StringComparison.OrdinalIgnoreCase) &&
-                !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase))
+                !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase) &&
+                !kvp.Key.StartsWith("!"))
             {
                 clone._variables[kvp.Key] = new Data(kvp.Value.Name, kvp.Value.Value, kvp.Value.Type);
             }
@@ -171,6 +177,20 @@ public class MemoryStack
             dict[kvp.Key] = kvp.Value.Value;
         }
         return dict;
+    }
+
+    /// <summary>
+    /// Resolves variable names inside bracket indices.
+    /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
+    /// </summary>
+    private string ResolveVariablesInPath(string path)
+    {
+        return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+        {
+            var varName = match.Groups[1].Value;
+            var resolved = GetValue(varName);
+            return resolved != null ? $"[{resolved}]" : match.Value;
+        });
     }
 
     private static string CleanName(string name)

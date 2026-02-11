@@ -1,0 +1,11 @@
+ApplyStep
+/ Validates and applies step result
+/ If validation fails, falls back to BuildStep with error context
+- [plang] ValidateActions, actions=%stepResult.actions%
+- [plang] MergeStep %goal.Steps[stepResult.index]%, %stepResult%, write to %goal.Steps[stepResult.index]%
+- if %stepResult.needsDetail%, call BuildStep
+
+
+HandleValidationError
+- set %goal.Steps[stepResult.index].validationError% = %!error%
+- call BuildStep, step=%goal.Steps[stepResult.index]%

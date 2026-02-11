@@ -65,6 +65,7 @@ public sealed class Actor : IAsyncDisposable
             CallStack = new CallStack()
         };
         Context.Actor = this;
+        Context.RegisterContextVariables(engine);
         IO = new IO.IO(engine);
     }
 

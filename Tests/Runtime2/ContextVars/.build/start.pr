@@ -1,0 +1,46 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out %!engine.Name%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "%!engine.Name%"
+            },
+            {
+              "name": "Actor",
+              "value": ""
+            },
+            {
+              "name": "Channel",
+              "value": ""
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\ContextVars\\Start.goal",
+  "prPath": "\\ContextVars\\.build\\start.pr",
+  "hash": "8b6374c35852e84debb59b409923cad0cfdc505a033e320c617dbe904aedd593",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

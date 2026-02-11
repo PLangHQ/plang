@@ -1,0 +1,46 @@
+{
+  "name": "LogBefore",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Before goal fired\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "Before goal fired"
+            },
+            {
+              "name": "Actor",
+              "value": ""
+            },
+            {
+              "name": "Channel",
+              "value": ""
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\LogBefore.goal",
+  "prPath": "\\.build\\logbefore.pr",
+  "hash": "3970fdcc3b851d516ab371375343cce2de93d186a3f82d45e783d3c03cfad41c",
+  "isSetup": false,
+  "isEvent": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "LogBefore"
+}

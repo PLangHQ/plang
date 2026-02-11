@@ -15,6 +15,7 @@ public sealed class IO : IAsyncDisposable
     private readonly Engine _engine;
 
     // Standard channel names
+    public const string Default = "default";
     public const string StdIn = "stdin";
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
@@ -22,8 +23,19 @@ public sealed class IO : IAsyncDisposable
     public IO(Engine engine)
     {
         _engine = engine;
-        Register(new Channel(StdOut, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
+        Register(new Channel(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
             { ContentType = "text/plain" });
+    }
+
+    /// <summary>
+    /// Routes a write to the correct actor's IO by actor name.
+    /// Engine.IO is the router — actor IOs own the actual channels.
+    /// </summary>
+    public async Task<Data> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
+    {
+        var (actor, error) = _engine.GetActor(actorName);
+        if (error != null) return Data.Fail(error);
+        return await actor!.IO.WriteAsync(channelName, data, cancellationToken: ct);
     }
 
     /// <summary>
