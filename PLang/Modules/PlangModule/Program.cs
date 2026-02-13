@@ -121,12 +121,23 @@ namespace PLang.Modules.PlangModule
 						}
 					}
 
-					actions.Add(new Runtime2.Core.Action
+					// Extract Cacheable from ActionAttribute
+				bool cacheable = true;
+				var actionType2 = registry.GetActionType(ns, className);
+				if (actionType2 != null)
+				{
+					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
+					if (actionAttr != null)
+						cacheable = actionAttr.Cacheable;
+				}
+
+				actions.Add(new Runtime2.Core.Action
 					{
 						Module = ns,
 						ActionName = className,
 						ParameterSchema = parameterType,
-						Parameters = parameters
+						Parameters = parameters,
+						Cacheable = cacheable
 					});
 				}
 			}
@@ -169,6 +180,9 @@ namespace PLang.Modules.PlangModule
 				{
 					goal.Steps[i].Actions = prStep.Actions;
 				}
+
+				if (prStep?.Cache != null)
+					goal.Steps[i].Cache = prStep.Cache;
 			}
 		}
 
@@ -302,6 +316,14 @@ namespace PLang.Modules.PlangModule
 			// Copy actions from LLM result to target step
 			step.Actions.Clear();
 			step.Actions.AddRange(stepFromLlm.Actions);
+
+			// Copy cache from LLM result
+			if (stepFromLlm.Cache != null)
+				step.Cache = stepFromLlm.Cache;
+
+			// Copy onError from LLM result
+			if (stepFromLlm.OnError != null)
+				step.OnError = stepFromLlm.OnError;
 
 			// Copy errors/warnings from LLM result
 			if (stepFromLlm.Errors.Count > 0)

@@ -1,0 +1,2 @@
+HandleMockPost
+- event skip action with value "post handled"

@@ -6,9 +6,9 @@ namespace PLang.Runtime2.Core;
 public sealed class CacheSettings
 {
     /// <summary>
-    /// How long to cache the result in minutes.
+    /// How long to cache the result in seconds.
     /// </summary>
-    public int DurationMinutes { get; init; }
+    public long DurationSeconds { get; init; }
 
     /// <summary>
     /// Whether this is a sliding expiration (resets on access).

@@ -1,0 +1,7 @@
+Start
+- before each goal call LogBefore
+- after each goal call LogAfter
+- set %name% = "hello"
+- assert %name% equals "hello"
+- call TestGoal
+- assert %name% equals "hello", "variable should survive goal call"

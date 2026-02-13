@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Serialization;
 
@@ -47,6 +48,17 @@ public sealed class PLangAppContext : IDisposable
     /// Whether debug mode is enabled.
     /// </summary>
     public bool IsDebugMode { get; set; }
+
+    /// <summary>
+    /// Whether test mode is enabled.
+    /// </summary>
+    public bool IsTestMode { get; set; }
+
+    /// <summary>
+    /// Application culture for formatting dates, numbers, etc.
+    /// Defaults to InvariantCulture. Set via PLang settings or startup.
+    /// </summary>
+    public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
 
     /// <summary>
     /// Cancellation token for graceful shutdown.

@@ -1,2 +1,2 @@
 OnStepError
-- write out system error "%!error%"
+- call /system/error/ConsoleError

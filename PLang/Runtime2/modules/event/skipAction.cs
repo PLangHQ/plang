@@ -2,7 +2,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.@event;
 
-[Action("skipAction")]
+[Action("skipAction", Cacheable = false)]
 public partial class SkipAction : IContext
 {
     public partial object? Value { get; init; }

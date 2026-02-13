@@ -245,6 +245,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             {
                 sb.AppendLine($"    private {prop.TypeName} {backingField};");
             }
+            else if (prop.IsNullable)
+            {
+                // Already nullable (e.g. int?, string?) — don't add another ?
+                sb.AppendLine($"    private {prop.TypeName} {backingField};");
+            }
             else
             {
                 sb.AppendLine($"    private {prop.TypeName}? {backingField};");
@@ -330,7 +335,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
-                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
                 sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
             }
         }
@@ -341,7 +346,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex)");
         sb.AppendLine("        {");
-        sb.AppendLine("            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+        sb.AppendLine("            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
@@ -360,7 +365,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                    __memoryStack!.GetValue(fullMatch.Groups[1].Value), typeof(T));");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\",");
         sb.AppendLine("                m => __FormatValue(__memoryStack!.GetValue(m.Groups[1].Value)));");
-        sb.AppendLine("            return (T?)(object)interpolated;");
+        sb.AppendLine("            return (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
         sb.AppendLine("        }");
         sb.AppendLine("        return data != null");
         sb.AppendLine("            ? (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(data.Value, typeof(T))");
@@ -445,7 +450,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine("                    _memory.GetValue(fullMatch.Groups[1].Value), typeof(T));");
             sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\",");
             sb.AppendLine("                m => FormatValue(_memory.GetValue(m.Groups[1].Value)));");
-            sb.AppendLine("            return (T?)(object)interpolated;");
+            sb.AppendLine("            return (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
             sb.AppendLine("        }");
             sb.AppendLine("        return (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(data?.Value, typeof(T));");
             sb.AppendLine("    }");
@@ -496,7 +501,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if (lazy.{prop.Name} == null)");
                 }
-                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
                 sb.AppendLine($"                \"'{prop.Name}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
             }
         }
@@ -517,7 +522,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex)");
         sb.AppendLine("        {");
-        sb.AppendLine("            return PLang.Runtime2.Memory.Data.Fail(new PLang.Runtime2.Errors.ServiceError(");
+        sb.AppendLine("            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
         sb.AppendLine("        }");
 

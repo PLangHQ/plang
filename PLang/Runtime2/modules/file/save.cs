@@ -3,7 +3,7 @@ using PLang.Runtime2.Serialization;
 
 namespace PLang.Runtime2.modules.file;
 
-[Action("save")]
+[Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
     public partial string Path { get; init; }

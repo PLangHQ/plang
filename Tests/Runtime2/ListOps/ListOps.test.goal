@@ -1,0 +1,17 @@
+Start
+- set %myList% = [10, 20, 30]
+- add 40 to %myList%
+- get count of %myList%, write to %count%
+- assert %count% equals 4, "list should have 4 items after add"
+- get first item from %myList%, write to %first%
+- assert %first% equals 10
+- get last item from %myList%, write to %last%
+- assert %last% equals 40
+- check if %myList% contains 20, write to %has20%
+- assert %has20% is true, "list should contain 20"
+- join %myList% with separator ", ", write to %joined%
+- assert %joined% contains "10"
+- assert %joined% contains "40"
+- split "a-b-c" by "-", write to %parts%
+- get count of %parts%, write to %partsCount%
+- assert %partsCount% equals 3

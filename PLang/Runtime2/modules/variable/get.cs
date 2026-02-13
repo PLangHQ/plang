@@ -11,13 +11,9 @@ public partial class Get : IContext
     public Task<Data> Run()
     {
         var data = Context.MemoryStack.Get(Name);
-        return Task.FromResult(Data.Ok(
-            new types.variable
-            {
-                name = Name,
-                value = data?.Value,
-                type = data?.Type?.Value,
-                exists = data != null
-            }));
+        if (data == null || !data.IsInitialized)
+            return Task.FromResult(Data.Ok(null));
+
+        return Task.FromResult(new Data(Name, data.Value, data.Type));
     }
 }

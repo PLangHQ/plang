@@ -1,0 +1,45 @@
+{
+  "name": "HandleRetryError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %retryErrorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%retryErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Retry\\HandleRetryError.goal",
+  "prPath": "\\Retry\\.build\\handleretryerror.pr",
+  "hash": "73b3860a35906d869cb5de411b068adead6bdd7c71fe0fb150d31fb361764d07",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleRetryError"
+}

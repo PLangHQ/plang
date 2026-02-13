@@ -69,12 +69,26 @@ public sealed class Engine : IAsyncDisposable
     public Runtime2.IO.IO IO { get; }
 
     /// <summary>
+    /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
+    /// </summary>
+    public ICache Cache { get; set; } = new MemoryStepCache();
+
+    /// <summary>
     /// Whether debug mode is enabled.
     /// </summary>
     public bool IsDebugMode
     {
         get => _appContext.IsDebugMode;
         set => _appContext.IsDebugMode = value;
+    }
+
+    /// <summary>
+    /// Whether test mode is enabled.
+    /// </summary>
+    public bool IsTestMode
+    {
+        get => _appContext.IsTestMode;
+        set => _appContext.IsTestMode = value;
     }
 
     /// <summary>

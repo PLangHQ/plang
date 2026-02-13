@@ -1,0 +1,5 @@
+Start
+- write out "Before error test"
+- throw error "something went wrong", on error ignore
+- write out "After ignored error - this should print"
+- throw error "expected failure" with status code 404

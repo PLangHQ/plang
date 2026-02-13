@@ -1,0 +1,145 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022Before error test\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "content",
+              "value": "Before error test",
+              "type": "string"
+            },
+            {
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error \u0022something went wrong\u0022, on error ignore",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "something went wrong",
+              "type": "string"
+            },
+            {
+              "name": "statusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "ignoreError": true
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022After ignored error - this should print\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "content",
+              "value": "After ignored error - this should print",
+              "type": "string"
+            },
+            {
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "throw error \u0022expected failure\u0022 with status code 404",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "expected failure",
+              "type": "string"
+            },
+            {
+              "name": "statusCode",
+              "value": 404,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\ErrorHandling\\Start.goal",
+  "prPath": "\\ErrorHandling\\.build\\start.pr",
+  "hash": "a62861f371f2946312c99a533e117f289f0453174b3226594b150eef77078b6c",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

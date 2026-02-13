@@ -1,0 +1,17 @@
+Start
+- add 5 and 3, write to %sum%
+- assert %sum% equals 8
+- subtract 3 from 10, write to %diff%
+- assert %diff% equals 7
+- multiply 6 by 7, write to %product%
+- assert %product% equals 42
+- divide 10 by 4, write to %quotient%
+- assert %quotient% equals 2.5
+- get absolute value of -42, write to %absVal%
+- assert %absVal% equals 42
+- round 3.14159 to 2 decimal places, write to %rounded%
+- assert %rounded% equals 3.14
+- get min of 5 and 3, write to %minimum%
+- assert %minimum% equals 3
+- get max of 5 and 3, write to %maximum%
+- assert %maximum% equals 5

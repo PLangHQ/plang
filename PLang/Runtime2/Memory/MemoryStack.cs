@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Force.DeepCloner;
 
 namespace PLang.Runtime2.Memory;
 
@@ -145,7 +146,8 @@ public class MemoryStack
     }
 
     /// <summary>
-    /// Creates a shallow clone of this memory stack.
+    /// Creates a deep clone of this memory stack.
+    /// Values are deep-cloned so mutations in the clone do not affect the original.
     /// </summary>
     public MemoryStack Clone()
     {
@@ -158,7 +160,8 @@ public class MemoryStack
                 !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase) &&
                 !kvp.Key.StartsWith("!"))
             {
-                clone._variables[kvp.Key] = new Data(kvp.Value.Name, kvp.Value.Value, kvp.Value.Type);
+                var clonedValue = kvp.Value.Value.DeepClone();
+                clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
             }
         }
         return clone;

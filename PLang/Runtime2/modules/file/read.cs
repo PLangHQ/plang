@@ -13,7 +13,7 @@ public partial class Read : IContext
         var absPath = fs.Path.GetFullPath(Path);
 
         if (!fs.File.Exists(absPath))
-            return Task.FromResult(Data.Fail(
+            return Task.FromResult(Data.FromError(
                 new Errors.ServiceError($"File not found: {Path}")));
 
         return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));

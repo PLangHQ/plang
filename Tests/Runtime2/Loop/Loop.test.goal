@@ -1,0 +1,5 @@
+Start
+- set %items% = ["apple", "banana", "cherry"]
+- set %count% = 0
+- foreach %items%, call CountItem item=%item%
+- assert %count% equals 3, "foreach should iterate 3 times"

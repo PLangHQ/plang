@@ -1,0 +1,10 @@
+Start
+/ Test 1: retry exhaustion + ignore continues execution
+- set %beforeRetry% = true
+- assert %beforeRetry% is true
+- throw error "temporary failure", on error retry 2 times, ignore
+- set %afterRetryIgnore% = true
+- assert %afterRetryIgnore% is true, "execution should continue after retry exhaustion + ignore"
+/ Test 2: retry + error goal captures error info
+- throw error "retry then goal", on error retry 1 times, then call HandleRetryError
+- assert %retryErrorHandled% is true, "error goal should have been called after retry exhausted"

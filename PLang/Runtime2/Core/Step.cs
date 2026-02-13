@@ -40,10 +40,10 @@ public sealed partial class Step
     public string? Intent { get; init; }
 
     [Store, Debug, Default]
-    public ErrorHandler? OnError { get; init; }
+    public ErrorHandler? OnError { get; set; }
 
     [Store, Debug, Default]
-    public CacheSettings? Cache { get; init; }
+    public CacheSettings? Cache { get; set; }
 
     [Store, Debug, Default]
     public int? Timeout { get; init; }
@@ -59,6 +59,11 @@ public sealed partial class Step
 
     [JsonIgnore]
     public Goal? Goal { get; set; }
+
+    private StepCache? _stepCache;
+
+    [JsonIgnore]
+    public StepCache? StepCache => Cache != null ? (_stepCache ??= new StepCache(this, Cache)) : null;
 
     public Step Clone()
     {

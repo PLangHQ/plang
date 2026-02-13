@@ -44,6 +44,34 @@ Action level:
 - Warning: you built it but want to flag something (typo, low confidence, missing variable)
 - Error: you could not build it
 
+## Step Modifiers
+
+Step text may include indented modifier lines (after \n). These are step-level properties, NOT actions.
+
+Recognized modifiers:
+- `cache for X seconds` → `cache: {durationSeconds: X}`
+- `cache for X minutes` → `cache: {durationSeconds: X*60}`
+- `cache for X minutes sliding` → `cache: {durationSeconds: X*60, sliding: true}`
+- `cache for X minutes, key 'name'` or `key=%var%` → `cache: {durationSeconds: X*60, key: "name"}`
+
+When you see a cache modifier:
+1. Do NOT create a cache action for it — it is a step property
+2. Return a `cache` object on the step result
+3. Actions marked [no-cache] should NOT have cache settings. If the user adds caching to a [no-cache] action, add a warning with key "cacheNotSupported"
+
+Error handling modifiers:
+- `on error ignore` → `onError: {ignoreError: true}`
+- `on error call <GoalName>` → `onError: {goal: {name: "<GoalName>"}}`
+- `on error retry X times` → `onError: {retryCount: X}`
+- `on error retry X times over Y seconds` → `onError: {retryCount: X, retryOverSeconds: Y}`
+- `on error retry X times, then call <GoalName>` → `onError: {retryCount: X, order: "RetryFirst", goal: {name: "<GoalName>"}}`
+- `on error call <GoalName>, then retry X times` → `onError: {retryCount: X, order: "GoalFirst", goal: {name: "<GoalName>"}}`
+
+When you see an error modifier:
+1. Do NOT create an error action for it — it is a step property
+2. Return an `onError` object on the step result
+3. The `on error` text is part of the step text but should NOT be included in the action parameters — strip it from the step when building actions
+
 ## Example
 
 Goal:
@@ -55,6 +83,11 @@ Start
 - sign \%payload\% with sha256 and verify with \%publicKey\%, write to \%isValid\%
 - get data from server
 - get \%apiUrl\%, write to \%result\%
+- read file 'config.json', write to \%config\%\n    cache for 5 minutes
+- throw error "something went wrong", on error ignore
+- call ProcessData, on error call HandleError
+- call LoadData, on error retry 3 times over 5 seconds
+- call SaveData, on error retry 2 times, then call HandleSaveError
 ```
 
 Response:
@@ -68,7 +101,12 @@ Response:
     {"index": 2, "actions": [{"module": "db", "action": "select", "parameters": [{"name": "sql", "value": "select * from users", "type": "string"}], "return": [{"name": "\%users\%"}]}]},
     {"index": 3, "needsDetail": true, "actions": [{"module": "crypto", "action": "sign", "return": [{"name": "\%signature\%"}]}, {"module": "crypto", "action": "verify", "return": [{"name": "\%isValid\%"}]}]},
     {"index": 4, "errors": [{"key": "ambiguousStep", "message": "could be db.select or http.get"}], "actions": []},
-    {"index": 5, "actions": [{"module": "http", "action": "get", "parameters": [{"name": "url", "value": "\%apiUrl\%", "type": "string"}], "return": [{"name": "\%result\%"}], "warnings": [{"key": "missingVariable", "message": "\%apiUrl\% not set in previous steps"}]}]}
+    {"index": 5, "actions": [{"module": "http", "action": "get", "parameters": [{"name": "url", "value": "\%apiUrl\%", "type": "string"}], "return": [{"name": "\%result\%"}], "warnings": [{"key": "missingVariable", "message": "\%apiUrl\% not set in previous steps"}]}]},
+    {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationSeconds": 300}},
+    {"index": 7, "actions": [{"module": "error", "action": "throw", "parameters": [{"name": "message", "value": "something went wrong", "type": "string"}]}], "onError": {"ignoreError": true}},
+    {"index": 8, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "ProcessData", "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
+    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverSeconds": 5}},
+    {"index": 10, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "SaveData", "type": "goal.call"}]}], "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleSaveError"}}}
   ]
 }
 ```

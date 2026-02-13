@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><title>Internal Error</title>
+<style>
+body { font-family: system-ui; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+.error { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 20px; }
+.error h1 { color: #dc2626; margin-top: 0; }
+.detail { color: #6b7280; font-size: 0.9em; margin-top: 12px; }
+.stack { font-size: 0.85em; color: #374151; }
+pre { background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; }
+</style></head>
+<body>
+<div class="error">
+  <h1>Internal Error</h1>
+  <p>{{ error.Message }}</p>
+  {{ if error.CallFrames.size > 0 }}
+  <div class="stack">
+    <h3>Call Stack</h3>
+    <ul>
+    {{ for frame in error.CallFrames }}
+      <li>{{ frame.GoalName }} - {{ frame.GoalPath }}{{ if frame.Step }}:{{ frame.Step.LineNumber }}{{ end }}</li>
+    {{ end }}
+    </ul>
+  </div>
+  {{ end }}
+  {{ if error.Exception }}
+  <div class="detail">
+    <h3>Exception</h3>
+    <pre>{{ error.Exception.Message }}
+{{ error.Exception.StackTrace }}</pre>
+  </div>
+  {{ end }}
+</div>
+</body></html>

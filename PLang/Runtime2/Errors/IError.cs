@@ -9,6 +9,7 @@ public interface IError
     string Message { get; }
     string Key { get; }
     int StatusCode { get; }
+    ErrorCategory Category { get; }
     string? FixSuggestion { get; }
     string? HelpfulLinks { get; }
     DateTime CreatedUtc { get; }

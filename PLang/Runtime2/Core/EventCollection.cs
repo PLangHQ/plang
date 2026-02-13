@@ -22,7 +22,9 @@ public enum EventType
     OnBeforeStepLoad,
     OnAfterStepLoad,
     BeforeAction,
-    AfterAction
+    AfterAction,
+    OnCacheHit,
+    OnCacheMiss
 }
 
 /// <summary>
@@ -53,13 +55,18 @@ public sealed class EventBinding
         var result = await Handler(context);
         context.ExitEvent(Id);
 
-        // Check if handler set an override via event.skipAction
-        var @override = context.EventOverride;
-        if (@override != null)
+        // Check if handler set an override via event.skipAction.
+        // Only consume the override for action-level events (BeforeAction/AfterAction)
+        // to prevent step/goal-level events from accidentally eating the override.
+        if (Type == EventType.BeforeAction || Type == EventType.AfterAction)
         {
-            context.EventOverride = null;
-            @override.Handled = true;
-            return @override;
+            var @override = context.EventOverride;
+            if (@override != null)
+            {
+                context.EventOverride = null;
+                @override.Handled = true;
+                return @override;
+            }
         }
 
         if (!result.Success && !StopOnError)
@@ -165,6 +172,11 @@ public sealed class Events
     private readonly object _lock = new();
 
     /// <summary>
+    /// Called after any registration or unregistration to notify consumers (e.g., cache invalidation).
+    /// </summary>
+    public System.Action? OnChanged { get; set; }
+
+    /// <summary>
     /// Registers an event binding.
     /// </summary>
     public string Register(EventBinding binding)
@@ -174,6 +186,7 @@ public sealed class Events
             _bindings.Add(binding);
             _bindings.Sort((a, b) => b.Priority.CompareTo(a.Priority));
         }
+        OnChanged?.Invoke();
         return binding.Id;
     }
 
@@ -198,16 +211,22 @@ public sealed class Events
     /// </summary>
     public bool Unregister(string id)
     {
+        bool removed;
         lock (_lock)
         {
             var index = _bindings.FindIndex(b => b.Id == id);
             if (index >= 0)
             {
                 _bindings.RemoveAt(index);
-                return true;
+                removed = true;
+            }
+            else
+            {
+                removed = false;
             }
         }
-        return false;
+        if (removed) OnChanged?.Invoke();
+        return removed;
     }
 
     /// <summary>
@@ -219,6 +238,7 @@ public sealed class Events
         {
             _bindings.Clear();
         }
+        OnChanged?.Invoke();
     }
 
     /// <summary>

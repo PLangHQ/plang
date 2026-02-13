@@ -1,0 +1,10 @@
+Start
+- set %user% = {name:"john", age:20, addresses:[{street:"first street", nr:10}, {street:"second street", nr:2}]}
+- assert %user.name% equals "john"
+- assert %user.age% equals 20
+- assert %user.addresses[0].street% equals "first street"
+- assert %user.addresses[0].nr% equals 10
+- assert %user.addresses[1].street% equals "second street"
+- assert %user.addresses[1].nr% equals 2
+- set %idx% = 1
+- assert %user.addresses[idx].street% equals "second street"

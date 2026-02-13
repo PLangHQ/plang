@@ -1,0 +1,49 @@
+{
+  "name": "ReadCached",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027testdata.txt\u0027, write to %fileData%\n    cache for 5 minutes",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "testdata.txt",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "fileData"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "cache": {
+        "durationSeconds": 300,
+        "sliding": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Cache\\ReadCached.goal",
+  "prPath": "\\Cache\\.build\\readcached.pr",
+  "hash": "5f68681458a1ffb0d4acce31cf8cbec954a4886d1b5bea3bed4c1000bb400d82",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ReadCached"
+}

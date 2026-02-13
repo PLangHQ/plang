@@ -27,12 +27,12 @@ public abstract class BaseClass : IClass
     protected static Data Success() => Data.Ok();
     protected static Data Success(object? value) => Data.Ok(value);
     protected static Data Error(string message, string key = "ServiceError", int statusCode = 400)
-        => Data.Fail(new ServiceError(message, key, statusCode));
-    protected static Data Error(IError error) => Data.Fail(error);
+        => Data.FromError(new ServiceError(message, key, statusCode));
+    protected static Data Error(IError error) => Data.FromError(error);
     protected static Task<Data> SuccessTask() => Task.FromResult(Data.Ok());
     protected static Task<Data> SuccessTask(object? value) => Task.FromResult(Data.Ok(value));
     protected static Task<Data> ErrorTask(string message, string key = "ServiceError", int statusCode = 400)
-        => Task.FromResult(Data.Fail(new ServiceError(message, key, statusCode)));
+        => Task.FromResult(Data.FromError(new ServiceError(message, key, statusCode)));
 
     protected static Data<T> Success<T>(T value) => Data<T>.Ok(value);
     protected static Task<Data> SuccessTask<T>(T value) => Task.FromResult<Data>(Data<T>.Ok(value));

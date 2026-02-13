@@ -1,0 +1,18 @@
+Start
+/ Test 1: file.read with cache - proves cache hit skips re-reading changed file
+- save "first-value" to file 'testdata.txt'
+- call ReadCached
+- write out "  1st call returned: %fileData.Value%"
+- save "second-value" to file 'testdata.txt'
+- call ReadCached
+- write out "  2nd call returned: %fileData.Value% (should still be 'first-value' if cached)"
+/ Test 2: custom cache key
+- save "key-value-1" to file 'keytest.txt'
+- call ReadWithKey
+- write out "  key test 1st: %keyData.Value%"
+- save "key-value-2" to file 'keytest.txt'
+- call ReadWithKey
+- write out "  key test 2nd: %keyData.Value% (should still be 'key-value-1' if cached)"
+/ Cleanup
+- delete file 'testdata.txt'
+- delete file 'keytest.txt'

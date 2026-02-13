@@ -30,11 +30,21 @@ public sealed partial class Goal
         context.CurrentGoalName = Name;
 
         if (cancellationToken.IsCancellationRequested)
-            return Data.Fail(GoalError.Cancelled(context));
+            return Data.FromError(GoalError.Cancelled(context));
 
         var events = context.EventsFor(this);
 
-        var beforeResult = await events.Before.Run(context);
+        Data beforeResult;
+        try
+        {
+            beforeResult = await events.Before.Run(context);
+        }
+        catch (Exception ex)
+        {
+            var eventError = new GoalError($"BeforeGoal event failed: {ex.Message}", context, "EventError", 500) { Exception = ex };
+            context.CallStack?.AddError(eventError);
+            return Data.FromError(eventError);
+        }
         if (!beforeResult) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
@@ -55,11 +65,20 @@ public sealed partial class Goal
                 }
 
                 if (cancellationToken.IsCancellationRequested)
-                    return Data.Fail(GoalError.Cancelled(context));
+                    return Data.FromError(GoalError.Cancelled(context));
             }
 
-            var afterResult = await events.After.Run(context);
-            if (!afterResult) return afterResult;
+            try
+            {
+                var afterResult = await events.After.Run(context);
+                if (!afterResult) return afterResult;
+            }
+            catch (Exception ex)
+            {
+                var eventError = new GoalError($"AfterGoal event failed: {ex.Message}", context, "EventError", 500) { Exception = ex };
+                context.CallStack?.AddError(eventError);
+                return Data.FromError(eventError);
+            }
 
             return Data.Ok();
         }

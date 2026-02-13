@@ -40,7 +40,6 @@ public class PrParser
                 return null;
 
             goal.Path = ExtractRelativePath(prFilePath);
-            goal.PrPath = prFilePath;
             foreach (var step in goal.Steps) step.Goal = goal;
 
             return goal;

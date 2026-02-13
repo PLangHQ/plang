@@ -19,7 +19,7 @@ public partial class List : IContext
         var absPath = fs.Path.GetFullPath(Path);
 
         if (!fs.Directory.Exists(absPath))
-            return Task.FromResult(Data.Fail(
+            return Task.FromResult(Data.FromError(
                 new Errors.ServiceError($"Directory not found: {Path}", "FileNotFound", 404)));
 
         var searchOption = Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;

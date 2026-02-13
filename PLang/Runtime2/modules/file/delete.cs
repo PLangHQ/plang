@@ -2,7 +2,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.file;
 
-[Action("delete")]
+[Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
     public partial string Path { get; init; }
@@ -19,7 +19,7 @@ public partial class Delete : IContext
         {
             if (IgnoreIfNotFound)
                 return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
-            return Task.FromResult(Data.Fail(
+            return Task.FromResult(Data.FromError(
                 new Errors.ServiceError($"File not found: {Path}", "FileNotFound", 404)));
         }
 

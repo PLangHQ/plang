@@ -1,0 +1,16 @@
+Start
+- set %myList% = [10, 20, 30]
+- add 40 to %myList%
+- write out "After add: %myList%"
+- get count of %myList%, write to %count%
+- write out "Count: %count%"
+- get first item from %myList%, write to %first%
+- write out "First: %first%"
+- get last item from %myList%, write to %last%
+- write out "Last: %last%"
+- check if %myList% contains 20, write to %has20%
+- write out "Contains 20: %has20%"
+- join %myList% with separator ", ", write to %joined%
+- write out "Joined: %joined%"
+- split "a-b-c" by "-", write to %parts%
+- write out "Split: %parts%"

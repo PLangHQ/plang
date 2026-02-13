@@ -3,7 +3,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.output;
 
-[Action("write")]
+[Action("write", Cacheable = false)]
 public partial class Write : IContext
 {
     public partial object Content { get; init; }

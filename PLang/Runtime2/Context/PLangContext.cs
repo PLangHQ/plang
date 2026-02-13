@@ -116,6 +116,10 @@ public sealed class PLangContext : IDisposable
         _cts = CancellationTokenSource.CreateLinkedTokenSource(appContext.ShutdownToken);
         System = new EventScope();
         User = new EventScope();
+
+        // Wire event registration to invalidate the resolved-events cache
+        System.Events.OnChanged = InvalidateEventCache;
+        User.Events.OnChanged = InvalidateEventCache;
     }
 
     /// <summary>
@@ -211,18 +215,24 @@ public sealed class PLangContext : IDisposable
     }
 
     private readonly ConcurrentDictionary<object, object> _eventContainers = new();
-    private readonly HashSet<string> _activeEventBindings = new();
+    private readonly ConcurrentDictionary<string, byte> _activeEventBindings = new();
 
     /// <summary>
     /// Returns true if the event binding is not already running, and marks it as active.
     /// Used to prevent re-entrant event handler execution.
     /// </summary>
-    internal bool TryEnterEvent(string bindingId) => _activeEventBindings.Add(bindingId);
+    internal bool TryEnterEvent(string bindingId) => _activeEventBindings.TryAdd(bindingId, 0);
 
     /// <summary>
     /// Marks an event binding as no longer active.
     /// </summary>
-    internal void ExitEvent(string bindingId) => _activeEventBindings.Remove(bindingId);
+    internal void ExitEvent(string bindingId) => _activeEventBindings.TryRemove(bindingId, out _);
+
+    /// <summary>
+    /// Clears the event resolution cache. Must be called when events are registered
+    /// during execution so newly added events are picked up on subsequent EventsFor() calls.
+    /// </summary>
+    public void InvalidateEventCache() => _eventContainers.Clear();
 
     /// <summary>
     /// Resolves per-context events for a Goal. Lazy-resolves from User.Events on first call, cached on context.
@@ -266,6 +276,14 @@ public sealed class PLangContext : IDisposable
                 events.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterStep, goalName: goalName, stepText: step.Text))
                 events.After.Add(b);
+
+            if (step.StepCache != null)
+            {
+                foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnCacheHit, goalName: goalName, stepText: step.Text))
+                    step.StepCache.Hit.Add(b);
+                foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnCacheMiss, goalName: goalName, stepText: step.Text))
+                    step.StepCache.Miss.Add(b);
+            }
 
             return events;
         });

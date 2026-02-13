@@ -44,6 +44,8 @@ public static class TypeMapping
         ["json[]"] = typeof(JsonArray),
         ["actor"] = typeof(PLang.Runtime2.Context.Actor),
         ["goal.call"] = typeof(PLang.Runtime2.Core.GoalCall),
+        ["tstring"] = typeof(PLang.Runtime2.Memory.TString),
+        ["translatable"] = typeof(PLang.Runtime2.Memory.TString),
 
         // Nullable types
         ["int?"] = typeof(int?),
@@ -70,6 +72,7 @@ public static class TypeMapping
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
         [typeof(PLang.Runtime2.Core.GoalCall)] = "goal.call",
+        [typeof(PLang.Runtime2.Memory.TString)] = "tstring",
     };
 
     /// <summary>

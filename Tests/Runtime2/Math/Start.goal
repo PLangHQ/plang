@@ -1,0 +1,19 @@
+Start
+- add 5 and 3, write to %sum%
+- write out "5 + 3 = %sum%"
+- subtract 3 from 10, write to %diff%
+- write out "10 - 3 = %diff%"
+- multiply 6 by 7, write to %product%
+- write out "6 * 7 = %product%"
+- divide 10 by 3, write to %quotient%
+- write out "10 / 3 = %quotient%"
+- get absolute value of -42, write to %absVal%
+- write out "abs(-42) = %absVal%"
+- round 3.14159 to 2 decimal places, write to %rounded%
+- write out "round(3.14159, 2) = %rounded%"
+- get min of 5 and 3, write to %minimum%
+- write out "min(5, 3) = %minimum%"
+- get max of 5 and 3, write to %maximum%
+- write out "max(5, 3) = %maximum%"
+- generate random number between 1 and 100, write to %rand%
+- write out "random: %rand%"

@@ -1,0 +1,50 @@
+{
+  "name": "ReadWithKey",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027keytest.txt\u0027, write to %keyData%\n    cache for 5 minutes, key \u0027myKeyTest\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "keytest.txt",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "keyData"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "cache": {
+        "durationSeconds": 300,
+        "sliding": false,
+        "key": "myKeyTest"
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Cache\\ReadWithKey.goal",
+  "prPath": "\\Cache\\.build\\readwithkey.pr",
+  "hash": "20b2c0fd939cfd65dba6a294d13b9ad732fd1563c72725dc3b82dc735921444b",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ReadWithKey"
+}

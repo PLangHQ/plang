@@ -2,7 +2,6 @@ using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules.variable;
-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
@@ -19,7 +18,7 @@ public class GetTests
     }
 
     [Test]
-    public async Task Get_ReturnsVariable()
+    public async Task Get_ReturnsRawValue()
     {
         var memory = new MemoryStack();
         memory.Set("testVar", "testValue");
@@ -29,15 +28,12 @@ public class GetTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.name).IsEqualTo("testVar");
-        await Assert.That(v.value).IsEqualTo("testValue");
-        await Assert.That(v.exists).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("testValue");
+        await Assert.That(result.Name).IsEqualTo("testVar");
     }
 
     [Test]
-    public async Task Get_NonexistentVariable_ReturnsNotExists()
+    public async Task Get_NonexistentVariable_ReturnsNull()
     {
         var (context, _) = CreateContext();
 
@@ -45,9 +41,6 @@ public class GetTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.value).IsNull();
-        await Assert.That(v.exists).IsFalse();
+        await Assert.That(result.Value).IsNull();
     }
 }

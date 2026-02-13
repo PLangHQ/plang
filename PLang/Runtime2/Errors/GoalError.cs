@@ -8,6 +8,7 @@ namespace PLang.Runtime2.Errors;
 /// </summary>
 public class GoalError : Error
 {
+    public override ErrorCategory Category => ErrorCategory.Runtime;
     public GoalError(string message, string key = "GoalError", int statusCode = 400)
         : base(message, key, statusCode) { }
 

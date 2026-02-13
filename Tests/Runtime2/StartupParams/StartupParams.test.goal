@@ -1,0 +1,7 @@
+Start
+/ StartupParams tests that variables can be set and used
+/ (CLI param injection is tested via manual run: plang p Start.goal name=World)
+- set %name% = "TestUser"
+- assert %name% equals "TestUser"
+- set %greeting% = "Hello %name%"
+- assert %greeting% contains "TestUser"

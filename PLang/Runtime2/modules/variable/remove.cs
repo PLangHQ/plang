@@ -2,7 +2,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.variable;
 
-[Action("remove")]
+[Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
     [VariableName]

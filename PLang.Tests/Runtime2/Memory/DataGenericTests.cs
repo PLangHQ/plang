@@ -49,7 +49,7 @@ public class DataGenericTests
     public async Task Fail_CreatesErrorResult()
     {
         var error = new ServiceError("something failed", "TestError", 500);
-        var data = Data<string>.Fail(error);
+        var data = Data<string>.FromError(error);
 
         await Assert.That(data.Success).IsFalse();
         await Assert.That(data.Error).IsNotNull();

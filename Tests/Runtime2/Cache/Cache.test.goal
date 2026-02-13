@@ -1,0 +1,10 @@
+Start
+/ Test: file.read with cache - proves cache hit skips re-reading changed file
+- save "first-value" to file 'testdata.txt'
+- call ReadCached
+- assert %fileData% is not null, "cached read should return value"
+- save "second-value" to file 'testdata.txt'
+- call ReadCached
+- assert %fileData% equals "first-value", "second call should return cached first-value"
+/ Cleanup
+- delete file 'testdata.txt'

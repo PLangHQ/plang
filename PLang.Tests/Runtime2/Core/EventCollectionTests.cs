@@ -211,7 +211,7 @@ public class EventsTests
     {
         var events = new PLang.Runtime2.Core.Events();
         var secondCalled = false;
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Fail(new Error("Error"))), priority: 2, stopOnError: true);
+        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: true);
         events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1);
 
         using var context = CreateContext();
@@ -226,7 +226,7 @@ public class EventsTests
     {
         var events = new PLang.Runtime2.Core.Events();
         var secondCalled = false;
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Fail(new Error("Error"))), priority: 2, stopOnError: false);
+        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: false);
         events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1);
 
         using var context = CreateContext();

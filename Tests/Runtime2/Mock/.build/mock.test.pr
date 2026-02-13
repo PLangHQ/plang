@@ -1,0 +1,212 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock intercept \u0022file.read\u0022, return \u0022mocked content\u0022, write to %mockRead%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "file.read",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": "mocked content",
+              "type": "object"
+            },
+            {
+              "name": "Parameters",
+              "type": "dictionary"
+            }
+          ],
+          "return": [
+            {
+              "name": "mockRead"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %mockRead.callCount% equals 0, \u0022mock should start with 0 calls\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.callCount%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "mock should start with 0 calls",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %mockRead.actionPattern% equals \u0022file.read\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "file.read",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.actionPattern%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %mockRead.isSpy% equals false",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.isSpy%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "mock intercept \u0022output.write\u0022, write to %spyWrite%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "type": "object"
+            },
+            {
+              "name": "Parameters",
+              "type": "dictionary"
+            }
+          ],
+          "return": [
+            {
+              "name": "spyWrite"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %spyWrite.isSpy% equals true",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%spyWrite.isSpy%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Mock\\Mock.test.goal",
+  "prPath": "\\Mock\\.build\\mock.test.pr",
+  "hash": "2a393fef9f45d66633f4f1a63dbd87725e152c3a290f35e32fba12cb64bb65ce",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

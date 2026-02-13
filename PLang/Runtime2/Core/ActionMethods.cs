@@ -24,7 +24,7 @@ public sealed partial class Action
         {
             var (handler, error) = engine.Actions.GetCodeGenerated(Module, ActionName, context);
             if (error != null)
-                return Data.Fail(error);
+                return Data.FromError(error);
 
             result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
         }

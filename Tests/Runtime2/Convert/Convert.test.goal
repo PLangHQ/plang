@@ -1,0 +1,16 @@
+Start
+- convert "42" to int, write to %intVal%
+- assert %intVal% equals 42
+- convert 3.14 to string, write to %strVal%
+- assert %strVal% contains "3.14"
+- convert "true" to bool, write to %boolVal%
+- assert %boolVal% is true
+- convert "Hello World" to base64, write to %b64%
+- assert %b64% is not null
+- convert %b64% from base64, write to %decoded%
+- assert %decoded% equals "Hello World"
+- set %obj% = {name: "Alice", age: 30}
+- convert %obj% to json, write to %json%
+- assert %json% contains "Alice"
+- convert %json% from json, write to %parsed%
+- assert %parsed.name% equals "Alice"

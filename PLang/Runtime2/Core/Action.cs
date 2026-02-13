@@ -29,4 +29,7 @@ public sealed partial class Action
 
     [Store, LlmBuilder, Debug, Default]
     public List<Info> Warnings { get; init; } = new();
+
+    [JsonIgnore]
+    public bool Cacheable { get; init; } = true;
 }

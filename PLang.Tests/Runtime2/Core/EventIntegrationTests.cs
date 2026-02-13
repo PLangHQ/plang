@@ -138,7 +138,7 @@ public class EventIntegrationTests
 
         _engine.Context.User.Events.Register(
             EventType.BeforeGoal,
-            ctx => Task.FromResult(Data.Fail(new Error("blocked"))),
+            ctx => Task.FromResult(Data.FromError(new Error("blocked"))),
             goalNamePattern: "TestGoal");
 
         var result = await _engine.RunGoalAsync(goal);

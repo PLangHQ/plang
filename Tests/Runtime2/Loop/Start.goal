@@ -1,0 +1,4 @@
+Start
+- set %items% = ["apple", "banana", "cherry"]
+- foreach %items%, call ProcessItem item=%item%
+- write out "Loop done"

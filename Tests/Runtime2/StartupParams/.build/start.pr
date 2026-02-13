@@ -43,6 +43,7 @@
   "hash": "20a2ffffb27b509b6a823dc2404527461169b84e70dbac2c2535776a4cdbacdb",
   "isSetup": false,
   "isEvent": false,
+  "isTest": false,
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

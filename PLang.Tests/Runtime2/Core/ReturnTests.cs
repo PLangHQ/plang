@@ -41,7 +41,7 @@ public class DataResultTests
     {
         var error = new Error("Test error", "TestKey", 500);
 
-        var result = Data.Fail(error);
+        var result = Data.FromError(error);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Value).IsNull();
@@ -52,7 +52,7 @@ public class DataResultTests
     [Test]
     public async Task Fail_WithErrorMessage_ReturnsErrorWithDefaultKey()
     {
-        var result = Data.Fail(new Error("Something went wrong"));
+        var result = Data.FromError(new Error("Something went wrong"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -64,7 +64,7 @@ public class DataResultTests
     [Test]
     public async Task Fail_WithMessageAndKeyAndStatusCode_ReturnsCustomError()
     {
-        var result = Data.Fail(new Error("Not found", "NotFound", 404));
+        var result = Data.FromError(new Error("Not found", "NotFound", 404));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).IsEqualTo("Not found");
@@ -125,7 +125,7 @@ public class DataResultTests
     [Test]
     public async Task ImplicitBool_FailureResult_ReturnsFalse()
     {
-        Data result = Data.Fail(new Error("error"));
+        Data result = Data.FromError(new Error("error"));
 
         bool boolValue = result;
 
@@ -136,7 +136,7 @@ public class DataResultTests
     public async Task ImplicitBool_CanBeUsedInIfStatement()
     {
         var successResult = Data.Ok();
-        var failResult = Data.Fail(new Error("error"));
+        var failResult = Data.FromError(new Error("error"));
 
         var successPassed = false;
         var failPassed = true;
@@ -171,7 +171,7 @@ public class DataResultTests
     [Test]
     public async Task ToString_Failure_ReturnsErrorMessage()
     {
-        var result = Data.Fail(new Error("Something went wrong"));
+        var result = Data.FromError(new Error("Something went wrong"));
 
         var str = result.ToString();
 

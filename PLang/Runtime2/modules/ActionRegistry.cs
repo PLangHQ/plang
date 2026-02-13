@@ -5,17 +5,25 @@ namespace PLang.Runtime2.modules;
 
 public sealed class ActionRegistry
 {
+    // Explicit instances (Register(instance) for tests/custom handlers)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IClass>> _handlers = new(StringComparer.OrdinalIgnoreCase);
 
-    // [Action]-attributed types: stored as Type, new instance created per call (thread safety)
+    // Types for per-call instantiation (thread-safe: new instance per call)
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Type>> _actionTypes = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Registers a specific handler instance. Used by tests and custom modules.
+    /// WARNING: Instance is shared — only use when you need to track state across calls (e.g., test counters).
+    /// </summary>
     public void Register(string module, string actionName, IClass handler)
     {
         var actions = _handlers.GetOrAdd(module, _ => new ConcurrentDictionary<string, IClass>(StringComparer.OrdinalIgnoreCase));
         actions[actionName] = handler;
     }
 
+    /// <summary>
+    /// Registers a handler Type for per-call instantiation (thread-safe).
+    /// </summary>
     public void RegisterCodeGenerated(string module, string actionName, Type type)
     {
         var actions = _actionTypes.GetOrAdd(module, _ => new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase));
@@ -26,7 +34,7 @@ public sealed class ActionRegistry
     {
         const string baseNs = "PLang.Runtime2.modules";
 
-        // Existing path: IClass-based handlers
+        // IClass-based handlers → store as Type for per-call instantiation
         var classTypes = assembly.GetTypes()
             .Where(t => typeof(IClass).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
 
@@ -36,19 +44,19 @@ public sealed class ActionRegistry
                 continue;
 
             var module = type.Namespace[(baseNs.Length + 1)..];
-            var instance = (IClass)Activator.CreateInstance(type)!;
 
-            // Use ParameterType.Name as action name (e.g., "save" from typeof(save).Name)
-            // For no-params handlers, strip "Handler" suffix
+            // Create a temporary instance just to derive the action name
+            var instance = (IClass)Activator.CreateInstance(type)!;
             var actionName = instance.ParameterType?.Name
                 ?? (type.Name.EndsWith("Handler")
                     ? type.Name[..^"Handler".Length].ToLowerInvariant()
                     : type.Name);
 
-            Register(module, actionName, instance);
+            // Store as Type, not instance — new instance per call
+            RegisterCodeGenerated(module, actionName, type);
         }
 
-        // New path: [Action] attribute-based classes
+        // [Action] attribute-based classes → already stored as Type
         var actionAttrTypes = assembly.GetTypes()
             .Where(t => t.GetCustomAttribute<ActionAttribute>() != null
                       && typeof(ICodeGenerated).IsAssignableFrom(t)
@@ -67,6 +75,9 @@ public sealed class ActionRegistry
         }
     }
 
+    /// <summary>
+    /// Gets an explicitly registered handler instance (for tests/custom).
+    /// </summary>
     public IClass? Get(string module, string actionName)
     {
         if (string.IsNullOrEmpty(module) || string.IsNullOrEmpty(actionName))
@@ -80,13 +91,12 @@ public sealed class ActionRegistry
     }
 
     /// <summary>
-    /// Gets a handler and validates it implements ICodeGenerated.
-    /// Checks both IClass-based handlers and [Action]-based types.
-    /// [Action] types create a new instance per call (thread safety).
+    /// Gets a handler for execution. Creates new instances for Type-registered handlers (thread-safe).
+    /// Explicit Register(instance) handlers are returned as-is (for tests).
     /// </summary>
     public (ICodeGenerated? Handler, Errors.IError? Error) GetCodeGenerated(string module, string actionName, Context.PLangContext context)
     {
-        // Check IClass-based handlers first (explicit Register() overrides auto-discovered types)
+        // Check explicit instances first (Register(instance) overrides discovered types)
         var handler = Get(module, actionName);
         if (handler != null)
         {
@@ -95,10 +105,13 @@ public sealed class ActionRegistry
             return (codeGenerated, null);
         }
 
-        // Fall back to [Action]-based types (factory: new instance per call)
+        // Per-call instantiation from registered Types (both IClass and [Action] paths)
         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
             actionTypes.TryGetValue(actionName, out var actionType))
         {
+            if (!typeof(ICodeGenerated).IsAssignableFrom(actionType))
+                return (null, new Errors.ActionError($"Handler '{module}.{actionName}' does not implement ICodeGenerated", context, "HandlerError", 500) { ActionModule = module, ActionName = actionName });
+
             var instance = (ICodeGenerated)Activator.CreateInstance(actionType)!;
             return (instance, null);
         }
@@ -142,16 +155,25 @@ public sealed class ActionRegistry
     }
 
     /// <summary>
-    /// Gets the CLR type for an [Action]-based handler, or null if not found.
+    /// Gets the CLR type for a handler, checking both explicit and type-registered handlers.
     /// </summary>
     public Type? GetActionType(string module, string actionName)
     {
+        // Check explicit instances first
+        var handler = Get(module, actionName);
+        if (handler != null)
+            return handler.GetType();
+
         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
             actionTypes.TryGetValue(actionName, out var type))
             return type;
         return null;
     }
 
+    /// <summary>
+    /// Yields all explicitly registered handler instances (for disposal on engine shutdown).
+    /// Type-registered handlers are per-call and need no disposal tracking.
+    /// </summary>
     public IEnumerable<IClass> All
     {
         get

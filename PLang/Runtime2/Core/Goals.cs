@@ -70,8 +70,10 @@ public sealed class Goals
 
     /// <summary>
     /// Gets a goal by name. Loads the .pr file from disk if not already cached.
+    /// When callingFolderPath is provided, resolves relative to that folder first.
+    /// Names starting with / are resolved from engine root.
     /// </summary>
-    public async Task<Goal?> GetAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<Goal?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
     {
         var goal = Get(name);
         if (goal != null)
@@ -82,10 +84,36 @@ public sealed class Goals
         if (cleanName.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             cleanName = cleanName[..^5];
 
-        // .pr lives in .build/ next to the .goal file: Variables/.build/start.pr
-        var dir = Engine.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
+        // Check if the name is absolute (starts with / meaning resolve from engine root)
+        bool isAbsolute = cleanName.StartsWith("/") || cleanName.StartsWith("\\");
+        if (isAbsolute)
+            cleanName = cleanName.TrimStart('/', '\\');
+
         var file = Engine.FileSystem.Path.GetFileName(cleanName);
-        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, dir, ".build", file.ToLowerInvariant() + ".pr");
+        var nameDir = Engine.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
+
+        // If relative and we have a calling folder, try resolving relative to it first
+        if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
+        {
+            var relativeDir = callingFolderPath.Trim('/', '\\');
+            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : Engine.FileSystem.Path.Combine(relativeDir, nameDir);
+            var relativePrPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, combinedDir, ".build", file.ToLowerInvariant() + ".pr");
+
+            if (Engine.FileSystem.File.Exists(relativePrPath))
+            {
+                var relResult = await LoadFromFileAsync(Engine, relativePrPath, cancellationToken: cancellationToken);
+                if (relResult.Success)
+                {
+                    var loaded = relResult.Value as Goal;
+                    if (loaded != null && !string.IsNullOrEmpty(name))
+                        _byPath[name] = loaded;
+                    return loaded;
+                }
+            }
+        }
+
+        // Fall back to root-relative resolution
+        var prPath = Engine.FileSystem.Path.Combine(Engine.FileSystem.RootDirectory, nameDir, ".build", file.ToLowerInvariant() + ".pr");
         if (!Engine.FileSystem.File.Exists(prPath))
             return null;
 
@@ -93,13 +121,10 @@ public sealed class Goals
         if (!loadResult.Success)
             return null;
 
-        // The .pr file caches the goal under its own name/path which may differ
-        // from the caller's search path (e.g. "Start" vs "./Variables/Start").
-        // Return the loaded goal directly and register it under the search path.
-        var loaded = loadResult.Value as Goal;
-        if (loaded != null && !string.IsNullOrEmpty(name))
-            _byPath[name] = loaded;
-        return loaded;
+        var result = loadResult.Value as Goal;
+        if (result != null && !string.IsNullOrEmpty(name))
+            _byPath[name] = result;
+        return result;
     }
 
     /// <summary>
@@ -202,9 +227,10 @@ public sealed class Goals
 
     public async Task<Data> Run(string name, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
-        var goal = await GetAsync(name, cancellationToken);
+        var callingFolderPath = context?.Goal?.FolderPath;
+        var goal = await GetAsync(name, callingFolderPath, cancellationToken);
         if (goal == null)
-            return Data.Fail(GoalError.NotFound(name));
+            return Data.FromError(GoalError.NotFound(name));
 
         context ??= Engine.Context;
 
@@ -224,9 +250,7 @@ public sealed class Goals
             var goal = await engine.IO.ReadAsync<Goal>(prFilePath, cancellationToken);
 
             if (goal == null)
-                return Data.Fail(new Error($"Failed to parse goal file: {prFilePath}"));
-
-            goal.PrPath = prFilePath;
+                return Data.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
 
             foreach (var step in goal.Steps)
                 step.Goal = goal;
@@ -242,7 +266,7 @@ public sealed class Goals
         }
         catch (Exception ex)
         {
-            return Data.Fail(Error.FromException(ex));
+            return Data.FromError(Error.FromException(ex));
         }
     }
 
@@ -269,7 +293,7 @@ public sealed class Goals
         }
         catch (Exception ex)
         {
-            return Data.Fail(Error.FromException(ex));
+            return Data.FromError(Error.FromException(ex));
         }
     }
 }

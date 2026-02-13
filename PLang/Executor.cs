@@ -344,6 +344,16 @@ namespace PLang
 				parameters.Remove("debug");
 			}
 
+			if (parameters.TryGetValue("test", out var testValue) && testValue is not false)
+			{
+				parameters.Remove("test");
+				foreach (var param in parameters)
+					engine.MemoryStack.Set(param.Key, param.Value);
+
+				var exitCode = await Runtime2.Core.TestMode.RunAsync(engine, cancellationToken);
+				return exitCode == 0 ? Runtime2.Memory.Data.Ok() : Runtime2.Memory.Data.FromError(new Runtime2.Errors.Error("Tests failed", "TestsFailed", exitCode));
+			}
+
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 

@@ -54,6 +54,10 @@
 - .NET 10: use `dotnet run --project PLang.Tests` not `dotnet test`
 - Source generator only runs on PLang project; test mocks must implement `ICodeGenerated` manually
 - In tests: use `System.Type?` (not `Type?`) for CLR type properties to avoid ambiguity with `PLang.Runtime2.Memory.Type`
+- **PLang tests are REQUIRED** alongside C# tests. PLang .goal tests validate the full pipeline: LLM builder understanding → .pr file generation → GoalMapper mapping → runtime execution
+- After building PLang tests (`plang p build`), **always read the generated .pr file** and verify the module/action/parameters are correctly mapped before running
+- PLang test location: `Tests/Runtime2/<ModuleName>/` with .goal files
+- **Read `Documentation/Runtime2/writing_tests.md` before writing any tests** — covers goal naming, builder gotchas, assertion syntax, mock usage, and the full build/verify/run workflow
 
 ## Debugging
 In Runtime2 you can get debug/callstack information. This is usefull when step fails and more information is needed. It will give you the variable values and step pr details that might not be available in the error information. 
@@ -72,3 +76,10 @@ In Runtime2 you can get debug/callstack information. This is usefull when step f
 - PLang.Generators/LazyParamsGenerator.cs - source generator for lazy param resolution
 
 For full OBP details with code examples, see `Documentation/Runtime2/plang_object_based_pattern.md`.
+
+## Learning & Architecture Notes
+- When the user corrects you about PLang architecture, **always add the insight to `Documentation/Runtime2/good_to_know.md`**. This file collects architectural knowledge learned from building and debugging — goal resolution, event mechanics, test patterns, etc.
+- Read `good_to_know.md` before making architectural assumptions.
+
+## Comments from dev
+I was not to happy with yesterdays result. Lets do better today!

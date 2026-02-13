@@ -52,7 +52,7 @@ public sealed partial class Goal
             var baseName = dotIndex >= 0 ? fileName[..dotIndex] : fileName;
             return dir + ".build" + (sepIndex >= 0 ? Path[sepIndex].ToString() : "\\") + baseName.ToLowerInvariant() + ".pr";
         }
-        set { } // PrPath is derived from Path
+        init { } // PrPath is derived from Path; init-only so callers get compile errors instead of silent no-op
     }
 
     [Store, Debug]
@@ -63,6 +63,32 @@ public sealed partial class Goal
 
     [Store, Debug, Default]
     public bool IsEvent { get; init; }
+
+    [Store, Debug, Default]
+    public bool IsTest { get; set; }
+
+    /// <summary>
+    /// Folder path of this goal, derived from Path.
+    /// Starts with / (relative to engine root, not OS root).
+    /// E.g., \Cache\Start.goal → /Cache/, \Start.goal → /
+    /// </summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    public string FolderPath
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Path))
+                return "/";
+
+            var normalized = Path.Replace('\\', '/');
+            var lastSep = normalized.LastIndexOf('/');
+            if (lastSep <= 0)
+                return "/";
+
+            return normalized[..lastSep] + "/";
+        }
+    }
 
     [Store, LlmBuilder, Debug, Default]
     public Dictionary<string, string>? InputParameters { get; init; }

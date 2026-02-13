@@ -1,0 +1,63 @@
+{
+  "GoalName": "ApplyStep",
+  "Comment": null,
+  "GoalSteps": [
+    {
+      "Text": "if %stepResult.approved% = false, call ProcessStep",
+      "Comment": "If validation fails, falls back to BuildStep with error context",
+      "ModuleType": "PLang.Modules.ConditionalModule",
+      "Name": "conditional_call_processstep_if_not_approved",
+      "Description": "Evaluate whether the variable %stepResult.approved% is false. If this condition is true, then invoke the goal named ProcessStep to handle the next actions.",
+      "PrFileName": "01. conditional_call_processstep_if_not_approved.pr",
+      "RelativePrPath": ".build\\ApplyStep\\01. conditional_call_processstep_if_not_approved.pr",
+      "InstructionHash": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Confidence": "Very High",
+      "Inconsistency": null,
+      "Generated": "2026-02-12T10:52:51.9622807+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "Retry": false,
+      "RetryCount": 1,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Number": 0,
+      "LineNumber": 4,
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "eecda7fa819f9144e37567f6cf8fb9dc3b06d5bfdbcfc9eb8dd3189b88c975ed",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ApplyStep.goal",
+      "UserIntent": "Check if the stepResult.approved variable is false and if so, call the ProcessStep goal"
+    }
+  ],
+  "SubGoals": [
+    ".build\\ApplyStep\\ProcessStep\\00. Goal.pr",
+    ".build\\ApplyStep\\HandleValidationError\\00. Goal.pr"
+  ],
+  "Description": "The ApplyStep goal checks the approval status of a step result. If the approval is false, it triggers the ProcessStep to handle the error context. This goal is essential for managing validation outcomes and ensuring appropriate actions are taken based on the approval status.",
+  "Visibility": 1,
+  "GoalFileName": "ApplyStep.goal",
+  "PrFileName": "00. Goal.pr",
+  "RelativeGoalPath": "\\ApplyStep.goal",
+  "CurrentPath": null,
+  "RelativeGoalFolderPath": "\\",
+  "RelativePrPath": ".build\\ApplyStep\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\ApplyStep",
+  "RelativeAppStartupFolderPath": null,
+  "BuilderVersion": "0.1.18.1",
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "f9a248e7cd41907776b720f2d1706768371da83fce4be22a2c5d970e4e3f6023",
+  "IncomingVariablesRequired": {
+    "%stepResult.approved%": "A boolean value indicating whether the step result has been approved or not."
+  },
+  "DataSourceName": null,
+  "IsSetup": false,
+  "IsEvent": false,
+  "Event": null
+}

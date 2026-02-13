@@ -1,0 +1,7 @@
+Start
+- mock intercept "file.read", return "mocked content", write to %mockRead%
+- assert %mockRead.callCount% equals 0, "mock should start with 0 calls"
+- assert %mockRead.actionPattern% equals "file.read"
+- assert %mockRead.isSpy% equals false
+- mock intercept "output.write", write to %spyWrite%
+- assert %spyWrite.isSpy% equals true

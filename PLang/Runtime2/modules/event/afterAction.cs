@@ -3,7 +3,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.@event;
 
-[Action("afterAction")]
+[Action("afterAction", Cacheable = false)]
 public partial class AfterAction : IContext
 {
     public partial GoalCall GoalToCall { get; init; }

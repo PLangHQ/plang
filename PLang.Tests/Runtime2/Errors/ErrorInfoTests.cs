@@ -208,7 +208,7 @@ public class ErrorTests
     public async Task Format_IncludesFixSuggestionAndLinks()
     {
         var step = new Step { Index = 0, Text = "connect db" };
-        var error = new Error("Connection failed", step)
+        var error = new Error("Connection failed", step, "Error", 500)
         {
             FixSuggestion = "Check your connection string",
             HelpfulLinks = "https://docs.example.com/db"
@@ -227,11 +227,10 @@ public class ErrorTests
     {
         var step = new Step { Index = 0, Text = "call api" };
         var ex = new InvalidOperationException("Boom");
-        var error = new Error("API call failed", step) { Exception = ex };
+        var error = new Error("API call failed", step, "Error", 500) { Exception = ex };
 
         var formatted = error.Format();
 
-        await Assert.That(formatted).Contains("Exception:");
         await Assert.That(formatted).Contains("InvalidOperationException: Boom");
     }
 }

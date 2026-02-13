@@ -10,7 +10,6 @@ BuildGoal
 - render template "/system/actions/summary.md", write to %actionSummary%
 - render template "/system/builder/templates/goalFormatForLlm.template", write to %goalForLlm%
 - read file "llm/BuildGoal.llm", load vars, write to %buildGoalPrompt%
-- write out "# BuildGoal\n## System\n%buildGoalPrompt%\n## User:\n%goalForLlm%"
 - [llm] system: %buildGoalPrompt%
         user: %goalForLlm%
          scheme: {
@@ -19,6 +18,8 @@ BuildGoal
             steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,
                   errors?: [{key: string, message: string}],
                   warnings?: [{key: string, message: string}],
+                  cache?: {durationSeconds: long, sliding?: bool, key?: string},
+                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string},
                   actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],
                               errors?: [{key: string, message: string}],
                               warnings?: [{key: string, message: string}]}]}]

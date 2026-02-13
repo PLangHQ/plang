@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal writes the current depth of the call stack before and after calling the Inner goal. It outputs the depth before the call and then again after the Inner goal has been executed.",
   "steps": [
     {
       "index": 0,
@@ -120,11 +121,15 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Start.goal",
-  "prPath": "\\.build\\start.pr",
+  "path": "\\CallStack\\Start.goal",
+  "prPath": "\\CallStack\\.build\\start.pr",
   "hash": "6ca1d78db436f64b203279cc93b3f7586f696520593adef279ecdf58102cbbcc",
   "isSetup": false,
   "isEvent": false,
+  "isTest": false,
+  "inputParameters": {
+    "!callStack.Depth": "This variable holds the current depth of the call stack and is required to output the depth before and after the Inner goal is called."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

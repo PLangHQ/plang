@@ -1,0 +1,3 @@
+InnerTest
+- set %innerDepth% = %!callStack.Depth%
+- assert %innerDepth% is not null, "inner depth should be set"

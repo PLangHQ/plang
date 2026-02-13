@@ -1,0 +1,5 @@
+CachedGoal
+/ Called twice from Start - second call should hit cache
+- read file 'testdata.txt', write to %cachedMsg%
+    cache for 5 minutes
+- write out "  CachedGoal read: %cachedMsg%"

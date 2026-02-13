@@ -20,6 +20,7 @@ public class Error : IError
     public List<IError> ErrorChain { get; } = new();
     public Core.Step? Step { get; init; }
     public IReadOnlyList<Core.CallFrame> CallFrames { get; init; } = Array.Empty<Core.CallFrame>();
+    public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     public Error(string message, string key = "Error", int statusCode = 400)
     {
@@ -80,7 +81,37 @@ public class Error : IError
 
     private static void FormatSingle(IError error, StringBuilder sb, string indent)
     {
-        // Header
+        if (error.Category == ErrorCategory.Application)
+        {
+            FormatApplication(error, sb, indent);
+        }
+        else
+        {
+            FormatRuntime(error, sb, indent);
+        }
+    }
+
+    private static void FormatApplication(IError error, StringBuilder sb, string indent)
+    {
+        var file = error.Step?.Goal?.Path != null ? $"{error.Step.Goal.Path}:{error.Step.LineNumber}" : null;
+
+        sb.AppendLine($"{indent}\u26a0\ufe0f  Error({error.StatusCode}) \u2014 {error.Key}");
+        sb.AppendLine($"{indent}Error: {error.Message}");
+
+        if (error.Step != null)
+            sb.AppendLine($"{indent}\ud83d\udcdd Step: - {error.Step.Text}");
+        if (file != null)
+            sb.AppendLine($"{indent}\ud83d\udcc4 File: {file}");
+
+        if (error.FixSuggestion != null)
+            sb.AppendLine($"{indent}\ud83d\udee0\ufe0f  Fix: {error.FixSuggestion}");
+
+        if (error is Error e)
+            e.FormatExtra(sb, indent);
+    }
+
+    private static void FormatRuntime(IError error, StringBuilder sb, string indent)
+    {
         var file = error.Step?.Goal?.Path != null ? $"{error.Step.Goal.Path}:{error.Step.LineNumber}" : null;
         var line = error.Step?.LineNumber;
 

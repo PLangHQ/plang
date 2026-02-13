@@ -1,0 +1,7 @@
+ConsoleError
+/ Formats %!error% for console display
+/ Application errors get concise output; Runtime errors get full detail
+- if %!error.Category% = "Application" then
+    - write out "Error: %!error.Message%"
+- if %!error.Category% = "Runtime" then
+    - write out "%!error.Format%"

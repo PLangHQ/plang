@@ -1,0 +1,515 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "add 5 and 3, write to %sum%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "sum"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %sum% equals 8",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 8,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%sum%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "subtract 3 from 10, write to %diff%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "subtract",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "diff"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %diff% equals 7",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 7,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%diff%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "multiply 6 by 7, write to %product%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "multiply",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 6,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 7,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "product"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %product% equals 42",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 42,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%product%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "divide 10 by 4, write to %quotient%",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "divide",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 4,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "quotient"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %quotient% equals 2.5",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 2.5,
+              "type": "double"
+            },
+            {
+              "name": "Actual",
+              "value": "%quotient%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "get absolute value of -42, write to %absVal%",
+      "lineNumber": 10,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "abs",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": -42,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "absVal"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %absVal% equals 42",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 42,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%absVal%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "round 3.14159 to 2 decimal places, write to %rounded%",
+      "lineNumber": 12,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "round",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.14159,
+              "type": "double"
+            },
+            {
+              "name": "Decimals",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "rounded"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "assert %rounded% equals 3.14",
+      "lineNumber": 13,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3.14,
+              "type": "double"
+            },
+            {
+              "name": "Actual",
+              "value": "%rounded%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "get min of 5 and 3, write to %minimum%",
+      "lineNumber": 14,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "min",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "minimum"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "assert %minimum% equals 3",
+      "lineNumber": 15,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%minimum%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "get max of 5 and 3, write to %maximum%",
+      "lineNumber": 16,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "max",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "maximum"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "assert %maximum% equals 5",
+      "lineNumber": 17,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%maximum%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Math\\Math.test.goal",
+  "prPath": "\\Math\\.build\\math.test.pr",
+  "hash": "1f6faf5ea65993a8358ad2b10f42b3e3128c7ff25c83dbb399b04843cf354433",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

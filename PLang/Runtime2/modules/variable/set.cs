@@ -2,7 +2,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.variable;
 
-[Action("set")]
+[Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
     [VariableName]

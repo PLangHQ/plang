@@ -1,0 +1,444 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "convert \u002242\u0022 to int, write to %intVal%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "toint",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "42",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "intVal"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %intVal% equals 42",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "expected",
+              "value": 42,
+              "type": "int"
+            },
+            {
+              "name": "actual",
+              "value": "%intVal%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "convert 3.14 to string, write to %strVal%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "tostring",
+          "parameters": [
+            {
+              "name": "value",
+              "value": 3.14,
+              "type": "double"
+            }
+          ],
+          "return": [
+            {
+              "name": "strVal"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %strVal% contains \u00223.14\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%strVal%",
+              "type": "string"
+            },
+            {
+              "name": "container",
+              "value": "3.14",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "convert \u0022true\u0022 to bool, write to %boolVal%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "tobool",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "true",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "boolVal"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %boolVal% is true",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%boolVal%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "convert \u0022Hello World\u0022 to base64, write to %b64%",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "tobase64",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "Hello World",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "b64"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %b64% is not null",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%b64%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "convert %b64% from base64, write to %decoded%",
+      "lineNumber": 10,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "frombase64",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%b64%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "decoded"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert %decoded% equals \u0022Hello World\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "expected",
+              "value": "Hello World",
+              "type": "string"
+            },
+            {
+              "name": "actual",
+              "value": "%decoded%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "set %obj% = {name: \u0022Alice\u0022, age: 30}",
+      "lineNumber": 12,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%obj%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": {
+                "name": "Alice",
+                "age": 30
+              },
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "convert %obj% to json, write to %json%",
+      "lineNumber": 13,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "tojson",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%obj%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "json"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "assert %json% contains \u0022Alice\u0022",
+      "lineNumber": 14,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%json%",
+              "type": "string"
+            },
+            {
+              "name": "container",
+              "value": "Alice",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "convert %json% from json, write to %parsed%",
+      "lineNumber": 15,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "fromjson",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%json%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "parsed"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "assert %parsed.name% equals \u0022Alice\u0022",
+      "lineNumber": 16,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "expected",
+              "value": "Alice",
+              "type": "string"
+            },
+            {
+              "name": "actual",
+              "value": "%parsed.name%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\Convert\\Convert.test.goal",
+  "prPath": "\\Convert\\.build\\convert.test.pr",
+  "hash": "908ce3b55e34a18822baa86e238e03a4394036e6efa48352fbd13fe74f19d224",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

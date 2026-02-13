@@ -1,0 +1,108 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "goalToCall",
+              "value": "OverrideFileRead",
+              "type": "goal.call"
+            },
+            {
+              "name": "actionPattern",
+              "value": "file.read",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0022nonexistent.json\u0022, write to %content%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "nonexistent.json",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "content"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %content% equals \u0022overridden\u0022, \u0022event override should replace file.read result\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "expected",
+              "value": "overridden",
+              "type": "string"
+            },
+            {
+              "name": "actual",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "value": "event override should replace file.read result",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\EventOverride\\EventOverride.test.goal",
+  "prPath": "\\EventOverride\\.build\\eventoverride.test.pr",
+  "hash": "43507e972b8277d304cd8138fe796e30b6ba10981497003b76e0fcd7eb11aa18",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

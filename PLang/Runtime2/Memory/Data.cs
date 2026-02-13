@@ -122,10 +122,9 @@ public class Data
             _value = UnwrapJsonElement(value);
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
-            if (_value != null && _type == null)
-            {
-                _type = new Type(TypeMapping.GetTypeName(_value.GetType()));
-            }
+            _type = _value != null
+                ? new Type(TypeMapping.GetTypeName(_value.GetType()))
+                : null;
         }
     }
 
@@ -238,7 +237,7 @@ public class Data
 
     public static Data Ok() => new("");
     public static Data Ok(object? value, Type? type = null) => new("", value, type);
-    public static Data Fail(IError error) => new("") { Error = error };
+    public static Data FromError(IError error) => new("") { Error = error };
 
     /// <summary>
     /// Merge: combines two Data results (logic from Return.Merge).
@@ -365,7 +364,7 @@ public class Data<T> : Data
 {
     public new T? Value
     {
-        get => base.Value is T typed ? typed : default;
+        get => base.Value is T typed ? typed : GetValue<T>();
         set => base.Value = value;
     }
 
@@ -373,7 +372,7 @@ public class Data<T> : Data
         : base(name, value, type, parent) { }
 
     public static Data<T> Ok(T value, Type? type = null) => new("", value, type);
-    public new static Data<T> Fail(IError error) => new() { Error = error };
+    public new static Data<T> FromError(IError error) => new() { Error = error };
 }
 
 /// <summary>

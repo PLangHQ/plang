@@ -2,7 +2,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.file;
 
-[Action("move")]
+[Action("move", Cacheable = false)]
 public partial class Move : IContext
 {
     public partial string Source { get; init; }
@@ -16,7 +16,7 @@ public partial class Move : IContext
         var absDest = fs.Path.GetFullPath(Destination);
 
         if (!fs.File.Exists(absSource))
-            return Task.FromResult(Data.Fail(
+            return Task.FromResult(Data.FromError(
                 new Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
 
         var destDir = fs.Path.GetDirectoryName(absDest);
