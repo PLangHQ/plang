@@ -18,11 +18,9 @@ public class AssertTests
 {
     private (PLangContext context, MemoryStack memory) CreateContext()
     {
-        var appContext = new PLangAppContext("/app");
+        var engine = new Engine("/app");
         var memory = new MemoryStack();
-        var context = new PLangContext(appContext, memory);
-        var engine = new Engine(appContext);
-        context.RegisterContextVariables(engine);
+        var context = new PLangContext(engine, memory);
         return (context, memory);
     }
 
@@ -238,7 +236,7 @@ public class AssertTests
     public async Task Contains_StringContainsSubstring_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Container = "hello world", Value = "world" };
+        var action = new AssertContains { Context = context, Value = "hello world", Container = "world" };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -247,7 +245,7 @@ public class AssertTests
     public async Task Contains_StringDoesNotContain_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Container = "hello world", Value = "xyz" };
+        var action = new AssertContains { Context = context, Value = "hello world", Container = "xyz" };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -257,7 +255,7 @@ public class AssertTests
     {
         var (context, _) = CreateContext();
         var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Container = list, Value = 2 };
+        var action = new AssertContains { Context = context, Value = list, Container = 2 };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -267,16 +265,16 @@ public class AssertTests
     {
         var (context, _) = CreateContext();
         var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Container = list, Value = 99 };
+        var action = new AssertContains { Context = context, Value = list, Container = 99 };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
 
     [Test]
-    public async Task Contains_NullContainer_Fails()
+    public async Task Contains_NullValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Container = null, Value = "x" };
+        var action = new AssertContains { Context = context, Value = null, Container = "x" };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }

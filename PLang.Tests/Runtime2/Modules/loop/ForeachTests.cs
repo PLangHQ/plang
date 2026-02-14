@@ -13,8 +13,7 @@ public class ForeachTests
     [Before(Test)]
     public void Setup()
     {
-        var appContext = new PLangAppContext("/app");
-        _engine = new Engine(appContext);
+        _engine = new Engine("/app");
     }
 
     private PLangContext CreateContext(MemoryStack? memory = null)

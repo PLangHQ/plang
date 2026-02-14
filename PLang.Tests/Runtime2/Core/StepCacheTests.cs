@@ -7,8 +7,6 @@ namespace PLang.Tests.Runtime2.Core;
 
 public class StepCacheTests
 {
-    private PLangAppContext CreateAppContext() => new PLangAppContext("/app");
-
     private static Step MakeStepWithReturn(string module, string action,
         Dictionary<string, object?> parameters, string returnVarName,
         CacheSettings? cache = null, int index = 0, string text = "")
@@ -36,8 +34,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_SecondRun_SkipsHandler()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("first-result");
         engine.Actions.Register("test", "fetch", handler);
@@ -66,8 +63,7 @@ public class StepCacheTests
     [Test]
     public async Task NoCacheSettings_HandlerAlwaysCalled()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
         engine.Actions.Register("test", "fetch", handler);
@@ -92,8 +88,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_RestoresVariableValue()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("cached-value");
         engine.Actions.Register("test", "fetch", handler);
@@ -122,8 +117,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_RestoresTypeName()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler(42L); // long value
         engine.Actions.Register("test", "compute", handler);
@@ -159,8 +153,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_FailedAction_NotCached()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new FailOnFirstCallHandler();
         engine.Actions.Register("test", "flaky", handler);
@@ -191,8 +184,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_DifferentSteps_DifferentCacheKeys()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new SequenceHandler("a", "b");
         engine.Actions.Register("test", "fetch", handler);
@@ -225,8 +217,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_CustomKey_WithVariableResolution()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("result");
         engine.Actions.Register("test", "fetch", handler);
@@ -305,8 +296,7 @@ public class StepCacheTests
     [Test]
     public async Task Engine_Cache_DefaultsToMemoryStepCache()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         await Assert.That(engine.Cache).IsNotNull();
         await Assert.That(engine.Cache).IsTypeOf<MemoryStepCache>();
@@ -315,8 +305,7 @@ public class StepCacheTests
     [Test]
     public async Task Engine_Cache_CanBeSwapped()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var custom = new FakeCache();
         engine.Cache = custom;
@@ -327,8 +316,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_UsesCustomCacheImplementation()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var fakeCache = new FakeCache();
         engine.Cache = fakeCache;
@@ -416,8 +404,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheHitEvent_Fires_OnSecondCall()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
         engine.Actions.Register("test", "fetch", handler);
@@ -446,8 +433,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheMissEvent_Fires_OnFirstCall()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
         engine.Actions.Register("test", "fetch", handler);
@@ -476,8 +462,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheEvents_BothFireCorrectly()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
         engine.Actions.Register("test", "fetch", handler);

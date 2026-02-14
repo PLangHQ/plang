@@ -18,8 +18,7 @@ public class FileHandlerTests : IDisposable
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        var appContext = new PLangAppContext(_tempDir);
-        _engine = new Engine(appContext, fileSystem: _fs);
+        _engine = new Engine(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -34,9 +33,7 @@ public class FileHandlerTests : IDisposable
 
     private PLangContext CreateContext()
     {
-        var context = _engine.CreateContext();
-        context.RegisterContextVariables(_engine);
-        return context;
+        return _engine.CreateContext();
     }
 
     // --- Save ---
@@ -304,15 +301,15 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task FileType_ToString_ReturnsRelativePath()
+    public async Task FileType_ToString_ReturnsContent()
     {
-        System.IO.File.WriteAllText(TempPath("tostring.txt"), "x");
+        System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
 
         var action = new Read { Context = CreateContext(), Path = TempPath("tostring.txt") };
         var result = await action.Run();
         var f = result.Value as FileResult;
 
-        await Assert.That(f!.ToString()).IsEqualTo("tostring.txt");
+        await Assert.That(f!.ToString()).IsEqualTo("file-content");
     }
 
     // --- Integration: file.exists → MemoryStack → output.write ---
@@ -328,8 +325,8 @@ public class FileHandlerTests : IDisposable
 
         // Replace default channel on User actor's IO so we can capture output
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.IO.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.IO.Default, captureStream,
+        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
+            PLang.Runtime2.IO.Channels.Default, captureStream,
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -407,8 +404,8 @@ public class FileHandlerTests : IDisposable
         _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.IO.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.IO.Default, captureStream,
+        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
+            PLang.Runtime2.IO.Channels.Default, captureStream,
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 

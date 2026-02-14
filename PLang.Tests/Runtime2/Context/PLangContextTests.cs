@@ -1,29 +1,27 @@
 using PLang.Runtime2.Context;
+using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Tests.Runtime2.Context;
 
 public class PLangContextTests
 {
-    private PLangAppContext CreateAppContext() => new PLangAppContext("/app");
-
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
-        await Assert.That(context.AppContext).IsEqualTo(appContext);
+        await Assert.That(context.Engine).IsEqualTo(engine);
         await Assert.That(context.MemoryStack).IsNotNull();
         await Assert.That(context.Parent).IsNull();
-        await Assert.That(context.Depth).IsEqualTo(0);
     }
 
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         await Assert.That(context.Id).IsNotNull();
         await Assert.That(context.Id.Length).IsEqualTo(12);
@@ -32,10 +30,10 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsCreatedAt()
     {
-        using var appContext = CreateAppContext();
+        await using var engine = new Engine("/app");
         var before = DateTime.UtcNow;
 
-        using var context = new PLangContext(appContext);
+        using var context = new PLangContext(engine);
 
         var after = DateTime.UtcNow;
         await Assert.That(context.CreatedAt).IsGreaterThanOrEqualTo(before);
@@ -45,32 +43,31 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_AcceptsCustomMemoryStack()
     {
-        using var appContext = CreateAppContext();
+        await using var engine = new Engine("/app");
         var memoryStack = new MemoryStack();
         memoryStack.Set("test", "value");
 
-        using var context = new PLangContext(appContext, memoryStack);
+        using var context = new PLangContext(engine, memoryStack);
 
         await Assert.That(context.MemoryStack).IsEqualTo(memoryStack);
     }
 
     [Test]
-    public async Task Constructor_WithParent_SetsParentAndDepth()
+    public async Task Constructor_WithParent_SetsParent()
     {
-        using var appContext = CreateAppContext();
-        using var parent = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var parent = new PLangContext(engine);
 
-        using var child = new PLangContext(appContext, parent: parent);
+        using var child = new PLangContext(engine, parent: parent);
 
         await Assert.That(child.Parent).IsEqualTo(parent);
-        await Assert.That(child.Depth).IsEqualTo(1);
     }
 
     [Test]
     public async Task CallStack_DefaultsToNull()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         await Assert.That(context.CallStack).IsNull();
     }
@@ -78,8 +75,8 @@ public class PLangContextTests
     [Test]
     public async Task CallStack_CanBeSet()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var callStack = new PLang.Runtime2.Core.CallStack();
 
         context.CallStack = callStack;
@@ -90,8 +87,8 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_DefaultsFalse()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         await Assert.That(context.IsAsync).IsFalse();
     }
@@ -99,8 +96,8 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_CanBeSet()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         context.IsAsync = true;
 
@@ -108,52 +105,12 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task CurrentGoalName_DefaultsToNull()
-    {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
-
-        await Assert.That(context.CurrentGoalName).IsNull();
-    }
-
-    [Test]
-    public async Task CurrentGoalName_CanBeSet()
-    {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
-
-        context.CurrentGoalName = "TestGoal";
-
-        await Assert.That(context.CurrentGoalName).IsEqualTo("TestGoal");
-    }
-
-    [Test]
-    public async Task CurrentStepIndex_DefaultsToNull()
-    {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
-
-        await Assert.That(context.CurrentStepIndex).IsNull();
-    }
-
-    [Test]
-    public async Task CurrentStepIndex_CanBeSet()
-    {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
-
-        context.CurrentStepIndex = 5;
-
-        await Assert.That(context.CurrentStepIndex).IsEqualTo(5);
-    }
-
-    [Test]
     public async Task CancellationToken_LinkedToAppShutdown()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
-        appContext.RequestShutdown();
+        engine.RequestShutdown();
 
         await Assert.That(context.CancellationToken.IsCancellationRequested).IsTrue();
     }
@@ -161,8 +118,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetsAndGetsValue()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         context["key"] = "value";
 
@@ -172,8 +129,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetNull_RemovesKey()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         context["key"] = "value";
 
         context["key"] = null;
@@ -184,8 +141,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_CaseInsensitive()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         context["Key"] = "value";
 
         await Assert.That(context["key"]).IsEqualTo("value");
@@ -195,8 +152,8 @@ public class PLangContextTests
     [Test]
     public async Task Get_ReturnsTypedValue()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         context["count"] = 42;
 
         var value = context.Get<int>("count");
@@ -207,8 +164,8 @@ public class PLangContextTests
     [Test]
     public async Task Get_NonexistentKey_ReturnsDefault()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         var value = context.Get<int>("nonexistent");
 
@@ -218,8 +175,8 @@ public class PLangContextTests
     [Test]
     public async Task Set_StoresTypedValue()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         context.Set("count", 42);
 
@@ -229,8 +186,8 @@ public class PLangContextTests
     [Test]
     public async Task Set_Null_RemovesKey()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         context.Set<string>("key", "value");
 
         context.Set<string>("key", null!);
@@ -241,8 +198,8 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_ExistingKey_ReturnsTrue()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         context["key"] = "value";
 
         await Assert.That(context.ContainsKey("key")).IsTrue();
@@ -251,8 +208,8 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_NonexistentKey_ReturnsFalse()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         await Assert.That(context.ContainsKey("nonexistent")).IsFalse();
     }
@@ -260,8 +217,8 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_CreatesWithClonedMemoryStack()
     {
-        using var appContext = CreateAppContext();
-        using var parent = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var parent = new PLangContext(engine);
         parent.MemoryStack.Set("test", "value");
 
         using var child = parent.CreateChild();
@@ -273,8 +230,8 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_SetsParent()
     {
-        using var appContext = CreateAppContext();
-        using var parent = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var parent = new PLangContext(engine);
 
         using var child = parent.CreateChild();
 
@@ -282,21 +239,10 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task CreateChild_IncrementsDepth()
-    {
-        using var appContext = CreateAppContext();
-        using var parent = new PLangContext(appContext);
-
-        using var child = parent.CreateChild();
-
-        await Assert.That(child.Depth).IsEqualTo(1);
-    }
-
-    [Test]
     public async Task CreateChild_AcceptsCustomMemoryStack()
     {
-        using var appContext = CreateAppContext();
-        using var parent = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var parent = new PLangContext(engine);
         var customStack = new MemoryStack();
         customStack.Set("custom", "value");
 
@@ -308,24 +254,22 @@ public class PLangContextTests
     [Test]
     public async Task Clone_CreatesIndependentCopy()
     {
-        using var appContext = CreateAppContext();
-        using var original = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var original = new PLangContext(engine);
         original["key"] = "value";
         original.IsAsync = true;
-        original.CurrentGoalName = "TestGoal";
 
         using var clone = original.Clone();
 
         await Assert.That(clone.Get<string>("key")).IsEqualTo("value");
         await Assert.That(clone.IsAsync).IsTrue();
-        await Assert.That(clone.CurrentGoalName).IsEqualTo("TestGoal");
     }
 
     [Test]
     public async Task Clone_IndependentData()
     {
-        using var appContext = CreateAppContext();
-        using var original = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var original = new PLangContext(engine);
         original["key"] = "value";
 
         using var clone = original.Clone();
@@ -338,8 +282,8 @@ public class PLangContextTests
     [Test]
     public async Task Clone_AcceptsCustomMemoryStack()
     {
-        using var appContext = CreateAppContext();
-        using var original = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var original = new PLangContext(engine);
         var customStack = new MemoryStack();
         customStack.Set("custom", "value");
 
@@ -351,8 +295,8 @@ public class PLangContextTests
     [Test]
     public async Task Cancel_CancelsCancellationToken()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         context.Cancel();
 
@@ -362,8 +306,8 @@ public class PLangContextTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         await Task.Delay(10);
 
         var duration = context.Duration;
@@ -374,8 +318,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CancelsToken()
     {
-        using var appContext = CreateAppContext();
-        var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        var context = new PLangContext(engine);
         var token = context.CancellationToken;
 
         context.Dispose();
@@ -386,8 +330,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_ClearsData()
     {
-        using var appContext = CreateAppContext();
-        var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        var context = new PLangContext(engine);
         context["key"] = "value";
 
         context.Dispose();
@@ -398,8 +342,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_DisposesDisposableValues()
     {
-        using var appContext = CreateAppContext();
-        var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        var context = new PLangContext(engine);
         var disposable = new TestDisposable();
         context["disposable"] = disposable;
 
@@ -411,8 +355,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CalledTwice_DoesNotThrow()
     {
-        using var appContext = CreateAppContext();
-        var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        var context = new PLangContext(engine);
 
         context.Dispose();
         context.Dispose();
@@ -445,8 +389,8 @@ public class PLangContextAccessorTests
     public async Task Current_SetAndGet_ReturnsSameContext()
     {
         var accessor = new PLangContextAccessor();
-        using var appContext = new PLangAppContext("/app");
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
 
         accessor.Current = context;
 
@@ -457,8 +401,8 @@ public class PLangContextAccessorTests
     public async Task Current_SetNull_ReturnsNull()
     {
         var accessor = new PLangContextAccessor();
-        using var appContext = new PLangAppContext("/app");
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         accessor.Current = context;
 
         accessor.Current = null;

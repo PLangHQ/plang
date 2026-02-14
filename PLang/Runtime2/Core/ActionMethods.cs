@@ -9,9 +9,9 @@ public sealed partial class Action
 {
     public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {
-        var events = context.EventsFor(this);
+        var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await events.Before.Run(context);
+        var beforeResult = await lifecycle.Before.Run(context);
         if (!beforeResult) return beforeResult;
 
         Data result;
@@ -35,7 +35,7 @@ public sealed partial class Action
                 context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
         }
 
-        var afterResult = await events.After.Run(context);
+        var afterResult = await lifecycle.After.Run(context);
         if (!afterResult) return afterResult;
 
         return result;

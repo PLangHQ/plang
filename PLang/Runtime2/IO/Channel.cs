@@ -53,15 +53,17 @@ public sealed class Channel : IAsyncDisposable, IDisposable
         => new(name, new MemoryStream(), direction);
 
     /// <summary>
-    /// Creates a channel from a file.
+    /// Creates a channel from a file using the PLang file system abstraction.
     /// </summary>
-    public static Channel File(string name, string path, FileMode mode = FileMode.OpenOrCreate)
+    public static Channel File(string name, string path, Interfaces.IPLangFileSystem fileSystem, FileMode mode = FileMode.OpenOrCreate)
     {
         var direction = mode == FileMode.Open ? ChannelDirection.Input :
                        mode == FileMode.Create || mode == FileMode.CreateNew ? ChannelDirection.Output :
                        ChannelDirection.Bidirectional;
-        var stream = new FileStream(path, mode, direction == ChannelDirection.Input ? FileAccess.Read :
-            direction == ChannelDirection.Output ? FileAccess.Write : FileAccess.ReadWrite);
+        var access = direction == ChannelDirection.Input ? FileAccess.Read :
+            direction == ChannelDirection.Output ? FileAccess.Write : FileAccess.ReadWrite;
+        var absPath = fileSystem.Path.GetFullPath(path);
+        var stream = fileSystem.FileStream.New(absPath, mode, access);
         return new Channel(name, stream, direction);
     }
 

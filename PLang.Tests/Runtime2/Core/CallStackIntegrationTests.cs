@@ -1,4 +1,3 @@
-using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Memory;
 
@@ -11,8 +10,7 @@ public class CallStackIntegrationTests
     [Before(Test)]
     public void Setup()
     {
-        var appContext = new PLangAppContext("/test");
-        _engine = new Engine(appContext);
+        _engine = new Engine("/test");
     }
 
     [Test]

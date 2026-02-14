@@ -54,26 +54,86 @@ All capabilities are reachable by navigating from a root object through properti
 engine
   .Projects       -- find/load projects
   .Handlers        -- find operation handlers
-  .IO              -- read/write channels
+  .Channels        -- named channel routing
   .FileSystem      -- file operations
   .Serializers     -- serialization
 ```
 
 **Test**: If a method signature has more than two domain parameters (excluding context and cancellation tokens), something should be reachable through navigation instead.
 
-### 3.3 Properties Read as Natural Language
+### 3.3 Names Describe What the Object Is
+
+Every property name should tell you what the object *is*, not what it *does*. When you look at the object graph, the name alone should tell you where to navigate.
+
+**Good names** describe the thing:
+```
+engine.Goals          -- "Goals" — manages goals
+engine.Actions        -- "Actions" — manages action handlers
+engine.Channels       -- "Channels" — manages named I/O channels
+engine.FileSystem     -- "FileSystem" — manages file access
+engine.Serializers    -- "Serializers" — manages serialization
+```
+
+**Bad names** describe a verb or are too broad:
+```
+engine.IO             -- "IO" — input/output of what? Files? Channels? Everything?
+engine.Run            -- "Run" — is this a method? A runner object?
+engine.Data           -- "Data" — what data?
+```
+
+**Test**: If the name could reasonably describe two different things in the system, it is too broad. `IO` could mean file I/O or channel I/O — rename to `Channels` or `FileSystem` depending on what it actually is.
+
+**Consequence**: When a name is accurate, responsibilities don't bleed. Nobody asks "should filesystem operations go through Channels?" because the name makes the boundary obvious. But when a name is vague like `IO`, the boundary is unclear and responsibilities drift.
+
+#### Structures Are Things
+
+A class that exists as a compositional structure — with properties that each take care of themselves — IS a thing. Name it after what it is.
+
+A `Lifecycle` with `.Before` and `.After` IS a lifecycle. A `Bindings` with `.Add()` and `.Run()` IS a collection of bindings. These are not managers, dispatchers, or handlers — they are the things themselves.
+
+```
+// Correct: the structure IS the thing
+goal.Lifecycle              -- the goal's lifecycle
+goal.Lifecycle.Before       -- the before bindings
+goal.Lifecycle.Before.Run() -- run them
+
+// Wrong: naming the structure after what it does
+goal.EventManager           -- what events? How does it manage them?
+goal.EventDispatcher        -- "dispatch" is a verb, not a thing
+```
+
+Do not rename structures to "Manager", "Dispatcher", "Handler", or "Service". These suffixes describe behavior, not identity. The structure already does what it does — each property takes care of itself.
+
+#### Properties Are Nouns, Methods Are Verbs
+
+A property describes what something IS. It is a structure sitting there. If something needs to happen to it, that is a method on it.
+
+Never put a verb in a property name.
+
+```
+// Wrong: "Load" is a verb — this property is not loading anything
+lifecycle.Load.Before
+
+// Correct: it is just "Before" — a structure with bindings
+lifecycle.Before            -- the before bindings
+lifecycle.Before.Run()      -- need to run them? Call a method
+```
+
+**Test**: Read the property name. If it sounds like an instruction — "load", "run", "create", "process" — it is a verb and belongs as a method. Properties answer "what is this?", methods answer "what should happen?"
+
+### 3.4 Properties Read as Natural Language
 
 Property chains should form a readable phrase. The pattern is **Subject.Component.Operation** or **Subject.Component.Sub-component**.
 
 ```
-engine.Projects.Get("alpha")         -- "the engine's projects — get alpha"
-stage.Operations.Load(context)       -- "the stage's operations — load them"
-task.Events.Before.Run(context)      -- "the task's events, the before ones — run them"
+engine.Goals.Get("alpha")                -- "the engine's goals — get alpha"
+stage.Operations.Load(context)           -- "the stage's operations — load them"
+goal.Lifecycle.Before.Run(context)       -- "the goal's lifecycle, before — run the bindings"
 ```
 
 If a chain does not read naturally, the structure is wrong. Likely a component is on the wrong object or named poorly.
 
-### 3.4 Distinguish Object State from Request State
+### 3.5 Distinguish Object State from Request State
 
 Some data belongs to the object (its structure, its configuration, its event bindings). Other data belongs to the current request (which user is executing, what the current position is, the memory stack). These two categories must not be mixed.
 
@@ -99,7 +159,7 @@ events.Before.Run(context)
 
 **Rule**: If multiple threads can access the same object instance, that object must not hold any request-scoped state. All request-scoped data flows through parameters.
 
-### 3.5 Preserve Object Identity
+### 3.6 Preserve Object Identity
 
 When referencing an object from another object, store the object itself — not a decomposed copy of its fields. If a `StageError` needs to know which stage caused it, it holds a reference to the `Stage`, not a copy of `Stage.Text`.
 
@@ -117,7 +177,7 @@ class StageError {
 }
 ```
 
-### 3.6 Results Own Their Composition
+### 3.7 Results Own Their Composition
 
 When multiple operations produce results that must be combined, the merge logic belongs on the result type. The result knows its own internal structure (what fields exist, how duplicates are resolved), so it is the correct owner of the merge operation.
 
@@ -129,7 +189,7 @@ class Result {
 
 The collection that produces multiple results calls `merge` in a loop. It does not inspect or restructure the result — it delegates composition to the result itself.
 
-### 3.7 No Redundant Wrapper Objects
+### 3.8 No Redundant Wrapper Objects
 
 If the information a callee needs already exists on an object the caller has, pass that object. Do not construct a new object that copies fields from the existing one into a different shape.
 
@@ -193,11 +253,14 @@ When adding a new operation, follow this sequence:
 |---|------|------|
 | 1 | Behavior lives on the object that owns the data | "Whose data does this method touch?" |
 | 2 | Navigate through properties; don't pass individual dependencies | "Can I reach this from the root?" |
-| 3 | Property chains read as natural language | "Does this read like a sentence?" |
-| 4 | Request state is passed as parameters, never stored on shared objects | "Can two threads see this field?" |
-| 5 | Store object references, not decomposed fields | "Am I discarding information?" |
-| 6 | Results own their composition logic | "Who knows how to merge these?" |
-| 7 | Don't create wrapper objects for data that already exists elsewhere | "Is every field already on an existing object?" |
-| 8 | Collections own batch operations on their items | "Who owns the loop?" |
-| 9 | The root is a composition point, not a behavior owner | "Does the root do work, or does it delegate?" |
-| 10 | Methods do one thing | "Can I describe this method in one clause without 'and'?" |
+| 3 | Names describe what the object is, not what it does | "Could this name mean two different things?" |
+| 3a | Structures are things — name them after what they are | "Am I naming the structure or the behavior?" |
+| 3b | Properties are nouns, methods are verbs | "Does this property name sound like an action?" |
+| 4 | Property chains read as natural language | "Does this read like a sentence?" |
+| 5 | Request state is passed as parameters, never stored on shared objects | "Can two threads see this field?" |
+| 6 | Store object references, not decomposed fields | "Am I discarding information?" |
+| 7 | Results own their composition logic | "Who knows how to merge these?" |
+| 8 | Don't create wrapper objects for data that already exists elsewhere | "Is every field already on an existing object?" |
+| 9 | Collections own batch operations on their items | "Who owns the loop?" |
+| 10 | The root is a composition point, not a behavior owner | "Does the root do work, or does it delegate?" |
+| 11 | Methods do one thing | "Can I describe this method in one clause without 'and'?" |

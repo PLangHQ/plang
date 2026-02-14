@@ -7,9 +7,9 @@ using PLang.Runtime2.Serialization;
 namespace PLang.Runtime2.IO;
 
 /// <summary>
-/// Manages named channels for I/O operations in Runtime2.
+/// Manages named channels for stream-based I/O in Runtime2.
 /// </summary>
-public sealed class IO : IAsyncDisposable
+public sealed class Channels : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, Channel> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly Engine _engine;
@@ -20,7 +20,7 @@ public sealed class IO : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public IO(Engine engine)
+    public Channels(Engine engine)
     {
         _engine = engine;
         Register(new Channel(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
@@ -28,14 +28,14 @@ public sealed class IO : IAsyncDisposable
     }
 
     /// <summary>
-    /// Routes a write to the correct actor's IO by actor name.
-    /// Engine.IO is the router — actor IOs own the actual channels.
+    /// Routes a write to the correct actor's channels by actor name.
+    /// Engine.Channels is the router — actor Channels own the actual channels.
     /// </summary>
     public async Task<Data> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
     {
         var (actor, error) = _engine.GetActor(actorName);
         if (error != null) return Data.FromError(error);
-        return await actor!.IO.WriteAsync(channelName, data, cancellationToken: ct);
+        return await actor!.Channels.WriteAsync(channelName, data, cancellationToken: ct);
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public sealed class IO : IAsyncDisposable
     /// </summary>
     public Channel CreateFileChannel(string name, string path, FileMode mode = FileMode.OpenOrCreate)
     {
-        var channel = Channel.File(name, path, mode);
+        var channel = Channel.File(name, path, _engine.FileSystem, mode);
         Register(channel);
         return channel;
     }

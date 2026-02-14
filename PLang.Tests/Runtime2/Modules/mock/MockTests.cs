@@ -11,11 +11,9 @@ public class MockTests
 {
     private (PLangContext context, MemoryStack memory, Engine engine) CreateContext()
     {
-        var appContext = new PLangAppContext("/app");
+        var engine = new Engine("/app");
         var memory = new MemoryStack();
-        var context = new PLangContext(appContext, memory);
-        var engine = new Engine(appContext);
-        context.RegisterContextVariables(engine);
+        var context = new PLangContext(engine, memory);
         return (context, memory, engine);
     }
 

@@ -8,14 +8,14 @@ public sealed partial class Step
 {
     public async Task<Data> Load(PLangContext context)
     {
-        var events = context.EventsFor(this);
-        var before = await events.Load.Before.Run(context);
+        var lifecycle = context.LifecycleFor(this);
+        var before = await lifecycle.Before.Run(context, EventType.OnBeforeStepLoad);
         if (!before.Success) return before;
 
         var actionsResult = await Actions.Load(context);
         if (!actionsResult.Success) return actionsResult;
 
-        var after = await events.Load.After.Run(context);
+        var after = await lifecycle.After.Run(context, EventType.OnAfterStepLoad);
         return after;
     }
 
@@ -24,12 +24,12 @@ public sealed partial class Step
         context.Step = this;
         context.CallStack?.RecordStep(this);
 
-        var events = context.EventsFor(this);
+        var lifecycle = context.LifecycleFor(this);
 
         Data beforeResult;
         try
         {
-            beforeResult = await events.Before.Run(context);
+            beforeResult = await lifecycle.Before.Run(context, EventType.BeforeStep);
         }
         catch (Exception ex)
         {
@@ -74,7 +74,7 @@ public sealed partial class Step
 
         try
         {
-            var afterResult = await events.After.Run(context);
+            var afterResult = await lifecycle.After.Run(context, EventType.AfterStep);
             if (!afterResult) return afterResult;
         }
         catch (Exception ex)

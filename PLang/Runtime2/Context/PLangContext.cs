@@ -19,9 +19,9 @@ public sealed class PLangContext : IDisposable
     public string Id { get; }
 
     /// <summary>
-    /// Reference to the application context.
+    /// Reference to the engine.
     /// </summary>
-    public PLangAppContext AppContext { get; }
+    public Engine Engine { get; }
 
     /// <summary>
     /// Memory stack for this execution.
@@ -39,16 +39,6 @@ public sealed class PLangContext : IDisposable
     public bool IsAsync { get; set; }
 
     /// <summary>
-    /// The goal being executed (if any).
-    /// </summary>
-    public string? CurrentGoalName { get; set; }
-
-    /// <summary>
-    /// The step being executed (if any).
-    /// </summary>
-    public int? CurrentStepIndex { get; set; }
-
-    /// <summary>
     /// When this context was created.
     /// </summary>
     public DateTime CreatedAt { get; }
@@ -63,11 +53,6 @@ public sealed class PLangContext : IDisposable
     /// Parent context (if this is a child execution).
     /// </summary>
     public PLangContext? Parent { get; }
-
-    /// <summary>
-    /// Execution depth (0 for root, increments for nested calls).
-    /// </summary>
-    public int Depth { get; }
 
     /// <summary>
     /// The actor that owns this context (if any).
@@ -100,45 +85,40 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Data? EventOverride { get; set; }
 
-    /// <summary>
-    /// Direct reference to the Engine. Set by RegisterContextVariables().
-    /// </summary>
-    public Engine? Engine { get; private set; }
-
-    public PLangContext(PLangAppContext appContext, MemoryStack? memoryStack = null, PLangContext? parent = null)
+    public PLangContext(Engine engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
-        AppContext = appContext;
+        Engine = engine;
         MemoryStack = memoryStack ?? new MemoryStack();
         Parent = parent;
-        Depth = parent != null ? parent.Depth + 1 : 0;
         CreatedAt = DateTime.UtcNow;
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(appContext.ShutdownToken);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
         System = new EventScope();
         User = new EventScope();
 
         // Wire event registration to invalidate the resolved-events cache
         System.Events.OnChanged = InvalidateEventCache;
         User.Events.OnChanged = InvalidateEventCache;
+
+        // Register context variables on the memory stack
+        RegisterContextVariables();
     }
 
     /// <summary>
     /// Registers context variables (prefixed with !) on the memory stack.
-    /// Called after Engine is available.
     /// </summary>
-    public void RegisterContextVariables(Engine engine)
+    private void RegisterContextVariables()
     {
-        Engine = engine;
         var ms = MemoryStack;
 
         // Static references (same object for lifetime of context)
-        ms.Put(new Data("!engine", engine));
+        ms.Put(new Data("!engine", Engine));
         ms.Put(new Data("!context", this));
         ms.Put(new Data("!memoryStack", ms));
-        ms.Put(new Data("!fileSystem", engine.FileSystem));
-        ms.Put(new Data("!callStack", CallStack));
-        ms.Put(new Data("!io", engine.IO));
-        ms.Put(new Data("!serializers", engine.Serializers));
+        ms.Put(new Data("!fileSystem", Engine.FileSystem));
+        ms.Put(new DynamicData("!callStack", () => CallStack));
+        ms.Put(new Data("!channels", Engine.Channels));
+        ms.Put(new Data("!serializers", Engine.Serializers));
 
         // Dynamic references (change per goal/step)
         ms.Put(new DynamicData("!goal", () => Goal));
@@ -191,7 +171,7 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public PLangContext CreateChild(MemoryStack? memoryStack = null)
     {
-        return new PLangContext(AppContext, memoryStack ?? MemoryStack.Clone(), this);
+        return new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), this);
     }
 
     /// <summary>
@@ -199,11 +179,9 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public PLangContext Clone(MemoryStack? memoryStack = null)
     {
-        var clone = new PLangContext(AppContext, memoryStack ?? MemoryStack.Clone(), Parent)
+        var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
         {
-            IsAsync = IsAsync,
-            CurrentGoalName = CurrentGoalName,
-            CurrentStepIndex = CurrentStepIndex
+            IsAsync = IsAsync
         };
 
         foreach (var kvp in _data)
@@ -235,47 +213,47 @@ public sealed class PLangContext : IDisposable
     public void InvalidateEventCache() => _eventContainers.Clear();
 
     /// <summary>
-    /// Resolves per-context events for a Goal. Lazy-resolves from User.Events on first call, cached on context.
+    /// Resolves per-context lifecycle for a Goal. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.GoalStepEvents EventsFor(Core.Goal goal)
+    public Core.Lifecycle LifecycleFor(Core.Goal goal)
     {
-        return (Core.GoalStepEvents)_eventContainers.GetOrAdd(goal, _ =>
+        return (Core.Lifecycle)_eventContainers.GetOrAdd(goal, _ =>
         {
-            var events = new Core.GoalStepEvents();
+            var lifecycle = new Core.Lifecycle();
             var userEvents = User.Events;
 
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeGoalLoad, goalName: goal.Name))
-                events.Load.Before.Add(b);
+                lifecycle.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterGoalLoad, goalName: goal.Name))
-                events.Load.After.Add(b);
+                lifecycle.After.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeGoal, goalName: goal.Name))
-                events.Before.Add(b);
+                lifecycle.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterGoal, goalName: goal.Name))
-                events.After.Add(b);
+                lifecycle.After.Add(b);
 
-            return events;
+            return lifecycle;
         });
     }
 
     /// <summary>
-    /// Resolves per-context events for a Step. Lazy-resolves from User.Events on first call, cached on context.
+    /// Resolves per-context lifecycle for a Step. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.GoalStepEvents EventsFor(Core.Step step)
+    public Core.Lifecycle LifecycleFor(Core.Step step)
     {
-        return (Core.GoalStepEvents)_eventContainers.GetOrAdd(step, _ =>
+        return (Core.Lifecycle)_eventContainers.GetOrAdd(step, _ =>
         {
-            var events = new Core.GoalStepEvents();
+            var lifecycle = new Core.Lifecycle();
             var userEvents = User.Events;
             var goalName = step.Goal?.Name;
 
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
-                events.Load.Before.Add(b);
+                lifecycle.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
-                events.Load.After.Add(b);
+                lifecycle.After.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeStep, goalName: goalName, stepText: step.Text))
-                events.Before.Add(b);
+                lifecycle.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterStep, goalName: goalName, stepText: step.Text))
-                events.After.Add(b);
+                lifecycle.After.Add(b);
 
             if (step.StepCache != null)
             {
@@ -285,26 +263,26 @@ public sealed class PLangContext : IDisposable
                     step.StepCache.Miss.Add(b);
             }
 
-            return events;
+            return lifecycle;
         });
     }
 
     /// <summary>
-    /// Resolves per-context events for an Action. Lazy-resolves from User.Events on first call, cached on context.
+    /// Resolves per-context lifecycle for an Action. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.ActionEvents EventsFor(Core.Action action)
+    public Core.Lifecycle LifecycleFor(Core.Action action)
     {
-        return (Core.ActionEvents)_eventContainers.GetOrAdd(action, _ =>
+        return (Core.Lifecycle)_eventContainers.GetOrAdd(action, _ =>
         {
-            var events = new Core.ActionEvents();
+            var lifecycle = new Core.Lifecycle();
             var userEvents = User.Events;
 
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
-                events.Before.Add(b);
+                lifecycle.Before.Add(b);
             foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterAction, module: action.Module, actionName: action.ActionName))
-                events.After.Add(b);
+                lifecycle.After.Add(b);
 
-            return events;
+            return lifecycle;
         });
     }
 

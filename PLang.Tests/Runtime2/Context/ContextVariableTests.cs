@@ -11,8 +11,7 @@ public class ContextVariableTests
     [Before(Test)]
     public void Setup()
     {
-        var appContext = new PLangAppContext("/test");
-        _engine = new Engine(appContext);
+        _engine = new Engine("/test");
     }
 
     [Test]
@@ -65,10 +64,10 @@ public class ContextVariableTests
     }
 
     [Test]
-    public async Task ContextVar_IO_ReturnsIO()
+    public async Task ContextVar_Channels_ReturnsChannels()
     {
         var ms = _engine.MemoryStack;
-        var value = ms.GetValue("!io");
+        var value = ms.GetValue("!channels");
 
         await Assert.That(value).IsNotNull();
     }

@@ -7,15 +7,12 @@ namespace PLang.Tests.Runtime2.Core;
 
 public class StartGoalTests
 {
-    private PLangAppContext CreateAppContext() => new PLangAppContext("/app");
-
     #region Programmatic Construction
 
     [Test]
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         // Replace output.write with capturing version
@@ -64,8 +61,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         // Replace output.write with capturing version
@@ -101,8 +97,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         var goal = new Goal
@@ -130,8 +125,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
@@ -162,8 +156,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
@@ -191,8 +184,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
@@ -220,8 +212,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
     {
-        using var appContext = CreateAppContext();
-        await using var engine = new Engine(appContext);
+        await using var engine = new Engine("/app");
         engine.RegisterBuiltInModules();
 
         var goal = new Goal

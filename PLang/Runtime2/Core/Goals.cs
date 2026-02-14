@@ -247,7 +247,7 @@ public sealed class Goals
     {
         try
         {
-            var goal = await engine.IO.ReadAsync<Goal>(prFilePath, cancellationToken);
+            var goal = await engine.Channels.ReadAsync<Goal>(prFilePath, cancellationToken);
 
             if (goal == null)
                 return Data.FromError(new Error($"Failed to parse goal file: {prFilePath}"));

@@ -345,8 +345,8 @@ public class StepErrorTests
     public async Task FromException_CreatesStepErrorWithStep()
     {
         var ex = new Exception("Step crashed");
-        var appContext = new PLangAppContext("/app");
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var step = new Step { Text = "test step" };
         context.Step = step;
 

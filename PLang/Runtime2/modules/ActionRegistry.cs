@@ -34,29 +34,7 @@ public sealed class ActionRegistry
     {
         const string baseNs = "PLang.Runtime2.modules";
 
-        // IClass-based handlers → store as Type for per-call instantiation
-        var classTypes = assembly.GetTypes()
-            .Where(t => typeof(IClass).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface);
-
-        foreach (var type in classTypes)
-        {
-            if (type.Namespace == null || !type.Namespace.StartsWith(baseNs + "."))
-                continue;
-
-            var module = type.Namespace[(baseNs.Length + 1)..];
-
-            // Create a temporary instance just to derive the action name
-            var instance = (IClass)Activator.CreateInstance(type)!;
-            var actionName = instance.ParameterType?.Name
-                ?? (type.Name.EndsWith("Handler")
-                    ? type.Name[..^"Handler".Length].ToLowerInvariant()
-                    : type.Name);
-
-            // Store as Type, not instance — new instance per call
-            RegisterCodeGenerated(module, actionName, type);
-        }
-
-        // [Action] attribute-based classes → already stored as Type
+        // [Action] attribute-based classes → stored as Type for per-call instantiation
         var actionAttrTypes = assembly.GetTypes()
             .Where(t => t.GetCustomAttribute<ActionAttribute>() != null
                       && typeof(ICodeGenerated).IsAssignableFrom(t)

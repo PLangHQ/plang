@@ -95,5 +95,5 @@ public class @file
               .ToArray()
         : Array.Empty<@file>();
 
-    public override string ToString() => Path;
+    public override string ToString() => _value?.Value?.ToString() ?? Path;
 }

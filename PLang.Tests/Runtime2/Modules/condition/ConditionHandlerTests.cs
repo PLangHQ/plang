@@ -18,8 +18,7 @@ public class ConditionHandlerTests : IDisposable
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        var appContext = new PLangAppContext(_tempDir);
-        _engine = new Engine(appContext, fileSystem: _fs);
+        _engine = new Engine(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -31,9 +30,7 @@ public class ConditionHandlerTests : IDisposable
 
     private PLangContext CreateContext()
     {
-        var context = _engine.CreateContext();
-        context.RegisterContextVariables(_engine);
-        return context;
+        return _engine.CreateContext();
     }
 
     // --- Unit tests: no goals ---
@@ -66,8 +63,8 @@ public class ConditionHandlerTests : IDisposable
         _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.IO.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.IO.Default, captureStream,
+        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
+            PLang.Runtime2.IO.Channels.Default, captureStream,
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -118,8 +115,8 @@ public class ConditionHandlerTests : IDisposable
         _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.IO.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.IO.Default, captureStream,
+        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
+            PLang.Runtime2.IO.Channels.Default, captureStream,
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -190,8 +187,8 @@ public class ConditionHandlerTests : IDisposable
         _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.IO.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.IO.Default, captureStream,
+        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
+            PLang.Runtime2.IO.Channels.Default, captureStream,
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 

@@ -7,7 +7,7 @@
 - **NEVER change strongly-typed parameters to `object`** — PLang is strongly typed. Need explicit permission to weaken types. Diagnose and explain the problem instead.
 - **YOU MUST** follow Object-Based Pattern (OBP):
         1. **Behavior belongs to the owner** — Put methods on the object that owns the data. If `Steps` should have the list, `Steps.Run()` does the iteration. Never loop over another object's collection from the outside.
-        2. **Navigate, don't pass** — Reach dependencies through the object graph (`Engine.IO`, `Engine.FileSystem`, `context.MemoryStack`). Never decompose an object into separate parameters; pass the root and let the caller navigate.
+        2. **Navigate, don't pass** — Reach dependencies through the object graph (`Engine.Channels`, `Engine.FileSystem`, `context.MemoryStack`). Never decompose an object into separate parameters; pass the root and let the caller navigate.
         3. **Keep object references, not extracted fields** — Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`. Wrapper DTOs are only allowed at serialization boundaries.
         4. **Per-request state is a parameter, per-object state is a property** — Never cache `PLangContext` on shared objects like `Goal` or `Step`. Pass context through method parameters; store only structural data (like `EntityEvents`) as properties.
         5. **Collections are smart wrappers** — Collection types (`Steps`, `Actions`) inherit `List<T>` and own domain operations (`Load`, `RunAsync`, `Merge`). Parents delegate to these methods — they never iterate directly.
@@ -80,6 +80,13 @@ For full OBP details with code examples, see `Documentation/Runtime2/plang_objec
 ## Learning & Architecture Notes
 - When the user corrects you about PLang architecture, **always add the insight to `Documentation/Runtime2/good_to_know.md`**. This file collects architectural knowledge learned from building and debugging — goal resolution, event mechanics, test patterns, etc.
 - Read `good_to_know.md` before making architectural assumptions.
+
+## Todo Capture
+When the user writes "todo:" or "dodo:" (typo), they're jotting down a thought while focused on something else. Handle it like this:
+1. **Save it immediately** — append to `Documentation/Runtime2/todos.md` with the date, the todo text, and any surrounding context from the conversation (what we were working on, relevant files, the idea they were exploring)
+2. **Ask one light question** — at most one short clarifying question to capture context. Keep it brief, they're mid-thought on something else.
+3. **Accept dismissals** — "n", "no", "nah", "neibb", or similar means "don't want to discuss it now". Just confirm it's saved and move on.
+4. **Don't derail** — after saving, return to whatever we were doing before
 
 ## Comments from dev
 I was not to happy with yesterdays result. Lets do better today!

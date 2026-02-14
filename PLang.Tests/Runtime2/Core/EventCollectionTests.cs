@@ -9,8 +9,8 @@ public class EventsTests
 {
     private static PLangContext CreateContext()
     {
-        var appContext = new PLangAppContext("/app");
-        return new PLangContext(appContext);
+        var engine = new Engine("/app");
+        return new PLangContext(engine);
     }
 
     [Test]
@@ -254,11 +254,11 @@ public class EventsTests
         events.Register(EventType.BeforeGoal, ctx => { capturedContext = ctx; return Task.FromResult(Data.Ok()); });
 
         using var context = CreateContext();
-        context.CurrentGoalName = "TestGoal";
+        context.Goal = new Goal { Name = "TestGoal" };
         await events.DispatchAsync(context, EventType.BeforeGoal, "TestGoal");
 
         await Assert.That(capturedContext).IsNotNull();
-        await Assert.That(capturedContext!.CurrentGoalName).IsEqualTo("TestGoal");
+        await Assert.That(capturedContext!.Goal?.Name).IsEqualTo("TestGoal");
     }
 }
 

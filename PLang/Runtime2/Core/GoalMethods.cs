@@ -10,14 +10,14 @@ public sealed partial class Goal
 {
     public async Task<Data> Load(PLangContext context)
     {
-        var events = context.EventsFor(this);
-        var before = await events.Load.Before.Run(context);
+        var lifecycle = context.LifecycleFor(this);
+        var before = await lifecycle.Before.Run(context, EventType.OnBeforeGoalLoad);
         if (!before.Success) return before;
 
         var stepsResult = await Steps.Load(context);
         if (!stepsResult.Success) return stepsResult;
 
-        var after = await events.Load.After.Run(context);
+        var after = await lifecycle.After.Run(context, EventType.OnAfterGoalLoad);
         return after;
     }
 
@@ -27,17 +27,16 @@ public sealed partial class Goal
         var savedStep = context.Step;
 
         context.Goal = this;
-        context.CurrentGoalName = Name;
 
         if (cancellationToken.IsCancellationRequested)
             return Data.FromError(GoalError.Cancelled(context));
 
-        var events = context.EventsFor(this);
+        var lifecycle = context.LifecycleFor(this);
 
         Data beforeResult;
         try
         {
-            beforeResult = await events.Before.Run(context);
+            beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
         }
         catch (Exception ex)
         {
@@ -54,7 +53,6 @@ public sealed partial class Goal
         {
             for (var i = 0; i < Steps.Count; i++)
             {
-                context.CurrentStepIndex = i;
                 var step = Steps[i];
 
                 var stepResult = await step.RunAsync(engine, context, cancellationToken);
@@ -70,7 +68,7 @@ public sealed partial class Goal
 
             try
             {
-                var afterResult = await events.After.Run(context);
+                var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
                 if (!afterResult) return afterResult;
             }
             catch (Exception ex)

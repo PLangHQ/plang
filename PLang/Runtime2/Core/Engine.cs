@@ -3,6 +3,8 @@ using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
+using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace PLang.Runtime2.Core;
@@ -10,10 +12,12 @@ namespace PLang.Runtime2.Core;
 /// <summary>
 /// Main runtime engine for PLang Runtime2.
 /// Executes goals and manages the execution lifecycle.
+/// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
 public sealed class Engine : IAsyncDisposable
 {
-    private readonly PLangAppContext _appContext;
+    private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
+    private readonly CancellationTokenSource _shutdownCts = new();
     private readonly ActionRegistry _actions;
     private readonly SerializerRegistry _serializers;
     private readonly Goals _goals;
@@ -34,14 +38,45 @@ public sealed class Engine : IAsyncDisposable
     public string Name { get; set; }
 
     /// <summary>
-    /// Root path of the application.
+    /// Relative root path, always "/".
     /// </summary>
-    public string RootPath => _appContext.RootPath;
+    public string Path => "/";
 
     /// <summary>
-    /// The application context.
+    /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
     /// </summary>
-    public PLangAppContext AppContext => _appContext;
+    public string AbsolutePath { get; }
+
+    /// <summary>
+    /// Environment name (e.g., "production", "development").
+    /// </summary>
+    public string Environment { get; set; }
+
+    /// <summary>
+    /// Application culture for formatting dates, numbers, etc.
+    /// Defaults to InvariantCulture.
+    /// </summary>
+    public CultureInfo Culture { get; set; } = CultureInfo.InvariantCulture;
+
+    /// <summary>
+    /// When the engine was started.
+    /// </summary>
+    public DateTime StartedAt { get; }
+
+    /// <summary>
+    /// How long the engine has been running.
+    /// </summary>
+    public TimeSpan Uptime => DateTime.UtcNow - StartedAt;
+
+    /// <summary>
+    /// Cancellation token for graceful shutdown.
+    /// </summary>
+    public CancellationToken ShutdownToken => _shutdownCts.Token;
+
+    /// <summary>
+    /// Global event collection for the application.
+    /// </summary>
+    public Events Events { get; }
 
     /// <summary>
     /// The action registry.
@@ -66,7 +101,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// I/O operations (file reading, channels).
     /// </summary>
-    public Runtime2.IO.IO IO { get; }
+    public Runtime2.IO.Channels Channels { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -76,20 +111,12 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Whether debug mode is enabled.
     /// </summary>
-    public bool IsDebugMode
-    {
-        get => _appContext.IsDebugMode;
-        set => _appContext.IsDebugMode = value;
-    }
+    public bool IsDebugMode { get; set; }
 
     /// <summary>
     /// Whether test mode is enabled.
     /// </summary>
-    public bool IsTestMode
-    {
-        get => _appContext.IsTestMode;
-        set => _appContext.IsTestMode = value;
-    }
+    public bool IsTestMode { get; set; }
 
     /// <summary>
     /// System actor for internal engine operations. Created lazily on first access.
@@ -131,22 +158,97 @@ public sealed class Engine : IAsyncDisposable
         return (actor, null);
     }
 
+    #region Key-Value Store
+
+    /// <summary>
+    /// Gets or sets a value in the engine's key-value store.
+    /// </summary>
+    public object? this[string key]
+    {
+        get => _data.TryGetValue(key, out var value) ? value : null;
+        set
+        {
+            if (value == null)
+                _data.TryRemove(key, out _);
+            else
+                _data[key] = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets a typed value from the engine's key-value store.
+    /// </summary>
+    public T? Get<T>(string key)
+    {
+        if (_data.TryGetValue(key, out var value) && value is T typed)
+            return typed;
+        return default;
+    }
+
+    /// <summary>
+    /// Sets a typed value in the engine's key-value store.
+    /// </summary>
+    public void Set<T>(string key, T value)
+    {
+        if (value == null)
+            _data.TryRemove(key, out _);
+        else
+            _data[key] = value;
+    }
+
+    /// <summary>
+    /// Gets a value or creates it if it doesn't exist.
+    /// </summary>
+    public T GetOrCreate<T>(string key, Func<T> factory) where T : class
+    {
+        return (T)_data.GetOrAdd(key, _ => factory()!);
+    }
+
+    /// <summary>
+    /// Checks if a key exists.
+    /// </summary>
+    public bool ContainsKey(string key) => _data.ContainsKey(key);
+
+    /// <summary>
+    /// Removes a key.
+    /// </summary>
+    public bool Remove(string key) => _data.TryRemove(key, out _);
+
+    /// <summary>
+    /// Gets all keys.
+    /// </summary>
+    public IEnumerable<string> Keys => _data.Keys;
+
+    #endregion
+
+    /// <summary>
+    /// Requests graceful shutdown.
+    /// </summary>
+    public void RequestShutdown()
+    {
+        _shutdownCts.Cancel();
+    }
+
     public Engine(Interfaces.IPLangFileSystem fileSystem)
-        : this(new PLangAppContext(fileSystem.RootDirectory), fileSystem: fileSystem)
+        : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
     }
 
-    public Engine(PLangAppContext appContext, ActionRegistry? actions = null,
-        SerializerRegistry? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null)
+    public Engine(string absolutePath, ActionRegistry? actions = null,
+        SerializerRegistry? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null,
+        string? environment = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Name = "Runtime2";
-        _appContext = appContext;
+        AbsolutePath = absolutePath;
+        Environment = environment ?? "production";
+        StartedAt = DateTime.UtcNow;
+        Events = new Events();
         _actions = actions ?? new ActionRegistry();
-        _serializers = serializers ?? appContext.Serializers;
+        _serializers = serializers ?? new SerializerRegistry();
         _goals = new Goals { Engine = this };
-        FileSystem = fileSystem ?? CreateDefaultFileSystem(appContext.RootPath);
-        IO = new Runtime2.IO.IO(this);
+        FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
+        Channels = new Runtime2.IO.Channels(this);
         RegisterBuiltInModules();
     }
 
@@ -253,11 +355,10 @@ public sealed class Engine : IAsyncDisposable
     /// </summary>
     public PLangContext CreateContext(MemoryStack? memoryStack = null)
     {
-        var context = new PLangContext(_appContext, memoryStack)
+        var context = new PLangContext(this, memoryStack)
         {
             CallStack = new CallStack()
         };
-        context.RegisterContextVariables(this);
         return context;
     }
 
@@ -291,6 +392,10 @@ public sealed class Engine : IAsyncDisposable
 
         _disposed = true;
 
+        // Cancel shutdown token
+        _shutdownCts.Cancel();
+        _shutdownCts.Dispose();
+
         // Dispose created actors
         if (_system != null)
             await _system.DisposeAsync();
@@ -307,5 +412,13 @@ public sealed class Engine : IAsyncDisposable
             else if (handler is IDisposable disposable)
                 disposable.Dispose();
         }
+
+        // Dispose any disposable items in the key-value store
+        foreach (var value in _data.Values)
+        {
+            if (value is IDisposable disposable)
+                disposable.Dispose();
+        }
+        _data.Clear();
     }
 }

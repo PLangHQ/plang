@@ -223,8 +223,9 @@ public class Data
 
     private object? GetChildValue(string key)
     {
-        if (_value == null) return null;
-        return ValueNavigators.Navigate(_value, key);
+        var val = Value;
+        if (val == null) return null;
+        return ValueNavigators.Navigate(val, key);
     }
 
     [JsonIgnore]

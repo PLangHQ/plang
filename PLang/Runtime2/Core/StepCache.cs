@@ -14,8 +14,8 @@ public sealed class StepCache
     private readonly Step _step;
 
     public CacheSettings Settings { get; }
-    public EventList Hit { get; } = new();
-    public EventList Miss { get; } = new();
+    public Bindings Hit { get; } = new();
+    public Bindings Miss { get; } = new();
 
     public StepCache(Step step, CacheSettings settings)
     {

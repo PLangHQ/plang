@@ -16,6 +16,8 @@ public partial class Read : IContext
             return Task.FromResult(Data.FromError(
                 new Errors.ServiceError($"File not found: {Path}")));
 
-        return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
+        var file = new types.@file(absPath, fs);
+        _ = file.Value; // Eager-read so step cache captures actual content
+        return Task.FromResult(Data.Ok(file));
     }
 }

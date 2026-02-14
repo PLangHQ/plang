@@ -20,6 +20,6 @@ public partial class Split : IContext
         var parts = Value.Split(new[] { Separator }, options);
         var list = parts.Cast<object?>().ToList();
 
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(list, Memory.Type.FromName("list")));
     }
 }

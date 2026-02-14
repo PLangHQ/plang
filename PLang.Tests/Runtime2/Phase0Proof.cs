@@ -1,4 +1,3 @@
-using PLang.Runtime2.Context;
 using PLang.Runtime2.Core;
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
@@ -267,12 +266,10 @@ public class Phase0Proof
     [Test]
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
-        // INPUT: new PLangAppContext
-        var appContext = new PLangAppContext("/app");
+        // INPUT: new Engine
+        await using var engine = new Engine("/app");
 
         // OUTPUT: culture defaults to InvariantCulture
-        await Assert.That(appContext.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);
-
-        appContext.Dispose();
+        await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);
     }
 }

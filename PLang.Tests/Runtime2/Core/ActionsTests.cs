@@ -380,7 +380,7 @@ public class ActionsTests
             return (false, new PLang.Runtime2.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
         var registry = new ActionRegistry();
-        registry.DiscoverAndRegister(typeof(BaseClass).Assembly);
+        registry.DiscoverAndRegister(typeof(ActionAttribute).Assembly);
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -402,7 +402,7 @@ public class ActionsTests
     private static Actions DiscoverActions()
     {
         var registry = new ActionRegistry();
-        registry.DiscoverAndRegister(typeof(BaseClass).Assembly);
+        registry.DiscoverAndRegister(typeof(ActionAttribute).Assembly);
 
         var actions = new Actions();
 

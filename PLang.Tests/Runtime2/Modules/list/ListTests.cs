@@ -10,11 +10,9 @@ public class ListTests
 {
     private (PLangContext context, MemoryStack memory) CreateContext()
     {
-        var appContext = new PLangAppContext("/app");
+        var engine = new Engine("/app");
         var memory = new MemoryStack();
-        var context = new PLangContext(appContext, memory);
-        var engine = new Engine(appContext);
-        context.RegisterContextVariables(engine);
+        var context = new PLangContext(engine, memory);
         return (context, memory);
     }
 
@@ -245,8 +243,8 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var listResult = result.Value as ListResult;
-        await Assert.That(listResult!.count).IsEqualTo(3);
+        var list = result.Value as System.Collections.IList;
+        await Assert.That(list!.Count).IsEqualTo(3);
     }
 
     // --- Reverse ---

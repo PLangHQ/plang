@@ -17,6 +17,6 @@ public partial class Write : IContext
     public async Task<Data> Run()
     {
         var channel = string.IsNullOrEmpty(Channel) ? "default" : Channel;
-        return await Actor.IO.WriteAsync(channel, Content);
+        return await Actor.Channels.WriteAsync(channel, Content);
     }
 }

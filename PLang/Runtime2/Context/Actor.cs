@@ -18,9 +18,9 @@ public sealed class Actor : IAsyncDisposable
     public PLangContext Context { get; }
 
     /// <summary>
-    /// IO channels owned by this actor.
+    /// Named channels owned by this actor.
     /// </summary>
-    public IO.IO IO { get; }
+    public IO.Channels Channels { get; }
 
     /// <summary>
     /// Back-reference to the engine.
@@ -43,18 +43,17 @@ public sealed class Actor : IAsyncDisposable
     {
         Name = name;
         Engine = engine;
-        Context = new PLangContext(engine.AppContext)
+        Context = new PLangContext(engine)
         {
             CallStack = new CallStack()
         };
         Context.Actor = this;
-        Context.RegisterContextVariables(engine);
-        IO = new IO.IO(engine);
+        Channels = new IO.Channels(engine);
     }
 
     public async ValueTask DisposeAsync()
     {
         Context.Dispose();
-        await IO.DisposeAsync();
+        await Channels.DisposeAsync();
     }
 }

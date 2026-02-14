@@ -12,13 +12,11 @@ namespace PLang.Tests.Runtime2.Foundation;
 /// </summary>
 public class EventCacheInvalidationTests
 {
-    private PLangAppContext CreateAppContext() => new PLangAppContext("/app");
-
     [Test]
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
@@ -28,7 +26,7 @@ public class EventCacheInvalidationTests
             goalNamePattern: "TestGoal");
 
         // Resolve events — this gets cached
-        var events1 = context.EventsFor(goal);
+        var events1 = context.LifecycleFor(goal);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register second event at runtime
@@ -38,15 +36,15 @@ public class EventCacheInvalidationTests
             goalNamePattern: "TestGoal");
 
         // Resolve again — should see 2 events, not stale cached 1
-        var events2 = context.EventsFor(goal);
+        var events2 = context.LifecycleFor(goal);
         await Assert.That(events2.Before.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
@@ -59,7 +57,7 @@ public class EventCacheInvalidationTests
             stepPattern: "do something");
 
         // Resolve — cached
-        var events1 = context.EventsFor(step);
+        var events1 = context.LifecycleFor(step);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another step event at runtime
@@ -70,15 +68,15 @@ public class EventCacheInvalidationTests
             stepPattern: "do something");
 
         // Should see 2, not stale 1
-        var events2 = context.EventsFor(step);
+        var events2 = context.LifecycleFor(step);
         await Assert.That(events2.Before.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var action = new PLang.Runtime2.Core.Action
         {
             Module = "variable",
@@ -92,7 +90,7 @@ public class EventCacheInvalidationTests
             actionPattern: "variable.set");
 
         // Resolve — cached
-        var events1 = context.EventsFor(action);
+        var events1 = context.LifecycleFor(action);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another action event at runtime
@@ -102,15 +100,15 @@ public class EventCacheInvalidationTests
             actionPattern: "variable.set");
 
         // Should see 2, not stale 1
-        var events2 = context.EventsFor(action);
+        var events2 = context.LifecycleFor(action);
         await Assert.That(events2.Before.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task EventsFor_ManualInvalidation_Works()
     {
-        using var appContext = CreateAppContext();
-        using var context = new PLangContext(appContext);
+        await using var engine = new Engine("/app");
+        using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache
@@ -118,7 +116,7 @@ public class EventCacheInvalidationTests
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal");
-        var events1 = context.EventsFor(goal);
+        var events1 = context.LifecycleFor(goal);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register new event + manually invalidate cache
@@ -129,7 +127,7 @@ public class EventCacheInvalidationTests
         context.InvalidateEventCache();
 
         // Now should pick up the new event
-        var events2 = context.EventsFor(goal);
+        var events2 = context.LifecycleFor(goal);
         await Assert.That(events2.Before.Count).IsEqualTo(2);
     }
 }

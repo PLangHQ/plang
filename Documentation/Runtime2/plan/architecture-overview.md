@@ -12,19 +12,22 @@ Engine is the single root of the entire object graph. Everything hangs off it.
 Engine                              [PLang.Runtime2.Core.Engine]
 ├── Id: string                      unique engine instance id
 ├── Name: string                    "Runtime2"
-├── RootPath: string                app root directory (from AppContext)
+├── Path: string                    always "/" (relative root)
+├── AbsolutePath: string            OS absolute path (e.g. C:\myapp)
 │
-├── AppContext: PLangAppContext      ── app-lifetime shared state ──
-│   ├── Id: string
-│   ├── RootPath: string
-│   ├── Environment: string         "production" | "development"
-│   ├── Culture: CultureInfo        formatting locale (default: Invariant)
-│   ├── IsDebugMode: bool
-│   ├── IsTestMode: bool
-│   ├── Events: Events              app-level event bindings
-│   ├── Serializers: SerializerRegistry
-│   ├── ShutdownToken               graceful shutdown
-│   └── [key-value store]           arbitrary app-level data
+├── Environment: string             "production" | "development"
+├── Culture: CultureInfo            formatting locale (default: Invariant)
+├── StartedAt: DateTime             when engine was created
+├── Uptime: TimeSpan                derived: UtcNow - StartedAt
+├── IsDebugMode: bool
+├── IsTestMode: bool
+│
+├── ShutdownToken: CancellationToken   graceful shutdown
+├── RequestShutdown()                  cancels the token
+│
+├── Events: Events                  app-level event bindings
+├── [key-value store]               this[key], Get<T>(), Set<T>(), GetOrCreate<T>(),
+│                                   ContainsKey(), Remove(), Keys
 │
 ├── FileSystem: IPLangFileSystem    ── all file I/O goes through this ──
 │
@@ -59,6 +62,9 @@ Engine                              [PLang.Runtime2.Core.Engine]
 └── User: Actor                     ── lazy, default execution actor ──
     ├── Context → PLangContext      convenience: Engine.Context = User.Context
     └── MemoryStack → ...           convenience: Engine.MemoryStack = User.Context.MemoryStack
+
+Concurrency model (future): EnginePool manages a pool of Engine instances.
+Each Engine is self-contained — no shared AppContext needed.
 ```
 
 ---
@@ -90,9 +96,8 @@ The builder knows valid values: `Actor.ValidValues = ["user", "service", "system
 ```
 PLangContext                         [PLang.Runtime2.Context.PLangContext]
 ├── Id: string                       unique context instance
-├── AppContext: PLangAppContext       shared app-level state
+├── Engine: Engine                   non-nullable, set in constructor
 ├── Actor: Actor?                    owning actor
-├── Engine: Engine?                  set by RegisterContextVariables()
 │
 ├── MemoryStack: MemoryStack         ── variable storage ──
 │   ├── User variables               %name%, %items%, etc.
@@ -109,8 +114,6 @@ PLangContext                         [PLang.Runtime2.Context.PLangContext]
 │
 ├── Goal: Goal?                      currently executing goal
 ├── Step: Step?                      currently executing step
-├── CurrentGoalName: string?
-├── CurrentStepIndex: int?
 │
 ├── System: EventScope               system-level events
 │   └── Events: Events
@@ -119,7 +122,6 @@ PLangContext                         [PLang.Runtime2.Context.PLangContext]
 │
 ├── EventOverride: Data?             set by event.skipAction
 ├── Parent: PLangContext?            parent (for nested calls)
-├── Depth: int                       nesting depth
 │
 ├── EventsFor(Goal) → GoalStepEvents    cached event resolution
 ├── EventsFor(Step) → GoalStepEvents    cached event resolution
@@ -546,7 +548,7 @@ PLang/Runtime2/
 │   ├── StepCache.cs         step result caching
 │   └── ErrorHandler.cs      step-level error handling config
 │
-├── Context/                 PLangAppContext, PLangContext, Actor, EventScope
+├── Context/                 PLangContext, Actor, EventScope
 │
 ├── Memory/                  MemoryStack, Data, Type, TString, DynamicData
 │   └── Navigators/          ValueNavigators for dot-path resolution

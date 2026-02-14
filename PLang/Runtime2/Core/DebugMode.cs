@@ -77,7 +77,7 @@ public static class DebugMode
         if (step == null) return Task.FromResult(Data.Ok());
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(Data.Ok());
 
-        var goalName = context.CurrentGoalName ?? "?";
+        var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
         sb.AppendLine($"=== DEBUG [BEFORE]: Step [{step.Index}] of {goalName} ===");
@@ -118,7 +118,7 @@ public static class DebugMode
         if (step == null) return Task.FromResult(Data.Ok());
         if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(Data.Ok());
 
-        var goalName = context.CurrentGoalName ?? "?";
+        var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
 
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName} ===");
@@ -132,7 +132,7 @@ public static class DebugMode
 
     private static Task<Data> AfterGoalHandler(PLangContext context)
     {
-        var goalName = context.CurrentGoalName ?? "?";
+        var goalName = context.Goal?.Name ?? "?";
         Console.Error.WriteLine($"--- DEBUG: Goal '{goalName}' completed ---");
         return Task.FromResult(Data.Ok());
     }

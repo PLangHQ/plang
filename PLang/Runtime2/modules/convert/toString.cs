@@ -16,7 +16,7 @@ public partial class ToString : IContext
         {
             result = "";
         }
-        else if (Format != null && Value is IFormattable formattable)
+        else if (Value is IFormattable formattable)
         {
             result = formattable.ToString(Format, System.Globalization.CultureInfo.InvariantCulture);
         }

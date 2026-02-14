@@ -13,13 +13,13 @@ public partial class Contains : IContext
 
     public Task<Data> Run()
     {
-        if (AssertHelper.Contains(Container, Value))
+        if (AssertHelper.Contains(Value, Container))
             return Task.FromResult(Data.Ok(true));
 
         return Task.FromResult(Data.FromError(
             new AssertionError(
-                $"container containing {AssertHelper.FormatValue(Value)}",
-                Container,
+                AssertHelper.FormatValue(Container),
+                Value,
                 Message ?? "Container does not contain value")));
     }
 }

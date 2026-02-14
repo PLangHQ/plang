@@ -9,11 +9,9 @@ public class ClearTests
 {
     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
     {
-        var appContext = new PLangAppContext("/app");
         var memory = memoryStack ?? new MemoryStack();
-        var context = new PLangContext(appContext, memory);
-        var engine = new Engine(appContext);
-        context.RegisterContextVariables(engine);
+        var engine = new Engine("/app");
+        var context = new PLangContext(engine, memory);
         return (context, memory);
     }
 

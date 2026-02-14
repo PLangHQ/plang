@@ -59,7 +59,7 @@ namespace PLang.Modules.PlangModule
 		public async Task<(Actions?, IError?)> GetActions()
 		{
 			var registry = new Runtime2.modules.ActionRegistry();
-			registry.DiscoverAndRegister(typeof(Runtime2.modules.BaseClass).Assembly);
+			registry.DiscoverAndRegister(typeof(Runtime2.modules.ActionAttribute).Assembly);
 
 			var actions = new Runtime2.Core.Actions(this.context);
 
@@ -204,7 +204,7 @@ namespace PLang.Modules.PlangModule
 					Key: "NoActionsProvided"));
 
 			var registry = new Runtime2.modules.ActionRegistry();
-			registry.DiscoverAndRegister(typeof(Runtime2.modules.BaseClass).Assembly);
+			registry.DiscoverAndRegister(typeof(Runtime2.modules.ActionAttribute).Assembly);
 
 			var notFound = new List<string>();
 			foreach (var action in actions)

@@ -3,7 +3,7 @@ using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Core;
 
-public sealed class EventList
+public sealed class Bindings
 {
     private readonly List<EventBinding> _bindings = new();
     public int Count => _bindings.Count;
@@ -27,23 +27,23 @@ public sealed class EventList
         }
         return Data.Ok();
     }
+
+    public async Task<Data> Run(PLangContext context, EventType type)
+    {
+        var matching = _bindings.Where(b => b.Type == type).ToList();
+        if (matching.Count == 0) return Data.Ok();
+        foreach (var binding in matching.OrderByDescending(b => b.Priority))
+        {
+            var result = await binding.Run(context);
+            if (!result.Success) return result;
+            if (result.Handled) return result;
+        }
+        return Data.Ok();
+    }
 }
 
-public sealed class BeforeAfterEvents
+public sealed class Lifecycle
 {
-    public EventList Before { get; } = new();
-    public EventList After { get; } = new();
-}
-
-public sealed class GoalStepEvents
-{
-    public BeforeAfterEvents Load { get; } = new();
-    public EventList Before { get; } = new();
-    public EventList After { get; } = new();
-}
-
-public sealed class ActionEvents
-{
-    public EventList Before { get; } = new();
-    public EventList After { get; } = new();
+    public Bindings Before { get; } = new();
+    public Bindings After { get; } = new();
 }

@@ -8,31 +8,43 @@ Engine is the root. Everything hangs off it as properties:
 
 ```
 Engine
-  .AppContext       -- PLangAppContext: app-level config, global events, serializers
+  .Goals            -- Goals: loaded goals, lookup by name
   .Actions          -- ActionRegistry: discovers and resolves module handlers
-  .Serializers      -- SerializerRegistry: serialize/deserialize through engine
-  .Goals            -- Goals: ConcurrentDictionary of loaded goals
+  .Serializers      -- SerializerRegistry: serialize/deserialize
   .FileSystem       -- IPLangFileSystem: sandboxed file operations
-  .IO               -- IO: channel-based I/O (stdin, stdout, stderr)
+  .Channels         -- Channels: named channel routing (stdin, stdout, stderr, custom)
+  .Events           -- Events: app-level event collection
+  .Cache            -- ICache: pluggable step cache
   .System           -- Actor: system trust level (lazy)
   .Service          -- Actor: service trust level (lazy)
   .User             -- Actor: user trust level (lazy)
-  .IsDebugMode      -- bool: delegates to AppContext
+  .Path             -- string: always "/" (relative root)
+  .AbsolutePath     -- string: OS path (e.g. C:\myapp)
+  .Environment      -- string: "production", "development", etc.
+  .Culture          -- CultureInfo: formatting for dates, numbers
+  .IsDebugMode      -- bool
+  .IsTestMode       -- bool
+  .ShutdownToken    -- CancellationToken: for graceful shutdown
+  [key]             -- object?: key-value store (Get<T>, Set<T>, GetOrCreate<T>)
 ```
 
-Each property is an object that **does things**. Goals knows how to load from files. IO knows how to read/write channels. Actions knows how to discover and resolve handlers. They are not passive data bags.
+Each property name tells you what the object *is*. `Goals` manages goals. `Actions` manages handlers. `FileSystem` manages file access. You look at the name and know exactly where to navigate.
+
+> **Naming principle**: If a property name could reasonably describe two different things, it's too broad. A name like `IO` is ambiguous — does it mean file I/O or channel I/O? Name it what it actually is, and responsibilities become obvious.
+
+Each property is an object that **does things**. Goals knows how to load from files. Channels knows how to route named streams. Actions knows how to discover and resolve handlers. They are not passive data bags.
 
 Every handler that needs the engine gets a reference to it and navigates from there:
 
 ```csharp
-// A handler reaches IO and FileSystem through Engine
+// A handler reaches Channels and FileSystem through Engine
 public sealed partial class WriteHandler : BaseClass<write>
 {
     protected override async Task<Data> ExecuteAsync(write p)
     {
-        var result = await Engine.IO.WriteTextAsync(Runtime2.IO.IO.StdOut, p.content?.ToString());
+        var result = await Engine.Channels.WriteTextAsync(Runtime2.IO.Channels.StdOut, p.content?.ToString());
         if (!result.Success) return result;
-        return Success(new types.output { content = p.content, channel = Runtime2.IO.IO.StdOut });
+        return Success(new types.output { content = p.content, channel = Runtime2.IO.Channels.StdOut });
     }
 }
 ```
@@ -45,7 +57,7 @@ The core domain model follows this structure:
 Goal
   .Name             -- string
   .Steps            -- Steps (collection wrapper)
-  .Events           -- EntityEvents (entity-owned, not serialized)
+  .Lifecycle        -- Lifecycle (Before/After bindings, not serialized)
   .Path / .PrPath   -- file system locations
   .Parent           -- Goal? (back-reference, not serialized)
 
@@ -53,7 +65,7 @@ Step
   .Index            -- int
   .Text             -- string (the PLang instruction)
   .Actions          -- Actions (collection wrapper)
-  .Events           -- EntityEvents (entity-owned, not serialized)
+  .Lifecycle        -- Lifecycle (Before/After bindings, not serialized)
   .Goal             -- Goal? (back-reference, not serialized)
 
 Action
@@ -61,7 +73,7 @@ Action
   .Method           -- string (action name, e.g. "set")
   .Parameters       -- List<Data> (input parameters)
   .Return           -- List<Data>? (variable mappings for return values)
-  .Events           -- EntityEvents (entity-owned, not serialized)
+  .Lifecycle        -- Lifecycle (Before/After bindings, not serialized)
 ```
 
 Navigation reads naturally:
@@ -121,127 +133,95 @@ public sealed class Actions : List<Action>
 ### Parents delegate
 
 ```csharp
-// Goal.Load() -- delegates to Steps
+// Goal delegates to Steps
 public async Task Load(PLangContext context)
 {
-    context.PopulateLoadEvents(Events, EventType.OnBeforeGoalLoad, EventType.OnAfterGoalLoad);
-    await Events.Before.Load.Run(context);
-    await Steps.Load(context);          // delegates, does not loop
-    await Events.After.Load.Run(context);
+    await Lifecycle.Before.Run(context);
+    await Steps.Load(context);              // delegates, does not loop
+    await Lifecycle.After.Run(context);
 }
 
-// Step.Load() -- delegates to Actions
+// Step delegates to Actions
 public async Task Load(PLangContext context)
 {
-    context.PopulateLoadEvents(Events, EventType.OnBeforeStepLoad, EventType.OnAfterStepLoad);
-    await Events.Before.Load.Run(context);
-    await Actions.Load(context);         // delegates, does not loop
-    await Events.After.Load.Run(context);
+    await Lifecycle.Before.Run(context);
+    await Actions.Load(context);            // delegates, does not loop
+    await Lifecycle.After.Run(context);
 }
 ```
 
-## 4. Events: Entity-Owned, Phase Navigation
+## 4. Events: Entity-Owned Lifecycle
 
-Events are owned by the entity they apply to, not by a central event manager. Each entity (Goal, Step, Action) has an `Events` property of type `EntityEvents`.
+Events are owned by the entity they apply to. Each entity (Goal, Step, Action) has a `Lifecycle` property — the same type for all three.
 
-### Event type hierarchy
+### Structure
 
 ```csharp
-// A flat list of event bindings that can be Run
-public sealed class EventList
+// A collection of event bindings
+public sealed class Bindings
 {
     public int Count { get; }
     public void Add(EventBinding binding);
     public async Task<Data> Run(PLangContext context);
 }
 
-// Two phases: Load-time events and Runtime events
-public sealed class PhaseEvents
+// The lifecycle of any entity
+public sealed class Lifecycle
 {
-    public EventList Load { get; }          // runs during entity.Load()
-    public Task<Data> Run(PLangContext context);  // runs during entity.RunAsync()
-    public void Add(EventBinding binding);          // adds a runtime binding
-}
-
-// Before and After for each entity
-public sealed class EntityEvents
-{
-    public PhaseEvents Before { get; }
-    public PhaseEvents After { get; }
+    public Bindings Before { get; }
+    public Bindings After { get; }
 }
 ```
+
+Every entity gets the same structure. There is no special "load" property — "load" is a verb and has no place in a property name. Each binding knows its own EventType (e.g., `BeforeGoalLoad` vs `BeforeGoal`); the Lifecycle structure does not distinguish between them. It is just Before and After.
 
 ### Navigation reads naturally
 
 ```csharp
-goal.Events.Before.Load.Run(context)    // "goal's events, before, load phase — run them"
-goal.Events.Before.Run(context)         // "goal's events, before runtime — run them"
-goal.Events.After.Load.Run(context)     // "goal's events, after, load phase — run them"
-step.Events.Before.Run(context)         // "step's events, before runtime — run them"
-step.Events.After.Run(context)          // "step's events, after runtime — run them"
+goal.Lifecycle.Before.Run(context)      // "goal's lifecycle, before — run the bindings"
+goal.Lifecycle.After.Run(context)       // "goal's lifecycle, after — run the bindings"
+step.Lifecycle.Before.Run(context)      // "step's lifecycle, before — run the bindings"
+action.Lifecycle.Before.Run(context)    // "action's lifecycle, before — run the bindings"
 ```
 
-### Load events are populated from context
-
-At load time, matching event bindings are copied from the global event collection (on System/User event scopes) to the entity's `Events`:
-
-```csharp
-// In GoalMethods.Load():
-context.PopulateLoadEvents(Events, EventType.OnBeforeGoalLoad, EventType.OnAfterGoalLoad);
-
-// In StepMethods.Load():
-context.PopulateLoadEvents(Events, EventType.OnBeforeStepLoad, EventType.OnAfterStepLoad);
-
-// In ActionMethods.Load():
-context.PopulateLoadEvents(Events, EventType.OnBeforeActionLoad, EventType.OnAfterActionLoad);
-```
-
-### Execution flow with events
+### Execution flow
 
 ```
-Load phase:
-  context.PopulateLoadEvents(goal.Events, ...)
-  goal.Events.Before.Load.Run(context)
-    step.Events.Before.Load.Run(context)
-      action.Events.Before.Load.Run(context)
-      action.Events.After.Load.Run(context)
-    step.Events.After.Load.Run(context)
-  goal.Events.After.Load.Run(context)
-
-Run phase:
-  goal.Events.Before.Run(context)          -- before-goal runtime events
-    step.Events.Before.Run(context)        -- before-step runtime events
-      action.RunAsync(engine, context)     -- actual execution
-    step.Events.After.Run(context)         -- after-step runtime events
-  goal.Events.After.Run(context)           -- after-goal runtime events
+goal.Lifecycle.Before.Run(context)
+  step.Lifecycle.Before.Run(context)
+    action.Lifecycle.Before.Run(context)
+    action.RunAsync(engine, context)         -- actual execution
+    action.Lifecycle.After.Run(context)
+  step.Lifecycle.After.Run(context)
+goal.Lifecycle.After.Run(context)
 ```
 
 ## 5. Handlers Navigate Through Engine
 
 Handlers extend `BaseClass<TParams>` and receive `Engine` and `Context` via `Initialize()`. They navigate to system capabilities through the engine.
 
-### IO navigation
+### Channel navigation
 
-Instead of `Console.WriteLine`, handlers write to named channels through `Engine.IO`:
+Instead of `Console.WriteLine`, handlers write to named channels through `Engine.Channels`:
 
 ```csharp
 // output.write handler
-Engine.IO.WriteTextAsync(IO.IO.StdOut, text)
+Engine.Channels.WriteTextAsync(IO.Channels.StdOut, text)
 
 // Reading from a channel
-Engine.IO.ReadTextAsync(IO.IO.StdIn)
+Engine.Channels.ReadTextAsync(IO.Channels.StdIn)
 
 // Writing structured data (serialized through engine.Serializers)
-Engine.IO.WriteAsync("stdout", data, "application/json")
+Engine.Channels.WriteAsync("stdout", data, "application/json")
 ```
 
-IO manages named channels (`stdin`, `stdout`, `stderr`, or custom). Each channel wraps a stream with direction and content type:
+Channels manages named streams (`stdin`, `stdout`, `stderr`, or custom). Each channel wraps a stream with direction and content type:
 
 ```csharp
-engine.IO.Get("stdout")                            // get a channel
-engine.IO.GetOrCreate("custom", () => channel)     // get or create
-engine.IO.CreateMemoryChannel("buffer")             // in-memory
-engine.IO.CreateFileChannel("log", path, FileMode.Append)  // file-backed
+engine.Channels.Get("stdout")                            // get a channel
+engine.Channels.GetOrCreate("custom", () => channel)     // get or create
+engine.Channels.CreateMemoryChannel("buffer")             // in-memory
+engine.Channels.CreateFileChannel("log", path, FileMode.Append)  // file-backed
 ```
 
 ### Serializer navigation
@@ -249,7 +229,7 @@ engine.IO.CreateFileChannel("log", path, FileMode.Append)  // file-backed
 Instead of `JsonSerializer.Serialize(obj)`, handlers use the engine's serializer registry:
 
 ```csharp
-// Serialize to a stream (used internally by IO.WriteAsync)
+// Serialize to a stream (used internally by Channels.WriteAsync)
 engine.Serializers.SerializeAsync(new SerializeOptions
 {
     Stream = channel.Stream,
@@ -257,7 +237,7 @@ engine.Serializers.SerializeAsync(new SerializeOptions
     ContentType = "application/json"
 });
 
-// Deserialize from a file (used by IO.ReadAsync)
+// Deserialize from a file (used by Channels.ReadAsync)
 engine.Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ".json" });
 ```
 
@@ -316,18 +296,28 @@ The source generator strips the `@` prefix, so the action registry key becomes `
 
 During execution every handler has two roots: `Engine` (system capabilities) and `Context` (request state). Together they determine what is reachable at any point.
 
-### Engine (system-level, shared)
+### Engine (system-level, self-contained)
 
 ```
 Engine
-  .AppContext         PLangAppContext — app config, global events, serializers, RootPath
+  .Goals              Goals — loaded goals, lookup by name
   .Actions            ActionRegistry — discover and resolve handlers
   .Serializers        SerializerRegistry — serialize / deserialize
-  .Goals              Goals — loaded goals, lookup by name
   .FileSystem         IPLangFileSystem — sandboxed file I/O
-  .IO                 IO — channel-based I/O (stdin, stdout, stderr, custom)
+  .Channels           Channels — named channel routing (stdin, stdout, stderr, custom)
+  .Events             Events — app-level event collection
+  .Cache              ICache — pluggable step cache
   .System / .Service / .User   Actor — trust-level identities (lazy)
+  .Path               string — always "/" (relative root)
+  .AbsolutePath       string — OS path (e.g. C:\myapp)
+  .Environment        string — "production", "development", etc.
+  .Culture            CultureInfo — formatting for dates, numbers
   .IsDebugMode        bool
+  .IsTestMode         bool
+  .ShutdownToken      CancellationToken — graceful shutdown
+  .StartedAt          DateTime
+  .Uptime             TimeSpan
+  [key]               object? — key-value store (Get<T>, Set<T>, GetOrCreate<T>)
 ```
 
 ### PLangContext (request-level, per-execution)
@@ -335,22 +325,20 @@ Engine
 ```
 Context
   .Id                 string — unique execution id
-  .AppContext          PLangAppContext — back-reference to app context
+  .Engine             Engine — back-reference to the engine (non-nullable)
   .MemoryStack         MemoryStack — all %variables% for this execution
   .CallStack           CallStack? — goal/step call frames, stack trace, errors
   .Goal                Goal? — the goal currently executing
   .Step                Step? — the step currently executing
-  .CurrentGoalName     string? — shortcut to current goal name
-  .CurrentStepIndex    int? — shortcut to current step index
   .Actor               Actor? — the actor that owns this context
   .Parent              PLangContext? — parent context (for nested calls)
-  .Depth               int — nesting depth (0 = root)
   .IsAsync             bool — whether this is an async execution
-  .CancellationToken   CancellationToken — linked to AppContext.ShutdownToken
+  .CancellationToken   CancellationToken — linked to Engine.ShutdownToken
   .CreatedAt           DateTime
   .Duration            TimeSpan
   .System              EventScope — system-level event bindings
   .User                EventScope — user-level event bindings
+  .EventOverride       Data? — set by event.skipAction to override action results
   [key]                object? — arbitrary key-value store (Get<T>, Set<T>)
 ```
 
@@ -386,29 +374,12 @@ CallStack
   .IsInEvent           bool — currently inside an event handler
 ```
 
-### PLangAppContext (app-level, shared across all requests)
-
-```
-AppContext
-  .Id                  string — app instance id
-  .RootPath            string — app root directory
-  .Environment         string — "production", "development", etc.
-  .Events              Events — global event collection
-  .Serializers         SerializerRegistry
-  .IsDebugMode         bool
-  .ShutdownToken       CancellationToken
-  .StartedAt           DateTime
-  .Uptime              TimeSpan
-  [key]                object? — arbitrary key-value store (Get<T>, Set<T>, GetOrCreate<T>)
-```
-
 ### BaseClass convenience properties
 
 Handlers extend `BaseClass<TParams>` which exposes shortcuts so you don't always navigate manually:
 
 ```csharp
 protected MemoryStack MemoryStack => Context.MemoryStack;
-protected PLangAppContext AppContext => Context.AppContext;
 protected CancellationToken CancellationToken => Context.CancellationToken;
 protected IPLangFileSystem FileSystem => Engine.FileSystem;
 
@@ -432,7 +403,7 @@ Given `Engine` + `Context`, a handler can reach:
 |------|-----------|
 | Read/write a variable | `MemoryStack.Get("name")` / `MemoryStack.Set("name", value)` |
 | Read a variable with dot path | `MemoryStack.Get("fileResult.Exists")` |
-| Write to stdout | `Engine.IO.WriteTextAsync(IO.StdOut, text)` |
+| Write to stdout | `Engine.Channels.WriteTextAsync(Channels.StdOut, text)` |
 | Read/write files | `Engine.FileSystem.File.ReadAllTextAsync(path)` |
 | Call another goal | `Engine.RunGoalAsync(goalName, Context, CancellationToken)` |
 | Resolve a handler | `Engine.Actions.GetCodeGenerated("module", "method", Context)` |
@@ -440,10 +411,10 @@ Given `Engine` + `Context`, a handler can reach:
 | Check current goal/step | `Context.Goal`, `Context.Step` |
 | Check call depth | `Context.Depth`, `Context.CallStack.Depth` |
 | Detect recursion | `Context.CallStack.ContainsGoal("GoalName")` |
-| Get app root path | `Engine.RootPath` or `Context.AppContext.RootPath` |
-| Check environment | `Context.AppContext.Environment` |
+| Get app root path | `Engine.AbsolutePath` |
+| Check environment | `Engine.Environment` |
 | Store request-scoped data | `Context["key"] = value` / `Context.Get<T>("key")` |
-| Store app-scoped data | `Context.AppContext["key"] = value` |
+| Store app-scoped data | `Engine["key"] = value` / `Engine.Get<T>("key")` |
 | Cancel execution | `Context.Cancel()` |
 
 ## 7. Data Owns Its Composition
@@ -514,7 +485,7 @@ engine.LoadGoal(path);
 ### DO: Navigate to what you need through properties
 
 ```csharp
-Engine.IO.WriteTextAsync(IO.IO.StdOut, data);
+Engine.Channels.WriteTextAsync(IO.Channels.StdOut, data);
 Engine.FileSystem.File.ReadAllTextAsync(path);
 Engine.Serializers.SerializeAsync(options);
 engine.Goals.Get("Start");
@@ -529,7 +500,7 @@ async Task RunStep(Engine engine, IO io, Goals goals) { }
 // Correct: reach them through engine
 async Task RunStep(Engine engine)
 {
-    engine.IO ...
+    engine.Channels ...
     engine.Goals ...
 }
 ```
@@ -579,16 +550,16 @@ Goal and Step objects may be shared between threads. Storing `PLangContext` on t
 public sealed partial class Goal
 {
     internal PLangContext? _context;
-    public EntityEvents Events => _context?.EventsFor(this) ?? _fallbackEvents;
+    public Lifecycle Lifecycle => _context?.LifecycleFor(this) ?? _fallback;
 }
 
-// Correct: Events is a direct property, context passed as parameter
+// Correct: Lifecycle is a direct property, context passed as parameter
 public sealed partial class Goal
 {
-    public EntityEvents Events { get; } = new();    // per-object, set at load time
+    public Lifecycle Lifecycle { get; } = new();    // per-object, set at load time
 }
 
-await Events.Before.Run(context);   // context passed as parameter
+await Lifecycle.Before.Run(context);   // context passed as parameter
 ```
 
 **Rule**: If something is per-request (like which context is executing), pass it as a parameter. If something is per-object (like which event bindings apply), store it on the object.
@@ -598,22 +569,25 @@ await Events.Before.Run(context);   // context passed as parameter
 ```csharp
 [JsonIgnore] public Goal? Parent { get; set; }  // Goal -> parent Goal
 [JsonIgnore] public Goal? Goal { get; set; }     // Step -> owning Goal
-[JsonIgnore] public EntityEvents Events { get; } // not serialized
+[JsonIgnore] public Lifecycle Lifecycle { get; } // not serialized
 ```
 
 These are set after deserialization (e.g., `step.Goal = goal` during goal loading) and excluded from serialization to avoid circular references.
 
 ## 10. Summary
 
-1. **Engine is the root** — everything hangs off it: IO, Goals, Actions, Serializers, FileSystem, Actors
-2. **Properties navigate** — `engine.IO.WriteTextAsync(...)`, `engine.Goals.Get(...)`, `goal.Events.Before.Run(...)`
-3. **Collections own their loops** — `Steps.Load()`, `Actions.RunAsync()`, not a foreach in Goal or Step
-4. **Methods belong on the owner** — Goals loads goals, Steps loads steps, Data merges results
-5. **Read like sentences** — `goal.Events.Before.Load.Run(context)` reads naturally
-6. **Events are entity-owned** — `EntityEvents` with `PhaseEvents` (Before/After) and phase split (Load/Runtime)
-7. **Handlers navigate through Engine** — IO channels, FileSystem, Serializers are all reachable from Engine
-8. **No unnecessary DTOs** — use real types inside the runtime, DTOs only at serialization boundaries
-9. **Don't cache request state on shared objects** — pass `PLangContext` as a parameter, don't store it
-10. **Keep object references** — `StepError.Step`, not `StepError.StepText`
-11. **Data owns merge** — `Data.Merge()` combines `List<Data>` by name
-12. **Don't create wrapper objects** — if the data is on `PLangContext`, pass `PLangContext`
+1. **Engine is the root** — everything hangs off it: Goals, Actions, Serializers, FileSystem, Channels, Events, Actors, config, key-value store
+2. **Names describe what the object is** — `Goals`, `Channels`, `Lifecycle`, `Bindings` — not vague verbs like `IO` or suffixes like `Manager`
+3. **Structures are things** — a `Lifecycle` with Before/After IS a lifecycle; don't rename to `EventManager`
+4. **Properties are nouns, methods are verbs** — never put a verb in a property name; `Lifecycle.Before`, not `Lifecycle.Load`
+5. **Properties navigate** — `engine.Channels.WriteTextAsync(...)`, `engine.Goals.Get(...)`, `goal.Lifecycle.Before.Run(...)`
+6. **Collections own their loops** — `Steps.Load()`, `Actions.RunAsync()`, not a foreach in Goal or Step
+7. **Methods belong on the owner** — Goals loads goals, Steps loads steps, Data merges results
+8. **Read like sentences** — `goal.Lifecycle.Before.Run(context)` reads naturally
+9. **Events are entity-owned** — `Lifecycle` with `Bindings` (Before/After), same type for Goal, Step, Action
+10. **Handlers navigate through Engine** — Channels, FileSystem, Serializers are all reachable from Engine
+11. **No unnecessary DTOs** — use real types inside the runtime, DTOs only at serialization boundaries
+12. **Don't cache request state on shared objects** — pass `PLangContext` as a parameter, don't store it
+13. **Keep object references** — `StepError.Step`, not `StepError.StepText`
+14. **Data owns merge** — `Data.Merge()` combines `List<Data>` by name
+15. **Don't create wrapper objects** — if the data is on `PLangContext`, pass `PLangContext`

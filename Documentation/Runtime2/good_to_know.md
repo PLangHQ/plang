@@ -72,3 +72,22 @@ The handler is named `intercept` (not `action`) because the LLM builder confuses
 
 ### Parameter Matching
 Uses regex-based matching: standalone `*` becomes `.*`, regex-like patterns are used as-is, plain strings are exact-matched. Matching is case-insensitive.
+
+---
+
+## OBP Naming Principle
+
+In OBP, **the name IS the contract**. Each property on the object graph should tell you what the object *is*, not what it *does*. You navigate the tree by name and the object takes care of itself.
+
+Good names describe the thing: `engine.Goals`, `engine.Actions`, `engine.Serializers`, `engine.FileSystem`, `engine.Channels`. Each tells you what it manages — you navigate there and call methods.
+
+Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. It doesn't tell you what the object *is* (a channel manager), only what it vaguely *does* (input/output). Broad names cause confusion — "filesystem is I/O too, shouldn't it be here?" The fix: name it what it is (`Channels`), and the responsibilities become obvious.
+
+**Structures ARE things.** A `Lifecycle` with `.Before` and `.After` IS a lifecycle. `Bindings` with `.Add()` and `.Run()` IS a collection of bindings. Name structures after what they are, not what they do. Don't rename to "Manager", "Dispatcher", or "Handler" — those describe behavior, not identity.
+
+**Properties are nouns, methods are verbs.** Never use a verb (sagnorð) in a property name. A property describes what the thing IS — it's just a structure sitting there. If something needs to happen to it, that's a method on it. Example: `lifecycle.Before` (noun — the before bindings), not `lifecycle.Load` (verb — loading is an action, not a thing). If it needs loading, call a method: `Phase.Load()`.
+
+**Agreed target naming for events:**
+- `GoalStepEvents` / `ActionEvents` → `Lifecycle` (same type for all entities)
+- `EventList` → `Bindings`
+- Navigation: `goal.Lifecycle.Before.Run(context)`, `step.Lifecycle.After.Run(context)`

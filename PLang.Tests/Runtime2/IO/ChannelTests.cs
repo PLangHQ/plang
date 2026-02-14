@@ -1,9 +1,13 @@
 using PLang.Runtime2.IO;
+using PLang.SafeFileSystem;
+using Path = System.IO.Path;
 
 namespace PLang.Tests.Runtime2.IO;
 
 public class ChannelTests
 {
+    private static PLangFileSystem CreateFileSystem() => new(Path.GetTempPath(), "");
+
     [Test]
     public async Task Constructor_SetsProperties()
     {
@@ -313,7 +317,7 @@ public class ChannelTests
         {
             await System.IO.File.WriteAllTextAsync(tempFile, "test content");
 
-            using var channel = Channel.File("test", tempFile, FileMode.Open);
+            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.Open);
 
             await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Input);
             await Assert.That(channel.CanRead).IsTrue();
@@ -330,7 +334,7 @@ public class ChannelTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            using var channel = Channel.File("test", tempFile, FileMode.Create);
+            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.Create);
 
             await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Output);
             await Assert.That(channel.CanWrite).IsTrue();
@@ -347,7 +351,7 @@ public class ChannelTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            using var channel = Channel.File("test", tempFile, FileMode.OpenOrCreate);
+            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.OpenOrCreate);
 
             await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Bidirectional);
         }
