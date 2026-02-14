@@ -58,20 +58,19 @@ namespace PLang.Modules.PlangModule
 		[Description("Get all actions available from the registry")]
 		public async Task<(Actions?, IError?)> GetActions()
 		{
-			var registry = new Runtime2.modules.ActionRegistry();
-			registry.DiscoverAndRegister(typeof(Runtime2.modules.ActionAttribute).Assembly);
+			var libraries = new Runtime2.modules.Libraries();
 
 			var actions = new Runtime2.Core.Actions(this.context);
 
-			foreach (var ns in registry.Modules)
+			foreach (var ns in libraries.Modules)
 			{
-				foreach (var className in registry.GetActions(ns))
+				foreach (var className in libraries.GetActions(ns))
 				{
 					var parameters = new List<Runtime2.Memory.Data>();
 					System.Type? parameterType = null;
 
 					// Try IClass-based handler first
-					var handler = registry.Get(ns, className);
+					var handler = libraries.Get(ns, className);
 					if (handler != null)
 					{
 						parameterType = handler.ParameterType;
@@ -79,7 +78,7 @@ namespace PLang.Modules.PlangModule
 					else
 					{
 						// Fall back to [Action]-attributed type
-						var actionType = registry.GetActionType(ns, className);
+						var actionType = libraries.GetActionType(ns, className);
 						if (actionType == null) continue;
 						parameterType = actionType;
 					}
@@ -123,7 +122,7 @@ namespace PLang.Modules.PlangModule
 
 					// Extract Cacheable from ActionAttribute
 				bool cacheable = true;
-				var actionType2 = registry.GetActionType(ns, className);
+				var actionType2 = libraries.GetActionType(ns, className);
 				if (actionType2 != null)
 				{
 					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
@@ -203,13 +202,12 @@ namespace PLang.Modules.PlangModule
 				return (false, new ProgramError("No actions provided", goalStep, function,
 					Key: "NoActionsProvided"));
 
-			var registry = new Runtime2.modules.ActionRegistry();
-			registry.DiscoverAndRegister(typeof(Runtime2.modules.ActionAttribute).Assembly);
+			var libraries = new Runtime2.modules.Libraries();
 
 			var notFound = new List<string>();
 			foreach (var action in actions)
 			{
-				if (!registry.Contains(action.Module, action.ActionName))
+				if (!libraries.Contains(action.Module, action.ActionName))
 					notFound.Add($"{action.Module}.{action.ActionName}");
 			}
 
@@ -477,16 +475,15 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var registry = new Runtime2.modules.ActionRegistry();
-			registry.DiscoverAndRegister(typeof(Runtime2.Core.Engine).Assembly);
+			var libraries = new Runtime2.modules.Libraries();
 			var result = new List<object>();
 
-			foreach (var ns in registry.Modules)
+			foreach (var ns in libraries.Modules)
 			{
 				result.Add(new
 				{
 					Name = ns,
-					Methods = registry.GetActions(ns).ToList()
+					Methods = libraries.GetActions(ns).ToList()
 				});
 			}
 

@@ -13,11 +13,10 @@ public class StartGoalTests
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Actions.Register("output", "write", capture);
+        engine.Libraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -62,11 +61,10 @@ public class StartGoalTests
     public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Actions.Register("output", "write", capture);
+        engine.Libraries.Register("output", "write", capture);
 
         // Find the .pr.json file and set FileSystem root to repo root so it's accessible
         var prJsonPath = FindPrJsonPath();
@@ -98,7 +96,6 @@ public class StartGoalTests
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -126,10 +123,9 @@ public class StartGoalTests
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
-        engine.Actions.Register("output", "write", capture);
+        engine.Libraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -157,10 +153,9 @@ public class StartGoalTests
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
-        engine.Actions.Register("output", "write", capture);
+        engine.Libraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -185,10 +180,9 @@ public class StartGoalTests
     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var capture = new CapturingWriteHandler();
-        engine.Actions.Register("output", "write", capture);
+        engine.Libraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -213,7 +207,6 @@ public class StartGoalTests
     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {

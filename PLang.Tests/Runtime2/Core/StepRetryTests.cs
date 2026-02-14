@@ -19,7 +19,7 @@ public class StepRetryTests
     {
         _engine = new Engine("/app");
         _flaky = new FlakyHandler();
-        _engine.Actions.Register("test", "flaky", _flaky);
+        _engine.Libraries.Register("test", "flaky", _flaky);
     }
 
     // ================================================================

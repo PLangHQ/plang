@@ -86,7 +86,7 @@ public class ActionsTests
         await Assert.That(action.ParameterSchema).IsNull();
     }
 
-    // --- GetActions integration tests (uses real ActionRegistry + assembly discovery) ---
+    // --- GetActions integration tests (uses real Libraries + assembly discovery) ---
 
     [Test]
     public async Task GetActions_ReturnsNonEmptyActions()
@@ -166,7 +166,7 @@ public class ActionsTests
         await Assert.That(noParams.Count).IsGreaterThanOrEqualTo(0);
     }
 
-    // --- ValidateActions tests (uses real ActionRegistry + assembly discovery) ---
+    // --- ValidateActions tests (uses real Libraries + assembly discovery) ---
 
     [Test]
     public async Task ValidateActions_NullActions_ReturnsError()
@@ -379,13 +379,12 @@ public class ActionsTests
         if (actions == null || actions.Count == 0)
             return (false, new PLang.Runtime2.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var registry = new ActionRegistry();
-        registry.DiscoverAndRegister(typeof(ActionAttribute).Assembly);
+        var libraries = new Libraries();
 
         var notFound = new List<string>();
         foreach (var action in actions)
         {
-            if (!registry.Contains(action.Module, action.ActionName))
+            if (!libraries.Contains(action.Module, action.ActionName))
                 notFound.Add($"{action.Module}.{action.ActionName}");
         }
 
@@ -397,21 +396,20 @@ public class ActionsTests
     }
 
     /// <summary>
-    /// Mimics what GetActions() in PlangModule does — uses ActionRegistry to discover handlers.
+    /// Mimics what GetActions() in PlangModule does — uses Libraries to discover handlers.
     /// </summary>
     private static Actions DiscoverActions()
     {
-        var registry = new ActionRegistry();
-        registry.DiscoverAndRegister(typeof(ActionAttribute).Assembly);
+        var libraries = new Libraries();
 
         var actions = new Actions();
 
-        foreach (var ns in registry.Modules)
+        foreach (var ns in libraries.Modules)
         {
-            foreach (var actionName in registry.GetActions(ns))
+            foreach (var actionName in libraries.GetActions(ns))
             {
                 // Check IClass-based handlers first
-                var handler = registry.Get(ns, actionName);
+                var handler = libraries.Get(ns, actionName);
                 if (handler != null)
                 {
                     actions.Add(new PLang.Runtime2.Core.Action
@@ -424,7 +422,7 @@ public class ActionsTests
                 }
 
                 // Check [Action]-based types
-                var actionType = registry.GetActionType(ns, actionName);
+                var actionType = libraries.GetActionType(ns, actionName);
                 if (actionType != null)
                 {
                     actions.Add(new PLang.Runtime2.Core.Action
