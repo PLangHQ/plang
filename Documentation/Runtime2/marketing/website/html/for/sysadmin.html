@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLang for SysAdmins — Server health checks that read like runbooks.</title>
+    <meta name="description" content="Health checks, log parsing, alerts, scheduling — all in plain English. No brittle bash pipes. Write monitoring that reads like documentation.">
+    <style>
+        :root {
+            --bg:#09090b;--surface:#111114;--surface-hover:#18181c;--border:#23232a;--border-hover:#3b82f6;
+            --text:#fafafa;--text-secondary:#a1a1aa;--text-muted:#71717a;
+            --accent:#3b82f6;--accent-hover:#2563eb;--accent-soft:rgba(59,130,246,.12);
+            --green:#22c55e;--green-soft:rgba(34,197,94,.12);
+            --code-goal:#f0f0f3;--code-step:#c8c8d0;--code-var:#93c5fd;--code-str:#86efac;--code-comment:#71717a;--code-bg:#0c0c0f;
+            --radius:8px;--radius-lg:12px;
+            --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
+            --font-mono:'SF Mono','Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;
+            --max-width:1200px;--content-width:780px;
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+        body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-height:1.6}
+        a{color:var(--accent);text-decoration:none;transition:color .15s}a:hover{color:var(--text)}
+        ::selection{background:var(--accent);color:var(--text)}
+        code{font-family:var(--font-mono);font-size:.88em;background:var(--surface);padding:2px 6px;border-radius:4px;color:var(--code-var)}
+        .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+        .content{max-width:var(--content-width)}
+
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-inner{max-width:var(--max-width);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{font-size:1.15rem;font-weight:700;color:var(--text)}.nav-logo span{color:var(--text-muted);font-weight:400;margin-left:6px;font-size:.85rem}
+        .nav-links{display:flex;gap:32px;align-items:center}.nav-links a{color:var(--text-secondary);font-size:.9rem}.nav-links a:hover{color:var(--text)}
+        .nav-cta{background:var(--accent);color:var(--text)!important;padding:6px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:500}.nav-cta:hover{background:var(--accent-hover);color:var(--text)!important}
+
+        .back-link{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-muted);margin-bottom:32px}.back-link:hover{color:var(--text-secondary)}
+
+        .page-hero{padding-top:120px;padding-bottom:64px}
+        .page-hero h1{font-size:2.75rem;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:24px}
+        .page-hero .lead{font-size:1.1rem;color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+
+        .section{padding:64px 0;border-top:1px solid var(--border)}
+        .section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .section p{color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+        .section p+p{margin-top:12px}
+
+        .code-window{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:32px 0}
+        .code-titlebar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+        .code-dots{display:flex;gap:6px}.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border)}
+        .code-filename{font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted)}
+        .code-content{padding:20px;font-family:var(--font-mono);font-size:.88rem;line-height:1.7;overflow-x:auto;color:var(--code-step)}
+        .code-content::-webkit-scrollbar{height:6px}.code-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .c-goal{color:var(--code-goal);font-weight:600;display:block;margin-top:12px}.c-goal:first-child{margin-top:0}
+        .c-step{display:block;color:var(--code-step)}.c-var{color:var(--code-var)}.c-str{color:var(--code-str)}.c-cmt{color:var(--code-comment);font-style:italic}
+
+        .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;margin:32px 0}
+        .callout p{color:var(--text);font-size:1.05rem;font-weight:500;line-height:1.6}
+        .callout .details{color:var(--text-secondary);font-size:.92rem;font-weight:400;margin-top:8px}
+
+        .feature-list{list-style:none;margin:24px 0}
+        .feature-list li{padding:12px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+        .feature-list li:last-child{border-bottom:none}
+        .fl-code{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:4px;white-space:nowrap}
+        .fl-desc{font-size:.92rem;color:var(--text-secondary);line-height:1.5}
+
+        .more-examples{margin:32px 0}
+        .more-examples h3{font-size:1.05rem;font-weight:600;margin-bottom:12px;margin-top:32px;color:var(--text-secondary)}
+        .more-examples h3:first-child{margin-top:0}
+        .more-examples .code-window{margin:12px 0}
+
+        .cta-section{padding:64px 0 100px;border-top:1px solid var(--border)}
+        .cta-section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .cta-code{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-family:var(--font-mono);font-size:.88rem;line-height:1.8;color:var(--text-secondary);margin:24px 0;max-width:480px}
+        .cta-code .cmd{color:var(--text)}.cta-code .cmt{color:var(--code-comment)}
+        .cta-bottom{margin-top:20px;font-size:.95rem;color:var(--text-secondary)}.cta-bottom a{font-weight:500}
+
+        .footer{border-top:1px solid var(--border);padding:32px 0}
+        .footer-inner{display:flex;justify-content:space-between;align-items:center}
+        .footer-left{font-size:.85rem;color:var(--text-muted)}
+        .footer-links{display:flex;gap:24px}.footer-links a{font-size:.85rem;color:var(--text-muted)}.footer-links a:hover{color:var(--text-secondary)}
+
+        @media(max-width:768px){
+            .page-hero h1{font-size:2rem}.page-hero{padding-top:100px}.section h2{font-size:1.4rem}.section{padding:48px 0}
+            .code-content{font-size:.8rem;padding:16px}.feature-list li{grid-template-columns:1fr;gap:4px}
+            .nav-links a:not(.nav-cta){display:none}.footer-inner{flex-direction:column;gap:16px;text-align:center}
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav"><div class="nav-inner">
+        <a href="../index.html" class="nav-logo">PLang <span>v0.1</span></a>
+        <div class="nav-links"><a href="../how-it-works.html">How It Works</a><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html" class="nav-cta">Get Started</a></div>
+    </div></nav>
+
+    <section class="page-hero"><div class="container">
+        <a href="../index.html#explore" class="back-link">&larr; All professions</a>
+        <h1>Server health checks that<br>read like runbooks.</h1>
+        <p class="lead">
+            You've got 30 servers and a pager that doesn't sleep. You're writing bash scripts three <code>grep</code> pipes deep,
+            parsing logs with <code>awk</code> commands you'll never understand again in six months, and rigging cron jobs
+            with shell scripts that send emails via <code>curl</code> to a Slack webhook because "it works."
+            Every monitoring script is a brittle chain. You know what the checks should do &mdash; you just wish you could write them that way.
+        </p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The PLang way</h2>
+        <div class="code-window">
+            <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- every 5 minutes, call !HealthCheck</span>
+<span class="c-goal">HealthCheck</span><span class="c-step">- get https://server1.internal/health, write to <span class="c-var">%status%</span></span><span class="c-step">    on error call !AlertDown, continue to next step</span><span class="c-step">- read /var/log/app/error.log into <span class="c-var">%logContent%</span></span><span class="c-step">- set <span class="c-var">%errorCount%</span> = <span class="c-var">%logContent.split('\n').length%</span></span><span class="c-step">- if <span class="c-var">%errorCount%</span> > 100 then call !AlertHighErrors</span><span class="c-step">- insert into health_log, server=<span class="c-str">'server1'</span>, status=<span class="c-var">%status.code%</span>,</span><span class="c-step">    errors=<span class="c-var">%errorCount%</span>, checked=<span class="c-var">%Now%</span></span><span class="c-step">- write out <span class="c-str">'Health check complete: <span class="c-var">%status.code%</span>, <span class="c-var">%errorCount%</span> errors'</span></span>
+<span class="c-goal">AlertDown</span><span class="c-step">- send email to ops@company.com, subject <span class="c-str">"Server Down: server1"</span>,</span><span class="c-step">    body <span class="c-str">"Health endpoint unreachable at <span class="c-var">%Now%</span>. Investigate immediately."</span></span>
+<span class="c-goal">AlertHighErrors</span><span class="c-step">- send email to ops@company.com, subject <span class="c-str">"High Error Rate: server1"</span>,</span><span class="c-step">    body <span class="c-str">"Error log has <span class="c-var">%errorCount%</span> entries. Threshold: 100."</span></span></pre>
+        </div>
+        <div class="callout">
+            <p>That's your entire monitoring script.</p>
+            <p class="details">Health check, log parsing, database logging, email alerts, scheduled execution. Read it in six months and you'll still know exactly what it does.</p>
+        </div>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>What just happened</h2>
+        <ul class="feature-list">
+            <li><span class="fl-code">every 5 minutes</span><span class="fl-desc">Built-in scheduler. No cron configuration.</span></li>
+            <li><span class="fl-code">get https://...</span><span class="fl-desc">HTTP health check with automatic error handling and retries.</span></li>
+            <li><span class="fl-code">read /var/log/...</span><span class="fl-desc">File system access. Read logs, configs, anything.</span></li>
+            <li><span class="fl-code">on error call !AlertDown</span><span class="fl-desc">Error handling that reads like English. Retry logic, fallbacks, continue-on-error &mdash; all built in.</span></li>
+            <li><span class="fl-code">insert into health_log</span><span class="fl-desc">SQLite database created automatically. No setup. Query it later for trends.</span></li>
+            <li><span class="fl-code">send email</span><span class="fl-desc">SMTP email, built in. No sendmail config, no webhook hacks.</span></li>
+        </ul>
+        <p>The <code>.goal</code> file IS your runbook. When you hand it to another admin, they can read it without learning a language.</p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The build / run split</h2>
+        <p>
+            PLang uses AI at <strong>build time only</strong> to compile your English into executable instructions.
+            At <strong>runtime</strong>, there's no AI &mdash; no network dependency, no API calls, deterministic execution.
+            Build once on a machine with internet access, then deploy the compiled <code>.pr</code> files anywhere.
+        </p>
+        <p>Your monitoring scripts run reliably offline. The AI is a one-time compiler, not a runtime dependency.</p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>More things you can automate</h2>
+        <div class="more-examples">
+            <h3>Disk space monitoring</h3>
+            <div class="code-window">
+                <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">DiskCheck.goal</span></div>
+                <pre class="code-content"><span class="c-goal">CheckDisk</span><span class="c-step">- run <span class="c-str">'df -h /'</span>, write to <span class="c-var">%diskInfo%</span></span><span class="c-step">- if <span class="c-var">%diskInfo%</span> contains <span class="c-str">'9[0-9]%'</span> then call !DiskAlert</span></pre>
+            </div>
+
+            <h3>SSL certificate expiry</h3>
+            <div class="code-window">
+                <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">CertCheck.goal</span></div>
+                <pre class="code-content"><span class="c-goal">CheckCerts</span><span class="c-step">- every 1 day, call !VerifyCerts</span>
+<span class="c-goal">VerifyCerts</span><span class="c-step">- get https://mysite.com, write to <span class="c-var">%response%</span></span><span class="c-step">- if <span class="c-var">%response.certificate.daysRemaining%</span> < 14 then</span><span class="c-step">    - send email to ops@company.com, subject <span class="c-str">"SSL Expiring"</span>,</span><span class="c-step">        body <span class="c-str">"Certificate expires in <span class="c-var">%response.certificate.daysRemaining%</span> days"</span></span></pre>
+            </div>
+
+            <h3>Log rotation and archival</h3>
+            <div class="code-window">
+                <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">LogRotate.goal</span></div>
+                <pre class="code-content"><span class="c-goal">ArchiveLogs</span><span class="c-step">- list files in /var/log/app/*.log, write to <span class="c-var">%logFiles%</span></span><span class="c-step">- foreach <span class="c-var">%logFiles%</span>, call !ArchiveFile item=<span class="c-var">%logFile%</span></span>
+<span class="c-goal">ArchiveFile</span><span class="c-step">- if <span class="c-var">%logFile.size%</span> > 10485760 then</span><span class="c-step">    - copy <span class="c-var">%logFile.path%</span> to /archive/<span class="c-var">%logFile.name%</span>_<span class="c-var">%Now%</span>.log</span><span class="c-step">    - write to <span class="c-var">%logFile.path%</span>, <span class="c-str">''</span></span><span class="c-step">    - write out <span class="c-str">'Archived <span class="c-var">%logFile.name%</span>'</span></span></pre>
+            </div>
+        </div>
+    </div></section>
+
+    <section class="cta-section"><div class="container">
+        <h2>Get started</h2>
+        <div class="cta-code">
+            <span class="cmt"># Download from GitHub releases, unzip, add to PATH</span><br>
+            <span class="cmd">mkdir ServerMonitor && cd ServerMonitor</span><br>
+            <span class="cmt"># Create Start.goal with your health checks</span><br>
+            <span class="cmd">plang exec</span>
+        </div>
+        <p class="cta-bottom">Write your monitoring like you'd explain it to a colleague. Build once. Run forever.<br><a href="../get-started.html">Full getting started guide &rarr;</a></p>
+    </div></section>
+
+    <footer class="footer"><div class="container"><div class="footer-inner">
+        <div class="footer-left">PLang is open source and in active development.</div>
+        <div class="footer-links"><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html">Docs</a><a href="../index.html">Home</a></div>
+    </div></div></footer>
+
+</body>
+</html>

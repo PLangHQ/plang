@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLang for Content Creators — Publish everywhere from one workflow.</title>
+    <meta name="description" content="Automate multi-platform publishing, content calendar reminders, and weekly analytics. Write your publishing process in plain English.">
+    <style>
+        :root {
+            --bg:#09090b;--surface:#111114;--surface-hover:#18181c;--border:#23232a;--border-hover:#3b82f6;
+            --text:#fafafa;--text-secondary:#a1a1aa;--text-muted:#71717a;
+            --accent:#3b82f6;--accent-hover:#2563eb;--accent-soft:rgba(59,130,246,.12);
+            --green:#22c55e;--green-soft:rgba(34,197,94,.12);
+            --code-goal:#f0f0f3;--code-step:#c8c8d0;--code-var:#93c5fd;--code-str:#86efac;--code-comment:#71717a;--code-bg:#0c0c0f;
+            --radius:8px;--radius-lg:12px;
+            --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
+            --font-mono:'SF Mono','Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;
+            --max-width:1200px;--content-width:780px;
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+        body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-height:1.6}
+        a{color:var(--accent);text-decoration:none;transition:color .15s}a:hover{color:var(--text)}
+        ::selection{background:var(--accent);color:var(--text)}
+        code{font-family:var(--font-mono);font-size:.88em;background:var(--surface);padding:2px 6px;border-radius:4px;color:var(--code-var)}
+        .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-inner{max-width:var(--max-width);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{font-size:1.15rem;font-weight:700;color:var(--text)}.nav-logo span{color:var(--text-muted);font-weight:400;margin-left:6px;font-size:.85rem}
+        .nav-links{display:flex;gap:32px;align-items:center}.nav-links a{color:var(--text-secondary);font-size:.9rem}.nav-links a:hover{color:var(--text)}
+        .nav-cta{background:var(--accent);color:var(--text)!important;padding:6px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:500}.nav-cta:hover{background:var(--accent-hover);color:var(--text)!important}
+
+        .back-link{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-muted);margin-bottom:32px}.back-link:hover{color:var(--text-secondary)}
+
+        .page-hero{padding-top:120px;padding-bottom:64px}
+        .page-hero h1{font-size:2.75rem;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:24px}
+        .page-hero .lead{font-size:1.1rem;color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+
+        .section{padding:64px 0;border-top:1px solid var(--border)}
+        .section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .section p{color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+        .section p+p{margin-top:12px}
+
+        .code-window{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:32px 0}
+        .code-titlebar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+        .code-dots{display:flex;gap:6px}.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border)}
+        .code-filename{font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted)}
+        .code-content{padding:20px;font-family:var(--font-mono);font-size:.88rem;line-height:1.7;overflow-x:auto;color:var(--code-step)}
+        .code-content::-webkit-scrollbar{height:6px}.code-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .c-goal{color:var(--code-goal);font-weight:600;display:block;margin-top:12px}.c-goal:first-child{margin-top:0}
+        .c-step{display:block;color:var(--code-step)}.c-var{color:var(--code-var)}.c-str{color:var(--code-str)}.c-cmt{color:var(--code-comment);font-style:italic}
+
+        .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;margin:32px 0}
+        .callout p{color:var(--text);font-size:1.05rem;font-weight:500;line-height:1.6}
+        .callout .details{color:var(--text-secondary);font-size:.92rem;font-weight:400;margin-top:8px}
+
+        .feature-list{list-style:none;margin:24px 0}
+        .feature-list li{padding:12px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+        .feature-list li:last-child{border-bottom:none}
+        .fl-code{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:4px;white-space:nowrap}
+        .fl-desc{font-size:.92rem;color:var(--text-secondary);line-height:1.5}
+
+        .cta-section{padding:64px 0 100px;border-top:1px solid var(--border)}
+        .cta-section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .cta-code{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-family:var(--font-mono);font-size:.88rem;line-height:1.8;color:var(--text-secondary);margin:24px 0;max-width:480px}
+        .cta-code .cmd{color:var(--text)}.cta-code .cmt{color:var(--code-comment)}
+        .cta-bottom{margin-top:20px;font-size:.95rem;color:var(--text-secondary)}.cta-bottom a{font-weight:500}
+
+        .footer{border-top:1px solid var(--border);padding:32px 0}
+        .footer-inner{display:flex;justify-content:space-between;align-items:center}
+        .footer-left{font-size:.85rem;color:var(--text-muted)}
+        .footer-links{display:flex;gap:24px}.footer-links a{font-size:.85rem;color:var(--text-muted)}.footer-links a:hover{color:var(--text-secondary)}
+
+        @media(max-width:768px){
+            .page-hero h1{font-size:2rem}.page-hero{padding-top:100px}.section h2{font-size:1.4rem}.section{padding:48px 0}
+            .code-content{font-size:.8rem;padding:16px}.feature-list li{grid-template-columns:1fr;gap:4px}
+            .nav-links a:not(.nav-cta){display:none}.footer-inner{flex-direction:column;gap:16px;text-align:center}
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav"><div class="nav-inner">
+        <a href="../index.html" class="nav-logo">PLang <span>v0.1</span></a>
+        <div class="nav-links"><a href="../how-it-works.html">How It Works</a><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html" class="nav-cta">Get Started</a></div>
+    </div></nav>
+
+    <section class="page-hero"><div class="container">
+        <a href="../index.html#explore" class="back-link">&larr; All professions</a>
+        <h1>Publish everywhere from<br>one workflow.</h1>
+        <p class="lead">
+            You create one piece of content, then spend an hour distributing it. Blog. Medium. Social posts. Newsletter. Content calendar.
+            Analytics check. The creating takes 2 hours. The publishing and tracking takes another 2.
+            And half the time you forget one platform.
+        </p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The PLang way</h2>
+        <div class="code-window">
+            <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- start webserver</span><span class="c-step">- every day at 8am, call !CheckContentCalendar</span>
+<span class="c-goal">PublishPost - POST</span><span class="c-step">- insert into posts, title=<span class="c-var">%request.title%</span>, body=<span class="c-var">%request.body%</span>,</span><span class="c-step">    status=<span class="c-str">'published'</span>, publishedAt=<span class="c-var">%Now%</span>, write to <span class="c-var">%postId%</span></span><span class="c-step">- call !DistributePost</span><span class="c-step">- write out {postId: <span class="c-var">%postId%</span>, status: <span class="c-str">'published and distributed'</span>}</span>
+<span class="c-goal">DistributePost</span><span class="c-step">- post https://api.medium.com/v1/users/me/posts</span><span class="c-step">    data={title: <span class="c-str">'<span class="c-var">%request.title%</span>'</span>, content: <span class="c-str">'<span class="c-var">%request.body%</span>'</span>,</span><span class="c-step">    contentFormat: <span class="c-str">'markdown'</span>, publishStatus: <span class="c-str">'public'</span>}</span><span class="c-step">    write to <span class="c-var">%mediumResult%</span></span><span class="c-step">- post https://api.twitter.com/2/tweets</span><span class="c-step">    data={text: <span class="c-str">'New post: <span class="c-var">%request.title%</span> - Read more at https://myblog.com/posts/<span class="c-var">%postId%</span>'</span>}</span><span class="c-step">    write to <span class="c-var">%tweetResult%</span></span><span class="c-step">- insert into distribution_log, postId=<span class="c-var">%postId%</span>,</span><span class="c-step">    medium=<span class="c-var">%mediumResult.id%</span>, twitter=<span class="c-var">%tweetResult.id%</span>, date=<span class="c-var">%Now%</span></span>
+<span class="c-goal">CheckContentCalendar</span><span class="c-step">- select * from content_calendar</span><span class="c-step">    where dueDate=<span class="c-var">%Tomorrow%</span> and status=<span class="c-str">'planned'</span>, write to <span class="c-var">%dueTomorrow%</span></span><span class="c-step">- foreach <span class="c-var">%dueTomorrow%</span>, call !RemindToWrite item=<span class="c-var">%item%</span></span>
+<span class="c-goal">RemindToWrite</span><span class="c-step">- send email to me@creator.com,</span><span class="c-step">    subject <span class="c-str">"Content Due Tomorrow: <span class="c-var">%item.title%</span>"</span>,</span><span class="c-step">    body <span class="c-str">"Your planned content '<span class="c-var">%item.title%</span>' is due tomorrow. Notes: <span class="c-var">%item.notes%</span>"</span></span>
+<span class="c-goal">AddToCalendar - POST</span><span class="c-step">- insert into content_calendar, title=<span class="c-var">%request.title%</span>,</span><span class="c-step">    notes=<span class="c-var">%request.notes%</span>, dueDate=<span class="c-var">%request.dueDate%</span>, status=<span class="c-str">'planned'</span></span><span class="c-step">- write out {status: <span class="c-str">'added to calendar'</span>}</span></pre>
+        </div>
+        <div class="callout">
+            <p>That's your entire publishing workflow.</p>
+            <p class="details">Publish once, distribute to Medium and Twitter, content calendar with daily reminders, analytics tracking. One file. Want to add LinkedIn? Add one more line.</p>
+        </div>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>What just happened</h2>
+        <ul class="feature-list">
+            <li><span class="fl-code">post https://api.medium.com</span><span class="fl-desc">Cross-post to Medium automatically on every publish.</span></li>
+            <li><span class="fl-code">post https://api.twitter.com</span><span class="fl-desc">Tweet the link automatically. No manual copy-paste.</span></li>
+            <li><span class="fl-code">insert into distribution_log</span><span class="fl-desc">Track where each post was distributed. Full audit trail.</span></li>
+            <li><span class="fl-code">every day at 8am</span><span class="fl-desc">Content calendar checked daily. Reminders for tomorrow's deadlines.</span></li>
+            <li><span class="fl-code">insert into content_calendar</span><span class="fl-desc">Your content calendar lives in a database, not a spreadsheet.</span></li>
+            <li><span class="fl-code">send email</span><span class="fl-desc">Deadline reminders and reports delivered to your inbox.</span></li>
+        </ul>
+        <p>Your publishing workflow adapts as your distribution grows. Add a platform, change reminder timing, add a weekly analytics email &mdash; change one line each time.</p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The build / run split</h2>
+        <p>
+            PLang uses AI at <strong>build time</strong> to compile your English into executable instructions.
+            At <strong>runtime</strong>, no AI &mdash; your publishing workflow runs reliably with zero ongoing cost.
+            Build once, your content distribution runs itself.
+        </p>
+    </div></section>
+
+    <section class="cta-section"><div class="container">
+        <h2>Get started</h2>
+        <div class="cta-code">
+            <span class="cmt"># Download from GitHub releases, unzip, add to PATH</span><br>
+            <span class="cmd">mkdir ContentTools && cd ContentTools</span><br>
+            <span class="cmt"># Create Start.goal with your publishing workflow</span><br>
+            <span class="cmd">plang exec</span>
+        </div>
+        <p class="cta-bottom">Write your publishing process in plain English. Create more, distribute less.<br><a href="../get-started.html">Full getting started guide &rarr;</a></p>
+    </div></section>
+
+    <footer class="footer"><div class="container"><div class="footer-inner">
+        <div class="footer-left">PLang is open source and in active development.</div>
+        <div class="footer-links"><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html">Docs</a><a href="../index.html">Home</a></div>
+    </div></div></footer>
+
+</body>
+</html>
