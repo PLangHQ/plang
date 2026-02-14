@@ -151,7 +151,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
-        await Assert.That(engine.Actions).IsNotNull();
+        await Assert.That(engine.Libraries).IsNotNull();
         await Assert.That(engine.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
@@ -195,12 +195,12 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomActionRegistry()
+    public async Task Constructor_AcceptsCustomLibraries()
     {
-        var actions = new ActionRegistry();
-        await using var engine = new Engine("/app", actions);
+        var libraries = new Libraries();
+        await using var engine = new Engine("/app", libraries);
 
-        await Assert.That(engine.Actions).IsEqualTo(actions);
+        await Assert.That(engine.Libraries).IsEqualTo(libraries);
     }
 
     [Test]
@@ -213,24 +213,20 @@ public class EngineTests
     }
 
     [Test]
-    public async Task RegisterBuiltInModules_RegistersVariableActions()
+    public async Task Libraries_HasVariableActions()
     {
         await using var engine = new Engine("/app");
 
-        engine.RegisterBuiltInModules();
-
-        await Assert.That(engine.Actions.Contains("variable", "set")).IsTrue();
-        await Assert.That(engine.Actions.Contains("variable", "get")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
     }
 
     [Test]
-    public async Task RegisterBuiltInModules_RegistersOutputActions()
+    public async Task Libraries_HasOutputActions()
     {
         await using var engine = new Engine("/app");
 
-        engine.RegisterBuiltInModules();
-
-        await Assert.That(engine.Actions.Contains("output", "write")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
     }
 
     [Test]
@@ -328,7 +324,6 @@ public class EngineTests
     public async Task RunGoalAsync_ExecutesSteps()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -353,7 +348,6 @@ public class EngineTests
     public async Task RunGoalAsync_StepFailure_ReturnsError()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -375,7 +369,6 @@ public class EngineTests
     public async Task RunGoalAsync_StepWithIgnoreError_ContinuesOnError()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -429,7 +422,6 @@ public class EngineTests
     public async Task StepRunAsync_SetsReturnVariable()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
@@ -444,7 +436,6 @@ public class EngineTests
     public async Task StepRunAsync_RecordsStep()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var step = MakeStep("variable", "clear", index: 5, text: "test step");
 
@@ -463,7 +454,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var throwingHandler = new ThrowingHandler();
-        engine.Actions.Register("throwing", "fail", throwingHandler);
+        engine.Libraries.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
@@ -480,7 +471,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.Actions.Register("legacy", "do", nonGeneratedHandler);
+        engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
         using var context = engine.CreateContext();
@@ -496,7 +487,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var disposableHandler = new DisposableHandler();
-        engine.Actions.Register("disposable", "do", disposableHandler);
+        engine.Libraries.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
@@ -508,7 +499,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.Actions.Register("asyncdisposable", "do", asyncDisposableHandler);
+        engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
 
         await engine.DisposeAsync();
 
@@ -563,7 +554,6 @@ public class EngineTests
     public async Task RunGoalAsync_WithActor_UsesActorContext()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -589,7 +579,6 @@ public class EngineTests
     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
     {
         await using var engine = new Engine("/app");
-        engine.RegisterBuiltInModules();
 
         var goal = new Goal
         {
@@ -671,4 +660,92 @@ public class EngineTests
             return ExecuteAsync(null);
         }
     }
+
+    #region ResolveAsync Tests
+
+    [Test]
+    public async Task ResolveAsync_WithNormalValue_ReturnsValue()
+    {
+        await using var engine = new Engine("/app");
+        engine["greeting"] = "hello";
+
+        var result = await engine.ResolveAsync("greeting");
+
+        await Assert.That(result).IsEqualTo("hello");
+    }
+
+    [Test]
+    public async Task ResolveAsync_WithNullKey_ReturnsNull()
+    {
+        await using var engine = new Engine("/app");
+
+        var result = await engine.ResolveAsync("nonexistent");
+
+        await Assert.That(result).IsNull();
+    }
+
+    [Test]
+    public async Task ResolveAsync_WithGoalCall_RunsGoal()
+    {
+        await using var engine = new Engine("/app");
+
+        // Set up a goal that sets a variable
+        var goal = new Goal
+        {
+            Name = "SummaryGoal",
+            Steps = new Steps
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "wasRun" }, { "value", "yes" } },
+                    index: 0, text: "set wasRun")
+            }
+        };
+        engine.Goals.Add(goal);
+
+        engine["Summary"] = new GoalCall { Name = "SummaryGoal" };
+
+        // ResolveAsync detects GoalCall and executes it
+        await engine.ResolveAsync("Summary");
+
+        // Verify the goal actually ran by checking the variable it set
+        await Assert.That(engine.User.Context.MemoryStack.GetValue("wasRun")).IsEqualTo("yes");
+    }
+
+    [Test]
+    public async Task Indexer_WithGoalCall_ReturnsRawGoalCall()
+    {
+        await using var engine = new Engine("/app");
+        var goalCall = new GoalCall { Name = "SummaryGoal" };
+        engine["Summary"] = goalCall;
+
+        var result = engine["Summary"];
+
+        // Sync indexer returns the raw GoalCall, does NOT execute
+        await Assert.That(result).IsTypeOf<GoalCall>();
+        await Assert.That(((GoalCall)result!).Name).IsEqualTo("SummaryGoal");
+    }
+
+    [Test]
+    public async Task ResolveAsync_Generic_WithNormalValue_ReturnsTyped()
+    {
+        await using var engine = new Engine("/app");
+        engine["count"] = 42;
+
+        var result = await engine.ResolveAsync<int>("count");
+
+        await Assert.That(result).IsEqualTo(42);
+    }
+
+    [Test]
+    public async Task ResolveAsync_Generic_TypeMismatch_ReturnsDefault()
+    {
+        await using var engine = new Engine("/app");
+        engine["count"] = "not-an-int";
+
+        var result = await engine.ResolveAsync<int>("count");
+
+        await Assert.That(result).IsEqualTo(0);
+    }
+
+    #endregion
 }

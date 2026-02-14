@@ -18,7 +18,7 @@ public sealed class Engine : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly ActionRegistry _actions;
+    private readonly Libraries _libraries;
     private readonly SerializerRegistry _serializers;
     private readonly Goals _goals;
     private bool _disposed;
@@ -79,9 +79,10 @@ public sealed class Engine : IAsyncDisposable
     public Events Events { get; }
 
     /// <summary>
-    /// The action registry.
+    /// The library registry — uniform handler resolution system.
+    /// Built-in handlers are Libraries[0], external DLLs can be added as additional libraries.
     /// </summary>
-    public ActionRegistry Actions => _actions;
+    public Libraries Libraries => _libraries;
 
     /// <summary>
     /// The serializer registry.
@@ -234,7 +235,7 @@ public sealed class Engine : IAsyncDisposable
     {
     }
 
-    public Engine(string absolutePath, ActionRegistry? actions = null,
+    public Engine(string absolutePath, Libraries? libraries = null,
         SerializerRegistry? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
     {
@@ -244,12 +245,11 @@ public sealed class Engine : IAsyncDisposable
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
         Events = new Events();
-        _actions = actions ?? new ActionRegistry();
+        _libraries = libraries ?? new Libraries();
         _serializers = serializers ?? new SerializerRegistry();
         _goals = new Goals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new Runtime2.IO.Channels(this);
-        RegisterBuiltInModules();
     }
 
     /// <summary>
@@ -378,11 +378,30 @@ public sealed class Engine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Registers built-in modules via reflection discovery.
+    /// Resolves a value from the engine's key-value store.
+    /// If the value is a GoalCall, executes the goal and returns the result.
     /// </summary>
-    public void RegisterBuiltInModules()
+    public async Task<object?> ResolveAsync(string key, PLangContext? context = null)
     {
-        _actions.DiscoverAndRegister(typeof(Engine).Assembly);
+        var value = this[key];
+        if (value is GoalCall goalCall)
+        {
+            context ??= User.Context;
+            var result = await RunGoalAsync(goalCall, context);
+            return result.Success ? result.Value : null;
+        }
+        return value;
+    }
+
+    /// <summary>
+    /// Resolves a typed value from the engine's key-value store.
+    /// If the value is a GoalCall, executes the goal and returns the typed result.
+    /// </summary>
+    public async Task<T?> ResolveAsync<T>(string key, PLangContext? context = null)
+    {
+        var value = await ResolveAsync(key, context);
+        if (value is T typed) return typed;
+        return default;
     }
 
     public async ValueTask DisposeAsync()
@@ -405,7 +424,7 @@ public sealed class Engine : IAsyncDisposable
             await _user.DisposeAsync();
 
         // Dispose any disposable handlers
-        foreach (var handler in _actions.All)
+        foreach (var handler in _libraries.All)
         {
             if (handler is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync();

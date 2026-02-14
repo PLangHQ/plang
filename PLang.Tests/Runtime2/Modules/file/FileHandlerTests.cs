@@ -321,7 +321,6 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         // Build engine with built-in modules
-        _engine.RegisterBuiltInModules();
 
         // Replace default channel on User actor's IO so we can capture output
         var captureStream = new System.IO.MemoryStream();
@@ -401,7 +400,6 @@ public class FileHandlerTests : IDisposable
     {
         // Arrange: NO file created — path doesn't exist
 
-        _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(

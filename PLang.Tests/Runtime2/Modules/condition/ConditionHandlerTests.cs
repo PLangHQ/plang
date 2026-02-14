@@ -60,7 +60,6 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_CallsGoalIfTrue()
     {
-        _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
@@ -112,7 +111,6 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_CallsGoalIfFalse()
     {
-        _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
@@ -163,7 +161,6 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_GoalNotFound_ReturnsError()
     {
-        _engine.RegisterBuiltInModules();
 
         var action = new If
         {
@@ -184,7 +181,6 @@ public class ConditionHandlerTests : IDisposable
         // Arrange: create a real file
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "real.txt"), "I exist");
 
-        _engine.RegisterBuiltInModules();
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
