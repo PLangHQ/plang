@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started with PLang — From idea to running software</title>
+    <meta name="description" content="Install PLang, write a .goal file in plain English, and run it. Your first app takes about 60 seconds. No setup ceremony.">
+    <style>
+        :root{--bg:#09090b;--surface:#111114;--surface-hover:#18181c;--border:#23232a;--text:#fafafa;--text-secondary:#a1a1aa;--text-muted:#71717a;--accent:#3b82f6;--accent-hover:#2563eb;--accent-soft:rgba(59,130,246,.12);--green:#22c55e;--green-soft:rgba(34,197,94,.12);--code-goal:#f0f0f3;--code-step:#c8c8d0;--code-var:#93c5fd;--code-str:#86efac;--code-comment:#71717a;--code-bg:#0c0c0f;--radius:8px;--radius-lg:12px;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;--font-mono:'SF Mono','Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--max-width:1200px;--content-width:780px}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-height:1.6}a{color:var(--accent);text-decoration:none;transition:color .15s}a:hover{color:var(--text)}::selection{background:var(--accent);color:var(--text)}code{font-family:var(--font-mono);font-size:.88em;background:var(--surface);padding:2px 6px;border-radius:4px;color:var(--code-var)}.container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}.nav-inner{max-width:var(--max-width);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}.nav-logo{font-size:1.15rem;font-weight:700;color:var(--text)}.nav-logo span{color:var(--text-muted);font-weight:400;margin-left:6px;font-size:.85rem}.nav-links{display:flex;gap:32px;align-items:center}.nav-links a{color:var(--text-secondary);font-size:.9rem}.nav-links a:hover{color:var(--text)}.nav-cta-active{background:var(--accent-soft);color:var(--accent)!important;padding:6px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:500}
+        .page-hero{padding-top:120px;padding-bottom:48px}.page-hero h1{font-size:2.75rem;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:16px}.page-hero .subtitle{font-size:1.15rem;color:var(--text-secondary);line-height:1.65;max-width:var(--content-width)}
+        .section{padding:48px 0;border-top:1px solid var(--border)}.section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}.section h3{font-size:1.1rem;font-weight:600;margin-top:28px;margin-bottom:8px}.section p{color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}.section p+p{margin-top:12px}
+        .section ul,.section ol{margin:16px 0;padding-left:24px;color:var(--text-secondary);max-width:var(--content-width)}.section li{margin:8px 0;line-height:1.6}
+        .step-num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:.85rem;font-weight:700;margin-right:12px;flex-shrink:0}
+        .step-header{display:flex;align-items:center;margin-bottom:16px}
+        .code-window{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:20px 0}.code-titlebar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}.code-dots{display:flex;gap:6px}.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border)}.code-filename{font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted)}.code-content{padding:20px;font-family:var(--font-mono);font-size:.88rem;line-height:1.7;overflow-x:auto;color:var(--code-step)}.code-content::-webkit-scrollbar{height:6px}.code-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}.c-goal{color:var(--code-goal);font-weight:600;display:block;margin-top:12px}.c-goal:first-child{margin-top:0}.c-step{display:block;color:var(--code-step)}.c-var{color:var(--code-var)}.c-str{color:var(--code-str)}.c-cmt{color:var(--code-comment);font-style:italic}
+        .terminal{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-family:var(--font-mono);font-size:.88rem;line-height:1.7;color:var(--text-muted);margin:20px 0;max-width:560px;overflow-x:auto}.terminal .cmd{color:var(--text)}.terminal .output{color:var(--code-comment)}
+        .platform-table{width:100%;border-collapse:collapse;margin:20px 0;max-width:var(--content-width)}.platform-table th,.platform-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}.platform-table th{color:var(--text-muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}.platform-table td{color:var(--text-secondary)}.platform-table td:last-child{font-family:var(--font-mono);font-size:.85rem;color:var(--code-var)}
+        .folder-tree{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-family:var(--font-mono);font-size:.85rem;line-height:1.8;color:var(--text-muted);margin:20px 0;overflow-x:auto}.folder-tree .file{color:var(--text-secondary)}.folder-tree .note{color:var(--code-comment);font-style:italic}
+        .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:20px 24px;margin:24px 0}.callout p{color:var(--text-secondary);font-size:.92rem;line-height:1.6}.callout strong{color:var(--text)}
+        .workflow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:24px 0;max-width:var(--content-width)}.workflow-step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}.workflow-step strong{display:block;font-size:.85rem;margin-bottom:2px}.workflow-step span{font-size:.78rem;color:var(--text-muted)}
+        .footer{border-top:1px solid var(--border);padding:32px 0}.footer-inner{display:flex;justify-content:space-between;align-items:center}.footer-left{font-size:.85rem;color:var(--text-muted)}.footer-links{display:flex;gap:24px}.footer-links a{font-size:.85rem;color:var(--text-muted)}.footer-links a:hover{color:var(--text-secondary)}
+        @media(max-width:768px){.page-hero h1{font-size:2rem}.page-hero{padding-top:100px}.section h2{font-size:1.4rem}.section{padding:40px 0}.code-content{font-size:.8rem;padding:16px}.nav-links a:not(.nav-cta-active){display:none}.footer-inner{flex-direction:column;gap:16px;text-align:center}.workflow{grid-template-columns:1fr;max-width:300px}.platform-table{font-size:.82rem}}
+    </style>
+</head>
+<body>
+    <nav class="nav"><div class="nav-inner"><a href="index.html" class="nav-logo">PLang <span>v0.1</span></a><div class="nav-links"><a href="how-it-works.html">How It Works</a><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="get-started.html" class="nav-cta-active">Get Started</a></div></div></nav>
+
+    <section class="page-hero"><div class="container">
+        <h1>From idea to running software.<br>No setup ceremony.</h1>
+        <p class="subtitle">Install PLang, write a <code>.goal</code> file in plain English, and run it. Your first app takes about 60 seconds.</p>
+    </div></section>
+
+    <!-- STEP 1: INSTALL -->
+    <section class="section"><div class="container">
+        <div class="step-header"><span class="step-num">1</span><h2>Install PLang</h2></div>
+        <p>Download the latest release for your platform from <a href="https://github.com/PLangHQ/plang/releases">GitHub Releases</a>:</p>
+        <table class="platform-table">
+            <thead><tr><th>Platform</th><th>Download</th></tr></thead>
+            <tbody>
+                <tr><td>Windows</td><td>plang-windows.zip</td></tr>
+                <tr><td>Linux (x64)</td><td>plang-linux-x64.zip</td></tr>
+                <tr><td>Linux (ARM)</td><td>plang-linux-arm64.zip</td></tr>
+                <tr><td>macOS (Intel)</td><td>plang-osx-x64.zip</td></tr>
+                <tr><td>macOS (M-series)</td><td>plang-osx-arm64.zip</td></tr>
+            </tbody>
+        </table>
+        <p>Unzip and add the folder to your PATH. Verify:</p>
+        <div class="terminal"><span class="cmd">$ plang --version</span></div>
+    </div></section>
+
+    <!-- STEP 2: FIRST APP -->
+    <section class="section"><div class="container">
+        <div class="step-header"><span class="step-num">2</span><h2>Create your first app</h2></div>
+        <div class="terminal"><span class="cmd">$ mkdir HelloWorld && cd HelloWorld</span></div>
+        <p>Write your program in <code>Start.goal</code>:</p>
+        <div class="code-window"><div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- write out <span class="c-str">'Hello PLang world'</span></span></pre>
+        </div>
+        <p>That's the whole program. One goal, one step.</p>
+    </div></section>
+
+    <!-- STEP 3: BUILD AND RUN -->
+    <section class="section"><div class="container">
+        <div class="step-header"><span class="step-num">3</span><h2>Build and run</h2></div>
+        <div class="terminal">
+            <span class="cmd">$ plang exec</span><br>
+            <span class="output">Hello PLang world</span>
+        </div>
+        <p>This builds (sends your step to the LLM, compiles it into a <code>.pr</code> file) and runs (executes the compiled instruction).</p>
+        <div class="callout"><p>On your first run, you'll be prompted to set up a PLang service account or OpenAI API key. A <strong>$5 credit</strong> goes a long way &mdash; building each step costs $0.002&ndash;$0.009.</p></div>
+    </div></section>
+
+    <!-- STEP 4: SOMETHING REAL -->
+    <section class="section"><div class="container">
+        <div class="step-header"><span class="step-num">4</span><h2>Build something real</h2></div>
+        <p>Create a <code>Start.goal</code> that actually does something:</p>
+        <div class="code-window"><div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- insert into tasks, description=<span class="c-str">'Buy groceries'</span>, done=false, write to <span class="c-var">%id%</span></span><span class="c-step">- insert into tasks, description=<span class="c-str">'Read PLang docs'</span>, done=false</span><span class="c-step">- select * from tasks, write to <span class="c-var">%tasks%</span></span><span class="c-step">- write out <span class="c-var">%tasks%</span></span></pre>
+        </div>
+        <div class="terminal"><span class="cmd">$ plang exec</span></div>
+        <p><strong>What just happened:</strong></p>
+        <ul>
+            <li>PLang created a SQLite database automatically (no config, no Docker)</li>
+            <li>Inserted two rows into a <code>tasks</code> table (created on first insert)</li>
+            <li>Queried all tasks and displayed them</li>
+        </ul>
+        <p>You didn't install a database. You didn't write a schema. You didn't configure a connection string.</p>
+    </div></section>
+
+    <!-- STEP 5: MORE POWER -->
+    <section class="section"><div class="container">
+        <div class="step-header"><span class="step-num">5</span><h2>Add more power</h2></div>
+        <p>A task manager with an API and email notifications:</p>
+        <div class="code-window"><div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- start webserver</span>
+<span class="c-goal">AddTask - POST</span><span class="c-step">- insert into tasks, description=<span class="c-var">%request.description%</span>,</span><span class="c-step">    assignee=<span class="c-var">%request.assignee%</span>, done=false, write to <span class="c-var">%id%</span></span><span class="c-step">- send email to <span class="c-var">%request.assignee%</span>, subject <span class="c-str">"New Task"</span>,</span><span class="c-step">    body <span class="c-str">"You've been assigned: <span class="c-var">%request.description%</span>"</span></span><span class="c-step">- write out {id: <span class="c-var">%id%</span>, status: <span class="c-str">'created'</span>}</span>
+<span class="c-goal">ListTasks - GET</span><span class="c-step">- select * from tasks where done=false, write to <span class="c-var">%tasks%</span></span><span class="c-step">- write out <span class="c-var">%tasks%</span></span>
+<span class="c-goal">CompleteTask - POST</span><span class="c-step">- update tasks set done=true where id=<span class="c-var">%request.id%</span></span><span class="c-step">- write out {status: <span class="c-str">'completed'</span>}</span></pre>
+        </div>
+        <p>You now have a running web server on <code>http://localhost:8080</code> with three API endpoints, a database, and email notifications. In 15 lines of English.</p>
+    </div></section>
+
+    <!-- PROJECT STRUCTURE -->
+    <section class="section"><div class="container">
+        <h2>Project structure</h2>
+        <div class="folder-tree">
+            HelloWorld/<br>
+            &nbsp;&nbsp;<span class="file">Start.goal</span> <span class="note">&larr; Your source code</span><br>
+            &nbsp;&nbsp;.build/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Start/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">00. insert into tasks.pr</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">01. insert into tasks.pr</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">02. select from tasks.pr</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">03. write out.pr</span><br>
+            &nbsp;&nbsp;.db/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">system.sqlite</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">data.sqlite</span>
+        </div>
+        <ul>
+            <li><strong><code>.goal</code> files</strong> &mdash; your source code. Version these.</li>
+            <li><strong><code>.build/</code> folder</strong> &mdash; compiled JSON instructions. Inspect to verify what the LLM produced.</li>
+            <li><strong><code>.db/</code> folder</strong> &mdash; SQLite databases. Created automatically.</li>
+        </ul>
+    </div></section>
+
+    <!-- DEV WORKFLOW -->
+    <section class="section"><div class="container">
+        <h2>The development workflow</h2>
+        <div class="workflow">
+            <div class="workflow-step"><strong>Write</strong><span>.goal files</span></div>
+            <div class="workflow-step"><strong>Build</strong><span>plang build</span></div>
+            <div class="workflow-step"><strong>Inspect</strong><span>.pr files</span></div>
+            <div class="workflow-step"><strong>Fix</strong><span>edit &amp; rebuild</span></div>
+            <div class="workflow-step"><strong>Run</strong><span>plang</span></div>
+        </div>
+    </div></section>
+
+    <!-- HONEST NOTES -->
+    <section class="section"><div class="container">
+        <h2>Honest notes</h2>
+        <ul>
+            <li><strong>Building costs money</strong> &mdash; LLM calls at build time cost $0.002&ndash;$0.009 per step. A $5 credit lasts a long time.</li>
+            <li><strong>Runtime is free</strong> &mdash; no AI calls, no network, no ongoing cost.</li>
+            <li><strong>PLang is young</strong> &mdash; best suited for internal tools, automation, and prototypes today.</li>
+            <li><strong>You can inspect everything</strong> &mdash; <code>.pr</code> files are JSON. If the LLM compiled something wrong, fix the wording, rebuild, done.</li>
+        </ul>
+    </div></section>
+
+    <!-- DONE -->
+    <section class="section" style="text-align:center;padding:64px 0 100px"><div class="container">
+        <h2>You just built your first app.</h2>
+        <p style="margin:0 auto">Database, HTTP, email, files, scheduling, crypto, and 40+ more modules &mdash; all built in, all callable in plain English. No imports. No packages. No config files.</p>
+        <p style="margin:16px auto;color:var(--text);font-weight:500;font-size:1.05rem">Write what you mean. Build once. Run forever.</p>
+    </div></section>
+
+    <footer class="footer"><div class="container"><div class="footer-inner"><div class="footer-left">PLang is open source and in active development.</div><div class="footer-links"><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="how-it-works.html">How It Works</a><a href="index.html">Home</a></div></div></div></footer>
+</body>
+</html>

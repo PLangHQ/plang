@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLang for HR Managers — Onboarding workflows that run themselves.</title>
+    <meta name="description" content="Automate new hire onboarding, welcome emails, manager notifications, and check-in scheduling. Plain English HR automation.">
+    <style>
+        :root{--bg:#09090b;--surface:#111114;--surface-hover:#18181c;--border:#23232a;--border-hover:#3b82f6;--text:#fafafa;--text-secondary:#a1a1aa;--text-muted:#71717a;--accent:#3b82f6;--accent-hover:#2563eb;--accent-soft:rgba(59,130,246,.12);--green:#22c55e;--green-soft:rgba(34,197,94,.12);--code-goal:#f0f0f3;--code-step:#c8c8d0;--code-var:#93c5fd;--code-str:#86efac;--code-comment:#71717a;--code-bg:#0c0c0f;--radius:8px;--radius-lg:12px;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;--font-mono:'SF Mono','Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;--max-width:1200px;--content-width:780px}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+        body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-height:1.6}
+        a{color:var(--accent);text-decoration:none;transition:color .15s}a:hover{color:var(--text)}
+        ::selection{background:var(--accent);color:var(--text)}
+        code{font-family:var(--font-mono);font-size:.88em;background:var(--surface);padding:2px 6px;border-radius:4px;color:var(--code-var)}
+        .container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+
+        .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .nav-inner{max-width:var(--max-width);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .nav-logo{font-size:1.15rem;font-weight:700;color:var(--text)}.nav-logo span{color:var(--text-muted);font-weight:400;margin-left:6px;font-size:.85rem}
+        .nav-links{display:flex;gap:32px;align-items:center}.nav-links a{color:var(--text-secondary);font-size:.9rem}.nav-links a:hover{color:var(--text)}
+        .nav-cta{background:var(--accent);color:var(--text)!important;padding:6px 16px;border-radius:var(--radius);font-size:.85rem;font-weight:500}.nav-cta:hover{background:var(--accent-hover);color:var(--text)!important}
+
+        .back-link{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-muted);margin-bottom:32px}.back-link:hover{color:var(--text-secondary)}
+
+        .page-hero{padding-top:120px;padding-bottom:64px}
+        .page-hero h1{font-size:2.75rem;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:24px}
+        .page-hero .lead{font-size:1.1rem;color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+
+        .section{padding:64px 0;border-top:1px solid var(--border)}
+        .section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .section p{color:var(--text-secondary);line-height:1.7;max-width:var(--content-width)}
+        .section p+p{margin-top:12px}
+
+        .code-window{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:32px 0}
+        .code-titlebar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+        .code-dots{display:flex;gap:6px}.code-dots span{width:10px;height:10px;border-radius:50%;background:var(--border)}
+        .code-filename{font-family:var(--font-mono);font-size:.8rem;color:var(--text-muted)}
+        .code-content{padding:20px;font-family:var(--font-mono);font-size:.88rem;line-height:1.7;overflow-x:auto;color:var(--code-step)}
+        .code-content::-webkit-scrollbar{height:6px}.code-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .c-goal{color:var(--code-goal);font-weight:600;display:block;margin-top:12px}.c-goal:first-child{margin-top:0}
+        .c-step{display:block;color:var(--code-step)}.c-var{color:var(--code-var)}.c-str{color:var(--code-str)}.c-cmt{color:var(--code-comment);font-style:italic}
+
+        .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px 28px;margin:32px 0}
+        .callout p{color:var(--text);font-size:1.05rem;font-weight:500;line-height:1.6}
+        .callout .details{color:var(--text-secondary);font-size:.92rem;font-weight:400;margin-top:8px}
+
+        .feature-list{list-style:none;margin:24px 0}
+        .feature-list li{padding:12px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+        .feature-list li:last-child{border-bottom:none}
+        .fl-code{font-family:var(--font-mono);font-size:.85rem;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:4px;white-space:nowrap}
+        .fl-desc{font-size:.92rem;color:var(--text-secondary);line-height:1.5}
+
+        .cta-section{padding:64px 0 100px;border-top:1px solid var(--border)}
+        .cta-section h2{font-size:1.65rem;font-weight:700;letter-spacing:-.02em;margin-bottom:16px}
+        .cta-code{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-family:var(--font-mono);font-size:.88rem;line-height:1.8;color:var(--text-secondary);margin:24px 0;max-width:480px}
+        .cta-code .cmd{color:var(--text)}.cta-code .cmt{color:var(--code-comment)}
+        .cta-bottom{margin-top:20px;font-size:.95rem;color:var(--text-secondary)}.cta-bottom a{font-weight:500}
+
+        .footer{border-top:1px solid var(--border);padding:32px 0}
+        .footer-inner{display:flex;justify-content:space-between;align-items:center}
+        .footer-left{font-size:.85rem;color:var(--text-muted)}
+        .footer-links{display:flex;gap:24px}.footer-links a{font-size:.85rem;color:var(--text-muted)}.footer-links a:hover{color:var(--text-secondary)}
+
+        @media(max-width:768px){
+            .page-hero h1{font-size:2rem}.page-hero{padding-top:100px}.section h2{font-size:1.4rem}.section{padding:48px 0}
+            .code-content{font-size:.8rem;padding:16px}.feature-list li{grid-template-columns:1fr;gap:4px}
+            .nav-links a:not(.nav-cta){display:none}.footer-inner{flex-direction:column;gap:16px;text-align:center}
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav"><div class="nav-inner">
+        <a href="../index.html" class="nav-logo">PLang <span>v0.1</span></a>
+        <div class="nav-links"><a href="../how-it-works.html">How It Works</a><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html" class="nav-cta">Get Started</a></div>
+    </div></nav>
+
+    <section class="page-hero"><div class="container">
+        <a href="../index.html#explore" class="back-link">&larr; All professions</a>
+        <h1>Onboarding workflows that<br>run themselves.</h1>
+        <p class="lead">
+            New hire starting Monday. Create their accounts, send the welcome packet, assign training modules,
+            notify their manager, schedule the 30-day check-in, update the headcount spreadsheet. You do this
+            manually every single time. Half your week is repetitive process management. You've looked at HR
+            software &mdash; too expensive, too rigid, or requires IT to set up.
+        </p>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The PLang way</h2>
+        <div class="code-window">
+            <div class="code-titlebar"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-filename">Start.goal</span></div>
+            <pre class="code-content"><span class="c-goal">Start</span><span class="c-step">- start webserver</span><span class="c-step">- every day at 8am, call !SendReminders</span>
+<span class="c-goal">NewHire - POST</span><span class="c-step">- insert into employees, name=<span class="c-var">%request.name%</span>, email=<span class="c-var">%request.email%</span>,</span><span class="c-step">    department=<span class="c-var">%request.department%</span>, startDate=<span class="c-var">%request.startDate%</span>,</span><span class="c-step">    manager=<span class="c-var">%request.manager%</span>, write to <span class="c-var">%id%</span></span><span class="c-step">- call !SendWelcomePacket</span><span class="c-step">- call !NotifyManager</span><span class="c-step">- call !ScheduleCheckIns</span><span class="c-step">- write out {employeeId: <span class="c-var">%id%</span>, status: <span class="c-str">'onboarding started'</span>}</span>
+<span class="c-goal">SendWelcomePacket</span><span class="c-step">- read templates/welcome_email.txt into <span class="c-var">%template%</span></span><span class="c-step">- send email to <span class="c-var">%request.email%</span>,</span><span class="c-step">    subject <span class="c-str">"Welcome to the Team, <span class="c-var">%request.name%</span>!"</span>,</span><span class="c-step">    body <span class="c-str">"<span class="c-var">%template%</span>"</span></span>
+<span class="c-goal">NotifyManager</span><span class="c-step">- send email to <span class="c-var">%request.manager%</span>,</span><span class="c-step">    subject <span class="c-str">"New Hire Starting: <span class="c-var">%request.name%</span>"</span>,</span><span class="c-step">    body <span class="c-str">"<span class="c-var">%request.name%</span> joins your team on <span class="c-var">%request.startDate%</span>."</span></span>
+<span class="c-goal">ScheduleCheckIns</span><span class="c-step">- insert into checkins, employeeId=<span class="c-var">%id%</span>, type=<span class="c-str">'30-day'</span>,</span><span class="c-step">    dueDate=<span class="c-var">%request.startDate+30days%</span>, status=<span class="c-str">'pending'</span></span><span class="c-step">- insert into checkins, employeeId=<span class="c-var">%id%</span>, type=<span class="c-str">'90-day'</span>,</span><span class="c-step">    dueDate=<span class="c-var">%request.startDate+90days%</span>, status=<span class="c-str">'pending'</span></span>
+<span class="c-goal">SendReminders</span><span class="c-step">- select c.type, c.dueDate, e.name, e.manager from checkins c</span><span class="c-step">    join employees e on c.employeeId=e.id</span><span class="c-step">    where c.dueDate=<span class="c-var">%Tomorrow%</span> and c.status=<span class="c-str">'pending'</span>, write to <span class="c-var">%upcoming%</span></span><span class="c-step">- foreach <span class="c-var">%upcoming%</span>, call !SendCheckInReminder item=<span class="c-var">%checkin%</span></span>
+<span class="c-goal">SendCheckInReminder</span><span class="c-step">- send email to <span class="c-var">%checkin.manager%</span>,</span><span class="c-step">    subject <span class="c-str">"<span class="c-var">%checkin.type%</span> Check-in Due: <span class="c-var">%checkin.name%</span>"</span>,</span><span class="c-step">    body <span class="c-str">"<span class="c-var">%checkin.name%</span>'s <span class="c-var">%checkin.type%</span> check-in is due tomorrow."</span></span></pre>
+        </div>
+        <div class="callout">
+            <p>That's your onboarding system.</p>
+            <p class="details">New hire registration, welcome emails, manager notifications, scheduled check-ins with automatic reminders. No HR software subscription. No IT dependency.</p>
+        </div>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>What just happened</h2>
+        <ul class="feature-list">
+            <li><span class="fl-code">insert into employees</span><span class="fl-desc">Employee database created automatically. No spreadsheet.</span></li>
+            <li><span class="fl-code">send email</span><span class="fl-desc">Welcome packet, manager notification, check-in reminders &mdash; all built in.</span></li>
+            <li><span class="fl-code">read templates/...</span><span class="fl-desc">Use text files as templates. Edit them anytime.</span></li>
+            <li><span class="fl-code">insert into checkins</span><span class="fl-desc">30-day and 90-day check-ins scheduled automatically.</span></li>
+            <li><span class="fl-code">every day at 8am</span><span class="fl-desc">Daily reminder check runs automatically.</span></li>
+            <li><span class="fl-code">NewHire - POST</span><span class="fl-desc">API endpoint you can connect to a web form.</span></li>
+        </ul>
+    </div></section>
+
+    <section class="section"><div class="container">
+        <h2>The build / run split</h2>
+        <p>
+            PLang uses AI at <strong>build time</strong> to compile your English into executable instructions.
+            At <strong>runtime</strong>, no AI &mdash; your onboarding workflows run reliably with zero ongoing cost.
+        </p>
+    </div></section>
+
+    <section class="cta-section"><div class="container">
+        <h2>Get started</h2>
+        <div class="cta-code">
+            <span class="cmt"># Download from GitHub releases, unzip, add to PATH</span><br>
+            <span class="cmd">mkdir HRWorkflows && cd HRWorkflows</span><br>
+            <span class="cmt"># Create Start.goal with your onboarding process</span><br>
+            <span class="cmd">plang exec</span>
+        </div>
+        <p class="cta-bottom">Write your HR processes like you'd explain them to a new team member. Build once. Let them run.<br><a href="../get-started.html">Full getting started guide &rarr;</a></p>
+    </div></section>
+
+    <footer class="footer"><div class="container"><div class="footer-inner">
+        <div class="footer-left">PLang is open source and in active development.</div>
+        <div class="footer-links"><a href="https://github.com/PLangHQ/plang">GitHub</a><a href="../get-started.html">Docs</a><a href="../index.html">Home</a></div>
+    </div></div></footer>
+
+</body>
+</html>
