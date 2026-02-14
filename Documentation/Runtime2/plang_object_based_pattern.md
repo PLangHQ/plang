@@ -9,7 +9,7 @@ Engine is the root. Everything hangs off it as properties:
 ```
 Engine
   .Goals            -- Goals: loaded goals, lookup by name
-  .Actions          -- ActionRegistry: discovers and resolves module handlers
+  .Libraries        -- Libraries: discovers and resolves module handlers (built-in [0] + external)
   .Serializers      -- SerializerRegistry: serialize/deserialize
   .FileSystem       -- IPLangFileSystem: sandboxed file operations
   .Channels         -- Channels: named channel routing (stdin, stdout, stderr, custom)
@@ -254,7 +254,7 @@ Engine.FileSystem.Directory.Exists(path)
 
 ```csharp
 // Resolves a handler by module name and method name
-var (handler, error) = engine.Actions.GetCodeGenerated("variable", "set", context);
+var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
 ```
 
 ### Goal navigation
@@ -301,7 +301,7 @@ During execution every handler has two roots: `Engine` (system capabilities) and
 ```
 Engine
   .Goals              Goals — loaded goals, lookup by name
-  .Actions            ActionRegistry — discover and resolve handlers
+  .Libraries          Libraries — discover and resolve handlers
   .Serializers        SerializerRegistry — serialize / deserialize
   .FileSystem         IPLangFileSystem — sandboxed file I/O
   .Channels           Channels — named channel routing (stdin, stdout, stderr, custom)
@@ -406,7 +406,7 @@ Given `Engine` + `Context`, a handler can reach:
 | Write to stdout | `Engine.Channels.WriteTextAsync(Channels.StdOut, text)` |
 | Read/write files | `Engine.FileSystem.File.ReadAllTextAsync(path)` |
 | Call another goal | `Engine.RunGoalAsync(goalName, Context, CancellationToken)` |
-| Resolve a handler | `Engine.Actions.GetCodeGenerated("module", "method", Context)` |
+| Resolve a handler | `Engine.Libraries.GetCodeGenerated("module", "method", Context)` |
 | Serialize data | `Engine.Serializers.SerializeAsync(options)` |
 | Check current goal/step | `Context.Goal`, `Context.Step` |
 | Check call depth | `Context.Depth`, `Context.CallStack.Depth` |
@@ -464,7 +464,7 @@ The `Actions` collection uses `Merge` in its loop — it never inspects the data
 goal.Steps.Load(context);                      // Steps owns the step list
 step.Actions.RunAsync(engine, context, ct);     // Actions owns the action list
 engine.Goals.Get("Start");                      // Goals owns goal lookup
-engine.Actions.GetCodeGenerated("file", "save", context);  // Actions owns handler resolution
+engine.Libraries.GetCodeGenerated("file", "save", context);  // Libraries owns handler resolution
 ```
 
 ### DON'T: Iterate someone else's collection

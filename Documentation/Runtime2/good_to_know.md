@@ -79,7 +79,7 @@ Uses regex-based matching: standalone `*` becomes `.*`, regex-like patterns are 
 
 In OBP, **the name IS the contract**. Each property on the object graph should tell you what the object *is*, not what it *does*. You navigate the tree by name and the object takes care of itself.
 
-Good names describe the thing: `engine.Goals`, `engine.Actions`, `engine.Serializers`, `engine.FileSystem`, `engine.Channels`. Each tells you what it manages — you navigate there and call methods.
+Good names describe the thing: `engine.Goals`, `engine.Libraries`, `engine.Serializers`, `engine.FileSystem`, `engine.Channels`. Each tells you what it manages — you navigate there and call methods.
 
 Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. It doesn't tell you what the object *is* (a channel manager), only what it vaguely *does* (input/output). Broad names cause confusion — "filesystem is I/O too, shouldn't it be here?" The fix: name it what it is (`Channels`), and the responsibilities become obvious.
 
@@ -91,3 +91,17 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 - `GoalStepEvents` / `ActionEvents` → `Lifecycle` (same type for all entities)
 - `EventList` → `Bindings`
 - Navigation: `goal.Lifecycle.Before.Run(context)`, `step.Lifecycle.After.Run(context)`
+
+---
+
+## Libraries Replaces ActionRegistry
+
+`ActionRegistry` was replaced by `Library` + `Libraries`. The key changes:
+
+- **`engine.Libraries`** replaces `engine.Actions` — uniform handler resolution
+- **`Library`** represents a single assembly's handlers (name + assembly + discovered actions)
+- **`Libraries`** is a smart collection: built-in handlers are `Libraries[0]`, external DLLs can be added as additional libraries
+- **Resolution**: `Libraries.GetCodeGenerated(module, action, context)` walks all libraries — first match wins
+- **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
+- **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
+- Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types implementing `ICodeGenerated`

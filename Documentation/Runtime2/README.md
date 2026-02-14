@@ -8,12 +8,13 @@ Engine is the root — everything hangs off it:
 
 ```
 Engine (sealed, IAsyncDisposable)
-├── AppContext       (PLangAppContext — app lifetime config)
-├── Actions          (ActionRegistry — module.action → handler lookup)
+├── Libraries        (Libraries — built-in [0] + external DLLs, handler resolution)
 ├── Serializers      (SerializerRegistry — content-type based)
 ├── Goals            (Goal collection with lazy disk loading)
 ├── FileSystem       (IPLangFileSystem — abstracted filesystem)
-├── IO               (Channel-based I/O manager)
+├── Channels         (Channel-based I/O routing)
+├── Events           (Global event collection)
+├── Cache            (ICache — pluggable step cache)
 └── Actors (lazy)
     ├── System       (internal engine operations)
     ├── Service      (external service operations)
@@ -44,7 +45,7 @@ plang p Start.goal
   → Engine.RunGoalAsync(goal, context)
     → Steps.RunAsync() → for each Step:
       → Actions.RunAsync() → for each Action:
-        → ActionRegistry finds handler by module+action name
+        → Libraries.GetCodeGenerated(module, action) finds handler
         → Source-generated code resolves %variables% in params
         → handler.Run() executes, returns Data
         → Return values stored in MemoryStack
@@ -141,7 +142,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operat
 | [MemoryStack](memory-stack.md) | Variable storage with dot-notation, system variables | Variables |
 | [CallStack](call-stack.md) | Execution tracking with frames, max depth 1000 | Debugging |
 | [Events](events.md) | Entity events + global Events with pattern matching | Lifecycle hooks |
-| [Action Handlers](modules.md) | `IClass`, `BaseClass`, `ICodeGenerated`, `ActionRegistry` | Extensibility |
+| [Action Handlers](modules.md) | `IClass`, `IContext`, `ICodeGenerated`, `Library`, `Libraries` | Extensibility |
 | [Serializers](serializers.md) | `ISerializer` with registry, content-type routing | Data formats |
 | [.pr File Format](pr-file-format.md) | JSON structure for compiled goals | File spec |
 | [Errors](exceptions.md) | `IError`/`Error` hierarchy + `Runtime2Exception` | Error handling |
@@ -186,7 +187,8 @@ PLang/Runtime2/
 │   ├── IClass.cs            Handler interface
 │   ├── ICodeGenerated.cs    Source-generated execution interface
 │   ├── BaseClass.cs         Abstract base + BaseClass<TParams>
-│   ├── ActionRegistry.cs    Module.action → handler lookup
+│   ├── Library.cs           Single library (one assembly's handlers)
+│   ├── Libraries.cs         Smart collection, walk-the-list resolution
 │   ├── variable/            variable.set, variable.get, ...
 │   ├── file/                file.save, file.read, file.copy, ...
 │   ├── output/              output.write

@@ -68,7 +68,7 @@ Every property name should tell you what the object *is*, not what it *does*. Wh
 **Good names** describe the thing:
 ```
 engine.Goals          -- "Goals" — manages goals
-engine.Actions        -- "Actions" — manages action handlers
+engine.Libraries      -- "Libraries" — manages action handler libraries
 engine.Channels       -- "Channels" — manages named I/O channels
 engine.FileSystem     -- "FileSystem" — manages file access
 engine.Serializers    -- "Serializers" — manages serialization

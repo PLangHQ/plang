@@ -68,90 +68,116 @@ public abstract class BaseClass<TParams> : BaseClass
 }
 ```
 
-## ActionRegistry
+## Library
 
-`PLang.Runtime2.modules.ActionRegistry` — two-level `ConcurrentDictionary` for handler lookup.
+`PLang.Runtime2.modules.Library` — a single library representing one assembly's action handlers.
 
 ```csharp
-public sealed class ActionRegistry
+public sealed class Library
 {
+    string Name { get; }
+    Assembly? Assembly { get; }
+
+    // Discovery
+    void Discover(string? baseNamespace = null)   // Finds [Action]-attributed types
+
     // Registration
-    void Register(string namespaceName, string className, IClass handler)
-    void DiscoverAndRegister(Assembly assembly)   // Reflection-based discovery
+    void Register(string module, string actionName, IClass handler)     // Shared instance
+    void RegisterCodeGenerated(string module, string actionName, Type type)  // Per-call
 
     // Lookup
-    IClass? Get(string namespaceName, string className)
-    ICodeGenerated? GetCodeGenerated(string className, string methodName)
+    IClass? Get(string module, string actionName)
+    ICodeGenerated? GetCodeGenerated(string module, string actionName)
+    Type? GetActionType(string module, string actionName)
+    bool Contains(string module, string actionName)
+    bool Contains(string module)
 
     // Enumeration
-    IEnumerable<string> Namespaces { get; }
-    IEnumerable<string> ClassNames(string namespaceName)
+    IEnumerable<string> Modules { get; }
+    IEnumerable<string> GetActions(string module)
+    int Count { get; }
+}
+```
+
+## Libraries
+
+`PLang.Runtime2.modules.Libraries` — smart collection of libraries. Owns walk-the-list handler resolution. Built-in library is always `[0]`. External DLLs are added as additional libraries.
+
+```csharp
+public sealed class Libraries
+{
+    Library BuiltIn { get; }                    // Always [0]
+    IReadOnlyList<Library> Value { get; }       // All libraries
+
+    // Resolution (walks all libraries, first match wins)
+    (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
+        string module, string actionName, PLangContext context)
+
+    // Library management
+    void Add(Library library)
+
+    // Convenience delegates to BuiltIn
+    void Register(string module, string actionName, IClass handler)
+    void RegisterCodeGenerated(string module, string actionName, Type type)
+
+    // Aggregate queries across all libraries
+    bool Contains(string module, string actionName)
+    bool Contains(string module)
+    IEnumerable<string> Modules { get; }
+    IEnumerable<string> GetActions(string module)
+    Type? GetActionType(string module, string actionName)
+    int Count { get; }
 }
 ```
 
 ### Behavior & Rules
 
-- Two-level structure: `namespace → className → IClass`
-- `DiscoverAndRegister` scans an assembly for all types implementing `IClass`
-- `GetCodeGenerated` finds the handler and casts to `ICodeGenerated`
+- Built-in library auto-discovers PLang's own `[Action]` types on construction
+- `GetCodeGenerated` walks all libraries in order — first match wins
+- Explicit instances (`Register`) take priority over type-registered handlers (`RegisterCodeGenerated`)
+- Type-registered handlers create a new instance per call (thread-safe)
 - Lookup is case-insensitive
-- Engine calls `RegisterBuiltInModules()` in constructor, which calls `DiscoverAndRegister(Assembly.GetExecutingAssembly())`
+- External libraries can be added at runtime via `Libraries.Add(library)` or the `library.load` handler
 
 ## Creating an Action Handler
 
 ### Handler Pattern
 
-Each action handler consists of:
-1. A **parameter record** (lowercase name matching the action) — defines the typed parameters
-2. A **handler class** (PascalCase + "Handler") — contains the execution logic as a `partial class`
-3. A **source-generated partial** — implements `ICodeGenerated` with lazy parameter resolution
+Each action handler is a single `partial class` with:
+1. An `[Action("name")]` attribute — identifies the action
+2. `IContext` implementation — receives `PLangContext`
+3. `partial` properties — source generator auto-implements with lazy `%var%` resolution
+4. A `Run()` method — contains the execution logic
 
 ### Example: variable.set
 
 ```csharp
-// PLang/Runtime2/actions/variable/set.cs
+// PLang/Runtime2/modules/variable/set.cs
 
 namespace PLang.Runtime2.modules.variable;
 
-// Parameter record — defines the action's typed parameters
-public record set(string name, object? value, string? type);
-
-// Handler class — contains execution logic
-public partial class SetHandler : BaseClass<set>
+[Action("set", Cacheable = false)]
+public partial class Set : IContext
 {
-    public Data Execute(set parameters)
-    {
-        var type = parameters.type != null
-            ? new Memory.Type(parameters.type)
-            : null;
+    [VariableName]
+    public partial string Name { get; init; }
+    public partial object? Value { get; init; }
+    public partial string? Type { get; init; }
 
-        MemoryStack.Set(parameters.name, parameters.value, type);
-        return Success();
+    public Task<Data> Run()
+    {
+        Context.MemoryStack.Set(Name, Value,
+            Type != null ? Memory.Type.FromName(Type) : null);
+        return Task.FromResult(Data.Ok(
+            new types.variable { name = Name, value = Value, type = Type }));
     }
 }
 ```
 
-The source generator creates a `SetHandler` partial that implements `ICodeGenerated`:
-
-```csharp
-// Auto-generated (conceptual)
-public partial class SetHandler : ICodeGenerated
-{
-    // Generated record that resolves %var% at property access
-    public sealed record set__Generated(/* ... */) : set(/* ... */);
-
-    public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
-    {
-        Engine = engine;
-        Context = context;
-
-        // Create lazy params that resolve %var% from MemoryStack
-        var p = new set__Generated(/* map parameters by name */);
-
-        return Task.FromResult(Execute(p));
-    }
-}
-```
+The source generator creates a partial implementation that:
+1. Auto-implements the `partial` properties with lazy `%var%` resolution from MemoryStack
+2. Implements `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()`
+3. Uses `[VariableName]` to strip `%` markers instead of resolving the variable value
 
 ### Handler Naming Convention
 
@@ -220,12 +246,13 @@ public static class TypeMapping
 | `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
 | `output` | `write` | Console/channel output |
 | `condition` | Condition evaluation | If/else logic |
+| `library` | `load` | Load external DLL libraries |
 
 ## Relationships
 
-- Registered in [Engine](engine.md) via `Actions` property (`ActionRegistry`)
-- Receive `PLangContext` via `CodeGeneratedExecuteAsync`
+- Registered in [Engine](engine.md) via `Libraries` property (`Libraries`)
+- Receive `PLangContext` via `IContext` and `CodeGeneratedExecuteAsync`
 - Access [MemoryStack](memory-stack.md) for variable operations
 - Return [Data](goal-result.md) from execution
-- Referenced by [Action](goals-steps.md) via `Class` and `Method`
+- Referenced by [Action](goals-steps.md) via `Module` and `ActionName`
 - Source generator in `PLang.Generators/LazyParamsGenerator.cs`

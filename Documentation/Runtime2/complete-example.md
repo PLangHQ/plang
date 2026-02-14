@@ -158,7 +158,7 @@ engine.RunGoalAsync("Start")
     ├── Step 0: "set %greeting% to Hello"
     │   └── Actions.RunAsync()
     │       └── Action: variable.set(name="greeting", value="Hello")
-    │           ├── ActionRegistry.GetCodeGenerated("variable", "set")
+    │           ├── Libraries.GetCodeGenerated("variable", "set")
     │           ├── SetHandler.CodeGeneratedExecuteAsync(params, engine, context)
     │           └── MemoryStack: greeting = "Hello"
     │
@@ -219,36 +219,36 @@ if (!result.Success && engine.Context.CallStack != null)
 The `variable.set` handler that executes in step 0:
 
 ```csharp
-// Parameter record
-public record set(string name, object? value, string? type);
-
-// Handler (partial — source generator adds ICodeGenerated)
-public partial class SetHandler : BaseClass<set>
+[Action("set", Cacheable = false)]
+public partial class Set : IContext
 {
-    public Data Execute(set parameters)
-    {
-        var type = parameters.type != null
-            ? new Memory.Type(parameters.type)
-            : null;
+    [VariableName]
+    public partial string Name { get; init; }
+    public partial object? Value { get; init; }
+    public partial string? Type { get; init; }
 
-        MemoryStack.Set(parameters.name, parameters.value, type);
-        return Success();
+    public Task<Data> Run()
+    {
+        Context.MemoryStack.Set(Name, Value,
+            Type != null ? Memory.Type.FromName(Type) : null);
+        return Task.FromResult(Data.Ok(
+            new types.variable { name = Name, value = Value, type = Type }));
     }
 }
 ```
 
-The source generator creates:
-1. `set__Generated` record — resolves `%var%` references lazily from MemoryStack
-2. `CodeGeneratedExecuteAsync` — wires Engine/Context, creates lazy params, calls `Execute`
+The source generator creates partial implementations that:
+1. Auto-implement the `partial` properties with lazy `%var%` resolution from MemoryStack
+2. Implement `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()`
 
 ## Summary
 
 This example demonstrates:
 
-1. **Engine setup** — creating `Engine` with `IPLangFileSystem`, auto-registers built-in handlers
+1. **Engine setup** — creating `Engine`, auto-discovers built-in handlers via `Libraries`
 2. **Goal loading** — loading `.pr` files via `LoadGoalsFromDirectoryAsync`
 3. **Execution** — `RunGoalAsync` with `Data` result type
-4. **Action handlers** — `variable.set` and `output.write` via `ActionRegistry` + `ICodeGenerated`
+4. **Action handlers** — `variable.set` and `output.write` via `Libraries` + `ICodeGenerated`
 5. **Lazy parameters** — `%var%` resolved at property access via source-generated records
 6. **MemoryStack** — variable storage with `Data` entries
 7. **CallStack** — automatic frame tracking during goal/step execution

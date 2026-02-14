@@ -16,12 +16,13 @@
 
 ---
 
-## External Library Integration (engine.astro)
+## External Library Integration (engine.astro) — Partially Done (2026-02-14)
 **Date:** 2026-02-13
 **Context:** During OBP naming work on Lifecycle/Bindings.
+**Status:** `library.load` handler implemented — PLang can load external DLLs at runtime. Remaining: builder auto-detection of unknown actions, calling external library actions from PLang steps.
 
 **Idea:** `engine.Libraries` — register and call external .dll libraries from PLang.
-- `engine.Libraries.Add('my.dll')` — user registers their dll
+- ~~`engine.Libraries.Add('my.dll')` — user registers their dll~~ ✅ Done via `library.load` handler
 - PLang syntax: `astrolib.dll, getCalculation(x, y), write to %result%`
 - Two paths: user writes it in PLang, OR the builder compiles C# code and auto-adds `Add('01. change_name.dll')` to the build output
 - Libraries contain actions — once registered, their methods become callable from PLang steps
@@ -46,17 +47,15 @@
 
 ---
 
-## Libraries Replaces ActionRegistry
+## ~~Libraries Replaces ActionRegistry~~ ✅ DONE (2026-02-14)
 **Date:** 2026-02-13
 **Context:** Discussing engine as platform — making external DLLs first-class.
-
-**Idea:** `engine.Libraries` replaces `ActionRegistry`. It's a `List<Library>`, lazy-loaded on first access.
+**Completed:** ActionRegistry fully replaced by Library + Libraries. External DLL loading implemented via `library.load` handler. Documentation updated.
 
 - Built-in handlers (variable, file, output, etc.) are Library[0] — everything uniform
-- `engine.Libraries.Add("astrolib.dll")` — loads assembly, discovers `[Action]` types
-- Handler resolution walks the list: `engine.Libraries.Get("variable", "set")`
-- From PLang: `load library astrolib.dll`
-- Builder can auto-add libraries when it sees unknown actions
+- `engine.Libraries.Add(library)` — adds external library
+- Handler resolution walks the list: `engine.Libraries.GetCodeGenerated("variable", "set", context)`
+- From PLang: `use library 'mylib.dll'` → `library.load` handler
 - Library is simple: Name + Assembly + discovered actions
 - ActionRegistry functionality absorbed into Libraries
 

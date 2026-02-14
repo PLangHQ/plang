@@ -153,7 +153,7 @@ Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct = 
 ```
 
 **Run sequence:**
-1. `ActionRegistry.GetCodeGenerated(Class, Method)` — find handler
+1. `Libraries.GetCodeGenerated(Module, ActionName)` — find handler
 2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, engine, context)`
 3. Store `Return` variables in `MemoryStack`
 
@@ -223,7 +223,7 @@ Engine.RunGoalAsync(goalName, context)
         │       ├── Before.Run events
         │       ├── Actions.RunAsync(engine, context)
         │       │   └── foreach action in Actions
-        │       │       ├── ActionRegistry.GetCodeGenerated(action.Class, action.Method)
+        │       │       ├── Libraries.GetCodeGenerated(action.Module, action.ActionName)
         │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, engine, context)
         │       │       └── Store Return vars in MemoryStack
         │       └── After.Run events
@@ -235,7 +235,7 @@ Engine.RunGoalAsync(goalName, context)
 
 - `Goals` is stored in [Engine](engine.md)
 - `Goal` contains `Step` instances, each containing `Action` instances
-- `Action` references handlers from [ActionRegistry](modules.md)
+- `Action` references handlers from [Libraries](modules.md)
 - Action execution stores results in [MemoryStack](memory-stack.md)
 - Execution is tracked via [CallStack](call-stack.md)
 - Entity events fire through [EntityEvents](events.md)
