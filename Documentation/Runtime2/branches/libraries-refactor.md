@@ -89,18 +89,18 @@ engine.Libraries.Add(lib);
 // - use library 'mylib.dll'
 ```
 
-### Engine.ResolveAsync (also added in this branch)
+### Engine.Property (key-value store, also added in this branch)
 
 ```csharp
-// Store a GoalCall in the engine key-value store
-engine["Summary"] = new GoalCall { Name = "GetSummary" };
+// Store a GoalCall in the engine's Property store
+engine.Property["Summary"] = new GoalCall { Name = "GetSummary" };
 
 // Sync access returns the raw GoalCall
-var raw = engine["Summary"]; // GoalCall object
+var raw = engine.Property["Summary"]; // GoalCall object
 
-// Async resolve detects GoalCall and executes the goal
-var result = await engine.ResolveAsync("Summary"); // runs GetSummary, returns result
-var typed = await engine.ResolveAsync<string>("Summary"); // typed variant
+// Async Get detects GoalCall and executes the goal
+var result = await engine.Property.Get("Summary"); // runs GetSummary, returns result
+var typed = await engine.Property.Get<string>("Summary"); // typed variant
 ```
 
 ---

@@ -3,7 +3,6 @@ using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
-using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -16,7 +15,6 @@ namespace PLang.Runtime2.Core;
 /// </summary>
 public sealed class Engine : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly Libraries _libraries;
     private readonly SerializerRegistry _serializers;
@@ -110,6 +108,11 @@ public sealed class Engine : IAsyncDisposable
     public ICache Cache { get; set; } = new MemoryStepCache();
 
     /// <summary>
+    /// Engine's key-value store with GoalCall resolution.
+    /// </summary>
+    public Property Property { get; }
+
+    /// <summary>
     /// Whether debug mode is enabled.
     /// </summary>
     public bool IsDebugMode { get; set; }
@@ -159,69 +162,6 @@ public sealed class Engine : IAsyncDisposable
         return (actor, null);
     }
 
-    #region Key-Value Store
-
-    /// <summary>
-    /// Gets or sets a value in the engine's key-value store.
-    /// </summary>
-    public object? this[string key]
-    {
-        get => _data.TryGetValue(key, out var value) ? value : null;
-        set
-        {
-            if (value == null)
-                _data.TryRemove(key, out _);
-            else
-                _data[key] = value;
-        }
-    }
-
-    /// <summary>
-    /// Gets a typed value from the engine's key-value store.
-    /// </summary>
-    public T? Get<T>(string key)
-    {
-        if (_data.TryGetValue(key, out var value) && value is T typed)
-            return typed;
-        return default;
-    }
-
-    /// <summary>
-    /// Sets a typed value in the engine's key-value store.
-    /// </summary>
-    public void Set<T>(string key, T value)
-    {
-        if (value == null)
-            _data.TryRemove(key, out _);
-        else
-            _data[key] = value;
-    }
-
-    /// <summary>
-    /// Gets a value or creates it if it doesn't exist.
-    /// </summary>
-    public T GetOrCreate<T>(string key, Func<T> factory) where T : class
-    {
-        return (T)_data.GetOrAdd(key, _ => factory()!);
-    }
-
-    /// <summary>
-    /// Checks if a key exists.
-    /// </summary>
-    public bool ContainsKey(string key) => _data.ContainsKey(key);
-
-    /// <summary>
-    /// Removes a key.
-    /// </summary>
-    public bool Remove(string key) => _data.TryRemove(key, out _);
-
-    /// <summary>
-    /// Gets all keys.
-    /// </summary>
-    public IEnumerable<string> Keys => _data.Keys;
-
-    #endregion
-
     /// <summary>
     /// Requests graceful shutdown.
     /// </summary>
@@ -245,6 +185,7 @@ public sealed class Engine : IAsyncDisposable
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
         Events = new Events();
+        Property = new Property(this);
         _libraries = libraries ?? new Libraries();
         _serializers = serializers ?? new SerializerRegistry();
         _goals = new Goals { Engine = this };
@@ -377,33 +318,6 @@ public sealed class Engine : IAsyncDisposable
         }
     }
 
-    /// <summary>
-    /// Resolves a value from the engine's key-value store.
-    /// If the value is a GoalCall, executes the goal and returns the result.
-    /// </summary>
-    public async Task<object?> ResolveAsync(string key, PLangContext? context = null)
-    {
-        var value = this[key];
-        if (value is GoalCall goalCall)
-        {
-            context ??= User.Context;
-            var result = await RunGoalAsync(goalCall, context);
-            return result.Success ? result.Value : null;
-        }
-        return value;
-    }
-
-    /// <summary>
-    /// Resolves a typed value from the engine's key-value store.
-    /// If the value is a GoalCall, executes the goal and returns the typed result.
-    /// </summary>
-    public async Task<T?> ResolveAsync<T>(string key, PLangContext? context = null)
-    {
-        var value = await ResolveAsync(key, context);
-        if (value is T typed) return typed;
-        return default;
-    }
-
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -433,11 +347,6 @@ public sealed class Engine : IAsyncDisposable
         }
 
         // Dispose any disposable items in the key-value store
-        foreach (var value in _data.Values)
-        {
-            if (value is IDisposable disposable)
-                disposable.Dispose();
-        }
-        _data.Clear();
+        Property.DisposeAll();
     }
 }

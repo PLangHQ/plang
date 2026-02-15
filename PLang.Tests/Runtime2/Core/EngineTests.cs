@@ -661,31 +661,31 @@ public class EngineTests
         }
     }
 
-    #region ResolveAsync Tests
+    #region Property Tests
 
     [Test]
-    public async Task ResolveAsync_WithNormalValue_ReturnsValue()
+    public async Task Property_Get_WithNormalValue_ReturnsValue()
     {
         await using var engine = new Engine("/app");
-        engine["greeting"] = "hello";
+        engine.Property["greeting"] = "hello";
 
-        var result = await engine.ResolveAsync("greeting");
+        var result = await engine.Property.Get("greeting");
 
         await Assert.That(result).IsEqualTo("hello");
     }
 
     [Test]
-    public async Task ResolveAsync_WithNullKey_ReturnsNull()
+    public async Task Property_Get_WithNullKey_ReturnsNull()
     {
         await using var engine = new Engine("/app");
 
-        var result = await engine.ResolveAsync("nonexistent");
+        var result = await engine.Property.Get("nonexistent");
 
         await Assert.That(result).IsNull();
     }
 
     [Test]
-    public async Task ResolveAsync_WithGoalCall_RunsGoal()
+    public async Task Property_Get_WithGoalCall_RunsGoal()
     {
         await using var engine = new Engine("/app");
 
@@ -702,23 +702,23 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        engine["Summary"] = new GoalCall { Name = "SummaryGoal" };
+        engine.Property["Summary"] = new GoalCall { Name = "SummaryGoal" };
 
-        // ResolveAsync detects GoalCall and executes it
-        await engine.ResolveAsync("Summary");
+        // Get detects GoalCall and executes it
+        await engine.Property.Get("Summary");
 
         // Verify the goal actually ran by checking the variable it set
         await Assert.That(engine.User.Context.MemoryStack.GetValue("wasRun")).IsEqualTo("yes");
     }
 
     [Test]
-    public async Task Indexer_WithGoalCall_ReturnsRawGoalCall()
+    public async Task Property_Indexer_WithGoalCall_ReturnsRawGoalCall()
     {
         await using var engine = new Engine("/app");
         var goalCall = new GoalCall { Name = "SummaryGoal" };
-        engine["Summary"] = goalCall;
+        engine.Property["Summary"] = goalCall;
 
-        var result = engine["Summary"];
+        var result = engine.Property["Summary"];
 
         // Sync indexer returns the raw GoalCall, does NOT execute
         await Assert.That(result).IsTypeOf<GoalCall>();
@@ -726,23 +726,23 @@ public class EngineTests
     }
 
     [Test]
-    public async Task ResolveAsync_Generic_WithNormalValue_ReturnsTyped()
+    public async Task Property_Get_Generic_WithNormalValue_ReturnsTyped()
     {
         await using var engine = new Engine("/app");
-        engine["count"] = 42;
+        engine.Property["count"] = 42;
 
-        var result = await engine.ResolveAsync<int>("count");
+        var result = await engine.Property.Get<int>("count");
 
         await Assert.That(result).IsEqualTo(42);
     }
 
     [Test]
-    public async Task ResolveAsync_Generic_TypeMismatch_ReturnsDefault()
+    public async Task Property_Get_Generic_TypeMismatch_ReturnsDefault()
     {
         await using var engine = new Engine("/app");
-        engine["count"] = "not-an-int";
+        engine.Property["count"] = "not-an-int";
 
-        var result = await engine.ResolveAsync<int>("count");
+        var result = await engine.Property.Get<int>("count");
 
         await Assert.That(result).IsEqualTo(0);
     }

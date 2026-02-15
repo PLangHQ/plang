@@ -25,7 +25,7 @@ Engine
   .IsDebugMode      -- bool
   .IsTestMode       -- bool
   .ShutdownToken    -- CancellationToken: for graceful shutdown
-  [key]             -- object?: key-value store (Get<T>, Set<T>, GetOrCreate<T>)
+  .Property         -- Property: key-value store with GoalCall resolution
 ```
 
 Each property name tells you what the object *is*. `Goals` manages goals. `Actions` manages handlers. `FileSystem` manages file access. You look at the name and know exactly where to navigate.
@@ -317,7 +317,7 @@ Engine
   .ShutdownToken      CancellationToken — graceful shutdown
   .StartedAt          DateTime
   .Uptime             TimeSpan
-  [key]               object? — key-value store (Get<T>, Set<T>, GetOrCreate<T>)
+  .Property           Property — key-value store with GoalCall resolution
 ```
 
 ### PLangContext (request-level, per-execution)
@@ -414,7 +414,7 @@ Given `Engine` + `Context`, a handler can reach:
 | Get app root path | `Engine.AbsolutePath` |
 | Check environment | `Engine.Environment` |
 | Store request-scoped data | `Context["key"] = value` / `Context.Get<T>("key")` |
-| Store app-scoped data | `Engine["key"] = value` / `Engine.Get<T>("key")` |
+| Store app-scoped data | `Engine.Property["key"] = value` / `await Engine.Property.Get<T>("key")` |
 | Cancel execution | `Context.Cancel()` |
 
 ## 7. Data Owns Its Composition

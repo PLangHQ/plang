@@ -77,18 +77,24 @@ Execution path:
 3. Calls `goal.Load(context)` then `goal.RunAsync(engine, context, ct)`
 4. Returns `Data` — check `Data.Success` / `Data.Error`
 
-## ResolveAsync
+## Property (Key-Value Store)
 
 ```csharp
-Task<object?> ResolveAsync(string key, PLangContext? context = null)
-Task<T?> ResolveAsync<T>(string key, PLangContext? context = null)
+engine.Property["key"]              // sync — raw value (indexer)
+engine.Property["key"] = value      // sync — set
+await engine.Property.Get("key")    // async — resolves GoalCall if needed
+await engine.Property.Get<T>("key") // async — typed
+engine.Property.Set("key", value)   // explicit set
+engine.Property.ContainsKey("key")  // check existence
+engine.Property.Remove("key")       // remove
+engine.Property.Keys                // all keys
 ```
 
-Resolves a value from the engine's key-value store. If the value is a `GoalCall`, executes the goal and returns the result. This enables engine properties to be lazy goal evaluations:
+If the value is a `GoalCall`, `Get()` executes the goal and returns the result. This enables engine properties to be lazy goal evaluations:
 
 ```csharp
-engine["Summary"] = new GoalCall { Name = "GetSummary" };
-var summary = await engine.ResolveAsync<string>("Summary"); // runs the goal
+engine.Property["Summary"] = new GoalCall { Name = "GetSummary" };
+var summary = await engine.Property.Get<string>("Summary"); // runs the goal
 ```
 
 ## Goal Loading
