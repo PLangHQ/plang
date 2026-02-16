@@ -1,7 +1,7 @@
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class GoalTests
 {
@@ -219,7 +219,7 @@ public class GoalTests
         var str = goal.ToString();
 
         // Goal does not override ToString; returns default type name
-        await Assert.That(str).IsEqualTo("PLang.Runtime2.Core.Goal");
+        await Assert.That(str).IsEqualTo("PLang.Runtime2.Goal");
     }
 
     [Test]
@@ -256,7 +256,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new Actions(new[]
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -325,7 +325,7 @@ public class GoalTests
                     Text = "select * from users, write to %users%",
                     Actions = new Actions(new[]
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "db",
                             ActionName = "select",
@@ -356,7 +356,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new Actions(new[]
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",

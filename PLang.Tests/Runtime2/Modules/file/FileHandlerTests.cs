@@ -1,5 +1,5 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules.file;
 using PLang.SafeFileSystem;
@@ -330,18 +330,18 @@ public class FileHandlerTests : IDisposable
         { ContentType = "text/plain" });
 
         // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
-        var goal = new PLang.Runtime2.Core.Goal
+        var goal = new PLang.Runtime2.Goal
         {
             Name = "TestFileExistsFlow",
-            Steps = new PLang.Runtime2.Core.Steps
+            Steps = new PLang.Runtime2.Steps
             {
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -352,13 +352,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Step
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -407,18 +407,18 @@ public class FileHandlerTests : IDisposable
             PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var goal = new PLang.Runtime2.Core.Goal
+        var goal = new PLang.Runtime2.Goal
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new PLang.Runtime2.Core.Steps
+            Steps = new PLang.Runtime2.Steps
             {
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -429,13 +429,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Step
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",

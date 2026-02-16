@@ -1,5 +1,5 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Tests.Runtime2.Context;
@@ -77,7 +77,7 @@ public class PLangContextTests
     {
         await using var engine = new Engine("/app");
         using var context = new PLangContext(engine);
-        var callStack = new PLang.Runtime2.Core.CallStack();
+        var callStack = new PLang.Runtime2.CallStack();
 
         context.CallStack = callStack;
 

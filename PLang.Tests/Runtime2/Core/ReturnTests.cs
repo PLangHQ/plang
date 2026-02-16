@@ -1,7 +1,7 @@
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class DataResultTests
 {

@@ -1,19 +1,19 @@
 using PLang.Building.Model;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 
 namespace PLang.Runtime2.Mapping;
 
 /// <summary>
-/// Maps from old Building.Model types to Runtime2.Core types.
+/// Maps from old Building.Model types to Runtime2 types.
 /// </summary>
 public static class GoalMapper
 {
     /// <summary>
-    /// Map PLang.Building.Model.Goal to PLang.Runtime2.Core.Goal
+    /// Map PLang.Building.Model.Goal to PLang.Runtime2.Goal
     /// </summary>
-    public static Core.Goal ToRuntime2Goal(Building.Model.Goal oldGoal)
+    public static Goal ToRuntime2Goal(Building.Model.Goal oldGoal)
     {
-        var goal = new Core.Goal
+        var goal = new Goal
         {
             Name = oldGoal.GoalName,
             Description = oldGoal.Description,
@@ -41,11 +41,11 @@ public static class GoalMapper
     }
 
     /// <summary>
-    /// Map PLang.Building.Model.GoalStep to PLang.Runtime2.Core.Step
+    /// Map PLang.Building.Model.GoalStep to PLang.Runtime2.Step
     /// </summary>
-    public static Core.Step ToRuntime2Step(Building.Model.GoalStep oldStep)
+    public static Step ToRuntime2Step(Building.Model.GoalStep oldStep)
     {
-        return new Core.Step
+        return new Step
         {
             Index = oldStep.Index,
             Text = oldStep.Text,
@@ -54,7 +54,7 @@ public static class GoalMapper
             Comment = oldStep.Comment,
             Actions = new Actions
             {
-                new Core.Action
+                new Action
                 {
                     Module = ExtractActionName(oldStep.ModuleType),
                     ActionName = oldStep.Name ?? "",
@@ -72,16 +72,16 @@ public static class GoalMapper
             Timeout = oldStep.CancellationHandler?.CancelExecutionAfterXMilliseconds != null
                 ? (int)(oldStep.CancellationHandler.CancelExecutionAfterXMilliseconds / 1000)
                 : null,
-            Errors = oldStep.ValidationErrors?.Select(e => new Core.Info { Message = e.Message }).ToList() ?? new(),
+            Errors = oldStep.ValidationErrors?.Select(e => new Info { Message = e.Message }).ToList() ?? new(),
             Warnings = new()
         };
     }
 
-    private static Core.Visibility MapVisibility(Building.Model.Visibility visibility)
+    private static Visibility MapVisibility(Building.Model.Visibility visibility)
     {
         return visibility == Building.Model.Visibility.Public
-            ? Core.Visibility.Public
-            : Core.Visibility.Private;
+            ? Visibility.Public
+            : Visibility.Private;
     }
 
     private static string ExtractActionName(string? moduleType)
@@ -98,11 +98,11 @@ public static class GoalMapper
         return name.ToLowerInvariant();
     }
 
-    private static Core.ErrorHandler? MapErrorHandler(Building.Model.ErrorHandler? oldHandler)
+    private static ErrorHandler? MapErrorHandler(Building.Model.ErrorHandler? oldHandler)
     {
         if (oldHandler == null) return null;
 
-        return new Core.ErrorHandler
+        return new ErrorHandler
         {
             Goal = MapGoalToCallInfo(oldHandler.GoalToCall),
             RetryCount = oldHandler.RetryHandler?.RetryCount,
@@ -110,8 +110,8 @@ public static class GoalMapper
                 ? (int)(oldHandler.RetryHandler.RetryDelayInMilliseconds.Value / 1000)
                 : null,
             Order = oldHandler.RunRetryBeforeCallingGoalToCall
-                ? Core.ErrorOrder.RetryFirst
-                : Core.ErrorOrder.GoalFirst,
+                ? ErrorOrder.RetryFirst
+                : ErrorOrder.GoalFirst,
             IgnoreError = oldHandler.IgnoreError,
             Message = oldHandler.Message,
             StatusCode = oldHandler.StatusCode,
@@ -119,11 +119,11 @@ public static class GoalMapper
         };
     }
 
-    private static Core.GoalCall? MapGoalToCallInfo(PLang.Models.GoalToCallInfo? oldInfo)
+    private static GoalCall? MapGoalToCallInfo(PLang.Models.GoalToCallInfo? oldInfo)
     {
         if (oldInfo == null) return null;
 
-        return new Core.GoalCall
+        return new GoalCall
         {
             Name = oldInfo.Name,
             Parameters = oldInfo.Parameters,
@@ -131,11 +131,11 @@ public static class GoalMapper
         };
     }
 
-    private static Core.CacheSettings? MapCacheSettings(Building.Model.CachingHandler? oldCache)
+    private static CacheSettings? MapCacheSettings(Building.Model.CachingHandler? oldCache)
     {
         if (oldCache == null) return null;
 
-        return new Core.CacheSettings
+        return new CacheSettings
         {
             DurationSeconds = oldCache.TimeInMilliseconds / 1000,
             Sliding = oldCache.CachingType == 0, // 0 = Sliding, 1 = Absolute

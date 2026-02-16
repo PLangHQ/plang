@@ -1,3 +1,5 @@
+using PLang.Runtime2;
+
 namespace PLang.Runtime2.Errors;
 
 /// <summary>
@@ -24,13 +26,13 @@ public interface IError
     /// <summary>
     /// The step where the error occurred. Navigate to goal, line number, etc. via Step.Goal.
     /// </summary>
-    Core.Step? Step { get; }
+    Step? Step { get; }
 
     /// <summary>
     /// Snapshot of the call stack frames at the time the error was created.
     /// Reads bottom-up: first frame is the root goal, last frame is where the error occurred.
     /// </summary>
-    IReadOnlyList<Core.CallFrame> CallFrames { get; }
+    IReadOnlyList<CallFrame> CallFrames { get; }
 
     /// <summary>
     /// Formats this error for display. Called only at the final display point, never during propagation.

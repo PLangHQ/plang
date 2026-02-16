@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.Context;
@@ -215,20 +215,20 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Resolves per-context lifecycle for a Goal. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.Lifecycle LifecycleFor(Core.Goal goal)
+    public Lifecycle LifecycleFor(Goal goal)
     {
-        return (Core.Lifecycle)_eventContainers.GetOrAdd(goal, _ =>
+        return (Lifecycle)_eventContainers.GetOrAdd(goal, _ =>
         {
-            var lifecycle = new Core.Lifecycle();
+            var lifecycle = new Lifecycle();
             var userEvents = User.Events;
 
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeGoalLoad, goalName: goal.Name))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.OnBeforeGoalLoad, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterGoalLoad, goalName: goal.Name))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.OnAfterGoalLoad, goalName: goal.Name))
                 lifecycle.After.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeGoal, goalName: goal.Name))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeGoal, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterGoal, goalName: goal.Name))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterGoal, goalName: goal.Name))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -238,28 +238,28 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Resolves per-context lifecycle for a Step. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.Lifecycle LifecycleFor(Core.Step step)
+    public Lifecycle LifecycleFor(Step step)
     {
-        return (Core.Lifecycle)_eventContainers.GetOrAdd(step, _ =>
+        return (Lifecycle)_eventContainers.GetOrAdd(step, _ =>
         {
-            var lifecycle = new Core.Lifecycle();
+            var lifecycle = new Lifecycle();
             var userEvents = User.Events;
             var goalName = step.Goal?.Name;
 
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeStep, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterStep, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
 
             if (step.StepCache != null)
             {
-                foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnCacheHit, goalName: goalName, stepText: step.Text))
+                foreach (var b in userEvents.GetMatchingBindings(EventType.OnCacheHit, goalName: goalName, stepText: step.Text))
                     step.StepCache.Hit.Add(b);
-                foreach (var b in userEvents.GetMatchingBindings(Core.EventType.OnCacheMiss, goalName: goalName, stepText: step.Text))
+                foreach (var b in userEvents.GetMatchingBindings(EventType.OnCacheMiss, goalName: goalName, stepText: step.Text))
                     step.StepCache.Miss.Add(b);
             }
 
@@ -270,16 +270,16 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Resolves per-context lifecycle for an Action. Lazy-resolves from User.Events on first call, cached on context.
     /// </summary>
-    public Core.Lifecycle LifecycleFor(Core.Action action)
+    public Lifecycle LifecycleFor(Action action)
     {
-        return (Core.Lifecycle)_eventContainers.GetOrAdd(action, _ =>
+        return (Lifecycle)_eventContainers.GetOrAdd(action, _ =>
         {
-            var lifecycle = new Core.Lifecycle();
+            var lifecycle = new Lifecycle();
             var userEvents = User.Events;
 
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.Before.Add(b);
-            foreach (var b in userEvents.GetMatchingBindings(Core.EventType.AfterAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in userEvents.GetMatchingBindings(EventType.AfterAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.After.Add(b);
 
             return lifecycle;

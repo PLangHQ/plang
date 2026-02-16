@@ -1,5 +1,5 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules.condition;
 using PLang.SafeFileSystem;
@@ -79,7 +79,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write true branch",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -129,7 +129,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write false branch",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -200,7 +200,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write file exists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -224,7 +224,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "check if file exists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -239,7 +239,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "if file exists call WriteExists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "condition",
                             ActionName = "if",

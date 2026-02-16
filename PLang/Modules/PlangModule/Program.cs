@@ -14,7 +14,7 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
-using Actions = PLang.Runtime2.Core.Actions;
+using Actions = PLang.Runtime2.Actions;
 using PLang.Runtime2.Mapping;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.Utility;
@@ -60,7 +60,7 @@ namespace PLang.Modules.PlangModule
 		{
 			var libraries = new Runtime2.modules.Libraries();
 
-			var actions = new Runtime2.Core.Actions(this.context);
+			var actions = new Runtime2.Actions(this.context);
 
 			foreach (var ns in libraries.Modules)
 			{
@@ -130,7 +130,7 @@ namespace PLang.Modules.PlangModule
 						cacheable = actionAttr.Cacheable;
 				}
 
-				actions.Add(new Runtime2.Core.Action
+				actions.Add(new Runtime2.Action
 					{
 						Module = ns,
 						ActionName = className,
@@ -146,7 +146,7 @@ namespace PLang.Modules.PlangModule
 
 
 		[Description("Get goals formatted for Runtime2")]
-		public async Task<(List<Runtime2.Core.Goal>? Goals, IError? Error)> GetGoalsV2(string path, string parser)
+		public async Task<(List<Runtime2.Goal>? Goals, IError? Error)> GetGoalsV2(string path, string parser)
 		{
 			var (goalsObj, error) = await GetGoals(path, visibility: "public_and_private", parser: parser);
 			if (error != null) return (null, error);
@@ -161,13 +161,13 @@ namespace PLang.Modules.PlangModule
 			return (runtime2Goals, null);
 		}
 
-		private void MergeV2PrData(Runtime2.Core.Goal goal)
+		private void MergeV2PrData(Runtime2.Goal goal)
 		{
 			var prPath = goal.PrPath;
 			if (prPath == null || !fileSystem.File.Exists(prPath)) return;
 
 			var prJson = fileSystem.File.ReadAllText(prPath);
-			var prGoal = System.Text.Json.JsonSerializer.Deserialize<Runtime2.Core.Goal>(
+			var prGoal = System.Text.Json.JsonSerializer.Deserialize<Runtime2.Goal>(
 				prJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 			if (prGoal == null) return;
 
@@ -277,16 +277,16 @@ namespace PLang.Modules.PlangModule
 			}
 		}
 
-		private static Runtime2.Core.GoalCall? DeserializeGoalCall(object? value)
+		private static Runtime2.GoalCall? DeserializeGoalCall(object? value)
 		{
-			if (value is Runtime2.Core.GoalCall gc)
+			if (value is Runtime2.GoalCall gc)
 				return gc;
 
 			if (value is System.Text.Json.JsonElement je)
 			{
 				try
 				{
-					return System.Text.Json.JsonSerializer.Deserialize<Runtime2.Core.GoalCall>(je.GetRawText(), new JsonSerializerOptions
+					return System.Text.Json.JsonSerializer.Deserialize<Runtime2.GoalCall>(je.GetRawText(), new JsonSerializerOptions
 					{
 						PropertyNameCaseInsensitive = true
 					});
@@ -297,14 +297,14 @@ namespace PLang.Modules.PlangModule
 			if (value is string s)
 			{
 				// Plain string name — wrap in GoalCall
-				return new Runtime2.Core.GoalCall { Name = s };
+				return new Runtime2.GoalCall { Name = s };
 			}
 
 			return null;
 		}
 
 		[Description("Merges the llm step result to the step object")]
-		public async Task<(Runtime2.Core.Step? Step, IError? Error)> MergeStep(Runtime2.Core.Step step, Runtime2.Core.Step stepFromLlm)
+		public async Task<(Runtime2.Step? Step, IError? Error)> MergeStep(Runtime2.Step step, Runtime2.Step stepFromLlm)
 		{
 			if (step == null)
 				return (null, new ProgramError("Step cannot be null", goalStep, function, Key: "MergeError"));
@@ -625,8 +625,8 @@ namespace PLang.Modules.PlangModule
 			return (new { IsValid = true, Module = moduleName, Method = methodName }, null);
 		}
 
-		[Description("Convert a Building.Model.Goal to Runtime2.Core.Goal")]
-		public async Task<(Runtime2.Core.Goal?, IError?)> GetRuntime2Goal(Goal goal)
+		[Description("Convert a Building.Model.Goal to Runtime2.Goal")]
+		public async Task<(Runtime2.Goal?, IError?)> GetRuntime2Goal(Goal goal)
 		{
 			if (goal == null)
 			{
@@ -645,7 +645,7 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Save a Runtime2 goal as v0.2 .pr file (all steps in one file)")]
-		public async Task<(object?, IError?)> SaveGoal(Runtime2.Core.Goal goal)
+		public async Task<(object?, IError?)> SaveGoal(Runtime2.Goal goal)
 		{
 			if (goal == null)
 			{

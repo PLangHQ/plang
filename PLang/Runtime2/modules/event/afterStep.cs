@@ -1,4 +1,4 @@
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.@event;

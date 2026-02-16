@@ -1,5 +1,5 @@
 # Output Summary
 
-## v13 — Restructure Runtime2/Core/ folders
-Reorganized flat 26-file Core/ folder into 6 subfolders mirroring the object graph (Goals/, Steps/, Actions/, Events/, Cache/, Execution/). Namespace unchanged. Zero breakage.
+## v13 — Remove Core/ folder, promote to Runtime2/
+Eliminated Core/ folder. Moved 26 files to Runtime2/ subfolders (Goals/, Steps/, Actions/, Events/, Cache/, Execution/). Changed namespace to PLang.Runtime2. Updated ~80 files. Zero build errors.
 See [v13/summary.md](./v13/summary.md)

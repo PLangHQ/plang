@@ -1,4 +1,5 @@
 using System.Text;
+using PLang.Runtime2;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -16,7 +17,7 @@ public class ActionError : Error
     public ActionError(string message, string key = "ActionError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public ActionError(string message, Core.Step step, string key = "ActionError", int statusCode = 400)
+    public ActionError(string message, Step step, string key = "ActionError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
     public ActionError(string message, PLangContext context, string key = "ActionError", int statusCode = 400)

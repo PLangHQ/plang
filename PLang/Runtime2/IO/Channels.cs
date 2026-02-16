@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.Serialization;

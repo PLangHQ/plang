@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
 namespace PLang.Runtime2.modules.mock;
@@ -71,7 +71,7 @@ public partial class MockAction : IContext
         return Task.FromResult(Data.Ok(handle));
     }
 
-    private static Core.Action? FindCurrentAction(Context.PLangContext ctx)
+    private static Action? FindCurrentAction(Context.PLangContext ctx)
     {
         var step = ctx.Step;
         if (step == null) return null;
@@ -86,7 +86,7 @@ public partial class MockAction : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(Core.Action? action, MemoryStack memoryStack)
+    private static Dictionary<string, object?> CaptureParameters(Action? action, MemoryStack memoryStack)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -100,7 +100,7 @@ public partial class MockAction : IContext
     }
 
     private static bool ParametersMatch(
-        Core.Action action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
+        Action action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {

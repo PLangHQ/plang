@@ -1,3 +1,4 @@
+using PLang.Runtime2;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -14,7 +15,7 @@ public class ValidationError : Error
     public ValidationError(string message, string key = "ValidationError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public ValidationError(string message, Core.Step step, string key = "ValidationError", int statusCode = 400)
+    public ValidationError(string message, Step step, string key = "ValidationError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
     public ValidationError(string message, PLangContext context, string key = "ValidationError", int statusCode = 400)

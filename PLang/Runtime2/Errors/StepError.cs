@@ -1,3 +1,4 @@
+using PLang.Runtime2;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -12,7 +13,7 @@ public class StepError : Error
     public StepError(string message, string key = "StepError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public StepError(string message, Core.Step step, string key = "StepError", int statusCode = 400)
+    public StepError(string message, Step step, string key = "StepError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
     public StepError(string message, PLangContext context, string key = "StepError", int statusCode = 400)

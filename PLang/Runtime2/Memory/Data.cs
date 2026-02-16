@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Attributes;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Errors;
 using PLang.Runtime2.Memory.Navigators;
 using PLang.Runtime2.Utility;

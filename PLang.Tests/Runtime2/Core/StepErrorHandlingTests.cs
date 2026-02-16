@@ -1,7 +1,7 @@
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class StepErrorHandlingTests
 {
@@ -29,7 +29,7 @@ public class StepErrorHandlingTests
                     OnError = new ErrorHandler { IgnoreError = true },
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",
@@ -43,7 +43,7 @@ public class StepErrorHandlingTests
                     Text = "set success marker",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -84,7 +84,7 @@ public class StepErrorHandlingTests
                     Text = "increment attempts",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -117,7 +117,7 @@ public class StepErrorHandlingTests
                     },
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",
@@ -151,7 +151,7 @@ public class StepErrorHandlingTests
                     Text = "mark error handled",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -183,7 +183,7 @@ public class StepErrorHandlingTests
                     },
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",

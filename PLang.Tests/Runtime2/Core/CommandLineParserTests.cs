@@ -1,6 +1,6 @@
 using PLang.Utils;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class CommandLineParserTests
 {

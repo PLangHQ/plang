@@ -1,10 +1,10 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.Serialization;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class EngineTests
 {
@@ -16,7 +16,7 @@ public class EngineTests
             Text = text,
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Action
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -37,7 +37,7 @@ public class EngineTests
             Text = text,
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Action
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -381,7 +381,7 @@ public class EngineTests
                     Text = "failing step",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "get",

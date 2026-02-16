@@ -1,4 +1,5 @@
 using System.Text;
+using PLang.Runtime2;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -18,8 +19,8 @@ public class Error : IError
     public DateTime CreatedUtc { get; }
     public Exception? Exception { get; init; }
     public List<IError> ErrorChain { get; } = new();
-    public Core.Step? Step { get; init; }
-    public IReadOnlyList<Core.CallFrame> CallFrames { get; init; } = Array.Empty<Core.CallFrame>();
+    public Step? Step { get; init; }
+    public IReadOnlyList<CallFrame> CallFrames { get; init; } = Array.Empty<CallFrame>();
     public virtual ErrorCategory Category => StatusCode < 500 ? ErrorCategory.Application : ErrorCategory.Runtime;
 
     public Error(string message, string key = "Error", int statusCode = 400)
@@ -31,13 +32,13 @@ public class Error : IError
         CreatedUtc = DateTime.UtcNow;
     }
 
-    public Error(string message, Core.Step step, string key = "Error", int statusCode = 400)
+    public Error(string message, Step step, string key = "Error", int statusCode = 400)
         : this(message, key, statusCode)
     {
         Step = step;
     }
 
-    public Error(string message, Core.Step step, IReadOnlyList<Core.CallFrame> callFrames, string key = "Error", int statusCode = 400)
+    public Error(string message, Step step, IReadOnlyList<CallFrame> callFrames, string key = "Error", int statusCode = 400)
         : this(message, step, key, statusCode)
     {
         CallFrames = callFrames;
@@ -46,7 +47,7 @@ public class Error : IError
     public Error(string message, PLangContext context, string key = "Error", int statusCode = 400)
         : this(message, context.Step!, key, statusCode)
     {
-        CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<Core.CallFrame>)Array.Empty<Core.CallFrame>();
+        CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
     }
 
     public static Error FromException(Exception ex, string key = "Exception", int statusCode = 500)

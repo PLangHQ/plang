@@ -5,67 +5,69 @@
       "id": "v13-coder-restructure-2026-02-16",
       "bot": "coder",
       "timestamp_start": "2026-02-16T12:00:00Z",
-      "timestamp_end": "2026-02-16T12:30:00Z",
-      "intent": "Restructure Runtime2/Core/ folder into subfolders (Goals/, Steps/, Actions/, Events/, Cache/, Execution/) to mirror the object graph",
+      "timestamp_end": "2026-02-16T13:00:00Z",
+      "intent": "Remove Core/ folder — move all files to Runtime2/ subfolders, change namespace from PLang.Runtime2.Core to PLang.Runtime2, update all references",
       "before": {
-        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core. 19 files in PLang + 39 files in PLang.Tests reference this namespace (58 total).",
-        "assumptions": "Folder-only move (keep namespace PLang.Runtime2.Core) requires zero downstream changes. C# does not require namespace-to-folder matching.",
-        "risk": "Low - purely structural reorganization, no namespace changes, no code changes. git mv preserves history."
+        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core. 58 files reference this namespace.",
+        "assumptions": "Moving files + changing namespace + updating all references will produce zero build errors.",
+        "risk": "Medium - namespace changes touch ~80 files across PLang, PLang.Tests, PLang.Generators, and v1 modules."
       },
-      "plan": "Folder-only move of 22 files into 6 subfolders (Goals/, Steps/, Actions/, Events/, Cache/, Execution/) under PLang/Runtime2/Core/. Keep namespace PLang.Runtime2.Core unchanged. 4 root files stay (Engine.cs, Property.cs, ErrorHandler.cs, Info.cs). Use git mv for history. Zero downstream using changes needed. Build verify after moves.",
+      "plan": "1. Move 22 files from Core/ subfolders to Runtime2/ subfolders, 4 root files to Runtime2/. 2. Change namespace PLang.Runtime2.Core to PLang.Runtime2 in all 26 files. 3. Change using PLang.Runtime2.Core to using PLang.Runtime2 in 58 downstream files. 4. Fix relative Core. qualifiers in Errors/, Context/, Mapping/, modules/. 5. Fix source generator hardcoded namespace. 6. Fix v1 module references. 7. Build verify all 3 projects.",
       "actions": [
         {
-          "paths": ["PLang/Runtime2/Core/Goals/", "PLang/Runtime2/Core/Steps/", "PLang/Runtime2/Core/Actions/", "PLang/Runtime2/Core/Events/", "PLang/Runtime2/Core/Cache/", "PLang/Runtime2/Core/Execution/"],
-          "type": "create",
-          "category": "code",
-          "health": "Clean - structural folders only, no code changes",
-          "confidence": "high",
-          "context": "Created 6 subfolders to mirror the object graph hierarchy"
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Core/Goals/Goal.cs",
-            "PLang/Runtime2/Core/Goals/GoalMethods.cs",
-            "PLang/Runtime2/Core/Goals/Goals.cs",
-            "PLang/Runtime2/Core/Goals/GoalCall.cs",
-            "PLang/Runtime2/Core/Steps/Step.cs",
-            "PLang/Runtime2/Core/Steps/StepMethods.cs",
-            "PLang/Runtime2/Core/Steps/Steps.cs",
-            "PLang/Runtime2/Core/Actions/Action.cs",
-            "PLang/Runtime2/Core/Actions/ActionMethods.cs",
-            "PLang/Runtime2/Core/Actions/Actions.cs",
-            "PLang/Runtime2/Core/Actions/IAction.cs",
-            "PLang/Runtime2/Core/Events/EventCollection.cs",
-            "PLang/Runtime2/Core/Events/Lifecycle.cs",
-            "PLang/Runtime2/Core/Cache/CacheSettings.cs",
-            "PLang/Runtime2/Core/Cache/ICache.cs",
-            "PLang/Runtime2/Core/Cache/MemoryStepCache.cs",
-            "PLang/Runtime2/Core/Cache/StepCache.cs",
-            "PLang/Runtime2/Core/Cache/StepCacheEntry.cs",
-            "PLang/Runtime2/Core/Execution/CallStack.cs",
-            "PLang/Runtime2/Core/Execution/CallFrame.cs",
-            "PLang/Runtime2/Core/Execution/DebugMode.cs",
-            "PLang/Runtime2/Core/Execution/TestMode.cs"
-          ],
+          "paths": ["PLang/Runtime2/Goals/", "PLang/Runtime2/Steps/", "PLang/Runtime2/Actions/", "PLang/Runtime2/Events/", "PLang/Runtime2/Cache/", "PLang/Runtime2/Execution/"],
           "type": "move",
           "category": "code",
-          "health": "Clean - git mv preserves history, namespace PLang.Runtime2.Core unchanged in all files",
-          "confidence": "high",
-          "context": "22 files moved via git mv. 4 files stay in Core/ root: Engine.cs, Property.cs, ErrorHandler.cs, Info.cs"
+          "health": "Clean - 22 files moved from Core/ subfolders to Runtime2/ subfolders, 4 root files moved to Runtime2/",
+          "confidence": "high"
         },
         {
-          "paths": ["PLang/PLang.csproj", "PLang.Tests/PLang.Tests.csproj", "PlangConsole/PLangConsole.csproj"],
-          "type": "review",
+          "paths": ["PLang/Runtime2/"],
+          "type": "modify",
           "category": "code",
-          "health": "All 3 projects build with 0 errors",
-          "confidence": "high",
-          "context": "dotnet build on PLang (0 errors/1814 warnings), PLang.Tests (0 errors/79 warnings), PLangConsole (0 errors/64 warnings). All pre-existing warnings."
+          "health": "Clean - namespace changed from PLang.Runtime2.Core to PLang.Runtime2 in all 26 moved files",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Memory/", "PLang/Runtime2/Context/", "PLang/Runtime2/IO/", "PLang/Runtime2/Mapping/", "PLang/Runtime2/Parsing/", "PLang/Runtime2/modules/"],
+          "type": "modify",
+          "category": "code",
+          "health": "Clean - using PLang.Runtime2.Core changed to using PLang.Runtime2 in 19 PLang files",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "modify",
+          "category": "code",
+          "health": "Clean - using statements and fully-qualified references updated in 39 test files",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Errors/", "PLang/Runtime2/Context/", "PLang/Runtime2/modules/mock/", "PLang/Runtime2/Mapping/GoalMapper.cs"],
+          "type": "modify",
+          "category": "code",
+          "health": "Clean - relative Core. qualifiers removed, using PLang.Runtime2 added to Error files",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang.Generators/LazyParamsGenerator.cs"],
+          "type": "modify",
+          "category": "code",
+          "health": "Clean - hardcoded PLang.Runtime2.Core references updated to PLang.Runtime2",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Modules/PlangModule/Program.cs", "PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "health": "Clean - v1 module references to Runtime2.Core updated",
+          "confidence": "high"
         }
       ],
       "after": {
-        "status": "Complete. All 22 files moved, all 3 projects build clean. Ready to commit.",
-        "health": "No gaps. Namespace unchanged, so all 58 downstream files work without modification. No tests broken.",
-        "notes": "Smooth execution. Folder-only approach was the right call - zero risk, immediate value. Namespace changes could be a future follow-up if desired."
+        "status": "Complete. Core/ folder removed. All 26 files in Runtime2/ subfolders. Namespace is PLang.Runtime2. All 3 projects build with 0 errors.",
+        "health": "No gaps. Zero Runtime2.Core references remain anywhere in PLang, PLang.Tests, or PLang.Generators.",
+        "notes": "Full restructure: folder moves + namespace changes + ~80 file updates. Build verified clean."
       }
     }
   ]

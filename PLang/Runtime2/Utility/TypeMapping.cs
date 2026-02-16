@@ -43,7 +43,7 @@ public static class TypeMapping
         ["json"] = typeof(JsonNode),
         ["json[]"] = typeof(JsonArray),
         ["actor"] = typeof(PLang.Runtime2.Context.Actor),
-        ["goal.call"] = typeof(PLang.Runtime2.Core.GoalCall),
+        ["goal.call"] = typeof(PLang.Runtime2.GoalCall),
         ["tstring"] = typeof(PLang.Runtime2.Memory.TString),
         ["translatable"] = typeof(PLang.Runtime2.Memory.TString),
 
@@ -71,7 +71,7 @@ public static class TypeMapping
         [typeof(byte)] = "byte",
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
-        [typeof(PLang.Runtime2.Core.GoalCall)] = "goal.call",
+        [typeof(PLang.Runtime2.GoalCall)] = "goal.call",
         [typeof(PLang.Runtime2.Memory.TString)] = "tstring",
     };
 
@@ -270,15 +270,15 @@ public static class TypeMapping
         }
 
         // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(PLang.Runtime2.Core.GoalCall))
+        if (targetType == typeof(PLang.Runtime2.GoalCall))
         {
             if (value is string goalName)
-                return new PLang.Runtime2.Core.GoalCall { Name = goalName };
+                return new PLang.Runtime2.GoalCall { Name = goalName };
             if (value is System.Text.Json.JsonElement je)
             {
                 try
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Core.GoalCall>(
+                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.GoalCall>(
                         je.GetRawText(),
                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
@@ -290,7 +290,7 @@ public static class TypeMapping
                 var parameters = dict.TryGetValue("parameters", out var p) && p is IDictionary<string, object?> pDict
                     ? new Dictionary<string, object?>(pDict)
                     : null;
-                return new PLang.Runtime2.Core.GoalCall { Name = name, Parameters = parameters };
+                return new PLang.Runtime2.GoalCall { Name = name, Parameters = parameters };
             }
         }
 

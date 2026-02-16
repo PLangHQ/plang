@@ -1,9 +1,9 @@
 using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 using PLang.Runtime2.modules;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 /// <summary>
 /// Tests for Step retry logic in StepMethods.RetryAsync and HandleErrorAsync.
@@ -241,7 +241,7 @@ public class StepRetryTests
                     Text = "capture error message",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -346,7 +346,7 @@ public class StepRetryTests
                     OnError = new ErrorHandler { RetryCount = 3 },
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -360,7 +360,7 @@ public class StepRetryTests
                     Text = "set marker after retry success",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -400,7 +400,7 @@ public class StepRetryTests
                     OnError = errorHandler,
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -425,7 +425,7 @@ public class StepRetryTests
                     Text = $"set {varName}",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Action
                         {
                             Module = "variable",
                             ActionName = "set",

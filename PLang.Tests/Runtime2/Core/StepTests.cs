@@ -1,7 +1,7 @@
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 using PLang.Runtime2.Memory;
 
-namespace PLang.Tests.Runtime2.Core;
+namespace PLang.Tests.Runtime2;
 
 public class StepTests
 {
@@ -17,7 +17,7 @@ public class StepTests
             Comment = "This makes an HTTP call",
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Action
                 {
                     Module = "http",
                     ActionName = "get",
@@ -82,7 +82,7 @@ public class StepTests
             Comment = "original comment",
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Action
                 {
                     Module = "variable",
                     ActionName = "set",

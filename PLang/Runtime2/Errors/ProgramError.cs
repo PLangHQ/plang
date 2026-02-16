@@ -1,3 +1,4 @@
+using PLang.Runtime2;
 using PLang.Runtime2.Context;
 
 namespace PLang.Runtime2.Errors;
@@ -10,7 +11,7 @@ public class ProgramError : Error
     public ProgramError(string message, string key = "ProgramError", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public ProgramError(string message, Core.Step step, string key = "ProgramError", int statusCode = 400)
+    public ProgramError(string message, Step step, string key = "ProgramError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
     public ProgramError(string message, PLangContext context, string key = "ProgramError", int statusCode = 400)

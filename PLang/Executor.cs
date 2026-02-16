@@ -336,11 +336,11 @@ namespace PLang
 		{
 			var (goalName, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new Runtime2.Core.Engine(fileSystem);
+			var engine = new Runtime2.Engine(fileSystem);
 
 			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
 			{
-				Runtime2.Core.DebugMode.Apply(engine, debugValue);
+				Runtime2.DebugMode.Apply(engine, debugValue);
 				parameters.Remove("debug");
 			}
 
@@ -350,7 +350,7 @@ namespace PLang
 				foreach (var param in parameters)
 					engine.MemoryStack.Set(param.Key, param.Value);
 
-				var exitCode = await Runtime2.Core.TestMode.RunAsync(engine, cancellationToken);
+				var exitCode = await Runtime2.TestMode.RunAsync(engine, cancellationToken);
 				return exitCode == 0 ? Runtime2.Memory.Data.Ok() : Runtime2.Memory.Data.FromError(new Runtime2.Errors.Error("Tests failed", "TestsFailed", exitCode));
 			}
 

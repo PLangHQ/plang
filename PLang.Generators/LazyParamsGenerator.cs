@@ -150,7 +150,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Resolution state
         sb.AppendLine("    private List<PLang.Runtime2.Memory.Data>? __parameters;");
         sb.AppendLine("    private PLang.Runtime2.Memory.MemoryStack? __memoryStack;");
-        sb.AppendLine("    private PLang.Runtime2.Core.Engine? __engine;");
+        sb.AppendLine("    private PLang.Runtime2.Engine? __engine;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -223,13 +223,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // CodeGeneratedExecuteAsync
         sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Memory.Data> CodeGeneratedExecuteAsync(");
-        sb.AppendLine("        List<PLang.Runtime2.Memory.Data> parameters, PLang.Runtime2.Core.Engine engine, PLang.Runtime2.Context.PLangContext context)");
+        sb.AppendLine("        List<PLang.Runtime2.Memory.Data> parameters, PLang.Runtime2.Engine engine, PLang.Runtime2.Context.PLangContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __parameters = parameters;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        var __step = context.Step;");
-        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Core.CallFrame>)System.Array.Empty<PLang.Runtime2.Core.CallFrame>();");
+        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.CallFrame>)System.Array.Empty<PLang.Runtime2.CallFrame>();");
 
         if (info.ImplementsIContext)
         {

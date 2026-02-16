@@ -1,8 +1,8 @@
-using PLang.Runtime2.Core;
+using PLang.Runtime2;
 
 namespace PLang.Runtime2.Context;
 
 public sealed class EventScope
 {
-    public Core.Events Events { get; } = new();
+    public Events Events { get; } = new();
 }
