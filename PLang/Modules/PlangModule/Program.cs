@@ -16,7 +16,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using Actions = PLang.Runtime2.Engine.StepActions;
 using PLang.Runtime2.Engine.Mapping;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Utility;
 using PLang.SafeFileSystem;
 using PLang.Utils;
@@ -58,7 +58,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Get all actions available from the registry")]
 		public async Task<(Actions?, IError?)> GetActions()
 		{
-			var libraries = new Runtime2.modules.EngineLibraries();
+			var libraries = new Runtime2.Engine.EngineLibraries();
 
 			var actions = new Runtime2.Engine.StepActions(this.context);
 
@@ -106,10 +106,10 @@ namespace PLang.Modules.PlangModule
 								typeName += $"({string.Join("|", validValues)})";
 
 							// @var marker
-							var hasVar = prop.GetCustomAttribute<Runtime2.modules.VariableNameAttribute>() != null;
+							var hasVar = prop.GetCustomAttribute<Runtime2.actions.VariableNameAttribute>() != null;
 
 							// Default value
-							var defaultAttr = prop.GetCustomAttribute<Runtime2.modules.DefaultAttribute>();
+							var defaultAttr = prop.GetCustomAttribute<Runtime2.actions.DefaultAttribute>();
 
 							// Build compact description: "@var string" or "actor(user|service|system) = \"user\""
 							var desc = hasVar ? $"@var {typeName}" : typeName;
@@ -125,7 +125,7 @@ namespace PLang.Modules.PlangModule
 				var actionType2 = libraries.GetActionType(ns, className);
 				if (actionType2 != null)
 				{
-					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
+					var actionAttr = actionType2.GetCustomAttribute<Runtime2.actions.ActionAttribute>();
 					if (actionAttr != null)
 						cacheable = actionAttr.Cacheable;
 				}
@@ -202,7 +202,7 @@ namespace PLang.Modules.PlangModule
 				return (false, new ProgramError("No actions provided", goalStep, function,
 					Key: "NoActionsProvided"));
 
-			var libraries = new Runtime2.modules.EngineLibraries();
+			var libraries = new Runtime2.Engine.EngineLibraries();
 
 			var notFound = new List<string>();
 			foreach (var action in actions)
@@ -475,7 +475,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var libraries = new Runtime2.modules.EngineLibraries();
+			var libraries = new Runtime2.Engine.EngineLibraries();
 			var result = new List<object>();
 
 			foreach (var ns in libraries.Modules)

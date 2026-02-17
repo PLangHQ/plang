@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Serializers;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -78,9 +78,9 @@ public sealed class Engine : IAsyncDisposable
 
     /// <summary>
     /// The library registry — uniform handler resolution system.
-    /// Built-in handlers are EngineLibraries[0], external DLLs can be added as additional libraries.
+    /// Built-in handlers are Libraries[0], external DLLs can be added as additional libraries.
     /// </summary>
-    public EngineLibraries EngineLibraries => _libraries;
+    public EngineLibraries Libraries => _libraries;
 
     /// <summary>
     /// The serializer registry.

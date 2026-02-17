@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.list;
-using ListResult = PLang.Runtime2.modules.list.types.list;
+using PLang.Runtime2.actions.list;
+using ListResult = PLang.Runtime2.actions.list.types.list;
 
 namespace PLang.Tests.Runtime2.actions.list;
 
@@ -285,7 +285,7 @@ public class ListTests
     {
         var (context, _) = CreateContext();
 
-        var action = new PLang.Runtime2.modules.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
+        var action = new PLang.Runtime2.actions.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
         var result = await action.Run();
 
         var listResult = result.Value as ListResult;

@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.convert;
+using PLang.Runtime2.actions.convert;
 
 namespace PLang.Tests.Runtime2.actions.convert;
 
@@ -86,7 +86,7 @@ public class ConvertTests
     {
         var (context, _) = CreateContext();
 
-        var action = new PLang.Runtime2.modules.convert.ToString
+        var action = new PLang.Runtime2.actions.convert.ToString
             { Context = context, Value = 42 };
         var result = await action.Run();
 
@@ -98,7 +98,7 @@ public class ConvertTests
     {
         var (context, _) = CreateContext();
 
-        var action = new PLang.Runtime2.modules.convert.ToString
+        var action = new PLang.Runtime2.actions.convert.ToString
             { Context = context, Value = 3.14159, Format = "F2" };
         var result = await action.Run();
 

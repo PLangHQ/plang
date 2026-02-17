@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.variable;
-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
+using PLang.Runtime2.actions.variable;
+using VariableResult = PLang.Runtime2.actions.variable.types.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 

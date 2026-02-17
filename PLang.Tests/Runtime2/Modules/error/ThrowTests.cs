@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.error;
+using PLang.Runtime2.actions.error;
 
 namespace PLang.Tests.Runtime2.actions.error;
 

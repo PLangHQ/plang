@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 
 namespace PLang.Runtime2.Engine;
 
@@ -22,7 +22,7 @@ public sealed partial class Action
         }
         else
         {
-            var (handler, error) = engine.EngineLibraries.GetCodeGenerated(Module, ActionName, context);
+            var (handler, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
             if (error != null)
                 return Data.FromError(error);
 

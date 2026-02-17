@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Serializers;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -151,7 +151,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
-        await Assert.That(engine.EngineLibraries).IsNotNull();
+        await Assert.That(engine.Libraries).IsNotNull();
         await Assert.That(engine.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
@@ -200,7 +200,7 @@ public class EngineTests
         var libraries = new EngineLibraries();
         await using var engine = new Engine("/app", libraries);
 
-        await Assert.That(engine.EngineLibraries).IsEqualTo(libraries);
+        await Assert.That(engine.Libraries).IsEqualTo(libraries);
     }
 
     [Test]
@@ -217,8 +217,8 @@ public class EngineTests
     {
         await using var engine = new Engine("/app");
 
-        await Assert.That(engine.EngineLibraries.Contains("variable", "set")).IsTrue();
-        await Assert.That(engine.EngineLibraries.Contains("variable", "get")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
     }
 
     [Test]
@@ -226,7 +226,7 @@ public class EngineTests
     {
         await using var engine = new Engine("/app");
 
-        await Assert.That(engine.EngineLibraries.Contains("output", "write")).IsTrue();
+        await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
     }
 
     [Test]
@@ -454,7 +454,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var throwingHandler = new ThrowingHandler();
-        engine.EngineLibraries.Register("throwing", "fail", throwingHandler);
+        engine.Libraries.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
@@ -471,7 +471,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.EngineLibraries.Register("legacy", "do", nonGeneratedHandler);
+        engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
         using var context = engine.CreateContext();
@@ -487,7 +487,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var disposableHandler = new DisposableHandler();
-        engine.EngineLibraries.Register("disposable", "do", disposableHandler);
+        engine.Libraries.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
@@ -499,7 +499,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.EngineLibraries.Register("asyncdisposable", "do", asyncDisposableHandler);
+        engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
 
         await engine.DisposeAsync();
 

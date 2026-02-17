@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -37,7 +37,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("first-result");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "url", "https://example.com" } },
@@ -66,7 +66,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "url", "https://example.com" } },
@@ -91,7 +91,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("cached-value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "id", "123" } },
@@ -120,7 +120,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler(42L); // long value
-        engine.EngineLibraries.Register("test", "compute", handler);
+        engine.Libraries.Register("test", "compute", handler);
 
         var step = MakeStepWithReturn("test", "compute",
             new Dictionary<string, object?>(),
@@ -156,7 +156,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new FailOnFirstCallHandler();
-        engine.EngineLibraries.Register("test", "flaky", handler);
+        engine.Libraries.Register("test", "flaky", handler);
 
         var step = MakeStepWithReturn("test", "flaky",
             new Dictionary<string, object?>(),
@@ -187,7 +187,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new SequenceHandler("a", "b");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step0 = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -220,7 +220,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("result");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -322,7 +322,7 @@ public class StepCacheTests
         engine.Cache = fakeCache;
 
         var handler = new CountingHandler("value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -407,7 +407,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
@@ -436,7 +436,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
@@ -465,7 +465,7 @@ public class StepCacheTests
         await using var engine = new Engine("/app");
 
         var handler = new CountingHandler("value");
-        engine.EngineLibraries.Register("test", "fetch", handler);
+        engine.Libraries.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",

@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -19,7 +19,7 @@ public class StepRetryTests
     {
         _engine = new Engine("/app");
         _flaky = new FlakyHandler();
-        _engine.EngineLibraries.Register("test", "flaky", _flaky);
+        _engine.Libraries.Register("test", "flaky", _flaky);
     }
 
     // ================================================================

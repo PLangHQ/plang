@@ -1,9 +1,9 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
+using PLang.Runtime2.actions;
 
-namespace PLang.Tests.Runtime2.modules;
+namespace PLang.Tests.Runtime2.actions;
 
 public class LibrariesTests
 {
@@ -431,7 +431,7 @@ public class LibrariesTests
     {
         var library = new Library("test", typeof(Engine).Assembly);
 
-        library.Discover("PLang.Runtime2.modules");
+        library.Discover("PLang.Runtime2.actions");
 
         await Assert.That(library.Contains("variable", "set")).IsTrue();
         await Assert.That(library.Contains("output", "write")).IsTrue();

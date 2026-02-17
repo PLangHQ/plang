@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.loop;
-using LoopResult = PLang.Runtime2.modules.loop.types.loop;
+using PLang.Runtime2.actions.loop;
+using LoopResult = PLang.Runtime2.actions.loop.types.loop;
 
 namespace PLang.Tests.Runtime2.actions.loop;
 

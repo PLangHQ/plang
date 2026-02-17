@@ -2,8 +2,8 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules.mock;
-using PLang.Runtime2.modules.mock.types;
+using PLang.Runtime2.actions.mock;
+using PLang.Runtime2.actions.mock.types;
 
 namespace PLang.Tests.Runtime2.Modules.mock;
 

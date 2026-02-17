@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.modules;
-using PLang.Runtime2.modules.library;
+using PLang.Runtime2.actions;
+using PLang.Runtime2.actions.library;
 
 namespace PLang.Tests.Runtime2.Modules.library;
 
@@ -50,14 +50,14 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.modules"
+                Namespace = "PLang.Runtime2.actions"
             };
 
-            var libraryCountBefore = engine.EngineLibraries.Value.Count;
+            var libraryCountBefore = engine.Libraries.Value.Count;
             var result = await load.Run();
 
             await Assert.That(result.Success).IsTrue();
-            await Assert.That(engine.EngineLibraries.Value.Count).IsEqualTo(libraryCountBefore + 1);
+            await Assert.That(engine.Libraries.Value.Count).IsEqualTo(libraryCountBefore + 1);
         }
     }
 
@@ -71,13 +71,13 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.modules"
+                Namespace = "PLang.Runtime2.actions"
             };
 
             var result = await load.Run();
             await Assert.That(result.Success).IsTrue();
 
-            var addedLib = engine.EngineLibraries.Value[^1];
+            var addedLib = engine.Libraries.Value[^1];
             await Assert.That(addedLib.Contains("variable", "set")).IsTrue();
         }
     }
@@ -98,7 +98,7 @@ public class LibraryLoadTests
             var result = await load.Run();
             await Assert.That(result.Success).IsTrue();
 
-            var addedLib = engine.EngineLibraries.Value[^1];
+            var addedLib = engine.Libraries.Value[^1];
             await Assert.That(addedLib.Count).IsEqualTo(0);
         }
     }
@@ -113,7 +113,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.modules"
+                Namespace = "PLang.Runtime2.actions"
             };
 
             var result = await load.Run();
@@ -139,7 +139,7 @@ public class LibraryLoadTests
             var result = await load.Run();
             await Assert.That(result.Success).IsTrue();
 
-            var addedLib = engine.EngineLibraries.Value[^1];
+            var addedLib = engine.Libraries.Value[^1];
             await Assert.That(addedLib.Contains("variable", "set")).IsTrue();
         }
     }
@@ -154,7 +154,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.modules"
+                Namespace = "PLang.Runtime2.actions"
             };
 
             var result = await load.Run();
@@ -162,7 +162,7 @@ public class LibraryLoadTests
 
             // First-match-wins means built-in [0] resolves first,
             // but no errors should occur with multiple libraries
-            var (handler, error) = engine.EngineLibraries.GetCodeGenerated("variable", "set", context);
+            var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
             await Assert.That(handler).IsNotNull();
             await Assert.That(error).IsNull();
         }
