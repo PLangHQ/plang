@@ -9,7 +9,7 @@ namespace PLang.Runtime2.Engine.Channels;
 /// <summary>
 /// Manages named channels for stream-based I/O in Runtime2.
 /// </summary>
-public sealed class Channels : IAsyncDisposable
+public sealed class EngineChannels : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, Channel> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly Engine _engine;
@@ -20,7 +20,7 @@ public sealed class Channels : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public Channels(Engine engine)
+    public EngineChannels(Engine engine)
     {
         _engine = engine;
         Register(new Channel(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)

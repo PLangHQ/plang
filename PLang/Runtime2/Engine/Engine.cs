@@ -16,9 +16,9 @@ namespace PLang.Runtime2.Engine;
 public sealed class Engine : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly Libraries _libraries;
-    private readonly SerializerRegistry _serializers;
-    private readonly Goals _goals;
+    private readonly EngineLibraries _libraries;
+    private readonly EngineSerializers _serializers;
+    private readonly EngineGoals _goals;
     private bool _disposed;
 
     private Actor? _system;
@@ -78,19 +78,19 @@ public sealed class Engine : IAsyncDisposable
 
     /// <summary>
     /// The library registry — uniform handler resolution system.
-    /// Built-in handlers are Libraries[0], external DLLs can be added as additional libraries.
+    /// Built-in handlers are EngineLibraries[0], external DLLs can be added as additional libraries.
     /// </summary>
-    public Libraries Libraries => _libraries;
+    public EngineLibraries EngineLibraries => _libraries;
 
     /// <summary>
     /// The serializer registry.
     /// </summary>
-    public SerializerRegistry Serializers => _serializers;
+    public EngineSerializers Serializers => _serializers;
 
     /// <summary>
     /// The loaded goals.
     /// </summary>
-    public Goals Goals => _goals;
+    public EngineGoals Goals => _goals;
 
     /// <summary>
     /// The file system abstraction.
@@ -100,7 +100,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// I/O operations (file reading, channels).
     /// </summary>
-    public PLang.Runtime2.Engine.Channels.Channels Channels { get; }
+    public PLang.Runtime2.Engine.Channels.EngineChannels Channels { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -110,7 +110,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Engine's key-value store with GoalCall resolution.
     /// </summary>
-    public Property Property { get; }
+    public EngineProperty Property { get; }
 
     /// <summary>
     /// Whether debug mode is enabled.
@@ -175,8 +175,8 @@ public sealed class Engine : IAsyncDisposable
     {
     }
 
-    public Engine(string absolutePath, Libraries? libraries = null,
-        SerializerRegistry? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null,
+    public Engine(string absolutePath, EngineLibraries? libraries = null,
+        EngineSerializers? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -185,12 +185,12 @@ public sealed class Engine : IAsyncDisposable
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
         Events = new Events();
-        Property = new Property(this);
-        _libraries = libraries ?? new Libraries();
-        _serializers = serializers ?? new SerializerRegistry();
-        _goals = new Goals { Engine = this };
+        Property = new EngineProperty(this);
+        _libraries = libraries ?? new EngineLibraries();
+        _serializers = serializers ?? new EngineSerializers();
+        _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
-        Channels = new PLang.Runtime2.Engine.Channels.Channels(this);
+        Channels = new PLang.Runtime2.Engine.Channels.EngineChannels(this);
     }
 
     /// <summary>

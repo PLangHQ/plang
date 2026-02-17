@@ -147,17 +147,17 @@ public class Program : BaseProgram
 	public async Task SetDebugMode()
 	{
 		context.ShowErrorDetails = true;
-		context.DebugMode = true;
+		context.EngineDebug = true;
 	}
 
 	public async Task RemoveDebugMode()
 	{
 		context.ShowErrorDetails = false;
-		context.DebugMode = false;
+		context.EngineDebug = false;
 	}
 	public async Task<bool> IsInDebugMode()
 	{
-		return context.DebugMode;
+		return context.EngineDebug;
 	}
 
 	public async Task ShowErrorDetails()

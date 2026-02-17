@@ -8,7 +8,7 @@ namespace PLang.Runtime2.modules;
 /// Built-in library is always [0]. External DLLs can be added as additional libraries.
 /// Replaces ActionRegistry entirely.
 /// </summary>
-public sealed class Libraries
+public sealed class EngineLibraries
 {
     private readonly List<Library> _libraries = new();
 
@@ -17,9 +17,9 @@ public sealed class Libraries
     /// </summary>
     public Library BuiltIn => _libraries[0];
 
-    public Libraries()
+    public EngineLibraries()
     {
-        var builtIn = new Library("builtin", typeof(Libraries).Assembly);
+        var builtIn = new Library("builtin", typeof(EngineLibraries).Assembly);
         builtIn.Discover("PLang.Runtime2.modules");
         _libraries.Add(builtIn);
     }

@@ -63,7 +63,7 @@ public class ConditionHandlerTests : IDisposable
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
             PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -71,13 +71,13 @@ public class ConditionHandlerTests : IDisposable
         var trueGoal = new Goal
         {
             Name = "TrueBranch",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "write true branch",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -114,20 +114,20 @@ public class ConditionHandlerTests : IDisposable
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
             PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         var falseGoal = new Goal
         {
             Name = "FalseBranch",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "write false branch",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -184,7 +184,7 @@ public class ConditionHandlerTests : IDisposable
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
             PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -192,13 +192,13 @@ public class ConditionHandlerTests : IDisposable
         var writeGoal = new Goal
         {
             Name = "WriteExists",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "write file exists",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -216,13 +216,13 @@ public class ConditionHandlerTests : IDisposable
         var mainGoal = new Goal
         {
             Name = "TestConditionFlow",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -237,7 +237,7 @@ public class ConditionHandlerTests : IDisposable
                 {
                     Index = 1,
                     Text = "if file exists call WriteExists",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {

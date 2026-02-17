@@ -15,7 +15,7 @@ public class StepTests
             LineNumber = 10,
             Indent = 2,
             Comment = "This makes an HTTP call",
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -80,7 +80,7 @@ public class StepTests
             LineNumber = 5,
             Indent = 1,
             Comment = "original comment",
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action
                 {

@@ -7,13 +7,13 @@ using System.Reflection;
 
 namespace PLang.Runtime2.Engine;
 
-public sealed class Actions : List<Action>
+public sealed class StepActions : List<Action>
 {
     private readonly object? _context;
 
-    public Actions() { }
-    public Actions(object context) { _context = context; }
-    public Actions(IEnumerable<Action> actions) : base(actions) { }
+    public StepActions() { }
+    public StepActions(object context) { _context = context; }
+    public StepActions(IEnumerable<Action> actions) : base(actions) { }
 
     public List<Action> Value => this;
 

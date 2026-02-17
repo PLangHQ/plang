@@ -21,7 +21,7 @@ public class GoalTests
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
             SubGoals = new List<string> { "SubGoal1", "SubGoal2" },
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
@@ -136,7 +136,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
                 new Step { Index = 1, Text = "second step" }
@@ -170,7 +170,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "step", Comment = "step comment" }
             }
@@ -187,7 +187,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "no indent", Indent = 0 },
                 new Step { Index = 1, Text = "one indent", Indent = 1 },
@@ -228,7 +228,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "write out \"hello\"" },
                 new Step { Index = 1, Text = "set %name% = \"world\"" }
@@ -248,13 +248,13 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "write out \"hello\"",
-                    Actions = new Actions(new[]
+                    Actions = new StepActions(new[]
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -282,7 +282,7 @@ public class GoalTests
         {
             Name = "Start",
             Comment = "This is the main goal",
-            Steps = new Steps()
+            Steps = new GoalSteps()
         };
 
         var result = await goal.FormatForLlm();
@@ -297,7 +297,7 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps(),
+            Steps = new GoalSteps(),
             Errors = new List<Info>
             {
                 new() { Key = "step1", Message = "Invalid JSON response" }
@@ -317,13 +317,13 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "select * from users, write to %users%",
-                    Actions = new Actions(new[]
+                    Actions = new StepActions(new[]
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -348,13 +348,13 @@ public class GoalTests
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "write out \"hello\"",
-                    Actions = new Actions(new[]
+                    Actions = new StepActions(new[]
                     {
                         new PLang.Runtime2.Engine.Action
                         {

@@ -325,7 +325,7 @@ public class FileHandlerTests : IDisposable
         // Replace default channel on User actor's IO so we can capture output
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
             PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
@@ -333,13 +333,13 @@ public class FileHandlerTests : IDisposable
         var goal = new PLang.Runtime2.Engine.Goal
         {
             Name = "TestFileExistsFlow",
-            Steps = new PLang.Runtime2.Engine.Steps
+            Steps = new PLang.Runtime2.Engine.GoalSteps
             {
                 new PLang.Runtime2.Engine.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Engine.Actions
+                    Actions = new PLang.Runtime2.Engine.StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -356,7 +356,7 @@ public class FileHandlerTests : IDisposable
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Engine.Actions
+                    Actions = new PLang.Runtime2.Engine.StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -403,20 +403,20 @@ public class FileHandlerTests : IDisposable
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
             PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         var goal = new PLang.Runtime2.Engine.Goal
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new PLang.Runtime2.Engine.Steps
+            Steps = new PLang.Runtime2.Engine.GoalSteps
             {
                 new PLang.Runtime2.Engine.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Engine.Actions
+                    Actions = new PLang.Runtime2.Engine.StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -433,7 +433,7 @@ public class FileHandlerTests : IDisposable
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Engine.Actions
+                    Actions = new PLang.Runtime2.Engine.StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {

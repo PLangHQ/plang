@@ -16,12 +16,12 @@ public class StartGoalTests
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.EngineLibraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
             Name = "Start",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "name" }, { "value", "Plang" } },
@@ -64,7 +64,7 @@ public class StartGoalTests
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.EngineLibraries.Register("output", "write", capture);
 
         // Find the .pr.json file and set FileSystem root to repo root so it's accessible
         var prJsonPath = FindPrJsonPath();
@@ -100,7 +100,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "myVar" }, { "value", "Hello" } },
@@ -125,12 +125,12 @@ public class StartGoalTests
         await using var engine = new Engine("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.EngineLibraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "user" }, { "value", "World" } },
@@ -155,12 +155,12 @@ public class StartGoalTests
         await using var engine = new Engine("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.EngineLibraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("output", "write",
                     new Dictionary<string, object?> { { "content", "no variables here" } },
@@ -182,12 +182,12 @@ public class StartGoalTests
         await using var engine = new Engine("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.EngineLibraries.Register("output", "write", capture);
 
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("output", "write",
                     new Dictionary<string, object?> { { "content", "Value: %unknown%" } },
@@ -211,7 +211,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "result" }, { "value", "%nonexistent%" } },
@@ -237,7 +237,7 @@ public class StartGoalTests
         {
             Index = index,
             Text = text,
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action
                 {

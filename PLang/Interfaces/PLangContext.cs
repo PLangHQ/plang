@@ -54,7 +54,7 @@ namespace PLang.Interfaces
 		public string Id { get; set; }
 		public bool IsAsync { get; set; }
 		public bool ShowErrorDetails { get; set; }
-		public bool DebugMode { get; set; }
+		public bool EngineDebug { get; set; }
 		public string Identity { get; set; }
 		public SignedMessage? SignedMessage { get; set; }
 		public HttpContext? HttpContext { get; set; }
@@ -248,7 +248,7 @@ namespace PLang.Interfaces
 			context.SharedItems = this.SharedItems;
 			context.HttpContext = this.HttpContext;
 			context.Callback = this.Callback;
-			context.DebugMode = this.DebugMode;
+			context.EngineDebug = this.EngineDebug;
 			context.ShowErrorDetails = this.ShowErrorDetails;
 			context.SystemSink = this.SystemSink;
 			context.UserSink = this.UserSink;

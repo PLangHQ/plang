@@ -20,7 +20,7 @@ public sealed class Actor : IAsyncDisposable
     /// <summary>
     /// Named channels owned by this actor.
     /// </summary>
-    public PLang.Runtime2.Engine.Channels.Channels Channels { get; }
+    public PLang.Runtime2.Engine.Channels.EngineChannels Channels { get; }
 
     /// <summary>
     /// Back-reference to the engine.
@@ -48,7 +48,7 @@ public sealed class Actor : IAsyncDisposable
             CallStack = new CallStack()
         };
         Context.Actor = this;
-        Channels = new PLang.Runtime2.Engine.Channels.Channels(engine);
+        Channels = new PLang.Runtime2.Engine.Channels.EngineChannels(engine);
     }
 
     public async ValueTask DisposeAsync()

@@ -340,7 +340,7 @@ namespace PLang
 
 			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
 			{
-				Runtime2.Engine.DebugMode.Apply(engine, debugValue);
+				Runtime2.Engine.EngineDebug.Apply(engine, debugValue);
 				parameters.Remove("debug");
 			}
 
@@ -350,7 +350,7 @@ namespace PLang
 				foreach (var param in parameters)
 					engine.MemoryStack.Set(param.Key, param.Value);
 
-				var exitCode = await Runtime2.Engine.TestMode.RunAsync(engine, cancellationToken);
+				var exitCode = await Runtime2.Engine.EngineTesting.RunAsync(engine, cancellationToken);
 				return exitCode == 0 ? Runtime2.Engine.Memory.Data.Ok() : Runtime2.Engine.Memory.Data.FromError(new Runtime2.Engine.Errors.Error("Tests failed", "TestsFailed", exitCode));
 			}
 

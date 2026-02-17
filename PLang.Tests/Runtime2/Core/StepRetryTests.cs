@@ -19,7 +19,7 @@ public class StepRetryTests
     {
         _engine = new Engine("/app");
         _flaky = new FlakyHandler();
-        _engine.Libraries.Register("test", "flaky", _flaky);
+        _engine.EngineLibraries.Register("test", "flaky", _flaky);
     }
 
     // ================================================================
@@ -233,13 +233,13 @@ public class StepRetryTests
         var errorGoal = new Goal
         {
             Name = "CaptureError",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "capture error message",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -337,14 +337,14 @@ public class StepRetryTests
         var goal = new Goal
         {
             Name = "TestContinuation",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "flaky step with retry",
                     OnError = new ErrorHandler { RetryCount = 3 },
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -358,7 +358,7 @@ public class StepRetryTests
                 {
                     Index = 1,
                     Text = "set marker after retry success",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -391,14 +391,14 @@ public class StepRetryTests
         return new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "flaky step",
                     OnError = errorHandler,
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -417,13 +417,13 @@ public class StepRetryTests
         return new Goal
         {
             Name = goalName,
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = $"set {varName}",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {

@@ -158,7 +158,7 @@ namespace PLang.Modules.TemplateEngineModule
 				logger.LogDebug($"             - Parsed content - {stopwatch.ElapsedMilliseconds}");
 				var result = await parsed.RenderAsync(templateContext);
 				logger.LogDebug($"             - Rendered content for: {goalStep.Text.MaxLength(40)} - {stopwatch.ElapsedMilliseconds}");
-				if (this.context != null && this.context.DebugMode && result != null)
+				if (this.context != null && this.context.EngineDebug && result != null)
 				{
 					result = InsertDebugInfo(result);
 				}
@@ -428,7 +428,7 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					{
 						throw new ExceptionWrapper(result.Item2);
 					}
-					if (this.context.DebugMode && result.Item1 != null)
+					if (this.context.EngineDebug && result.Item1 != null)
 					{
 						return InsertDebugInfo(result.Item1);
 						

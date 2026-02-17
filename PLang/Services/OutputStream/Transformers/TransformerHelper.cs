@@ -127,7 +127,7 @@ namespace PLang.Services.OutputStream.Transformers
 					}
 				};
 				
-				if (context.DebugMode)
+				if (context.EngineDebug)
 				{
 					envelope["debug"] = DebugHelper.GetDebugInfo(context);
 				}
@@ -147,7 +147,7 @@ namespace PLang.Services.OutputStream.Transformers
 					["content"] = $"",
 				};
 
-				if (context.DebugMode)
+				if (context.EngineDebug)
 				{
 					envelope["debug"] = DebugHelper.GetDebugInfo(context);
 				}

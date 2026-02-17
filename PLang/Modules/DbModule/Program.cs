@@ -906,7 +906,7 @@ namespace PLang.Modules.DbModule
 				}
 				cmd.CommandText = prep.sql;
 				properties.Add(new ObjectValue("CommandText", cmd.CommandText));
-				if (context.DebugMode)
+				if (context.EngineDebug)
 				{
 
 				}

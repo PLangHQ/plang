@@ -23,7 +23,7 @@ public class CallStackIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(
@@ -56,7 +56,7 @@ public class CallStackIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step1, step2 }
+            Steps = new GoalSteps { step1, step2 }
         };
 
         _engine.Context.User.Events.Register(
@@ -82,7 +82,7 @@ public class CallStackIntegrationTests
         {
             Index = 0,
             Text = "failing step",
-            Actions = new Actions(new[]
+            Actions = new StepActions(new[]
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -95,7 +95,7 @@ public class CallStackIntegrationTests
         var goal = new Goal
         {
             Name = "ErrorGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         var result = await _engine.RunGoalAsync(goal);
@@ -114,7 +114,7 @@ public class CallStackIntegrationTests
         var goal = new Goal
         {
             Name = "DepthGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(

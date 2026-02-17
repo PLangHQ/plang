@@ -10,7 +10,7 @@ namespace PLang.Runtime2.Engine;
 /// Collection of goals for an application.
 /// Provides lookup and caching functionality.
 /// </summary>
-public sealed class Goals
+public sealed class EngineGoals
 {
     private readonly ConcurrentDictionary<string, Goal> _goals = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Goal> _byPath = new(StringComparer.OrdinalIgnoreCase);

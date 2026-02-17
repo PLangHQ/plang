@@ -9,7 +9,7 @@ public class ActionsTests
     [Test]
     public async Task Constructor_Default_CreatesEmptyList()
     {
-        var actions = new Actions();
+        var actions = new StepActions();
 
         await Assert.That(actions.Count).IsEqualTo(0);
     }
@@ -23,7 +23,7 @@ public class ActionsTests
             new() { Module = "file", ActionName = "save" }
         };
 
-        var actions = new Actions(list);
+        var actions = new StepActions(list);
 
         await Assert.That(actions.Count).IsEqualTo(2);
     }
@@ -31,7 +31,7 @@ public class ActionsTests
     [Test]
     public async Task Value_ReturnsSelf()
     {
-        var actions = new Actions();
+        var actions = new StepActions();
         actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         await Assert.That(actions.Value).IsEquivalentTo(actions);
@@ -40,7 +40,7 @@ public class ActionsTests
     [Test]
     public async Task Summary_NoContext_ReturnsEmptyString()
     {
-        var actions = new Actions();
+        var actions = new StepActions();
         actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
@@ -52,7 +52,7 @@ public class ActionsTests
     [Test]
     public async Task Summary_WrongContextType_ReturnsEmptyString()
     {
-        var actions = new Actions("not a PLangContext");
+        var actions = new StepActions("not a PLangContext");
         actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
@@ -86,7 +86,7 @@ public class ActionsTests
         await Assert.That(action.ParameterSchema).IsNull();
     }
 
-    // --- GetActions integration tests (uses real Libraries + assembly discovery) ---
+    // --- GetActions integration tests (uses real EngineLibraries + assembly discovery) ---
 
     [Test]
     public async Task GetActions_ReturnsNonEmptyActions()
@@ -166,7 +166,7 @@ public class ActionsTests
         await Assert.That(noParams.Count).IsGreaterThanOrEqualTo(0);
     }
 
-    // --- ValidateActions tests (uses real Libraries + assembly discovery) ---
+    // --- ValidateActions tests (uses real EngineLibraries + assembly discovery) ---
 
     [Test]
     public async Task ValidateActions_NullActions_ReturnsError()
@@ -181,7 +181,7 @@ public class ActionsTests
     [Test]
     public async Task ValidateActions_EmptyActions_ReturnsError()
     {
-        var (isValid, error) = ValidateActions(new Actions());
+        var (isValid, error) = ValidateActions(new StepActions());
 
         await Assert.That(isValid).IsEqualTo(false);
         await Assert.That(error).IsNotNull();
@@ -191,7 +191,7 @@ public class ActionsTests
     [Test]
     public async Task ValidateActions_ValidActions_ReturnsTrue()
     {
-        var actions = new Actions
+        var actions = new StepActions
         {
             new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
             new PLang.Runtime2.Engine.Action { Module = "file", ActionName = "save" }
@@ -206,7 +206,7 @@ public class ActionsTests
     [Test]
     public async Task ValidateActions_OneInvalid_ReturnsActionNotFound()
     {
-        var actions = new Actions
+        var actions = new StepActions
         {
             new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" }
         };
@@ -221,7 +221,7 @@ public class ActionsTests
     [Test]
     public async Task ValidateActions_MixedValidAndInvalid_ReturnsActionNotFound()
     {
-        var actions = new Actions
+        var actions = new StepActions
         {
             new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
             new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" },
@@ -269,7 +269,7 @@ public class ActionsTests
         var step = new Step { Index = 0, Text = "set greeting" };
         var stepFromLlm = new Step
         {
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" }
             }
@@ -290,7 +290,7 @@ public class ActionsTests
         var step = new Step { Index = 3, Text = "original text", LineNumber = 10 };
         var stepFromLlm = new Step
         {
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action { Module = "output", ActionName = "write" }
             }
@@ -310,7 +310,7 @@ public class ActionsTests
         var step = new Step { Index = 0, Text = "test" };
         var stepFromLlm = new Step
         {
-            Actions = new Actions(),
+            Actions = new StepActions(),
             Errors = new List<Info> { new() { Key = "E1", Message = "Some error" } },
             Warnings = new List<Info> { new() { Key = "W1", Message = "Some warning" } }
         };
@@ -331,12 +331,12 @@ public class ActionsTests
         {
             Index = 0,
             Text = "test",
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action { Module = "old", ActionName = "action" }
             }
         };
-        var stepFromLlm = new Step { Actions = new Actions() };
+        var stepFromLlm = new Step { Actions = new StepActions() };
 
         var (result, error) = MergeStep(step, stepFromLlm);
 
@@ -374,12 +374,12 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, PLang.Runtime2.Engine.Errors.IError? error) ValidateActions(Actions actions)
+    private static (bool isValid, PLang.Runtime2.Engine.Errors.IError? error) ValidateActions(StepActions actions)
     {
         if (actions == null || actions.Count == 0)
             return (false, new PLang.Runtime2.Engine.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -396,13 +396,13 @@ public class ActionsTests
     }
 
     /// <summary>
-    /// Mimics what GetActions() in PlangModule does — uses Libraries to discover handlers.
+    /// Mimics what GetActions() in PlangModule does — uses EngineLibraries to discover handlers.
     /// </summary>
-    private static Actions DiscoverActions()
+    private static StepActions DiscoverActions()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
-        var actions = new Actions();
+        var actions = new StepActions();
 
         foreach (var ns in libraries.Modules)
         {

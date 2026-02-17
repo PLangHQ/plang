@@ -10,9 +10,9 @@ public class LibrariesTests
     [Test]
     public async Task Constructor_DiscoversBultInHandlers()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
-        // Libraries constructor auto-discovers built-in handlers
+        // EngineLibraries constructor auto-discovers built-in handlers
         await Assert.That(libraries.Contains("variable", "set")).IsTrue();
         await Assert.That(libraries.Contains("output", "write")).IsTrue();
     }
@@ -20,7 +20,7 @@ public class LibrariesTests
     [Test]
     public async Task Register_AddsHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler = new MockHandler();
 
         libraries.Register("test", "do", handler);
@@ -31,7 +31,7 @@ public class LibrariesTests
     [Test]
     public async Task Get_ReturnsHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler = new MockHandler();
         libraries.Register("test", "do", handler);
 
@@ -43,7 +43,7 @@ public class LibrariesTests
     [Test]
     public async Task Get_CaseInsensitive()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler = new MockHandler();
         libraries.Register("Test", "Do", handler);
 
@@ -54,7 +54,7 @@ public class LibrariesTests
     [Test]
     public async Task Get_NonexistentHandler_ReturnsNull()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         await Assert.That(libraries.Get("nonexistent", "method")).IsNull();
     }
@@ -62,7 +62,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_WithModuleAndAction_ReturnsTrue()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.Register("test", "do", new MockHandler());
 
         await Assert.That(libraries.Contains("test", "do")).IsTrue();
@@ -71,7 +71,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_WithModuleOnly_ReturnsTrue()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.Register("test", "do", new MockHandler());
 
         await Assert.That(libraries.Contains("test")).IsTrue();
@@ -80,7 +80,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_NonexistentModule_ReturnsFalse()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         await Assert.That(libraries.Contains("nonexistent_xyz_123")).IsFalse();
     }
@@ -88,7 +88,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_ReturnsAllActionsInModule()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.Register("custom", "alpha", new MockHandler());
         libraries.Register("custom", "beta", new MockHandler());
 
@@ -101,7 +101,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_NonexistentModule_ReturnsEmpty()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var actions = libraries.GetActions("nonexistent_xyz_123").ToList();
 
@@ -111,7 +111,7 @@ public class LibrariesTests
     [Test]
     public async Task Modules_ReturnsAllModules()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var modules = libraries.Modules.ToList();
 
@@ -123,7 +123,7 @@ public class LibrariesTests
     [Test]
     public async Task Clear_RemovesAllHandlers()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.Register("custom", "do", new MockHandler());
 
         libraries.Clear();
@@ -136,7 +136,7 @@ public class LibrariesTests
     [Test]
     public async Task Register_SameKeyTwice_ReplacesHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         libraries.Register("test", "do", handler1);
@@ -149,7 +149,7 @@ public class LibrariesTests
     [Test]
     public async Task BuiltIn_DiscoversFindHandlers()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         // Should discover variable.set, variable.get, etc.
         await Assert.That(libraries.Contains("variable", "set")).IsTrue();
@@ -169,7 +169,7 @@ public class LibrariesTests
     [Test]
     public async Task All_ReturnsRegisteredHandlers()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         libraries.Register("ns1", "cls1", handler1);
@@ -204,7 +204,7 @@ public class LibrariesTests
     [Test]
     public async Task AddLibrary_ResolvesFromAddedLibrary()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var external = new Library("external");
         external.Register("custom", "magic", new MockHandler());
         libraries.Add(external);
@@ -215,7 +215,7 @@ public class LibrariesTests
     [Test]
     public async Task Value_ReturnsAllLibraries()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var external = new Library("external");
         libraries.Add(external);
 
@@ -224,12 +224,12 @@ public class LibrariesTests
         await Assert.That(libraries[1].Name).IsEqualTo("external");
     }
 
-    #region Libraries.GetCodeGenerated
+    #region EngineLibraries.GetCodeGenerated
 
     [Test]
     public async Task GetCodeGenerated_BuiltInAction_ReturnsHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         await using var engine = new Engine("/app", libraries);
         using var context = engine.CreateContext();
 
@@ -242,7 +242,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_ExplicitCodeGenHandler_ReturnsHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler = new MockCodeGenHandler();
         libraries.Register("custom", "run", handler);
         await using var engine = new Engine("/app", libraries);
@@ -257,7 +257,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_NonICodeGeneratedHandler_ReturnsHandlerError()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.Register("legacy", "do", new MockHandler());
         await using var engine = new Engine("/app", libraries);
         using var context = engine.CreateContext();
@@ -272,7 +272,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         await using var engine = new Engine("/app", libraries);
         using var context = engine.CreateContext();
 
@@ -286,7 +286,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_MultiLibrary_FirstMatchWins()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var builtInHandler = new MockCodeGenHandler { Tag = "builtin" };
         libraries.Register("custom", "run", builtInHandler);
 
@@ -308,7 +308,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_FallsToSecondLibrary_WhenFirstDoesNotHaveIt()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var external = new Library("external");
         var externalHandler = new MockCodeGenHandler { Tag = "external" };
@@ -327,7 +327,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         await using var engine = new Engine("/app", libraries);
         using var context = engine.CreateContext();
 
@@ -440,12 +440,12 @@ public class LibrariesTests
 
     #endregion
 
-    #region Libraries aggregate queries
+    #region EngineLibraries aggregate queries
 
     [Test]
     public async Task Count_IncludesBuiltInAndRegistered()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var countBefore = libraries.Count;
 
         libraries.Register("custom", "one", new MockHandler());
@@ -457,7 +457,7 @@ public class LibrariesTests
     [Test]
     public async Task Count_SpansMultipleLibraries()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var countBefore = libraries.Count;
 
         var external = new Library("external");
@@ -471,7 +471,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_ReturnsTypeForBuiltIn()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var type = libraries.GetActionType("variable", "set");
 
@@ -481,7 +481,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_ReturnsTypeForExplicitHandler()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         var handler = new MockCodeGenHandler();
         libraries.Register("custom", "run", handler);
 
@@ -493,7 +493,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_NonexistentAction_ReturnsNull()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
 
         var type = libraries.GetActionType("nonexistent_xyz", "nope");
 
@@ -503,7 +503,7 @@ public class LibrariesTests
     [Test]
     public async Task RegisterCodeGenerated_RegistersTypeOnBuiltIn()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         libraries.RegisterCodeGenerated("custom", "run", typeof(MockCodeGenHandler));
 
         await Assert.That(libraries.Contains("custom", "run")).IsTrue();
@@ -513,7 +513,7 @@ public class LibrariesTests
     [Test]
     public async Task Modules_IncludesAcrossLibraries_NoDuplicates()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         // "variable" already exists in builtin
         var external = new Library("external");
         external.Register("variable", "custom_action", new MockHandler());
@@ -531,7 +531,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_IncludesAcrossLibraries_NoDuplicates()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         // "variable.set" already exists in builtin
         var external = new Library("external");
         external.Register("variable", "set", new MockHandler()); // duplicate

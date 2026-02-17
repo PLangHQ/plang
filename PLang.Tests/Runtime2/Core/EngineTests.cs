@@ -14,7 +14,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -35,7 +35,7 @@ public class EngineTests
         {
             Index = index,
             Text = text,
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -151,7 +151,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
-        await Assert.That(engine.Libraries).IsNotNull();
+        await Assert.That(engine.EngineLibraries).IsNotNull();
         await Assert.That(engine.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
@@ -197,16 +197,16 @@ public class EngineTests
     [Test]
     public async Task Constructor_AcceptsCustomLibraries()
     {
-        var libraries = new Libraries();
+        var libraries = new EngineLibraries();
         await using var engine = new Engine("/app", libraries);
 
-        await Assert.That(engine.Libraries).IsEqualTo(libraries);
+        await Assert.That(engine.EngineLibraries).IsEqualTo(libraries);
     }
 
     [Test]
     public async Task Constructor_AcceptsCustomSerializerRegistry()
     {
-        var serializers = new SerializerRegistry();
+        var serializers = new EngineSerializers();
         await using var engine = new Engine("/app", serializers: serializers);
 
         await Assert.That(engine.Serializers).IsEqualTo(serializers);
@@ -217,8 +217,8 @@ public class EngineTests
     {
         await using var engine = new Engine("/app");
 
-        await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
-        await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
+        await Assert.That(engine.EngineLibraries.Contains("variable", "set")).IsTrue();
+        await Assert.That(engine.EngineLibraries.Contains("variable", "get")).IsTrue();
     }
 
     [Test]
@@ -226,7 +226,7 @@ public class EngineTests
     {
         await using var engine = new Engine("/app");
 
-        await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
+        await Assert.That(engine.EngineLibraries.Contains("output", "write")).IsTrue();
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
@@ -352,7 +352,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
                 // Missing name parameter -> will fail
@@ -373,13 +373,13 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "failing step",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -454,7 +454,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var throwingHandler = new ThrowingHandler();
-        engine.Libraries.Register("throwing", "fail", throwingHandler);
+        engine.EngineLibraries.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
@@ -471,7 +471,7 @@ public class EngineTests
         await using var engine = new Engine("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
+        engine.EngineLibraries.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
         using var context = engine.CreateContext();
@@ -487,7 +487,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var disposableHandler = new DisposableHandler();
-        engine.Libraries.Register("disposable", "do", disposableHandler);
+        engine.EngineLibraries.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
@@ -499,7 +499,7 @@ public class EngineTests
     {
         var engine = new Engine("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
+        engine.EngineLibraries.Register("asyncdisposable", "do", asyncDisposableHandler);
 
         await engine.DisposeAsync();
 
@@ -558,7 +558,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "hello" } },
@@ -583,7 +583,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "test" }, { "value", "system-value" } },
@@ -693,7 +693,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "SummaryGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
                     new Dictionary<string, object?> { { "name", "wasRun" }, { "value", "yes" } },

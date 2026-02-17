@@ -9,7 +9,7 @@ namespace PLang.Runtime2.Engine;
 /// Provides debug output for PLang execution when !debug is passed on the command line.
 /// Registers events to dump step info, call stack, and memory stack to stderr.
 /// </summary>
-public static class DebugMode
+public static class EngineDebug
 {
     public static void Apply(Engine engine, object debugValue)
     {

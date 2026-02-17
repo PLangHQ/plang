@@ -67,7 +67,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(
@@ -95,7 +95,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(
@@ -123,7 +123,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(
@@ -231,7 +231,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         _engine.Context.User.Events.Register(
@@ -368,7 +368,7 @@ public class EventIntegrationTests
         {
             Index = 0,
             Text = "set var",
-            Actions = new Actions(new[]
+            Actions = new StepActions(new[]
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -386,7 +386,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         await _engine.RunGoalAsync(goal);
@@ -412,7 +412,7 @@ public class EventIntegrationTests
         {
             Index = 0,
             Text = "set var",
-            Actions = new Actions(new[]
+            Actions = new StepActions(new[]
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -430,7 +430,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         await _engine.RunGoalAsync(goal);
@@ -456,7 +456,7 @@ public class EventIntegrationTests
         {
             Index = 0,
             Text = "set var",
-            Actions = new Actions(new[]
+            Actions = new StepActions(new[]
             {
                 new PLang.Runtime2.Engine.Action
                 {
@@ -474,7 +474,7 @@ public class EventIntegrationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps { step }
+            Steps = new GoalSteps { step }
         };
 
         await _engine.RunGoalAsync(goal);

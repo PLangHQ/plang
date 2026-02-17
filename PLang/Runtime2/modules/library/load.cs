@@ -21,7 +21,7 @@ public partial class Load : IContext
         var assembly = System.Reflection.Assembly.LoadFrom(absPath);
         var lib = new Library(fs.Path.GetFileNameWithoutExtension(absPath), assembly);
         lib.Discover(Namespace);
-        engine.Libraries.Add(lib);
+        engine.EngineLibraries.Add(lib);
 
         return Task.FromResult(Data.Ok(
             new types.library { name = lib.Name, actions = lib.Count }));

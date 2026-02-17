@@ -28,7 +28,7 @@ public sealed partial class Goal
     public string? Comment { get; init; }
 
     [Store, Debug, Default]
-    public Steps Steps { get; init; } = new();
+    public GoalSteps Steps { get; init; } = new();
 
     [Store, Debug, Default]
     public List<string> SubGoals { get; init; } = new();

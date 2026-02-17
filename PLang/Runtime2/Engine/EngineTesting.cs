@@ -9,7 +9,7 @@ namespace PLang.Runtime2.Engine;
 /// tracks assertion pass/fail via events, and prints a summary.
 /// Activated by: plang p !test
 /// </summary>
-public static class TestMode
+public static class EngineTesting
 {
     private sealed class TestResult
     {

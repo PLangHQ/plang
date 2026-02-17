@@ -25,7 +25,7 @@ public static class GoalMapper
             InputParameters = oldGoal.IncomingVariablesRequired,
             Path = oldGoal.RelativeGoalPath,
             PrPath = oldGoal.RelativePrPath,
-            Steps = new Steps(oldGoal.GoalSteps.Select(ToRuntime2Step)),
+            Steps = new GoalSteps(oldGoal.GoalSteps.Select(ToRuntime2Step)),
             SubGoals = oldGoal.SubGoals ?? new(),
             Errors = new(),
             Warnings = new()
@@ -52,7 +52,7 @@ public static class GoalMapper
             LineNumber = oldStep.LineNumber,
             Indent = oldStep.Indent,
             Comment = oldStep.Comment,
-            Actions = new Actions
+            Actions = new StepActions
             {
                 new Action
                 {

@@ -91,7 +91,7 @@ public class GoalSerializationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
@@ -102,7 +102,7 @@ public class GoalSerializationTests
                     Comment = "step comment",
                     WaitForExecution = false,
                     Timeout = 30,
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -139,7 +139,7 @@ public class GoalSerializationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
@@ -180,7 +180,7 @@ public class GoalSerializationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
@@ -213,7 +213,7 @@ public class GoalSerializationTests
         var goal = new Goal
         {
             Name = "TestGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "step" }
             }

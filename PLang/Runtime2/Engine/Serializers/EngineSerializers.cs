@@ -3,13 +3,13 @@ namespace PLang.Runtime2.Engine.Serializers;
 /// <summary>
 /// Registry for serializers, allowing lookup by content type or file extension.
 /// </summary>
-public sealed class SerializerRegistry
+public sealed class EngineSerializers
 {
     private readonly Dictionary<string, ISerializer> _byContentType = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ISerializer> _byExtension = new(StringComparer.OrdinalIgnoreCase);
     private ISerializer _default;
 
-    public SerializerRegistry()
+    public EngineSerializers()
     {
         var json = new JsonStreamSerializer();
         var text = new TextStreamSerializer(jsonFallback: json);

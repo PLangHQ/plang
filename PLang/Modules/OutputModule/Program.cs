@@ -131,7 +131,7 @@ namespace PLang.Modules.OutputModule
 				parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());
 				parameters.Add("url", url);
 
-				if (context.DebugMode)
+				if (context.EngineDebug)
 				{
 					parameters.Add("prFile", goalStep.PrFileName);
 				}

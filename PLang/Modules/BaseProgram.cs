@@ -412,7 +412,7 @@ namespace PLang.Modules
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var engine = container.GetInstance<IEngine>();
 			string message = fa.Message;
-			if (context.DebugMode)
+			if (context.EngineDebug)
 			{
 				message = $"[Debug: {goalStep.Text.Replace("%", "\\%")} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}]\n\n" + message;
 			}

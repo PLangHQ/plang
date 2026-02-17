@@ -34,13 +34,13 @@ public class ForeachTests
         var captureGoal = new Goal
         {
             Name = "ProcessItem",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "capture item",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -107,7 +107,7 @@ public class ForeachTests
         var goal = new Goal
         {
             Name = "CaptureGoal",
-            Steps = new Steps()
+            Steps = new GoalSteps()
         };
         _engine.Goals.Add(goal);
 
@@ -132,7 +132,7 @@ public class ForeachTests
         var context = CreateContext();
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
 
-        var goal = new Goal { Name = "DictGoal", Steps = new Steps() };
+        var goal = new Goal { Name = "DictGoal", Steps = new GoalSteps() };
         _engine.Goals.Add(goal);
 
         var action = new Foreach

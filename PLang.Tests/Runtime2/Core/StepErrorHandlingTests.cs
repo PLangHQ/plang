@@ -20,14 +20,14 @@ public class StepErrorHandlingTests
         var goal = new Goal
         {
             Name = "TestIgnoreError",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "this will fail",
                     OnError = new ErrorHandler { IgnoreError = true },
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -41,7 +41,7 @@ public class StepErrorHandlingTests
                 {
                     Index = 1,
                     Text = "set success marker",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -76,13 +76,13 @@ public class StepErrorHandlingTests
         var countGoal = new Goal
         {
             Name = "CountAttempt",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "increment attempts",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -104,7 +104,7 @@ public class StepErrorHandlingTests
         var goal = new Goal
         {
             Name = "TestRetry",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
@@ -115,7 +115,7 @@ public class StepErrorHandlingTests
                         RetryCount = 2,
                         IgnoreError = true
                     },
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -143,13 +143,13 @@ public class StepErrorHandlingTests
         var errorGoal = new Goal
         {
             Name = "HandleError",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
                     Index = 0,
                     Text = "mark error handled",
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {
@@ -171,7 +171,7 @@ public class StepErrorHandlingTests
         var goal = new Goal
         {
             Name = "TestErrorGoal",
-            Steps = new Steps
+            Steps = new GoalSteps
             {
                 new Step
                 {
@@ -181,7 +181,7 @@ public class StepErrorHandlingTests
                     {
                         Goal = new GoalCall { Name = "HandleError" }
                     },
-                    Actions = new Actions
+                    Actions = new StepActions
                     {
                         new PLang.Runtime2.Engine.Action
                         {

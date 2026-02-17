@@ -25,7 +25,7 @@ public sealed partial class Step
     public string? Comment { get; init; }
 
     [Store, Debug, Default]
-    public Actions Actions { get; set; } = new();
+    public StepActions Actions { get; set; } = new();
 
     [Store, Debug, Default]
     public string? OnErrorGoal { get; init; }
@@ -74,7 +74,7 @@ public sealed partial class Step
             LineNumber = LineNumber,
             Indent = Indent,
             Comment = Comment,
-            Actions = new Actions(Actions.Select(a => new Action
+            Actions = new StepActions(Actions.Select(a => new Action
             {
                 Module = a.Module,
                 ActionName = a.ActionName,

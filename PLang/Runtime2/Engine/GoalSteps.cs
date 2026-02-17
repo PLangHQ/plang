@@ -3,10 +3,10 @@ using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine;
 
-public sealed class Steps : List<Step>
+public sealed class GoalSteps : List<Step>
 {
-    public Steps() { }
-    public Steps(IEnumerable<Step> steps) : base(steps) { }
+    public GoalSteps() { }
+    public GoalSteps(IEnumerable<Step> steps) : base(steps) { }
 
     public List<Step> Value => this;
 

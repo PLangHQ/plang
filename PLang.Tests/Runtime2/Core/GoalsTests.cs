@@ -7,7 +7,7 @@ public class GoalsTests
     [Test]
     public async Task Constructor_StartsEmpty()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         await Assert.That(goals.Count).IsEqualTo(0);
     }
@@ -15,7 +15,7 @@ public class GoalsTests
     [Test]
     public async Task Add_AddsGoal()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal" };
 
         goals.Add(goal);
@@ -26,7 +26,7 @@ public class GoalsTests
     [Test]
     public async Task Add_RegistersByName()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal" };
 
         goals.Add(goal);
@@ -37,7 +37,7 @@ public class GoalsTests
     [Test]
     public async Task Add_RegistersByPath()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal", Path = "goals/test" };
 
         goals.Add(goal);
@@ -48,7 +48,7 @@ public class GoalsTests
     [Test]
     public async Task Get_ByName_ReturnsGoal()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal" };
         goals.Add(goal);
 
@@ -60,7 +60,7 @@ public class GoalsTests
     [Test]
     public async Task Get_CaseInsensitive()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal" };
         goals.Add(goal);
 
@@ -71,7 +71,7 @@ public class GoalsTests
     [Test]
     public async Task Get_EmptyOrNull_ReturnsNull()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         await Assert.That(goals.Get(null!)).IsNull();
         await Assert.That(goals.Get("")).IsNull();
@@ -80,7 +80,7 @@ public class GoalsTests
     [Test]
     public async Task Get_NonexistentName_ReturnsNull()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         var result = goals.Get("NonexistentGoal");
 
@@ -90,7 +90,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_WithGoalExtension()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal.goal" };
         goals.Add(goal);
 
@@ -102,7 +102,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_WithLeadingSlash()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         // The Get method tries TrimStart('/'), so looking up "/goals/test" will find "goals/test"
         var goal = new Goal { Name = "/goals/test", Path = "/goals/test" };
         goals.Add(goal);
@@ -116,7 +116,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_SlashConversion()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "goals/test" };
         goals.Add(goal);
 
@@ -128,7 +128,7 @@ public class GoalsTests
     [Test]
     public async Task Indexer_ReturnsGoal()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal = new Goal { Name = "TestGoal" };
         goals.Add(goal);
 
@@ -140,7 +140,7 @@ public class GoalsTests
     [Test]
     public async Task Indexer_NonexistentName_ReturnsNull()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         var result = goals["NonexistentGoal"];
 
@@ -150,7 +150,7 @@ public class GoalsTests
     [Test]
     public async Task Contains_ExistingGoal_ReturnsTrue()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "TestGoal" });
 
         await Assert.That(goals.Contains("TestGoal")).IsTrue();
@@ -159,7 +159,7 @@ public class GoalsTests
     [Test]
     public async Task Contains_NonexistentGoal_ReturnsFalse()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         await Assert.That(goals.Contains("NonexistentGoal")).IsFalse();
     }
@@ -167,7 +167,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_RemovesGoal()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "TestGoal", Path = "test" });
 
         var removed = goals.Remove("TestGoal");
@@ -179,7 +179,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_RemovesPathLookups()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "TestGoal", Path = "test" });
 
         goals.Remove("TestGoal");
@@ -190,7 +190,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_NonexistentGoal_ReturnsFalse()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
 
         var removed = goals.Remove("NonexistentGoal");
 
@@ -200,7 +200,7 @@ public class GoalsTests
     [Test]
     public async Task Clear_RemovesAllGoals()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "Goal1" });
         goals.Add(new Goal { Name = "Goal2" });
 
@@ -212,7 +212,7 @@ public class GoalsTests
     [Test]
     public async Task Names_ReturnsAllNames()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "Goal1" });
         goals.Add(new Goal { Name = "Goal2" });
 
@@ -225,7 +225,7 @@ public class GoalsTests
     [Test]
     public async Task All_ReturnsAllGoals()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal1 = new Goal { Name = "Goal1" };
         var goal2 = new Goal { Name = "Goal2" };
         goals.Add(goal1);
@@ -240,7 +240,7 @@ public class GoalsTests
     [Test]
     public async Task Public_ReturnsOnlyPublicGoals()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "PublicGoal", Visibility = Visibility.Public });
         goals.Add(new Goal { Name = "PrivateGoal", Visibility = Visibility.Private });
 
@@ -253,7 +253,7 @@ public class GoalsTests
     [Test]
     public async Task Setup_ReturnsOnlySetupGoals()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
         goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
 
@@ -266,7 +266,7 @@ public class GoalsTests
     [Test]
     public async Task Events_ReturnsOnlyEventGoals()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "EventGoal", IsEvent = true });
         goals.Add(new Goal { Name = "NormalGoal", IsEvent = false });
 
@@ -279,7 +279,7 @@ public class GoalsTests
     [Test]
     public async Task Add_SameNameTwice_ReplacesGoal()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         var goal1 = new Goal { Name = "TestGoal", Description = "First" };
         var goal2 = new Goal { Name = "TestGoal", Description = "Second" };
         goals.Add(goal1);
@@ -293,7 +293,7 @@ public class GoalsTests
     [Test]
     public async Task Count_ReturnsCorrectCount()
     {
-        var goals = new Goals();
+        var goals = new EngineGoals();
         goals.Add(new Goal { Name = "Goal1" });
         goals.Add(new Goal { Name = "Goal2" });
         goals.Add(new Goal { Name = "Goal3" });
