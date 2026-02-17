@@ -1,5 +1,5 @@
 using System.Text;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -25,6 +25,6 @@ public partial class ToBase64 : IContext
             result = Convert.ToBase64String(Encoding.UTF8.GetBytes(Value.ToString() ?? ""));
         }
 
-        return Task.FromResult(Data.Ok(result, Memory.Type.String));
+        return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.String));
     }
 }

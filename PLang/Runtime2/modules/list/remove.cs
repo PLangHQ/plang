@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -16,7 +16,7 @@ public partial class Remove : IContext
         var existing = Context.MemoryStack.GetValue(ListName);
         if (existing is not List<object?> list)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         if (AtIndex >= 0)
         {
@@ -29,6 +29,6 @@ public partial class Remove : IContext
         }
 
         Context.MemoryStack.Set(ListName, list);
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

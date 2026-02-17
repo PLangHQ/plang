@@ -1,0 +1,45 @@
+{
+  "branch": "runtime2",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T00:00:00Z",
+      "timestamp_end": "2026-02-16T00:05:00Z",
+      "intent": "Test run to exercise the session reporting system by creating a HelloWorld class and moving Data.cs.",
+      "before": {
+        "intent": "Exercise the reporting system with simple file operations: create a new HelloWorld.cs and move Data.cs to a Results subfolder.",
+        "assumptions": [
+          "This is a test run - changes are meant to exercise reporting, not improve architecture.",
+          "Data.cs is at PLang/Runtime2/Memory/Data.cs (not Runtime2/Core/Data.cs as task stated).",
+          "No Runtime2/Examples/ folder exists yet."
+        ],
+        "risk": "Low - creating a new example file is a leaf operation. Moving Data.cs is higher risk as it's a core type used everywhere, but this is a test exercise."
+      },
+      "plan": "1. Create PLang/Runtime2/Examples/HelloWorld.cs - a simple class in the PLang.Runtime2.Examples namespace. 2. Move PLang/Runtime2/Memory/Data.cs to PLang/Runtime2/Memory/Results/Data.cs using git mv. 3. Run git diff and save output to output/v1/changes.patch. 4. Write state.md and summary.md output files. Note: task specified Runtime2/Core/Data.cs but the actual file is at Runtime2/Memory/Data.cs - adapting accordingly.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Examples/HelloWorld.cs"],
+          "type": "create",
+          "category": "code",
+          "health": "Clean. New leaf file in a new Examples folder. No existing code affected.",
+          "confidence": "high",
+          "context": "Simple class with a Greet method. Created to exercise the reporting system."
+        },
+        {
+          "paths": ["PLang/Runtime2/Memory/Data.cs", "PLang/Runtime2/Memory/Results/Data.cs"],
+          "type": "move",
+          "category": "code",
+          "health": "This move would break all references to Data.cs in production. Acceptable for a test exercise only.",
+          "confidence": "high",
+          "context": "Used git mv to preserve history. Task specified Runtime2/Core/Data.cs but actual location was Runtime2/Memory/Data.cs."
+        }
+      ],
+      "after": {
+        "status": "Complete. Both file operations executed successfully. Output files written. This is a test exercise - changes should be reverted before real work continues.",
+        "health": "No tests added (test exercise). The Data.cs move breaks all existing references - this is expected and intentional for a reporting test. No OBP concerns with HelloWorld.cs (it's a standalone leaf class).",
+        "notes": "Session went smoothly. The reporting workflow (before -> plan -> actions -> after) is straightforward. Key adaptation: task referenced a wrong path for Data.cs, report captured the correction. All output artifacts produced: changes.patch, state.md, summary.md, report JSON."
+      }
+    }
+  ]
+}

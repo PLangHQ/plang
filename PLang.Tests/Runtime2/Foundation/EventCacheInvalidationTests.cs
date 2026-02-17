@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Foundation;
 
@@ -77,7 +77,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = new Engine("/app");
         using var context = new PLangContext(engine);
-        var action = new PLang.Runtime2.Core.Action
+        var action = new PLang.Runtime2.Engine.Action
         {
             Module = "variable",
             ActionName = "set"

@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.file;
 
@@ -20,7 +20,7 @@ public partial class Delete : IContext
             if (IgnoreIfNotFound)
                 return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
             return Task.FromResult(Data.FromError(
-                new Errors.ServiceError($"File not found: {Path}", "FileNotFound", 404)));
+                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}", "FileNotFound", 404)));
         }
 
         fs.File.Delete(absPath);

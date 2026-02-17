@@ -1,14 +1,14 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Memory;
+using EngineType = PLang.Runtime2.Engine.Engine;
 
 namespace PLang.Runtime2.modules;
 
 public interface IClass
 {
-    Engine Engine { get; }
+    EngineType Engine { get; }
     PLangContext Context { get; }
     System.Type? ParameterType { get; }
-    void Initialize(Engine engine, PLangContext context);
+    void Initialize(EngineType engine, PLangContext context);
     Task<Data> ExecuteAsync(object? parameters);
 }

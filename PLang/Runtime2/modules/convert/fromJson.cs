@@ -1,5 +1,5 @@
 using System.Text.Json;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -19,7 +19,7 @@ public partial class FromJson : IContext
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Invalid JSON: {ex.Message}", "JsonParseError")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Invalid JSON: {ex.Message}", "JsonParseError")));
         }
     }
 

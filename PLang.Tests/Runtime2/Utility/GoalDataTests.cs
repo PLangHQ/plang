@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Utility;
 
@@ -104,7 +104,7 @@ public class GoalSerializationTests
                     Timeout = 30,
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "http",
                             ActionName = "get",

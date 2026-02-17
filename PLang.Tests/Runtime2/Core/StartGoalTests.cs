@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -239,7 +239,7 @@ public class StartGoalTests
             Text = text,
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = actionClass,
                     ActionName = method,

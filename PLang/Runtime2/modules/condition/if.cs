@@ -1,5 +1,5 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.condition;
 

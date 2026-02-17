@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Memory;
+using EngineType = PLang.Runtime2.Engine.Engine;
 
 namespace PLang.Runtime2.modules;
 
@@ -11,5 +11,5 @@ namespace PLang.Runtime2.modules;
 public interface ICodeGenerated
 {
     Task<Data> CodeGeneratedExecuteAsync(
-        List<Data> parameters, Engine engine, PLangContext context);
+        List<Data> parameters, EngineType engine, PLangContext context);
 }

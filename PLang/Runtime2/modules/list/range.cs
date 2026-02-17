@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -14,7 +14,7 @@ public partial class Range : IContext
     {
         if (Step == 0)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError("Step cannot be zero", "InvalidStep")));
+                new PLang.Runtime2.Engine.Errors.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
         if (Step > 0)
@@ -28,6 +28,6 @@ public partial class Range : IContext
                 list.Add(i);
         }
 
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

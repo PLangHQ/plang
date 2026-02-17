@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.loop;
 using LoopResult = PLang.Runtime2.modules.loop.types.loop;
 
@@ -42,7 +42,7 @@ public class ForeachTests
                     Text = "capture item",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "variable",
                             ActionName = "set",

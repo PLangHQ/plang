@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -15,13 +15,13 @@ public partial class Join : IContext
         var existing = Context.MemoryStack.GetValue(ListName);
         if (existing is not System.Collections.IList list)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var strings = new List<string>();
         foreach (var item in list)
             strings.Add(item?.ToString() ?? "");
 
         var result = string.Join(Separator, strings);
-        return Task.FromResult(Data.Ok(result, Memory.Type.String));
+        return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.String));
     }
 }

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -18,6 +18,6 @@ public partial class ToJson : IContext
         };
 
         var json = JsonSerializer.Serialize(Value, options);
-        return Task.FromResult(Data.Ok(json, Memory.Type.FromMime("application/json")));
+        return Task.FromResult(Data.Ok(json, PLang.Runtime2.Engine.Memory.Type.FromMime("application/json")));
     }
 }

@@ -1,0 +1,39 @@
+{
+  "branch": "coder-_interactive",
+  "sessions": [
+    {
+      "id": "v13-coder-restructure-2026-02-16",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T12:00:00Z",
+      "timestamp_end": "2026-02-16T13:00:00Z",
+      "intent": "Remove Core/ folder — move all files to Runtime2/ subfolders, change namespace from PLang.Runtime2.Core to PLang.Runtime2, update all references",
+      "before": {
+        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core. 58 files reference this namespace.",
+        "assumptions": "Moving files + changing namespace + updating all references will produce zero build errors.",
+        "risk": "Medium - namespace changes touch ~80 files across PLang, PLang.Tests, PLang.Generators, and v1 modules."
+      },
+      "plan": "1. Move 22 files from Core/ subfolders to Runtime2/ subfolders, 4 root files to Runtime2/. 2. Change namespace PLang.Runtime2.Core to PLang.Runtime2 in all 26 files. 3. Change using PLang.Runtime2.Core to using PLang.Runtime2 in 58 downstream files. 4. Fix relative Core. qualifiers in Errors/, Context/, Mapping/, modules/. 5. Fix source generator hardcoded namespace. 6. Fix v1 module references. 7. Build verify all 3 projects.",
+      "actions": [],
+      "after": {
+        "status": "Incomplete — v13 report claims completion but Core/ folder still exists on this branch. v14 will redo this work.",
+        "health": "No changes were persisted.",
+        "notes": "v13 work was lost. v14 starts fresh."
+      }
+    },
+    {
+      "id": "v14-coder-law-of-names-2026-02-17",
+      "bot": "coder",
+      "timestamp_start": "2026-02-17T10:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement Law of Names restructuring: move Runtime2 folders to Engine/ hierarchy, update all namespaces, rename classes to {Owner}{Capability} convention",
+      "before": {
+        "state": "165 .cs files in Runtime2, Core/ folder has 29 files with PLang.Runtime2.Core namespace. 88 files reference PLang.Runtime2.Core (~188 occurrences). All 1167 C# tests pass. Both PLang and PLang.Tests build with 0 errors.",
+        "assumptions": "Namespace changes won't break .pr file deserialization (confirmed: .pr files contain no namespace strings). Atomic namespace replacement (longest match first) will avoid partial-match corruption. Git mv preserves history.",
+        "risk": "High — touching 88+ files across PLang, PLang.Tests, PLang.Generators. But fully reversible via git."
+      },
+      "plan": "Phase 1: Namespace replacements (longest match first) across all .cs files in PLang/, PLang.Tests/, PLang.Generators/. Then git mv folders: Core/->Engine/, IO/->Engine/Channels/, Context/->Engine/Context/, Memory/->Engine/Memory/, Errors/->Engine/Errors/, Serialization/->Engine/Serializers/, Utility/->Engine/Utility/, Parsing/->Engine/Parsing/, Mapping/->Engine/Mapping/. Build verify. Phase 2: Split multi-class files, dot-naming for partials. Phase 3: Rename 11 classes to {Owner}{Capability} pattern. Phase 4: EngineCache, EngineDebug, EngineTesting as instance classes.",
+      "actions": [],
+      "after": null
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "branch": "restructure-core-folders",
+  "sessions": [
+    {
+      "id": "v12-coder-restructure-2026-02-16",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Restructure Runtime2/Core/ folder to mirror the object graph with Goals/, Steps/, Actions/, Events/, Cache/ subfolders",
+      "before": {
+        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core",
+        "assumptions": "Global using bridge will keep builds green during incremental moves",
+        "risk": "Medium - namespace changes touch ~75 files but are mechanical"
+      },
+      "plan": null,
+      "actions": [],
+      "after": null
+    }
+  ]
+}

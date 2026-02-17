@@ -1,7 +1,7 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Errors;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -282,7 +282,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_Register_DispatchesCorrectly()
     {
-        var events = new PLang.Runtime2.Core.Events();
+        var events = new PLang.Runtime2.Engine.Events();
         bool fired = false;
 
         events.Register(EventType.BeforeGoal, ctx =>
@@ -301,7 +301,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_GoalNamePattern_FiltersCorrectly()
     {
-        var events = new PLang.Runtime2.Core.Events();
+        var events = new PLang.Runtime2.Engine.Events();
         var results = new List<string>();
 
         events.Register(EventType.BeforeGoal, ctx =>
@@ -333,7 +333,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_Unregister_RemovesBinding()
     {
-        var events = new PLang.Runtime2.Core.Events();
+        var events = new PLang.Runtime2.Engine.Events();
         bool fired = false;
 
         var id = events.Register(EventType.BeforeGoal, ctx =>
@@ -370,7 +370,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new Actions(new[]
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -414,7 +414,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new Actions(new[]
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -458,7 +458,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new Actions(new[]
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = "variable",
                     ActionName = "set",

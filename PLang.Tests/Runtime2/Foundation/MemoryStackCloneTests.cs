@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Foundation;
 

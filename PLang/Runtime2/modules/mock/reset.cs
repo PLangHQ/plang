@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.mock;
 
@@ -17,7 +17,7 @@ public partial class Reset : IContext
         else
         {
             // Clear all mocks — remove all BeforeAction bindings tagged as mock
-            var bindings = Context.User.Events.GetBindings(Core.EventType.BeforeAction);
+            var bindings = Context.User.Events.GetBindings(Engine.EventType.BeforeAction);
             foreach (var binding in bindings)
             {
                 if (binding.Targets.OfType<types.MockHandle>().Any())

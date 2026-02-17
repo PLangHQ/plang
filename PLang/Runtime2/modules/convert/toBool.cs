@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -33,6 +33,6 @@ public partial class ToBool : IContext
             }
         }
 
-        return Task.FromResult(Data.Ok(result, Memory.Type.FromName("bool")));
+        return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.FromName("bool")));
     }
 }

@@ -1,6 +1,6 @@
 using PLang.Interfaces;
-using PLang.Runtime2.Memory;
-using PLang.Runtime2.Utility;
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Runtime2.modules.file.types;
 
@@ -70,7 +70,7 @@ public class @file
             }
 
             var mime = TypeMapping.GetMimeType(_fs.Path.GetExtension(_absolutePath));
-            var type = Memory.Type.FromMime(mime);
+            var type = PLang.Runtime2.Engine.Memory.Type.FromMime(mime);
             var clrType = type.ClrType;
 
             if (clrType == typeof(byte[]))

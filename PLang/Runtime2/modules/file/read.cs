@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.file;
 
@@ -14,7 +14,7 @@ public partial class Read : IContext
 
         if (!fs.File.Exists(absPath))
             return Task.FromResult(Data.FromError(
-                new Errors.ServiceError($"File not found: {Path}")));
+                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}")));
 
         var file = new types.@file(absPath, fs);
         _ = file.Value; // Eager-read so step cache captures actual content

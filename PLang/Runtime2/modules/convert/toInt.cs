@@ -1,5 +1,5 @@
 using System.Globalization;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -13,12 +13,12 @@ public partial class ToInt : IContext
         try
         {
             var result = Convert.ToInt32(Value, CultureInfo.InvariantCulture);
-            return Task.FromResult(Data.Ok(result, Memory.Type.Int));
+            return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.Int));
         }
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Cannot convert to int: {ex.Message}", "ConversionError")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Cannot convert to int: {ex.Message}", "ConversionError")));
         }
     }
 }

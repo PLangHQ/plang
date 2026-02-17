@@ -1,5 +1,5 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -84,7 +84,7 @@ public class CallStackIntegrationTests
             Text = "failing step",
             Actions = new Actions(new[]
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = "nonexistent",
                     ActionName = "fail"

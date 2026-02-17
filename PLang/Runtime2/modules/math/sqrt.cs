@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.math;
 
@@ -12,7 +12,7 @@ public partial class Sqrt : IContext
         var input = MathHelper.ToDouble(Value);
         if (input < 0)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
+                new PLang.Runtime2.Engine.Errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
 
         var result = Math.Sqrt(input);
         return Task.FromResult(Data.Ok(result));

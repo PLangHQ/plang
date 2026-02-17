@@ -1,8 +1,8 @@
-using PLang.Runtime2.Utility;
+using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Tests.Runtime2.Memory;
 
-using R2 = PLang.Runtime2.Memory;
+using R2 = PLang.Runtime2.Engine.Memory;
 
 public class TStringTests
 {

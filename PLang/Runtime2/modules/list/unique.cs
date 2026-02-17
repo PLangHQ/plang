@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -13,9 +13,9 @@ public partial class Unique : IContext
         var existing = Context.MemoryStack.GetValue(ListName);
         if (existing is not List<object?> list)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var distinct = list.Distinct().ToList();
-        return Task.FromResult(Data.Ok(new types.list { count = distinct.Count, value = distinct }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = distinct.Count, value = distinct }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

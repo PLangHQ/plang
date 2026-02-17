@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -25,6 +25,6 @@ public partial class ToString : IContext
             result = Value.ToString() ?? "";
         }
 
-        return Task.FromResult(Data.Ok(result, Memory.Type.String));
+        return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.String));
     }
 }

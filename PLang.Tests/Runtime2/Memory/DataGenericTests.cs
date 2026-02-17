@@ -1,6 +1,6 @@
-using PLang.Runtime2.Errors;
-using PLang.Runtime2.Memory;
-using Type = PLang.Runtime2.Memory.Type;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
+using Type = PLang.Runtime2.Engine.Memory.Type;
 
 namespace PLang.Tests.Runtime2.Memory;
 

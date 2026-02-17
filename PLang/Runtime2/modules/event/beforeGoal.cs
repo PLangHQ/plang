@@ -1,5 +1,5 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.@event;
 
@@ -15,7 +15,7 @@ public partial class BeforeGoal : IContext
 
     public Task<Data> Run()
     {
-        Func<Context.PLangContext, Task<Data>> handler = async ctx =>
+        Func<Engine.Context.PLangContext, Task<Data>> handler = async ctx =>
         {
             return await ctx.Engine!.RunGoalAsync(GoalToCall, ctx, ctx.CancellationToken);
         };

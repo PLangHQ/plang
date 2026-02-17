@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.variable;
 
@@ -13,7 +13,7 @@ public partial class Set : IContext
     public Task<Data> Run()
     {
         Context.MemoryStack.Set(Name, Value,
-            Type != null ? Memory.Type.FromName(Type) : null);
+            Type != null ? PLang.Runtime2.Engine.Memory.Type.FromName(Type) : null);
         return Task.FromResult(Data.Ok(
             new types.variable { name = Name, value = Value, type = Type }));
     }

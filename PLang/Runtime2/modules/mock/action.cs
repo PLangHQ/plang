@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.mock;
 
@@ -25,7 +25,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall;
         var paramMatchers = Parameters;
 
-        Func<Context.PLangContext, Task<Data>> handler = async ctx =>
+        Func<Engine.Context.PLangContext, Task<Data>> handler = async ctx =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);
@@ -71,7 +71,7 @@ public partial class MockAction : IContext
         return Task.FromResult(Data.Ok(handle));
     }
 
-    private static Core.Action? FindCurrentAction(Context.PLangContext ctx)
+    private static Engine.Action? FindCurrentAction(Engine.Context.PLangContext ctx)
     {
         var step = ctx.Step;
         if (step == null) return null;
@@ -86,7 +86,7 @@ public partial class MockAction : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(Core.Action? action, MemoryStack memoryStack)
+    private static Dictionary<string, object?> CaptureParameters(Engine.Action? action, MemoryStack memoryStack)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -100,7 +100,7 @@ public partial class MockAction : IContext
     }
 
     private static bool ParametersMatch(
-        Core.Action action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
+        Engine.Action action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {

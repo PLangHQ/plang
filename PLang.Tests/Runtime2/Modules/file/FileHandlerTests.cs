@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.file;
 using PLang.SafeFileSystem;
 using FileResult = PLang.Runtime2.modules.file.types.file;
@@ -324,46 +324,46 @@ public class FileHandlerTests : IDisposable
 
         // Replace default channel on User actor's IO so we can capture output
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.Channels.Default, captureStream,
-            PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
+            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
-        var goal = new PLang.Runtime2.Core.Goal
+        var goal = new PLang.Runtime2.Engine.Goal
         {
             Name = "TestFileExistsFlow",
-            Steps = new PLang.Runtime2.Core.Steps
+            Steps = new PLang.Runtime2.Engine.Steps
             {
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Engine.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Engine.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("path", TempPath("real.txt")) },
-                            Return = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("fileResult") }
+                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("path", TempPath("real.txt")) },
+                            Return = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("fileResult") }
                         }
                     }
                 },
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Engine.Step
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Engine.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("content", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("content", "%fileResult.Exists%") },
                         }
                     }
                 }
@@ -402,45 +402,45 @@ public class FileHandlerTests : IDisposable
 
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.Channels.Default, captureStream,
-            PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
+            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var goal = new PLang.Runtime2.Core.Goal
+        var goal = new PLang.Runtime2.Engine.Goal
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new PLang.Runtime2.Core.Steps
+            Steps = new PLang.Runtime2.Engine.Steps
             {
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Engine.Step
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Engine.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("path", TempPath("ghost.txt")) },
-                            Return = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("fileResult") }
+                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("path", TempPath("ghost.txt")) },
+                            Return = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("fileResult") }
                         }
                     }
                 },
-                new PLang.Runtime2.Core.Step
+                new PLang.Runtime2.Engine.Step
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Core.Actions
+                    Actions = new PLang.Runtime2.Engine.Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Memory.Data>
-                                { new PLang.Runtime2.Memory.Data("content", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<PLang.Runtime2.Engine.Memory.Data>
+                                { new PLang.Runtime2.Engine.Memory.Data("content", "%fileResult.Exists%") },
                         }
                     }
                 }

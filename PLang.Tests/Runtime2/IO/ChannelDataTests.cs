@@ -1,4 +1,4 @@
-using PLang.Runtime2.IO;
+using PLang.Runtime2.Engine.Channels;
 
 namespace PLang.Tests.Runtime2.IO;
 

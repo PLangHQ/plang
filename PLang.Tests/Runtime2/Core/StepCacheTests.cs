@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -18,7 +18,7 @@ public class StepCacheTests
             Cache = cache,
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action
+                new PLang.Runtime2.Engine.Action
                 {
                     Module = module,
                     ActionName = action,
@@ -567,7 +567,7 @@ public class StepCacheTests
             Initialize(engine, context);
             CallCount++;
             if (CallCount == 1)
-                return Task.FromResult(Data.FromError(new PLang.Runtime2.Errors.ActionError("flaky", "FlakyError", 500)));
+                return Task.FromResult(Data.FromError(new PLang.Runtime2.Engine.Errors.ActionError("flaky", "FlakyError", 500)));
             return Task.FromResult(Data.Ok("success"));
         }
     }

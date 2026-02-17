@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.condition;
 using PLang.SafeFileSystem;
 using FileResult = PLang.Runtime2.modules.file.types.file;
@@ -62,9 +62,9 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.Channels.Default, captureStream,
-            PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
+            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Register a goal that writes "true-branch"
@@ -79,7 +79,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write true branch",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -113,9 +113,9 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.Channels.Default, captureStream,
-            PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
+            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         var falseGoal = new Goal
@@ -129,7 +129,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write false branch",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -183,9 +183,9 @@ public class ConditionHandlerTests : IDisposable
 
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.IO.Channel(
-            PLang.Runtime2.IO.Channels.Default, captureStream,
-            PLang.Runtime2.IO.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
+            PLang.Runtime2.Engine.Channels.Channels.Default, captureStream,
+            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Register the goal that condition.if will call
@@ -200,7 +200,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write file exists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -224,7 +224,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "check if file exists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -239,7 +239,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "if file exists call WriteExists",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "condition",
                             ActionName = "if",

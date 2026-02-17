@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -12,12 +12,12 @@ public partial class ToLong : IContext
         try
         {
             var result = Convert.ToInt64(Value, System.Globalization.CultureInfo.InvariantCulture);
-            return Task.FromResult(Data.Ok(result, Memory.Type.FromName("long")));
+            return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.FromName("long")));
         }
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Cannot convert to long: {ex.Message}", "ConversionError")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Cannot convert to long: {ex.Message}", "ConversionError")));
         }
     }
 }

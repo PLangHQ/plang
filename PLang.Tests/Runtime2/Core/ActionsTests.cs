@@ -1,5 +1,5 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -17,7 +17,7 @@ public class ActionsTests
     [Test]
     public async Task Constructor_WithEnumerable_PopulatesList()
     {
-        var list = new List<PLang.Runtime2.Core.Action>
+        var list = new List<PLang.Runtime2.Engine.Action>
         {
             new() { Module = "variable", ActionName = "set" },
             new() { Module = "file", ActionName = "save" }
@@ -32,7 +32,7 @@ public class ActionsTests
     public async Task Value_ReturnsSelf()
     {
         var actions = new Actions();
-        actions.Add(new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         await Assert.That(actions.Value).IsEquivalentTo(actions);
     }
@@ -41,7 +41,7 @@ public class ActionsTests
     public async Task Summary_NoContext_ReturnsEmptyString()
     {
         var actions = new Actions();
-        actions.Add(new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
 
@@ -53,7 +53,7 @@ public class ActionsTests
     public async Task Summary_WrongContextType_ReturnsEmptyString()
     {
         var actions = new Actions("not a PLangContext");
-        actions.Add(new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
 
@@ -64,7 +64,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_SetOnAction_IsPreserved()
     {
-        var action = new PLang.Runtime2.Core.Action
+        var action = new PLang.Runtime2.Engine.Action
         {
             Module = "variable",
             ActionName = "set",
@@ -77,7 +77,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_DefaultIsNull()
     {
-        var action = new PLang.Runtime2.Core.Action
+        var action = new PLang.Runtime2.Engine.Action
         {
             Module = "variable",
             ActionName = "set"
@@ -193,8 +193,8 @@ public class ActionsTests
     {
         var actions = new Actions
         {
-            new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" },
-            new PLang.Runtime2.Core.Action { Module = "file", ActionName = "save" }
+            new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
+            new PLang.Runtime2.Engine.Action { Module = "file", ActionName = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -208,7 +208,7 @@ public class ActionsTests
     {
         var actions = new Actions
         {
-            new PLang.Runtime2.Core.Action { Module = "bogus", ActionName = "nope" }
+            new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -223,9 +223,9 @@ public class ActionsTests
     {
         var actions = new Actions
         {
-            new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" },
-            new PLang.Runtime2.Core.Action { Module = "bogus", ActionName = "nope" },
-            new PLang.Runtime2.Core.Action { Module = "fake", ActionName = "missing" }
+            new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
+            new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" },
+            new PLang.Runtime2.Engine.Action { Module = "fake", ActionName = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -271,7 +271,7 @@ public class ActionsTests
         {
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action { Module = "variable", ActionName = "set" }
+                new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" }
             }
         };
 
@@ -292,7 +292,7 @@ public class ActionsTests
         {
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action { Module = "output", ActionName = "write" }
+                new PLang.Runtime2.Engine.Action { Module = "output", ActionName = "write" }
             }
         };
 
@@ -333,7 +333,7 @@ public class ActionsTests
             Text = "test",
             Actions = new Actions
             {
-                new PLang.Runtime2.Core.Action { Module = "old", ActionName = "action" }
+                new PLang.Runtime2.Engine.Action { Module = "old", ActionName = "action" }
             }
         };
         var stepFromLlm = new Step { Actions = new Actions() };
@@ -347,12 +347,12 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.MergeStep logic for unit testing without DI.
     /// </summary>
-    private static (Step? step, PLang.Runtime2.Errors.IError? error) MergeStep(Step step, Step stepFromLlm)
+    private static (Step? step, PLang.Runtime2.Engine.Errors.IError? error) MergeStep(Step step, Step stepFromLlm)
     {
         if (step == null)
-            return (null, new PLang.Runtime2.Errors.ProgramError("Step cannot be null", key: "MergeError"));
+            return (null, new PLang.Runtime2.Engine.Errors.ProgramError("Step cannot be null", key: "MergeError"));
         if (stepFromLlm == null)
-            return (null, new PLang.Runtime2.Errors.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
+            return (null, new PLang.Runtime2.Engine.Errors.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
 
         step.Actions.Clear();
         step.Actions.AddRange(stepFromLlm.Actions);
@@ -374,10 +374,10 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, PLang.Runtime2.Errors.IError? error) ValidateActions(Actions actions)
+    private static (bool isValid, PLang.Runtime2.Engine.Errors.IError? error) ValidateActions(Actions actions)
     {
         if (actions == null || actions.Count == 0)
-            return (false, new PLang.Runtime2.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
+            return (false, new PLang.Runtime2.Engine.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
         var libraries = new Libraries();
 
@@ -389,7 +389,7 @@ public class ActionsTests
         }
 
         if (notFound.Count > 0)
-            return (false, new PLang.Runtime2.Errors.ProgramError(
+            return (false, new PLang.Runtime2.Engine.Errors.ProgramError(
                 $"Actions not found: {string.Join(", ", notFound)}", key: "ActionNotFound"));
 
         return (true, null);
@@ -412,7 +412,7 @@ public class ActionsTests
                 var handler = libraries.Get(ns, actionName);
                 if (handler != null)
                 {
-                    actions.Add(new PLang.Runtime2.Core.Action
+                    actions.Add(new PLang.Runtime2.Engine.Action
                     {
                         Module = ns,
                         ActionName = actionName,
@@ -425,7 +425,7 @@ public class ActionsTests
                 var actionType = libraries.GetActionType(ns, actionName);
                 if (actionType != null)
                 {
-                    actions.Add(new PLang.Runtime2.Core.Action
+                    actions.Add(new PLang.Runtime2.Engine.Action
                     {
                         Module = ns,
                         ActionName = actionName,

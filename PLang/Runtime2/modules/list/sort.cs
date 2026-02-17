@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -15,7 +15,7 @@ public partial class Sort : IContext
         var existing = Context.MemoryStack.GetValue(ListName);
         if (existing is not List<object?> list)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         if (Descending)
             list.Sort((a, b) => Comparer<object>.Default.Compare(b, a));
@@ -23,6 +23,6 @@ public partial class Sort : IContext
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));
 
         Context.MemoryStack.Set(ListName, list);
-        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

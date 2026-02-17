@@ -1,0 +1,195 @@
+{
+  "branch": "architect-_interactive",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T00:00:00Z",
+      "timestamp_end": "2026-02-17T00:30:00Z",
+      "intent": "Design discussion: naming convention as the dispatch mechanism for Runtime2 engine graph",
+      "before": {
+        "assumptions": [
+          "Current Runtime2 uses flat PLang.Runtime2.Core namespace for most classes",
+          "Libraries/module system handles dispatch via lookup tables",
+          "Source generator already exists for lazy param resolution"
+        ],
+        "risk": "Low — this is a design session, no code changes. The eventual migration would be high-risk (massive rename) but mechanical."
+      },
+      "plan": "Interactive design session — no implementation plan. Captured design principles and noted next step: map the full namespace tree.",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "health": "Clean — appended two entries to existing todo file",
+          "confidence": "high",
+          "context": "Added engine.Debug todo and 'Law of Names' design entry capturing the session's design decisions"
+        },
+        {
+          "paths": ["output/v1/summary.md", "output/v1/state.md", "output/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — standard session output files",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Design session complete. No code changes. Next step is mapping the full namespace tree as a migration blueprint.",
+        "health": "No code touched. Design principles captured in todos.md. Ready for tree-mapping session.",
+        "notes": "Productive session. Ingi's idea is clean: naming convention as dispatch law. The migration is big but mechanical. Key open question is how entity types (Goal, Step, Action) relate to the convention — they live in the namespace but aren't Engine* capabilities."
+      }
+    },
+    {
+      "id": "f7e8d9c0-b1a2-4356-8901-abcdef234567",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T01:00:00Z",
+      "timestamp_end": "2026-02-17T01:45:00Z",
+      "intent": "Create detailed migration plan for the Law of Names refactoring",
+      "before": {
+        "assumptions": [
+          "Design is finalized from previous session — all 5 resolved decisions locked",
+          "Current codebase: 165 production files, 57 test files, 2 critical external files",
+          "LazyParamsGenerator has 15 hardcoded namespace strings that must update",
+          "PlangConsole has zero Runtime2 deps (good isolation)"
+        ],
+        "risk": "Medium — plan only, no code changes. But the plan commits to a large refactoring (every file in Runtime2 changes namespace)."
+      },
+      "plan": "6-phase migration plan: Phase 0 (prep), Phase 1A (namespace merge to Engine.*), Phase 1B (subfolder distribution with this.cs convention), Phase 2 (class renames to {Owner}{Capability}), Phase 3 (ConventionWiringGenerator + LazyParamsGenerator updates), Phase 4 (wire MethodRun into runtime). Each phase is a separate commit, must pass all tests before proceeding.",
+      "actions": [
+        {
+          "paths": ["output/v1/result.md", "output/v1/code/"],
+          "type": "review",
+          "category": "doc",
+          "health": "Clean — reviewed design artifacts from previous session",
+          "confidence": "high",
+          "context": "Verified the design document and reference implementation code are complete and consistent"
+        },
+        {
+          "paths": ["PLang/Runtime2/Core/", "PLang/Runtime2/Memory/", "PLang/Runtime2/IO/", "PLang/Runtime2/Context/", "PLang/Runtime2/Errors/", "PLang/Runtime2/modules/"],
+          "type": "review",
+          "category": "code",
+          "health": "Clean — full codebase exploration to scope the migration",
+          "confidence": "high",
+          "context": "Explored 165 production files. Key findings: Goals is a ConcurrentDictionary-based collection (not List), Steps/Actions inherit List<T>. Engine is sealed. 30 files in Core, 13 in Memory, 97 in modules."
+        },
+        {
+          "paths": ["PLang.Generators/LazyParamsGenerator.cs"],
+          "type": "review",
+          "category": "code",
+          "health": "15 hardcoded namespace strings identified — all must update in Phase 3A",
+          "confidence": "high",
+          "context": "6 unique namespaces referenced: modules, Context, Memory, Core, Errors, Utility"
+        },
+        {
+          "paths": ["PLang/Modules/PlangModule/Program.cs", "PLang.Tests/"],
+          "type": "review",
+          "category": "code",
+          "health": "External blast radius: 70 files total, 57 tests, 1 critical bridge file",
+          "confidence": "high",
+          "context": "PlangModule/Program.cs has ~45 Runtime2 references — most critical external dependency"
+        }
+      ],
+      "after": {
+        "status": "Session interrupted. Codebase exploration complete, 6-phase plan drafted but tree map not produced.",
+        "health": "No code touched. Plan exists but lacks the per-file migration map.",
+        "notes": "Session ended before the tree map deliverable was written. Picked up in v5."
+      }
+    },
+    {
+      "id": "b3c4d5e6-f7a8-9012-bcde-fa3456789012",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T16:40:00Z",
+      "timestamp_end": null,
+      "intent": "Complete the full namespace tree map — every current file mapped to its proposed Law of Names location",
+      "before": {
+        "assumptions": [
+          "v1 design and v2 codebase exploration are both valid and current",
+          "165 production files, ~89 handler files, 10 error files",
+          "Engine is sealed — must become partial for convention wiring",
+          "Goals uses ConcurrentDictionary (not List) — naming to EngineGoals still works, it's a smart collection",
+          "Data and Type are in Memory/ but used everywhere — v1 design puts them at Engine root"
+        ],
+        "risk": "Low — documentation only. But the tree map becomes the blueprint for actual code migration."
+      },
+      "plan": "Read every Runtime2 file, build a complete current→proposed mapping table covering: file path, namespace, class name (with renames). Flag open questions for Ingi. Produce output/v5/result.md as the deliverable.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Core/Engine.cs",
+            "PLang/Runtime2/Core/Goals.cs",
+            "PLang/Runtime2/Core/Goal.cs",
+            "PLang/Runtime2/Core/GoalMethods.cs",
+            "PLang/Runtime2/Core/Steps.cs",
+            "PLang/Runtime2/Core/Step.cs",
+            "PLang/Runtime2/Core/StepMethods.cs",
+            "PLang/Runtime2/Core/Actions.cs",
+            "PLang/Runtime2/Core/Action.cs",
+            "PLang/Runtime2/Core/ActionMethods.cs",
+            "PLang/Runtime2/Core/Property.cs",
+            "PLang/Runtime2/Core/EventCollection.cs",
+            "PLang/Runtime2/Core/Lifecycle.cs",
+            "PLang/Runtime2/Core/CallStack.cs",
+            "PLang/Runtime2/Core/CallFrame.cs",
+            "PLang/Runtime2/Core/ICache.cs",
+            "PLang/Runtime2/Core/CacheSettings.cs",
+            "PLang/Runtime2/Core/StepCache.cs",
+            "PLang/Runtime2/Core/MemoryStepCache.cs",
+            "PLang/Runtime2/Core/StepCacheEntry.cs",
+            "PLang/Runtime2/Core/ErrorHandler.cs",
+            "PLang/Runtime2/Core/DebugMode.cs",
+            "PLang/Runtime2/Core/TestMode.cs",
+            "PLang/Runtime2/Core/Info.cs",
+            "PLang/Runtime2/Core/GoalCall.cs",
+            "PLang/Runtime2/Core/IAction.cs",
+            "PLang/Runtime2/Context/PLangContext.cs",
+            "PLang/Runtime2/Context/Actor.cs",
+            "PLang/Runtime2/Context/EventScope.cs",
+            "PLang/Runtime2/Memory/Data.cs",
+            "PLang/Runtime2/IO/Channels.cs",
+            "PLang/Runtime2/IO/Channel.cs",
+            "PLang/Runtime2/Serialization/SerializerRegistry.cs",
+            "PLang/Runtime2/modules/Libraries.cs",
+            "PLang/Runtime2/modules/Library.cs",
+            "PLang/Runtime2/modules/IClass.cs",
+            "PLang/Runtime2/modules/ICodeGenerated.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "health": "Complete read of all 165 production files — every class, namespace, and inheritance relationship catalogued",
+          "confidence": "high",
+          "context": "Read every file in Core/, Context/, Memory/, IO/, Serialization/, Errors/, Utility/, Parsing/, Mapping/, and modules/ root. Built complete inventory."
+        },
+        {
+          "paths": ["output/v5/result.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — comprehensive tree map with 18 sections, convention-wired summary table, and 5 resolved questions",
+          "confidence": "high",
+          "context": "The deliverable: full current→proposed mapping for all ~165 files. 11 classes get convention renames. All 5 design questions resolved by Ingi."
+        },
+        {
+          "paths": ["output/v5/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — 7-phase migration plan with exact namespace mappings, blast radius counts, and per-phase verification steps",
+          "confidence": "high",
+          "context": "Migration plan: Phase 0 (baseline), Phase 1 (folder+namespace, ~222 files, one atomic commit), Phase 2 (file splits), Phase 3 (11 convention renames), Phase 4 (EngineCache + static→instance), Phase 5 (ConventionWiringGenerator), Phase 6 (MethodRun dispatch, likely no-op). Phases 1-4 are mechanical Coder work. Phase 5 is the interesting generator work."
+        }
+      ],
+        {
+          "paths": ["handoff/coder/law-of-names/task.md", "handoff/coder/law-of-names/context/"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — complete handoff package with task description, tree map, migration plan, namespace map, phase 4 sketches, and current Engine.cs",
+          "confidence": "high",
+          "context": "5 context files provided: tree-map.md (full file mapping), migration-plan.md (7 phases), namespace-map.txt (search-replace table), engine-current.cs (root object), phase4-sketches.cs (EngineCache/Debug/Testing reference code)"
+        }
+      ],
+      "after": {
+        "status": "Complete. Tree map, migration plan, and coder handoff all delivered. All design questions resolved. Ready for execution.",
+        "health": "No code touched. All output is documentation and handoff material. The codebase is unchanged — migration starts when the Coder picks up the task.",
+        "notes": "Clean session. Three deliverables: (1) tree map with all 165 files mapped, (2) 7-phase migration plan with blast radius, (3) coder handoff package with 5 context files. Phases 1-4 are mechanical and can start immediately."
+      }
+    }
+  ]
+}

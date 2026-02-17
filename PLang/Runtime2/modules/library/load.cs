@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.library;
 
@@ -16,7 +16,7 @@ public partial class Load : IContext
 
         if (!fs.File.Exists(absPath))
             return Task.FromResult(Data.FromError(
-                new Errors.ServiceError($"Library not found: {Path}")));
+                new PLang.Runtime2.Engine.Errors.ServiceError($"Library not found: {Path}")));
 
         var assembly = System.Reflection.Assembly.LoadFrom(absPath);
         var lib = new Library(fs.Path.GetFileNameWithoutExtension(absPath), assembly);

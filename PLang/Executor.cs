@@ -332,15 +332,15 @@ namespace PLang
 			return (engine, vars, error);
 		}
 
-		public async Task<Runtime2.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
+		public async Task<Runtime2.Engine.Memory.Data> Run2(string[] args, CancellationToken cancellationToken = default)
 		{
 			var (goalName, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new Runtime2.Core.Engine(fileSystem);
+			var engine = new Runtime2.Engine.Engine(fileSystem);
 
 			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
 			{
-				Runtime2.Core.DebugMode.Apply(engine, debugValue);
+				Runtime2.Engine.DebugMode.Apply(engine, debugValue);
 				parameters.Remove("debug");
 			}
 
@@ -350,8 +350,8 @@ namespace PLang
 				foreach (var param in parameters)
 					engine.MemoryStack.Set(param.Key, param.Value);
 
-				var exitCode = await Runtime2.Core.TestMode.RunAsync(engine, cancellationToken);
-				return exitCode == 0 ? Runtime2.Memory.Data.Ok() : Runtime2.Memory.Data.FromError(new Runtime2.Errors.Error("Tests failed", "TestsFailed", exitCode));
+				var exitCode = await Runtime2.Engine.TestMode.RunAsync(engine, cancellationToken);
+				return exitCode == 0 ? Runtime2.Engine.Memory.Data.Ok() : Runtime2.Engine.Memory.Data.FromError(new Runtime2.Engine.Errors.Error("Tests failed", "TestsFailed", exitCode));
 			}
 
 			foreach (var param in parameters)

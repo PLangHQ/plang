@@ -143,14 +143,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // IContext auto-provision
         if (info.ImplementsIContext)
         {
-            sb.AppendLine("    public PLang.Runtime2.Context.PLangContext Context { get; set; } = null!;");
+            sb.AppendLine("    public PLang.Runtime2.Engine.Context.PLangContext Context { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // Resolution state
-        sb.AppendLine("    private List<PLang.Runtime2.Memory.Data>? __parameters;");
-        sb.AppendLine("    private PLang.Runtime2.Memory.MemoryStack? __memoryStack;");
-        sb.AppendLine("    private PLang.Runtime2.Core.Engine? __engine;");
+        sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __parameters;");
+        sb.AppendLine("    private PLang.Runtime2.Engine.Memory.MemoryStack? __memoryStack;");
+        sb.AppendLine("    private PLang.Runtime2.Engine.Engine? __engine;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -222,14 +222,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // CodeGeneratedExecuteAsync
-        sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Memory.Data> CodeGeneratedExecuteAsync(");
-        sb.AppendLine("        List<PLang.Runtime2.Memory.Data> parameters, PLang.Runtime2.Core.Engine engine, PLang.Runtime2.Context.PLangContext context)");
+        sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> CodeGeneratedExecuteAsync(");
+        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.Engine engine, PLang.Runtime2.Engine.Context.PLangContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __parameters = parameters;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        var __step = context.Step;");
-        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Core.CallFrame>)System.Array.Empty<PLang.Runtime2.Core.CallFrame>();");
+        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallFrame>();");
 
         if (info.ImplementsIContext)
         {
@@ -253,7 +253,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     sb.AppendLine($"        if ({prop.Name} == null)");
                 }
-                sb.AppendLine($"            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
+                sb.AppendLine($"            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
                 sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' is required\", __step, __callFrames, \"MissingParameter\", 400));");
             }
         }
@@ -264,7 +264,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex)");
         sb.AppendLine("        {");
-        sb.AppendLine("            return PLang.Runtime2.Memory.Data.FromError(new PLang.Runtime2.Errors.ServiceError(");
+        sb.AppendLine("            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex });");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
@@ -279,14 +279,14 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
         sb.AppendLine("            if (fullMatch.Success)");
-        sb.AppendLine("                return (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(");
+        sb.AppendLine("                return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(");
         sb.AppendLine("                    __memoryStack!.GetValue(fullMatch.Groups[1].Value), typeof(T));");
         sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\",");
         sb.AppendLine("                m => __FormatValue(__memoryStack!.GetValue(m.Groups[1].Value)));");
-        sb.AppendLine("            return (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
+        sb.AppendLine("            return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
         sb.AppendLine("        }");
         sb.AppendLine("        return data != null");
-        sb.AppendLine("            ? (T?)PLang.Runtime2.Utility.TypeMapping.ConvertTo(data.Value, typeof(T))");
+        sb.AppendLine("            ? (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(data.Value, typeof(T))");
         sb.AppendLine("            : default;");
         sb.AppendLine("    }");
         sb.AppendLine();

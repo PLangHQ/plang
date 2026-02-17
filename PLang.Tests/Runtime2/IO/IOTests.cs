@@ -1,14 +1,14 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.IO;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Channels;
 
 namespace PLang.Tests.Runtime2.IO;
 
 public class IOTests
 {
-    private static PLang.Runtime2.IO.Channels CreateIO()
+    private static PLang.Runtime2.Engine.Channels.Channels CreateIO()
     {
         var engine = new Engine("/app");
-        return new PLang.Runtime2.IO.Channels(engine);
+        return new PLang.Runtime2.Engine.Channels.Channels(engine);
     }
 
     [Test]
@@ -23,19 +23,19 @@ public class IOTests
     [Test]
     public async Task StdIn_Constant_IsCorrect()
     {
-        await Assert.That(PLang.Runtime2.IO.Channels.StdIn).IsEqualTo("stdin");
+        await Assert.That(PLang.Runtime2.Engine.Channels.Channels.StdIn).IsEqualTo("stdin");
     }
 
     [Test]
     public async Task StdOut_Constant_IsCorrect()
     {
-        await Assert.That(PLang.Runtime2.IO.Channels.StdOut).IsEqualTo("stdout");
+        await Assert.That(PLang.Runtime2.Engine.Channels.Channels.StdOut).IsEqualTo("stdout");
     }
 
     [Test]
     public async Task StdErr_Constant_IsCorrect()
     {
-        await Assert.That(PLang.Runtime2.IO.Channels.StdErr).IsEqualTo("stderr");
+        await Assert.That(PLang.Runtime2.Engine.Channels.Channels.StdErr).IsEqualTo("stderr");
     }
 
     [Test]
@@ -188,7 +188,7 @@ public class IOTests
             {
                 // Engine must be rooted at temp dir so filesystem allows access
                 await using var engine = new Engine(Path.GetTempPath());
-                await using var io = new PLang.Runtime2.IO.Channels(engine);
+                await using var io = new PLang.Runtime2.Engine.Channels.Channels(engine);
                 var channel = io.CreateFileChannel("test", tempFile);
 
                 await Assert.That(channel).IsNotNull();

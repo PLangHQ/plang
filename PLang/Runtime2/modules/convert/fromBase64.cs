@@ -1,5 +1,5 @@
 using System.Text;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.convert;
 
@@ -17,15 +17,15 @@ public partial class FromBase64 : IContext
             var bytes = Convert.FromBase64String(Value);
 
             if (AsBytes)
-                return Task.FromResult(Data.Ok(bytes, Memory.Type.FromName("bytes")));
+                return Task.FromResult(Data.Ok(bytes, PLang.Runtime2.Engine.Memory.Type.FromName("bytes")));
 
             var result = Encoding.UTF8.GetString(bytes);
-            return Task.FromResult(Data.Ok(result, Memory.Type.String));
+            return Task.FromResult(Data.Ok(result, PLang.Runtime2.Engine.Memory.Type.String));
         }
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Invalid base64: {ex.Message}", "ConversionError")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Invalid base64: {ex.Message}", "ConversionError")));
         }
     }
 }

@@ -1,8 +1,8 @@
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Errors;
-using PLang.Runtime2.Memory;
-using PLang.Runtime2.Utility;
-using R2 = PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Utility;
+using R2 = PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2;
 

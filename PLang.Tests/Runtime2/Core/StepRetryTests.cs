@@ -1,6 +1,6 @@
-using PLang.Runtime2.Context;
-using PLang.Runtime2.Core;
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -241,7 +241,7 @@ public class StepRetryTests
                     Text = "capture error message",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -346,7 +346,7 @@ public class StepRetryTests
                     OnError = new ErrorHandler { RetryCount = 3 },
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -360,7 +360,7 @@ public class StepRetryTests
                     Text = "set marker after retry success",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -400,7 +400,7 @@ public class StepRetryTests
                     OnError = errorHandler,
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -425,7 +425,7 @@ public class StepRetryTests
                     Text = $"set {varName}",
                     Actions = new Actions
                     {
-                        new PLang.Runtime2.Core.Action
+                        new PLang.Runtime2.Engine.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -465,7 +465,7 @@ public class StepRetryTests
             CallCount++;
             if (CallCount <= FailCount)
                 return Task.FromResult(Data.FromError(
-                    new PLang.Runtime2.Errors.Error($"Flaky fail #{CallCount}", "FlakyError", 500)));
+                    new PLang.Runtime2.Engine.Errors.Error($"Flaky fail #{CallCount}", "FlakyError", 500)));
 
             return Task.FromResult(Data.Ok("success"));
         }

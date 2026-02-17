@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -20,6 +20,6 @@ public partial class Split : IContext
         var parts = Value.Split(new[] { Separator }, options);
         var list = parts.Cast<object?>().ToList();
 
-        return Task.FromResult(Data.Ok(list, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(list, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

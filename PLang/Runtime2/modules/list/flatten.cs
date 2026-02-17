@@ -1,4 +1,4 @@
-using PLang.Runtime2.Memory;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.list;
 
@@ -13,12 +13,12 @@ public partial class Flatten : IContext
         var existing = Context.MemoryStack.GetValue(ListName);
         if (existing is not System.Collections.IList list)
             return Task.FromResult(Data.FromError(
-                new Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
         var result = new List<object?>();
         FlattenRecursive(list, result);
 
-        return Task.FromResult(Data.Ok(new types.list { count = result.Count, value = result }, Memory.Type.FromName("list")));
+        return Task.FromResult(Data.Ok(new types.list { count = result.Count, value = result }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 
     private static void FlattenRecursive(System.Collections.IList source, List<object?> target)
