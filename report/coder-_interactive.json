@@ -60,14 +60,52 @@
       "id": "v14b-coder-phase2-phase4-2026-02-17",
       "bot": "coder",
       "timestamp_start": "2026-02-17T15:00:00Z",
+      "timestamp_end": "2026-02-17T15:45:00Z",
       "intent": "Phase 2 (file organization, Events→EngineEvents rename) and Phase 4 (EngineDebug/EngineTesting static→instance conversion)",
       "before": {
         "assumptions": "Phases 1+3 are complete and building cleanly. File splits and renames are safe git operations. Static-to-instance conversion will not change behavior.",
         "risk": "Medium — touching ~30 files, but all changes are mechanical renames and refactors. Fully reversible."
       },
       "plan": "Phase 2A: git mv GoalMethods→Goal.Methods, StepMethods→Step.Methods, ActionMethods→Action.Methods. Phase 2B: Split EventCollection.cs→3 files, CallFrame.cs→extract ExecutedStep, CallStack.cs→extract SerializableCallStack, Lifecycle.cs→extract Bindings. Phase 2C: Rename Events class→EngineEvents, update all type refs. Build+test. Commit. Phase 4A: EngineDebug static→instance, add Engine.Debug, move IsDebugMode→IsEnabled. Phase 4B: EngineTesting static→instance, add Engine.Testing, move IsTestMode→IsEnabled. Build+test. Commit.",
-      "actions": [],
-      "after": {}
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goal.Methods.cs", "PLang/Runtime2/Engine/Step.Methods.cs", "PLang/Runtime2/Engine/Action.Methods.cs"],
+          "type": "rename",
+          "category": "code",
+          "description": "Phase 2A: Renamed partial files to dot-naming convention (GoalMethods→Goal.Methods, etc.)",
+          "health": "Clean. git mv only, no code changes.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/EventType.cs", "PLang/Runtime2/Engine/EventBinding.cs", "PLang/Runtime2/Engine/EngineEvents.cs", "PLang/Runtime2/Engine/ExecutedStep.cs", "PLang/Runtime2/Engine/SerializableCallStack.cs", "PLang/Runtime2/Engine/Bindings.cs", "PLang/Runtime2/Engine/CallFrame.cs", "PLang/Runtime2/Engine/CallStack.cs", "PLang/Runtime2/Engine/Lifecycle.cs"],
+          "type": "create",
+          "category": "code",
+          "description": "Phase 2B+2C: Split EventCollection.cs into 3 files (EventType, EventBinding, EngineEvents), extracted ExecutedStep from CallFrame, SerializableCallStack from CallStack, Bindings from Lifecycle. Renamed Events class to EngineEvents.",
+          "health": "Clean. Each file contains exactly one type (or tightly coupled pair). All references updated.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Engine.cs", "PLang/Runtime2/Engine/Context/EventScope.cs", "PLang.Tests/Runtime2/Core/EventCollectionTests.cs", "PLang.Tests/Runtime2/Core/EventIntegrationTests.cs"],
+          "type": "modify",
+          "category": "code",
+          "description": "Phase 2C: Updated Events type references to EngineEvents in Engine.cs property/constructor, EventScope.cs property, and 2 test files.",
+          "health": "Clean. Property names (.Events) unchanged, only the type name changed.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/EngineDebug.cs", "PLang/Runtime2/Engine/EngineTesting.cs", "PLang/Runtime2/Engine/Engine.cs", "PLang/Executor.cs", "PLang.Tests/Runtime2/Core/EngineTests.cs"],
+          "type": "modify",
+          "category": "code",
+          "description": "Phase 4: Converted EngineDebug and EngineTesting from static to instance classes. Added Engine.Debug and Engine.Testing properties. Moved IsDebugMode/IsTestMode to IsEnabled on each. Updated Executor.cs call sites and test assertions.",
+          "health": "Clean. Behavioral semantics unchanged — same event registration, same test isolation pattern.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All 4 phases of Law of Names are now done (Phase 1: namespaces, Phase 2: file organization, Phase 3: class renames, Phase 4: static→instance).",
+        "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. No architectural concerns.",
+        "notes": "Smooth execution. Two commits: Phase 2 (18 files, splits + renames) and Phase 4 (5 files, static→instance). The EngineDebug/EngineTesting handler methods remain static since they don't need instance state — only Apply()/RunAsync() are instance methods."
+      }
     }
   ]
 }
