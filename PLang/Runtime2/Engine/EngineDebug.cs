@@ -9,11 +9,23 @@ namespace PLang.Runtime2.Engine;
 /// Provides debug output for PLang execution when !debug is passed on the command line.
 /// Registers events to dump step info, call stack, and memory stack to stderr.
 /// </summary>
-public static class EngineDebug
+public sealed class EngineDebug
 {
-    public static void Apply(Engine engine, object debugValue)
+    private readonly Engine _engine;
+
+    /// <summary>
+    /// Whether debug mode is enabled.
+    /// </summary>
+    public bool IsEnabled { get; set; }
+
+    public EngineDebug(Engine engine)
     {
-        engine.IsDebugMode = true;
+        _engine = engine;
+    }
+
+    public void Apply(object debugValue)
+    {
+        IsEnabled = true;
 
         string? goalFilter = null;
         int? stepFilter = null;
@@ -23,7 +35,7 @@ public static class EngineDebug
             ParseFilter(spec, out goalFilter, out stepFilter);
         }
 
-        var events = engine.Context.User.Events;
+        var events = _engine.Context.User.Events;
 
         events.Register(
             EventType.BeforeStep,

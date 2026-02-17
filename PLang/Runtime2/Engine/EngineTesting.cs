@@ -9,8 +9,20 @@ namespace PLang.Runtime2.Engine;
 /// tracks assertion pass/fail via events, and prints a summary.
 /// Activated by: plang p !test
 /// </summary>
-public static class EngineTesting
+public sealed class EngineTesting
 {
+    private readonly Engine _engine;
+
+    /// <summary>
+    /// Whether test mode is enabled.
+    /// </summary>
+    public bool IsEnabled { get; set; }
+
+    public EngineTesting(Engine engine)
+    {
+        _engine = engine;
+    }
+
     private sealed class TestResult
     {
         public string FilePath { get; init; } = "";
@@ -31,9 +43,11 @@ public static class EngineTesting
     /// Discovers and runs all *.test.goal files, prints summary, returns exit code.
     /// Each test file gets a fresh engine for full isolation.
     /// </summary>
-    public static async Task<int> RunAsync(Engine engine, CancellationToken cancellationToken = default)
+    public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
-        var fileSystem = engine.FileSystem;
+        IsEnabled = true;
+
+        var fileSystem = _engine.FileSystem;
         var rootDir = fileSystem.RootDirectory;
 
         // Discover all *.test.goal files
@@ -102,7 +116,7 @@ public static class EngineTesting
         // so the engine root stays at the top level (e.g., Tests/Runtime2/).
         var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
         await using var testEngine = new Engine(testFs);
-        testEngine.IsTestMode = true;
+        testEngine.Testing.IsEnabled = true;
 
         // Load the test .pr file
         await testEngine.Goals.LoadFromFileAsync(testEngine, prPath, cancellationToken: cancellationToken);

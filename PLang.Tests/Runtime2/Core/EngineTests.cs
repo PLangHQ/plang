@@ -185,13 +185,13 @@ public class EngineTests
     }
 
     [Test]
-    public async Task IsDebugMode_ReflectsEngine()
+    public async Task Debug_IsEnabled_ReflectsEngine()
     {
         await using var engine = new Engine("/app");
 
-        engine.IsDebugMode = true;
+        engine.Debug.IsEnabled = true;
 
-        await Assert.That(engine.IsDebugMode).IsTrue();
+        await Assert.That(engine.Debug.IsEnabled).IsTrue();
     }
 
     [Test]

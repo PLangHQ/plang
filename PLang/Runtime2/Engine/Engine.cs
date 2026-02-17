@@ -113,14 +113,14 @@ public sealed class Engine : IAsyncDisposable
     public EngineProperty Property { get; }
 
     /// <summary>
-    /// Whether debug mode is enabled.
+    /// Debug mode controller. Registers event handlers for step/goal debug output.
     /// </summary>
-    public bool IsDebugMode { get; set; }
+    public EngineDebug Debug { get; }
 
     /// <summary>
-    /// Whether test mode is enabled.
+    /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
-    public bool IsTestMode { get; set; }
+    public EngineTesting Testing { get; }
 
     /// <summary>
     /// System actor for internal engine operations. Created lazily on first access.
@@ -185,6 +185,8 @@ public sealed class Engine : IAsyncDisposable
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
         Events = new EngineEvents();
+        Debug = new EngineDebug(this);
+        Testing = new EngineTesting(this);
         Property = new EngineProperty(this);
         _libraries = libraries ?? new EngineLibraries();
         _serializers = serializers ?? new EngineSerializers();
