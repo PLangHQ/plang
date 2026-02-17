@@ -282,7 +282,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_Register_DispatchesCorrectly()
     {
-        var events = new PLang.Runtime2.Engine.Events();
+        var events = new PLang.Runtime2.Engine.EngineEvents();
         bool fired = false;
 
         events.Register(EventType.BeforeGoal, ctx =>
@@ -301,7 +301,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_GoalNamePattern_FiltersCorrectly()
     {
-        var events = new PLang.Runtime2.Engine.Events();
+        var events = new PLang.Runtime2.Engine.EngineEvents();
         var results = new List<string>();
 
         events.Register(EventType.BeforeGoal, ctx =>
@@ -333,7 +333,7 @@ public class EventIntegrationTests
     [Test]
     public async Task Events_Unregister_RemovesBinding()
     {
-        var events = new PLang.Runtime2.Engine.Events();
+        var events = new PLang.Runtime2.Engine.EngineEvents();
         bool fired = false;
 
         var id = events.Register(EventType.BeforeGoal, ctx =>

@@ -74,7 +74,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public Events Events { get; }
+    public EngineEvents Events { get; }
 
     /// <summary>
     /// The library registry — uniform handler resolution system.
@@ -184,7 +184,7 @@ public sealed class Engine : IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new Events();
+        Events = new EngineEvents();
         Property = new EngineProperty(this);
         _libraries = libraries ?? new EngineLibraries();
         _serializers = serializers ?? new EngineSerializers();
