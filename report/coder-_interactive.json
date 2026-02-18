@@ -106,6 +106,124 @@
         "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. No architectural concerns.",
         "notes": "Smooth execution. Two commits: Phase 2 (18 files, splits + renames) and Phase 4 (5 files, static→instance). The EngineDebug/EngineTesting handler methods remain static since they don't need instance state — only Apply()/RunAsync() are instance methods."
       }
+    },
+    {
+      "id": "v14c-coder-modules-to-actions-2026-02-17",
+      "bot": "coder",
+      "timestamp_start": "2026-02-17T16:00:00Z",
+      "timestamp_end": "2026-02-17T17:00:00Z",
+      "intent": "Rename modules/ to actions/, move Library/EngineLibraries to Engine root, merge attribute files, update README.md",
+      "before": {
+        "assumptions": "All Law of Names phases complete. Namespace rename is mechanical. Library/EngineLibraries move is safe since they already belong to Engine's object graph.",
+        "risk": "Medium — touching 128+ files for namespace rename, but all mechanical."
+      },
+      "plan": "1. git mv modules/ to actions/. 2. sed PLang.Runtime2.modules→PLang.Runtime2.actions across all .cs files. 3. Move Library.cs and EngineLibraries.cs to Engine/, update their namespaces. 4. Rename Engine property from EngineLibraries to Libraries. 5. Merge 3 attribute files into Attributes.cs. 6. Fix compilation errors. 7. Update README.md to reflect changes.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/actions/", "PLang/Runtime2/modules/"],
+          "type": "rename",
+          "category": "code",
+          "description": "Renamed modules/ folder to actions/, updated namespace PLang.Runtime2.modules→PLang.Runtime2.actions across 128 files.",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Library.cs", "PLang/Runtime2/Engine/EngineLibraries.cs"],
+          "type": "move",
+          "category": "code",
+          "description": "Moved Library.cs and EngineLibraries.cs from actions/ to Engine/. Namespace changed to PLang.Runtime2.Engine. Added using PLang.Runtime2.actions for IClass/ICodeGenerated types.",
+          "health": "Clean. Library/EngineLibraries are Engine capabilities, belong in Engine/ namespace.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Engine.cs"],
+          "type": "modify",
+          "category": "code",
+          "description": "Renamed property from EngineLibraries to Libraries for cleaner access (engine.Libraries).",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/Attributes.cs"],
+          "type": "create",
+          "category": "code",
+          "description": "Merged ActionAttribute.cs, DefaultAttribute.cs, VariableNameAttribute.cs into single Attributes.cs. Deleted the 3 individual files.",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["Documentation/Runtime2/README.md"],
+          "type": "modify",
+          "category": "doc",
+          "description": "Updated file structure to reflect modules→actions rename, Library/EngineLibraries move to Engine/, Attributes.cs merge.",
+          "health": "Clean.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All changes committed (37f67bb3). README.md updated with a follow-up fix.",
+        "health": "0 build errors, 1167/1167 C# tests passing. No architectural concerns.",
+        "notes": "Short-form qualified references (e.g., Runtime2.modules.X in PlangModule/Program.cs) needed separate handling from full namespace references. Test namespaces (PLang.Tests.Runtime2.modules) also needed manual fixing due to different prefix."
+      }
+    },
+    {
+      "id": "v14d-coder-serializers-to-channels-2026-02-18",
+      "bot": "coder",
+      "timestamp_start": "2026-02-18T10:00:00Z",
+      "intent": "Move Serializers into Channels subsystem — View.cs to Engine root, serializer files to Channels/Serializers/, rewire ownership from Engine to EngineChannels",
+      "before": {
+        "assumptions": "Serializers are only used from 4 call sites: 3 in EngineChannels, 1 in file/save. View attributes are entity metadata used on Goal, Step, Action, GoalCall — they must stay accessible without importing Channels namespace.",
+        "risk": "Low — mechanical file moves and namespace changes. All reversible via git. ~15 files affected."
+      },
+      "plan": "Step 1: Move View.cs to Engine namespace (entity metadata, not I/O). Step 2: git mv 5 serializer files to Engine/Channels/Serializers/. Step 3: Rewire ownership — EngineChannels gets Serializers property, Engine removes it. Step 4: Update using statements everywhere. Step 5: Update EngineTests. Step 6: Update documentation.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/View.cs", "PLang/Runtime2/Engine/Goal.cs", "PLang/Runtime2/Engine/Step.cs", "PLang/Runtime2/Engine/Action.cs", "PLang/Runtime2/Engine/GoalCall.cs", "PLang/Runtime2/Engine/Utility/TypeMapping.cs"],
+          "type": "move",
+          "category": "code",
+          "description": "Step 1: Moved View.cs from Serializers/ to Engine/ root, changed namespace to PLang.Runtime2.Engine, removed old using from 4 entity files, changed using in TypeMapping.cs.",
+          "health": "Clean. View attributes are entity metadata, correctly separated from serializer I/O code.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Channels/Serializers/EngineSerializers.cs", "PLang/Runtime2/Engine/Channels/Serializers/ISerializer.cs", "PLang/Runtime2/Engine/Channels/Serializers/JsonStreamSerializer.cs", "PLang/Runtime2/Engine/Channels/Serializers/TextStreamSerializer.cs", "PLang/Runtime2/Engine/Channels/Serializers/ViewPropertyFilter.cs"],
+          "type": "move",
+          "category": "code",
+          "description": "Step 2: Moved 5 serializer files from Engine/Serializers/ to Engine/Channels/Serializers/, changed namespace to PLang.Runtime2.Engine.Channels.",
+          "health": "Clean. Serializers are I/O infrastructure, belong under Channels.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Engine.cs", "PLang/Runtime2/Engine/Channels/EngineChannels.cs", "PLang/Runtime2/Engine/Context/PLangContext.cs", "PLang/Runtime2/actions/file/save.cs"],
+          "type": "modify",
+          "category": "code",
+          "description": "Steps 3-4: Rewired ownership — Engine removed Serializers field/property/param, EngineChannels gained Serializers property. Updated PLangContext system variable path and file/save access path.",
+          "health": "Clean. Access now via engine.Channels.Serializers instead of engine.Serializers.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/EngineTests.cs", "PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs", "PLang.Tests/Runtime2/Serialization/JsonStreamSerializerTests.cs", "PLang.Tests/Runtime2/Serialization/TextStreamSerializerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "description": "Step 5: Updated test using statements, replaced Constructor_AcceptsCustomSerializerRegistry with Channels_HasSerializers, updated engine.Serializers → engine.Channels.Serializers assertions.",
+          "health": "Clean. All 1167 tests passing.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["Documentation/Runtime2/README.md", "Documentation/Runtime2/good_to_know.md", "CLAUDE.md"],
+          "type": "modify",
+          "category": "doc",
+          "description": "Step 6: Updated object graph diagrams, file structure, and prose references from Engine.Serializers to Engine.Channels.Serializers.",
+          "health": "Clean.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All serializer files moved to Channels subsystem, ownership rewired, all references updated.",
+        "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. 0 remaining references to old namespace PLang.Runtime2.Engine.Serializers in any .cs file.",
+        "notes": "Clean execution. View.cs separation was the key design decision — entity annotations shouldn't force importing I/O namespaces."
+      },
+      "timestamp_end": "2026-02-18T10:30:00Z"
     }
   ]
 }

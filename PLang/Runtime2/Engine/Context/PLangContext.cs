@@ -118,7 +118,7 @@ public sealed class PLangContext : IDisposable
         ms.Put(new Data("!fileSystem", Engine.FileSystem));
         ms.Put(new DynamicData("!callStack", () => CallStack));
         ms.Put(new Data("!channels", Engine.Channels));
-        ms.Put(new Data("!serializers", Engine.Serializers));
+        ms.Put(new Data("!serializers", Engine.Channels.Serializers));
 
         // Dynamic references (change per goal/step)
         ms.Put(new DynamicData("!goal", () => Goal));

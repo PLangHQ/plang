@@ -9,10 +9,10 @@ Engine is the root — everything hangs off it:
 ```
 Engine (sealed, IAsyncDisposable)
 ├── EngineLibraries  (built-in [0] + external DLLs, handler resolution)
-├── Serializers      (EngineSerializers — content-type based)
 ├── Goals            (EngineGoals — goal collection with lazy disk loading)
 ├── FileSystem       (IPLangFileSystem — abstracted filesystem)
 ├── Channels         (EngineChannels — channel-based I/O routing)
+│   └── Serializers  (EngineSerializers — content-type based)
 ├── Events           (EngineEvents — global event collection)
 ├── Cache            (ICache — pluggable step cache)
 ├── Property         (EngineProperty — key-value store with GoalCall resolution)
@@ -219,15 +219,15 @@ PLang/Runtime2/
 ├── Engine/Channels/
 │   ├── EngineChannels.cs      Channel manager (named I/O routing)
 │   ├── Channel.cs             Stream-backed channel
-│   └── ChannelData.cs         Channel data wrapper
+│   ├── ChannelData.cs         Channel data wrapper
+│   └── Serializers/
+│       ├── EngineSerializers.cs   Content-type routing registry
+│       ├── ISerializer.cs         Serializer interface
+│       ├── JsonStreamSerializer.cs  System.Text.Json implementation
+│       ├── TextStreamSerializer.cs  Plain text implementation
+│       └── ViewPropertyFilter.cs  View-based property filtering
 │
-├── Engine/Serializers/
-│   ├── EngineSerializers.cs   Content-type routing registry
-│   ├── ISerializer.cs         Serializer interface
-│   ├── JsonStreamSerializer.cs  System.Text.Json implementation
-│   ├── TextStreamSerializer.cs  Plain text implementation
-│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default] attributes
-│   └── ViewPropertyFilter.cs  View-based property filtering
+├── Engine/View.cs               [Store], [LlmBuilder], [Debug], [Default] attributes
 │
 ├── Engine/Utility/
 │   ├── TypeMapping.cs         PLang type names + MIME → CLR types + ConvertTo

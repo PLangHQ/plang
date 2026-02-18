@@ -2,8 +2,6 @@ using System.Collections.Concurrent;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Serializers;
-
 namespace PLang.Runtime2.Engine.Channels;
 
 /// <summary>
@@ -14,15 +12,21 @@ public sealed class EngineChannels : IAsyncDisposable
     private readonly ConcurrentDictionary<string, Channel> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly Engine _engine;
 
+    /// <summary>
+    /// The serializer registry — content-type routing for I/O.
+    /// </summary>
+    public EngineSerializers Serializers { get; }
+
     // Standard channel names
     public const string Default = "default";
     public const string StdIn = "stdin";
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public EngineChannels(Engine engine)
+    public EngineChannels(Engine engine, EngineSerializers? serializers = null)
     {
         _engine = engine;
+        Serializers = serializers ?? new EngineSerializers();
         Register(new Channel(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
             { ContentType = "text/plain" });
     }
@@ -45,7 +49,7 @@ public sealed class EngineChannels : IAsyncDisposable
     {
         var content = await _engine.FileSystem.File.ReadAllTextAsync(filePath, cancellationToken);
         var ext = System.IO.Path.GetExtension(filePath);
-        return _engine.Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
+        return Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
     }
 
     /// <summary>
@@ -123,7 +127,7 @@ public sealed class EngineChannels : IAsyncDisposable
 
         try
         {
-            await _engine.Serializers.SerializeAsync(new SerializeOptions
+            await Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = channel!.Stream,
                 Data = data,
@@ -148,7 +152,7 @@ public sealed class EngineChannels : IAsyncDisposable
 
         try
         {
-            var result = await _engine.Serializers.DeserializeAsync<T>(new DeserializeOptions
+            var result = await Serializers.DeserializeAsync<T>(new DeserializeOptions
             {
                 Stream = channel!.Stream,
                 ContentType = channel.ContentType ?? "application/json",

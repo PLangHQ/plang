@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
-using PLang.Runtime2.Engine.Serializers;
+using PLang.Runtime2.Engine.Channels;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -17,7 +17,6 @@ public sealed class Engine : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly EngineLibraries _libraries;
-    private readonly EngineSerializers _serializers;
     private readonly EngineGoals _goals;
     private bool _disposed;
 
@@ -81,11 +80,6 @@ public sealed class Engine : IAsyncDisposable
     /// Built-in handlers are Libraries[0], external DLLs can be added as additional libraries.
     /// </summary>
     public EngineLibraries Libraries => _libraries;
-
-    /// <summary>
-    /// The serializer registry.
-    /// </summary>
-    public EngineSerializers Serializers => _serializers;
 
     /// <summary>
     /// The loaded goals.
@@ -176,7 +170,7 @@ public sealed class Engine : IAsyncDisposable
     }
 
     public Engine(string absolutePath, EngineLibraries? libraries = null,
-        EngineSerializers? serializers = null, Interfaces.IPLangFileSystem? fileSystem = null,
+        Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -189,7 +183,6 @@ public sealed class Engine : IAsyncDisposable
         Testing = new EngineTesting(this);
         Property = new EngineProperty(this);
         _libraries = libraries ?? new EngineLibraries();
-        _serializers = serializers ?? new EngineSerializers();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new PLang.Runtime2.Engine.Channels.EngineChannels(this);

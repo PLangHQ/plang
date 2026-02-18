@@ -1,5 +1,5 @@
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Serializers;
+using PLang.Runtime2.Engine.Channels;
 
 namespace PLang.Runtime2.actions.file;
 
@@ -30,7 +30,7 @@ public partial class Save : IContext
         {
             var ext = fs.Path.GetExtension(absPath);
             await using var stream = fs.File.Create(absPath);
-            await Context.Engine.Serializers.SerializeAsync(new SerializeOptions
+            await Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
                 { Stream = stream, Data = Value, Extension = ext });
         }
 

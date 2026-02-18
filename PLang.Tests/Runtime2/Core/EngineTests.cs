@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
-using PLang.Runtime2.Engine.Serializers;
+using PLang.Runtime2.Engine.Channels;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -152,7 +152,7 @@ public class EngineTests
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Libraries).IsNotNull();
-        await Assert.That(engine.Serializers).IsNotNull();
+        await Assert.That(engine.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
     }
@@ -204,12 +204,12 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomSerializerRegistry()
+    public async Task Channels_HasSerializers()
     {
-        var serializers = new EngineSerializers();
-        await using var engine = new Engine("/app", serializers: serializers);
+        await using var engine = new Engine("/app");
 
-        await Assert.That(engine.Serializers).IsEqualTo(serializers);
+        await Assert.That(engine.Channels.Serializers).IsNotNull();
+        await Assert.That(engine.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
     }
 
     [Test]

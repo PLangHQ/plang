@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace PLang.Runtime2.Engine.Serializers;
+namespace PLang.Runtime2.Engine.Channels;
 
 /// <summary>
 /// Plain text serializer - converts objects to their string representation.

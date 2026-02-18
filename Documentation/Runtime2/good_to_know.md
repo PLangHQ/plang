@@ -79,7 +79,7 @@ Uses regex-based matching: standalone `*` becomes `.*`, regex-like patterns are 
 
 In OBP, **the name IS the contract**. Each property on the object graph should tell you what the object *is*, not what it *does*. You navigate the tree by name and the object takes care of itself.
 
-Good names describe the thing: `engine.Goals`, `engine.Libraries`, `engine.Serializers`, `engine.FileSystem`, `engine.Channels`. Each tells you what it manages — you navigate there and call methods.
+Good names describe the thing: `engine.Goals`, `engine.Libraries`, `engine.FileSystem`, `engine.Channels`, `engine.Channels.Serializers`. Each tells you what it manages — you navigate there and call methods.
 
 Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. It doesn't tell you what the object *is* (a channel manager), only what it vaguely *does* (input/output). Broad names cause confusion — "filesystem is I/O too, shouldn't it be here?" The fix: name it what it is (`Channels`), and the responsibilities become obvious.
 

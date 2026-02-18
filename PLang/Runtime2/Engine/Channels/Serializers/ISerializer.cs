@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Serializers;
+namespace PLang.Runtime2.Engine.Channels;
 
 /// <summary>
 /// Interface for serializing and deserializing objects in Runtime2.

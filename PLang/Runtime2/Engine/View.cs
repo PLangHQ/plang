@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Serializers;
+namespace PLang.Runtime2.Engine;
 
 /// <summary>
 /// Which serialization view to use.
