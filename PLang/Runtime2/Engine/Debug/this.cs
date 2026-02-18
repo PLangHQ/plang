@@ -10,7 +10,7 @@ namespace PLang.Runtime2.Engine.Debug;
 /// Provides debug output for PLang execution when !debug is passed on the command line.
 /// Registers events to dump step info, call stack, and memory stack to stderr.
 /// </summary>
-public sealed class EngineDebug
+public sealed class @this
 {
     private readonly Engine _engine;
 
@@ -19,7 +19,7 @@ public sealed class EngineDebug
     /// </summary>
     public bool IsEnabled { get; set; }
 
-    public EngineDebug(Engine engine)
+    public @this(Engine engine)
     {
         _engine = engine;
     }

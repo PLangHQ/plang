@@ -8,7 +8,7 @@ namespace PLang.Runtime2.Engine.CallStack;
 /// Tracks the call stack during PLang execution.
 /// Thread-safe and optional (can be disabled for performance).
 /// </summary>
-public sealed class CallStack
+public sealed class @this
 {
     private readonly ConcurrentStack<CallFrame> _frames = new();
     private readonly List<IError> _errors = new();

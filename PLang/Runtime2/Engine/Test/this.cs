@@ -10,7 +10,7 @@ namespace PLang.Runtime2.Engine.Test;
 /// tracks assertion pass/fail via events, and prints a summary.
 /// Activated by: plang p !test
 /// </summary>
-public sealed class EngineTesting
+public sealed class @this
 {
     private readonly Engine _engine;
 
@@ -19,7 +19,7 @@ public sealed class EngineTesting
     /// </summary>
     public bool IsEnabled { get; set; }
 
-    public EngineTesting(Engine engine)
+    public @this(Engine engine)
     {
         _engine = engine;
     }

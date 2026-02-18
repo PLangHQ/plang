@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Channels;
-using R2CallStack = PLang.Runtime2.Engine.CallStack.CallStack;
+using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -106,17 +106,17 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// Engine's key-value store with GoalCall resolution.
     /// </summary>
-    public EngineProperty Property { get; }
+    public Property Property { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
     /// </summary>
-    public EngineDebug Debug { get; }
+    public Debugging Debug { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
-    public EngineTesting Testing { get; }
+    public Testing Testing { get; }
 
     /// <summary>
     /// System actor for internal engine operations. Created lazily on first access.
@@ -181,9 +181,9 @@ public sealed class Engine : IAsyncDisposable
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
         Events = new EngineEvents();
-        Debug = new EngineDebug(this);
-        Testing = new EngineTesting(this);
-        Property = new EngineProperty(this);
+        Debug = new Debugging(this);
+        Testing = new Testing(this);
+        Property = new Property(this);
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);

@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
-using R2CallStack = PLang.Runtime2.Engine.CallStack.CallStack;
+using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
 
 namespace PLang.Runtime2.Engine.Context;
 

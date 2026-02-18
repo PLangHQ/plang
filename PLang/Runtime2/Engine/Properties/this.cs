@@ -7,12 +7,12 @@ namespace PLang.Runtime2.Engine.Properties;
 /// Engine's key-value store. Owns the data dictionary, indexer, Get/Set/Remove,
 /// and GoalCall resolution (async Get).
 /// </summary>
-public sealed class EngineProperty
+public sealed class @this
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
     private readonly Engine _engine;
 
-    public EngineProperty(Engine engine)
+    public @this(Engine engine)
     {
         _engine = engine;
     }

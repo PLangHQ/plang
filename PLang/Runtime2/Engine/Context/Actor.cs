@@ -1,5 +1,5 @@
 using PLang.Runtime2.Engine;
-using R2CallStack = PLang.Runtime2.Engine.CallStack.CallStack;
+using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
 
 namespace PLang.Runtime2.Engine.Context;
 
