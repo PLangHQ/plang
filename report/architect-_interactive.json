@@ -99,7 +99,7 @@
       "id": "b3c4d5e6-f7a8-9012-bcde-fa3456789012",
       "bot": "architect",
       "timestamp_start": "2026-02-17T16:40:00Z",
-      "timestamp_end": null,
+      "timestamp_end": "2026-02-17T17:30:00Z",
       "intent": "Complete the full namespace tree map — every current file mapped to its proposed Law of Names location",
       "before": {
         "assumptions": [
@@ -118,40 +118,15 @@
             "PLang/Runtime2/Core/Engine.cs",
             "PLang/Runtime2/Core/Goals.cs",
             "PLang/Runtime2/Core/Goal.cs",
-            "PLang/Runtime2/Core/GoalMethods.cs",
             "PLang/Runtime2/Core/Steps.cs",
             "PLang/Runtime2/Core/Step.cs",
-            "PLang/Runtime2/Core/StepMethods.cs",
             "PLang/Runtime2/Core/Actions.cs",
             "PLang/Runtime2/Core/Action.cs",
-            "PLang/Runtime2/Core/ActionMethods.cs",
             "PLang/Runtime2/Core/Property.cs",
-            "PLang/Runtime2/Core/EventCollection.cs",
-            "PLang/Runtime2/Core/Lifecycle.cs",
-            "PLang/Runtime2/Core/CallStack.cs",
-            "PLang/Runtime2/Core/CallFrame.cs",
-            "PLang/Runtime2/Core/ICache.cs",
-            "PLang/Runtime2/Core/CacheSettings.cs",
-            "PLang/Runtime2/Core/StepCache.cs",
-            "PLang/Runtime2/Core/MemoryStepCache.cs",
-            "PLang/Runtime2/Core/StepCacheEntry.cs",
-            "PLang/Runtime2/Core/ErrorHandler.cs",
-            "PLang/Runtime2/Core/DebugMode.cs",
-            "PLang/Runtime2/Core/TestMode.cs",
-            "PLang/Runtime2/Core/Info.cs",
-            "PLang/Runtime2/Core/GoalCall.cs",
-            "PLang/Runtime2/Core/IAction.cs",
             "PLang/Runtime2/Context/PLangContext.cs",
-            "PLang/Runtime2/Context/Actor.cs",
-            "PLang/Runtime2/Context/EventScope.cs",
             "PLang/Runtime2/Memory/Data.cs",
             "PLang/Runtime2/IO/Channels.cs",
-            "PLang/Runtime2/IO/Channel.cs",
-            "PLang/Runtime2/Serialization/SerializerRegistry.cs",
-            "PLang/Runtime2/modules/Libraries.cs",
-            "PLang/Runtime2/modules/Library.cs",
-            "PLang/Runtime2/modules/IClass.cs",
-            "PLang/Runtime2/modules/ICodeGenerated.cs"
+            "PLang/Runtime2/modules/Libraries.cs"
           ],
           "type": "review",
           "category": "code",
@@ -173,23 +148,74 @@
           "category": "doc",
           "health": "Clean — 7-phase migration plan with exact namespace mappings, blast radius counts, and per-phase verification steps",
           "confidence": "high",
-          "context": "Migration plan: Phase 0 (baseline), Phase 1 (folder+namespace, ~222 files, one atomic commit), Phase 2 (file splits), Phase 3 (11 convention renames), Phase 4 (EngineCache + static→instance), Phase 5 (ConventionWiringGenerator), Phase 6 (MethodRun dispatch, likely no-op). Phases 1-4 are mechanical Coder work. Phase 5 is the interesting generator work."
-        }
-      ],
+          "context": "Migration plan: Phase 0 (baseline), Phase 1 (folder+namespace), Phase 2 (file splits), Phase 3 (11 convention renames), Phase 4 (EngineCache), Phase 5 (ConventionWiringGenerator), Phase 6 (MethodRun dispatch)."
+        },
         {
           "paths": ["handoff/coder/law-of-names/task.md", "handoff/coder/law-of-names/context/"],
           "type": "create",
           "category": "doc",
           "health": "Clean — complete handoff package with task description, tree map, migration plan, namespace map, phase 4 sketches, and current Engine.cs",
           "confidence": "high",
-          "context": "5 context files provided: tree-map.md (full file mapping), migration-plan.md (7 phases), namespace-map.txt (search-replace table), engine-current.cs (root object), phase4-sketches.cs (EngineCache/Debug/Testing reference code)"
+          "context": "5 context files provided: tree-map.md, migration-plan.md, namespace-map.txt, engine-current.cs, phase4-sketches.cs"
         }
       ],
       "after": {
         "status": "Complete. Tree map, migration plan, and coder handoff all delivered. All design questions resolved. Ready for execution.",
-        "health": "No code touched. All output is documentation and handoff material. The codebase is unchanged — migration starts when the Coder picks up the task.",
-        "notes": "Clean session. Three deliverables: (1) tree map with all 165 files mapped, (2) 7-phase migration plan with blast radius, (3) coder handoff package with 5 context files. Phases 1-4 are mechanical and can start immediately."
+        "health": "No code touched. All output is documentation and handoff material. The codebase is unchanged.",
+        "notes": "Clean session. Three deliverables: (1) tree map with all 165 files mapped, (2) 7-phase migration plan, (3) coder handoff package with 5 context files."
       }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-0123-cdef-ab4567890123",
+      "bot": "architect",
+      "timestamp_start": "2026-02-18T00:00:00Z",
+      "timestamp_end": "2026-02-18T01:00:00Z",
+      "intent": "Design an intent audit process for Runtime2 unit tests — aligning tests with intended behavior rather than current implementation",
+      "before": {
+        "assumptions": [
+          "Existing tests were written by AI based on code behavior, not creator's intent",
+          "14 modules with ~110 actions total; 8 have full coverage, 3 C#-only, 3 untested",
+          "Ingi knows the intended behavior but it's not documented anywhere",
+          "The codebase is stable enough that the tests mostly pass — but passing doesn't mean correct"
+        ],
+        "risk": "Low — this is a process design session. The eventual audit could surface bugs (tests passing against wrong behavior), which is the whole point."
+      },
+      "plan": "Designed the 3-phase intent audit process (present understanding, capture intent, alignment check) with tree traversal order from Data up to modules. Process approved by Ingi.",
+      "actions": [],
+      "after": {
+        "status": "Process design complete. Ready for execution in v8.",
+        "health": "No code touched.",
+        "notes": "Plan approved. Data chosen as practice run target."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-defg-bc5678901234",
+      "bot": "architect",
+      "timestamp_start": "2026-02-18T10:00:00Z",
+      "timestamp_end": null,
+      "intent": "Execute intent audit Phase 1 starting with Level 0: Data, Type, DynamicData, Properties",
+      "before": {
+        "assumptions": [
+          "Intent audit process was designed and approved in v7",
+          "Data.cs has 378 lines, 42 existing tests in DataTests.cs, 4 DynamicData tests",
+          "Type.cs is small (46 lines), no separate test file — tested implicitly through Data",
+          "Properties.cs (109 lines) has no dedicated tests",
+          "Data is the foundation — every other class depends on it getting the contracts right"
+        ],
+        "risk": "Low for this session — presenting understanding for review, no code changes yet. But corrections found here could cascade."
+      },
+      "plan": "Present behavioral contracts for Data, Type, DynamicData, and Properties. Get Ingi's review (corrections/additions/removals). Then capture as doc comments and audit against existing tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Memory/Data.cs", "PLang/Runtime2/Memory/Properties.cs", "PLang/Runtime2/Utility/TypeMapping.cs", "PLang.Tests/Runtime2/Memory/DataTests.cs"],
+          "type": "review",
+          "category": "code",
+          "health": "Read all Level 0 source and tests to build understanding",
+          "confidence": "high",
+          "context": "Complete read of Data.cs (378 lines, 3 classes: Data, Data<T>, DynamicData), Type.cs (46 lines), Properties.cs (109 lines), DataTests.cs (468 lines, 42+4 tests), TypeMapping.cs, ValueNavigators.cs"
+        }
+      ],
+      "after": null
     }
   ]
 }
