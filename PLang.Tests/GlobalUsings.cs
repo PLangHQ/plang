@@ -1,17 +1,18 @@
-// Entity types — mirrors PLang/Runtime2/GlobalUsings.cs
-global using GoalCall = PLang.Runtime2.Engine.Goals.GoalCall;
-global using GoalSteps = PLang.Runtime2.Engine.Goals.Steps.GoalSteps;
-global using Step = PLang.Runtime2.Engine.Goals.Steps.Step;
-global using ErrorOrder = PLang.Runtime2.Engine.Goals.Steps.ErrorOrder;
-global using CacheSettings = PLang.Runtime2.Engine.Goals.Steps.CacheSettings;
-global using StepCache = PLang.Runtime2.Engine.Goals.Steps.StepCache;
-global using StepActions = PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions;
-global using IAction = PLang.Runtime2.Engine.Goals.Steps.Actions.IAction;
+// Goals subsystem — mirrors PLang/Runtime2/GlobalUsings.cs
+global using EngineGoals = PLang.Runtime2.Engine.Goals.@this;
+global using GoalCall = PLang.Runtime2.Engine.Goals.Goal.GoalCall;
+global using GoalSteps = PLang.Runtime2.Engine.Goals.Goal.Steps.@this;
+global using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+global using ErrorOrder = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder;
+global using CacheSettings = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings;
+global using StepCache = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.StepCache;
+global using StepActions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
+global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
-global using Goal = PLang.Runtime2.Engine.Goals.Goal;
-global using Visibility = PLang.Runtime2.Engine.Goals.Visibility;
-global using ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
+global using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+global using Visibility = PLang.Runtime2.Engine.Goals.Goal.Visibility;
+global using ErrorHandler = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorHandler;
 
 // Event types
 global using EventType = PLang.Runtime2.Engine.Events.EventType;

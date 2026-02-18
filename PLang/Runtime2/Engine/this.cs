@@ -1,9 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
-using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
-using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -294,7 +293,7 @@ public sealed class Engine : IAsyncDisposable
     {
         var context = new PLangContext(this, memoryStack)
         {
-            CallStack = new R2CallStack()
+            CallStack = new CallStack.@this()
         };
         return context;
     }

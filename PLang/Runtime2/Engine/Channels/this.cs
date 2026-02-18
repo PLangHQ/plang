@@ -2,9 +2,6 @@ using System.Collections.Concurrent;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using R2Channel = PLang.Runtime2.Engine.Channels.Channel.@this;
-using R2Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
-
 namespace PLang.Runtime2.Engine.Channels;
 
 /// <summary>
@@ -12,13 +9,13 @@ namespace PLang.Runtime2.Engine.Channels;
 /// </summary>
 public sealed class @this : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, R2Channel> _channels = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
     private readonly Engine _engine;
 
     /// <summary>
     /// The serializer registry — content-type routing for I/O.
     /// </summary>
-    public R2Serializers Serializers { get; }
+    public Serializers.@this Serializers { get; }
 
     // Standard channel names
     public const string Default = "default";
@@ -26,11 +23,11 @@ public sealed class @this : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public @this(Engine engine, R2Serializers? serializers = null)
+    public @this(Engine engine, Serializers.@this? serializers = null)
     {
         _engine = engine;
-        Serializers = serializers ?? new R2Serializers();
-        Register(new R2Channel(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
+        Serializers = serializers ?? new Serializers.@this();
+        Register(new Channel.@this(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
             { ContentType = "text/plain" });
     }
 
@@ -58,7 +55,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Gets or creates a channel by name.
     /// </summary>
-    public R2Channel GetOrCreate(string name, Func<R2Channel> factory)
+    public Channel.@this GetOrCreate(string name, Func<Channel.@this> factory)
     {
         return _channels.GetOrAdd(name, _ => factory());
     }
@@ -66,7 +63,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Gets a channel by name.
     /// </summary>
-    public R2Channel? Get(string name)
+    public Channel.@this? Get(string name)
     {
         return _channels.TryGetValue(name, out var channel) ? channel : null;
     }
@@ -74,7 +71,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Gets a channel and validates existence and permissions.
     /// </summary>
-    private (R2Channel? Channel, Data? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
+    private (Channel.@this? Channel, Data? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
         if (channel == null)
@@ -92,7 +89,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Registers a channel.
     /// </summary>
-    public void Register(R2Channel channel)
+    public void Register(Channel.@this channel)
     {
         _channels[channel.Name] = channel;
     }
@@ -210,9 +207,9 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Creates a memory channel.
     /// </summary>
-    public R2Channel CreateMemoryChannel(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
+    public Channel.@this CreateMemoryChannel(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
     {
-        var channel = R2Channel.Memory(name, direction);
+        var channel = Channel.@this.Memory(name, direction);
         Register(channel);
         return channel;
     }
@@ -220,9 +217,9 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Creates a file channel.
     /// </summary>
-    public R2Channel CreateFileChannel(string name, string path, FileMode mode = FileMode.OpenOrCreate)
+    public Channel.@this CreateFileChannel(string name, string path, FileMode mode = FileMode.OpenOrCreate)
     {
-        var channel = R2Channel.File(name, path, _engine.FileSystem, mode);
+        var channel = Channel.@this.File(name, path, _engine.FileSystem, mode);
         Register(channel);
         return channel;
     }

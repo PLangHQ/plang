@@ -1,12 +1,13 @@
-// Entity types — global aliases for types WITHOUT v1 (Building.Model) naming conflicts
-global using GoalCall = PLang.Runtime2.Engine.Goals.GoalCall;
-global using GoalSteps = PLang.Runtime2.Engine.Goals.Steps.GoalSteps;
-global using Step = PLang.Runtime2.Engine.Goals.Steps.Step;
-global using ErrorOrder = PLang.Runtime2.Engine.Goals.Steps.ErrorOrder;
-global using CacheSettings = PLang.Runtime2.Engine.Goals.Steps.CacheSettings;
-global using StepCache = PLang.Runtime2.Engine.Goals.Steps.StepCache;
-global using StepActions = PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions;
-global using IAction = PLang.Runtime2.Engine.Goals.Steps.Actions.IAction;
+// Goals subsystem
+global using EngineGoals = PLang.Runtime2.Engine.Goals.@this;
+global using GoalCall = PLang.Runtime2.Engine.Goals.Goal.GoalCall;
+global using GoalSteps = PLang.Runtime2.Engine.Goals.Goal.Steps.@this;
+global using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;
+global using ErrorOrder = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder;
+global using CacheSettings = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings;
+global using StepCache = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.StepCache;
+global using StepActions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
+global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
 
 // Event types
 global using EngineEvents = PLang.Runtime2.Engine.Events.@this;
@@ -39,11 +40,12 @@ global using Debugging = PLang.Runtime2.Engine.Debug.@this;
 global using Testing = PLang.Runtime2.Engine.Test.@this;
 global using Property = PLang.Runtime2.Engine.Properties.@this;
 
-// CallStack: namespace-alias collision in Engine.* files — use per-file alias:
-//   using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
+// CallStack: can't be global alias — v1 PLang.Runtime.CallStack conflict
+// Inside Engine.*: use CallStack.@this (namespace resolves to child)
+// Outside Engine.*: use PLang.Runtime2.Engine.CallStack.@this or per-file alias
 
 // Types WITH v1 conflicts — require per-file handling:
-// Goal: use "using PLang.Runtime2.Engine.Goals;" or per-file alias
-// Visibility: use "using PLang.Runtime2.Engine.Goals;" or qualified reference
-// ErrorHandler: use "using PLang.Runtime2.Engine.Goals.Steps;" or per-file alias
-// Action: can't alias (System.Action conflict), use per-file alias
+// Goal: use Goals.Goal.@this or per-file alias
+// Visibility: use Goals.Goal.Visibility
+// ErrorHandler: use Goals.Goal.Steps.Step.ErrorHandler
+// Action: can't global alias (System.Action conflict), use per-file alias

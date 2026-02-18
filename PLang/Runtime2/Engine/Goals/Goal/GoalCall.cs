@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Goals;
+namespace PLang.Runtime2.Engine.Goals.Goal;
 
 /// <summary>
 /// Strongly-typed reference to a goal, carrying name, parameters, and optional pre-resolved PrPath.

@@ -15,7 +15,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -36,7 +36,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -380,7 +380,7 @@ public class EngineTests
                     Text = "failing step",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "get",

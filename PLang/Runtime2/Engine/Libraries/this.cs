@@ -1,8 +1,6 @@
 using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
-using R2Library = PLang.Runtime2.Engine.Libraries.Library.@this;
-
 namespace PLang.Runtime2.Engine.Libraries;
 
 /// <summary>
@@ -12,16 +10,16 @@ namespace PLang.Runtime2.Engine.Libraries;
 /// </summary>
 public sealed class @this
 {
-    private readonly List<R2Library> _libraries = new();
+    private readonly List<Library.@this> _libraries = new();
 
     /// <summary>
     /// The built-in library containing PLang's own action handlers. Always [0].
     /// </summary>
-    public R2Library BuiltIn => _libraries[0];
+    public Library.@this BuiltIn => _libraries[0];
 
     public @this()
     {
-        var builtIn = new R2Library("builtin", typeof(@this).Assembly);
+        var builtIn = new Library.@this("builtin", typeof(@this).Assembly);
         builtIn.Discover("PLang.Runtime2.actions");
         _libraries.Add(builtIn);
     }
@@ -96,7 +94,7 @@ public sealed class @this
 
     // === Library management ===
 
-    public void Add(R2Library library) => _libraries.Add(library);
-    public IReadOnlyList<R2Library> Value => _libraries;
-    public R2Library this[int index] => _libraries[index];
+    public void Add(Library.@this library) => _libraries.Add(library);
+    public IReadOnlyList<Library.@this> Value => _libraries;
+    public Library.@this this[int index] => _libraries[index];
 }

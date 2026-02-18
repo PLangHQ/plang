@@ -5,9 +5,9 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 using Scriban;
 
-namespace PLang.Runtime2.Engine.Goals;
+namespace PLang.Runtime2.Engine.Goals.Goal;
 
-public sealed partial class Goal
+public sealed partial class @this
 {
     public async Task<Data> Load(PLangContext context)
     {

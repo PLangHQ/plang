@@ -104,7 +104,7 @@ public class GoalSerializationTests
                     Timeout = 30,
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "http",
                             ActionName = "get",

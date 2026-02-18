@@ -3,9 +3,9 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 
-public sealed partial class Step
+public sealed partial class @this
 {
     public async Task<Data> Load(PLangContext context)
     {

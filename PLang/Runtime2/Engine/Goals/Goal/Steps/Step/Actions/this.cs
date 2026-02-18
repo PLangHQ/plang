@@ -4,19 +4,17 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Utility;
 using System.Reflection;
-using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions;
 
-namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
-
-public sealed class StepActions : List<Action>
+public sealed class @this : List<Action.@this>
 {
     private readonly object? _context;
 
-    public StepActions() { }
-    public StepActions(object context) { _context = context; }
-    public StepActions(IEnumerable<Action> actions) : base(actions) { }
+    public @this() { }
+    public @this(object context) { _context = context; }
+    public @this(IEnumerable<Action.@this> actions) : base(actions) { }
 
-    public List<Action> Value => this;
+    public List<Action.@this> Value => this;
 
     public async Task<(string?, IError?)> Summary()
     {

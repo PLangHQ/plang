@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine;
-using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
 
 namespace PLang.Runtime2.Engine.Context;
 
@@ -46,7 +45,7 @@ public sealed class Actor : IAsyncDisposable
         Engine = engine;
         Context = new PLangContext(engine)
         {
-            CallStack = new R2CallStack()
+            CallStack = new CallStack.@this()
         };
         Context.Actor = this;
         Channels = new EngineChannels(engine);

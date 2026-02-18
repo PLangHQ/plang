@@ -79,7 +79,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write true branch",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -129,7 +129,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write false branch",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -200,7 +200,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "write file exists",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -224,7 +224,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "check if file exists",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -239,7 +239,7 @@ public class ConditionHandlerTests : IDisposable
                     Text = "if file exists call WriteExists",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "condition",
                             ActionName = "if",

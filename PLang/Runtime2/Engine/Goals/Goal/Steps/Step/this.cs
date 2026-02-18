@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
-using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
 
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 
 /// <summary>
 /// Represents a step within a goal for Runtime2.
 /// </summary>
-public sealed partial class Step
+public sealed partial class @this
 {
     [Store, LlmBuilder, Debug, Default]
     public int Index { get; init; }
@@ -25,7 +25,7 @@ public sealed partial class Step
     public string? Comment { get; init; }
 
     [Store, Debug, Default]
-    public StepActions Actions { get; set; } = new();
+    public Actions.@this Actions { get; set; } = new();
 
     [Store, Debug, Default]
     public string? OnErrorGoal { get; init; }
@@ -58,23 +58,23 @@ public sealed partial class Step
     public bool WaitForExecution { get; init; } = true;
 
     [JsonIgnore]
-    public Goal? Goal { get; set; }
+    public Goals.Goal.@this? Goal { get; set; }
 
     private StepCache? _stepCache;
 
     [JsonIgnore]
     public StepCache? StepCache => Cache != null ? (_stepCache ??= new StepCache(this, Cache)) : null;
 
-    public Step Clone()
+    public @this Clone()
     {
-        return new Step
+        return new @this
         {
             Index = Index,
             Text = Text,
             LineNumber = LineNumber,
             Indent = Indent,
             Comment = Comment,
-            Actions = new StepActions(Actions.Select(a => new Action
+            Actions = new Actions.@this(Actions.Select(a => new Action
             {
                 Module = a.Module,
                 ActionName = a.ActionName,

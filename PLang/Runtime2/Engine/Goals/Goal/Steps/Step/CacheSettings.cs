@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 
 /// <summary>
 /// Cache settings for a step result.

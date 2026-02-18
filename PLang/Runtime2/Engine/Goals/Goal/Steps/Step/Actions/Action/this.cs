@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
-namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
 
-public sealed partial class Action
+public sealed partial class @this
 {
     [JsonIgnore]
     public System.Type? ParameterSchema { get; init; }

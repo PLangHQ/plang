@@ -42,7 +42,7 @@ public class ForeachTests
                     Text = "capture item",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",

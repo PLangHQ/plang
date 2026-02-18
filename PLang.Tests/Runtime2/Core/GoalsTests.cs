@@ -1,5 +1,5 @@
 using PLang.Runtime2.Engine;
-using PLang.Runtime2.Engine.Goals;
+using PLang.Runtime2.Engine.Goals.Goal;
 
 namespace PLang.Tests.Runtime2.Core;
 

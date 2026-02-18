@@ -10,16 +10,16 @@ namespace PLang.Runtime2.Engine.Goals;
 /// Collection of goals for an application.
 /// Provides lookup and caching functionality.
 /// </summary>
-public sealed class EngineGoals
+public sealed class @this
 {
-    private readonly ConcurrentDictionary<string, Goal> _goals = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, Goal> _byPath = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Goal.@this> _goals = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
     internal Engine Engine { get; set; } = null!;
 
     /// <summary>
     /// Adds a goal to the collection.
     /// </summary>
-    public void Add(Goal goal)
+    public void Add(Goal.@this goal)
     {
         goal.Engine = Engine;
         _goals[goal.Name] = goal;
@@ -30,7 +30,7 @@ public sealed class EngineGoals
     /// <summary>
     /// Gets a goal by name from cache only.
     /// </summary>
-    public Goal? Get(string name)
+    public Goal.@this? Get(string name)
     {
         if (string.IsNullOrEmpty(name))
             return null;
@@ -73,7 +73,7 @@ public sealed class EngineGoals
     /// When callingFolderPath is provided, resolves relative to that folder first.
     /// Names starting with / are resolved from engine root.
     /// </summary>
-    public async Task<Goal?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
+    public async Task<Goal.@this?> GetAsync(string name, string? callingFolderPath = null, CancellationToken cancellationToken = default)
     {
         var goal = Get(name);
         if (goal != null)
@@ -104,7 +104,7 @@ public sealed class EngineGoals
                 var relResult = await LoadFromFileAsync(Engine, relativePrPath, cancellationToken: cancellationToken);
                 if (relResult.Success)
                 {
-                    var loaded = relResult.Value as Goal;
+                    var loaded = relResult.Value as Goal.@this;
                     if (loaded != null && !string.IsNullOrEmpty(name))
                         _byPath[name] = loaded;
                     return loaded;
@@ -121,7 +121,7 @@ public sealed class EngineGoals
         if (!loadResult.Success)
             return null;
 
-        var result = loadResult.Value as Goal;
+        var result = loadResult.Value as Goal.@this;
         if (result != null && !string.IsNullOrEmpty(name))
             _byPath[name] = result;
         return result;
@@ -163,12 +163,12 @@ public sealed class EngineGoals
     /// <summary>
     /// Gets all goals as a list.
     /// </summary>
-    public IReadOnlyList<Goal> Value => _goals.Values.ToList();
+    public IReadOnlyList<Goal.@this> Value => _goals.Values.ToList();
 
     /// <summary>
     /// Gets all goals.
     /// </summary>
-    public IEnumerable<Goal> All => _goals.Values;
+    public IEnumerable<Goal.@this> All => _goals.Values;
 
     /// <summary>
     /// Gets the count of goals.
@@ -178,27 +178,27 @@ public sealed class EngineGoals
     /// <summary>
     /// Gets public goals only.
     /// </summary>
-    public IEnumerable<Goal> Public => _goals.Values.Where(g => g.Visibility == Visibility.Public);
+    public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
 
     /// <summary>
     /// Gets setup goals only.
     /// </summary>
-    public IEnumerable<Goal> Setup => _goals.Values.Where(g => g.IsSetup);
+    public IEnumerable<Goal.@this> Setup => _goals.Values.Where(g => g.IsSetup);
 
     /// <summary>
     /// Gets event goals only.
     /// </summary>
-    public IEnumerable<Goal> Events => _goals.Values.Where(g => g.IsEvent);
+    public IEnumerable<Goal.@this> Events => _goals.Values.Where(g => g.IsEvent);
 
     /// <summary>
     /// Indexer for getting goals by name.
     /// </summary>
-    public Goal? this[string name] => Get(name);
+    public Goal.@this? this[string name] => Get(name);
 
     /// <summary>
     /// Gets a goal by its .pr file path. Loads from disk if not cached.
     /// </summary>
-    public async Task<Goal?> GetByPrPathAsync(string prPath, CancellationToken ct = default)
+    public async Task<Goal.@this?> GetByPrPathAsync(string prPath, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(prPath))
             return null;
@@ -219,7 +219,7 @@ public sealed class EngineGoals
         if (!loadResult.Success)
             return null;
 
-        var loaded = loadResult.Value as Goal;
+        var loaded = loadResult.Value as Goal.@this;
         if (loaded != null)
             _byPath[prPath] = loaded;
         return loaded;
@@ -247,7 +247,7 @@ public sealed class EngineGoals
     {
         try
         {
-            var goal = await engine.Channels.ReadAsync<Goal>(prFilePath, cancellationToken);
+            var goal = await engine.Channels.ReadAsync<Goal.@this>(prFilePath, cancellationToken);
 
             if (goal == null)
                 return Data.FromError(new Error($"Failed to parse goal file: {prFilePath}"));

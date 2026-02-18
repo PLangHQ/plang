@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Cache;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 
 /// <summary>
 /// Behavioral wrapper around CacheSettings. Owns all cache logic:
@@ -12,13 +12,13 @@ namespace PLang.Runtime2.Engine.Goals.Steps;
 /// </summary>
 public sealed class StepCache
 {
-    private readonly Step _step;
+    private readonly @this _step;
 
     public CacheSettings Settings { get; }
     public Bindings Hit { get; } = new();
     public Bindings Miss { get; } = new();
 
-    public StepCache(Step step, CacheSettings settings)
+    public StepCache(@this step, CacheSettings settings)
     {
         _step = step;
         Settings = settings;

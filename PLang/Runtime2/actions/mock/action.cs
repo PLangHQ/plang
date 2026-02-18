@@ -73,7 +73,7 @@ public partial class MockAction : IContext
         return Task.FromResult(Data.Ok(handle));
     }
 
-    private static Engine.Goals.Steps.Actions.Action? FindCurrentAction(Engine.Context.PLangContext ctx)
+    private static Engine.Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Engine.Context.PLangContext ctx)
     {
         var step = ctx.Step;
         if (step == null) return null;
@@ -88,7 +88,7 @@ public partial class MockAction : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(Engine.Goals.Steps.Actions.Action? action, MemoryStack memoryStack)
+    private static Dictionary<string, object?> CaptureParameters(Engine.Goals.Goal.Steps.Step.Actions.Action.@this? action, MemoryStack memoryStack)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -102,7 +102,7 @@ public partial class MockAction : IContext
     }
 
     private static bool ParametersMatch(
-        Engine.Goals.Steps.Actions.Action action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
+        Engine.Goals.Goal.Steps.Step.Actions.Action.@this action, MemoryStack memoryStack, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {

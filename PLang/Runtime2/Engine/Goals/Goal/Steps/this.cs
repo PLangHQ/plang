@@ -1,14 +1,14 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps;
 
-public sealed class GoalSteps : List<Step>
+public sealed class @this : List<Step.@this>
 {
-    public GoalSteps() { }
-    public GoalSteps(IEnumerable<Step> steps) : base(steps) { }
+    public @this() { }
+    public @this(IEnumerable<Step.@this> steps) : base(steps) { }
 
-    public List<Step> Value => this;
+    public List<Step.@this> Value => this;
 
     public async Task<Data> Load(PLangContext context)
     {

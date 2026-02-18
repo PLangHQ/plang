@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Goals.Steps;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 
 /// <summary>
 /// Order of error handling: retry first or call goal first.

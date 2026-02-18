@@ -84,7 +84,7 @@ public class CallStackIntegrationTests
             Text = "failing step",
             Actions = new StepActions(new[]
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "nonexistent",
                     ActionName = "fail"

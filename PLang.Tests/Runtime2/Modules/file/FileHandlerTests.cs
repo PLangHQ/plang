@@ -330,18 +330,18 @@ public class FileHandlerTests : IDisposable
         { ContentType = "text/plain" });
 
         // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
-        var goal = new PLang.Runtime2.Engine.Goals.Goal
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
         {
             Name = "TestFileExistsFlow",
-            Steps = new PLang.Runtime2.Engine.Goals.Steps.GoalSteps
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Step
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -352,13 +352,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new PLang.Runtime2.Engine.Goals.Steps.Step
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -407,18 +407,18 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
-        var goal = new PLang.Runtime2.Engine.Goals.Goal
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new PLang.Runtime2.Engine.Goals.Steps.GoalSteps
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Step
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
@@ -429,13 +429,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new PLang.Runtime2.Engine.Goals.Steps.Step
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",

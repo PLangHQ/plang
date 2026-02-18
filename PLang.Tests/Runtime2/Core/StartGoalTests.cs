@@ -239,7 +239,7 @@ public class StartGoalTests
             Text = text,
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,

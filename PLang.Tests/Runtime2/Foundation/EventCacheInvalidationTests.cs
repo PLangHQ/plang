@@ -77,7 +77,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = new Engine("/app");
         using var context = new PLangContext(engine);
-        var action = new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
+        var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "variable",
             ActionName = "set"

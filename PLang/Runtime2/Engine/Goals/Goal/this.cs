@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using PLang.Attributes;
-namespace PLang.Runtime2.Engine.Goals;
+namespace PLang.Runtime2.Engine.Goals.Goal;
 
 /// <summary>
 /// Visibility of a goal.
@@ -14,7 +14,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for Runtime2.
 /// </summary>
-public sealed partial class Goal
+public sealed partial class @this
 {
     [Store, LlmBuilder, Debug, Default]
     public string Name { get; init; } = "";
@@ -26,7 +26,7 @@ public sealed partial class Goal
     public string? Comment { get; init; }
 
     [Store, Debug, Default]
-    public GoalSteps Steps { get; init; } = new();
+    public Steps.@this Steps { get; init; } = new();
 
     [Store, Debug, Default]
     public List<string> SubGoals { get; init; } = new();
@@ -93,7 +93,7 @@ public sealed partial class Goal
 
     [LlmIgnore]
     [JsonIgnore]
-    public Goal? Parent { get; set; }
+    public @this? Parent { get; set; }
 
     [LlmIgnore]
     [JsonIgnore]
@@ -137,7 +137,7 @@ public sealed partial class Goal
         return string.Join("\n", lines);
     }
 
-    public static Goal NotFound(string name) => new()
+    public static @this NotFound(string name) => new()
     {
         Name = name,
         Description = "Goal not found"

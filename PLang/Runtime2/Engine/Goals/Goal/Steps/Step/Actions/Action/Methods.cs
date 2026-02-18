@@ -3,9 +3,9 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
-namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
+namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
 
-public sealed partial class Action
+public sealed partial class @this
 {
     public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
     {

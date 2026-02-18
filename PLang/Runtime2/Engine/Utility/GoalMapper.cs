@@ -1,9 +1,9 @@
 using PLang.Building.Model;
 using PLang.Runtime2.Engine;
-using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
-using R2Goal = PLang.Runtime2.Engine.Goals.Goal;
-using R2Visibility = PLang.Runtime2.Engine.Goals.Visibility;
-using R2ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
+using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
+using R2Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+using R2Visibility = PLang.Runtime2.Engine.Goals.Goal.Visibility;
+using R2ErrorHandler = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorHandler;
 
 namespace PLang.Runtime2.Engine.Utility;
 

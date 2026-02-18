@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine;
-using PLang.Runtime2.Engine.Goals;
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 
 namespace PLang.Runtime2.Engine.Utility;
 
