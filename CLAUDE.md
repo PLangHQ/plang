@@ -40,7 +40,7 @@
 - v0.2 .pr.json format: single file with all steps
 - **Lazy params**: Source generator creates `*__Generated` records resolving `%var%` at property access
 - Handler naming: records = action name (`set`, `save`), handlers = `SetHandler`, `SaveHandler` (partial)
-- `ICodeGenerated` is REQUIRED on all handlers — Engine has no fallback path
+- `ICodeGenerated` is added automatically by the source generator — handlers never implement it directly
 - `Data` is the universal result type: has `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`. It can be extended with more properties.
 - `Action.Return` is `List<Data>?` — simple list of return variable mappings, no wrapper class
 - Simplified modules: `variable.set(name, value, type?)`, `output.write(content)`, `file.save/read/etc`
@@ -139,7 +139,7 @@ If you see code that violates these rules, **stop and flag it** before continuin
 - **NEVER edit .pr files** — only the builder generates these
 - **Use System.Text.Json**, not Newtonsoft
 - **`Data` is the universal result type** — `Data.Ok()`, `Data.Fail()`, check `.Success`
-- **`ICodeGenerated` is required** on all handlers — Engine has no fallback
+- **`ICodeGenerated` is added automatically** by the source generator — handlers never implement it directly
 - **Source generator** creates `*__Generated` records — test mocks must implement `ICodeGenerated` manually
 
 ## Build & Run Commands
@@ -208,7 +208,7 @@ All code you write or propose MUST follow these rules:
 - **Entity hierarchy**: Goal â†’ Steps â†’ Actions. Each has `.Events` (EntityEvents with Before/After Ã— Load/Runtime phases)
 - **Handlers extend `BaseClass<TParams>`** â€” get Engine/Context via Initialize(), use `MemoryStack` for variables
 - **`Data` is the universal result type** â€” has `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`
-- **`ICodeGenerated` is REQUIRED** on all handlers â€” Engine has no fallback path
+- **`ICodeGenerated` is added automatically** by the source generator â€" handlers never implement it directly
 
 ## Testing Requirements
 - PLang .goal tests are REQUIRED alongside C# tests â€” they validate the FULL pipeline: LLM builder â†’ .pr generation â†’ GoalMapper â†’ runtime
@@ -432,7 +432,7 @@ If you see code that violates these rules, **stop and flag it** before continuin
 - **NEVER edit .pr files** — only the builder generates these
 - **Use System.Text.Json**, not Newtonsoft
 - **`Data` is the universal result type** — `Data.Ok()`, `Data.Fail()`, check `.Success`
-- **`ICodeGenerated` is required** on all handlers — Engine has no fallback
+- **`ICodeGenerated` is added automatically** by the source generator — handlers never implement it directly
 - **Source generator** creates `*__Generated` records — test mocks must implement `ICodeGenerated` manually
 
 ## Build & Run Commands
