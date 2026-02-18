@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using System.Collections.Concurrent;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Properties;
 
 /// <summary>
 /// Engine's key-value store. Owns the data dictionary, indexer, Get/Set/Remove,

@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Test;
 
 /// <summary>
 /// Test runner for PLang. Discovers *.test.goal files, runs them,

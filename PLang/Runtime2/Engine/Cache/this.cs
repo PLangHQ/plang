@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Cache;
 
 /// <summary>
 /// Pluggable cache interface for step result caching.

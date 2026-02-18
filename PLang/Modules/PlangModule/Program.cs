@@ -62,7 +62,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Get all actions available from the registry")]
 		public async Task<(Actions?, IError?)> GetActions()
 		{
-			var libraries = new Runtime2.Engine.EngineLibraries();
+			var libraries = new Runtime2.Engine.Libraries.EngineLibraries();
 
 			var actions = new Actions(this.context);
 
@@ -206,7 +206,7 @@ namespace PLang.Modules.PlangModule
 				return (false, new ProgramError("No actions provided", goalStep, function,
 					Key: "NoActionsProvided"));
 
-			var libraries = new Runtime2.Engine.EngineLibraries();
+			var libraries = new Runtime2.Engine.Libraries.EngineLibraries();
 
 			var notFound = new List<string>();
 			foreach (var action in actions)
@@ -479,7 +479,7 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var libraries = new Runtime2.Engine.EngineLibraries();
+			var libraries = new Runtime2.Engine.Libraries.EngineLibraries();
 			var result = new List<object>();
 
 			foreach (var ns in libraries.Modules)

@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Cache;
 using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine.Goals.Steps;

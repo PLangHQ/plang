@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.CallStack;
 
 /// <summary>
 /// Record of an executed step.

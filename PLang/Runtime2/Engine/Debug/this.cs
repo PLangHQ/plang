@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Debug;
 
 /// <summary>
 /// Provides debug output for PLang execution when !debug is passed on the command line.

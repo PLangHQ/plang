@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Channels;
+using R2CallStack = PLang.Runtime2.Engine.CallStack.CallStack;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -294,7 +295,7 @@ public sealed class Engine : IAsyncDisposable
     {
         var context = new PLangContext(this, memoryStack)
         {
-            CallStack = new CallStack()
+            CallStack = new R2CallStack()
         };
         return context;
     }

@@ -77,7 +77,7 @@ public class PLangContextTests
     {
         await using var engine = new Engine("/app");
         using var context = new PLangContext(engine);
-        var callStack = new PLang.Runtime2.Engine.CallStack();
+        var callStack = new CallStack();
 
         context.CallStack = callStack;
 

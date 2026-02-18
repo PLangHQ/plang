@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using PLang.Runtime2.Engine.Errors;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.CallStack;
 
 /// <summary>
 /// Execution phase within a call frame.

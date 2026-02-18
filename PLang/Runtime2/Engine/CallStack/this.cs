@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using PLang.Runtime2.Engine.Errors;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.CallStack;
 
 /// <summary>
 /// Tracks the call stack during PLang execution.

@@ -229,7 +229,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        var __step = context.Step;");
-        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallFrame>();");
+        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallStack.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallStack.CallFrame>();");
 
         if (info.ImplementsIContext)
         {

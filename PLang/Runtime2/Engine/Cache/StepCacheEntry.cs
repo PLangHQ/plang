@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Cache;
 
 /// <summary>
 /// Cached snapshot of a step's return variables.

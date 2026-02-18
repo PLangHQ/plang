@@ -1,6 +1,6 @@
 using System.Runtime.Caching;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Cache;
 
 /// <summary>
 /// Default in-memory ICache implementation using System.Runtime.Caching.MemoryCache.

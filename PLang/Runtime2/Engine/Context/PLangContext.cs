@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+using R2CallStack = PLang.Runtime2.Engine.CallStack.CallStack;
 
 namespace PLang.Runtime2.Engine.Context;
 
@@ -34,7 +35,7 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Call stack for this execution.
     /// </summary>
-    public CallStack? CallStack { get; set; }
+    public R2CallStack? CallStack { get; set; }
 
     /// <summary>
     /// Whether this is an async execution.

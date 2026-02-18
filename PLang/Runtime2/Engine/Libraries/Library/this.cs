@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using PLang.Runtime2.actions;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Libraries;
 
 /// <summary>
 /// A single library — one assembly's worth of action handlers.

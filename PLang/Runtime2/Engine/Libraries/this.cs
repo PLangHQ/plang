@@ -2,7 +2,7 @@ using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Libraries;
 
 /// <summary>
 /// Smart collection of libraries. Owns walk-the-list handler resolution.

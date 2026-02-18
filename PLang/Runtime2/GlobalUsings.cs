@@ -17,6 +17,22 @@ global using Bindings = PLang.Runtime2.Engine.Events.Bindings;
 // EventType: use "using PLang.Runtime2.Engine.Events;" or per-file alias
 // EventBinding: use "using PLang.Runtime2.Engine.Events;" or per-file alias
 
+// Standalone concepts — no v1 conflicts
+global using EngineLibraries = PLang.Runtime2.Engine.Libraries.EngineLibraries;
+global using Library = PLang.Runtime2.Engine.Libraries.Library;
+global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
+global using StepCacheEntry = PLang.Runtime2.Engine.Cache.StepCacheEntry;
+global using CallFrame = PLang.Runtime2.Engine.CallStack.CallFrame;
+global using EngineDebug = PLang.Runtime2.Engine.Debug.EngineDebug;
+global using EngineTesting = PLang.Runtime2.Engine.Test.EngineTesting;
+global using EngineProperty = PLang.Runtime2.Engine.Properties.EngineProperty;
+
+// Types WITH v1 conflicts — require per-file handling:
+// CallStack: v1 PLang.Runtime.CallStack — use "using PLang.Runtime2.Engine.CallStack;" or per-file alias
+// ExecutedStep: v1 PLang.Runtime.ExecutedStep — use "using PLang.Runtime2.Engine.CallStack;" or per-file alias
+// SerializableCallStack: v1 PLang.Models.SerializableCallStack — use per-file handling
+
 // Types WITH v1 (Building.Model) conflicts — require per-file handling:
 // Goal: use "using PLang.Runtime2.Engine.Goals;" or per-file alias
 // Visibility: use "using PLang.Runtime2.Engine.Goals;" or qualified reference
