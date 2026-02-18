@@ -1,0 +1,710 @@
+{
+  "branch": "rename-classes-to-this",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T00:00:00Z",
+      "timestamp_end": "2026-02-16T00:01:00Z",
+      "intent": "Respond to greeting and set up session output files.",
+      "before": {
+        "intent": "User asked for a hello greeting, no code work expected.",
+        "assumptions": "No code changes needed.",
+        "risk": "None — no code touched."
+      },
+      "plan": "Say hello, write output files, write report.",
+      "actions": [
+        {
+          "paths": ["output/v1/summary.md", "output/v1/state.md", "output/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. No code changes made.",
+        "health": "Clean — only output/report files created.",
+        "notes": "Simple greeting session."
+      }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T00:00:00Z",
+      "timestamp_end": "2026-02-16T00:05:00Z",
+      "intent": "Test run to exercise the session reporting system by creating a HelloWorld class and moving Data.cs.",
+      "before": {
+        "intent": "Exercise the reporting system with simple file operations: create a new HelloWorld.cs and move Data.cs to a Results subfolder.",
+        "assumptions": [
+          "This is a test run - changes are meant to exercise reporting, not improve architecture.",
+          "Data.cs is at PLang/Runtime2/Memory/Data.cs (not Runtime2/Core/Data.cs as task stated).",
+          "No Runtime2/Examples/ folder exists yet."
+        ],
+        "risk": "Low - creating a new example file is a leaf operation. Moving Data.cs is higher risk as it's a core type used everywhere, but this is a test exercise."
+      },
+      "plan": "1. Create PLang/Runtime2/Examples/HelloWorld.cs - a simple class in the PLang.Runtime2.Examples namespace. 2. Move PLang/Runtime2/Memory/Data.cs to PLang/Runtime2/Memory/Results/Data.cs using git mv. 3. Run git diff and save output to output/v1/changes.patch. 4. Write state.md and summary.md output files. Note: task specified Runtime2/Core/Data.cs but the actual file is at Runtime2/Memory/Data.cs - adapting accordingly.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Examples/HelloWorld.cs"],
+          "type": "create",
+          "category": "code",
+          "health": "Clean. New leaf file in a new Examples folder. No existing code affected.",
+          "confidence": "high",
+          "context": "Simple class with a Greet method. Created to exercise the reporting system."
+        },
+        {
+          "paths": ["PLang/Runtime2/Memory/Data.cs", "PLang/Runtime2/Memory/Results/Data.cs"],
+          "type": "move",
+          "category": "code",
+          "health": "This move would break all references to Data.cs in production. Acceptable for a test exercise only.",
+          "confidence": "high",
+          "context": "Used git mv to preserve history. Task specified Runtime2/Core/Data.cs but actual location was Runtime2/Memory/Data.cs."
+        }
+      ],
+      "after": {
+        "status": "Complete. Both file operations executed successfully. Output files written. This is a test exercise - changes should be reverted before real work continues.",
+        "health": "No tests added (test exercise). The Data.cs move breaks all existing references - this is expected and intentional for a reporting test. No OBP concerns with HelloWorld.cs (it's a standalone leaf class).",
+        "notes": "Session went smoothly. The reporting workflow (before -> plan -> actions -> after) is straightforward. Key adaptation: task referenced a wrong path for Data.cs, report captured the correction. All output artifacts produced: changes.patch, state.md, summary.md, report JSON."
+      }
+    },
+    {
+      "id": "v12-coder-restructure-2026-02-16",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Restructure Runtime2/Core/ folder to mirror the object graph with Goals/, Steps/, Actions/, Events/, Cache/ subfolders",
+      "before": {
+        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core",
+        "assumptions": "Global using bridge will keep builds green during incremental moves",
+        "risk": "Medium - namespace changes touch ~75 files but are mechanical"
+      },
+      "plan": null,
+      "actions": [],
+      "after": null
+    },
+    {
+      "id": "v13-coder-restructure-2026-02-16",
+      "bot": "coder",
+      "timestamp_start": "2026-02-16T12:00:00Z",
+      "timestamp_end": "2026-02-16T13:00:00Z",
+      "intent": "Remove Core/ folder — move all files to Runtime2/ subfolders, change namespace from PLang.Runtime2.Core to PLang.Runtime2, update all references",
+      "before": {
+        "state": "26 files in flat PLang/Runtime2/Core/ folder, all namespace PLang.Runtime2.Core. 58 files reference this namespace.",
+        "assumptions": "Moving files + changing namespace + updating all references will produce zero build errors.",
+        "risk": "Medium - namespace changes touch ~80 files across PLang, PLang.Tests, PLang.Generators, and v1 modules."
+      },
+      "plan": "1. Move 22 files from Core/ subfolders to Runtime2/ subfolders, 4 root files to Runtime2/. 2. Change namespace PLang.Runtime2.Core to PLang.Runtime2 in all 26 files. 3. Change using PLang.Runtime2.Core to using PLang.Runtime2 in 58 downstream files. 4. Fix relative Core. qualifiers in Errors/, Context/, Mapping/, modules/. 5. Fix source generator hardcoded namespace. 6. Fix v1 module references. 7. Build verify all 3 projects.",
+      "actions": [],
+      "after": {
+        "status": "Incomplete — v13 report claims completion but Core/ folder still exists on this branch. v14 will redo this work.",
+        "health": "No changes were persisted.",
+        "notes": "v13 work was lost. v14 starts fresh."
+      }
+    },
+    {
+      "id": "v14-coder-law-of-names-2026-02-17",
+      "bot": "coder",
+      "timestamp_start": "2026-02-17T10:00:00Z",
+      "timestamp_end": "2026-02-17T14:30:00Z",
+      "intent": "Implement Law of Names restructuring: move Runtime2 folders to Engine/ hierarchy, update all namespaces, rename classes to {Owner}{Capability} convention",
+      "before": {
+        "state": "165 .cs files in Runtime2, Core/ folder has 29 files with PLang.Runtime2.Core namespace. 88 files reference PLang.Runtime2.Core (~188 occurrences). All 1167 C# tests pass. Both PLang and PLang.Tests build with 0 errors.",
+        "assumptions": "Namespace changes won't break .pr file deserialization (confirmed: .pr files contain no namespace strings). Atomic namespace replacement (longest match first) will avoid partial-match corruption. Git mv preserves history.",
+        "risk": "High — touching 88+ files across PLang, PLang.Tests, PLang.Generators. But fully reversible via git."
+      },
+      "plan": "Phase 1: Namespace replacements (longest match first) across all .cs files in PLang/, PLang.Tests/, PLang.Generators/. Then git mv folders: Core/->Engine/, IO/->Engine/Channels/, Context/->Engine/Context/, Memory/->Engine/Memory/, Errors/->Engine/Errors/, Serialization/->Engine/Serializers/, Utility/->Engine/Utility/, Parsing/->Engine/Parsing/, Mapping/->Engine/Mapping/. Build verify. Phase 2: Skip (cosmetic). Phase 3: Rename 9 classes to {Owner}{Capability} pattern. Phase 4: Defer (behavioral change).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/",
+            "PLang/Runtime2/modules/",
+            "PLang.Tests/",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/Executor.cs",
+            "PLang/Modules/PlangModule/Program.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "description": "Phase 1: Migrated 10 namespace prefixes (longest-match-first sed) and moved folders. Core/->Engine/, IO/->Engine/Channels/, Context/->Engine/Context/, etc. 212 files changed.",
+          "health": "Clean. Namespace-type conflict (Engine namespace vs Engine class) resolved with using alias in IClass.cs and ICodeGenerated.cs.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/EngineGoals.cs",
+            "PLang/Runtime2/Engine/GoalSteps.cs",
+            "PLang/Runtime2/Engine/StepActions.cs",
+            "PLang/Runtime2/Engine/EngineProperty.cs",
+            "PLang/Runtime2/Engine/Channels/EngineChannels.cs",
+            "PLang/Runtime2/modules/EngineLibraries.cs",
+            "PLang/Runtime2/Engine/EngineSerializers.cs",
+            "PLang/Runtime2/Engine/EngineDebug.cs",
+            "PLang/Runtime2/Engine/EngineTesting.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "description": "Phase 3: Renamed 9 classes to {Owner}{Capability} convention. Goals->EngineGoals, Steps->GoalSteps, Actions->StepActions, etc. 44 files changed.",
+          "health": "Clean. All references updated including constructors, type annotations, using aliases, and fully-qualified references in tests.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Phase 1 and Phase 3 complete. Phase 2 (cosmetic file organization) and Phase 4 (static-to-instance conversion) deferred to future sessions.",
+        "health": "0 build errors, 1167/1167 C# tests passing. The EngineType alias in IClass.cs/ICodeGenerated.cs is a known workaround for namespace-type conflict.",
+        "notes": "Smooth execution. The namespace-type conflict was the trickiest part — Engine is both a namespace and a class. The using alias pattern works but is worth noting for future namespace changes."
+      }
+    },
+    {
+      "id": "v14b-coder-phase2-phase4-2026-02-17",
+      "bot": "coder",
+      "timestamp_start": "2026-02-17T15:00:00Z",
+      "timestamp_end": "2026-02-17T15:45:00Z",
+      "intent": "Phase 2 (file organization, Events→EngineEvents rename) and Phase 4 (EngineDebug/EngineTesting static→instance conversion)",
+      "before": {
+        "assumptions": "Phases 1+3 are complete and building cleanly. File splits and renames are safe git operations. Static-to-instance conversion will not change behavior.",
+        "risk": "Medium — touching ~30 files, but all changes are mechanical renames and refactors. Fully reversible."
+      },
+      "plan": "Phase 2A: git mv GoalMethods→Goal.Methods, StepMethods→Step.Methods, ActionMethods→Action.Methods. Phase 2B: Split EventCollection.cs→3 files, CallFrame.cs→extract ExecutedStep, CallStack.cs→extract SerializableCallStack, Lifecycle.cs→extract Bindings. Phase 2C: Rename Events class→EngineEvents, update all type refs. Build+test. Commit. Phase 4A: EngineDebug static→instance, add Engine.Debug, move IsDebugMode→IsEnabled. Phase 4B: EngineTesting static→instance, add Engine.Testing, move IsTestMode→IsEnabled. Build+test. Commit.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goal.Methods.cs",
+            "PLang/Runtime2/Engine/Step.Methods.cs",
+            "PLang/Runtime2/Engine/Action.Methods.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "description": "Phase 2A: Renamed partial files to dot-naming convention (GoalMethods→Goal.Methods, etc.)",
+          "health": "Clean. git mv only, no code changes.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/EventType.cs",
+            "PLang/Runtime2/Engine/EventBinding.cs",
+            "PLang/Runtime2/Engine/EngineEvents.cs",
+            "PLang/Runtime2/Engine/ExecutedStep.cs",
+            "PLang/Runtime2/Engine/SerializableCallStack.cs",
+            "PLang/Runtime2/Engine/Bindings.cs",
+            "PLang/Runtime2/Engine/CallFrame.cs",
+            "PLang/Runtime2/Engine/CallStack.cs",
+            "PLang/Runtime2/Engine/Lifecycle.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "description": "Phase 2B+2C: Split EventCollection.cs into 3 files (EventType, EventBinding, EngineEvents), extracted ExecutedStep from CallFrame, SerializableCallStack from CallStack, Bindings from Lifecycle. Renamed Events class to EngineEvents.",
+          "health": "Clean. Each file contains exactly one type (or tightly coupled pair). All references updated.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Engine.cs",
+            "PLang/Runtime2/Engine/Context/EventScope.cs",
+            "PLang.Tests/Runtime2/Core/EventCollectionTests.cs",
+            "PLang.Tests/Runtime2/Core/EventIntegrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "description": "Phase 2C: Updated Events type references to EngineEvents in Engine.cs property/constructor, EventScope.cs property, and 2 test files.",
+          "health": "Clean. Property names (.Events) unchanged, only the type name changed.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/EngineDebug.cs",
+            "PLang/Runtime2/Engine/EngineTesting.cs",
+            "PLang/Runtime2/Engine/Engine.cs",
+            "PLang/Executor.cs",
+            "PLang.Tests/Runtime2/Core/EngineTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "description": "Phase 4: Converted EngineDebug and EngineTesting from static to instance classes. Added Engine.Debug and Engine.Testing properties. Moved IsDebugMode/IsTestMode to IsEnabled on each. Updated Executor.cs call sites and test assertions.",
+          "health": "Clean. Behavioral semantics unchanged — same event registration, same test isolation pattern.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All 4 phases of Law of Names are now done (Phase 1: namespaces, Phase 2: file organization, Phase 3: class renames, Phase 4: static→instance).",
+        "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. No architectural concerns.",
+        "notes": "Smooth execution. Two commits: Phase 2 (18 files, splits + renames) and Phase 4 (5 files, static→instance). The EngineDebug/EngineTesting handler methods remain static since they don't need instance state — only Apply()/RunAsync() are instance methods."
+      }
+    },
+    {
+      "id": "v14c-coder-modules-to-actions-2026-02-17",
+      "bot": "coder",
+      "timestamp_start": "2026-02-17T16:00:00Z",
+      "timestamp_end": "2026-02-17T17:00:00Z",
+      "intent": "Rename modules/ to actions/, move Library/EngineLibraries to Engine root, merge attribute files, update README.md",
+      "before": {
+        "assumptions": "All Law of Names phases complete. Namespace rename is mechanical. Library/EngineLibraries move is safe since they already belong to Engine's object graph.",
+        "risk": "Medium — touching 128+ files for namespace rename, but all mechanical."
+      },
+      "plan": "1. git mv modules/ to actions/. 2. sed PLang.Runtime2.modules→PLang.Runtime2.actions across all .cs files. 3. Move Library.cs and EngineLibraries.cs to Engine/, update their namespaces. 4. Rename Engine property from EngineLibraries to Libraries. 5. Merge 3 attribute files into Attributes.cs. 6. Fix compilation errors. 7. Update README.md to reflect changes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/actions/",
+            "PLang/Runtime2/modules/"
+          ],
+          "type": "rename",
+          "category": "code",
+          "description": "Renamed modules/ folder to actions/, updated namespace PLang.Runtime2.modules→PLang.Runtime2.actions across 128 files.",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Library.cs",
+            "PLang/Runtime2/Engine/EngineLibraries.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "description": "Moved Library.cs and EngineLibraries.cs from actions/ to Engine/. Namespace changed to PLang.Runtime2.Engine. Added using PLang.Runtime2.actions for IClass/ICodeGenerated types.",
+          "health": "Clean. Library/EngineLibraries are Engine capabilities, belong in Engine/ namespace.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Engine.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "description": "Renamed property from EngineLibraries to Libraries for cleaner access (engine.Libraries).",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/Attributes.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "description": "Merged ActionAttribute.cs, DefaultAttribute.cs, VariableNameAttribute.cs into single Attributes.cs. Deleted the 3 individual files.",
+          "health": "Clean.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "description": "Updated file structure to reflect modules→actions rename, Library/EngineLibraries move to Engine/, Attributes.cs merge.",
+          "health": "Clean.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All changes committed (37f67bb3). README.md updated with a follow-up fix.",
+        "health": "0 build errors, 1167/1167 C# tests passing. No architectural concerns.",
+        "notes": "Short-form qualified references (e.g., Runtime2.modules.X in PlangModule/Program.cs) needed separate handling from full namespace references. Test namespaces (PLang.Tests.Runtime2.modules) also needed manual fixing due to different prefix."
+      }
+    },
+    {
+      "id": "v14d-coder-serializers-to-channels-2026-02-18",
+      "bot": "coder",
+      "timestamp_start": "2026-02-18T10:00:00Z",
+      "timestamp_end": "2026-02-18T10:30:00Z",
+      "intent": "Move Serializers into Channels subsystem — View.cs to Engine root, serializer files to Channels/Serializers/, rewire ownership from Engine to EngineChannels",
+      "before": {
+        "assumptions": "Serializers are only used from 4 call sites: 3 in EngineChannels, 1 in file/save. View attributes are entity metadata used on Goal, Step, Action, GoalCall — they must stay accessible without importing Channels namespace.",
+        "risk": "Low — mechanical file moves and namespace changes. All reversible via git. ~15 files affected."
+      },
+      "plan": "Step 1: Move View.cs to Engine namespace (entity metadata, not I/O). Step 2: git mv 5 serializer files to Engine/Channels/Serializers/. Step 3: Rewire ownership — EngineChannels gets Serializers property, Engine removes it. Step 4: Update using statements everywhere. Step 5: Update EngineTests. Step 6: Update documentation.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/View.cs",
+            "PLang/Runtime2/Engine/Goal.cs",
+            "PLang/Runtime2/Engine/Step.cs",
+            "PLang/Runtime2/Engine/Action.cs",
+            "PLang/Runtime2/Engine/GoalCall.cs",
+            "PLang/Runtime2/Engine/Utility/TypeMapping.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "description": "Step 1: Moved View.cs from Serializers/ to Engine/ root, changed namespace to PLang.Runtime2.Engine, removed old using from 4 entity files, changed using in TypeMapping.cs.",
+          "health": "Clean. View attributes are entity metadata, correctly separated from serializer I/O code.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Channels/Serializers/EngineSerializers.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/ISerializer.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/JsonStreamSerializer.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/TextStreamSerializer.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/ViewPropertyFilter.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "description": "Step 2: Moved 5 serializer files from Engine/Serializers/ to Engine/Channels/Serializers/, changed namespace to PLang.Runtime2.Engine.Channels.",
+          "health": "Clean. Serializers are I/O infrastructure, belong under Channels.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Engine.cs",
+            "PLang/Runtime2/Engine/Channels/EngineChannels.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/actions/file/save.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "description": "Steps 3-4: Rewired ownership — Engine removed Serializers field/property/param, EngineChannels gained Serializers property. Updated PLangContext system variable path and file/save access path.",
+          "health": "Clean. Access now via engine.Channels.Serializers instead of engine.Serializers.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Core/EngineTests.cs",
+            "PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs",
+            "PLang.Tests/Runtime2/Serialization/JsonStreamSerializerTests.cs",
+            "PLang.Tests/Runtime2/Serialization/TextStreamSerializerTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "description": "Step 5: Updated test using statements, replaced Constructor_AcceptsCustomSerializerRegistry with Channels_HasSerializers, updated engine.Serializers → engine.Channels.Serializers assertions.",
+          "health": "Clean. All 1167 tests passing.",
+          "confidence": "high"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/README.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "description": "Step 6: Updated object graph diagrams, file structure, and prose references from Engine.Serializers to Engine.Channels.Serializers.",
+          "health": "Clean.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All serializer files moved to Channels subsystem, ownership rewired, all references updated.",
+        "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. 0 remaining references to old namespace PLang.Runtime2.Engine.Serializers in any .cs file.",
+        "notes": "Clean execution. View.cs separation was the key design decision — entity annotations shouldn't force importing I/O namespaces."
+      }
+    },
+    {
+      "id": "v14e-coder-folder-restructure-2026-02-18",
+      "bot": "coder",
+      "timestamp_start": "2026-02-18T11:00:00Z",
+      "timestamp_end": "2026-02-18T12:30:00Z",
+      "intent": "Restructure Engine folder so folder paths match namespaces exactly, every primary class is this.cs",
+      "before": {
+        "assumptions": "All previous Law of Names phases complete. 34 files in flat Engine namespace need nested folders. Global using aliases resolve namespace-type collisions. Source generator resolves types at compile time.",
+        "risk": "High — moving 40+ files, creating 20+ new folders, updating namespaces across 200+ files. Fully reversible via git."
+      },
+      "plan": "Phase 1: Create GlobalUsings.cs + move 14 entity files into Goals/Goal/Steps/Step/Actions/Action/ hierarchy. Phase 2: Move 5 event files into Events/Lifecycle/Bindings/Binding/. Phase 3: Move 12 files into Libraries/, Cache/, CallStack/, Debug/, Test/, Properties/. Phase 4: Restructure Channels, consolidate Utility (merge Mapping + Parsing), rename Engine.cs to this.cs. Phase 5: Update documentation.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/", "PLang/Runtime2/GlobalUsings.cs", "PLang.Tests/GlobalUsings.cs"],
+          "type": "move",
+          "category": "code",
+          "description": "Phase 1: Moved 14 entity files into nested Goals/Goal/Steps/Step/Actions/Action/ hierarchy. Created GlobalUsings.cs with type aliases. Key adaptation: entity classes share collection namespace to avoid C# namespace-type collision (CS0118).",
+          "health": "Clean. All 1167 tests pass.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Events/"],
+          "type": "move",
+          "category": "code",
+          "description": "Phase 2: Moved 5 event files into Events/Lifecycle/Bindings/Binding/ hierarchy. All share PLang.Runtime2.Engine.Events namespace. EventType/EventBinding have v1 PLang.Events conflict, use per-file handling.",
+          "health": "Clean. All 1167 tests pass.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Libraries/", "PLang/Runtime2/Engine/Cache/", "PLang/Runtime2/Engine/CallStack/", "PLang/Runtime2/Engine/Debug/", "PLang/Runtime2/Engine/Test/", "PLang/Runtime2/Engine/Properties/"],
+          "type": "move",
+          "category": "code",
+          "description": "Phase 3: Moved 12 files into dedicated subfolders. CallStack requires per-file R2CallStack alias (v1 PLang.Runtime.CallStack conflict). Updated LazyParamsGenerator CallFrame namespace.",
+          "health": "Clean. All 1167 tests pass.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Channels/", "PLang/Runtime2/Engine/Utility/", "PLang/Runtime2/Engine/this.cs"],
+          "type": "move",
+          "category": "code",
+          "description": "Phase 4: Channels restructured (EngineChannels.cs→this.cs, Channel.cs→Channel/this.cs, serializer subfolder). GoalMapper and PrParser consolidated into Utility/ from Mapping/ and Parsing/. Engine.cs renamed to this.cs.",
+          "health": "Clean. All 1167 tests pass.",
+          "confidence": "high"
+        },
+        {
+          "paths": ["Documentation/Runtime2/README.md", "Documentation/Runtime2/good_to_know.md", "CLAUDE.md"],
+          "type": "modify",
+          "category": "doc",
+          "description": "Phase 5: Updated file structure diagram in README, key file paths in CLAUDE.md, added namespace collision notes to good_to_know.md.",
+          "health": "Clean.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All 5 phases done. 5 commits on branch plang-coder-_interactive-v14.",
+        "health": "0 build errors on PLang and PLang.Tests. 1167/1167 C# tests passing. No remaining references to old namespace paths.",
+        "notes": "Key lesson: C# namespace-type collision (when namespace segment matches class name) requires entity classes to share the collection's namespace rather than getting their own. Global using aliases can't be used for types that conflict with v1 types (Building.Model.Goal, PLang.Events.EventBinding, PLang.Runtime.CallStack). Per-file aliases (R2Goal, R2CallStack, etc.) are the fallback."
+      }
+    },
+    {
+      "id": "v14f-coder-fix-test-namespaces-2026-02-18",
+      "bot": "coder",
+      "timestamp_start": "2026-02-18T13:00:00Z",
+      "timestamp_end": "2026-02-18T13:15:00Z",
+      "intent": "Fix all old namespace FQN references in 16 PLang.Tests files after entity hierarchy restructure",
+      "before": {
+        "assumptions": "GlobalUsings.cs handles most type aliases, but FQN references in test files still use old paths (PLang.Runtime2.Engine.Goals.Steps.Actions.Action etc.). These need updating to compile.",
+        "risk": "Low — mechanical find-and-replace with longest-match-first strategy. All reversible."
+      },
+      "plan": "Apply FQN replacements to 16 test files using longest-pattern-first strategy: PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions -> new path, PLang.Runtime2.Engine.Goals.Steps.Actions.Action -> new path, PLang.Runtime2.Engine.Goals.Steps.GoalSteps -> new path, PLang.Runtime2.Engine.Goals.Steps.Step -> new path, PLang.Runtime2.Engine.Goals.Goal (as type) -> new path, using PLang.Runtime2.Engine.Goals; -> using PLang.Runtime2.Engine.Goals.Goal;. Build verify.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Core/ActionsTests.cs",
+            "PLang.Tests/Runtime2/Core/StepTests.cs",
+            "PLang.Tests/Runtime2/Core/EngineTests.cs",
+            "PLang.Tests/Runtime2/Core/StepRetryTests.cs",
+            "PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs",
+            "PLang.Tests/Runtime2/Core/EventIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/GoalTests.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs",
+            "PLang.Tests/Runtime2/Core/StartGoalTests.cs",
+            "PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/StepCacheTests.cs",
+            "PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs",
+            "PLang.Tests/Runtime2/Utility/GoalDataTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "description": "Updated all old-style FQN namespace references to new entity hierarchy paths. 6 distinct patterns replaced across 16 files. FileHandlerTests.cs had the most extensive FQN usage (Goal, GoalSteps, Step, StepActions, Action types all fully qualified).",
+          "health": "Clean. 0 build errors after all replacements.",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Complete. All 16 files updated. Build succeeds with 0 errors.",
+        "health": "0 build errors on PLang.Tests. No remaining old namespace patterns (verified via grep).",
+        "notes": "Clean execution. Longest-match-first strategy prevented partial matches (e.g., replacing Action before StepActions would have corrupted StepActions references)."
+      }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T00:00:00Z",
+      "timestamp_end": "2026-02-17T00:30:00Z",
+      "intent": "Design discussion: naming convention as the dispatch mechanism for Runtime2 engine graph",
+      "before": {
+        "assumptions": [
+          "Current Runtime2 uses flat PLang.Runtime2.Core namespace for most classes",
+          "Libraries/module system handles dispatch via lookup tables",
+          "Source generator already exists for lazy param resolution"
+        ],
+        "risk": "Low — this is a design session, no code changes. The eventual migration would be high-risk (massive rename) but mechanical."
+      },
+      "plan": "Interactive design session — no implementation plan. Captured design principles and noted next step: map the full namespace tree.",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "health": "Clean — appended two entries to existing todo file",
+          "confidence": "high",
+          "context": "Added engine.Debug todo and 'Law of Names' design entry capturing the session's design decisions"
+        },
+        {
+          "paths": ["v1/summary.md", "v1/state.md", "summary.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — standard session output files",
+          "confidence": "high"
+        }
+      ],
+      "after": {
+        "status": "Design session complete. No code changes. Next step is mapping the full namespace tree as a migration blueprint.",
+        "health": "No code touched. Design principles captured in todos.md. Ready for tree-mapping session.",
+        "notes": "Productive session. Ingi's idea is clean: naming convention as dispatch law. The migration is big but mechanical. Key open question is how entity types (Goal, Step, Action) relate to the convention — they live in the namespace but aren't Engine* capabilities."
+      }
+    },
+    {
+      "id": "f7e8d9c0-b1a2-4356-8901-abcdef234567",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T01:00:00Z",
+      "timestamp_end": "2026-02-17T01:45:00Z",
+      "intent": "Create detailed migration plan for the Law of Names refactoring",
+      "before": {
+        "assumptions": [
+          "Design is finalized from previous session — all 5 resolved decisions locked",
+          "Current codebase: 165 production files, 57 test files, 2 critical external files",
+          "LazyParamsGenerator has 15 hardcoded namespace strings that must update",
+          "PlangConsole has zero Runtime2 deps (good isolation)"
+        ],
+        "risk": "Medium — plan only, no code changes. But the plan commits to a large refactoring (every file in Runtime2 changes namespace)."
+      },
+      "plan": "6-phase migration plan: Phase 0 (prep), Phase 1A (namespace merge to Engine.*), Phase 1B (subfolder distribution with this.cs convention), Phase 2 (class renames to {Owner}{Capability}), Phase 3 (ConventionWiringGenerator + LazyParamsGenerator updates), Phase 4 (wire MethodRun into runtime). Each phase is a separate commit, must pass all tests before proceeding.",
+      "actions": [
+        {
+          "paths": ["v1/result.md", "v1/code/"],
+          "type": "review",
+          "category": "doc",
+          "health": "Clean — reviewed design artifacts from previous session",
+          "confidence": "high",
+          "context": "Verified the design document and reference implementation code are complete and consistent"
+        },
+        {
+          "paths": ["PLang/Runtime2/Core/", "PLang/Runtime2/Memory/", "PLang/Runtime2/IO/", "PLang/Runtime2/Context/", "PLang/Runtime2/Errors/", "PLang/Runtime2/modules/"],
+          "type": "review",
+          "category": "code",
+          "health": "Clean — full codebase exploration to scope the migration",
+          "confidence": "high",
+          "context": "Explored 165 production files. Key findings: Goals is a ConcurrentDictionary-based collection (not List), Steps/Actions inherit List<T>. Engine is sealed. 30 files in Core, 13 in Memory, 97 in modules."
+        },
+        {
+          "paths": ["PLang.Generators/LazyParamsGenerator.cs"],
+          "type": "review",
+          "category": "code",
+          "health": "15 hardcoded namespace strings identified — all must update in Phase 3A",
+          "confidence": "high",
+          "context": "6 unique namespaces referenced: modules, Context, Memory, Core, Errors, Utility"
+        },
+        {
+          "paths": ["PLang/Modules/PlangModule/Program.cs", "PLang.Tests/"],
+          "type": "review",
+          "category": "code",
+          "health": "External blast radius: 70 files total, 57 tests, 1 critical bridge file",
+          "confidence": "high",
+          "context": "PlangModule/Program.cs has ~45 Runtime2 references — most critical external dependency"
+        }
+      ],
+      "after": {
+        "status": "Session interrupted. Codebase exploration complete, 6-phase plan drafted but tree map not produced.",
+        "health": "No code touched. Plan exists but lacks the per-file migration map.",
+        "notes": "Session ended before the tree map deliverable was written. Picked up in v5."
+      }
+    },
+    {
+      "id": "b3c4d5e6-f7a8-9012-bcde-fa3456789012",
+      "bot": "architect",
+      "timestamp_start": "2026-02-17T16:40:00Z",
+      "timestamp_end": "2026-02-17T17:30:00Z",
+      "intent": "Complete the full namespace tree map — every current file mapped to its proposed Law of Names location",
+      "before": {
+        "assumptions": [
+          "v1 design and v2 codebase exploration are both valid and current",
+          "165 production files, ~89 handler files, 10 error files",
+          "Engine is sealed — must become partial for convention wiring",
+          "Goals uses ConcurrentDictionary (not List) — naming to EngineGoals still works, it's a smart collection",
+          "Data and Type are in Memory/ but used everywhere — v1 design puts them at Engine root"
+        ],
+        "risk": "Low — documentation only. But the tree map becomes the blueprint for actual code migration."
+      },
+      "plan": "Read every Runtime2 file, build a complete current→proposed mapping table covering: file path, namespace, class name (with renames). Flag open questions for Ingi. Produce output/v5/result.md as the deliverable.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Core/Engine.cs",
+            "PLang/Runtime2/Core/Goals.cs",
+            "PLang/Runtime2/Core/Goal.cs",
+            "PLang/Runtime2/Core/Steps.cs",
+            "PLang/Runtime2/Core/Step.cs",
+            "PLang/Runtime2/Core/Actions.cs",
+            "PLang/Runtime2/Core/Action.cs",
+            "PLang/Runtime2/Core/Property.cs",
+            "PLang/Runtime2/Context/PLangContext.cs",
+            "PLang/Runtime2/Memory/Data.cs",
+            "PLang/Runtime2/IO/Channels.cs",
+            "PLang/Runtime2/modules/Libraries.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "health": "Complete read of all 165 production files — every class, namespace, and inheritance relationship catalogued",
+          "confidence": "high",
+          "context": "Read every file in Core/, Context/, Memory/, IO/, Serialization/, Errors/, Utility/, Parsing/, Mapping/, and modules/ root. Built complete inventory."
+        },
+        {
+          "paths": ["v5/result.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — comprehensive tree map with 18 sections, convention-wired summary table, and 5 resolved questions",
+          "confidence": "high",
+          "context": "The deliverable: full current→proposed mapping for all ~165 files. 11 classes get convention renames. All 5 design questions resolved by Ingi."
+        },
+        {
+          "paths": ["v5/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — 7-phase migration plan with exact namespace mappings, blast radius counts, and per-phase verification steps",
+          "confidence": "high",
+          "context": "Migration plan: Phase 0 (baseline), Phase 1 (folder+namespace), Phase 2 (file splits), Phase 3 (11 convention renames), Phase 4 (EngineCache), Phase 5 (ConventionWiringGenerator), Phase 6 (MethodRun dispatch)."
+        },
+        {
+          "paths": ["handoff/coder/law-of-names/task.md", "handoff/coder/law-of-names/context/"],
+          "type": "create",
+          "category": "doc",
+          "health": "Clean — complete handoff package with task description, tree map, migration plan, namespace map, phase 4 sketches, and current Engine.cs",
+          "confidence": "high",
+          "context": "5 context files provided: tree-map.md, migration-plan.md, namespace-map.txt, engine-current.cs, phase4-sketches.cs"
+        }
+      ],
+      "after": {
+        "status": "Complete. Tree map, migration plan, and coder handoff all delivered. All design questions resolved. Ready for execution.",
+        "health": "No code touched. All output is documentation and handoff material. The codebase is unchanged.",
+        "notes": "Clean session. Three deliverables: (1) tree map with all 165 files mapped, (2) 7-phase migration plan, (3) coder handoff package with 5 context files."
+      }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-0123-cdef-ab4567890123",
+      "bot": "architect",
+      "timestamp_start": "2026-02-18T00:00:00Z",
+      "timestamp_end": "2026-02-18T01:00:00Z",
+      "intent": "Design an intent audit process for Runtime2 unit tests — aligning tests with intended behavior rather than current implementation",
+      "before": {
+        "assumptions": [
+          "Existing tests were written by AI based on code behavior, not creator's intent",
+          "14 modules with ~110 actions total; 8 have full coverage, 3 C#-only, 3 untested",
+          "Ingi knows the intended behavior but it's not documented anywhere",
+          "The codebase is stable enough that the tests mostly pass — but passing doesn't mean correct"
+        ],
+        "risk": "Low — this is a process design session. The eventual audit could surface bugs (tests passing against wrong behavior), which is the whole point."
+      },
+      "plan": "Designed the 3-phase intent audit process (present understanding, capture intent, alignment check) with tree traversal order from Data up to modules. Process approved by Ingi.",
+      "actions": [],
+      "after": {
+        "status": "Process design complete. Ready for execution in v8.",
+        "health": "No code touched.",
+        "notes": "Plan approved. Data chosen as practice run target."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-defg-bc5678901234",
+      "bot": "architect",
+      "timestamp_start": "2026-02-18T10:00:00Z",
+      "timestamp_end": null,
+      "intent": "Execute intent audit Phase 1 starting with Level 0: Data, Type, DynamicData, Properties",
+      "before": {
+        "assumptions": [
+          "Intent audit process was designed and approved in v7",
+          "Data.cs has 378 lines, 42 existing tests in DataTests.cs, 4 DynamicData tests",
+          "Type.cs is small (46 lines), no separate test file — tested implicitly through Data",
+          "Properties.cs (109 lines) has no dedicated tests",
+          "Data is the foundation — every other class depends on it getting the contracts right"
+        ],
+        "risk": "Low for this session — presenting understanding for review, no code changes yet. But corrections found here could cascade."
+      },
+      "plan": "Present behavioral contracts for Data, Type, DynamicData, and Properties. Get Ingi's review (corrections/additions/removals). Then capture as doc comments and audit against existing tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Memory/Data.cs", "PLang/Runtime2/Memory/Properties.cs", "PLang/Runtime2/Utility/TypeMapping.cs", "PLang.Tests/Runtime2/Memory/DataTests.cs"],
+          "type": "review",
+          "category": "code",
+          "health": "Read all Level 0 source and tests to build understanding",
+          "confidence": "high",
+          "context": "Complete read of Data.cs (378 lines, 3 classes: Data, Data<T>, DynamicData), Type.cs (46 lines), Properties.cs (109 lines), DataTests.cs (468 lines, 42+4 tests), TypeMapping.cs, ValueNavigators.cs"
+        }
+      ],
+      "after": null
+    }
+  ]
+}
