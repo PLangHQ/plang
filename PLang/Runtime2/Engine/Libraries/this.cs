@@ -1,6 +1,7 @@
 using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
+using R2Library = PLang.Runtime2.Engine.Libraries.Library.@this;
 
 namespace PLang.Runtime2.Engine.Libraries;
 
@@ -9,18 +10,18 @@ namespace PLang.Runtime2.Engine.Libraries;
 /// Built-in library is always [0]. External DLLs can be added as additional libraries.
 /// Replaces ActionRegistry entirely.
 /// </summary>
-public sealed class EngineLibraries
+public sealed class @this
 {
-    private readonly List<Library> _libraries = new();
+    private readonly List<R2Library> _libraries = new();
 
     /// <summary>
     /// The built-in library containing PLang's own action handlers. Always [0].
     /// </summary>
-    public Library BuiltIn => _libraries[0];
+    public R2Library BuiltIn => _libraries[0];
 
-    public EngineLibraries()
+    public @this()
     {
-        var builtIn = new Library("builtin", typeof(EngineLibraries).Assembly);
+        var builtIn = new R2Library("builtin", typeof(@this).Assembly);
         builtIn.Discover("PLang.Runtime2.actions");
         _libraries.Add(builtIn);
     }
@@ -95,7 +96,7 @@ public sealed class EngineLibraries
 
     // === Library management ===
 
-    public void Add(Library library) => _libraries.Add(library);
-    public IReadOnlyList<Library> Value => _libraries;
-    public Library this[int index] => _libraries[index];
+    public void Add(R2Library library) => _libraries.Add(library);
+    public IReadOnlyList<R2Library> Value => _libraries;
+    public R2Library this[int index] => _libraries[index];
 }

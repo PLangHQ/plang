@@ -21,8 +21,8 @@ global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle.@this;
 global using Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
-global using EngineLibraries = PLang.Runtime2.Engine.Libraries.EngineLibraries;
-global using Library = PLang.Runtime2.Engine.Libraries.Library;
+global using EngineLibraries = PLang.Runtime2.Engine.Libraries.@this;
+global using Library = PLang.Runtime2.Engine.Libraries.Library.@this;
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
 global using StepCacheEntry = PLang.Runtime2.Engine.Cache.StepCacheEntry;

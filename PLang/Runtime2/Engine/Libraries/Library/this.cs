@@ -2,13 +2,13 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using PLang.Runtime2.actions;
 
-namespace PLang.Runtime2.Engine.Libraries;
+namespace PLang.Runtime2.Engine.Libraries.Library;
 
 /// <summary>
 /// A single library — one assembly's worth of action handlers.
 /// Owns handler registration, discovery, and lookup scoped to this library.
 /// </summary>
-public sealed class Library
+public sealed class @this
 {
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IClass>> _handlers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Type>> _actionTypes = new(StringComparer.OrdinalIgnoreCase);
@@ -16,7 +16,7 @@ public sealed class Library
     public string Name { get; }
     public Assembly? Assembly { get; }
 
-    public Library(string name, Assembly? assembly = null)
+    public @this(string name, Assembly? assembly = null)
     {
         Name = name;
         Assembly = assembly;
