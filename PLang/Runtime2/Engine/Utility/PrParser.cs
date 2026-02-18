@@ -2,9 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Goals;
-using PLang.Runtime2.Engine.Utility;
 
-namespace PLang.Runtime2.Engine.Parsing;
+namespace PLang.Runtime2.Engine.Utility;
 
 /// <summary>
 /// Parser for Runtime2 v0.2 .pr.json files.

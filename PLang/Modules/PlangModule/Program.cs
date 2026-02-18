@@ -19,9 +19,10 @@ using R2Goal = PLang.Runtime2.Engine.Goals.Goal;
 using R2Step = PLang.Runtime2.Engine.Goals.Steps.Step;
 using R2Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
 using R2GoalCall = PLang.Runtime2.Engine.Goals.GoalCall;
-using PLang.Runtime2.Engine.Mapping;
+using GoalMapper = PLang.Runtime2.Engine.Utility.GoalMapper;
+using TypeMapping = PLang.Runtime2.Engine.Utility.TypeMapping;
+using AppData = PLang.Runtime2.Engine.Utility.AppData;
 using PLang.Runtime2.actions;
-using PLang.Runtime2.Engine.Utility;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections.Generic;
@@ -639,7 +640,7 @@ namespace PLang.Modules.PlangModule
 
 			try
 			{
-				var runtime2Goal = Runtime2.Engine.Mapping.GoalMapper.ToRuntime2Goal(goal);
+				var runtime2Goal = Runtime2.Engine.Utility.GoalMapper.ToRuntime2Goal(goal);
 				return await Task.FromResult((runtime2Goal, (IError?)null));
 			}
 			catch (Exception ex)

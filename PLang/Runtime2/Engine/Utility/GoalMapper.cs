@@ -5,7 +5,7 @@ using R2Goal = PLang.Runtime2.Engine.Goals.Goal;
 using R2Visibility = PLang.Runtime2.Engine.Goals.Visibility;
 using R2ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
 
-namespace PLang.Runtime2.Engine.Mapping;
+namespace PLang.Runtime2.Engine.Utility;
 
 /// <summary>
 /// Maps from old Building.Model types to Runtime2.Engine types.
