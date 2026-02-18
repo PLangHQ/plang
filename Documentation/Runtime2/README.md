@@ -152,110 +152,112 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operat
 
 ## File Structure
 
+Folder paths map to the architecture graph. Each folder's primary class is `this.cs`.
+
 ```
 PLang/Runtime2/
 ├── Engine/
-│   ├── Engine.cs              Central orchestrator (root of object graph)
-│   ├── Goal.cs                Goal entity (properties)
-│   ├── Goal.Methods.cs        Goal runtime methods (Load, RunAsync)
-│   ├── EngineGoals.cs         Goal collection with lazy disk loading
-│   ├── GoalCall.cs            Strongly-typed goal reference (name, parameters)
-│   ├── Step.cs                Step entity (properties)
-│   ├── Step.Methods.cs        Step runtime methods (Load, RunAsync)
-│   ├── GoalSteps.cs           GoalSteps : List<Step> (smart collection)
-│   ├── Action.cs              Action entity (properties)
-│   ├── Action.Methods.cs      Action runtime methods (RunAsync)
-│   ├── StepActions.cs         StepActions : List<Action> (smart collection)
-│   ├── CallStack.cs           Execution tracking
-│   ├── CallFrame.cs           Stack frame with ExecutionPhase enum
-│   ├── ExecutedStep.cs        Record of an executed step
-│   ├── SerializableCallStack.cs  Serializable call stack/frame DTOs
-│   ├── EventType.cs           Event type enum (BeforeGoal, AfterStep, etc.)
-│   ├── EventBinding.cs        Event handler binding with pattern matching
-│   ├── EngineEvents.cs        EngineEvents — global event collection + dispatch
-│   ├── Lifecycle.cs           Per-entity lifecycle (Before/After Bindings)
-│   ├── Bindings.cs            Bindings — ordered event binding collection
-│   ├── EngineDebug.cs         Debug mode controller (engine.Debug)
-│   ├── EngineTesting.cs       Test runner (engine.Testing)
-│   ├── Library.cs             Single library (one assembly's handlers)
-│   ├── EngineLibraries.cs     Smart collection, walk-the-list resolution (engine.Libraries)
-│   ├── EngineProperty.cs      Key-value store with GoalCall resolution
-│   ├── ErrorHandler.cs        Step error configuration
-│   ├── CacheSettings.cs       Step cache configuration
-│   ├── StepCache.cs           Step-level cache wrapper
-│   ├── StepCacheEntry.cs      Cache entry type
-│   ├── MemoryStepCache.cs     In-memory ICache implementation
-│   ├── ICache.cs              Cache interface
-│   ├── IAction.cs             Action interface
-│   └── Info.cs                Version/build info
-│
-├── Engine/Context/
-│   ├── PLangContext.cs         Per-request state (MemoryStack, CallStack, events)
-│   ├── Actor.cs               Identity (System/Service/User)
-│   └── EventScope.cs          Event scope wrapper (owns EngineEvents)
-│
-├── Engine/Memory/
-│   ├── Data.cs                Universal container + Type class
-│   ├── MemoryStack.cs         Variable storage (ConcurrentDictionary)
-│   ├── Properties.cs          Properties : IList<Data>
-│   ├── IValueNavigator.cs     Navigation interface for dot-paths
-│   ├── PlangTypeConverter.cs  Type conversion utilities
-│   ├── TString.cs             Translatable string type
-│   └── TypeJsonConverter.cs   JSON converter for Type
-│
-├── Engine/Errors/
-│   ├── IError.cs              Error interface
-│   ├── Error.cs               Base error implementation
-│   ├── GoalError.cs           Goal-level errors
-│   ├── StepError.cs           Step-level errors
-│   ├── ActionError.cs         Action-level errors
-│   ├── ServiceError.cs        External service errors
-│   ├── ProgramError.cs        Program-level errors
-│   ├── ValidationError.cs     Validation errors
-│   ├── AssertionError.cs      Test assertion errors
-│   ├── ErrorCategory.cs       Error categorization
-│   └── Exceptions.cs          Runtime2Exception types
-│
-├── Engine/Channels/
-│   ├── EngineChannels.cs      Channel manager (named I/O routing)
-│   ├── Channel.cs             Stream-backed channel
-│   ├── ChannelData.cs         Channel data wrapper
-│   └── Serializers/
-│       ├── EngineSerializers.cs   Content-type routing registry
-│       ├── ISerializer.cs         Serializer interface
-│       ├── JsonStreamSerializer.cs  System.Text.Json implementation
-│       ├── TextStreamSerializer.cs  Plain text implementation
-│       └── ViewPropertyFilter.cs  View-based property filtering
-│
-├── Engine/View.cs               [Store], [LlmBuilder], [Debug], [Default] attributes
-│
-├── Engine/Utility/
-│   ├── TypeMapping.cs         PLang type names + MIME → CLR types + ConvertTo
-│   └── AppData.cs             Application data utilities
-│
-├── Engine/Mapping/
-│   └── GoalMapper.cs          Building.Model → Runtime2 conversion
-│
-├── Engine/Parsing/
-│   └── PrParser.cs            .pr file parser
+│   ├── this.cs                Central orchestrator (root of object graph)
+│   ├── Info.cs                Version/build info
+│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default] attributes
+│   │
+│   ├── Goals/
+│   │   ├── this.cs            EngineGoals — goal collection with lazy disk loading
+│   │   └── Goal/
+│   │       ├── this.cs        Goal entity (properties)
+│   │       ├── Methods.cs     Goal runtime methods (Load, RunAsync)
+│   │       ├── GoalCall.cs    Strongly-typed goal reference (name, parameters)
+│   │       └── Steps/
+│   │           ├── this.cs    GoalSteps : List<Step> (smart collection)
+│   │           └── Step/
+│   │               ├── this.cs        Step entity (properties)
+│   │               ├── Methods.cs     Step runtime methods (Load, RunAsync)
+│   │               ├── ErrorHandler.cs Step error configuration
+│   │               ├── CacheSettings.cs Step cache configuration
+│   │               ├── StepCache.cs   Step-level cache wrapper
+│   │               └── Actions/
+│   │                   ├── this.cs    StepActions : List<Action> (smart collection)
+│   │                   └── Action/
+│   │                       ├── this.cs    Action entity (properties)
+│   │                       ├── Methods.cs Action runtime methods (RunAsync)
+│   │                       └── IAction.cs Action interface
+│   │
+│   ├── Events/
+│   │   ├── this.cs            EngineEvents — global event collection + dispatch
+│   │   ├── EventType.cs       Event type enum (BeforeGoal, AfterStep, etc.)
+│   │   └── Lifecycle/
+│   │       ├── this.cs        Per-entity lifecycle (Before/After Bindings)
+│   │       └── Bindings/
+│   │           ├── this.cs    Bindings — ordered event binding collection
+│   │           └── Binding/
+│   │               └── this.cs EventBinding — handler with pattern matching
+│   │
+│   ├── Libraries/
+│   │   ├── this.cs            EngineLibraries — smart collection, handler resolution
+│   │   └── Library/
+│   │       └── this.cs        Library — one assembly's handlers
+│   │
+│   ├── CallStack/
+│   │   ├── this.cs            CallStack — execution tracking
+│   │   ├── CallFrame.cs       Stack frame with ExecutionPhase enum
+│   │   ├── ExecutedStep.cs    Record of an executed step
+│   │   └── SerializableCallStack.cs  Serializable DTOs
+│   │
+│   ├── Cache/
+│   │   ├── this.cs            ICache — pluggable cache interface
+│   │   ├── MemoryStepCache.cs In-memory ICache implementation
+│   │   └── StepCacheEntry.cs  Cache entry type
+│   │
+│   ├── Properties/
+│   │   └── this.cs            EngineProperty — key-value store with GoalCall resolution
+│   │
+│   ├── Debug/
+│   │   └── this.cs            EngineDebug — debug mode controller
+│   │
+│   ├── Test/
+│   │   └── this.cs            EngineTesting — test runner
+│   │
+│   ├── Channels/
+│   │   ├── this.cs            EngineChannels — channel manager (named I/O routing)
+│   │   ├── ChannelData.cs     Channel data wrapper
+│   │   ├── Channel/
+│   │   │   └── this.cs        Channel — stream-backed channel
+│   │   └── Serializers/
+│   │       ├── this.cs        EngineSerializers — content-type routing registry
+│   │       ├── ViewPropertyFilter.cs  View-based property filtering
+│   │       └── Serializer/
+│   │           ├── this.cs    ISerializer — serializer interface
+│   │           ├── JsonStreamSerializer.cs  System.Text.Json implementation
+│   │           └── TextStreamSerializer.cs  Plain text implementation
+│   │
+│   ├── Context/
+│   │   ├── PLangContext.cs    Per-request state (MemoryStack, CallStack, events)
+│   │   ├── Actor.cs           Identity (System/Service/User)
+│   │   └── EventScope.cs     Event scope wrapper (owns EngineEvents)
+│   │
+│   ├── Memory/
+│   │   ├── Data.cs            Universal container + Type class
+│   │   ├── MemoryStack.cs     Variable storage (ConcurrentDictionary)
+│   │   ├── Properties.cs      Properties : IList<Data>
+│   │   ├── IValueNavigator.cs Navigation interface for dot-paths
+│   │   ├── PlangTypeConverter.cs Type conversion utilities
+│   │   ├── TString.cs         Translatable string type
+│   │   └── TypeJsonConverter.cs JSON converter for Type
+│   │
+│   ├── Errors/
+│   │   ├── IError.cs, Error.cs, GoalError.cs, StepError.cs, ActionError.cs
+│   │   ├── ServiceError.cs, ProgramError.cs, ValidationError.cs
+│   │   ├── AssertionError.cs, ErrorCategory.cs, Exceptions.cs
+│   │
+│   └── Utility/
+│       ├── TypeMapping.cs     PLang type names + MIME → CLR types + ConvertTo
+│       ├── AppData.cs         Application data utilities
+│       ├── GoalMapper.cs      Building.Model → Runtime2 conversion
+│       └── PrParser.cs        .pr file parser
 │
 └── actions/
-    ├── IClass.cs              Handler interface
-    ├── IContext.cs             Context-aware handler interface
-    ├── ICodeGenerated.cs       Source-generated execution interface
-    ├── Attributes.cs          [Action], [Default], [VariableName] attributes
-    ├── variable/              variable.set, variable.get, variable.clear, ...
-    ├── file/                  file.save, file.read, file.copy, ...
-    ├── output/                output.write
-    ├── condition/             if handler
-    ├── event/                 before/after goal/step/action handlers
-    ├── goal/                  goal.call handler
-    ├── loop/                  foreach handler
-    ├── list/                  list operations
-    ├── math/                  math operations
-    ├── convert/               type conversion
-    ├── assert/                test assertions
-    ├── mock/                  test mocking
-    ├── error/                 error handling
-    └── library/               dynamic library loading
+    ├── IClass.cs, IContext.cs, ICodeGenerated.cs, Attributes.cs
+    ├── variable/   file/   output/   condition/   event/
+    ├── goal/   loop/   list/   math/   convert/
+    ├── assert/   mock/   error/   library/
 ```

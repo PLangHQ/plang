@@ -68,11 +68,11 @@ In Runtime2 you can get debug/callstack information. This is usefull when step f
 ## Key Files
 - PlangConsole is the executable project (not PLang which is a library)
 - system/builder/*.goal - the new PLang builder written in PLang
-- PLang/Runtime2/modules/*.cs - action handlers (variable/set, file/read, output/write, etc.)
-- PLang/Runtime2/modules/IClass.cs, ICodeGenerated.cs, BaseClass.cs - handler interfaces
-- PLang/Runtime2/Memory/Data.cs - universal data container + Type class
-- PLang/Runtime2/Utility/TypeMapping.cs - PLang type names + MIME types -> CLR types
-- PLang/Runtime2/Mapping/GoalMapper.cs - maps Building.Model -> Runtime2.Core
+- PLang/Runtime2/actions/*.cs - action handlers (variable/set, file/read, output/write, etc.)
+- PLang/Runtime2/actions/IClass.cs, ICodeGenerated.cs, BaseClass.cs - handler interfaces
+- PLang/Runtime2/Engine/Memory/Data.cs - universal data container + Type class
+- PLang/Runtime2/Engine/Utility/TypeMapping.cs - PLang type names + MIME types -> CLR types
+- PLang/Runtime2/Engine/Utility/GoalMapper.cs - maps Building.Model -> Runtime2
 - PLang.Generators/LazyParamsGenerator.cs - source generator for lazy param resolution
 
 For full OBP details with code examples, see `Documentation/Runtime2/plang_object_based_pattern.md`.

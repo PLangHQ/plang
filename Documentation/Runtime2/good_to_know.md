@@ -4,6 +4,33 @@ Collected architectural insights from building and debugging PLang Runtime2.
 
 ---
 
+## Folder Structure & Namespaces
+
+### `this.cs` Convention
+Each folder's primary class is named `this.cs`. The folder name IS the concept name:
+- `Engine/Goals/this.cs` → `EngineGoals` class
+- `Engine/Goals/Goal/this.cs` → `Goal` class
+- `Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `Action` class
+
+### Namespace-Type Collision Avoidance
+Entity classes share the **collection's namespace**, not a namespace matching their folder:
+- `Goals/Goal/this.cs` → namespace `PLang.Runtime2.Engine.Goals` (not `Goals.Goal`)
+- `Goals/Goal/Steps/Step/this.cs` → namespace `PLang.Runtime2.Engine.Goals.Steps` (not `Goals.Goal.Steps.Step`)
+
+This prevents C# namespace-type collisions (CS0118: 'Goal' is a namespace but is used like a type).
+
+### Global Using Aliases
+`PLang/Runtime2/GlobalUsings.cs` provides aliases for types without v1 naming conflicts.
+Types with v1 conflicts (Goal, Visibility, ErrorHandler, CallStack, EventType, EventBinding)
+require per-file handling — either `using PLang.Runtime2.Engine.Goals;` or per-file aliases like
+`using R2Goal = PLang.Runtime2.Engine.Goals.Goal;`.
+
+### PLang.Tests Has Extra Aliases
+`PLang.Tests/GlobalUsings.cs` includes additional aliases (Goal, ErrorHandler, CallStack, etc.)
+because there are no Building.Model or v1 Runtime references in the test project.
+
+---
+
 ## Goal Resolution & Relative Paths
 
 ### Engine Root
