@@ -7,17 +7,17 @@ Runtime2 is PLang's second-generation execution engine. It replaces the v1 modul
 Engine is the root — everything hangs off it:
 
 ```
-Engine (sealed, IAsyncDisposable)
-├── EngineLibraries  (built-in [0] + external DLLs, handler resolution)
-├── Goals            (EngineGoals — goal collection with lazy disk loading)
-├── FileSystem       (IPLangFileSystem — abstracted filesystem)
-├── Channels         (EngineChannels — channel-based I/O routing)
-│   └── Serializers  (EngineSerializers — content-type based)
-├── Events           (EngineEvents — global event collection)
-├── Cache            (ICache — pluggable step cache)
-├── Property         (EngineProperty — key-value store with GoalCall resolution)
-├── Debug            (EngineDebug — debug mode controller)
-├── Testing          (EngineTesting — test runner)
+Engine (@this, sealed, IAsyncDisposable)
+├── Libraries    (goal alias: EngineLibraries — handler resolution)
+├── Goals        (goal alias: EngineGoals — goal collection with lazy disk loading)
+├── FileSystem   (IPLangFileSystem — abstracted filesystem)
+├── Channels     (goal alias: EngineChannels — channel-based I/O routing)
+│   └── Serializers  (goal alias: Serializers — content-type based)
+├── Events       (global alias: EngineEvents — global event collection)
+├── Cache        (ICache — pluggable step cache)
+├── Property     (global alias: Property — key-value store with GoalCall resolution)
+├── Debug        (global alias: Debugging — debug mode controller)
+├── Testing      (global alias: Testing — test runner)
 └── Actors (lazy)
     ├── System       (internal engine operations)
     ├── Service      (external service operations)
@@ -29,13 +29,15 @@ Engine (sealed, IAsyncDisposable)
                         └── Actor         (identity)
 ```
 
-## Entity Hierarchy: Goal → GoalSteps → StepActions
+**`@this` Convention**: Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases (e.g., `global using Step = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this;`). Within parent namespaces, use `ChildNamespace.@this` (e.g., `Engine.@this`, `Goal.@this`, `Channel.@this`).
+
+## Entity Hierarchy: Goal → Steps → Actions
 
 ```
-Goal (one .pr file)
- └── GoalSteps : List<Step>  (smart collection, owns Load)
-      └── StepActions : List<Action>  (smart collection, owns RunAsync)
-           └── Action → resolves to a Handler (e.g. variable/set → SetHandler)
+Goal (@this in Goals/Goal/)
+ └── Steps (@this : List<Step>, smart collection, owns Load)
+      └── Actions (@this : List<Action>, smart collection, owns RunAsync)
+           └── Action (@this) → resolves to a Handler (e.g. variable/set → SetHandler)
 ```
 
 Each level calls `.Load()` then `.RunAsync()`. Events fire before/after each phase via `Lifecycle` (Before/After `Bindings`).
@@ -162,43 +164,43 @@ PLang/Runtime2/
 │   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default] attributes
 │   │
 │   ├── Goals/
-│   │   ├── this.cs            EngineGoals — goal collection with lazy disk loading
+│   │   ├── this.cs            @this (alias: EngineGoals) — goal collection
 │   │   └── Goal/
-│   │       ├── this.cs        Goal entity (properties)
-│   │       ├── Methods.cs     Goal runtime methods (Load, RunAsync)
+│   │       ├── this.cs        @this (alias: Goal) — goal entity
+│   │       ├── Methods.cs     partial @this — runtime methods (Load, RunAsync)
 │   │       ├── GoalCall.cs    Strongly-typed goal reference (name, parameters)
 │   │       └── Steps/
-│   │           ├── this.cs    GoalSteps : List<Step> (smart collection)
+│   │           ├── this.cs    @this (alias: GoalSteps) : List<Step>
 │   │           └── Step/
-│   │               ├── this.cs        Step entity (properties)
-│   │               ├── Methods.cs     Step runtime methods (Load, RunAsync)
+│   │               ├── this.cs        @this (alias: Step) — step entity
+│   │               ├── Methods.cs     partial @this — runtime methods
 │   │               ├── ErrorHandler.cs Step error configuration
 │   │               ├── CacheSettings.cs Step cache configuration
 │   │               ├── StepCache.cs   Step-level cache wrapper
 │   │               └── Actions/
-│   │                   ├── this.cs    StepActions : List<Action> (smart collection)
+│   │                   ├── this.cs    @this (alias: StepActions) : List<Action>
 │   │                   └── Action/
-│   │                       ├── this.cs    Action entity (properties)
-│   │                       ├── Methods.cs Action runtime methods (RunAsync)
+│   │                       ├── this.cs    @this — action entity
+│   │                       ├── Methods.cs partial @this — RunAsync
 │   │                       └── IAction.cs Action interface
 │   │
 │   ├── Events/
-│   │   ├── this.cs            EngineEvents — global event collection + dispatch
+│   │   ├── this.cs            @this (alias: EngineEvents) — global event dispatch
 │   │   ├── EventType.cs       Event type enum (BeforeGoal, AfterStep, etc.)
 │   │   └── Lifecycle/
-│   │       ├── this.cs        Per-entity lifecycle (Before/After Bindings)
+│   │       ├── this.cs        @this (alias: Lifecycle) — Before/After Bindings
 │   │       └── Bindings/
-│   │           ├── this.cs    Bindings — ordered event binding collection
+│   │           ├── this.cs    @this (alias: Bindings) — ordered binding collection
 │   │           └── Binding/
-│   │               └── this.cs EventBinding — handler with pattern matching
+│   │               └── this.cs @this (alias: EventBinding) — pattern matching
 │   │
 │   ├── Libraries/
-│   │   ├── this.cs            EngineLibraries — smart collection, handler resolution
+│   │   ├── this.cs            @this (alias: EngineLibraries) — handler resolution
 │   │   └── Library/
-│   │       └── this.cs        Library — one assembly's handlers
+│   │       └── this.cs        @this (alias: Library) — one assembly's handlers
 │   │
 │   ├── CallStack/
-│   │   ├── this.cs            CallStack — execution tracking
+│   │   ├── this.cs            @this (alias: CallStack) — execution tracking
 │   │   ├── CallFrame.cs       Stack frame with ExecutionPhase enum
 │   │   ├── ExecutedStep.cs    Record of an executed step
 │   │   └── SerializableCallStack.cs  Serializable DTOs
@@ -209,21 +211,21 @@ PLang/Runtime2/
 │   │   └── StepCacheEntry.cs  Cache entry type
 │   │
 │   ├── Properties/
-│   │   └── this.cs            EngineProperty — key-value store with GoalCall resolution
+│   │   └── this.cs            @this (alias: Property) — key-value store
 │   │
 │   ├── Debug/
-│   │   └── this.cs            EngineDebug — debug mode controller
+│   │   └── this.cs            @this (alias: Debugging) — debug mode controller
 │   │
 │   ├── Test/
-│   │   └── this.cs            EngineTesting — test runner
+│   │   └── this.cs            @this (alias: Testing) — test runner
 │   │
 │   ├── Channels/
-│   │   ├── this.cs            EngineChannels — channel manager (named I/O routing)
+│   │   ├── this.cs            @this (alias: EngineChannels) — channel I/O routing
 │   │   ├── ChannelData.cs     Channel data wrapper
 │   │   ├── Channel/
-│   │   │   └── this.cs        Channel — stream-backed channel
+│   │   │   └── this.cs        @this (alias: Channel) — stream-backed channel
 │   │   └── Serializers/
-│   │       ├── this.cs        EngineSerializers — content-type routing registry
+│   │       ├── this.cs        @this (alias: Serializers) — content-type routing
 │   │       ├── ViewPropertyFilter.cs  View-based property filtering
 │   │       └── Serializer/
 │   │           ├── this.cs    ISerializer — serializer interface

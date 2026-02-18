@@ -6,27 +6,41 @@ Collected architectural insights from building and debugging PLang Runtime2.
 
 ## Folder Structure & Namespaces
 
-### `this.cs` Convention
-Each folder's primary class is named `this.cs`. The folder name IS the concept name:
-- `Engine/Goals/this.cs` → `EngineGoals` class
-- `Engine/Goals/Goal/this.cs` → `Goal` class
-- `Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `Action` class
+### `@this` Class Convention
+Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases:
+- `Engine/this.cs` → `class @this` (no global alias — namespace shadows it)
+- `Engine/Goals/this.cs` → `class @this` (alias: `EngineGoals`)
+- `Engine/Goals/Goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
+- `Engine/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
 
-### Namespace-Type Collision Avoidance
-Entity classes share the **collection's namespace**, not a namespace matching their folder:
-- `Goals/Goal/this.cs` → namespace `PLang.Runtime2.Engine.Goals` (not `Goals.Goal`)
-- `Goals/Goal/Steps/Step/this.cs` → namespace `PLang.Runtime2.Engine.Goals.Steps` (not `Goals.Goal.Steps.Step`)
+### Namespace Per Folder
+Each folder gets its **own namespace** matching its path exactly:
+- `Goals/Goal/this.cs` → namespace `PLang.Runtime2.Engine.Goals.Goal`
+- `Goals/Goal/Steps/Step/this.cs` → namespace `PLang.Runtime2.Engine.Goals.Goal.Steps.Step`
+- `Events/Lifecycle/Bindings/this.cs` → namespace `PLang.Runtime2.Engine.Events.Lifecycle.Bindings`
 
-This prevents C# namespace-type collisions (CS0118: 'Goal' is a namespace but is used like a type).
+This works because the class is `@this` — it never collides with its namespace segment.
+
+### `ChildNamespace.@this` Pattern
+From within a parent namespace, reference a child's primary class as `ChildNamespace.@this`:
+- From `Engine.Goals`: `Goal.@this` (the Goal entity class)
+- From `Engine.Channels`: `Channel.@this`, `Serializers.@this`
+- From `Engine.*`: `Engine.@this` (the Engine root class)
+
+This works because C# resolves child namespace segments before using aliases.
 
 ### Global Using Aliases
-`PLang/Runtime2/GlobalUsings.cs` provides aliases for types without v1 naming conflicts.
-Types with v1 conflicts (Goal, Visibility, ErrorHandler, CallStack, EventType, EventBinding)
-require per-file handling — either `using PLang.Runtime2.Engine.Goals;` or per-file aliases like
-`using R2Goal = PLang.Runtime2.Engine.Goals.Goal;`.
+`PLang/Runtime2/GlobalUsings.cs` provides aliases for types without naming conflicts.
+
+**Can't be global** (shadowed or conflicting):
+- `Engine` — namespace `PLang.Runtime2.Engine` shadows it from all `PLang.Runtime2.*` files
+- `CallStack` — v1 `PLang.Runtime.CallStack` conflict
+- `Goal`, `Visibility`, `ErrorHandler` — v1 `Building.Model` conflict
+- `Action` — `System.Action` conflict
+- `EventType`, `EventBinding` — v1 `PLang.Events` conflict
 
 ### PLang.Tests Has Extra Aliases
-`PLang.Tests/GlobalUsings.cs` includes additional aliases (Goal, ErrorHandler, CallStack, etc.)
+`PLang.Tests/GlobalUsings.cs` includes additional aliases (Engine, Goal, ErrorHandler, CallStack, etc.)
 because there are no Building.Model or v1 Runtime references in the test project.
 
 ---
