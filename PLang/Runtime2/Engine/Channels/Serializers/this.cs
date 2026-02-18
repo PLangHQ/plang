@@ -1,15 +1,17 @@
-namespace PLang.Runtime2.Engine.Channels;
+using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
+
+namespace PLang.Runtime2.Engine.Channels.Serializers;
 
 /// <summary>
 /// Registry for serializers, allowing lookup by content type or file extension.
 /// </summary>
-public sealed class EngineSerializers
+public sealed class @this
 {
     private readonly Dictionary<string, ISerializer> _byContentType = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ISerializer> _byExtension = new(StringComparer.OrdinalIgnoreCase);
     private ISerializer _default;
 
-    public EngineSerializers()
+    public @this()
     {
         var json = new JsonStreamSerializer();
         var text = new TextStreamSerializer(jsonFallback: json);

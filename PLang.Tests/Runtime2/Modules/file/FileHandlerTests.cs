@@ -324,9 +324,9 @@ public class FileHandlerTests : IDisposable
 
         // Replace default channel on User actor's IO so we can capture output
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
-            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
@@ -402,9 +402,9 @@ public class FileHandlerTests : IDisposable
 
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
-            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         var goal = new PLang.Runtime2.Engine.Goals.Goal

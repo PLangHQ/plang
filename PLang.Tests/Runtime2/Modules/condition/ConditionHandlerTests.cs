@@ -62,9 +62,9 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
-            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Register a goal that writes "true-branch"
@@ -113,9 +113,9 @@ public class ConditionHandlerTests : IDisposable
     {
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
-            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         var falseGoal = new Goal
@@ -183,9 +183,9 @@ public class ConditionHandlerTests : IDisposable
 
 
         var captureStream = new System.IO.MemoryStream();
-        _engine.User.Channels.Register(new PLang.Runtime2.Engine.Channels.Channel(
-            PLang.Runtime2.Engine.Channels.EngineChannels.Default, captureStream,
-            PLang.Runtime2.Engine.Channels.ChannelDirection.Output, ownsStream: true)
+        _engine.User.Channels.Register(new Channel(
+            EngineChannels.Default, captureStream,
+            ChannelDirection.Output, ownsStream: true)
         { ContentType = "text/plain" });
 
         // Register the goal that condition.if will call

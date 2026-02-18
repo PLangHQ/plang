@@ -20,9 +20,19 @@ global using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Bind
 global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle.@this;
 global using Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 
-// Standalone concepts (no v1 conflicts in tests)
+// Libraries subsystem
 global using EngineLibraries = PLang.Runtime2.Engine.Libraries.@this;
 global using Library = PLang.Runtime2.Engine.Libraries.Library.@this;
+
+// Channels subsystem
+global using EngineChannels = PLang.Runtime2.Engine.Channels.@this;
+global using Channel = PLang.Runtime2.Engine.Channels.Channel.@this;
+global using ChannelDirection = PLang.Runtime2.Engine.Channels.Channel.ChannelDirection;
+global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
+global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
+global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
+
+// Standalone concepts (no v1 conflicts in tests)
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
 global using StepCacheEntry = PLang.Runtime2.Engine.Cache.StepCacheEntry;

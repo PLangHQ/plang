@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace PLang.Runtime2.Engine.Channels;
+namespace PLang.Runtime2.Engine.Channels.Serializers.Serializer;
 
 /// <summary>
 /// JSON serializer using System.Text.Json with stream support.

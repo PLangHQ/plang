@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization.Metadata;
 using PLang.Runtime2.Engine;
 
-namespace PLang.Runtime2.Engine.Channels;
+namespace PLang.Runtime2.Engine.Channels.Serializers;
 
 /// <summary>
 /// Filters JSON properties based on view attributes.

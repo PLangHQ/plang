@@ -3,7 +3,6 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
-using PLang.Runtime2.Engine.Channels;
 using R2CallStack = PLang.Runtime2.Engine.CallStack.@this;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -96,7 +95,7 @@ public sealed class Engine : IAsyncDisposable
     /// <summary>
     /// I/O operations (file reading, channels).
     /// </summary>
-    public PLang.Runtime2.Engine.Channels.EngineChannels Channels { get; }
+    public EngineChannels Channels { get; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -187,7 +186,7 @@ public sealed class Engine : IAsyncDisposable
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
-        Channels = new PLang.Runtime2.Engine.Channels.EngineChannels(this);
+        Channels = new EngineChannels(this);
     }
 
     /// <summary>

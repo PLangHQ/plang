@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Channels;
+namespace PLang.Runtime2.Engine.Channels.Channel;
 
 /// <summary>
 /// Direction of a channel (input, output, or bidirectional).
@@ -13,7 +13,7 @@ public enum ChannelDirection
 /// <summary>
 /// Represents a named I/O channel backed by a Stream.
 /// </summary>
-public sealed class Channel : IAsyncDisposable, IDisposable
+public sealed class @this : IAsyncDisposable, IDisposable
 {
     public string Name { get; }
     public Stream Stream { get; }
@@ -25,7 +25,7 @@ public sealed class Channel : IAsyncDisposable, IDisposable
 
     private readonly bool _ownsStream;
 
-    public Channel(string name, Stream stream, ChannelDirection direction = ChannelDirection.Bidirectional, bool ownsStream = true)
+    public @this(string name, Stream stream, ChannelDirection direction = ChannelDirection.Bidirectional, bool ownsStream = true)
     {
         Name = name;
         Stream = stream;
@@ -39,23 +39,23 @@ public sealed class Channel : IAsyncDisposable, IDisposable
     /// <summary>
     /// Creates an input channel from a stream.
     /// </summary>
-    public static Channel Input(string name, Stream stream) => new(name, stream, ChannelDirection.Input);
+    public static @this Input(string name, Stream stream) => new(name, stream, ChannelDirection.Input);
 
     /// <summary>
     /// Creates an output channel from a stream.
     /// </summary>
-    public static Channel Output(string name, Stream stream) => new(name, stream, ChannelDirection.Output);
+    public static @this Output(string name, Stream stream) => new(name, stream, ChannelDirection.Output);
 
     /// <summary>
     /// Creates a memory-backed channel.
     /// </summary>
-    public static Channel Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
+    public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction);
 
     /// <summary>
     /// Creates a channel from a file using the PLang file system abstraction.
     /// </summary>
-    public static Channel File(string name, string path, Interfaces.IPLangFileSystem fileSystem, FileMode mode = FileMode.OpenOrCreate)
+    public static @this File(string name, string path, Interfaces.IPLangFileSystem fileSystem, FileMode mode = FileMode.OpenOrCreate)
     {
         var direction = mode == FileMode.Open ? ChannelDirection.Input :
                        mode == FileMode.Create || mode == FileMode.CreateNew ? ChannelDirection.Output :
@@ -64,7 +64,7 @@ public sealed class Channel : IAsyncDisposable, IDisposable
             direction == ChannelDirection.Output ? FileAccess.Write : FileAccess.ReadWrite;
         var absPath = fileSystem.Path.GetFullPath(path);
         var stream = fileSystem.FileStream.New(absPath, mode, access);
-        return new Channel(name, stream, direction);
+        return new @this(name, stream, direction);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-using PLang.Runtime2.Engine.Channels;
+using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
 using System.Text;
 
 namespace PLang.Tests.Runtime2.Serialization;
