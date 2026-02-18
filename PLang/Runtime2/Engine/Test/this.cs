@@ -12,14 +12,14 @@ namespace PLang.Runtime2.Engine.Test;
 /// </summary>
 public sealed class @this
 {
-    private readonly Engine _engine;
+    private readonly Engine.@this _engine;
 
     /// <summary>
     /// Whether test mode is enabled.
     /// </summary>
     public bool IsEnabled { get; set; }
 
-    public @this(Engine engine)
+    public @this(Engine.@this engine)
     {
         _engine = engine;
     }
@@ -116,7 +116,7 @@ public sealed class @this
         // Goal resolution uses Goal.FolderPath for relative lookups,
         // so the engine root stays at the top level (e.g., Tests/Runtime2/).
         var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
-        await using var testEngine = new Engine(testFs);
+        await using var testEngine = new Engine.@this(testFs);
         testEngine.Testing.IsEnabled = true;
 
         // Load the test .pr file

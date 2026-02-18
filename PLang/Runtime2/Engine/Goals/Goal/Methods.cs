@@ -22,7 +22,7 @@ public sealed partial class @this
         return after;
     }
 
-    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
+    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         var savedGoal = context.Goal;
         var savedStep = context.Step;

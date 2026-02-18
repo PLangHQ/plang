@@ -1,34 +1,35 @@
-# v14 State — Law of Names + modules→actions + Serializers→Channels
+# v14 State -- Rename All Primary Classes to @this
 
-## Status: ALL PHASES COMPLETE
+## Status: Phases 1-6 COMPLETE, Phase 7 remaining
 
-### Done
-- **Phase 0**: Green baseline verified (restore, build, 1167 tests pass)
-- **Phase 1**: Folder restructure + namespace migration (commit `e14c87a6`, 212 files)
-- **Phase 3**: Convention renames to `{Owner}{Capability}` (commit `b9e1bdb5`, 44 files)
-- **Phase 2**: File organization — dot-naming, splits, Events→EngineEvents (commit `b1eb5e1b`, 18 files)
-- **Phase 4**: Static→instance for EngineDebug/EngineTesting (commit `fe820f99`, 5 files)
-- **Documentation**: README.md fully rewritten (commit `97ae82d3`)
-- **modules→actions**: Folder rename, Library/EngineLibraries move, Attributes merge (commit `37f67bb3`)
-- **Serializers→Channels**: Move Serializers into Channels subsystem (uncommitted, pending commit)
+### Completed Phases
+- **Phase 1**: Leaf singletons (CallStack, Debug, Test, Properties) → @this (committed 8793f09d)
+- **Phase 2**: Events subsystem (EngineEvents, Lifecycle, Bindings, EventBinding) → @this (committed 0996a19a)
+- **Phase 3**: Libraries subsystem (EngineLibraries, Library) → @this (committed bf4a1e82)
+- **Phase 4**: Channels subsystem (EngineChannels, Channel, EngineSerializers) → @this (committed de84a152)
+- **Phase 5**: Entity hierarchy + R2 alias cleanup (committed 4f708e0f)
+  - Renamed: EngineGoals, Goal, GoalSteps, Step, StepActions, Action → @this
+  - Un-shared all namespaces: each folder gets own namespace matching path
+  - **Removed ALL R2{Name} per-file aliases** → replaced with ChildNamespace.@this
+  - Fixed 43 files including 16 test files
+- **Phase 6**: Engine root class → @this (committed in this session)
+  - Renamed `class Engine` → `class @this` in Engine/this.cs
+  - Updated 14 files within Engine.* namespace: `Engine` type → `Engine.@this`
+  - Updated IClass.cs, ICodeGenerated.cs: `EngineType` alias → `PLang.Runtime2.Engine.@this`
+  - Updated LazyParamsGenerator.cs: FQN string literals + engine-resolvable check
+  - Updated Executor.cs: `new Runtime2.Engine.Engine(...)` → `new Runtime2.Engine.@this(...)`
+  - Added global alias in PLang.Tests/GlobalUsings.cs: `Engine = PLang.Runtime2.Engine.@this`
+  - No global alias in PLang project (namespace shadows it)
 
-### Serializers→Channels Changes
-Files moved:
-- `Engine/Serializers/View.cs` → `Engine/View.cs` (namespace: PLang.Runtime2.Engine)
-- `Engine/Serializers/*.cs` (5 files) → `Engine/Channels/Serializers/*.cs` (namespace: PLang.Runtime2.Engine.Channels)
+### Key Design Decision: Engine.@this
+A global alias `Engine` can't work in the PLang project because the namespace `PLang.Runtime2.Engine` shadows it from every file in `PLang.Runtime2.*`. Instead, all files use `Engine.@this` — the same ChildNamespace.@this pattern used for Channel.@this, Library.@this, Goal.@this, etc.
 
-Files modified:
-- `Engine/Engine.cs` — removed Serializers field/property/param
-- `Engine/Channels/EngineChannels.cs` — added Serializers property, changed internal refs
-- `Engine/Context/PLangContext.cs` — system variable path
-- `Engine/Goal.cs`, `Step.cs`, `Action.cs`, `GoalCall.cs` — removed old using
-- `Engine/Utility/TypeMapping.cs` — changed using
-- `actions/file/save.cs` — changed access path + using
-- 4 test files — changed using + assertions
-- 3 doc files — updated object graph references
+In the test project, the global alias works because test namespaces (`PLang.Tests.Runtime2.*`) don't have an `Engine` namespace segment.
 
-### Final Verification
+### Remaining
+- **Phase 7**: Documentation updates
+
+### Build Status
 - PLang.csproj: 0 errors
 - PLang.Tests.csproj: 0 errors
-- 1167/1167 C# tests passing
-- 0 references to old namespace `PLang.Runtime2.Engine.Serializers` remain
+- All 1167 tests pass

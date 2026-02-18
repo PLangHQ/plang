@@ -25,13 +25,13 @@ public sealed class Actor : IAsyncDisposable
     /// <summary>
     /// Back-reference to the engine.
     /// </summary>
-    public Engine Engine { get; }
+    public Engine.@this Engine { get; }
 
     /// <summary>
     /// Resolves an actor by name using the engine.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static Actor? Resolve(string name, Engine engine) => engine.GetActor(name).Actor;
+    public static Actor? Resolve(string name, Engine.@this engine) => engine.GetActor(name).Actor;
 
     /// <summary>
     /// Valid values for LLM action summaries.
@@ -39,7 +39,7 @@ public sealed class Actor : IAsyncDisposable
     /// </summary>
     public static string[] ValidValues => ["user", "service", "system"];
 
-    public Actor(string name, Engine engine)
+    public Actor(string name, Engine.@this engine)
     {
         Name = name;
         Engine = engine;

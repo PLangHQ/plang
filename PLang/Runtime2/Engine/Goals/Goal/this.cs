@@ -97,7 +97,7 @@ public sealed partial class @this
 
     [LlmIgnore]
     [JsonIgnore]
-    public Engine? Engine { get; set; }
+    public Engine.@this? Engine { get; set; }
 
     [Store, Debug]
     public List<Info> Errors { get; init; } = new();

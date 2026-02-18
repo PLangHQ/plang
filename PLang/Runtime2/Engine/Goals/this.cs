@@ -14,7 +14,7 @@ public sealed class @this
 {
     private readonly ConcurrentDictionary<string, Goal.@this> _goals = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
-    internal Engine Engine { get; set; } = null!;
+    internal Engine.@this Engine { get; set; } = null!;
 
     /// <summary>
     /// Adds a goal to the collection.
@@ -243,7 +243,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes, calls goal.Load(context), and adds to this collection.
     /// </summary>
-    public async Task<Data> LoadFromFileAsync(Engine engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromFileAsync(Engine.@this engine, string prFilePath, PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -273,7 +273,7 @@ public sealed class @this
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data> LoadFromDirectoryAsync(Engine engine, string directory, string pattern = "*.pr", PLangContext? context = null, CancellationToken cancellationToken = default)
+    public async Task<Data> LoadFromDirectoryAsync(Engine.@this engine, string directory, string pattern = "*.pr", PLangContext? context = null, CancellationToken cancellationToken = default)
     {
         try
         {

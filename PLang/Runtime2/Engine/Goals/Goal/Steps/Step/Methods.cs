@@ -20,7 +20,7 @@ public sealed partial class @this
         return after;
     }
 
-    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
+    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         context.Step = this;
         context.CallStack?.RecordStep(this);
@@ -88,14 +88,14 @@ public sealed partial class @this
         return result;
     }
 
-    private async Task<Data> ExecuteActionsAsync(Engine engine, PLangContext context, CancellationToken cancellationToken)
+    private async Task<Data> ExecuteActionsAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken)
     {
         return StepCache != null
             ? await StepCache.RunAsync(engine, context, cancellationToken)
             : await Actions.RunAsync(engine, context, cancellationToken);
     }
 
-    private async Task<Data> HandleErrorAsync(Data failedResult, Engine engine, PLangContext context, CancellationToken cancellationToken)
+    private async Task<Data> HandleErrorAsync(Data failedResult, Engine.@this engine, PLangContext context, CancellationToken cancellationToken)
     {
         var handler = OnError;
         if (handler == null) return failedResult;
@@ -129,7 +129,7 @@ public sealed partial class @this
         return failedResult;
     }
 
-    private async Task<Data> RetryAsync(ErrorHandler handler, Engine engine, PLangContext context, CancellationToken cancellationToken)
+    private async Task<Data> RetryAsync(ErrorHandler handler, Engine.@this engine, PLangContext context, CancellationToken cancellationToken)
     {
         var retryCount = handler.RetryCount ?? 0;
         if (retryCount <= 0) return Data.FromError(new Error("No retries configured"));
@@ -167,7 +167,7 @@ public sealed partial class @this
         return Data.FromError(new Error($"Step failed after {retryCount} retries", "RetryExhausted", 500));
     }
 
-    private async Task<Data?> CallErrorGoalAsync(ErrorHandler handler, Data failedResult, Engine engine, PLangContext context, CancellationToken cancellationToken)
+    private async Task<Data?> CallErrorGoalAsync(ErrorHandler handler, Data failedResult, Engine.@this engine, PLangContext context, CancellationToken cancellationToken)
     {
         if (handler.Goal == null) return null;
 

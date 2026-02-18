@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using EngineType = PLang.Runtime2.Engine.Engine;
+using EngineType = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Runtime2.actions;
 

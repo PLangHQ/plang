@@ -103,7 +103,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                         .Any(m => m.IsStatic
                             && m.Parameters.Length == 2
                             && m.Parameters[0].Type.SpecialType == SpecialType.System_String
-                            && m.Parameters[1].Type.Name == "Engine");
+                            && m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine");
 
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
@@ -150,7 +150,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Resolution state
         sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __parameters;");
         sb.AppendLine("    private PLang.Runtime2.Engine.Memory.MemoryStack? __memoryStack;");
-        sb.AppendLine("    private PLang.Runtime2.Engine.Engine? __engine;");
+        sb.AppendLine("    private PLang.Runtime2.Engine.@this? __engine;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -223,7 +223,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // CodeGeneratedExecuteAsync
         sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> CodeGeneratedExecuteAsync(");
-        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.Engine engine, PLang.Runtime2.Engine.Context.PLangContext context)");
+        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __parameters = parameters;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");

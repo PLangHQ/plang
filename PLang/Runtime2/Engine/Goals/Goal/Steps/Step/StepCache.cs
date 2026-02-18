@@ -24,7 +24,7 @@ public sealed class StepCache
         Settings = settings;
     }
 
-    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken ct)
+    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct)
     {
         var key = BuildCacheKey(context.MemoryStack);
         var cached = await engine.Cache.GetAsync(key, ct);

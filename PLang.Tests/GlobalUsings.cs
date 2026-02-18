@@ -1,3 +1,6 @@
+// Engine root (works in tests — no PLang.Runtime2.Engine namespace to shadow it)
+global using Engine = PLang.Runtime2.Engine.@this;
+
 // Goals subsystem — mirrors PLang/Runtime2/GlobalUsings.cs
 global using EngineGoals = PLang.Runtime2.Engine.Goals.@this;
 global using GoalCall = PLang.Runtime2.Engine.Goals.Goal.GoalCall;

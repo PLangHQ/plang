@@ -336,7 +336,7 @@ namespace PLang
 		{
 			var (goalName, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new Runtime2.Engine.Engine(fileSystem);
+			var engine = new Runtime2.Engine.@this(fileSystem);
 
 			if (parameters.TryGetValue("debug", out var debugValue) && debugValue is not false)
 			{

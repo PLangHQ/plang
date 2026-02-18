@@ -10,7 +10,7 @@ namespace PLang.Runtime2.Engine.Channels;
 public sealed class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, Channel.@this> _channels = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Engine _engine;
+    private readonly Engine.@this _engine;
 
     /// <summary>
     /// The serializer registry — content-type routing for I/O.
@@ -23,7 +23,7 @@ public sealed class @this : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
-    public @this(Engine engine, Serializers.@this? serializers = null)
+    public @this(Engine.@this engine, Serializers.@this? serializers = null)
     {
         _engine = engine;
         Serializers = serializers ?? new Serializers.@this();

@@ -10,9 +10,9 @@ namespace PLang.Runtime2.Engine.Properties;
 public sealed class @this
 {
     private readonly ConcurrentDictionary<string, object> _data = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Engine _engine;
+    private readonly Engine.@this _engine;
 
-    public @this(Engine engine)
+    public @this(Engine.@this engine)
     {
         _engine = engine;
     }

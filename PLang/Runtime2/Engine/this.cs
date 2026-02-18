@@ -13,7 +13,7 @@ namespace PLang.Runtime2.Engine;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed class Engine : IAsyncDisposable
+public sealed class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly EngineLibraries _libraries;
@@ -164,12 +164,12 @@ public sealed class Engine : IAsyncDisposable
         _shutdownCts.Cancel();
     }
 
-    public Engine(Interfaces.IPLangFileSystem fileSystem)
+    public @this(Interfaces.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
     }
 
-    public Engine(string absolutePath, EngineLibraries? libraries = null,
+    public @this(string absolutePath, EngineLibraries? libraries = null,
         Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
     {

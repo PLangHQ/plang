@@ -40,6 +40,10 @@ global using Debugging = PLang.Runtime2.Engine.Debug.@this;
 global using Testing = PLang.Runtime2.Engine.Test.@this;
 global using Property = PLang.Runtime2.Engine.Properties.@this;
 
+// Engine: can't be global alias — namespace PLang.Runtime2.Engine shadows it from all PLang.Runtime2.* files
+// Inside Engine.*: use Engine.@this (parent namespace resolves naturally)
+// Outside PLang.Runtime2.*: use PLang.Runtime2.Engine.@this or per-file alias
+
 // CallStack: can't be global alias — v1 PLang.Runtime.CallStack conflict
 // Inside Engine.*: use CallStack.@this (namespace resolves to child)
 // Outside Engine.*: use PLang.Runtime2.Engine.CallStack.@this or per-file alias

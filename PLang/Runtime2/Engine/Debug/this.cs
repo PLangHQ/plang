@@ -12,14 +12,14 @@ namespace PLang.Runtime2.Engine.Debug;
 /// </summary>
 public sealed class @this
 {
-    private readonly Engine _engine;
+    private readonly Engine.@this _engine;
 
     /// <summary>
     /// Whether debug mode is enabled.
     /// </summary>
     public bool IsEnabled { get; set; }
 
-    public @this(Engine engine)
+    public @this(Engine.@this engine)
     {
         _engine = engine;
     }

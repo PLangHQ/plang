@@ -7,7 +7,7 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
 
 public sealed partial class @this
 {
-    public async Task<Data> RunAsync(Engine engine, PLangContext context, CancellationToken cancellationToken = default)
+    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         var lifecycle = context.LifecycleFor(this);
 

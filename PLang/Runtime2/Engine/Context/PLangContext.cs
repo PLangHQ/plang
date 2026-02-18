@@ -23,7 +23,7 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Reference to the engine.
     /// </summary>
-    public Engine Engine { get; }
+    public Engine.@this Engine { get; }
 
     /// <summary>
     /// Memory stack for this execution.
@@ -87,7 +87,7 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Data? EventOverride { get; set; }
 
-    public PLangContext(Engine engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
+    public PLangContext(Engine.@this engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Engine = engine;
