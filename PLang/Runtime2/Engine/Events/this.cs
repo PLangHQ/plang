@@ -1,12 +1,14 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
+using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+
 namespace PLang.Runtime2.Engine.Events;
 
 /// <summary>
 /// Manages event bindings and dispatching for Runtime2.
 /// </summary>
-public sealed class EngineEvents
+public sealed class @this
 {
     private readonly List<EventBinding> _bindings = new();
     private readonly object _lock = new();

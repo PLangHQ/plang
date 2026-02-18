@@ -1,13 +1,14 @@
 using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Events;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.Events;
+namespace PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding;
 
 /// <summary>
 /// Represents an event binding in Runtime2.
 /// </summary>
-public sealed class EventBinding
+public sealed class @this
 {
     public string Id { get; }
     public EventType Type { get; }
@@ -52,7 +53,7 @@ public sealed class EventBinding
         return result;
     }
 
-    public EventBinding(
+    public @this(
         EventType type,
         Func<PLangContext, Task<Data>> handler,
         string? goalNamePattern = null,

@@ -15,10 +15,10 @@ global using ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
 
 // Event types
 global using EventType = PLang.Runtime2.Engine.Events.EventType;
-global using EngineEvents = PLang.Runtime2.Engine.Events.EngineEvents;
-global using EventBinding = PLang.Runtime2.Engine.Events.EventBinding;
-global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle;
-global using Bindings = PLang.Runtime2.Engine.Events.Bindings;
+global using EngineEvents = PLang.Runtime2.Engine.Events.@this;
+global using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle.@this;
+global using Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
 global using EngineLibraries = PLang.Runtime2.Engine.Libraries.EngineLibraries;

@@ -1,6 +1,7 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
+using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
 namespace PLang.Runtime2.actions.@event;
 

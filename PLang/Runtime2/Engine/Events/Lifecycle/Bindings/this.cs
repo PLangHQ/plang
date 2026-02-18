@@ -1,9 +1,11 @@
 using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Events;
 using PLang.Runtime2.Engine.Memory;
+using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
-namespace PLang.Runtime2.Engine.Events;
+namespace PLang.Runtime2.Engine.Events.Lifecycle.Bindings;
 
-public sealed class Bindings
+public sealed class @this
 {
     private readonly List<EventBinding> _bindings = new();
     public int Count => _bindings.Count;

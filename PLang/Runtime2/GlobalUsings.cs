@@ -8,14 +8,15 @@ global using StepCache = PLang.Runtime2.Engine.Goals.Steps.StepCache;
 global using StepActions = PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions;
 global using IAction = PLang.Runtime2.Engine.Goals.Steps.Actions.IAction;
 
-// Event types — no v1 conflicts
-global using EngineEvents = PLang.Runtime2.Engine.Events.EngineEvents;
-global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle;
-global using Bindings = PLang.Runtime2.Engine.Events.Bindings;
+// Event types
+global using EngineEvents = PLang.Runtime2.Engine.Events.@this;
+global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle.@this;
+global using Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 
-// Event types WITH v1 (PLang.Events) conflicts — require per-file handling:
-// EventType: use "using PLang.Runtime2.Engine.Events;" or per-file alias
-// EventBinding: use "using PLang.Runtime2.Engine.Events;" or per-file alias
+// Event types WITH conflicts — require per-file handling:
+// EngineEvents alias (not "Events") avoids collision with PLang.Events namespace
+// EventType: v1 PLang.Events conflict — use: using PLang.Runtime2.Engine.Events; or per-file alias
+// EventBinding: v1 PLang.Events conflict — use: using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
 // Standalone concepts
 global using EngineLibraries = PLang.Runtime2.Engine.Libraries.EngineLibraries;

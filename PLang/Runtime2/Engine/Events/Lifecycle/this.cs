@@ -1,7 +1,9 @@
-namespace PLang.Runtime2.Engine.Events;
+using R2Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 
-public sealed class Lifecycle
+namespace PLang.Runtime2.Engine.Events.Lifecycle;
+
+public sealed class @this
 {
-    public Bindings Before { get; } = new();
-    public Bindings After { get; } = new();
+    public R2Bindings Before { get; } = new();
+    public R2Bindings After { get; } = new();
 }
