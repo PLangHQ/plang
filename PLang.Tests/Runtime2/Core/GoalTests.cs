@@ -219,7 +219,7 @@ public class GoalTests
         var str = goal.ToString();
 
         // Goal does not override ToString; returns default type name
-        await Assert.That(str).IsEqualTo("PLang.Runtime2.Engine.Goal");
+        await Assert.That(str).IsEqualTo("PLang.Runtime2.Engine.Goals.Goal");
     }
 
     [Test]
@@ -256,7 +256,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "output",
                             ActionName = "write",
@@ -325,7 +325,7 @@ public class GoalTests
                     Text = "select * from users, write to %users%",
                     Actions = new StepActions(new[]
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "db",
                             ActionName = "select",
@@ -356,7 +356,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "output",
                             ActionName = "write",

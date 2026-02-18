@@ -29,7 +29,7 @@ public class StepErrorHandlingTests
                     OnError = new ErrorHandler { IgnoreError = true },
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",
@@ -43,7 +43,7 @@ public class StepErrorHandlingTests
                     Text = "set success marker",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -84,7 +84,7 @@ public class StepErrorHandlingTests
                     Text = "increment attempts",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -117,7 +117,7 @@ public class StepErrorHandlingTests
                     },
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",
@@ -151,7 +151,7 @@ public class StepErrorHandlingTests
                     Text = "mark error handled",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -183,7 +183,7 @@ public class StepErrorHandlingTests
                     },
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "nonexistent",
                             ActionName = "doesnotexist",

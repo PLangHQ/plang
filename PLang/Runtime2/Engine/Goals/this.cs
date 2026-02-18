@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using Error = PLang.Runtime2.Engine.Errors.Error;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals;
 
 /// <summary>
 /// Collection of goals for an application.

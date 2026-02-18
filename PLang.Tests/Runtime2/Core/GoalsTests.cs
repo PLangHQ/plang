@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Goals;
 
 namespace PLang.Tests.Runtime2.Core;
 

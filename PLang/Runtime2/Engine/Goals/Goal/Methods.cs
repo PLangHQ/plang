@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using Scriban;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals;
 
 public sealed partial class Goal
 {

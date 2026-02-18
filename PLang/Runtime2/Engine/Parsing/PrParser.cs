@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Goals;
 using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Runtime2.Engine.Parsing;

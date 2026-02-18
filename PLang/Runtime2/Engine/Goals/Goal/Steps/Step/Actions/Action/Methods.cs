@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
 
 public sealed partial class Action
 {

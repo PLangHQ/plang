@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
 
 public interface IAction
 {

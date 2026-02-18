@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals.Steps;
 
 /// <summary>
 /// Behavioral wrapper around CacheSettings. Owns all cache logic:

@@ -14,7 +14,11 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
-using Actions = PLang.Runtime2.Engine.StepActions;
+using Actions = PLang.Runtime2.Engine.Goals.Steps.Actions.StepActions;
+using R2Goal = PLang.Runtime2.Engine.Goals.Goal;
+using R2Step = PLang.Runtime2.Engine.Goals.Steps.Step;
+using R2Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+using R2GoalCall = PLang.Runtime2.Engine.Goals.GoalCall;
 using PLang.Runtime2.Engine.Mapping;
 using PLang.Runtime2.actions;
 using PLang.Runtime2.Engine.Utility;
@@ -60,7 +64,7 @@ namespace PLang.Modules.PlangModule
 		{
 			var libraries = new Runtime2.Engine.EngineLibraries();
 
-			var actions = new Runtime2.Engine.StepActions(this.context);
+			var actions = new Actions(this.context);
 
 			foreach (var ns in libraries.Modules)
 			{
@@ -130,7 +134,7 @@ namespace PLang.Modules.PlangModule
 						cacheable = actionAttr.Cacheable;
 				}
 
-				actions.Add(new Runtime2.Engine.Action
+				actions.Add(new R2Action
 					{
 						Module = ns,
 						ActionName = className,
@@ -146,7 +150,7 @@ namespace PLang.Modules.PlangModule
 
 
 		[Description("Get goals formatted for Runtime2")]
-		public async Task<(List<Runtime2.Engine.Goal>? Goals, IError? Error)> GetGoalsV2(string path, string parser)
+		public async Task<(List<R2Goal>? Goals, IError? Error)> GetGoalsV2(string path, string parser)
 		{
 			var (goalsObj, error) = await GetGoals(path, visibility: "public_and_private", parser: parser);
 			if (error != null) return (null, error);
@@ -161,13 +165,13 @@ namespace PLang.Modules.PlangModule
 			return (runtime2Goals, null);
 		}
 
-		private void MergeV2PrData(Runtime2.Engine.Goal goal)
+		private void MergeV2PrData(R2Goal goal)
 		{
 			var prPath = goal.PrPath;
 			if (prPath == null || !fileSystem.File.Exists(prPath)) return;
 
 			var prJson = fileSystem.File.ReadAllText(prPath);
-			var prGoal = System.Text.Json.JsonSerializer.Deserialize<Runtime2.Engine.Goal>(
+			var prGoal = System.Text.Json.JsonSerializer.Deserialize<R2Goal>(
 				prJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 			if (prGoal == null) return;
 
@@ -277,16 +281,16 @@ namespace PLang.Modules.PlangModule
 			}
 		}
 
-		private static Runtime2.Engine.GoalCall? DeserializeGoalCall(object? value)
+		private static R2GoalCall? DeserializeGoalCall(object? value)
 		{
-			if (value is Runtime2.Engine.GoalCall gc)
+			if (value is R2GoalCall gc)
 				return gc;
 
 			if (value is System.Text.Json.JsonElement je)
 			{
 				try
 				{
-					return System.Text.Json.JsonSerializer.Deserialize<Runtime2.Engine.GoalCall>(je.GetRawText(), new JsonSerializerOptions
+					return System.Text.Json.JsonSerializer.Deserialize<R2GoalCall>(je.GetRawText(), new JsonSerializerOptions
 					{
 						PropertyNameCaseInsensitive = true
 					});
@@ -297,14 +301,14 @@ namespace PLang.Modules.PlangModule
 			if (value is string s)
 			{
 				// Plain string name — wrap in GoalCall
-				return new Runtime2.Engine.GoalCall { Name = s };
+				return new R2GoalCall { Name = s };
 			}
 
 			return null;
 		}
 
 		[Description("Merges the llm step result to the step object")]
-		public async Task<(Runtime2.Engine.Step? Step, IError? Error)> MergeStep(Runtime2.Engine.Step step, Runtime2.Engine.Step stepFromLlm)
+		public async Task<(R2Step? Step, IError? Error)> MergeStep(R2Step step, R2Step stepFromLlm)
 		{
 			if (step == null)
 				return (null, new ProgramError("Step cannot be null", goalStep, function, Key: "MergeError"));
@@ -625,8 +629,8 @@ namespace PLang.Modules.PlangModule
 			return (new { IsValid = true, Module = moduleName, Method = methodName }, null);
 		}
 
-		[Description("Convert a Building.Model.Goal to Runtime2.Engine.Goal")]
-		public async Task<(Runtime2.Engine.Goal?, IError?)> GetRuntime2Goal(Goal goal)
+		[Description("Convert a Building.Model.Goal to R2Goal")]
+		public async Task<(R2Goal?, IError?)> GetRuntime2Goal(Goal goal)
 		{
 			if (goal == null)
 			{
@@ -645,7 +649,7 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Save a Runtime2 goal as v0.2 .pr file (all steps in one file)")]
-		public async Task<(object?, IError?)> SaveGoal(Runtime2.Engine.Goal goal)
+		public async Task<(object?, IError?)> SaveGoal(R2Goal goal)
 		{
 			if (goal == null)
 			{

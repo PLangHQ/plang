@@ -17,7 +17,7 @@ public class ActionsTests
     [Test]
     public async Task Constructor_WithEnumerable_PopulatesList()
     {
-        var list = new List<PLang.Runtime2.Engine.Action>
+        var list = new List<PLang.Runtime2.Engine.Goals.Steps.Actions.Action>
         {
             new() { Module = "variable", ActionName = "set" },
             new() { Module = "file", ActionName = "save" }
@@ -32,7 +32,7 @@ public class ActionsTests
     public async Task Value_ReturnsSelf()
     {
         var actions = new StepActions();
-        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" });
 
         await Assert.That(actions.Value).IsEquivalentTo(actions);
     }
@@ -41,7 +41,7 @@ public class ActionsTests
     public async Task Summary_NoContext_ReturnsEmptyString()
     {
         var actions = new StepActions();
-        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
 
@@ -53,7 +53,7 @@ public class ActionsTests
     public async Task Summary_WrongContextType_ReturnsEmptyString()
     {
         var actions = new StepActions("not a PLangContext");
-        actions.Add(new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" });
+        actions.Add(new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" });
 
         var (text, error) = await actions.Summary();
 
@@ -64,7 +64,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_SetOnAction_IsPreserved()
     {
-        var action = new PLang.Runtime2.Engine.Action
+        var action = new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
         {
             Module = "variable",
             ActionName = "set",
@@ -77,7 +77,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_DefaultIsNull()
     {
-        var action = new PLang.Runtime2.Engine.Action
+        var action = new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
         {
             Module = "variable",
             ActionName = "set"
@@ -193,8 +193,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
-            new PLang.Runtime2.Engine.Action { Module = "file", ActionName = "save" }
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" },
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "file", ActionName = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -208,7 +208,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" }
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "bogus", ActionName = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -223,9 +223,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" },
-            new PLang.Runtime2.Engine.Action { Module = "bogus", ActionName = "nope" },
-            new PLang.Runtime2.Engine.Action { Module = "fake", ActionName = "missing" }
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" },
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "bogus", ActionName = "nope" },
+            new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "fake", ActionName = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -271,7 +271,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action { Module = "variable", ActionName = "set" }
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "variable", ActionName = "set" }
             }
         };
 
@@ -292,7 +292,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action { Module = "output", ActionName = "write" }
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "output", ActionName = "write" }
             }
         };
 
@@ -333,7 +333,7 @@ public class ActionsTests
             Text = "test",
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action { Module = "old", ActionName = "action" }
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action { Module = "old", ActionName = "action" }
             }
         };
         var stepFromLlm = new Step { Actions = new StepActions() };
@@ -412,7 +412,7 @@ public class ActionsTests
                 var handler = libraries.Get(ns, actionName);
                 if (handler != null)
                 {
-                    actions.Add(new PLang.Runtime2.Engine.Action
+                    actions.Add(new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                     {
                         Module = ns,
                         ActionName = actionName,
@@ -425,7 +425,7 @@ public class ActionsTests
                 var actionType = libraries.GetActionType(ns, actionName);
                 if (actionType != null)
                 {
-                    actions.Add(new PLang.Runtime2.Engine.Action
+                    actions.Add(new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                     {
                         Module = ns,
                         ActionName = actionName,

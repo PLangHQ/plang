@@ -43,7 +43,7 @@ public static class TypeMapping
         ["json"] = typeof(JsonNode),
         ["json[]"] = typeof(JsonArray),
         ["actor"] = typeof(PLang.Runtime2.Engine.Context.Actor),
-        ["goal.call"] = typeof(PLang.Runtime2.Engine.GoalCall),
+        ["goal.call"] = typeof(PLang.Runtime2.Engine.Goals.GoalCall),
         ["tstring"] = typeof(PLang.Runtime2.Engine.Memory.TString),
         ["translatable"] = typeof(PLang.Runtime2.Engine.Memory.TString),
 
@@ -71,7 +71,7 @@ public static class TypeMapping
         [typeof(byte)] = "byte",
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
-        [typeof(PLang.Runtime2.Engine.GoalCall)] = "goal.call",
+        [typeof(PLang.Runtime2.Engine.Goals.GoalCall)] = "goal.call",
         [typeof(PLang.Runtime2.Engine.Memory.TString)] = "tstring",
     };
 
@@ -270,15 +270,15 @@ public static class TypeMapping
         }
 
         // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(PLang.Runtime2.Engine.GoalCall))
+        if (targetType == typeof(PLang.Runtime2.Engine.Goals.GoalCall))
         {
             if (value is string goalName)
-                return new PLang.Runtime2.Engine.GoalCall { Name = goalName };
+                return new PLang.Runtime2.Engine.Goals.GoalCall { Name = goalName };
             if (value is System.Text.Json.JsonElement je)
             {
                 try
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.GoalCall>(
+                    return System.Text.Json.JsonSerializer.Deserialize<PLang.Runtime2.Engine.Goals.GoalCall>(
                         je.GetRawText(),
                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
@@ -290,7 +290,7 @@ public static class TypeMapping
                 var parameters = dict.TryGetValue("parameters", out var p) && p is IDictionary<string, object?> pDict
                     ? new Dictionary<string, object?>(pDict)
                     : null;
-                return new PLang.Runtime2.Engine.GoalCall { Name = name, Parameters = parameters };
+                return new PLang.Runtime2.Engine.Goals.GoalCall { Name = name, Parameters = parameters };
             }
         }
 

@@ -1,5 +1,9 @@
 using PLang.Building.Model;
 using PLang.Runtime2.Engine;
+using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+using R2Goal = PLang.Runtime2.Engine.Goals.Goal;
+using R2Visibility = PLang.Runtime2.Engine.Goals.Visibility;
+using R2ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
 
 namespace PLang.Runtime2.Engine.Mapping;
 
@@ -11,9 +15,9 @@ public static class GoalMapper
     /// <summary>
     /// Map PLang.Building.Model.Goal to PLang.Runtime2.Engine.Goal
     /// </summary>
-    public static Goal ToRuntime2Goal(Building.Model.Goal oldGoal)
+    public static R2Goal ToRuntime2Goal(Building.Model.Goal oldGoal)
     {
-        var goal = new Goal
+        var goal = new R2Goal
         {
             Name = oldGoal.GoalName,
             Description = oldGoal.Description,
@@ -77,11 +81,11 @@ public static class GoalMapper
         };
     }
 
-    private static Visibility MapVisibility(Building.Model.Visibility visibility)
+    private static R2Visibility MapVisibility(Building.Model.Visibility visibility)
     {
         return visibility == Building.Model.Visibility.Public
-            ? Visibility.Public
-            : Visibility.Private;
+            ? R2Visibility.Public
+            : R2Visibility.Private;
     }
 
     private static string ExtractActionName(string? moduleType)
@@ -98,11 +102,11 @@ public static class GoalMapper
         return name.ToLowerInvariant();
     }
 
-    private static ErrorHandler? MapErrorHandler(Building.Model.ErrorHandler? oldHandler)
+    private static R2ErrorHandler? MapErrorHandler(Building.Model.ErrorHandler? oldHandler)
     {
         if (oldHandler == null) return null;
 
-        return new ErrorHandler
+        return new R2ErrorHandler
         {
             Goal = MapGoalToCallInfo(oldHandler.GoalToCall),
             RetryCount = oldHandler.RetryHandler?.RetryCount,

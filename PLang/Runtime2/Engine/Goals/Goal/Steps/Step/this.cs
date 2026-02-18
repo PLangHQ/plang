@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
-namespace PLang.Runtime2.Engine;
+using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
+
+namespace PLang.Runtime2.Engine.Goals.Steps;
 
 /// <summary>
 /// Represents a step within a goal for Runtime2.

@@ -18,7 +18,7 @@ public class StepCacheTests
             Cache = cache,
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = module,
                     ActionName = action,

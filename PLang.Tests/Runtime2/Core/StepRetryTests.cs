@@ -241,7 +241,7 @@ public class StepRetryTests
                     Text = "capture error message",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -346,7 +346,7 @@ public class StepRetryTests
                     OnError = new ErrorHandler { RetryCount = 3 },
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -360,7 +360,7 @@ public class StepRetryTests
                     Text = "set marker after retry success",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -400,7 +400,7 @@ public class StepRetryTests
                     OnError = errorHandler,
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "test",
                             ActionName = "flaky",
@@ -425,7 +425,7 @@ public class StepRetryTests
                     Text = $"set {varName}",
                     Actions = new StepActions
                     {
-                        new PLang.Runtime2.Engine.Action
+                        new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                         {
                             Module = "variable",
                             ActionName = "set",

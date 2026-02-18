@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
 
 public sealed partial class Action
 {

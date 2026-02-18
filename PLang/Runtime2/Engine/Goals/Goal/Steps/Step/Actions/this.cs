@@ -4,8 +4,9 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Utility;
 using System.Reflection;
+using Action = PLang.Runtime2.Engine.Goals.Steps.Actions.Action;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals.Steps.Actions;
 
 public sealed class StepActions : List<Action>
 {

@@ -17,7 +17,7 @@ public class StepTests
             Comment = "This makes an HTTP call",
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = "http",
                     ActionName = "get",
@@ -82,7 +82,7 @@ public class StepTests
             Comment = "original comment",
             Actions = new StepActions
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = "variable",
                     ActionName = "set",

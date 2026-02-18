@@ -370,7 +370,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new StepActions(new[]
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -414,7 +414,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new StepActions(new[]
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -458,7 +458,7 @@ public class EventIntegrationTests
             Text = "set var",
             Actions = new StepActions(new[]
             {
-                new PLang.Runtime2.Engine.Action
+                new PLang.Runtime2.Engine.Goals.Steps.Actions.Action
                 {
                     Module = "variable",
                     ActionName = "set",

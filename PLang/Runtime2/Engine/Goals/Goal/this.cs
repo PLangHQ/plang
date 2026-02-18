@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using PLang.Attributes;
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Goals;
 
 /// <summary>
 /// Visibility of a goal.
