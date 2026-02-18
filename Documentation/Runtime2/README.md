@@ -144,7 +144,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operat
 | [MemoryStack](memory-stack.md) | Variable storage with dot-notation, system variables | Variables |
 | [CallStack](call-stack.md) | Execution tracking with frames, max depth 1000 | Debugging |
 | [Events](events.md) | Lifecycle (Before/After Bindings) + EngineEvents with pattern matching | Lifecycle hooks |
-| [Action Handlers](modules.md) | `IClass`, `IContext`, `ICodeGenerated`, `Library`, `EngineLibraries` | Extensibility |
+| [Action Handlers](modules.md) | `IClass`, `IContext`, `ICodeGenerated`, `Library`, `EngineLibraries` (in Engine/) | Extensibility |
 | [Serializers](serializers.md) | `ISerializer` with EngineSerializers, content-type routing | Data formats |
 | [.pr File Format](pr-file-format.md) | JSON structure for compiled goals | File spec |
 | [Errors](exceptions.md) | `IError`/`Error` hierarchy + `Runtime2Exception` | Error handling |
@@ -177,6 +177,8 @@ PLang/Runtime2/
 │   ├── Bindings.cs            Bindings — ordered event binding collection
 │   ├── EngineDebug.cs         Debug mode controller (engine.Debug)
 │   ├── EngineTesting.cs       Test runner (engine.Testing)
+│   ├── Library.cs             Single library (one assembly's handlers)
+│   ├── EngineLibraries.cs     Smart collection, walk-the-list resolution (engine.Libraries)
 │   ├── EngineProperty.cs      Key-value store with GoalCall resolution
 │   ├── ErrorHandler.cs        Step error configuration
 │   ├── CacheSettings.cs       Step cache configuration
@@ -237,15 +239,11 @@ PLang/Runtime2/
 ├── Engine/Parsing/
 │   └── PrParser.cs            .pr file parser
 │
-└── modules/
+└── actions/
     ├── IClass.cs              Handler interface
     ├── IContext.cs             Context-aware handler interface
     ├── ICodeGenerated.cs       Source-generated execution interface
-    ├── Library.cs             Single library (one assembly's handlers)
-    ├── EngineLibraries.cs     Smart collection, walk-the-list resolution
-    ├── ActionAttribute.cs     [Action("name")] attribute
-    ├── VariableNameAttribute.cs  [VariableName] attribute
-    ├── DefaultAttribute.cs    [Default] attribute
+    ├── Attributes.cs          [Action], [Default], [VariableName] attributes
     ├── variable/              variable.set, variable.get, variable.clear, ...
     ├── file/                  file.save, file.read, file.copy, ...
     ├── output/                output.write
