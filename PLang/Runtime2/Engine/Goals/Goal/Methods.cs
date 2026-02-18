@@ -2,6 +2,7 @@ using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Events;
 using Scriban;
 
 namespace PLang.Runtime2.Engine.Goals;

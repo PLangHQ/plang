@@ -12,3 +12,10 @@ global using IAction = PLang.Runtime2.Engine.Goals.Steps.Actions.IAction;
 global using Goal = PLang.Runtime2.Engine.Goals.Goal;
 global using Visibility = PLang.Runtime2.Engine.Goals.Visibility;
 global using ErrorHandler = PLang.Runtime2.Engine.Goals.Steps.ErrorHandler;
+
+// Event types
+global using EventType = PLang.Runtime2.Engine.Events.EventType;
+global using EngineEvents = PLang.Runtime2.Engine.Events.EngineEvents;
+global using EventBinding = PLang.Runtime2.Engine.Events.EventBinding;
+global using Lifecycle = PLang.Runtime2.Engine.Events.Lifecycle;
+global using Bindings = PLang.Runtime2.Engine.Events.Bindings;

@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Events;
 
 public sealed class Bindings
 {

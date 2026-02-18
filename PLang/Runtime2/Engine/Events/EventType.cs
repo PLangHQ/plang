@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine;
+namespace PLang.Runtime2.Engine.Events;
 
 /// <summary>
 /// Types of events in the PLang runtime lifecycle.
