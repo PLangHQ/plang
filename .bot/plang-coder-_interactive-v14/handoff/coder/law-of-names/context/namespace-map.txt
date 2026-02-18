@@ -1,0 +1,126 @@
+# Namespace Search-and-Replace Map
+# ORDER MATTERS — apply longest match first to avoid partial replacements
+#
+# Format: OLD_NAMESPACE → NEW_NAMESPACE
+#
+# Phase 1: Namespace migration
+# ============================
+
+# Memory navigators (must come before Memory)
+PLang.Runtime2.Memory.Navigators → PLang.Runtime2.Engine.Memory.Navigators
+
+# Core → Engine root
+PLang.Runtime2.Core → PLang.Runtime2.Engine
+
+# Context
+PLang.Runtime2.Context → PLang.Runtime2.Engine.Context
+
+# Memory (after Navigators already handled)
+PLang.Runtime2.Memory → PLang.Runtime2.Engine.Memory
+
+# IO → Channels
+PLang.Runtime2.IO → PLang.Runtime2.Engine.Channels
+
+# Errors
+PLang.Runtime2.Errors → PLang.Runtime2.Engine.Errors
+
+# Serialization → Serializers
+PLang.Runtime2.Serialization → PLang.Runtime2.Engine.Serializers
+
+# Utility
+PLang.Runtime2.Utility → PLang.Runtime2.Engine.Utility
+
+# Parsing
+PLang.Runtime2.Parsing → PLang.Runtime2.Engine.Parsing
+
+# Mapping
+PLang.Runtime2.Mapping → PLang.Runtime2.Engine.Mapping
+
+# modules/ infrastructure files only → Libraries
+# These 8 files move from modules/ root to Libraries/:
+#   IClass.cs, ICodeGenerated.cs, IContext.cs,
+#   ActionAttribute.cs, DefaultAttribute.cs, VariableNameAttribute.cs,
+#   Libraries.cs, Library.cs
+# Their namespace changes:
+PLang.Runtime2.modules (in infrastructure files only) → PLang.Runtime2.Engine.Libraries
+
+# modules/ handler subfolders stay as modules
+# No namespace change needed IF they already use PLang.Runtime2.modules
+# Just need folder move: modules/{handler}/ → Engine/modules/{handler}/
+# The Discover() call updates:
+#   "PLang.Runtime2.modules" → "PLang.Runtime2.Engine.modules"
+
+# ============================
+# Phase 1: File move map (folder restructuring)
+# ============================
+#
+# Core/Engine.cs                    → Engine/this.cs
+# Core/Goals.cs                     → Engine/Goals/this.cs
+# Core/Goal.cs                      → Engine/Goals/Goal.cs
+# Core/GoalMethods.cs               → Engine/Goals/Goal.Methods.cs
+# Core/GoalCall.cs                  → Engine/Goals/GoalCall.cs
+# Core/Steps.cs                     → Engine/Goals/Steps/this.cs
+# Core/Step.cs                      → Engine/Goals/Steps/Step.cs
+# Core/StepMethods.cs               → Engine/Goals/Steps/Step.Methods.cs
+# Core/ErrorHandler.cs              → Engine/Goals/Steps/ErrorHandler.cs
+# Core/Actions.cs                   → Engine/Goals/Steps/Actions/this.cs
+# Core/Action.cs                    → Engine/Goals/Steps/Actions/Action.cs
+# Core/ActionMethods.cs             → Engine/Goals/Steps/Actions/Action.Methods.cs
+# Core/IAction.cs                   → Engine/Goals/Steps/Actions/IAction.cs
+# Core/EventCollection.cs           → Engine/Events/EventCollection.cs (split in Phase 2)
+# Core/Lifecycle.cs                 → Engine/Events/Lifecycle.cs
+# Core/Property.cs                  → Engine/Property/this.cs
+# Core/ICache.cs                    → Engine/Cache/ICache.cs
+# Core/MemoryStepCache.cs           → Engine/Cache/MemoryStepCache.cs
+# Core/CacheSettings.cs             → Engine/Cache/CacheSettings.cs
+# Core/StepCache.cs                 → Engine/Cache/StepCache.cs
+# Core/StepCacheEntry.cs            → Engine/Cache/StepCacheEntry.cs
+# Core/DebugMode.cs                 → Engine/Debug/this.cs
+# Core/TestMode.cs                  → Engine/Testing/this.cs
+# Core/CallStack.cs                 → Engine/Context/CallStack.cs
+# Core/CallFrame.cs                 → Engine/Context/CallFrame.cs
+# Core/Info.cs                      → Engine/Info.cs
+# Memory/Data.cs (Data classes)     → Engine/Data.cs
+# Memory/Data.cs (Type class)       → Engine/Type.cs
+# Memory/MemoryStack.cs             → Engine/Memory/MemoryStack.cs
+# Memory/TString.cs                 → Engine/Memory/TString.cs
+# Memory/Properties.cs              → Engine/Memory/Properties.cs
+# Memory/IValueNavigator.cs         → Engine/Memory/IValueNavigator.cs
+# Memory/PlangTypeConverter.cs      → Engine/Memory/PlangTypeConverter.cs
+# Memory/TypeJsonConverter.cs       → Engine/Memory/TypeJsonConverter.cs
+# Memory/Navigators/*.cs            → Engine/Memory/Navigators/*.cs
+# Context/PLangContext.cs           → Engine/Context/PLangContext.cs
+# Context/Actor.cs                  → Engine/Context/Actor.cs
+# Context/EventScope.cs             → Engine/Events/EventScope.cs  ← NOTE: moves to Events
+# IO/Channels.cs                    → Engine/Channels/this.cs
+# IO/Channel.cs                     → Engine/Channels/Channel.cs
+# IO/ChannelData.cs                 → Engine/Channels/ChannelData.cs
+# Serialization/*.cs                → Engine/Serializers/*.cs
+# Errors/*.cs                       → Engine/Errors/*.cs
+# Utility/*.cs                      → Engine/Utility/*.cs
+# Parsing/*.cs                      → Engine/Parsing/*.cs
+# Mapping/*.cs                      → Engine/Mapping/*.cs
+# modules/IClass.cs                 → Engine/Libraries/IClass.cs
+# modules/ICodeGenerated.cs         → Engine/Libraries/ICodeGenerated.cs
+# modules/IContext.cs               → Engine/Libraries/IContext.cs
+# modules/ActionAttribute.cs        → Engine/Libraries/ActionAttribute.cs
+# modules/DefaultAttribute.cs       → Engine/Libraries/DefaultAttribute.cs
+# modules/VariableNameAttribute.cs  → Engine/Libraries/VariableNameAttribute.cs
+# modules/Libraries.cs              → Engine/Libraries/this.cs
+# modules/Library.cs                → Engine/Libraries/Library.cs
+# modules/{handler}/*.cs            → Engine/modules/{handler}/*.cs
+
+# ============================
+# Phase 3: Class renames
+# ============================
+#
+# Goals             → EngineGoals
+# Steps             → GoalSteps
+# Actions           → StepActions
+# Channels (IO)     → EngineChannels
+# Property          → EngineProperty
+# Events (class)    → EngineEvents
+# SerializerRegistry → EngineSerializers
+# Libraries         → EngineLibraries
+# DebugMode         → EngineDebug
+# TestMode          → EngineTesting
