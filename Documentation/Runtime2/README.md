@@ -96,7 +96,7 @@ public partial class Set : IContext
 
 The source generator creates a `CodeGeneratedExecuteAsync` partial that resolves `%var%` references at property access time before calling `Run()`.
 
-**Key**: All handlers must implement `ICodeGenerated` — Engine has no fallback path.
+**Key**: Handlers don't implement any interface directly — just `[Action]` attribute, `IContext` for the Context property, and a `Run()` method. The source generator adds `ICodeGenerated` automatically.
 
 ## Memory System
 
@@ -144,7 +144,7 @@ The bridge is `PLang/Modules/PlangModule/Program.cs` — exposes Runtime2 operat
 | [MemoryStack](memory-stack.md) | Variable storage with dot-notation, system variables | Variables |
 | [CallStack](call-stack.md) | Execution tracking with frames, max depth 1000 | Debugging |
 | [Events](events.md) | Lifecycle (Before/After Bindings) + EngineEvents with pattern matching | Lifecycle hooks |
-| [Action Handlers](modules.md) | `IClass`, `IContext`, `ICodeGenerated`, `Library`, `EngineLibraries` (in Engine/) | Extensibility |
+| [Action Handlers](modules.md) | `[Action]` + `IContext` + `Run()`, source generator adds `ICodeGenerated`. `Library`, `EngineLibraries` (in Engine/) | Extensibility |
 | [Serializers](serializers.md) | `ISerializer` with EngineSerializers, content-type routing | Data formats |
 | [.pr File Format](pr-file-format.md) | JSON structure for compiled goals | File spec |
 | [Errors](exceptions.md) | `IError`/`Error` hierarchy + `Runtime2Exception` | Error handling |

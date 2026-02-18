@@ -20,7 +20,7 @@ public interface IClass
 
 ## ICodeGenerated Interface
 
-`PLang.Runtime2.modules.ICodeGenerated` — source-generated dispatch interface. **Required** on all handlers — Engine has no fallback path.
+`PLang.Runtime2.actions.ICodeGenerated` — source-generated dispatch interface. Handlers don't implement this directly — the source generator adds it automatically. Engine requires it at runtime (no fallback path).
 
 ```csharp
 public interface ICodeGenerated
@@ -176,7 +176,7 @@ public partial class Set : IContext
 
 The source generator creates a partial implementation that:
 1. Auto-implements the `partial` properties with lazy `%var%` resolution from MemoryStack
-2. Implements `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()`
+2. Adds `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()` (handlers never implement this directly)
 3. Uses `[VariableName]` to strip `%` markers instead of resolving the variable value
 
 ### Handler Naming Convention

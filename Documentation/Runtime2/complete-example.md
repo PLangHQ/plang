@@ -239,7 +239,7 @@ public partial class Set : IContext
 
 The source generator creates partial implementations that:
 1. Auto-implement the `partial` properties with lazy `%var%` resolution from MemoryStack
-2. Implement `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()`
+2. Add `ICodeGenerated.CodeGeneratedExecuteAsync` to wire Context and call `Run()` (handlers never implement this directly)
 
 ## Summary
 
@@ -248,7 +248,7 @@ This example demonstrates:
 1. **Engine setup** — creating `Engine`, auto-discovers built-in handlers via `Libraries`
 2. **Goal loading** — loading `.pr` files via `LoadGoalsFromDirectoryAsync`
 3. **Execution** — `RunGoalAsync` with `Data` result type
-4. **Action handlers** — `variable.set` and `output.write` via `Libraries` + `ICodeGenerated`
+4. **Action handlers** — `variable.set` and `output.write` via `Libraries` (source generator adds `ICodeGenerated`)
 5. **Lazy parameters** — `%var%` resolved at property access via source-generated records
 6. **MemoryStack** — variable storage with `Data` entries
 7. **CallStack** — automatic frame tracking during goal/step execution

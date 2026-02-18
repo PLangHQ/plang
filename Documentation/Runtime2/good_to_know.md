@@ -104,4 +104,4 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 - **Resolution**: `Libraries.GetCodeGenerated(module, action, context)` walks all libraries — first match wins
 - **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
 - **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
-- Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types implementing `ICodeGenerated`
+- Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
