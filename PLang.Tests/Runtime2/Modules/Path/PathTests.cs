@@ -1,7 +1,7 @@
 using PLang.SafeFileSystem;
 using PLang.Runtime2.actions.file;
 
-namespace PLang.Tests.Runtime2.Memory;
+namespace PLang.Tests.Runtime2.Modules.Path;
 
 public class PathTests : IDisposable
 {
@@ -321,7 +321,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.txt"), "b");
 
         var p = new PLangPath(dir, _engine);
-        var result = p.List(new List { Path = p });
+        var result = p.List(new List { Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsTrue();
         var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
@@ -365,7 +365,7 @@ public class PathTests : IDisposable
     public async Task List_NonexistentDirectory_ReturnsError()
     {
         var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_dir"), _engine);
-        var result = p.List(new List { Path = p });
+        var result = p.List(new List { Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -609,5 +609,83 @@ public class PathTests : IDisposable
         var result = p.Delete(new Delete { Path = p, IgnoreIfNotFound = true });
 
         await Assert.That(result.Success).IsTrue();
+    }
+
+    // --- #2: Relative prefix-matching bug ---
+
+    [Test]
+    public async Task Relative_DoesNotMatchSimilarPrefix()
+    {
+        // Root is _tempDir (e.g., /tmp/plang_path_test_abc).
+        // A sibling path like _tempDir + "ation" should NOT be treated as relative.
+        var siblingPath = _tempDir + "ation" + _fs.Path.DirectorySeparatorChar + "file.txt";
+        var p = new PLangPath(siblingPath, _engine);
+
+        // Should return absolute path, not "ation/file.txt"
+        await Assert.That(p.Relative).IsEqualTo(p.Absolute);
+    }
+
+    // --- #3: Move directory with overwrite ---
+
+    [Test]
+    public async Task Move_Directory_Overwrite_ReplacesExisting()
+    {
+        var srcDir = TempDir("move_over_src");
+        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "new.txt"), "new");
+
+        var destDir = TempDir("move_over_dst");
+        _fs.File.WriteAllText(_fs.Path.Combine(destDir, "old.txt"), "old");
+
+        var src = new PLangPath(srcDir, _engine);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine), Overwrite = true });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "new.txt"))).IsTrue();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "old.txt"))).IsFalse();
+        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
+    }
+
+    // --- #4: Delete non-empty directory without recursive ---
+
+    [Test]
+    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsError()
+    {
+        var dirPath = TempDir("del_nonempty");
+        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
+
+        var p = new PLangPath(dirPath, _engine);
+        var result = p.Delete(new Delete { Path = p, Recursive = false });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(_fs.Directory.Exists(dirPath)).IsTrue(); // not deleted
+    }
+
+    // --- #7: Null guard on constructor ---
+
+    [Test]
+    public async Task Constructor_NullPath_ThrowsArgumentNull()
+    {
+        await Assert.That(() => new PLangPath(null!, _engine)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task Constructor_NullEngine_ThrowsArgumentNull()
+    {
+        await Assert.That(() => new PLangPath("test.txt", null!)).Throws<ArgumentNullException>();
+    }
+
+    // --- #8: Copy file to existing directory ---
+
+    [Test]
+    public async Task Copy_FileToExistingDirectory_PutsFileInsideDir()
+    {
+        var srcPath = TempFile("copy_to_dir.txt");
+        var destDir = TempDir("copy_target_dir");
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "copy_to_dir.txt"))).IsTrue();
     }
 }

@@ -52,3 +52,11 @@ public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFou
 - `AsFile()` NOT renamed to `Exists()` — conflicts with `bool Exists` property
 
 1221/1221 tests passing. See [v5/summary.md](v5/summary.md) for details.
+
+## v6: Auditor Findings — Exception Handling, Relative Bug, Edge Cases
+
+**Auditor found 10 issues.** Addressed 8 (#1-#4, #7-#10). Skipped #5 (case-sensitive equality, Windows-primary) and #6 (operator ==, low risk).
+
+**Key fixes:** try/catch in all 6 behavior methods returning `Data.FromError()` instead of throwing (#1). Trailing separator guard in `Relative` property (#2). Directory overwrite support in `Move` (#3). Non-empty directory check in `Delete` (#4). Null guards (#7). File-to-directory copy (#8). Test namespace fix (#9). Explicit Pattern in List tests (#10).
+
+1227/1227 tests passing (+6 new). See [v6/summary.md](v6/summary.md) for details.

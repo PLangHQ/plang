@@ -254,6 +254,39 @@
         "health": "Path foundation is solid architecturally (OBP-compliant). Safety gaps need addressing before production use.",
         "notes": "The critical finding (#1 — no exception handling) affects every file handler. Recommend fixing that first."
       }
+    },
+    {
+      "id": "f7a8b9c0-d1e2-3456-f012-678901234567",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T21:00:00Z",
+      "timestamp_end": "2026-02-19T21:30:00Z",
+      "intent": "Fix auditor findings: exception handling, Relative prefix bug, Move/Delete edge cases, null guards, file-to-dir copy",
+      "before": {
+        "assumptions": "Auditor found 10 issues. Critical #1 (exception handling) affects all behavior methods. Major #2 (Relative prefix) is a subtle string bug. #3+#4 are edge cases users will hit.",
+        "risk": "Low — well-scoped fixes, existing tests validate non-regression"
+      },
+      "plan": "Wrap all behavior methods in try/catch. Fix Relative with trailing separator guard. Add directory overwrite to Move. Add non-empty check to Delete. Null guards. ResolveDestination for file-to-dir copy. Fix test namespace and explicit Pattern.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Memory/Path.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "try/catch in Copy/Move/Delete/Read/List/Save. Relative trailing separator guard. Move directory overwrite. Delete non-empty check. Null guards. ResolveDestination helper."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/Path/PathTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Namespace fix. Explicit Pattern. 6 new tests: Relative prefix, Move dir overwrite, Delete non-empty, null guards x2, Copy file-to-dir."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1227/1227 tests passing (+6 new).",
+        "health": "Green. No regressions.",
+        "notes": "Addressed 8 of 10 auditor findings. Skipped #5 (case-sensitive equality, Windows-primary) and #6 (operator ==, low risk)."
+      }
     }
   ]
 }

@@ -25,6 +25,9 @@ public sealed class Path
 
     public Path(string rawPath, Engine.@this engine)
     {
+        ArgumentNullException.ThrowIfNull(rawPath);
+        ArgumentNullException.ThrowIfNull(engine);
+
         _rawPath = rawPath;
         _engine = engine;
         _fs = engine.FileSystem;
@@ -49,11 +52,20 @@ public sealed class Path
     {
         get
         {
-            if (_absolutePath.StartsWith(_fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
-            {
-                var rel = _absolutePath[_fs.RootDirectory.Length..];
-                return rel.TrimStart(_fs.Path.DirectorySeparatorChar, _fs.Path.AltDirectorySeparatorChar);
-            }
+            var root = _fs.RootDirectory;
+
+            // Ensure comparison includes trailing separator to avoid
+            // prefix false positives ("/app" matching "/application")
+            if (!root.EndsWith(_fs.Path.DirectorySeparatorChar) && !root.EndsWith(_fs.Path.AltDirectorySeparatorChar))
+                root += _fs.Path.DirectorySeparatorChar;
+
+            if (_absolutePath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                return _absolutePath[root.Length..];
+
+            // Exact match (path IS the root directory)
+            if (string.Equals(_absolutePath, _fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
             return _absolutePath;
         }
     }
@@ -100,14 +112,22 @@ public sealed class Path
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-        EnsureDirectory(action.Destination.Directory);
+        try
+        {
+            var dest = ResolveDestination(action.Destination);
+            EnsureDirectory(dest.Directory);
 
-        if (_fs.File.Exists(_absolutePath))
-            _fs.File.Copy(_absolutePath, action.Destination.Absolute, action.Overwrite);
-        else
-            CopyDirectory(_absolutePath, action.Destination.Absolute, action.Overwrite, action.IncludeSubfolders);
+            if (_fs.File.Exists(_absolutePath))
+                _fs.File.Copy(_absolutePath, dest.Absolute, action.Overwrite);
+            else
+                CopyDirectory(_absolutePath, dest.Absolute, action.Overwrite, action.IncludeSubfolders);
 
-        return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
+            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     public Data Move(actions.file.Move action)
@@ -115,26 +135,51 @@ public sealed class Path
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-        EnsureDirectory(action.Destination.Directory);
+        try
+        {
+            EnsureDirectory(action.Destination.Directory);
 
-        if (_fs.File.Exists(_absolutePath))
-            _fs.File.Move(_absolutePath, action.Destination.Absolute, action.Overwrite);
-        else
-            _fs.Directory.Move(_absolutePath, action.Destination.Absolute);
+            if (_fs.File.Exists(_absolutePath))
+                _fs.File.Move(_absolutePath, action.Destination.Absolute, action.Overwrite);
+            else
+            {
+                if (action.Overwrite && _fs.Directory.Exists(action.Destination.Absolute))
+                    _fs.Directory.Delete(action.Destination.Absolute, recursive: true);
 
-        return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
+                _fs.Directory.Move(_absolutePath, action.Destination.Absolute);
+            }
+
+            return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     public Data Delete(actions.file.Delete action)
     {
-        if (_fs.File.Exists(_absolutePath))
-            _fs.File.Delete(_absolutePath);
-        else if (_fs.Directory.Exists(_absolutePath))
-            _fs.Directory.Delete(_absolutePath, action.Recursive);
-        else if (!action.IgnoreIfNotFound)
-            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+        try
+        {
+            if (_fs.File.Exists(_absolutePath))
+                _fs.File.Delete(_absolutePath);
+            else if (_fs.Directory.Exists(_absolutePath))
+            {
+                if (!action.Recursive && _fs.Directory.GetFileSystemEntries(_absolutePath).Length > 0)
+                    return Data.FromError(new ServiceError(
+                        $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
-        return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+                _fs.Directory.Delete(_absolutePath, action.Recursive);
+            }
+            else if (!action.IgnoreIfNotFound)
+                return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+
+            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     public Data Read()
@@ -142,9 +187,16 @@ public sealed class Path
         if (!_fs.File.Exists(_absolutePath))
             return Data.FromError(new ServiceError($"File not found: {Raw}", "NotFound", 404));
 
-        var file = new actions.file.types.@file(_absolutePath, _fs);
-        _ = file.Value; // Eager-read so step cache captures content
-        return Data.Ok(file);
+        try
+        {
+            var file = new actions.file.types.@file(_absolutePath, _fs);
+            _ = file.Value; // Eager-read so step cache captures content
+            return Data.Ok(file);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     public Data List(actions.file.List action)
@@ -152,11 +204,18 @@ public sealed class Path
         if (!_fs.Directory.Exists(_absolutePath))
             return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
 
-        var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
-            .Select(f => new actions.file.types.@file(f, _fs))
-            .ToArray();
-        return Data.Ok(files);
+        try
+        {
+            var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
+                .Select(f => new actions.file.types.@file(f, _fs))
+                .ToArray();
+            return Data.Ok(files);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     /// <summary>Wraps this path as a @file object — used by exists handler</summary>
@@ -164,20 +223,39 @@ public sealed class Path
 
     public async Task<Data> Save(actions.file.Save action)
     {
-        EnsureDirectory(Directory);
-
-        if (action.Value is byte[] bytes)
-            await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
-        else if (action.Value is string str)
-            await _fs.File.WriteAllTextAsync(_absolutePath, str);
-        else
+        try
         {
-            await using var stream = _fs.File.Create(_absolutePath);
-            await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
-                { Stream = stream, Data = action.Value, Extension = Extension });
-        }
+            EnsureDirectory(Directory);
 
-        return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+            if (action.Value is byte[] bytes)
+                await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
+            else if (action.Value is string str)
+                await _fs.File.WriteAllTextAsync(_absolutePath, str);
+            else
+            {
+                await using var stream = _fs.File.Create(_absolutePath);
+                await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+                    { Stream = stream, Data = action.Value, Extension = Extension });
+            }
+
+            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
+    }
+
+    /// <summary>
+    /// If source is a file and destination is an existing directory,
+    /// resolve to a file inside that directory with the source filename.
+    /// </summary>
+    private Path ResolveDestination(Path destination)
+    {
+        if (_fs.File.Exists(_absolutePath) && _fs.Directory.Exists(destination.Absolute))
+            return new Path(_fs.Path.Combine(destination.Absolute, FileName), _engine);
+
+        return destination;
     }
 
     private void EnsureDirectory(string dir)
