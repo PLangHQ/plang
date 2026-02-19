@@ -3,22 +3,8 @@
   "folder": "feature-path-class",
   "bot": "coder",
   "version": "v4",
-  "exportedAt": "2026-02-19T16:46:58.899Z",
+  "exportedAt": "2026-02-19T17:00:43.233Z",
   "comments": [
-    {
-      "file": "PLang/Runtime2/actions/file/copy.cs",
-      "line": 20,
-      "selection": "if (!Source.IsFile)",
-      "text": "should it be Exists, it doesnt have be a file, it could be folder",
-      "time": "2026-02-19T11:20:05.976Z"
-    },
-    {
-      "file": "PLang/Runtime2/actions/file/copy.cs",
-      "line": 32,
-      "selection": null,
-      "text": "I think we are breaking odp here, should we let the Path class handle this. source.copy(destination, overwrite);  then path knows how to copy if it's file or directory. should we include subdir or other properties?? ",
-      "time": "2026-02-19T11:21:40.832Z"
-    },
     {
       "file": "PLang/Runtime2/actions/file/exists.cs",
       "line": 15,
@@ -41,11 +27,39 @@
       "time": "2026-02-19T16:44:48.957Z"
     },
     {
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 193,
+      "file": "PLang/Runtime2/actions/file/delete.cs",
+      "line": 33,
       "selection": null,
-      "text": "",
-      "time": "2026-02-19T16:46:35.549Z"
+      "text": "Why isn´t this the Delete object?? Path.Delete(this)",
+      "time": "2026-02-19T16:58:14.001Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 34,
+      "selection": null,
+      "text": "This should be the Copy object, Source.Copy(this)",
+      "time": "2026-02-19T16:58:18.705Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/list.cs",
+      "line": 32,
+      "selection": "t(Pattern, Recursive));\n\nline 32\nRemove\n💬}\n💬\n1 on file · 6 total · auto-saved\n↓ Export JSON\nCOMMENTS\n0\nPLang/Runtime2/actions/file/list.cs\n💬 icon to comment · select text\n◇ Show removedD\nClose · Esc\n💬--- a/PLang/Runtime2/actions/file/list.cs\n💬+++ b/PLang/Runtime2/actions/file/list.cs\n💬\n@@ -5,7 +5,7 @@ namespace PLang.Runtime2.actions.file;\n💬1\n💬public partial class List : IContext\n💬{\n💬    public partial PLangPath Path { get; init; }\n💬\n💬    1\n💬    public partial string Pattern { get; ",
+      "text": "Path.List(this)??",
+      "time": "2026-02-19T16:59:09.930Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/move.cs",
+      "line": 32,
+      "selection": null,
+      "text": "Source.Move(this)??",
+      "time": "2026-02-19T16:59:19.449Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/save.cs",
+      "line": 38,
+      "selection": null,
+      "text": "Path.Save(this);???",
+      "time": "2026-02-19T17:00:40.489Z"
     }
   ]
 }
