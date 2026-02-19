@@ -1,0 +1,51 @@
+{
+  "reviewKey": "feature-path-class::coder::v4",
+  "folder": "feature-path-class",
+  "bot": "coder",
+  "version": "v4",
+  "exportedAt": "2026-02-19T16:46:58.899Z",
+  "comments": [
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 20,
+      "selection": "if (!Source.IsFile)",
+      "text": "should it be Exists, it doesnt have be a file, it could be folder",
+      "time": "2026-02-19T11:20:05.976Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 32,
+      "selection": null,
+      "text": "I think we are breaking odp here, should we let the Path class handle this. source.copy(destination, overwrite);  then path knows how to copy if it's file or directory. should we include subdir or other properties?? ",
+      "time": "2026-02-19T11:21:40.832Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/exists.cs",
+      "line": 15,
+      "selection": null,
+      "text": "isn´t this missing Exists call to the Path?",
+      "time": "2026-02-19T16:43:15.795Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/delete.cs",
+      "line": 28,
+      "selection": null,
+      "text": "Why this test? isn´t it the job of Path?",
+      "time": "2026-02-19T16:43:42.747Z"
+    },
+    {
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 15,
+      "selection": null,
+      "text": "never use System.IO. use _fs.Path.Combine, same for rest of code",
+      "time": "2026-02-19T16:44:48.957Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 193,
+      "selection": null,
+      "text": "",
+      "time": "2026-02-19T16:46:35.549Z"
+    }
+  ]
+}
