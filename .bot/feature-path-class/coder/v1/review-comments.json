@@ -1,0 +1,20 @@
+{
+  "reviewedAt": "2026-02-19T11:21:46.957Z",
+  "folder": "feature-path-class",
+  "comments": [
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 20,
+      "selection": "if (!Source.IsFile)",
+      "text": "should it be Exists, it doesnt have be a file, it could be folder",
+      "time": "2026-02-19T11:20:05.976Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 32,
+      "selection": null,
+      "text": "I think we are breaking odp here, should we let the Path class handle this. source.copy(destination, overwrite);  then path knows how to copy if it's file or directory. should we include subdir or other properties?? ",
+      "time": "2026-02-19T11:21:40.832Z"
+    }
+  ]
+}
