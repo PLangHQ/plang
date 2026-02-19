@@ -1,0 +1,100 @@
+{
+  "tester": "tester",
+  "branch": "feature/path-class",
+  "timestamp": "2026-02-19T23:30:00Z",
+  "tested_version": "v6",
+  "test_run": {
+    "csharp": { "total": 1227, "passed": 1227, "failed": 0, "skipped": 0 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 9,
+    "changed_files_total": 10,
+    "uncovered_files": ["PLang/Runtime2/Engine/Utility/TypeMapping.cs"],
+    "notes": "TypeMapping only had 2 lines added (path type registration). All 7 handlers + Path.cs + tests are covered. Exception catch blocks in Path.cs have zero coverage."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Zero tests exercise the try/catch blocks in Path behavior methods (Copy, Move, Delete, Read, List, Save). All 6 methods wrap their body in `catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)` — but no test triggers IOException or UnauthorizedAccessException. If every try/catch were removed, all 1227 tests still pass.",
+      "impact": "The auditor's #1 critical finding was the absence of exception handling. The coder added it in v6, but without tests, there's no protection against someone removing it or changing the error shape. A locked file, permission denied, or disk-full scenario would be silently broken.",
+      "suggestion": "Add tests that mock filesystem operations to throw IOException/UnauthorizedAccessException and verify Data.FromError is returned with the correct ServiceError code ('IOError', 500). At minimum: one test per method type (file op, directory op, async op)."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/actions/file/*.cs",
+      "issue": "No PLang .goal tests exist for file operations in Runtime2. CLAUDE.md states: 'PLang .goal tests are REQUIRED alongside C# tests — they validate the FULL pipeline: LLM builder → .pr generation → GoalMapper → runtime.' The C# integration tests (FileHandlerTests) construct goals manually in code, but this skips builder and GoalMapper.",
+      "impact": "If the builder generates wrong .pr files for file operations (e.g., wrong parameter names, wrong module mapping), no test catches it. The full pipeline from PLang source to runtime execution is untested for file/path actions.",
+      "suggestion": "Create Tests/Runtime2/File/Start.goal and File.test.goal covering: save+read round-trip, copy, delete, exists check, list. These validate that the builder correctly maps PLang steps to file action .pr files."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Copy and Move overwrite conflict scenarios are untested. No test verifies: (1) Copy with Overwrite=false when destination file already exists — should throw/error. (2) Move with Overwrite=false when destination exists. (3) Copy file to existing directory WITHOUT ResolveDestination working — what if dest is a dir but source is also a dir?",
+      "impact": "Overwrite=false is the default for both Copy and Move. If the filesystem's Copy/Move silently overwrites (or throws unexpectedly), no test catches it. The developer reviewed overwrite behavior in v3 (review-feature-path-class-v3.json) — this is a concern he raised.",
+      "suggestion": "Add: Copy_FileExists_OverwriteFalse_ThrowsOrErrors, Copy_FileExists_OverwriteTrue_Succeeds, Move_FileExists_OverwriteFalse_ThrowsOrErrors, Move_FileExists_OverwriteTrue_Succeeds."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Save's object serialization path (the else branch at line 236) is untested. Save has 3 branches: byte[] → WriteAllBytesAsync, string → WriteAllTextAsync, else → _engine.Channels.Serializers.SerializeAsync. Only string and byte[] are tested. The serialization path is the most complex — it creates a stream, calls SerializeAsync with SerializeOptions, uses the file Extension for format detection.",
+      "impact": "If the serializer integration breaks (wrong extension mapping, stream not flushed, SerializeOptions misconfigured), no test catches it. This is the path PLang users hit when saving objects (e.g., `save %data% to 'output.json'`).",
+      "suggestion": "Add a test that saves a POCO/dictionary to a .json file via Save and reads it back to verify serialization worked."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Five error-path tests only assert `result.Success.IsFalse()` without checking the error code or message: Copy_NotFound (line 514), Move_NotFound (line 557), Delete_NotFound (line 603), Read_NonexistentFile (line 311), List_NonexistentDir (line 371). If the code returned an error for a completely different reason, these tests would still pass.",
+      "impact": "Low — the happy-path tests are solid so wrong-reason errors are unlikely, but these tests don't distinguish between 'NotFound' (404) and 'IOError' (500).",
+      "suggestion": "Add assertions on the error: cast result.Error to ServiceError and check Code == 'NotFound' and StatusCode == 404."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Relative_StripsRootDirectory (line 64) asserts `rel.Contains(_tempDir).IsFalse()` and `rel.Contains('file.txt')` — but doesn't verify the exact relative path. The expected value should be 'sub/file.txt' (or platform separator). If Relative returned 'garbage/file.txt' or just 'file.txt' (missing 'sub/'), the test passes.",
+      "impact": "Low — the Relative property logic is simple and has the prefix-matching regression test. But this base test is too loose to catch path-component loss.",
+      "suggestion": "Assert exact value: `rel.IsEqualTo('sub' + sep + 'file.txt')` or at minimum check `rel.StartsWith('sub')`."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "List tests (lines 317-361) only check array length, not file names. List_ExistingDirectory_ReturnsFileArray asserts `files.Length == 2` but not that the files are 'a.txt' and 'b.txt'. If List returned 2 wrong files, the test passes.",
+      "impact": "Low — the pattern and directory constraints make wrong files unlikely. But count-only assertions are a smell.",
+      "suggestion": "Add at least one assertion on a file name: `files.Any(f => f.Path.Contains('a.txt'))`."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "issue": "Copy_File_CopiesToDestination (line 442) verifies destination exists with correct content, but doesn't verify source file still exists after copy. If Copy accidentally moved (deleted source), this test passes.",
+      "impact": "Low — the implementation clearly calls File.Copy not File.Move. But the test doesn't protect against regression to move-like behavior.",
+      "suggestion": "Add `await Assert.That(_fs.File.Exists(srcPath)).IsTrue();` after the copy assertion."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "All 1227 C# tests pass. The test suite has good coverage for happy paths and basic error cases (not-found). However, the most critical gap is that the exception handling added in v6 (auditor's #1 critical finding) has zero test coverage — all try/catch blocks are untested. Additionally, no PLang .goal tests exist for file operations (required by CLAUDE.md), the Copy/Move overwrite conflict scenarios are untested, and Save's object serialization path is uncovered. Findings #1-#4 should be addressed before merge; #5-#8 are improvements. Verdict: needs-fixes — send back to coder for exception-path tests and PLang .goal tests at minimum."
+}
