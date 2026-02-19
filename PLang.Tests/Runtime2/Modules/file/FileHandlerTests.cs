@@ -129,6 +129,20 @@ public class FileHandlerTests : IDisposable
         await Assert.That(result.Success).IsFalse();
     }
 
+    [Test]
+    public async Task Copy_Directory_CopiesAllFiles()
+    {
+        var srcDir = TempPath("copy_dir");
+        System.IO.Directory.CreateDirectory(srcDir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
+
+        var action = new Copy { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
+    }
+
     // --- Move ---
 
     [Test]
@@ -153,6 +167,21 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+    }
+
+    [Test]
+    public async Task Move_Directory_MovesDirectory()
+    {
+        var srcDir = TempPath("move_dir");
+        System.IO.Directory.CreateDirectory(srcDir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
+
+        var action = new Move { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(srcDir)).IsFalse();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
     }
 
     // --- Delete ---
@@ -187,6 +216,20 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task Delete_Directory_Recursive()
+    {
+        var dir = TempPath("del_dir");
+        System.IO.Directory.CreateDirectory(dir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
+
+        var action = new Delete { Context = CreateContext(), Path = MakeAbsPath(dir), Recursive = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(dir)).IsFalse();
     }
 
     // --- Exists ---

@@ -7,21 +7,12 @@ public partial class Copy : IContext
 {
     public partial PLangPath Source { get; init; }
     public partial PLangPath Destination { get; init; }
+
+    [Default(false)]
     public partial bool Overwrite { get; init; }
 
-    public Task<Data> Run()
-    {
-        var fs = Context.Engine!.FileSystem;
+    [Default(true)]
+    public partial bool IncludeSubfolders { get; init; }
 
-        if (!Source.IsFile)
-            return Task.FromResult(Data.FromError(
-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source.Raw}", "FileNotFound", 404)));
-
-        var destDir = Destination.Directory;
-        if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
-            fs.Directory.CreateDirectory(destDir);
-
-        fs.File.Copy(Source.Absolute, Destination.Absolute, Overwrite);
-        return Task.FromResult(Data.Ok(new types.@file(Destination.Absolute, fs, source: Source.Absolute)));
-    }
+    public Task<Data> Run() => Task.FromResult(Source.Copy(Destination, Overwrite, IncludeSubfolders));
 }

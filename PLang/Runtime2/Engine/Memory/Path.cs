@@ -1,4 +1,5 @@
 using PLang.Interfaces;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Runtime2.Engine.Memory;
@@ -86,6 +87,75 @@ public sealed class Path
         {
             var info = _fs.FileInfo.New(_absolutePath);
             return info.Exists ? info.Length : 0;
+        }
+    }
+
+    // --- Behavior methods (OBP: behavior belongs to the owner) ---
+
+    public Data Copy(Path destination, bool overwrite = false, bool includeSubfolders = true)
+    {
+        if (!Exists)
+            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+
+        EnsureDirectory(destination.Directory);
+
+        if (IsFile)
+            _fs.File.Copy(_absolutePath, destination.Absolute, overwrite);
+        else
+            CopyDirectory(_absolutePath, destination.Absolute, overwrite, includeSubfolders);
+
+        return Data.Ok(new actions.file.types.@file(destination.Absolute, _fs, source: _absolutePath));
+    }
+
+    public Data Move(Path destination, bool overwrite = false)
+    {
+        if (!Exists)
+            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+
+        EnsureDirectory(destination.Directory);
+
+        if (IsFile)
+            _fs.File.Move(_absolutePath, destination.Absolute, overwrite);
+        else
+            _fs.Directory.Move(_absolutePath, destination.Absolute);
+
+        return Data.Ok(new actions.file.types.@file(destination.Absolute, _fs, source: _absolutePath));
+    }
+
+    public Data Delete(bool recursive = false)
+    {
+        if (IsFile)
+            _fs.File.Delete(_absolutePath);
+        else if (IsDirectory)
+            _fs.Directory.Delete(_absolutePath, recursive);
+        else
+            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+
+        return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+    }
+
+    private void EnsureDirectory(string dir)
+    {
+        if (!string.IsNullOrEmpty(dir) && !_fs.Directory.Exists(dir))
+            _fs.Directory.CreateDirectory(dir);
+    }
+
+    private void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
+    {
+        _fs.Directory.CreateDirectory(dest);
+
+        foreach (var file in _fs.Directory.GetFiles(src))
+        {
+            var fileName = _fs.Path.GetFileName(file);
+            _fs.File.Copy(file, _fs.Path.Combine(dest, fileName), overwrite);
+        }
+
+        if (!includeSubfolders) return;
+
+        foreach (var subDir in _fs.Directory.GetDirectories(src))
+        {
+            var dirName = _fs.Path.GetFileName(subDir);
+            CopyDirectory(subDir, _fs.Path.Combine(dest, dirName), overwrite, includeSubfolders);
         }
     }
 

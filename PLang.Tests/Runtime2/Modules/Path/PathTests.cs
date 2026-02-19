@@ -286,4 +286,185 @@ public class PathTests : IDisposable
         await Assert.That(ext1).IsEqualTo(ext2);
         await Assert.That(name1).IsEqualTo(name2);
     }
+
+    // --- Helper for directories ---
+
+    private string TempDir(string name)
+    {
+        var path = System.IO.Path.Combine(_tempDir, name);
+        System.IO.Directory.CreateDirectory(path);
+        return path;
+    }
+
+    // --- Copy ---
+
+    [Test]
+    public async Task Copy_File_CopiesToDestination()
+    {
+        var srcPath = TempFile("copy_src.txt");
+        var destPath = System.IO.Path.Combine(_tempDir, "copy_dst.txt");
+
+        var src = new PLangPath(srcPath, _fs);
+        var dest = new PLangPath(destPath, _fs);
+        var result = src.Copy(dest);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(destPath)).IsTrue();
+        await Assert.That(System.IO.File.ReadAllText(destPath)).IsEqualTo("test content");
+    }
+
+    [Test]
+    public async Task Copy_Directory_CopiesAllFiles()
+    {
+        var srcDir = TempDir("copy_dir_src");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "aaa");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "b.txt"), "bbb");
+
+        var destDir = System.IO.Path.Combine(_tempDir, "copy_dir_dst");
+        var src = new PLangPath(srcDir, _fs);
+        var dest = new PLangPath(destDir, _fs);
+        var result = src.Copy(dest);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "a.txt"))).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "b.txt"))).IsTrue();
+    }
+
+    [Test]
+    public async Task Copy_Directory_WithSubfolders()
+    {
+        var srcDir = TempDir("copy_sub_src");
+        var nested = System.IO.Path.Combine(srcDir, "sub");
+        System.IO.Directory.CreateDirectory(nested);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "top.txt"), "top");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
+
+        var destDir = System.IO.Path.Combine(_tempDir, "copy_sub_dst");
+        var src = new PLangPath(srcDir, _fs);
+        var dest = new PLangPath(destDir, _fs);
+        var result = src.Copy(dest, includeSubfolders: true);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "top.txt"))).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "sub", "deep.txt"))).IsTrue();
+    }
+
+    [Test]
+    public async Task Copy_Directory_WithoutSubfolders()
+    {
+        var srcDir = TempDir("copy_nosub_src");
+        var nested = System.IO.Path.Combine(srcDir, "sub");
+        System.IO.Directory.CreateDirectory(nested);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "top.txt"), "top");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
+
+        var destDir = System.IO.Path.Combine(_tempDir, "copy_nosub_dst");
+        var src = new PLangPath(srcDir, _fs);
+        var dest = new PLangPath(destDir, _fs);
+        var result = src.Copy(dest, includeSubfolders: false);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "top.txt"))).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(System.IO.Path.Combine(destDir, "sub"))).IsFalse();
+    }
+
+    [Test]
+    public async Task Copy_NotFound_ReturnsError()
+    {
+        var src = new PLangPath(System.IO.Path.Combine(_tempDir, "ghost.txt"), _fs);
+        var dest = new PLangPath(System.IO.Path.Combine(_tempDir, "dst.txt"), _fs);
+        var result = src.Copy(dest);
+
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    // --- Move ---
+
+    [Test]
+    public async Task Move_File_MovesToDestination()
+    {
+        var srcPath = TempFile("move_src.txt");
+        var destPath = System.IO.Path.Combine(_tempDir, "move_dst.txt");
+
+        var src = new PLangPath(srcPath, _fs);
+        var dest = new PLangPath(destPath, _fs);
+        var result = src.Move(dest);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(destPath)).IsTrue();
+        await Assert.That(System.IO.File.Exists(srcPath)).IsFalse();
+    }
+
+    [Test]
+    public async Task Move_Directory_MovesToDestination()
+    {
+        var srcDir = TempDir("move_dir_src");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "aaa");
+
+        var destDir = System.IO.Path.Combine(_tempDir, "move_dir_dst");
+        var src = new PLangPath(srcDir, _fs);
+        var dest = new PLangPath(destDir, _fs);
+        var result = src.Move(dest);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(destDir)).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(srcDir)).IsFalse();
+        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(destDir, "a.txt"))).IsTrue();
+    }
+
+    [Test]
+    public async Task Move_NotFound_ReturnsError()
+    {
+        var src = new PLangPath(System.IO.Path.Combine(_tempDir, "ghost.txt"), _fs);
+        var dest = new PLangPath(System.IO.Path.Combine(_tempDir, "dst.txt"), _fs);
+        var result = src.Move(dest);
+
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    // --- Delete ---
+
+    [Test]
+    public async Task Delete_File_RemovesFile()
+    {
+        var filePath = TempFile("del_file.txt");
+        var p = new PLangPath(filePath, _fs);
+        var result = p.Delete();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(filePath)).IsFalse();
+    }
+
+    [Test]
+    public async Task Delete_EmptyDirectory_RemovesIt()
+    {
+        var dirPath = TempDir("del_empty_dir");
+        var p = new PLangPath(dirPath, _fs);
+        var result = p.Delete();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(dirPath)).IsFalse();
+    }
+
+    [Test]
+    public async Task Delete_DirectoryRecursive_RemovesAll()
+    {
+        var dirPath = TempDir("del_recursive_dir");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dirPath, "child.txt"), "data");
+
+        var p = new PLangPath(dirPath, _fs);
+        var result = p.Delete(recursive: true);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.Directory.Exists(dirPath)).IsFalse();
+    }
+
+    [Test]
+    public async Task Delete_NotFound_ReturnsError()
+    {
+        var p = new PLangPath(System.IO.Path.Combine(_tempDir, "ghost.txt"), _fs);
+        var result = p.Delete();
+
+        await Assert.That(result.Success).IsFalse();
+    }
 }

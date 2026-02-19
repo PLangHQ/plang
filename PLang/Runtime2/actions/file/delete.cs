@@ -10,19 +10,14 @@ public partial class Delete : IContext
     [Default(false)]
     public partial bool IgnoreIfNotFound { get; init; }
 
+    [Default(false)]
+    public partial bool Recursive { get; init; }
+
     public Task<Data> Run()
     {
-        var fs = Context.Engine!.FileSystem;
+        if (!Path.Exists && IgnoreIfNotFound)
+            return Task.FromResult(Data.Ok(new types.@file(Path.Absolute, Context.Engine!.FileSystem)));
 
-        if (!Path.IsFile)
-        {
-            if (IgnoreIfNotFound)
-                return Task.FromResult(Data.Ok(new types.@file(Path.Absolute, fs)));
-            return Task.FromResult(Data.FromError(
-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path.Raw}", "FileNotFound", 404)));
-        }
-
-        fs.File.Delete(Path.Absolute);
-        return Task.FromResult(Data.Ok(new types.@file(Path.Absolute, fs)));
+        return Task.FromResult(Path.Delete(Recursive));
     }
 }
