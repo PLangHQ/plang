@@ -1,0 +1,55 @@
+{
+  "branch": "data-envelope-architecture",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-02-19T00:00:00Z",
+      "timestamp_end": "2026-02-19T23:59:00Z",
+      "intent": "Design Data envelope architecture — Engine.Types, Type context, Data restructure, envelope pipeline",
+      "before": {
+        "assumptions": "Type knowledge scattered across three static/instance sources. Data has no context. Type is eagerly derived. No transport serialization view exists.",
+        "risk": "Large architectural change touching Data (universal type), Type, and TypeMapping. Phased approach mitigates — each phase independently shippable."
+      },
+      "plan": "Four-phase design: (1) Engine.Types replaces static TypeMapping, (2) Type gets context + lazy derivation, Data gets late-bound context, (3) Data partial class split + Out view, (4) Envelope pipeline with Wrap/Compress/Encrypt chain. OBP throughout.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/architect/v1/DATA_DEEP_DIVE.md",
+            ".bot/data-envelope-architecture/architect/v1/DATA_ENVELOPE_ARCHITECTURE.md",
+            ".bot/data-envelope-architecture/architect/v1/DataEnvelopePipelineExample.cs"
+          ],
+          "type": "move",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Moved handover docs from Documentation/Runtime2/architect-handover/ to .bot/ — they belong in the architect workspace, not the runtime docs tree"
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/architect/v1/plan.md",
+            ".bot/data-envelope-architecture/architect/v1/summary.md",
+            ".bot/data-envelope-architecture/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Design spec and summaries from architectural discussion session. Four-phase plan for coder handoff."
+        },
+        {
+          "paths": [
+            "learnings/data-envelope-architecture/architect/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "OBP learnings from design session — no verbs in APIs, navigate through context, lazy properties, instance not static, one-word noun names"
+        }
+      ],
+      "after": {
+        "status": "Design complete. Four-phase plan ready for coder handoff.",
+        "health": "Good. No code changes, pure design. All existing code untouched.",
+        "notes": "Key OBP insights captured in learnings and memory. Coder should read plan.md + learnings.md before starting Phase 1."
+      }
+    }
+  ]
+}
