@@ -64,7 +64,7 @@ public sealed class Path
 
             // Exact match (path IS the root directory)
             if (string.Equals(_absolutePath, _fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
-                return string.Empty;
+                return ".";
 
             return _absolutePath;
         }
@@ -137,19 +137,20 @@ public sealed class Path
 
         try
         {
-            EnsureDirectory(action.Destination.Directory);
+            var dest = ResolveDestination(action.Destination);
+            EnsureDirectory(dest.Directory);
 
             if (_fs.File.Exists(_absolutePath))
-                _fs.File.Move(_absolutePath, action.Destination.Absolute, action.Overwrite);
+                _fs.File.Move(_absolutePath, dest.Absolute, action.Overwrite);
             else
             {
-                if (action.Overwrite && _fs.Directory.Exists(action.Destination.Absolute))
-                    _fs.Directory.Delete(action.Destination.Absolute, recursive: true);
+                if (action.Overwrite && _fs.Directory.Exists(dest.Absolute))
+                    _fs.Directory.Delete(dest.Absolute, recursive: true);
 
-                _fs.Directory.Move(_absolutePath, action.Destination.Absolute);
+                _fs.Directory.Move(_absolutePath, dest.Absolute);
             }
 
-            return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
+            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

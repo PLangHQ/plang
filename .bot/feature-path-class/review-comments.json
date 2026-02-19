@@ -1,109 +1,29 @@
 {
   "reviewer": "auditor",
   "branch": "feature/path-class",
-  "timestamp": "2026-02-19T18:00:00Z",
-  "reviewed_version": "v5",
-  "summary": "Path class is well-structured with strong OBP compliance after 4 review iterations. Handlers are pure one-line delegators, behavior lives on Path, action records are navigated correctly. The remaining issues are in error handling and edge-case correctness: filesystem exceptions bypass the Data error path entirely (affects all 6 behavior methods), the Relative property has a prefix-matching bug, Move.Overwrite is silently ignored for directories, and Delete of non-empty directories without Recursive throws instead of returning an error. These are foundation-layer concerns — Path is used by every file handler.",
+  "timestamp": "2026-02-19T19:00:00Z",
+  "reviewed_version": "v6",
+  "summary": "Coder v6 correctly addresses all critical and major findings from v1. Exception handling wraps all 6 behavior methods consistently. Relative prefix bug fixed with trailing separator guard. Move.Overwrite deletes existing dir before move. Delete non-empty dir returns clear error. Null guards added. Copy file-to-dir resolved. 6 new targeted tests. Two minor observations remain but nothing blocking. Recommend merge.",
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
-      "category": "safety",
+      "severity": "minor",
+      "category": "contract",
       "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 98,
-      "issue": "No exception handling in any behavior method. Filesystem operations (File.Copy, File.Move, Directory.Delete, File.WriteAllTextAsync, etc.) can throw IOException, UnauthorizedAccessException, DirectoryNotFoundException. These propagate as unhandled exceptions instead of returning Data.FromError().",
-      "impact": "Every file handler delegates to Path. A locked file, permission error, or disk-full condition crashes the step instead of producing a PLang-level error the user can handle with error events. Since handlers call Path synchronously inside Task.FromResult(), the exception isn't even wrapped in a faulted Task — it's a synchronous throw from Run().",
-      "suggestion": "Wrap the filesystem operations in each behavior method with try/catch. Catch IOException and UnauthorizedAccessException (or a broader Exception with re-throw for truly fatal ones) and return Data.FromError(new ServiceError(ex.Message, \"IOError\", 500)). The Read method already checks File.Exists before reading, but a TOCTOU race means the file could disappear between the check and the read."
+      "line": 253,
+      "issue": "ResolveDestination (file-to-existing-directory) is only used by Copy, not Move. A user who writes 'move file.txt to existing_dir/' would get the file at the directory path, not inside it. Copy handles this correctly but Move doesn't.",
+      "impact": "Inconsistent behavior between copy and move for the same source/destination pattern. Low frequency — most users specify a file destination.",
+      "suggestion": "Apply ResolveDestination in Move as well, or document the difference."
     },
     {
       "id": 2,
-      "severity": "major",
-      "category": "contract",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 52,
-      "issue": "Relative property uses StartsWith(_fs.RootDirectory) without a trailing separator guard. If RootDirectory is '/home/user/app' (no trailing slash), then an absolute path '/home/user/application/file.txt' also matches StartsWith, producing the nonsense relative path 'lication/file.txt'.",
-      "impact": "Any path whose parent directory name starts with the root directory name gets a corrupted relative path. This affects ToString() (which returns Relative), and any PLang code that uses %path% in string interpolation. The @file type has the same pattern in its Path property — both are affected.",
-      "suggestion": "Before calling StartsWith, append a directory separator to RootDirectory for the comparison: `_absolutePath.StartsWith(_fs.RootDirectory + _fs.Path.DirectorySeparatorChar, ...)`. Or compare with the separator already present: check that the character at RootDirectory.Length is a separator."
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "category": "contract",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 121,
-      "issue": "Move.Overwrite is silently ignored for directory moves. _fs.Directory.Move() does not accept an overwrite parameter, so when a PLang user writes 'move dir to dest, overwrite', the overwrite flag has no effect on directories. The operation will fail if dest already exists.",
-      "impact": "PLang user writes a move step with overwrite=true for a directory and expects it to replace the destination. Instead they get an IOException. The flag works for files but silently does nothing for directories — inconsistent behavior from the same action.",
-      "suggestion": "Either: (1) check if destination directory exists and delete it before moving when overwrite is true, or (2) detect the directory+overwrite combination and return a clear error explaining that directory overwrite is not supported. Option 1 is what users expect."
-    },
-    {
-      "id": 4,
-      "severity": "major",
-      "category": "safety",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 132,
-      "issue": "Delete of a non-empty directory without Recursive=true calls _fs.Directory.Delete(path, false), which throws IOException. The method checks file existence and directory existence, but doesn't guard against the non-empty-directory-without-recursive case.",
-      "impact": "PLang user writes 'delete mydir' (Recursive defaults to false). If mydir has contents, they get an unhandled IOException instead of a clear PLang error. This is a special case of finding #1 but worth calling out because it's a predictable user scenario.",
-      "suggestion": "Before calling _fs.Directory.Delete, check if the directory is non-empty and Recursive is false. Return Data.FromError with a message like 'Directory is not empty. Use recursive=true to delete contents.' Or, let finding #1's try/catch handle it with a clear error message."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "category": "contract",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 211,
-      "issue": "Equals uses OrdinalIgnoreCase unconditionally. On Linux/macOS, '/tmp/File.txt' and '/tmp/file.txt' are different files. Case-insensitive comparison would incorrectly report them as equal.",
-      "impact": "Path equality checks produce wrong results on case-sensitive filesystems. This affects any code that uses Path in dictionaries, HashSets, or equality comparisons. GetHashCode has the same issue (uses StringComparer.OrdinalIgnoreCase).",
-      "suggestion": "Use RuntimeInformation.IsOSPlatform(OSPlatform.Windows) to pick the right StringComparison. Or use the platform's native path comparison if available. Since PLang primarily targets Windows, this may be acceptable for now — but document the assumption."
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "category": "contract",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 211,
-      "issue": "Equals(object?) is overridden but operator == is not. This means `pathA == pathB` does reference equality while `pathA.Equals(pathB)` does value equality. Classic C# consistency issue.",
-      "impact": "Code using == on Path objects will get incorrect results (two different Path instances pointing to the same file won't be ==). Any future LINQ or collection code using == instead of Equals will have subtle bugs.",
-      "suggestion": "Override operator == and != to delegate to Equals. Also implement IEquatable<Path> for type-safe equality."
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "category": "safety",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 26,
-      "issue": "No null guard on constructor parameters. `new Path(null, engine)` would throw NullReferenceException from _fs.Path.GetFullPath(null) with a confusing stack trace. `new Path(\"file\", null)` would throw on engine.FileSystem.",
-      "impact": "If the source generator resolves a null path (e.g., a PLang variable that wasn't set), the error message is a .NET NullReferenceException instead of a clear PLang error.",
-      "suggestion": "Add ArgumentNullException guards: `ArgumentNullException.ThrowIfNull(rawPath)` and `ArgumentNullException.ThrowIfNull(engine)`. Or return a sentinel 'invalid path' — but throwing early with a clear message is better."
-    },
-    {
-      "id": 8,
-      "severity": "minor",
-      "category": "contract",
-      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
-      "line": 105,
-      "issue": "Copy for files doesn't check if destination path is an existing directory. _fs.File.Copy(source, dest, overwrite) will throw a confusing IOException if dest is an existing directory path, not a file path.",
-      "impact": "PLang user writes 'copy file.txt to existing_directory' — they expect the file to end up inside the directory, but instead they get an IOException. The method handles file-to-file and dir-to-dir but not file-to-directory (a common user expectation).",
-      "suggestion": "Before the file copy, check if destination is an existing directory and auto-append the source filename: `dest = _fs.Path.Combine(dest, FileName)`."
-    },
-    {
-      "id": 9,
       "severity": "nit",
       "category": "style",
-      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
-      "line": 5,
-      "issue": "Test namespace `PLang.Tests.Runtime2.Memory` doesn't match file location `PLang.Tests/Runtime2/Modules/Path/PathTests.cs`. Convention is for namespace to mirror directory structure.",
-      "impact": "Makes tests harder to find by namespace. Minor confusion when navigating the test project.",
-      "suggestion": "Change namespace to `PLang.Tests.Runtime2.Modules.Path` to match file location."
-    },
-    {
-      "id": 10,
-      "severity": "nit",
-      "category": "test",
-      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
-      "line": 324,
-      "issue": "List tests construct `new List { Path = p }` without setting Pattern. The [Default(\"*\")] attribute is resolved by the source generator, but in tests the record is constructed directly. If Pattern is null at runtime, _fs.Directory.GetFiles(path, null, option) would throw ArgumentNullException.",
-      "impact": "Tests pass now (likely because the generated partial class provides a default), but they're implicitly depending on source generator behavior for test correctness. If the generator changes how defaults work, these tests break for the wrong reason.",
-      "suggestion": "Explicitly set Pattern = \"*\" in test List action records. Tests should be explicit about their inputs, not rely on generated defaults."
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 65,
+      "issue": "Relative returns string.Empty when the path IS the root directory. This means ToString() returns empty string for root paths, which could surprise PLang users who interpolate %path% in output.",
+      "impact": "Cosmetic. User writes 'write %path%' for a root directory and gets empty string. Very rare scenario.",
+      "suggestion": "Consider returning '.' or '/' for the root case. Not blocking."
     }
   ]
 }

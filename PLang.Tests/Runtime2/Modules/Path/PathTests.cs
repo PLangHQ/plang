@@ -65,9 +65,8 @@ public class PathTests : IDisposable
     {
         var abs = _fs.Path.Combine(_tempDir, "sub", "file.txt");
         var p = new PLangPath(abs, _engine);
-        var rel = p.Relative;
-        await Assert.That(rel.Contains(_tempDir)).IsFalse();
-        await Assert.That(rel).Contains("file.txt");
+        var expected = "sub" + _fs.Path.DirectorySeparatorChar + "file.txt";
+        await Assert.That(p.Relative).IsEqualTo(expected);
     }
 
     // --- Extension ---
@@ -309,6 +308,8 @@ public class PathTests : IDisposable
         var result = p.Read();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
 
     // --- List ---
@@ -327,6 +328,9 @@ public class PathTests : IDisposable
         var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
+        var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
+        await Assert.That(names[0]).IsEqualTo("a.txt");
+        await Assert.That(names[1]).IsEqualTo("b.txt");
     }
 
     [Test]
@@ -368,6 +372,8 @@ public class PathTests : IDisposable
         var result = p.List(new List { Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
 
     // --- Save ---
@@ -450,6 +456,7 @@ public class PathTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(destPath)).IsTrue();
         await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+        await Assert.That(_fs.File.Exists(srcPath)).IsTrue(); // copy, not move
     }
 
     [Test]
@@ -512,6 +519,7 @@ public class PathTests : IDisposable
         var result = src.Copy(new Copy { Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     // --- Move ---
@@ -554,6 +562,7 @@ public class PathTests : IDisposable
         var result = src.Move(new Move { Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     // --- Delete ---
@@ -600,6 +609,7 @@ public class PathTests : IDisposable
         var result = p.Delete(new Delete { Path = p });
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]
@@ -687,5 +697,215 @@ public class PathTests : IDisposable
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "copy_to_dir.txt"))).IsTrue();
+    }
+
+    // --- Move file to existing directory (auditor v2 #1) ---
+
+    [Test]
+    public async Task Move_FileToExistingDirectory_PutsFileInsideDir()
+    {
+        var srcPath = TempFile("move_to_dir.txt");
+        var destDir = TempDir("move_target_dir");
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "move_to_dir.txt"))).IsTrue();
+        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
+    }
+
+    // --- Relative returns "." for root path (auditor v2 #2) ---
+
+    [Test]
+    public async Task Relative_RootPath_ReturnsDot()
+    {
+        var p = new PLangPath(_tempDir, _engine);
+        await Assert.That(p.Relative).IsEqualTo(".");
+    }
+
+    // --- Exception handling tests (tester #1) ---
+
+    [Test]
+    public async Task Copy_DestExists_OverwriteFalse_ReturnsIOError()
+    {
+        var srcPath = TempFile("copy_ow_src.txt");
+        var destPath = TempFile("copy_ow_dst.txt"); // dest already exists
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Copy_DestExists_OverwriteTrue_Succeeds()
+    {
+        var srcPath = TempFile("copy_owt_src.txt");
+        var destPath = _fs.Path.Combine(_tempDir, "copy_owt_dst.txt");
+        _fs.File.WriteAllText(destPath, "old content");
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+    }
+
+    [Test]
+    public async Task Move_DestExists_OverwriteFalse_ReturnsIOError()
+    {
+        var srcPath = TempFile("move_ow_src.txt");
+        var destPath = TempFile("move_ow_dst.txt"); // dest already exists
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Move_DestExists_OverwriteTrue_Succeeds()
+    {
+        var srcPath = TempFile("move_owt_src.txt");
+        var destPath = _fs.Path.Combine(_tempDir, "move_owt_dst.txt");
+        _fs.File.WriteAllText(destPath, "old content");
+
+        var src = new PLangPath(srcPath, _engine);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
+    }
+
+    [Test]
+    public async Task Delete_ReadOnlyParent_ReturnsIOError()
+    {
+        var dir = TempDir("del_ro_parent");
+        var filePath = _fs.Path.Combine(dir, "locked.txt");
+        _fs.File.WriteAllText(filePath, "data");
+
+        // Make parent directory read-only (prevents deletion on Linux)
+        System.IO.File.SetUnixFileMode(dir,
+            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
+
+        try
+        {
+            var p = new PLangPath(filePath, _engine);
+            var result = p.Delete(new Delete { Path = p });
+
+            await Assert.That(result.Success).IsFalse();
+            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        }
+        finally
+        {
+            // Restore permissions for cleanup
+            System.IO.File.SetUnixFileMode(dir,
+                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+        }
+    }
+
+    [Test]
+    public async Task Save_ReadOnlyDir_ReturnsIOError()
+    {
+        var dir = TempDir("save_ro");
+        System.IO.File.SetUnixFileMode(dir,
+            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
+
+        try
+        {
+            var p = new PLangPath(_fs.Path.Combine(dir, "blocked.txt"), _engine);
+            var result = await p.Save(new Save { Path = p, Value = "data" });
+
+            await Assert.That(result.Success).IsFalse();
+            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        }
+        finally
+        {
+            System.IO.File.SetUnixFileMode(dir,
+                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+        }
+    }
+
+    [Test]
+    public async Task Read_PermissionDenied_ReturnsIOError()
+    {
+        var filePath = TempFile("read_denied.txt");
+        System.IO.File.SetUnixFileMode(filePath, System.IO.UnixFileMode.None);
+
+        try
+        {
+            var p = new PLangPath(filePath, _engine);
+            var result = p.Read();
+
+            await Assert.That(result.Success).IsFalse();
+            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        }
+        finally
+        {
+            System.IO.File.SetUnixFileMode(filePath,
+                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite);
+        }
+    }
+
+    [Test]
+    public async Task List_PermissionDenied_ReturnsIOError()
+    {
+        var dir = TempDir("list_denied");
+        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
+        System.IO.File.SetUnixFileMode(dir, System.IO.UnixFileMode.None);
+
+        try
+        {
+            var p = new PLangPath(dir, _engine);
+            var result = p.List(new List { Path = p, Pattern = "*" });
+
+            await Assert.That(result.Success).IsFalse();
+            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        }
+        finally
+        {
+            System.IO.File.SetUnixFileMode(dir,
+                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+        }
+    }
+
+    // --- Save object serialization (tester #4) ---
+
+    [Test]
+    public async Task Save_Object_SerializesToJson()
+    {
+        var filePath = _fs.Path.Combine(_tempDir, "saved_obj.json");
+        var p = new PLangPath(filePath, _engine);
+        var data = new Dictionary<string, object> { ["name"] = "test", ["count"] = 42 };
+
+        var result = await p.Save(new Save { Path = p, Value = data });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
+        var content = _fs.File.ReadAllText(filePath);
+        await Assert.That(content).Contains("test");
+        await Assert.That(content).Contains("42");
+    }
+
+    // --- Delete non-empty directory error has correct code ---
+
+    [Test]
+    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsDirectoryNotEmpty()
+    {
+        var dirPath = TempDir("del_nonempty_code");
+        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
+
+        var p = new PLangPath(dirPath, _engine);
+        var result = p.Delete(new Delete { Path = p, Recursive = false });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DirectoryNotEmpty");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
     }
 }

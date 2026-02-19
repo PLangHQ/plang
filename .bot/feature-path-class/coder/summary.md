@@ -60,3 +60,11 @@ public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFou
 **Key fixes:** try/catch in all 6 behavior methods returning `Data.FromError()` instead of throwing (#1). Trailing separator guard in `Relative` property (#2). Directory overwrite support in `Move` (#3). Non-empty directory check in `Delete` (#4). Null guards (#7). File-to-directory copy (#8). Test namespace fix (#9). Explicit Pattern in List tests (#10).
 
 1227/1227 tests passing (+6 new). See [v6/summary.md](v6/summary.md) for details.
+
+## v7: Tester Findings — Exception Tests, Overwrite Tests, Strengthened Assertions
+
+**Tester found 8 issues.** Critical: all try/catch blocks had zero test coverage (false-green). Also: missing overwrite conflict tests, Save serialization test, weak assertions.
+
+**Key additions:** 8 exception-path tests (chmod + overwrite conflicts exercise all 6 try/catch blocks). Save object serialization test. ResolveDestination applied to Move (auditor v2). Relative returns "." for root path. All error assertions now verify error code + status. PLang .goal tests blocked (needs builder).
+
+1239/1239 tests passing (+12 new). See [v7/summary.md](v7/summary.md) for details.
