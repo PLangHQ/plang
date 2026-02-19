@@ -1,0 +1,99 @@
+{
+  "reviewer": "auditor",
+  "branch": "feature/path-class",
+  "timestamp": "2026-02-19T20:30:00Z",
+  "reviewed_version": "v5",
+  "summary": "v5 successfully addresses the v4 OBP rule 2 feedback: handlers now pass `this` to Path methods, and Path navigates the action record internally. The overall design is solid — handlers are clean one-line delegators, Path owns all file behavior, and the source generator integration works correctly. Remaining findings are a mix of architectural concerns (Path coupling to action record types creates a bidirectional dependency between Engine.Memory and actions.file), safety issues (null path in constructor, CopyDirectory exception propagation), and test quality gaps (System.IO still used in constructors/Dispose, PathTests namespace mismatch).",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "obp",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 98,
+      "issue": "Path (in Engine.Memory namespace) takes hard dependencies on 5 action record types from actions.file: Copy, Move, Delete, List, Save. This creates a bidirectional coupling: actions.file depends on Engine.Memory.Path for the property type, and Engine.Memory.Path depends on actions.file for the method signatures. Path is a foundational type in the Engine layer — it should not know about handler action records in the actions layer.",
+      "impact": "Any new file action that needs Path behavior requires modifying Path.cs. Path cannot be used by non-file modules without dragging in actions.file dependencies. The dependency arrow goes from foundation (Engine.Memory) up to application (actions.file), which inverts the expected layering.",
+      "suggestion": "Consider an interface approach: define an interface like `IPathAction` with the properties Path methods need, and have action records implement it. Or use the handler itself as the navigation target — Path methods could accept a generic parameter object. Alternatively, accept this coupling as intentional since Path is specifically a file-system concept and will always be tied to file actions. If so, consider moving Path to the actions.file namespace or a shared sub-namespace to make the coupling explicit rather than hidden."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 26,
+      "issue": "Constructor does not guard against null or empty `rawPath`. `_fs.Path.GetFullPath(null)` or `_fs.Path.GetFullPath(\"\")` will throw an ArgumentException deep inside the file system abstraction, with no clear error message pointing back to the PLang layer.",
+      "impact": "When a PLang user writes `save to %path%` and `%path%` is unset/null, they get an opaque .NET exception instead of a clear PLang error.",
+      "suggestion": "Add a guard clause: `ArgumentException.ThrowIfNullOrEmpty(rawPath, nameof(rawPath));` or return a clear PLang error. Since Path is constructed by the source generator's `Resolve()` call, consider whether `Resolve` should return `null` (and let the generated validation catch it) or throw with a PLang-friendly message."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 189,
+      "issue": "CopyDirectory does not catch or wrap exceptions from `_fs.File.Copy` or `_fs.Directory.GetFiles`. If a single file copy fails (e.g., permission denied on one file in a directory), the entire Copy operation throws an unhandled exception, leaving a partially-copied directory. The caller (`Copy` method at line 108) has no try/catch either.",
+      "impact": "Partial copy with no cleanup. The user gets a raw .NET exception instead of a Data error.",
+      "suggestion": "Wrap the CopyDirectory call in a try/catch that returns `Data.FromError(...)` on failure. Consider whether partial copies should be cleaned up or left in place (user preference). At minimum, convert exceptions to Data errors so the PLang runtime can handle them through its normal error pipeline."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 113,
+      "issue": "Move for directories silently ignores the `Overwrite` parameter. `_fs.Directory.Move` throws if the destination exists — there is no overwrite option. But the action record has `[Default(false)] public partial bool Overwrite { get; init; }`, so a PLang user could write `move dir to other, overwrite` and get an unexplained IOException instead of a clear 'directory overwrite not supported' message.",
+      "impact": "Confusing error for PLang users who expect directory move with overwrite to work like file move with overwrite.",
+      "suggestion": "Either (a) check `action.Overwrite && _fs.Directory.Exists(action.Destination.Absolute)` and delete-then-move, or (b) return a clear error: 'Directory move does not support overwrite; delete destination first'."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 5,
+      "issue": "File is at `Modules/Path/PathTests.cs` but namespace is `PLang.Tests.Runtime2.Memory`. The namespace should match the folder structure per .NET conventions. This could cause confusion when navigating by namespace vs file location.",
+      "impact": "Minor discoverability issue. Tools that navigate by namespace won't find this test where the folder structure suggests it should be.",
+      "suggestion": "Change namespace to `PLang.Tests.Runtime2.Modules.Path` to match the file location, or move the file to a `Memory/` folder to match the namespace."
+    },
+    {
+      "id": 6,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 14,
+      "issue": "Constructor still uses `System.IO.Path.Combine`, `System.IO.Path.GetTempPath`, `System.IO.Directory.CreateDirectory` and Dispose uses `System.IO.Directory.Exists/Delete`. The v3 review flagged System.IO usage, and the coder stated these were kept 'for constructor/Dispose temp dir lifecycle'. But PLangFileSystem _fs is available after line 16 — only the initial temp dir creation (line 14-15) genuinely needs System.IO since _fs doesn't exist yet.",
+      "impact": "Inconsistency: the rule says 'never use System.IO' but the test breaks it in 5 places. Lines 14-15 are justified (bootstrap), but line 23-24 in Dispose could use _fs.",
+      "suggestion": "In Dispose, use `_fs.Directory.Exists(_tempDir)` and `_fs.Directory.Delete(_tempDir, true)` since `_fs` is still alive at that point (disposed after the engine). Keep only lines 14-15 as System.IO (the 2 bootstrap lines before _fs exists)."
+    },
+    {
+      "id": 7,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 155,
+      "issue": "The `List` method uses `SearchOption.AllDirectories` and `SearchOption.TopDirectoryOnly` which are `System.IO.SearchOption` enum values. While this is not a System.IO *call* (it's just an enum), it creates a direct dependency on the `System.IO` namespace. The file system abstraction should ideally abstract this enum too.",
+      "impact": "Very minor. The enum is just a flag — no actual I/O bypass.",
+      "suggestion": "Acceptable as-is since `System.IO.SearchOption` is just an enum. But if the file system abstraction ever wraps it, this would need updating."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 165,
+      "issue": "Save method is `async Task<Data>` while all other behavior methods (Copy, Move, Delete, Read, List, AsFile) are synchronous `Data`. This forces save.cs handler to return `Task<Data>` from `Run()` while all other handlers wrap in `Task.FromResult()`. The asymmetry exists because `_fs.File.WriteAllBytesAsync` and `WriteAllTextAsync` are async. But `_fs.File.Create` + serializer are also async in the else branch — so this is inherently async. The inconsistency in the Path API is acceptable but worth noting.",
+      "impact": "Minor API inconsistency. All callers of Save must await. Not a bug — just architectural awareness.",
+      "suggestion": "No change needed. If other methods need to become async in the future (e.g., async Read for large files), they'd follow the same pattern."
+    },
+    {
+      "id": 9,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 448,
+      "issue": "Copy/Move/Delete/List/Save tests construct action records with `Source = src` or `Path = p` set to the same PLangPath instance the test is calling the method on. This is correct for the runtime path (handler passes `this` which contains the Path). But it means the test is setting up a redundant reference: `src.Copy(new Copy { Source = src, ... })` — the Copy method on Path ignores `action.Source` entirely (it uses `this`/`_absolutePath`). The test gives the impression Source matters for the Copy behavior, but it doesn't.",
+      "impact": "Misleading test setup. A reader might think `action.Source` is used by Path.Copy, but it isn't — Path.Copy always operates on `this` (the PLangPath instance the method is called on). Source is only on the action record for the handler's init properties.",
+      "suggestion": "This is inherent to the OBP pattern (handler passes this, Path is this.Source). No code change needed, but a test comment clarifying 'Source is set for record completeness — Path.Copy operates on `this`' would help future readers."
+    }
+  ]
+}
