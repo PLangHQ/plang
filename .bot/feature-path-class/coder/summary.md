@@ -38,3 +38,17 @@ public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFou
 ```
 
 1221/1221 tests passing (+2 new: Delete_IgnoreIfNotFound on Path, AsFile).
+
+## v5: Handlers Pass `this` to Path (OBP Rule 2)
+
+**What the reviewer flagged:** All handlers decompose action record properties into method parameters (`Path.Delete(Recursive, IgnoreIfNotFound)`) instead of passing the action record itself (`Path.Delete(this)`). This violates OBP rule 2 — "navigate, don't pass".
+
+**Key design change:** Path methods now accept the action record and navigate it internally. Handlers pass `this`.
+
+**What changed:**
+- Path.cs: `Copy/Move/Delete/List/Save` now take their respective action record as a parameter
+- All 5 handlers: `Source.Copy(this)`, `Source.Move(this)`, `Path.Delete(this)`, `Path.List(this)`, `Path.Save(this)`
+- PathTests: construct action records for all behavior tests
+- `AsFile()` NOT renamed to `Exists()` — conflicts with `bool Exists` property
+
+1221/1221 tests passing. See [v5/summary.md](v5/summary.md) for details.

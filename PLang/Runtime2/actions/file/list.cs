@@ -13,5 +13,5 @@ public partial class List : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Path.List(Pattern, Recursive));
+    public Task<Data> Run() => Task.FromResult(Path.List(this));
 }

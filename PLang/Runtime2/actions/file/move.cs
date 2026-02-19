@@ -11,5 +11,5 @@ public partial class Move : IContext
     [Default(false)]
     public partial bool Overwrite { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Source.Move(Destination, Overwrite));
+    public Task<Data> Run() => Task.FromResult(Source.Move(this));
 }

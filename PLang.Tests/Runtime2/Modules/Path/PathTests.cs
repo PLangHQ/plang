@@ -1,4 +1,5 @@
 using PLang.SafeFileSystem;
+using PLang.Runtime2.actions.file;
 
 namespace PLang.Tests.Runtime2.Memory;
 
@@ -320,7 +321,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.txt"), "b");
 
         var p = new PLangPath(dir, _engine);
-        var result = p.List();
+        var result = p.List(new List { Path = p });
 
         await Assert.That(result.Success).IsTrue();
         var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
@@ -336,7 +337,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.md"), "b");
 
         var p = new PLangPath(dir, _engine);
-        var result = p.List("*.txt");
+        var result = p.List(new List { Path = p, Pattern = "*.txt" });
 
         await Assert.That(result.Success).IsTrue();
         var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
@@ -353,7 +354,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
         var p = new PLangPath(dir, _engine);
-        var result = p.List("*", recursive: true);
+        var result = p.List(new List { Path = p, Pattern = "*", Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
         var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
@@ -364,7 +365,7 @@ public class PathTests : IDisposable
     public async Task List_NonexistentDirectory_ReturnsError()
     {
         var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_dir"), _engine);
-        var result = p.List();
+        var result = p.List(new List { Path = p });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -377,7 +378,7 @@ public class PathTests : IDisposable
         var filePath = _fs.Path.Combine(_tempDir, "saved.txt");
         var p = new PLangPath(filePath, _engine);
 
-        var result = await p.Save("hello world");
+        var result = await p.Save(new Save { Path = p, Value = "hello world" });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(filePath)).IsTrue();
@@ -391,7 +392,7 @@ public class PathTests : IDisposable
         var p = new PLangPath(filePath, _engine);
 
         var bytes = new byte[] { 1, 2, 3 };
-        var result = await p.Save(bytes);
+        var result = await p.Save(new Save { Path = p, Value = bytes });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(filePath)).IsTrue();
@@ -405,7 +406,7 @@ public class PathTests : IDisposable
         var filePath = _fs.Path.Combine(_tempDir, "newdir", "saved.txt");
         var p = new PLangPath(filePath, _engine);
 
-        var result = await p.Save("nested");
+        var result = await p.Save(new Save { Path = p, Value = "nested" });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(filePath)).IsTrue();
@@ -444,8 +445,7 @@ public class PathTests : IDisposable
         var destPath = _fs.Path.Combine(_tempDir, "copy_dst.txt");
 
         var src = new PLangPath(srcPath, _engine);
-        var dest = new PLangPath(destPath, _engine);
-        var result = src.Copy(dest);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(destPath)).IsTrue();
@@ -461,8 +461,7 @@ public class PathTests : IDisposable
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_dir_dst");
         var src = new PLangPath(srcDir, _engine);
-        var dest = new PLangPath(destDir, _engine);
-        var result = src.Copy(dest);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
@@ -480,8 +479,7 @@ public class PathTests : IDisposable
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_sub_dst");
         var src = new PLangPath(srcDir, _engine);
-        var dest = new PLangPath(destDir, _engine);
-        var result = src.Copy(dest, includeSubfolders: true);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
@@ -499,8 +497,7 @@ public class PathTests : IDisposable
 
         var destDir = _fs.Path.Combine(_tempDir, "copy_nosub_dst");
         var src = new PLangPath(srcDir, _engine);
-        var dest = new PLangPath(destDir, _engine);
-        var result = src.Copy(dest, includeSubfolders: false);
+        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = false });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
@@ -512,7 +509,7 @@ public class PathTests : IDisposable
     {
         var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
         var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
-        var result = src.Copy(dest);
+        var result = src.Copy(new Copy { Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -526,8 +523,7 @@ public class PathTests : IDisposable
         var destPath = _fs.Path.Combine(_tempDir, "move_dst.txt");
 
         var src = new PLangPath(srcPath, _engine);
-        var dest = new PLangPath(destPath, _engine);
-        var result = src.Move(dest);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(destPath)).IsTrue();
@@ -542,8 +538,7 @@ public class PathTests : IDisposable
 
         var destDir = _fs.Path.Combine(_tempDir, "move_dir_dst");
         var src = new PLangPath(srcDir, _engine);
-        var dest = new PLangPath(destDir, _engine);
-        var result = src.Move(dest);
+        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.Directory.Exists(destDir)).IsTrue();
@@ -556,7 +551,7 @@ public class PathTests : IDisposable
     {
         var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
         var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
-        var result = src.Move(dest);
+        var result = src.Move(new Move { Source = src, Destination = dest });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -568,7 +563,7 @@ public class PathTests : IDisposable
     {
         var filePath = TempFile("del_file.txt");
         var p = new PLangPath(filePath, _engine);
-        var result = p.Delete();
+        var result = p.Delete(new Delete { Path = p });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.File.Exists(filePath)).IsFalse();
@@ -579,7 +574,7 @@ public class PathTests : IDisposable
     {
         var dirPath = TempDir("del_empty_dir");
         var p = new PLangPath(dirPath, _engine);
-        var result = p.Delete();
+        var result = p.Delete(new Delete { Path = p });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
@@ -592,7 +587,7 @@ public class PathTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
 
         var p = new PLangPath(dirPath, _engine);
-        var result = p.Delete(recursive: true);
+        var result = p.Delete(new Delete { Path = p, Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
@@ -602,7 +597,7 @@ public class PathTests : IDisposable
     public async Task Delete_NotFound_ReturnsError()
     {
         var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
-        var result = p.Delete();
+        var result = p.Delete(new Delete { Path = p });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -611,7 +606,7 @@ public class PathTests : IDisposable
     public async Task Delete_NotFound_IgnoreIfNotFound_ReturnsSuccess()
     {
         var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
-        var result = p.Delete(ignoreIfNotFound: true);
+        var result = p.Delete(new Delete { Path = p, IgnoreIfNotFound = true });
 
         await Assert.That(result.Success).IsTrue();
     }

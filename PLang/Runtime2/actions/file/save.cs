@@ -8,5 +8,5 @@ public partial class Save : IContext
     public partial PLangPath Path { get; init; }
     public partial object Value { get; init; }
 
-    public Task<Data> Run() => Path.Save(Value);
+    public Task<Data> Run() => Path.Save(this);
 }

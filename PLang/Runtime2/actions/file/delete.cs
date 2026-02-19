@@ -13,5 +13,5 @@ public partial class Delete : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFound));
+    public Task<Data> Run() => Task.FromResult(Path.Delete(this));
 }

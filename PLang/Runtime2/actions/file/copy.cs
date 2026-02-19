@@ -14,5 +14,5 @@ public partial class Copy : IContext
     [Default(true)]
     public partial bool IncludeSubfolders { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Source.Copy(Destination, Overwrite, IncludeSubfolders));
+    public Task<Data> Run() => Task.FromResult(Source.Copy(this));
 }

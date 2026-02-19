@@ -127,6 +127,46 @@
         "health": "Green. No regressions.",
         "notes": "All v3 review feedback addressed. Every file handler is now a pure one-line delegator."
       }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-def0-456789012345",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T16:00:00Z",
+      "timestamp_end": "2026-02-19T16:15:00Z",
+      "intent": "Address v4 review: handlers pass this to Path (OBP rule 2 — navigate, don't pass)",
+      "before": {
+        "assumptions": "v4 review: all handlers decompose action record properties into method parameters instead of passing action record itself",
+        "risk": "Low - method signatures change but behavior is identical"
+      },
+      "plan": "Path methods accept action records. Handlers pass this. Tests construct action records. AsFile rename skipped (conflicts with bool Exists property).",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Memory/Path.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Copy/Move/Delete/List/Save signatures changed from decomposed params to action record params. Methods navigate action internally."
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/file/save.cs", "PLang/Runtime2/actions/file/delete.cs", "PLang/Runtime2/actions/file/copy.cs", "PLang/Runtime2/actions/file/move.cs", "PLang/Runtime2/actions/file/list.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "All handlers now pass this: Path.Save(this), Path.Delete(this), Source.Copy(this), Source.Move(this), Path.List(this)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/Path/PathTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All behavior tests construct action records with init properties instead of passing decomposed params"
+        }
+      ],
+      "after": {
+        "status": "Complete. 1221/1221 tests passing.",
+        "health": "Green. No regressions.",
+        "notes": "All v4 review feedback addressed. AsFile() rename skipped — conflicts with bool Exists property on Path."
+      }
     }
   ]
 }

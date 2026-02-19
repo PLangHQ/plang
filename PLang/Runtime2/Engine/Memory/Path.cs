@@ -95,43 +95,43 @@ public sealed class Path
 
     // --- Behavior methods (OBP: behavior belongs to the owner) ---
 
-    public Data Copy(Path destination, bool overwrite = false, bool includeSubfolders = true)
+    public Data Copy(actions.file.Copy action)
     {
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-        EnsureDirectory(destination.Directory);
+        EnsureDirectory(action.Destination.Directory);
 
         if (_fs.File.Exists(_absolutePath))
-            _fs.File.Copy(_absolutePath, destination.Absolute, overwrite);
+            _fs.File.Copy(_absolutePath, action.Destination.Absolute, action.Overwrite);
         else
-            CopyDirectory(_absolutePath, destination.Absolute, overwrite, includeSubfolders);
+            CopyDirectory(_absolutePath, action.Destination.Absolute, action.Overwrite, action.IncludeSubfolders);
 
-        return Data.Ok(new actions.file.types.@file(destination.Absolute, _fs, source: _absolutePath));
+        return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
     }
 
-    public Data Move(Path destination, bool overwrite = false)
+    public Data Move(actions.file.Move action)
     {
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-        EnsureDirectory(destination.Directory);
+        EnsureDirectory(action.Destination.Directory);
 
         if (_fs.File.Exists(_absolutePath))
-            _fs.File.Move(_absolutePath, destination.Absolute, overwrite);
+            _fs.File.Move(_absolutePath, action.Destination.Absolute, action.Overwrite);
         else
-            _fs.Directory.Move(_absolutePath, destination.Absolute);
+            _fs.Directory.Move(_absolutePath, action.Destination.Absolute);
 
-        return Data.Ok(new actions.file.types.@file(destination.Absolute, _fs, source: _absolutePath));
+        return Data.Ok(new actions.file.types.@file(action.Destination.Absolute, _fs, source: _absolutePath));
     }
 
-    public Data Delete(bool recursive = false, bool ignoreIfNotFound = false)
+    public Data Delete(actions.file.Delete action)
     {
         if (_fs.File.Exists(_absolutePath))
             _fs.File.Delete(_absolutePath);
         else if (_fs.Directory.Exists(_absolutePath))
-            _fs.Directory.Delete(_absolutePath, recursive);
-        else if (!ignoreIfNotFound)
+            _fs.Directory.Delete(_absolutePath, action.Recursive);
+        else if (!action.IgnoreIfNotFound)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
         return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
@@ -147,13 +147,13 @@ public sealed class Path
         return Data.Ok(file);
     }
 
-    public Data List(string pattern = "*", bool recursive = false)
+    public Data List(actions.file.List action)
     {
         if (!_fs.Directory.Exists(_absolutePath))
             return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
 
-        var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        var files = _fs.Directory.GetFiles(_absolutePath, pattern, option)
+        var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
             .Select(f => new actions.file.types.@file(f, _fs))
             .ToArray();
         return Data.Ok(files);
@@ -162,19 +162,19 @@ public sealed class Path
     /// <summary>Wraps this path as a @file object — used by exists handler</summary>
     public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
 
-    public async Task<Data> Save(object value)
+    public async Task<Data> Save(actions.file.Save action)
     {
         EnsureDirectory(Directory);
 
-        if (value is byte[] bytes)
+        if (action.Value is byte[] bytes)
             await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
-        else if (value is string str)
+        else if (action.Value is string str)
             await _fs.File.WriteAllTextAsync(_absolutePath, str);
         else
         {
             await using var stream = _fs.File.Create(_absolutePath);
             await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
-                { Stream = stream, Data = value, Extension = Extension });
+                { Stream = stream, Data = action.Value, Extension = Extension });
         }
 
         return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
