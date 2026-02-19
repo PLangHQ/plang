@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
+using Path = System.IO.Path;
 
 namespace PLang.Tests.Runtime2.Core;
 

@@ -5,34 +5,32 @@ namespace PLang.Runtime2.actions.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial string Path { get; init; }
+    public partial PLangPath Path { get; init; }
     public partial object Value { get; init; }
 
     public async Task<Data> Run()
     {
         var fs = Context.Engine!.FileSystem;
-        var absPath = fs.Path.GetFullPath(Path);
-        var dir = fs.Path.GetDirectoryName(absPath);
+        var dir = Path.Directory;
 
         if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
             fs.Directory.CreateDirectory(dir);
 
         if (Value is byte[] bytes)
         {
-            await fs.File.WriteAllBytesAsync(absPath, bytes);
+            await fs.File.WriteAllBytesAsync(Path.Absolute, bytes);
         }
         else if (Value is string str)
         {
-            await fs.File.WriteAllTextAsync(absPath, str);
+            await fs.File.WriteAllTextAsync(Path.Absolute, str);
         }
         else
         {
-            var ext = fs.Path.GetExtension(absPath);
-            await using var stream = fs.File.Create(absPath);
+            await using var stream = fs.File.Create(Path.Absolute);
             await Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
-                { Stream = stream, Data = Value, Extension = ext });
+                { Stream = stream, Data = Value, Extension = Path.Extension });
         }
 
-        return Data.Ok(new types.@file(absPath, fs));
+        return Data.Ok(new types.@file(Path.Absolute, fs));
     }
 }

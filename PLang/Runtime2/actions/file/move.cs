@@ -5,25 +5,23 @@ namespace PLang.Runtime2.actions.file;
 [Action("move", Cacheable = false)]
 public partial class Move : IContext
 {
-    public partial string Source { get; init; }
-    public partial string Destination { get; init; }
+    public partial PLangPath Source { get; init; }
+    public partial PLangPath Destination { get; init; }
     public partial bool Overwrite { get; init; }
 
     public Task<Data> Run()
     {
         var fs = Context.Engine!.FileSystem;
-        var absSource = fs.Path.GetFullPath(Source);
-        var absDest = fs.Path.GetFullPath(Destination);
 
-        if (!fs.File.Exists(absSource))
+        if (!Source.IsFile)
             return Task.FromResult(Data.FromError(
-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
+                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source.Raw}", "FileNotFound", 404)));
 
-        var destDir = fs.Path.GetDirectoryName(absDest);
+        var destDir = Destination.Directory;
         if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
             fs.Directory.CreateDirectory(destDir);
 
-        fs.File.Move(absSource, absDest, Overwrite);
-        return Task.FromResult(Data.Ok(new types.@file(absDest, fs, source: absSource)));
+        fs.File.Move(Source.Absolute, Destination.Absolute, Overwrite);
+        return Task.FromResult(Data.Ok(new types.@file(Destination.Absolute, fs, source: Source.Absolute)));
     }
 }
