@@ -29,13 +29,13 @@ public class FileHandlerTests : IDisposable
     }
 
     private string TempPath(string relativePath) =>
-        System.IO.Path.Combine(_tempDir, relativePath);
+        _fs.Path.Combine(_tempDir, relativePath);
 
     private PLangPath MakePath(string relativePath) =>
-        new PLangPath(TempPath(relativePath), _fs);
+        new PLangPath(TempPath(relativePath), _engine);
 
     private PLangPath MakeAbsPath(string absolutePath) =>
-        new PLangPath(absolutePath, _fs);
+        new PLangPath(absolutePath, _engine);
 
     private PLangContext CreateContext()
     {
@@ -63,7 +63,7 @@ public class FileHandlerTests : IDisposable
         var action = new Save { Context = CreateContext(), Path = MakePath("exists.txt"), Value = "data" };
         await action.Run();
 
-        await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
+        await Assert.That(_fs.File.Exists(TempPath("exists.txt"))).IsTrue();
     }
 
     // --- Read ---
@@ -71,7 +71,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_ReturnsFileObject()
     {
-        System.IO.File.WriteAllText(TempPath("read.txt"), "content here");
+        _fs.File.WriteAllText(TempPath("read.txt"), "content here");
 
         var action = new Read { Context = CreateContext(), Path = MakePath("read.txt") };
         var result = await action.Run();
@@ -85,7 +85,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_ContentIsLazy()
     {
-        System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
+        _fs.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
 
         var action = new Read { Context = CreateContext(), Path = MakePath("lazy.txt") };
         var result = await action.Run();
@@ -108,7 +108,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Copy_ReturnsFileWithSource()
     {
-        System.IO.File.WriteAllText(TempPath("src.txt"), "source data");
+        _fs.File.WriteAllText(TempPath("src.txt"), "source data");
 
         var action = new Copy { Context = CreateContext(), Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
@@ -133,14 +133,14 @@ public class FileHandlerTests : IDisposable
     public async Task Copy_Directory_CopiesAllFiles()
     {
         var srcDir = TempPath("copy_dir");
-        System.IO.Directory.CreateDirectory(srcDir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
+        _fs.Directory.CreateDirectory(srcDir);
+        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
 
         var action = new Copy { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
     }
 
     // --- Move ---
@@ -148,7 +148,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Move_ReturnsFileWithSource()
     {
-        System.IO.File.WriteAllText(TempPath("move_src.txt"), "move data");
+        _fs.File.WriteAllText(TempPath("move_src.txt"), "move data");
 
         var action = new Move { Context = CreateContext(), Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
         var result = await action.Run();
@@ -173,15 +173,15 @@ public class FileHandlerTests : IDisposable
     public async Task Move_Directory_MovesDirectory()
     {
         var srcDir = TempPath("move_dir");
-        System.IO.Directory.CreateDirectory(srcDir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
+        _fs.Directory.CreateDirectory(srcDir);
+        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
 
         var action = new Move { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(System.IO.Directory.Exists(srcDir)).IsFalse();
-        await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
+        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
+        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
     }
 
     // --- Delete ---
@@ -189,7 +189,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_ReturnsFile()
     {
-        System.IO.File.WriteAllText(TempPath("del.txt"), "delete me");
+        _fs.File.WriteAllText(TempPath("del.txt"), "delete me");
 
         var action = new Delete { Context = CreateContext(), Path = MakePath("del.txt") };
         var result = await action.Run();
@@ -222,14 +222,14 @@ public class FileHandlerTests : IDisposable
     public async Task Delete_Directory_Recursive()
     {
         var dir = TempPath("del_dir");
-        System.IO.Directory.CreateDirectory(dir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
+        _fs.Directory.CreateDirectory(dir);
+        _fs.File.WriteAllText(_fs.Path.Combine(dir, "child.txt"), "data");
 
         var action = new Delete { Context = CreateContext(), Path = MakeAbsPath(dir), Recursive = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(System.IO.Directory.Exists(dir)).IsFalse();
+        await Assert.That(_fs.Directory.Exists(dir)).IsFalse();
     }
 
     // --- Exists ---
@@ -237,7 +237,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Exists_ExistingFile_ReturnsTrue()
     {
-        System.IO.File.WriteAllText(TempPath("check.txt"), "present");
+        _fs.File.WriteAllText(TempPath("check.txt"), "present");
 
         var action = new Exists { Context = CreateContext(), Path = MakePath("check.txt") };
         var result = await action.Run();
@@ -266,9 +266,9 @@ public class FileHandlerTests : IDisposable
     public async Task List_ReturnsFileArray()
     {
         var subDir = TempPath("listdir");
-        System.IO.Directory.CreateDirectory(subDir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.txt"), "b");
+        _fs.Directory.CreateDirectory(subDir);
+        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
+        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.txt"), "b");
 
         var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir) };
         var result = await action.Run();
@@ -283,9 +283,9 @@ public class FileHandlerTests : IDisposable
     public async Task List_WithPattern_FiltersFiles()
     {
         var subDir = TempPath("listpattern");
-        System.IO.Directory.CreateDirectory(subDir);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
+        _fs.Directory.CreateDirectory(subDir);
+        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
+        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.md"), "b");
 
         var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Pattern = "*.txt" };
         var result = await action.Run();
@@ -300,10 +300,11 @@ public class FileHandlerTests : IDisposable
     public async Task List_Recursive_FindsNestedFiles()
     {
         var subDir = TempPath("listrecursive");
-        var nested = System.IO.Path.Combine(subDir, "sub");
-        System.IO.Directory.CreateDirectory(nested);
-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
-        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
+        var nested = _fs.Path.Combine(subDir, "sub");
+        _fs.Directory.CreateDirectory(subDir);
+        _fs.Directory.CreateDirectory(nested);
+        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "top.txt"), "top");
+        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
         var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Recursive = true };
         var result = await action.Run();
@@ -328,7 +329,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task FileType_MimeType_FromExtension()
     {
-        System.IO.File.WriteAllText(TempPath("doc.md"), "# Hello");
+        _fs.File.WriteAllText(TempPath("doc.md"), "# Hello");
 
         var action = new Read { Context = CreateContext(), Path = MakePath("doc.md") };
         var result = await action.Run();
@@ -340,7 +341,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task FileType_Size_IsLazy()
     {
-        System.IO.File.WriteAllText(TempPath("sized.txt"), "12345");
+        _fs.File.WriteAllText(TempPath("sized.txt"), "12345");
 
         var action = new Read { Context = CreateContext(), Path = MakePath("sized.txt") };
         var result = await action.Run();
@@ -352,7 +353,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task FileType_ToString_ReturnsContent()
     {
-        System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
+        _fs.File.WriteAllText(TempPath("tostring.txt"), "file-content");
 
         var action = new Read { Context = CreateContext(), Path = MakePath("tostring.txt") };
         var result = await action.Run();
@@ -366,7 +367,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Integration_FileExists_FlowsThroughMemoryStack_ToOutput()
     {
-        System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
+        _fs.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
         _engine.User.Channels.Register(new Channel(

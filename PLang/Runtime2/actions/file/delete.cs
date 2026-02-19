@@ -13,11 +13,5 @@ public partial class Delete : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run()
-    {
-        if (!Path.Exists && IgnoreIfNotFound)
-            return Task.FromResult(Data.Ok(new types.@file(Path.Absolute, Context.Engine!.FileSystem)));
-
-        return Task.FromResult(Path.Delete(Recursive));
-    }
+    public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFound));
 }

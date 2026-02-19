@@ -87,6 +87,46 @@
         "health": "Green. No regressions.",
         "notes": "All review feedback addressed. Handlers are now pure delegators."
       }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-0123-cdef-345678901234",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T14:00:00Z",
+      "timestamp_end": "2026-02-19T14:15:00Z",
+      "intent": "Address v3 review: Path stores Engine, all handlers become pure delegators, tests use _fs",
+      "before": {
+        "assumptions": "v3 review identified 4 remaining issues: delete.cs handler logic, exists.cs direct @file creation, save.cs passing Engine as param, tests using System.IO",
+        "risk": "Low - well-scoped changes, constructor signature change is internal to Path"
+      },
+      "plan": "Path stores Engine.@this instead of IPLangFileSystem. Save drops engine param. Delete absorbs ignoreIfNotFound. Add AsFile(). All handlers become one-liners. Tests replace System.IO with _fs.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Memory/Path.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Constructor takes Engine.@this, stores both _engine and _fs. Save uses _engine.Channels.Serializers internally. Delete absorbs ignoreIfNotFound param. Added AsFile()."
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/file/save.cs", "PLang/Runtime2/actions/file/delete.cs", "PLang/Runtime2/actions/file/exists.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "All three handlers reduced to single-line pure delegators. save: Path.Save(Value). delete: Path.Delete(Recursive, IgnoreIfNotFound). exists: Path.AsFile()."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/Path/PathTests.cs", "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added _engine field, all new PLangPath(_, _fs) -> new PLangPath(_, _engine). Replaced all System.IO with _fs (except constructor/Dispose temp dir lifecycle). Added Delete_IgnoreIfNotFound and AsFile tests."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1221/1221 tests passing (+2 new).",
+        "health": "Green. No regressions.",
+        "notes": "All v3 review feedback addressed. Every file handler is now a pure one-line delegator."
+      }
     }
   ]
 }

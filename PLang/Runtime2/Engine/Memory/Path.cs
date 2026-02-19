@@ -12,6 +12,7 @@ namespace PLang.Runtime2.Engine.Memory;
 /// </summary>
 public sealed class Path
 {
+    private readonly Engine.@this _engine;
     private readonly IPLangFileSystem _fs;
     private readonly string _rawPath;
     private readonly string _absolutePath;
@@ -22,11 +23,12 @@ public sealed class Path
     private string? _fileNameWithoutExtension;
     private string? _directory;
 
-    public Path(string rawPath, IPLangFileSystem fileSystem)
+    public Path(string rawPath, Engine.@this engine)
     {
         _rawPath = rawPath;
-        _fs = fileSystem;
-        _absolutePath = fileSystem.Path.GetFullPath(rawPath);
+        _engine = engine;
+        _fs = engine.FileSystem;
+        _absolutePath = _fs.Path.GetFullPath(rawPath);
     }
 
     /// <summary>
@@ -34,7 +36,7 @@ public sealed class Path
     /// and generates: Path.Resolve(__Resolve&lt;string&gt;("path"), __engine!)
     /// </summary>
     public static Path Resolve(string rawPath, Engine.@this engine)
-        => new Path(rawPath, engine.FileSystem);
+        => new Path(rawPath, engine);
 
     /// <summary>The raw path string as provided (before resolution)</summary>
     public string Raw => _rawPath;
@@ -123,13 +125,13 @@ public sealed class Path
         return Data.Ok(new actions.file.types.@file(destination.Absolute, _fs, source: _absolutePath));
     }
 
-    public Data Delete(bool recursive = false)
+    public Data Delete(bool recursive = false, bool ignoreIfNotFound = false)
     {
         if (_fs.File.Exists(_absolutePath))
             _fs.File.Delete(_absolutePath);
         else if (_fs.Directory.Exists(_absolutePath))
             _fs.Directory.Delete(_absolutePath, recursive);
-        else
+        else if (!ignoreIfNotFound)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
         return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
@@ -157,7 +159,10 @@ public sealed class Path
         return Data.Ok(files);
     }
 
-    public async Task<Data> Save(object value, Engine.@this engine)
+    /// <summary>Wraps this path as a @file object — used by exists handler</summary>
+    public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+
+    public async Task<Data> Save(object value)
     {
         EnsureDirectory(Directory);
 
@@ -168,7 +173,7 @@ public sealed class Path
         else
         {
             await using var stream = _fs.File.Create(_absolutePath);
-            await engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+            await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
                 { Stream = stream, Data = value, Extension = Extension });
         }
 

@@ -7,9 +7,5 @@ public partial class Exists : IContext
 {
     public partial PLangPath Path { get; init; }
 
-    public Task<Data> Run()
-    {
-        var fs = Context.Engine!.FileSystem;
-        return Task.FromResult(Data.Ok(new types.@file(Path.Absolute, fs)));
-    }
+    public Task<Data> Run() => Task.FromResult(Path.AsFile());
 }
