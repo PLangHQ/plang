@@ -245,6 +245,10 @@ public sealed class Path
         {
             return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "SerializationError", 500));
+        }
     }
 
     /// <summary>

@@ -68,3 +68,11 @@ public Task<Data> Run() => Task.FromResult(Path.Delete(Recursive, IgnoreIfNotFou
 **Key additions:** 8 exception-path tests (chmod + overwrite conflicts exercise all 6 try/catch blocks). Save object serialization test. ResolveDestination applied to Move (auditor v2). Relative returns "." for root path. All error assertions now verify error code + status. PLang .goal tests blocked (needs builder).
 
 1239/1239 tests passing (+12 new). See [v7/summary.md](v7/summary.md) for details.
+
+## v8: Auditor v4 — Save Serialization Exception Gap
+
+**Auditor found 4 issues.** 1 major: Save's catch filter misses `JsonException`/`NotSupportedException` from serialization. 2 nits: inconsistent StatusCode assertions, duplicate test. 1 minor (non-blocking): non-atomic directory move.
+
+**Key fix:** Added second catch clause for serialization exceptions → returns `"SerializationError"/500`. Added test with circular reference. Consistent StatusCode assertions on all NotFound tests. Removed duplicate weaker test.
+
+1239/1239 tests passing (net zero: +1 new, -1 removed). See [v8/summary.md](v8/summary.md) for details.

@@ -520,6 +520,7 @@ public class PathTests : IDisposable
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
 
     // --- Move ---
@@ -563,6 +564,7 @@ public class PathTests : IDisposable
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
 
     // --- Delete ---
@@ -610,6 +612,7 @@ public class PathTests : IDisposable
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
 
     [Test]
@@ -653,21 +656,6 @@ public class PathTests : IDisposable
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "new.txt"))).IsTrue();
         await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "old.txt"))).IsFalse();
         await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
-    }
-
-    // --- #4: Delete non-empty directory without recursive ---
-
-    [Test]
-    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsError()
-    {
-        var dirPath = TempDir("del_nonempty");
-        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
-
-        var p = new PLangPath(dirPath, _engine);
-        var result = p.Delete(new Delete { Path = p, Recursive = false });
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(_fs.Directory.Exists(dirPath)).IsTrue(); // not deleted
     }
 
     // --- #7: Null guard on constructor ---
@@ -891,6 +879,25 @@ public class PathTests : IDisposable
         var content = _fs.File.ReadAllText(filePath);
         await Assert.That(content).Contains("test");
         await Assert.That(content).Contains("42");
+    }
+
+    // --- Save serialization error (auditor v4 #1) ---
+
+    [Test]
+    public async Task Save_NonSerializableObject_ReturnsSerializationError()
+    {
+        var filePath = _fs.Path.Combine(_tempDir, "bad_obj.json");
+        var p = new PLangPath(filePath, _engine);
+
+        // Create a circular reference — JsonSerializer will throw JsonException
+        var dict = new Dictionary<string, object>();
+        dict["self"] = dict;
+
+        var result = await p.Save(new Save { Path = p, Value = dict });
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SerializationError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
 
     // --- Delete non-empty directory error has correct code ---
