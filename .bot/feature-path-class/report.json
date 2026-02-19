@@ -535,6 +535,58 @@
         "health": "Green. Tests are honest and comprehensive.",
         "notes": "Exception handling, overwrite conflicts, Save serialization all properly tested. PLang .goal tests remain as future work."
       }
+    },
+    {
+      "id": "b9c0d1e2-f3a4-5678-1234-auditor345678",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-20T01:00:00Z",
+      "timestamp_end": "2026-02-20T01:30:00Z",
+      "intent": "Self-reflection: analyze what tester caught that auditor missed, identify process gaps",
+      "before": {
+        "assumptions": "Tester found critical false-green (catch blocks untested) that auditor approved past. This is a review process failure, not a code issue.",
+        "risk": "None — analysis only, no code changes"
+      },
+      "plan": "Map each tester finding to what auditor knew at v2 review time. Identify the systematic gap: verifying code correctness without verifying test adequacy. Document process changes.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/feature-path-class/test-report.json",
+            ".bot/feature-path-class/tester/v1/summary.md",
+            ".bot/feature-path-class/auditor/v1/summary.md",
+            ".bot/feature-path-class/auditor/v2/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Cross-referenced tester findings with auditor review history. Found auditor's v1 report explicitly noted 'Missing: exception paths' in test review, but v2 approved without checking tests were added."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/auditor/v3/plan.md",
+            ".bot/feature-path-class/auditor/v3/summary.md",
+            ".bot/feature-path-class/auditor/v3/result.md",
+            ".bot/feature-path-class/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Self-reflection artifacts: finding-by-finding analysis, process gap identification, 4 concrete process improvements"
+        },
+        {
+          "paths": [
+            "/learnings/feature-path-class/auditor/v3/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5 reusable learnings: code fix != finding resolved, run coverage before approving, test existence != test adequacy, equal time for test review, new code paths need a checklist"
+        }
+      ],
+      "after": {
+        "status": "Self-reflection complete. 5 process improvements documented.",
+        "health": "N/A — no code changes, review process analysis only.",
+        "notes": "The critical miss: auditor requested exception handling (v1), verified code was added (v2), approved for merge, but never verified tests existed for the new catch blocks. Tester caught it immediately. Root cause: reviewing code correctness without reviewing test adequacy."
+      }
     }
   ]
 }
