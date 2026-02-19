@@ -13,19 +13,5 @@ public partial class List : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run()
-    {
-        var fs = Context.Engine!.FileSystem;
-
-        if (!Path.IsDirectory)
-            return Task.FromResult(Data.FromError(
-                new PLang.Runtime2.Engine.Errors.ServiceError($"Directory not found: {Path.Raw}", "FileNotFound", 404)));
-
-        var searchOption = Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        var files = fs.Directory.GetFiles(Path.Absolute, Pattern, searchOption)
-            .Select(f => new types.@file(f, fs))
-            .ToArray();
-
-        return Task.FromResult(Data.Ok(files));
-    }
+    public Task<Data> Run() => Task.FromResult(Path.List(Pattern, Recursive));
 }

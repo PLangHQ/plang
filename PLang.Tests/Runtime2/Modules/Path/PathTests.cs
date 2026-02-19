@@ -133,37 +133,35 @@ public class PathTests : IDisposable
         await Assert.That(p.MimeType).IsEqualTo("application/octet-stream");
     }
 
-    // --- IsFile ---
+    // --- IsFile (structural: has extension) ---
 
     [Test]
-    public async Task IsFile_ExistingFile_ReturnsTrue()
+    public async Task IsFile_WithExtension_ReturnsTrue()
     {
-        var filePath = TempFile("exists.txt");
-        var p = new PLangPath(filePath, _fs);
+        var p = new PLangPath("config.json", _fs);
         await Assert.That(p.IsFile).IsTrue();
     }
 
     [Test]
-    public async Task IsFile_NonexistentFile_ReturnsFalse()
+    public async Task IsFile_NoExtension_ReturnsFalse()
     {
-        var p = new PLangPath(System.IO.Path.Combine(_tempDir, "nope.txt"), _fs);
+        var p = new PLangPath("Makefile", _fs);
         await Assert.That(p.IsFile).IsFalse();
     }
 
-    // --- IsDirectory ---
+    // --- IsDirectory (structural: no extension) ---
 
     [Test]
-    public async Task IsDirectory_ExistingDir_ReturnsTrue()
+    public async Task IsDirectory_NoExtension_ReturnsTrue()
     {
-        var p = new PLangPath(_tempDir, _fs);
+        var p = new PLangPath("mydir", _fs);
         await Assert.That(p.IsDirectory).IsTrue();
     }
 
     [Test]
-    public async Task IsDirectory_File_ReturnsFalse()
+    public async Task IsDirectory_WithExtension_ReturnsFalse()
     {
-        var filePath = TempFile("notdir.txt");
-        var p = new PLangPath(filePath, _fs);
+        var p = new PLangPath("file.txt", _fs);
         await Assert.That(p.IsDirectory).IsFalse();
     }
 
@@ -212,11 +210,11 @@ public class PathTests : IDisposable
     // --- ToString ---
 
     [Test]
-    public async Task ToString_ReturnsAbsolutePath()
+    public async Task ToString_ReturnsRelativePath()
     {
         var abs = System.IO.Path.Combine(_tempDir, "test.txt");
         var p = new PLangPath(abs, _fs);
-        await Assert.That(p.ToString()).IsEqualTo(abs);
+        await Assert.That(p.ToString()).IsEqualTo("test.txt");
     }
 
     // --- Equality ---
@@ -258,18 +256,18 @@ public class PathTests : IDisposable
         await engine.DisposeAsync();
     }
 
-    // --- IsFile is live (not cached) ---
+    // --- Exists is live (not cached) ---
 
     [Test]
-    public async Task IsFile_BecomesTrue_AfterFileCreated()
+    public async Task Exists_BecomesTrue_AfterFileCreated()
     {
         var filePath = System.IO.Path.Combine(_tempDir, "later.txt");
         var p = new PLangPath(filePath, _fs);
 
-        await Assert.That(p.IsFile).IsFalse();
+        await Assert.That(p.Exists).IsFalse();
 
         System.IO.File.WriteAllText(filePath, "created");
-        await Assert.That(p.IsFile).IsTrue();
+        await Assert.That(p.Exists).IsTrue();
     }
 
     // --- Cached properties are stable ---
@@ -285,6 +283,137 @@ public class PathTests : IDisposable
 
         await Assert.That(ext1).IsEqualTo(ext2);
         await Assert.That(name1).IsEqualTo(name2);
+    }
+
+    // --- Read ---
+
+    [Test]
+    public async Task Read_ExistingFile_ReturnsFileObject()
+    {
+        var filePath = TempFile("read_me.txt");
+        var p = new PLangPath(filePath, _fs);
+        var result = p.Read();
+
+        await Assert.That(result.Success).IsTrue();
+        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+        await Assert.That(f).IsNotNull();
+        await Assert.That(f!.Value.Value).IsEqualTo("test content");
+    }
+
+    [Test]
+    public async Task Read_NonexistentFile_ReturnsError()
+    {
+        var p = new PLangPath(System.IO.Path.Combine(_tempDir, "no_such.txt"), _fs);
+        var result = p.Read();
+
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    // --- List ---
+
+    [Test]
+    public async Task List_ExistingDirectory_ReturnsFileArray()
+    {
+        var dir = TempDir("list_dir");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a.txt"), "a");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "b.txt"), "b");
+
+        var p = new PLangPath(dir, _fs);
+        var result = p.List();
+
+        await Assert.That(result.Success).IsTrue();
+        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        await Assert.That(files).IsNotNull();
+        await Assert.That(files!.Length).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task List_WithPattern_FiltersFiles()
+    {
+        var dir = TempDir("list_pattern");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a.txt"), "a");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "b.md"), "b");
+
+        var p = new PLangPath(dir, _fs);
+        var result = p.List("*.txt");
+
+        await Assert.That(result.Success).IsTrue();
+        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        await Assert.That(files!.Length).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task List_Recursive_FindsNestedFiles()
+    {
+        var dir = TempDir("list_recursive");
+        var nested = System.IO.Path.Combine(dir, "sub");
+        System.IO.Directory.CreateDirectory(nested);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "top.txt"), "top");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
+
+        var p = new PLangPath(dir, _fs);
+        var result = p.List("*", recursive: true);
+
+        await Assert.That(result.Success).IsTrue();
+        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        await Assert.That(files!.Length).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task List_NonexistentDirectory_ReturnsError()
+    {
+        var p = new PLangPath(System.IO.Path.Combine(_tempDir, "no_dir"), _fs);
+        var result = p.List();
+
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    // --- Save ---
+
+    [Test]
+    public async Task Save_String_WritesFile()
+    {
+        var filePath = System.IO.Path.Combine(_tempDir, "saved.txt");
+        var p = new PLangPath(filePath, _fs);
+        var engine = new Engine(_tempDir, fileSystem: _fs);
+
+        var result = await p.Save("hello world", engine);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(filePath)).IsTrue();
+        await Assert.That(System.IO.File.ReadAllText(filePath)).IsEqualTo("hello world");
+        await engine.DisposeAsync();
+    }
+
+    [Test]
+    public async Task Save_Bytes_WritesFile()
+    {
+        var filePath = System.IO.Path.Combine(_tempDir, "saved.bin");
+        var p = new PLangPath(filePath, _fs);
+        var engine = new Engine(_tempDir, fileSystem: _fs);
+
+        var bytes = new byte[] { 1, 2, 3 };
+        var result = await p.Save(bytes, engine);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(filePath)).IsTrue();
+        var actual = System.IO.File.ReadAllBytes(filePath);
+        await Assert.That(actual.SequenceEqual(bytes)).IsTrue();
+        await engine.DisposeAsync();
+    }
+
+    [Test]
+    public async Task Save_CreatesDirectory_IfNotExists()
+    {
+        var filePath = System.IO.Path.Combine(_tempDir, "newdir", "saved.txt");
+        var p = new PLangPath(filePath, _fs);
+        var engine = new Engine(_tempDir, fileSystem: _fs);
+
+        var result = await p.Save("nested", engine);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(System.IO.File.Exists(filePath)).IsTrue();
+        await engine.DisposeAsync();
     }
 
     // --- Helper for directories ---

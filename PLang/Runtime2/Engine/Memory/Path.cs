@@ -1,4 +1,5 @@
 using PLang.Interfaces;
+using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Utility;
 
@@ -71,14 +72,14 @@ public sealed class Path
     /// <summary>MIME type derived from file extension</summary>
     public string MimeType => TypeMapping.GetMimeType(Extension);
 
-    /// <summary>Whether a file exists at this path (live check, not cached)</summary>
-    public bool IsFile => _fs.File.Exists(_absolutePath);
+    /// <summary>Structural: has a file extension (no I/O)</summary>
+    public bool IsFile => !string.IsNullOrEmpty(Extension);
 
-    /// <summary>Whether a directory exists at this path (live check, not cached)</summary>
-    public bool IsDirectory => _fs.Directory.Exists(_absolutePath);
+    /// <summary>Structural: no file extension (no I/O)</summary>
+    public bool IsDirectory => string.IsNullOrEmpty(Extension);
 
-    /// <summary>Whether anything exists at this path (live check, not cached)</summary>
-    public bool Exists => IsFile || IsDirectory;
+    /// <summary>Whether anything exists at this path (live filesystem check)</summary>
+    public bool Exists => _fs.File.Exists(_absolutePath) || _fs.Directory.Exists(_absolutePath);
 
     /// <summary>File size in bytes. Returns 0 if file doesn't exist. (live check)</summary>
     public long Size
@@ -99,7 +100,7 @@ public sealed class Path
 
         EnsureDirectory(destination.Directory);
 
-        if (IsFile)
+        if (_fs.File.Exists(_absolutePath))
             _fs.File.Copy(_absolutePath, destination.Absolute, overwrite);
         else
             CopyDirectory(_absolutePath, destination.Absolute, overwrite, includeSubfolders);
@@ -114,7 +115,7 @@ public sealed class Path
 
         EnsureDirectory(destination.Directory);
 
-        if (IsFile)
+        if (_fs.File.Exists(_absolutePath))
             _fs.File.Move(_absolutePath, destination.Absolute, overwrite);
         else
             _fs.Directory.Move(_absolutePath, destination.Absolute);
@@ -124,12 +125,52 @@ public sealed class Path
 
     public Data Delete(bool recursive = false)
     {
-        if (IsFile)
+        if (_fs.File.Exists(_absolutePath))
             _fs.File.Delete(_absolutePath);
-        else if (IsDirectory)
+        else if (_fs.Directory.Exists(_absolutePath))
             _fs.Directory.Delete(_absolutePath, recursive);
         else
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+
+        return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+    }
+
+    public Data Read()
+    {
+        if (!_fs.File.Exists(_absolutePath))
+            return Data.FromError(new ServiceError($"File not found: {Raw}", "NotFound", 404));
+
+        var file = new actions.file.types.@file(_absolutePath, _fs);
+        _ = file.Value; // Eager-read so step cache captures content
+        return Data.Ok(file);
+    }
+
+    public Data List(string pattern = "*", bool recursive = false)
+    {
+        if (!_fs.Directory.Exists(_absolutePath))
+            return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+
+        var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        var files = _fs.Directory.GetFiles(_absolutePath, pattern, option)
+            .Select(f => new actions.file.types.@file(f, _fs))
+            .ToArray();
+        return Data.Ok(files);
+    }
+
+    public async Task<Data> Save(object value, Engine.@this engine)
+    {
+        EnsureDirectory(Directory);
+
+        if (value is byte[] bytes)
+            await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
+        else if (value is string str)
+            await _fs.File.WriteAllTextAsync(_absolutePath, str);
+        else
+        {
+            await using var stream = _fs.File.Create(_absolutePath);
+            await engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+                { Stream = stream, Data = value, Extension = Extension });
+        }
 
         return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
     }
@@ -159,8 +200,8 @@ public sealed class Path
         }
     }
 
-    /// <summary>Returns absolute path — allows Path to be used where string is expected</summary>
-    public override string ToString() => _absolutePath;
+    /// <summary>Returns relative path — PLang users think in relative paths</summary>
+    public override string ToString() => Relative;
 
     public override bool Equals(object? obj) => obj switch
     {
