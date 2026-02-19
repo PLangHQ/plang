@@ -23,3 +23,6 @@ coverage-report/
 coverage.cobertura.xml
 
 .claude/settings.local.json
+
+# Characters — read-only mount from C:\, not repo content
+characters/
