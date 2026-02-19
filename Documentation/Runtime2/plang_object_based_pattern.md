@@ -505,6 +505,32 @@ async Task RunStep(Engine engine)
 }
 ```
 
+### DO: Pass the caller as a whole, not its extracted fields
+
+This is the deeper form of "navigate, don't pass." When a handler calls a method on a domain object, pass the action record (the caller), not individual properties pulled from it.
+
+```csharp
+// Wrong: handler decomposes itself into parameters
+await path.Delete(p.Recursive, p.IgnoreIfNotFound);
+
+// Correct: pass the action record, let Path navigate it
+await path.Delete(p);  // Path reads p.Recursive, p.IgnoreIfNotFound internally
+```
+
+**Why:** This keeps coupling one-directional. `Path` knows about action records (it navigates them). Handlers don't know what `Path` needs (they just pass themselves). If `Path` needs a new property later, only `Path` changes — no handler changes.
+
+The same principle applies up the chain:
+
+```csharp
+// Wrong: handler extracts fields to pass
+var content = p.Content?.ToString();
+var channel = IO.Channels.StdOut;
+await Engine.Channels.WriteTextAsync(channel, content);
+
+// Better: pass the action record where possible
+await Engine.Channels.WriteAsync(p);
+```
+
 ### DO: Keep object references, not decomposed fields
 
 ```csharp
@@ -591,3 +617,15 @@ These are set after deserialization (e.g., `step.Goal = goal` during goal loadin
 13. **Keep object references** — `StepError.Step`, not `StepError.StepText`
 14. **Data owns merge** — `Data.Merge()` combines `List<Data>` by name
 15. **Don't create wrapper objects** — if the data is on `PLangContext`, pass `PLangContext`
+16. **Pass the caller, not its fields** — `path.Delete(actionRecord)`, not `path.Delete(recursive, ignoreIfNotFound)`. The callee navigates what it needs.
+
+## Common OBP Violation Pattern
+
+If you're extracting fields from an object to pass as parameters, you're probably violating "navigate, don't pass." The typical progression when fixing OBP violations:
+
+1. Create the type, use it everywhere (basic plumbing)
+2. Move behavior to the owner (rule 1 — behavior belongs to owner)
+3. Store the root, navigate internally (rule 2 — object graph navigation)
+4. Pass the caller as a whole (rule 2 — don't decompose the caller)
+
+Each step feels "done" but may still violate OBP at the next level. The test: are you pulling fields out of an object to hand them individually to another method? If yes, pass the object instead.
