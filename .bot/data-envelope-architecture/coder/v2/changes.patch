@@ -1,0 +1,5089 @@
+diff --git a/.gitignore b/.gitignore
+index 9838c00f..ee01f9db 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -23,4 +23,3 @@ coverage-report/
+ coverage.cobertura.xml
+ 
+ .claude/settings.local.json
+-characters/
+diff --git a/CLAUDE.md b/CLAUDE.md
+index cde28bbe..f0f6e86b 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -326,3 +326,265 @@ Write to `.bot/<branch>/review-comments.json` (branch root, not inside a bot fol
+ ## Philosophy
+ 
+ The foundation carries the weight. A bug in Data.cs is a bug in every module. A race in MemoryStack is a race in every concurrent goal. Fix the foundation first — the layers above get more stable for free.
++
++---
++
++## About the User (Ingi)
++
++- When Ingi says "could we allow..." or "can we allow...", he means "what if we designed it so that...". It's a design direction, not a question about feasibility.
++- Ingi is the creator of PLang. He thinks in terms of language design and user experience for PLang developers.
++- He prefers concise, direct answers. Show the reasoning but don't over-explain.
++- Icelandic is his first language — he sometimes mixes Icelandic into prompts. Respond in English unless he writes fully in Icelandic.
++
++---
++
++﻿
++
++---
++
++# PLang Design Rules â€” MUST FOLLOW
++
++## Object-Based Pattern (OBP) â€” MANDATORY
++All code you write or propose MUST follow these rules:
++
++1. **Behavior belongs to the owner** â€” Put methods on the object that owns the data. `Steps.Run()` does the iteration, not the caller. Never loop over another object's collection from the outside.
++2. **Navigate, don't pass** â€” Reach dependencies through the object graph (`Engine.IO`, `Engine.FileSystem`, `context.MemoryStack`). Never decompose an object into separate parameters; pass the root and let the caller navigate. This also applies to the caller itself: if a handler calls `Path.Delete(Recursive, IgnoreIfNotFound)`, it's decomposing itself into parameters. The OBP form is `Path.Delete(this)` â€” let the callee navigate the action record for what it needs. This keeps coupling one-directional: the callee knows about the caller's structure, but the caller doesn't know what the callee needs.
++3. **Keep object references, not extracted fields** â€” Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`. Wrapper DTOs are only allowed at serialization boundaries.
++4. **Per-request state is a parameter, per-object state is a property** â€” Never cache `PLangContext` on shared objects like `Goal` or `Step`. Pass context through method parameters; store only structural data as properties.
++5. **Collections are smart wrappers** â€” Collection types (`Steps`, `Actions`) inherit `List<T>` and own domain operations (`Load`, `RunAsync`, `Merge`). Parents delegate â€” they never iterate directly.
++
++**Before writing or proposing any code**, read `Documentation/Runtime2/plang_object_based_pattern.md` for full OBP details with code examples. Every code change must follow this pattern â€” no exceptions.
++
++## Critical Constraints
++- **NEVER use System.IO** â€” Always use `fileSystem.File`, `fileSystem.Directory`, `fileSystem.Path` (IPLangFileSystem abstraction)
++- **NEVER change strongly-typed parameters to `object`** â€” PLang is strongly typed. Diagnose the real problem instead.
++- **NEVER manually edit or delete .pr files** â€” Only the plang builder generates these. Explain the problem and rebuild.
++- **Use System.Text.Json**, not Newtonsoft â€” suggest migration when you see Newtonsoft in Runtime2 code
++- **Strong typing is a design goal** â€” The stronger typed PLang and C# communicate, the more stable everything becomes
++
++## Runtime2 Object Graph
++- **Engine is the root** â€” all capabilities: `Engine.IO`, `Engine.Goals`, `Engine.Actions`, `Engine.FileSystem`, `Engine.Serializers`
++- **Entity hierarchy**: Goal â†’ Steps â†’ Actions. Each has `.Events` (EntityEvents with Before/After Ã— Load/Runtime phases)
++- **Handlers extend `BaseClass<TParams>`** â€” get Engine/Context via Initialize(), use `MemoryStack` for variables
++- **`Data` is the universal result type** â€” has `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`
++- **`ICodeGenerated` is REQUIRED** on all handlers â€” Engine has no fallback path
++
++## Testing Requirements
++- PLang .goal tests are REQUIRED alongside C# tests â€” they validate the FULL pipeline: LLM builder â†’ .pr generation â†’ GoalMapper â†’ runtime
++- Read `Documentation/Runtime2/writing_tests.md` before writing tests
++- Read `Documentation/Runtime2/good_to_know.md` before making architectural assumptions
++
++
++
++---
++
++## Output Directory
++
++Your output lives inside the repo at `.bot/data-envelope-architecture/coder/`.
++
++**IMPORTANT:** When the branch name contains slashes (e.g. `feature/path-class`), replace `/` with `-` in folder names. So branch `feature/path-class` becomes `.bot/feature-path-class/coder/`. Always use a flat folder name, never nest by slash.
++
++### Versioning
++
++A new version is created when:
++1. **New plan** â€” You write a new plan â†’ create next `v<N>`, write `plan.md` there.
++2. **Review received** â€” You receive review comments on your work â†’ create next `v<N+1>`, write `v<N>_review_summary.md` there (summarizing the review of the previous version), then write your new `plan.md` for addressing the feedback.
++
++If you're continuing work from a previous plan without a new plan or review, stay in the same version. Check existing directories (v1, v2, ...) to determine the next number.
++
++### Workflow
++
++1. **Plan first** â€” Analyze the task, then write your plan to `v<N>/plan.md`. Read the file back so the user can see it and approve before you start implementing. Do NOT start coding until the user approves.
++2. **Implement** â€” After approval, do the work.
++3. **Before finishing** (in this order):
++   - Write `v<N>/summary.md` (see format below)
++   - Update `summary.md` in the bot root (the light cross-session summary)
++   - Commit all changes (including `.bot/`)
++   - Run `git diff runtime2..HEAD -- ':(exclude).bot'` and write the output to `v<N>/changes.patch`
++   - Commit the patch file, then push
++
++### Session Files (inside `v<N>/`)
++
++- `v<N-1>_review_summary.md` -- Summary of review feedback on the previous version (only when responding to a review). This is about the PREVIOUS version's review, not this version's work.
++- `plan.md` -- Your plan. Written first, read back for user approval.
++- `summary.md` -- This version's full summary (see format below). This is about THIS version's work.
++- `result.md` -- Detailed findings, recommendations, or documentation
++- `changes.patch` -- git diff of code changes (excluding .bot/)
++
++Do NOT confuse `v<N>/v<N-1>_review_summary.md` (review of previous version) with `v<N>/summary.md` (summary of this version's work).
++
++If you have questions that block your work, write them in `plan.md` and note that you are blocked.
++
++### v<N>/summary.md Format
++
++Write this so someone unfamiliar with the task can understand what happened and continue the work.
++
++- **What this is** â€” Describe the feature/change in plain terms. What problem does it solve? Why was it needed?
++- **What was done** â€” The key decisions, approach taken, and files modified (with paths). What is done, what is still in progress, what to do next, any blockers or decisions needed.
++- **Code example** â€” 1-2 short examples that illustrate the pattern of the change. Pick the one that best represents what all the others look like. Don't show every file â€” one example often says the same as all others in pattern terms.
++- **For v2+ after review** â€” What did the reviewer flag? What was changed in response? A before/after snippet if the fix illustrates a pattern.
++
++### summary.md (bot root) Format
++
++This is the light cross-session file at `.bot/data-envelope-architecture/coder/summary.md`. One short paragraph per version â€” just enough to see the progression at a glance. Link to `v<N>/summary.md` for details.
++
++## Learning from Review Comments
++
++When you encounter `auditor-report.json` (or any review feedback), treat it as a learning opportunity. Read the comments carefully and extract insights about:
++- How PLang C# code should be written
++- OBP patterns â€” what violations look like and how to fix them
++- Architectural decisions â€” why things are structured the way they are
++- Common mistakes and how to avoid them
++- Any other patterns or conventions you didn't know before
++
++Write your learnings to `/learnings/data-envelope-architecture/coder/v<N>/learnings.md` (same slash-to-dash rule for branch names). Use the same v<N> as your session. Structure it as a list of concrete, reusable insights â€” not a summary of the review. State what you learned and why it matters. Note which review comment taught you each thing.
++
++## Branching & PRs
++
++- If you are on `runtime2` (the base branch), you MUST create a feature branch BEFORE making any changes. Use `git checkout -b <descriptive-branch-name>` based on the task. NEVER commit directly to `runtime2`.
++- When your work is complete, commit your changes (including `.bot/`), push your branch, and create a PR targeting `runtime2`
++- The `.bot/` directory is included in PRs to `runtime2` â€” this is intentional and wanted
++- Do NOT include `.bot/` in PRs to `main` â€” the release process strips it automatically
++
++
++
++---
++
++## Session Reporting (MANDATORY)
++
++You MUST produce a structured JSON report alongside your normal work. This is additive - do your normal work AND write the report.
++
++Your reporting context:
++- **Branch**: data-envelope-architecture
++- **Bot identity**: coder
++- **Report file**: `.bot/data-envelope-architecture/report.json`
++
++Follow these rules strictly:
++1. At session START, read `.bot/data-envelope-architecture/report.json` (create if missing). Add a new session entry with your `before` data and `timestamp_start`. Write the file.
++2. BEFORE you start implementation, once your plan is finalized, write the full plan text into the `plan` field of your session in the report file. Do this BEFORE writing any code or making changes.
++3. As you work, batch actions by intent. When your focus shifts, append action entries to your session in the report file.
++4. At session END, fill in `after` and `timestamp_end`. Write the final report.
++5. When reading/writing the report file, preserve all other sessions - only modify YOUR session entry.
++
++### Full Reporting Spec
++
++# Session Report Schema
++
++## Location
++
++`.bot/{branchName}/report.json` â€” one per branch, all bots append.
++
++## JSON Structure
++
++```json
++{
++  "branch": "branch-name",
++  "sessions": [
++    {
++      "id": "UUID",
++      "bot": "coder|architect|web|marketing",
++      "timestamp_start": "ISO 8601",
++      "timestamp_end": "ISO 8601",
++      "intent": "One sentence goal",
++      "before": { "assumptions": "...", "risk": "..." },
++      "plan": "Full plan text, written before implementation starts",
++      "actions": [
++        {
++          "paths": ["relative/path/to/file"],
++          "type": "create|modify|delete|review|decision|move|rename",
++          "category": "code|test|doc|config",
++          "confidence": "high|medium|low",
++          "context": "reasoning, alternatives considered"
++        }
++      ],
++      "after": { "status": "...", "health": "...", "notes": "..." }
++    }
++  ]
++}
++```
++
++## Required Fields
++
++- **id** â€” UUID
++- **bot**, **timestamp_start**, **timestamp_end**, **intent**
++- **actions[].paths** â€” relative to project root, maps to architecture
++- **actions[].type** â€” create, modify, delete, review, decision, move, rename
++
++Everything else (`before`, `after`, action details) is open â€” include what's relevant.
++
++## Rules
++
++1. Write `before` FIRST, `plan` before coding, `after` LAST.
++2. Batch actions by intent â€” log when your focus shifts, not per file.
++3. Read existing report first, append your session, preserve other sessions.
++4. Use relative paths from project root.
++
++
++---
++
++## Active Character
++
++# The Coder
++
++**Role:** Senior C# developer working on PLang Runtime2.
++
++**Personality:** You are a senior C# developer with deep experience in .NET runtime internals, strongly-typed systems, and clean architecture. You write production-grade code — no hand-waving, no shortcuts. You read existing code before writing new code. You follow the project's patterns exactly and push back when something violates them.
++
++**Your primary job:** Write C# code for PLang Runtime2. Every line must follow the Object-Based Pattern (OBP). If you see OBP violations in existing code, flag them.
++
++## What You Must Do Before Writing Code
++
++1. **Read `Documentation/Runtime2/plang_object_based_pattern.md`** — this is the law. Understand it fully before proposing any code.
++2. **Read `Documentation/Runtime2/good_to_know.md`** — architectural insights and gotchas collected from real debugging.
++3. **Read `Documentation/Runtime2/README.md`** — architecture overview, object graph, entity hierarchy.
++4. **Read `Documentation/Runtime2/botTricks.md`** — CLI flags, debugging, testing commands.
++5. **Read `Documentation/Runtime2/writing_tests.md`** — test patterns, both C# and PLang tests.
++6. **Read `Documentation/Runtime2/modules.md`** — handler pattern (IClass, BaseClass, ICodeGenerated).
++
++Read ALL of these before writing a single line of code. This is not optional.
++
++## OBP — The 5 Rules You Must Follow
++
++1. **Behavior belongs to the owner** — `Steps.Run()` iterates, not the caller. Never loop over another object's collection.
++2. **Navigate, don't pass** — Pass Engine/Context, navigate to what you need (`Engine.Goals`, `context.MemoryStack`). Never decompose into separate parameters.
++3. **Keep object references** — Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`.
++4. **Per-request state is a parameter** — Never cache `PLangContext` on shared objects. Pass it through methods.
++5. **Smart collections** — `Steps`, `Actions` extend `List<T>` and own domain operations. Parents delegate, never iterate directly.
++
++If you see code that violates these rules, **stop and flag it** before continuing.
++
++## Key Technical Constraints
++
++- **NEVER use System.IO** — use `fileSystem.File`, `fileSystem.Directory`, `fileSystem.Path` (IPLangFileSystem)
++- **NEVER weaken types to `object`** — PLang is strongly typed. Diagnose the real problem.
++- **NEVER edit .pr files** — only the builder generates these
++- **Use System.Text.Json**, not Newtonsoft
++- **`Data` is the universal result type** — `Data.Ok()`, `Data.Fail()`, check `.Success`
++- **`ICodeGenerated` is required** on all handlers — Engine has no fallback
++- **Source generator** creates `*__Generated` records — test mocks must implement `ICodeGenerated` manually
++
++## Build & Run Commands
++
++- `plang p build` — build all .goal files (Runtime2 builder)
++- `plang p` — run Start.goal
++- `plang p MyGoal.goal` — run specific goal
++- `plang p !debug` — debug all steps
++- `plang p !debug=Start:3` — debug specific step
++- `plang p !test` — run all *.test.goal files
++- `dotnet run --project PLang.Tests` — run C# tests (TUnit, .NET 10)
++
++## Testing Requirements
++
++- **Both C# and PLang tests are required**
++- C# tests: handler logic in isolation (`PLang.Tests/Runtime2/Modules/`)
++- PLang tests: full pipeline validation (`Tests/Runtime2/`)
++- PLang test goals MUST be named `Start`
++- After building PLang tests, **always read the .pr file** and verify module/action/parameters before running
++- Never change .goal test steps when they fail — investigate the builder/runtime instead
++
++## What You Produce
++
++- Clean, OBP-compliant C# code with file:line references
++- Both C# and PLang tests for any new functionality
++- Clear explanation of what you changed and why
++- Flags for any OBP violations you spot in surrounding code
+diff --git a/Documentation/Runtime2/architect-handover/DATA_DEEP_DIVE (1).md b/Documentation/Runtime2/architect-handover/DATA_DEEP_DIVE (1).md
+deleted file mode 100644
+index 81bdc7f2..00000000
+--- a/Documentation/Runtime2/architect-handover/DATA_DEEP_DIVE (1).md	
++++ /dev/null
+@@ -1,701 +0,0 @@
+-# Data Deep Dive — The Universal Type in PLang Runtime2
+-
+-This document traces `Data` through every touchpoint in Runtime2: how it's created, stored, navigated, passed as parameters, returned as results, serialized, cached, and used in error handling. `Data` is the single most important type in Runtime2 — it replaced both the old variable system and the old `Return` type.
+-
+----
+-
+-## 1. What Data Is
+-
+-Data serves three roles simultaneously:
+-
+-1. **Variable wrapper** — every variable in MemoryStack is a `Data` instance (`%name%` → `Data { Name="name", Value="Ingi" }`)
+-2. **Result type** — every method in the execution chain returns `Task<Data>` with Success/Error semantics
+-3. **Parameter carrier** — action parameters arrive as `List<Data>` with name-value pairs
+-
+-This unification means the same object flows through the entire system with no type conversions between roles.
+-
+-### The Data class layout
+-
+-```
+-Data
+-│
+-│  Identity & Hierarchy
+-├── Name: string              Stripped of % delimiters. Case-insensitive lookup.
+-├── Path: string              Hierarchical: "user.address.city" or "items[0].name"
+-├── Parent: Data?             For navigation chains (GetChild creates parent→child links)
+-│
+-│  Value & Type
+-├── Value: virtual object?    The actual payload. Setter auto-unwraps JsonElement/JToken.
+-├── Type: Type?               PLang type descriptor ("string", "int", "image/jpeg", etc.)
+-├── IsInitialized: bool       True once Value has been set (even to null via setter)
+-├── IsEmpty: bool             !IsInitialized || null || empty string
+-│
+-│  Timestamps
+-├── Created: DateTime         Set once in constructor
+-├── Updated: DateTime         Refreshed on every Value setter call
+-│
+-│  Metadata
+-├── Properties: Properties    IList<Data> with named access. Extensible child properties.
+-│
+-│  Result semantics
+-├── Error: IError?            Non-null = failure
+-├── Success: bool             Error == null
+-├── Handled: bool             Set by before-events to short-circuit execution
+-├── Warnings: List<Info>?
+-│
+-│  Operators
+-├── implicit operator bool    Returns Success — enables `if (!result)` pattern
+-│
+-│  Navigation
+-├── GetValue<T>()             Cast or convert via TypeMapping.ConvertTo
+-├── GetValue(Type)            Non-generic version
+-├── GetChild(path)            Dot/bracket navigation, recursive
+-│
+-│  Static factories
+-├── Ok()                      Success with no value (Name="")
+-├── Ok(value, type?)          Success with value
+-├── FromError(IError)         Failure
+-├── Null(name)                Uninitialized named Data
+-│
+-│  Merging
+-└── Merge(other)              Combines List<Data> by Name (replace-or-append)
+-```
+-
+-### Subclasses
+-
+-| Class | Purpose | Key Difference |
+-|-------|---------|----------------|
+-| `Data<T>` | Strongly-typed generic | `new T? Value` property shadows base, typed `Ok(T)` and `FromError` |
+-| `DynamicData` | Computed values | `override object? Value => _valueFactory()` — value computed on every access |
+-
+----
+-
+-## 2. Data Construction & Value Unwrapping
+-
+-### Constructor chain
+-
+-```csharp
+-new Data(string name, object? value = null, Type? type = null, Data? parent = null)
+-```
+-
+-1. **Name cleaning**: `CleanName(name)` strips whitespace and `%` delimiters
+-2. **Value unwrapping**: `UnwrapJsonElement(value)` normalizes the value
+-3. **Type inference**: If no type provided and value is non-null, auto-derives via `TypeMapping.GetTypeName(value.GetType())`
+-4. **Path building**: `BuildPath(parent, name)` creates hierarchical path (`parent.name` or `parent[0]`)
+-5. **Timestamps**: Created = Updated = UtcNow
+-
+-### Value Unwrapping (the normalization layer)
+-
+-Every time a value enters Data (constructor or setter), `UnwrapJsonElement` runs:
+-
+-```
+-Input                           → Output
+-─────────────────────────────────────────────────────
+-JsonElement (String)            → string
+-JsonElement (Number)            → long (if fits) or double
+-JsonElement (True/False)        → bool
+-JsonElement (Null/Undefined)    → null
+-JsonElement (Object)            → Dictionary<string, object?> (case-insensitive, recursive)
+-JsonElement (Array)             → List<object?> (recursive)
+-Newtonsoft JValue               → underlying CLR value (via reflection, no import)
+-Newtonsoft JObject/JArray       → round-trip: ToString() → JsonDocument.Parse → recurse
+-Everything else                 → passed through as-is
+-```
+-
+-This means **Data never stores raw JsonElement or JToken**. Values are always plain CLR types. This is critical for the navigator system and type conversion.
+-
+-### Value setter behavior
+-
+-```csharp
+-set {
+-    _value = UnwrapJsonElement(value);   // normalize
+-    Updated = DateTime.UtcNow;           // track change time
+-    IsInitialized = true;                // mark as set
+-    _type = _value != null               // re-derive type
+-        ? new Type(TypeMapping.GetTypeName(_value.GetType()))
+-        : null;
+-}
+-```
+-
+-The type is **always re-derived from the actual CLR type** on set. This means if you set a string value on Data that was previously int, the Type changes to "string" automatically.
+-
+----
+-
+-## 3. Type System
+-
+-### Type class
+-
+-`Type` is a simple wrapper around a string value. It bridges PLang's type system to .NET:
+-
+-```
+-Type("string")  → ClrType = typeof(string)
+-Type("int")     → ClrType = typeof(int)
+-Type("image/jpeg") → ClrType = typeof(byte[])   // MIME type resolution
+-Type("list<string>") → ClrType = typeof(List<string>)  // generic syntax
+-Type("actor")   → ClrType = typeof(Actor)
+-Type("goal.call") → ClrType = typeof(GoalCall)
+-```
+-
+-### TypeMapping — the conversion engine
+-
+-`TypeMapping` is the central type bridge. Key capabilities:
+-
+-**Name → CLR Type** (`GetType`):
+-- Primitives: string, text, int, integer, long, float, double, decimal, bool, boolean, datetime, guid, bytes
+-- Collections: list, array, dictionary, dict, map, object, dynamic, json
+-- Runtime types: actor, goal.call, tstring
+-- Generics: `list<string>`, `dict<string,int>` (parsed at runtime)
+-- MIME types: `text/*` → string, `image/*`/`audio/*`/`video/*` → byte[], `application/json` → object
+-- Nullable: `int?`, `long?`, `bool?`, etc.
+-
+-**CLR Type → Name** (`GetTypeName`):
+-- Reverse mapping for display and serialization
+-- Generic awareness: `List<string>` → `"list<string>"`
+-- Array coercion: `byte[]` → `"bytes"`, other arrays → `"list<elementType>"`
+-- ValidValues convention: types with `static string[] ValidValues` get lowercased name
+-
+-**Value conversion** (`ConvertTo`):
+-- Nullable unwrapping
+-- Enum parsing (string → enum, enum → enum)
+-- GoalCall conversion (string → GoalCall, Dictionary → GoalCall, JsonElement → GoalCall)
+-- Primitive conversion via `Convert.ChangeType`
+-- Assignability check (skip conversion if already compatible)
+-
+-### TypeJsonConverter & PlangTypeConverter
+-
+-Two converters ensure `Type` serializes cleanly:
+-- `TypeJsonConverter`: System.Text.Json — writes/reads `Type` as a plain JSON string `"string"`
+-- `PlangTypeConverter`: .NET TypeConverter — enables Newtonsoft auto-discovery via `[TypeConverter]` attribute. No Newtonsoft dependency needed.
+-
+----
+-
+-## 4. Data in MemoryStack
+-
+-### Storage
+-
+-```
+-MemoryStack._variables: ConcurrentDictionary<string, Data>
+-                        (case-insensitive keys)
+-```
+-
+-Every variable in PLang is a `Data` entry in this dictionary. The MemoryStack never stores raw values — always `Data` wrappers.
+-
+-### Writing Data into MemoryStack
+-
+-**`Put(Data)`** — stores the Data instance directly (used for system/context variables):
+-```csharp
+-_variables[value.Name] = value;
+-```
+-
+-**`Set(name, value, type?)`** — creates or updates:
+-```csharp
+-name = CleanName(name);       // strip %, trim
+-if (existing found) {
+-    existing.Value = value;    // triggers unwrap + type re-derive
+-    if (type != null) existing.Type = type;
+-} else {
+-    _variables[name] = new Data(name, value, type);
+-}
+-```
+-
+-Key detail: `Set` **reuses existing Data instances**. The same Data object stays in the dictionary, only its Value changes. This matters because anything holding a reference to that Data sees the update.
+-
+-### Reading Data from MemoryStack
+-
+-**`Get(name)`** → `Data?`:
+-1. Clean name (strip %, trim)
+-2. If name contains `[`, resolve variable references in brackets: `addresses[idx]` → `addresses[1]` (looks up `idx` in the stack)
+-3. Extract root name (before first `.` or `[`)
+-4. Look up root in dictionary
+-5. If path has remaining segments → `root.GetChild(remaining)` (navigation)
+-
+-**`GetValue(name)`** → `object?`: shorthand for `Get(name)?.Value`
+-
+-**`Get<T>(name)`** → `T?`: shorthand for `Get(name)?.GetValue<T>()`
+-
+-### System variables (registered in constructor)
+-
+-```csharp
+-Put(new DynamicData("Now",    () => DateTime.Now,      Type.DateTime));
+-Put(new DynamicData("NowUtc", () => DateTime.UtcNow,   Type.DateTime));
+-Put(new DynamicData("GUID",   () => Guid.NewGuid(),    Type.FromName("guid")));
+-```
+-
+-These are `DynamicData` — value computed fresh on every access.
+-
+-### Context variables (registered by PLangContext)
+-
+-```csharp
+-ms.Put(new Data("!engine", Engine));
+-ms.Put(new Data("!context", this));
+-ms.Put(new Data("!memoryStack", ms));
+-ms.Put(new Data("!fileSystem", Engine.FileSystem));
+-ms.Put(new DynamicData("!callStack", () => CallStack));
+-ms.Put(new Data("!channels", Engine.Channels));
+-ms.Put(new Data("!serializers", Engine.Serializers));
+-ms.Put(new DynamicData("!goal", () => Goal));    // changes during execution
+-ms.Put(new DynamicData("!step", () => Step));    // changes during execution
+-```
+-
+-The `!` prefix is a convention — these are excluded from `GetNames()` and `GetAll()` but accessible via `Get("!engine")`.
+-
+-### Clone behavior
+-
+-```csharp
+-MemoryStack.Clone() {
+-    // Deep-clones all non-system, non-! variables
+-    // Uses Force.DeepCloner for value deep copy
+-    // System vars (Now, NowUtc, GUID) recreated fresh
+-    // ! context vars NOT cloned (they're context-specific)
+-}
+-```
+-
+-Used when creating child contexts (`PLangContext.CreateChild()`).
+-
+----
+-
+-## 5. Data Navigation (GetChild + Navigators)
+-
+-When you access `%user.address.city%`, the system:
+-
+-1. MemoryStack.Get("user.address.city")
+-2. Root = "user", Remaining = "address.city"
+-3. Look up `user` Data in dictionary
+-4. Call `userData.GetChild("address.city")`
+-
+-### GetChild algorithm
+-
+-```
+-GetChild("address.city"):
+-1. Parse path: segment = "address", remaining = "city"
+-2. GetChildValue("address") → uses ValueNavigators
+-3. Wrap result: new Data("address", childValue, parent: this)
+-4. Recurse: child.GetChild("city")
+-```
+-
+-Path parsing handles three forms:
+-- Dot notation: `address.city` → segment="address", remaining="city"
+-- Bracket notation: `[0].value` → segment="0", remaining="value"
+-- Mixed: `items[0].name` → segment="items", remaining="[0].name"
+-
+-### Navigator chain (priority order)
+-
+-```
+-ValueNavigators._navigators = [
+-    DictionaryNavigator,    // IDictionary<string,object?> or IDictionary
+-    ListNavigator,          // IList
+-    JsonStringNavigator,    // string that looks like JSON
+-    ObjectNavigator,        // any object (reflection fallback)
+-]
+-```
+-
+-First navigator that returns `CanNavigate(value) == true` handles the lookup.
+-
+-#### DictionaryNavigator
+-- Handles: `IDictionary<string, object?>` (case-insensitive key scan), `IDictionary`
+-- This is the most common path because JSON objects unwrap to `Dictionary<string, object?>`
+-
+-#### ListNavigator
+-- Handles: `IList`
+-- **Numeric key**: `"0"` → `list[0]`
+-- **Named accessors**: `"first"` → `list[0]`, `"last"` → `list[^1]`, `"random"` → random element, `"count"`/`"length"` → `list.Count`
+-- **Implicit first element delegation**: any other key → `ValueNavigators.Navigate(list[0], key)`. This means `%addresses.street%` automatically navigates through the first element: `addresses[0].street`
+-
+-#### JsonStringNavigator
+-- Handles: strings starting with `{` or `[`
+-- Parses the JSON string into CLR types (same unwrap logic as Data constructor)
+-- Then delegates to `ValueNavigators.Navigate` on the parsed object
+-- This means a string-valued variable containing JSON is automatically navigable
+-
+-#### ObjectNavigator
+-- Handles: anything (always returns `CanNavigate = true`)
+-- Uses reflection: `value.GetType().GetProperty(key, IgnoreCase)?.GetValue(value)`
+-- This is the fallback that handles typed C# objects (records, classes)
+-
+-### Navigation creates Data chains
+-
+-Each `GetChild` call creates a new `Data` with a parent link:
+-
+-```
+-userData (root, no parent)
+-  └── addressData (parent = userData, path = "user.address")
+-       └── cityData (parent = addressData, path = "user.address.city")
+-```
+-
+-The Path is built as: `parent.Path + "." + name` (or `parent.Path + "[" + name + "]"` for numeric names).
+-
+-**These child Data instances are ephemeral** — created on demand, not cached. Each navigation creates fresh wrappers.
+-
+----
+-
+-## 6. Data as Action Parameters
+-
+-### How parameters flow from .pr file to action handler
+-
+-1. **Stored in .pr file**: Action has `Parameters: List<Data>` — each Data has Name and Value (may contain `%var%` references)
+-
+-2. **Deserialized**: JSON deserializer creates `Data` instances via the `[JsonConstructor]` constructor. Values go through `UnwrapJsonElement`.
+-
+-3. **Source-generated CodeGeneratedExecuteAsync**: The generated code resolves each parameter:
+-   - Finds matching Data by name from the `List<Data>` 
+-   - If value is a string containing `%var%`, resolves variables from MemoryStack
+-   - Converts to the target CLR type via `TypeMapping.ConvertTo`
+-   - Sets the partial property on the action handler
+-
+-4. **Action.RunAsync orchestration**:
+-   ```csharp
+-   // Libraries resolves the handler
+-   var (handler, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
+-   
+-   // Generated code receives the raw List<Data>
+-   result = await handler.CodeGeneratedExecuteAsync(Parameters, engine, context);
+-   
+-   // Return variables written to MemoryStack
+-   if (result.Value != null && this.Return != null) {
+-       foreach (var returnVar in this.Return)
+-           context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+-   }
+-   ```
+-
+-### Parameter resolution by generated code
+-
+-The source generator creates code like (conceptual):
+-
+-```csharp
+-public async Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context) {
+-    Context = context;
+-    
+-    // Find parameter by name, resolve %var% in string values
+-    var nameParam = parameters.Find(p => p.Name == "name");
+-    Name = ResolveAndConvert<string>(nameParam, context.MemoryStack);
+-    
+-    var valueParam = parameters.Find(p => p.Name == "value");
+-    Value = ResolveAndConvert<object>(valueParam, context.MemoryStack);
+-    
+-    return await Run();
+-}
+-```
+-
+-The `[VariableName]` attribute tells the generator to strip `%` from the resolved value (it's a variable name, not a value).
+-
+-The `[Default(value)]` attribute provides a fallback if the parameter is missing or null.
+-
+----
+-
+-## 7. Data as Results (Return Flow)
+-
+-### Action → Step → Goal → Engine
+-
+-Every method returns `Task<Data>`. The chain:
+-
+-```
+-Action.RunAsync returns Data
+-  → if Return vars defined: result.Value written to MemoryStack
+-  → Data propagates up
+-
+-StepActions.RunAsync:
+-  → runs actions sequentially
+-  → merges results: merged = merged.Merge(result)
+-  → Merge combines List<Data> by Name (replace-or-append)
+-
+-Step.RunAsync:
+-  → receives merged action result
+-  → if error + OnError: HandleErrorAsync
+-  → propagates result up
+-
+-Goal.RunAsync:
+-  → iterates steps
+-  → if step fails and !IgnoreError: returns error immediately
+-  → on success: returns Data.Ok()
+-
+-Engine.RunGoalAsync:
+-  → returns final Data from goal
+-```
+-
+-### The Merge operation
+-
+-When a step has multiple actions, their results are merged:
+-
+-```csharp
+-Data.Merge(Data other) {
+-    // Both Values treated as List<Data>
+-    // For each item in other: find by Name in my list
+-    //   - Found: replace
+-    //   - Not found: append
+-}
+-```
+-
+-This allows multiple actions in a single step to contribute return variables without overwriting each other.
+-
+-### Return variable binding
+-
+-```csharp
+-// In Action.RunAsync:
+-if (result.Value != null && this.Return != null) {
+-    foreach (var returnVar in this.Return)
+-        context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+-}
+-```
+-
+-**All return variables get the same value** — the single result value from the action. The Return list defines which variable names to bind it to.
+-
+----
+-
+-## 8. Data in the Event System
+-
+-### Before-events and the Handled flag
+-
+-Before-events can short-circuit execution:
+-
+-```csharp
+-// In Goal.RunAsync:
+-beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
+-if (!beforeResult) return beforeResult;       // error → propagate
+-if (beforeResult.Handled) return beforeResult; // handled → skip goal
+-
+-// In Action.RunAsync:
+-if (beforeResult.Handled) {
+-    result = beforeResult;  // use event's Data as the action result
+-} else {
+-    // run actual action handler
+-}
+-```
+-
+-### EventOverride (skipAction mechanism)
+-
+-`event.skipAction` sets a Data on the context:
+-
+-```csharp
+-// In skipAction.Run():
+-Context.EventOverride = Data.Ok(Value);
+-
+-// In EventBinding.Run():
+-if (Type == BeforeAction || Type == AfterAction) {
+-    var @override = context.EventOverride;
+-    if (@override != null) {
+-        context.EventOverride = null;    // consume it
+-        @override.Handled = true;        // mark as handled
+-        return @override;                // this Data becomes the action result
+-    }
+-}
+-```
+-
+-The override Data flows back through the Action.RunAsync pipeline, hitting the Return variable binding. So `skipAction` can inject values into the MemoryStack.
+-
+----
+-
+-## 9. Data in Step Caching
+-
+-### Cache write (on miss)
+-
+-```csharp
+-// StepCache.CollectReturnVariables:
+-foreach action in step.Actions:
+-    foreach returnVar in action.Return:
+-        data = memoryStack.Get(returnVar.Name)
+-        entry.Variables[name] = new CachedVariable {
+-            Value = data.Value,        // raw object reference (in-memory)
+-            TypeName = data.Type?.Value // PLang type name string
+-        }
+-```
+-
+-Only the Value and TypeName are cached — not the full Data wrapper.
+-
+-### Cache read (on hit)
+-
+-```csharp
+-// StepCache.RestoreVariables:
+-foreach (name, cached) in entry.Variables:
+-    type = cached.TypeName != null ? new Type(cached.TypeName) : null
+-    memoryStack.Set(name, cached.Value, type)
+-```
+-
+-This creates or updates Data instances in MemoryStack with the cached values. The `Set` call goes through normal Data construction (unwrapping, type inference).
+-
+-### Cache key building
+-
+-```csharp
+-// Custom key with variable resolution:
+-"user:%userId%:profile" → "user:42:profile"
+-
+-// Default key:
+-"step:{goalPath}:{stepIndex}"
+-```
+-
+----
+-
+-## 10. Data in Error Handling
+-
+-### Error Data creation
+-
+-```csharp
+-Data.FromError(IError error) => new Data("") { Error = error }
+-```
+-
+-Error Data has:
+-- `Name = ""` (anonymous)
+-- `Value = null` (no value)
+-- `Error = IError` (the error)
+-- `Success = false`
+-- Implicit bool conversion returns `false`
+-
+-### Error propagation
+-
+-```csharp
+-// The `if (!result)` pattern works because of implicit bool:
+-var result = await step.RunAsync(engine, context, ct);
+-if (!result) {           // Data.Success == false → bool = false → !false = true
+-    if (!step.OnError?.IgnoreError ?? false)
+-        return result;   // propagate the error Data up
+-}
+-```
+-
+-### Error variables in error goal
+-
+-When a step's OnError calls an error goal:
+-
+-```csharp
+-context.MemoryStack.Set("__error__", failedResult.Error?.Message);
+-context.MemoryStack.Set("__errorKey__", failedResult.Error?.Key);
+-context.MemoryStack.Set("__errorStatusCode__", failedResult.Error?.StatusCode);
+-```
+-
+-These are plain string/int Data entries in MemoryStack, accessible as `%__error__%` in the error goal. Cleaned up in `finally` block.
+-
+----
+-
+-## 11. Data in Serialization
+-
+-### JSON serialization (for .pr files and channels)
+-
+-Data has explicit JSON attributes:
+-
+-```csharp
+-[JsonPropertyName("name")]   public string Name { get; }
+-[JsonPropertyName("value")]  public virtual object? Value { get; set; }
+-[JsonPropertyName("type")]   [JsonConverter(typeof(TypeJsonConverter))] public Type? Type { get; set; }
+-```
+-
+-Everything else is `[JsonIgnore]`: Path, Parent, Properties, Error, Success, Handled, etc.
+-
+-So a Data serializes to:
+-```json
+-{ "name": "userId", "value": 42, "type": "long" }
+-```
+-
+-### Deserialization
+-
+-`[JsonConstructor]` and `[Newtonsoft.Json.JsonConstructor]` on the main constructor ensure both serializers can create Data instances. The constructor runs `UnwrapJsonElement` on the value, so deserialized JsonElements are immediately normalized.
+-
+-### View-based filtering
+-
+-Data properties tagged with `[Store]`, `[LlmBuilder]`, `[Debug]`, `[Default]` are filtered per serialization view. Data itself doesn't have these attributes (they're on Goal, Step, Action), but when Data is a value inside those types, the containing type controls visibility.
+-
+----
+-
+-## 12. Data in Channels
+-
+-### Writing Data through channels
+-
+-```csharp
+-// output.write action:
+-await Actor.Channels.WriteAsync(channel, Content);  // Content is object? from Data.Value
+-
+-// EngineChannels.WriteAsync:
+-await _engine.Serializers.SerializeAsync(new SerializeOptions {
+-    Stream = channel.Stream,
+-    Data = data,                    // the raw object
+-    ContentType = contentType       // determines serializer
+-});
+-```
+-
+-The channel system serializes the **unwrapped value**, not the Data wrapper. So if a Data has `Value = Dictionary<string, object?>`, that dictionary gets JSON-serialized to the stream.
+-
+-### Reading Data from files
+-
+-```csharp
+-// EngineChannels.ReadAsync<T>:
+-var content = await fs.File.ReadAllTextAsync(filePath);
+-var ext = Path.GetExtension(filePath);
+-return Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
+-```
+-
+-For goal loading (`ReadAsync<Goal>`), the JSON deserializer creates Goal objects with nested Step/Action/Data structures. Each Data parameter in an action goes through the constructor → unwrap pipeline.
+-
+----
+-
+-## 13. Data in Testing & Mocking
+-
+-### Assertion results
+-
+-Assert actions return Data with AssertionError:
+-```csharp
+-Data.FromError(new AssertionError("Expected 5 but got 3", context))
+-```
+-
+-The test runner checks `__stepResult` in MemoryStack for assertion failures.
+-
+-### Mock return values
+-
+-```csharp
+-// mock.intercept with return value:
+-if (returnValue != null) {
+-    ctx.EventOverride = Data.Ok(returnValue);  // Data wrapping the mock value
+-    return Data.Ok(returnValue);
+-}
+-```
+-
+-The mock value flows through `EventOverride` → `EventBinding.Run` → `Handled = true` → `Action.RunAsync` skips real handler → Return variables bound from the mock Data.
+-
+-### Mock parameter capture
+-
+-```csharp
+-// Captured as raw objects, not Data wrappers:
+-var capturedParams = new Dictionary<string, object?>();
+-foreach (var param in action.Parameters) {
+-    var value = ResolveParamValue(param, memoryStack);  // resolves %var% in Data.Value
+-    capturedParams[param.Name] = value;
+-}
+-```
+-
+----
+-
+-## 14. Data Lifecycle Summary
+-
+-### Creation points
+-
+-| Where | How | Purpose |
+-|-------|-----|---------|
+-| .pr file deserialization | `new Data(name, value)` via JSON constructor | Action parameters and return definitions |
+-| MemoryStack.Set | `new Data(name, value, type)` | Variable storage |
+-| MemoryStack constructor | `new DynamicData(name, factory)` | System variables (Now, GUID) |
+-| PLangContext constructor | `new Data("!engine", engine)` | Context variables |
+-| Action.RunAsync | `Data.Ok(typedResult)` | Action return values |
+-| Step/Goal.RunAsync | `Data.Ok()` or `Data.FromError(error)` | Execution results |
+-| Data.GetChild | `new Data(segment, childValue, parent: this)` | Navigation (ephemeral) |
+-| StepCache.RestoreVariables | `memoryStack.Set(name, cached.Value, type)` | Cache restoration |
+-| EventBinding.Run | `Data.Ok()` or handler result | Event results |
+-| event.skipAction | `Data.Ok(Value)` on `context.EventOverride` | Action override |
+-
+-### Mutation points
+-
+-| Where | What changes |
+-|-------|-------------|
+-| MemoryStack.Set (existing) | `existing.Value = value` (triggers unwrap + type re-derive + Updated timestamp) |
+-| Action.RunAsync (return binding) | `context.MemoryStack.Set(returnVar.Name, result.Value, result.Type)` |
+-| EventBinding.Run | `@override.Handled = true` |
+-| Data.Merge | Creates new Data with merged List<Data> value |
+-
+-### Data never holds
+-
+-- JsonElement (unwrapped on entry)
+-- Newtonsoft JToken (unwrapped on entry via reflection)
+-- Raw CLR reference types as Type — Type is always the PLang string descriptor
+-- Circular parent references (parent chain is strictly one-directional upward)
+-
+-### Thread safety
+-
+-- Data instances are **not individually thread-safe** — Value setter is not atomic
+-- Thread safety comes from **MemoryStack** (ConcurrentDictionary) and the execution model (one step at a time per context)
+-- DynamicData is safe if the factory function is safe (DateTime.Now, Guid.NewGuid are safe)
+-- Navigation (GetChild) creates new instances, no shared state concerns
+diff --git a/Documentation/Runtime2/architect-handover/DATA_ENVELOPE_ARCHITECTURE.md b/Documentation/Runtime2/architect-handover/DATA_ENVELOPE_ARCHITECTURE.md
+deleted file mode 100644
+index b3602b51..00000000
+--- a/Documentation/Runtime2/architect-handover/DATA_ENVELOPE_ARCHITECTURE.md
++++ /dev/null
+@@ -1,374 +0,0 @@
+-# Data Envelope Architecture — PLang Runtime2
+-
+-## Status: Design Complete, Ready for Architecture Review
+-
+-This document captures the design decisions from an iterative design session. The architect should review for completeness, identify gaps, and produce implementation specs for handoff to coding.
+-
+----
+-
+-## Problem Statement
+-
+-PLang Runtime2 uses `Data` as its universal type (variable wrapper, result type, parameter carrier). When Data crosses the runtime boundary (io.read/io.write), it needs to:
+-
+-1. Be self-describing so receivers can route it without understanding every specific type
+-2. Support automatic signing/verification (PLang's identity system)
+-3. Support optional compression and encryption as transparent layers
+-4. Hide content details when encrypted (no metadata leakage)
+-5. Let each layer decide its own behavior (OBP — object-based patterns)
+-
+----
+-
+-## Core Design: Two-Data Envelope Pattern
+-
+-Every layer follows the same structure:
+-
+-```
+-Data { type = categoryType, value = Data { type = specificType, value = payload } }
+-```
+-
+-- **Outer Data**: pure routing — its type tells the pipeline which handler to send it to
+-- **Inner Data**: belongs entirely to the handler — type, properties, value are all the handler's concern
+-
+-This pattern is universal. Content and processing layers use the same structure. There is no special case.
+-
+-```
+-// Processing layers
+-Data { type = "encrypted", value = Data { type = "ed25519", value = ..., Properties = [...] } }
+-Data { type = "archived",  value = Data { type = "gzip", value = ... } }
+-
+-// Content layers
+-Data { type = "image",       value = Data { type = "image/jpeg", value = byte[] } }
+-Data { type = "spreadsheet", value = Data { type = "application/vnd...sheet", value = byte[] } }
+-Data { type = "text",        value = Data { type = "text/plain", value = "Hello" } }
+-```
+-
+-### Why wrapping, not a Kind property
+-
+-The wrapping gives each handler its own isolated Data. The routing info (outer type) and the handler-specific info (inner type, properties, value) live on separate objects. No mixed concerns, no ambiguity about which fields belong to which layer.
+-
+-The handler contract is simple: you receive a Data, your stuff is in `.value` which is another Data. Do your thing, return the result.
+-
+----
+-
+-## Design Decisions
+-
+-### 1. Signature — Automatic Signing/Verification
+-
+-```csharp
+-public byte[]? Signature { get; set; }
+-public bool? Verified { get; set; }  // true = verified, false = failed, null = unsigned
+-```
+-
+-- **Output**: Signature is computed automatically during serialization. No sign() method needed.
+-- **Input**: Signature is verified automatically during deserialization. Verified flag is set.
+-- **Placement**: Always on the outermost Data.
+-- **Verified states**: `true` (signed + passed), `false` (signed + failed), `null` (no signature present)
+-
+-### 2. OBP — Data Decides Its Own Behavior
+-
+-```csharp
+-data.Compress()   // type is "image/jpeg" → not compressible → returns self unchanged
+-                  // type is "text/plain" → compresses, wraps in archived envelope
+-
+-data.Encrypt()    // always encrypts, wraps in encrypted envelope
+-```
+-
+-Each method inspects the Data and decides whether to act or pass through. The pipeline has no conditionals.
+-
+-### 3. Wrapping/Unwrapping Only at io.read/io.write
+-
+-The envelope structure only exists at the channel boundary. Inside the runtime, Data is flat:
+-
+-```
+-// Internal (flat):
+-Data { type = "image/jpeg", value = byte[] }
+-
+-// External (enveloped, after io.write pipeline):
+-Data { type = "encrypted", Signature = byte[], value =
+-    Data { type = "ed25519", value = encryptedBytes, Properties = [...] }
+-}
+-```
+-
+----
+-
+-## Output Pipeline (io.write)
+-
+-```
+-Internal Data
+-    → data.Wrap()        // wraps content: outer type from TypeMapping, inner is the content
+-    → .Compress()        // compresses if compressible, no-op otherwise
+-    → .Encrypt()         // encrypts, wraps in encrypted envelope
+-    → serialize          // Signature computed automatically on outermost Data
+-    → write to channel
+-```
+-
+-### Example: Excel file, compressed and encrypted
+-
+-Step 1 — Wrap (content envelope from TypeMapping):
+-```
+-Data { type = "spreadsheet", value =
+-    Data { type = "application/vnd...sheet", value = byte[] }
+-}
+-```
+-
+-Step 2 — Compress (spreadsheet is compressible):
+-```
+-Data { type = "archived", value =
+-    Data { type = "gzip", value = compress(serialize(above)) }
+-}
+-```
+-
+-Step 3 — Encrypt:
+-```
+-Data { type = "encrypted", value =
+-    Data { type = "ed25519", value = encrypt(serialize(above)), Properties = [...] }
+-}
+-```
+-
+-Step 4 — Serialize (Signature computed automatically on outermost):
+-```
+-Data { type = "encrypted", Signature = byte[], value =
+-    Data { type = "ed25519", value = encryptedBytes, Properties = [...] }
+-}
+-```
+-
+-Outside world sees: `type = "encrypted"`. Nothing about spreadsheet or compression is visible.
+-
+-### Example: JPEG image, encrypted, no compression
+-
+-Step 1 — Wrap:
+-```
+-Data { type = "image", value =
+-    Data { type = "image/jpeg", value = byte[] }
+-}
+-```
+-
+-Step 2 — Compress (image is NOT compressible, no-op):
+-```
+-Data { type = "image", value =
+-    Data { type = "image/jpeg", value = byte[] }
+-}
+-```
+-
+-Step 3 — Encrypt:
+-```
+-Data { type = "encrypted", Signature = byte[], value =
+-    Data { type = "ed25519", value = encrypt(serialize(above)), Properties = [...] }
+-}
+-```
+-
+-### Example: Plain text, no compression, no encryption
+-
+-```
+-Data { type = "text", Signature = byte[], value =
+-    Data { type = "text/plain", value = "Hello world" }
+-}
+-```
+-
+-### Example: JSON data, compressed, encrypted
+-
+-```
+-Data { type = "encrypted", Signature = byte[], value =
+-    Data { type = "ed25519", value = encrypt(serialize(
+-        Data { type = "archived", value =
+-            Data { type = "gzip", value = compress(serialize(
+-                Data { type = "text", value =
+-                    Data { type = "application/json", value = "{...}" }
+-                }
+-            )) }
+-        }
+-    )), Properties = [...] }
+-}
+-```
+-
+-### Example: Video file, no compression, no encryption
+-
+-```
+-Data { type = "video", Signature = byte[], value =
+-    Data { type = "video/mp4", value = byte[] }
+-}
+-```
+-
+-Note: Compress() was a no-op because video is not compressible.
+-
+----
+-
+-## Input Pipeline (io.read)
+-
+-```
+-Read from channel
+-    → deserialize          // Signature verified automatically, Verified flag set
+-    → pipeline peels layers by outer type:
+-        "encrypted" → send to encryption handler → returns inner Data
+-        "archived"  → send to archive handler → returns inner Data
+-        content type (image, text, spreadsheet, ...) → unwrap, return flat internal Data
+-```
+-
+-### Example: Receiving the encrypted compressed Excel file
+-
+-Step 1 — Deserialize, verify Signature:
+-```
+-Data { type = "encrypted", Signature = byte[], Verified = true, value =
+-    Data { type = "ed25519", value = encryptedBytes, Properties = [...] }
+-}
+-```
+-
+-Step 2 — Outer type is "encrypted", send to encryption handler:
+-Handler reads inner Data (type = "ed25519", Properties), decrypts, deserializes result:
+-```
+-Data { type = "archived", value =
+-    Data { type = "gzip", value = compressedBytes }
+-}
+-```
+-
+-Step 3 — Outer type is "archived", send to archive handler:
+-Handler reads inner Data (type = "gzip"), decompresses, deserializes result:
+-```
+-Data { type = "spreadsheet", value =
+-    Data { type = "application/vnd...sheet", value = byte[] }
+-}
+-```
+-
+-Step 4 — Outer type is "spreadsheet", this is content. Unwrap:
+-```
+-Data { type = "application/vnd...sheet", value = byte[] }
+-```
+-
+-Back to flat internal form. The runtime never sees the envelopes.
+-
+----
+-
+-## Handler Contract
+-
+-Every handler follows the same interface:
+-
+-**Unwrap (input):**
+-- Receives: `Data { type = category, value = Data { type = specific, ... } }`
+-- Reads inner Data's type and Properties for specifics
+-- Processes (decrypt, decompress, or just unwrap)
+-- Returns: result Data (next envelope to process, or flat content)
+-
+-**Wrap (output):**
+-- Receives: Data (content or previous layer's output)
+-- Processes (encrypt, compress, or just wrap content type)
+-- Returns: `Data { type = category, value = Data { type = specific, value = processed } }`
+-
+-The pipeline doesn't special-case anything. It reads outer type, routes to handler, handler returns Data, pipeline continues.
+-
+----
+-
+-## Compressibility
+-
+-Not all content benefits from compression. Already-compressed formats waste CPU and can increase size. The `.Compress()` method checks the content type and no-ops if not compressible.
+-
+-**Not compressible** (Compress() returns self unchanged):
+-- image
+-- video
+-- audio
+-- archive
+-
+-**Compressible**:
+-- text
+-- spreadsheet
+-- document
+-- presentation
+-- code
+-- database
+-- and most other categories
+-
+-This can be a simple set lookup or a property on the TypeMapping entries.
+-
+----
+-
+-## Category Registry (TypeMapping)
+-
+-The existing TypeMapping maps file extensions to categories. These categories become the outer Data type in the envelope:
+-
+-```
+-.jpg → image          .mp4 → video          .mp3 → audio
+-.xlsx → spreadsheet   .pdf → document       .pptx → presentation
+-.cs → code            .db → database        .zip → archive
+-.epub → ebook         .ttf → font           .goal → plang
+-... (full list in TypeMapping.cs)
+-```
+-
+-Processing layer categories:
+-- `encrypted` — encryption algorithms (ed25519, x25519-xsalsa20-poly1305, aes-256-gcm, etc.)
+-- `archived` — compression algorithms (gzip, brotli, zstd, etc.)
+-
+----
+-
+-## Changes to Data Class
+-
+-```csharp
+-public class Data
+-{
+-    // ... all existing fields unchanged ...
+-    
+-    // NEW: Automatic signature (computed on serialization)
+-    [JsonPropertyName("signature")]
+-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+-    public byte[]? Signature { get; set; }
+-    
+-    // NEW: Verification status (set on deserialization)
+-    [JsonIgnore]
+-    public bool? Verified { get; set; }
+-    
+-    // CHANGED: Properties must serialize for processing layer parameters
+-    // Was: [JsonIgnore]
+-    // Now:
+-    [JsonPropertyName("properties")]
+-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+-    public Properties Properties { get; set; }
+-    
+-    // NEW: OBP pipeline methods
+-    public Data Wrap()         { /* wrap with category from TypeMapping */ }
+-    public Data Compress()     { /* compress if compressible, no-op otherwise */ }
+-    public Data Encrypt()      { /* encrypt, wrap in encrypted envelope */ }
+-    public Data Decrypt()      { /* if type == "encrypted": unwrap, decrypt inner */ }
+-    public Data Decompress()   { /* if type == "archived": unwrap, decompress inner */ }
+-    public Data Unwrap()       { /* strip envelope, return inner Data */ }
+-}
+-```
+-
+----
+-
+-## Open Questions for Architect Review
+-
+-### 1. Pipeline detection on input
+-The pipeline peels layers by reading the outer type. It needs to distinguish processing types (encrypted, archived) from content types (image, text, spreadsheet). Options:
+-- Hardcoded set of processing types
+-- A flag on the category registration (`isProcessingLayer = true`)
+-- Convention: processing layers always have a value that is a Data; content layers have raw values
+-
+-### 2. Inner serialization format
+-When `.Compress()` or `.Encrypt()` wraps Data, it serializes the inner Data to bytes. What format?
+-- JSON (readable after decrypt, good for debugging, larger)
+-- Binary/MessagePack (compact, faster, opaque)
+-- Configurable per engine?
+-
+-### 3. Verification failure behavior
+-When `Verified = false` (signature check failed), should the runtime:
+-- Reject the Data entirely (safer, prevents processing tampered data)
+-- Pass it through with Verified = false (flexible, developer decides)
+-- Default to reject with opt-out configuration?
+-
+-### 4. Encryption key resolution
+-`.Encrypt()` needs to know which key to use. The Identity system provides the signing key, but encryption may need the recipient's public key. How does the encryption method resolve this?
+-- Parameter on .Encrypt(recipientKey)?
+-- Resolved from EngineProperty or Identity service?
+-- Passed through context?
+-
+-### 5. Properties serialization scope
+-Properties changes from [JsonIgnore] to serializing when non-empty. Need to verify this doesn't break .pr file serialization or MemoryStack behavior. Consider: only serialize Properties in the channel serialization path, not in the Store/LlmBuilder views.
+-
+-### 6. Compress() needs to know the content type
+-When Compress() is called, it needs to determine compressibility. After Wrap(), the outer type is the category (e.g., "image"). Compress() checks the outer type — that's the category level where compressibility is defined.
+-
+----
+-
+-## Reference
+-
+-See **DATA_DEEP_DIVE.md** for comprehensive documentation of the existing Data class, its construction, value unwrapping, navigation, MemoryStack integration, and flow through the execution pipeline.
+-
+-See **SKILL.md** (Runtime2 skill) for the full Runtime2 architecture including Engine, Goals, Steps, Actions, Events, Channels, and Serialization systems.
+diff --git a/Documentation/Runtime2/architect-handover/DataEnvelopePipelineExample.cs b/Documentation/Runtime2/architect-handover/DataEnvelopePipelineExample.cs
+deleted file mode 100644
+index cc5aa32d..00000000
+--- a/Documentation/Runtime2/architect-handover/DataEnvelopePipelineExample.cs
++++ /dev/null
+@@ -1,161 +0,0 @@
+-// === Data Envelope Pipeline — Output Example ===
+-// Shows how Data flows through Wrap → Compress → Encrypt on io.write
+-
+-// --- Starting point: flat internal Data ---
+-var data = new Data("report", fileBytes, Type.FromMime("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+-
+-// data looks like:
+-// Data { Name = "report", Type = "application/vnd...sheet", Value = byte[148832] }
+-
+-
+-// === Step 1: Wrap() ===
+-// Sets the category envelope from TypeMapping
+-
+-public Data Wrap()
+-{
+-    // Look up category from type string or file extension
+-    var category = TypeMapping.GetCategory(this.Type.Value); // → "spreadsheet"
+-    if (category == null)
+-        return this; // unknown type, no wrapping
+-
+-    // Outer Data = routing envelope
+-    // Inner Data = this (the content)
+-    return new Data("", this, Type.FromName(category));
+-    // returns: Data { Type = "spreadsheet", Value = Data { Type = "application/vnd...sheet", Value = byte[] } }
+-}
+-
+-
+-// === Step 2: Compress() ===
+-// Compresses if the content is compressible, no-op otherwise
+-
+-private static readonly HashSet<string> NotCompressible = 
+-    new(StringComparer.OrdinalIgnoreCase) { "image", "video", "audio", "archive" };
+-
+-public Data Compress()
+-{
+-    // Check outer type (the category) for compressibility
+-    if (NotCompressible.Contains(this.Type.Value))
+-        return this; // no-op, return self unchanged
+-
+-    // Serialize this entire Data (the wrapped envelope) to bytes
+-    var innerBytes = Serializer.Serialize(this); // JSON or binary
+-
+-    // Compress the bytes
+-    var compressedBytes = GzipCompressor.Compress(innerBytes);
+-
+-    // Build the inner Data (handler-specific)
+-    var inner = new Data("", compressedBytes, Type.FromName("gzip"));
+-
+-    // Wrap in archived envelope
+-    return new Data("", inner, Type.FromName("archived"));
+-    // returns: Data { Type = "archived", Value = Data { Type = "gzip", Value = byte[compressed] } }
+-}
+-
+-
+-// === Step 3: Encrypt() ===
+-// Always encrypts, wraps in encrypted envelope
+-
+-public Data Encrypt()
+-{
+-    // Serialize this entire Data to bytes
+-    var innerBytes = Serializer.Serialize(this);
+-
+-    // Encrypt the bytes (key resolution from Identity/context)
+-    var (encryptedBytes, nonce) = Ed25519Crypto.Encrypt(innerBytes, recipientPublicKey);
+-
+-    // Build the inner Data with algorithm-specific properties
+-    var inner = new Data("", encryptedBytes, Type.FromName("ed25519"));
+-    inner.Properties = new Properties
+-    {
+-        new Data("keyId", "did:plang:abc123"),
+-        new Data("nonce", nonce),
+-        new Data("sender", myPublicKey)
+-    };
+-
+-    // Wrap in encrypted envelope
+-    return new Data("", inner, Type.FromName("encrypted"));
+-    // returns: Data { Type = "encrypted", Value = Data { Type = "ed25519", Value = byte[encrypted], Properties = [...] } }
+-}
+-
+-
+-// === The full chain ===
+-
+-// In io.write:
+-var envelope = data      // Data { Type = "application/vnd...sheet", Value = byte[] }
+-    .Wrap()              // Data { Type = "spreadsheet", Value = Data { Type = "application/vnd...sheet", Value = byte[] } }
+-    .Compress()          // Data { Type = "archived", Value = Data { Type = "gzip", Value = compressedBytes } }
+-    .Encrypt();          // Data { Type = "encrypted", Value = Data { Type = "ed25519", Value = encryptedBytes, Properties = [...] } }
+-
+-// Serialization adds Signature automatically
+-// envelope.Signature = sign(serialize(envelope))
+-
+-await channel.WriteAsync(envelope);
+-
+-
+-// === Input: the reverse ===
+-
+-// In io.read:
+-var received = await channel.ReadAsync(); // deserialization verifies Signature, sets Verified
+-
+-var content = received   // Data { Type = "encrypted", Verified = true, Value = Data { Type = "ed25519", ... } }
+-    .Decrypt()           // Data { Type = "archived", Value = Data { Type = "gzip", Value = compressedBytes } }
+-    .Decompress()        // Data { Type = "spreadsheet", Value = Data { Type = "application/vnd...sheet", Value = byte[] } }
+-    .Unwrap();           // Data { Type = "application/vnd...sheet", Value = byte[] }
+-
+-// Back to flat internal Data, ready for the runtime
+-
+-
+-// === Decrypt() ===
+-
+-public Data Decrypt()
+-{
+-    if (!string.Equals(this.Type.Value, "encrypted", StringComparison.OrdinalIgnoreCase))
+-        return this; // not encrypted, no-op
+-
+-    // Inner Data has the algorithm specifics
+-    var inner = this.Value as Data;
+-    if (inner == null)
+-        return Data.FromError(new Error("encrypted Data has no inner Data"));
+-
+-    // Read algorithm-specific properties
+-    var algorithm = inner.Type.Value; // "ed25519"
+-    var keyId = inner.Properties?.Get("keyId")?.GetValue<string>();
+-    var nonce = inner.Properties?.Get("nonce")?.GetValue<byte[]>();
+-
+-    // Decrypt
+-    var decryptedBytes = Ed25519Crypto.Decrypt(inner.GetValue<byte[]>(), nonce, senderPublicKey);
+-
+-    // Deserialize back to Data (the next layer)
+-    return Serializer.Deserialize<Data>(decryptedBytes);
+-}
+-
+-
+-// === Decompress() ===
+-
+-public Data Decompress()
+-{
+-    if (!string.Equals(this.Type.Value, "archived", StringComparison.OrdinalIgnoreCase))
+-        return this; // not compressed, no-op
+-
+-    var inner = this.Value as Data;
+-    if (inner == null)
+-        return Data.FromError(new Error("archived Data has no inner Data"));
+-
+-    var algorithm = inner.Type.Value; // "gzip"
+-
+-    var decompressedBytes = GzipCompressor.Decompress(inner.GetValue<byte[]>());
+-
+-    return Serializer.Deserialize<Data>(decompressedBytes);
+-}
+-
+-
+-// === Unwrap() ===
+-
+-public Data Unwrap()
+-{
+-    // If value is a Data, unwrap it (strip the category envelope)
+-    if (this.Value is Data inner)
+-        return inner;
+-
+-    return this; // already flat
+-}
+diff --git a/PLang.Tests/GlobalUsings.cs b/PLang.Tests/GlobalUsings.cs
+index c32b88cf..f6428683 100644
+--- a/PLang.Tests/GlobalUsings.cs
++++ b/PLang.Tests/GlobalUsings.cs
+@@ -36,8 +36,8 @@ global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
+ global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
+ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
+ 
+-// Memory types
+-global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
++// Type system
++global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
+ 
+ // Standalone concepts (no v1 conflicts in tests)
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+diff --git a/PLang.Tests/Runtime2/Core/StartGoalTests.cs b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+index 0524786e..16871468 100644
+--- a/PLang.Tests/Runtime2/Core/StartGoalTests.cs
++++ b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+@@ -2,7 +2,6 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+-using Path = System.IO.Path;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+diff --git a/PLang.Tests/Runtime2/Memory/DataTests.cs b/PLang.Tests/Runtime2/Memory/DataTests.cs
+index bc83e01d..899404a5 100644
+--- a/PLang.Tests/Runtime2/Memory/DataTests.cs
++++ b/PLang.Tests/Runtime2/Memory/DataTests.cs
+@@ -420,6 +420,155 @@ public class DataTests
+ 
+         await Assert.That(ov.Parent).IsNull();
+     }
++
++    // --- Phase 2: Context + Lazy Type derivation ---
++
++    [Test]
++    public async Task Context_DefaultsToNull()
++    {
++        var ov = new Data("test", "hello");
++
++        await Assert.That(ov.Context).IsNull();
++    }
++
++    [Test]
++    public async Task Context_WhenSet_PropagesToType()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        // Use MIME type — Kind is only non-null when context is set
++        var ov = new Data("test", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
++        ov.Context = context;
++
++        // Type has context: Kind navigation works
++        await Assert.That(ov.Type!.Kind).IsEqualTo("image");
++    }
++
++    [Test]
++    public async Task Type_LazyDerivation_WithoutContext()
++    {
++        var ov = new Data("test", 42);
++
++        // Type is lazily derived on first access
++        await Assert.That(ov.Type).IsNotNull();
++        await Assert.That(ov.Type!.Value).IsEqualTo("int");
++        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
++    }
++
++    [Test]
++    public async Task Type_LazyDerivation_WithContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var ov = new Data("test", "hello");
++        ov.Context = context;
++
++        // Type lazily derived through context's Engine.Types
++        await Assert.That(ov.Type).IsNotNull();
++        await Assert.That(ov.Type!.Value).IsEqualTo("string");
++        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
++    }
++
++    [Test]
++    public async Task Type_LazyDerivation_InvalidatedByValueSetter()
++    {
++        var ov = new Data("test", "hello");
++
++        await Assert.That(ov.Type!.Value).IsEqualTo("string");
++
++        ov.Value = 42;
++
++        await Assert.That(ov.Type!.Value).IsEqualTo("int");
++        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
++    }
++
++    [Test]
++    public async Task Type_NullValue_ReturnsNull()
++    {
++        var ov = new Data("test");
++
++        await Assert.That(ov.Type).IsNull();
++    }
++
++    [Test]
++    public async Task Type_ExplicitType_NotOverridden()
++    {
++        var explicitType = new Type("image/jpeg");
++        var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType);
++
++        // Explicit type is preserved, not lazily derived
++        await Assert.That(ov.Type).IsEqualTo(explicitType);
++        await Assert.That(ov.Type!.Value).IsEqualTo("image/jpeg");
++    }
++
++    [Test]
++    public async Task Type_Setter_StampsContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var ov = new Data("test", "hello");
++        ov.Context = context;
++
++        var newType = new Type("text/plain");
++        ov.Type = newType;
++
++        // Type gets context from Data — Kind navigation works
++        await Assert.That(newType.Kind).IsEqualTo("text");
++    }
++
++    [Test]
++    public async Task Type_Kind_WithContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
++        data.Context = context;
++
++        await Assert.That(data.Type!.Kind).IsEqualTo("image");
++        await Assert.That(data.Type!.Compressible).IsFalse();
++    }
++
++    [Test]
++    public async Task Type_Kind_WithoutContext_ReturnsNull()
++    {
++        var imageType = new Type("image/jpeg");
++
++        await Assert.That(imageType.Kind).IsNull();
++        await Assert.That(imageType.Compressible).IsFalse();
++    }
++
++    [Test]
++    public async Task Type_Compressible_TextKind()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var data = new Data("txt", "hello", Type.FromMime("text/plain"));
++        data.Context = context;
++
++        await Assert.That(data.Type!.Kind).IsEqualTo("text");
++        await Assert.That(data.Type!.Compressible).IsTrue();
++    }
++
++    [Test]
++    public async Task GetChild_InheritsContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var data = new Dictionary<string, object?> { { "name", "test" } };
++        var ov = new Data("data", data);
++        ov.Context = context;
++
++        var child = ov.GetChild("name");
++
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Context).IsEqualTo(context);
++    }
+ }
+ 
+ public class DynamicDataTests
+diff --git a/PLang.Tests/Runtime2/Memory/MemoryStackTests.cs b/PLang.Tests/Runtime2/Memory/MemoryStackTests.cs
+index e8a5e97e..12cc8067 100644
+--- a/PLang.Tests/Runtime2/Memory/MemoryStackTests.cs
++++ b/PLang.Tests/Runtime2/Memory/MemoryStackTests.cs
+@@ -485,6 +485,76 @@ public class MemoryStackTests
+         await Assert.That(dict.ContainsKey("name")).IsTrue();
+         await Assert.That(dict.ContainsKey("NAME")).IsTrue();
+     }
++
++    // --- Phase 2: Context stamping via PLangContext ---
++
++    [Test]
++    public async Task PLangContext_StampsContextOnMemoryStackData()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        // Variables set through PLangContext's MemoryStack get context stamped
++        context.MemoryStack.Set("name", "John");
++
++        await Assert.That(context.MemoryStack.Get("name")!.Context).IsEqualTo(context);
++    }
++
++    [Test]
++    public async Task PLangContext_Put_StampsContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        var data = new Data("test", "hello");
++        context.MemoryStack.Put(data);
++
++        await Assert.That(data.Context).IsEqualTo(context);
++    }
++
++    [Test]
++    public async Task PLangContext_ExistingData_GetsContext()
++    {
++        // Pre-populate a MemoryStack, then create PLangContext with it
++        var stack = new MemoryStack();
++        stack.Set("name", "John");
++
++        // Data has no context before PLangContext creation
++        await Assert.That(stack.Get("name")!.Context).IsNull();
++
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine, stack);
++
++        // After PLangContext creation, existing data gets context
++        await Assert.That(stack.Get("name")!.Context).IsEqualTo(context);
++    }
++
++    [Test]
++    public async Task Clone_DataHasNoContext()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++
++        context.MemoryStack.Set("name", "John");
++
++        var clone = context.MemoryStack.Clone();
++
++        // Cloned data has no context until a new PLangContext stamps it
++        await Assert.That(clone.Get("name")!.Context).IsNull();
++    }
++
++    [Test]
++    public async Task ChildContext_StampsClonedData()
++    {
++        await using var engine = new PLang.Runtime2.Engine.@this("/test");
++        var parentContext = new PLang.Runtime2.Engine.Context.PLangContext(engine);
++        parentContext.MemoryStack.Set("name", "John");
++
++        var childContext = parentContext.CreateChild();
++
++        // Child context stamps its own context on the cloned data
++        await Assert.That(childContext.MemoryStack.Get("name")!.Context).IsEqualTo(childContext);
++    }
+ }
+ 
+ public class MemoryStackAccessorTests
+diff --git a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+deleted file mode 100644
+index f199b2b3..00000000
+--- a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
++++ /dev/null
+@@ -1,918 +0,0 @@
+-using PLang.SafeFileSystem;
+-using PLang.Runtime2.actions.file;
+-
+-namespace PLang.Tests.Runtime2.Modules.Path;
+-
+-public class PathTests : IDisposable
+-{
+-    private readonly string _tempDir;
+-    private readonly PLangFileSystem _fs;
+-    private readonly Engine _engine;
+-
+-    public PathTests()
+-    {
+-        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_path_test_" + Guid.NewGuid().ToString("N"));
+-        System.IO.Directory.CreateDirectory(_tempDir);
+-        _fs = new PLangFileSystem(_tempDir, "");
+-        _engine = new Engine(_tempDir, fileSystem: _fs);
+-    }
+-
+-    public void Dispose()
+-    {
+-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+-        if (System.IO.Directory.Exists(_tempDir))
+-            System.IO.Directory.Delete(_tempDir, true);
+-    }
+-
+-    private string TempFile(string name)
+-    {
+-        var path = _fs.Path.Combine(_tempDir, name);
+-        _fs.File.WriteAllText(path, "test content");
+-        return path;
+-    }
+-
+-    // --- Constructor & Absolute ---
+-
+-    [Test]
+-    public async Task Absolute_ResolvesRelativePath()
+-    {
+-        var p = new PLangPath("config.json", _engine);
+-        var expected = _fs.Path.GetFullPath("config.json");
+-        await Assert.That(p.Absolute).IsEqualTo(expected);
+-    }
+-
+-    [Test]
+-    public async Task Absolute_PreservesAbsolutePath()
+-    {
+-        var abs = _fs.Path.Combine(_tempDir, "test.txt");
+-        var p = new PLangPath(abs, _engine);
+-        await Assert.That(p.Absolute).IsEqualTo(abs);
+-    }
+-
+-    // --- Raw ---
+-
+-    [Test]
+-    public async Task Raw_PreservesOriginalInput()
+-    {
+-        var p = new PLangPath("relative/file.txt", _engine);
+-        await Assert.That(p.Raw).IsEqualTo("relative/file.txt");
+-    }
+-
+-    // --- Relative ---
+-
+-    [Test]
+-    public async Task Relative_StripsRootDirectory()
+-    {
+-        var abs = _fs.Path.Combine(_tempDir, "sub", "file.txt");
+-        var p = new PLangPath(abs, _engine);
+-        var expected = "sub" + _fs.Path.DirectorySeparatorChar + "file.txt";
+-        await Assert.That(p.Relative).IsEqualTo(expected);
+-    }
+-
+-    // --- Extension ---
+-
+-    [Test]
+-    public async Task Extension_ReturnsWithDot()
+-    {
+-        var p = new PLangPath("config.json", _engine);
+-        await Assert.That(p.Extension).IsEqualTo(".json");
+-    }
+-
+-    [Test]
+-    public async Task Extension_NoExtension_ReturnsEmpty()
+-    {
+-        var p = new PLangPath("Makefile", _engine);
+-        await Assert.That(p.Extension).IsEqualTo("");
+-    }
+-
+-    // --- FileName ---
+-
+-    [Test]
+-    public async Task FileName_ReturnsFileNameWithExtension()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "config.json"), _engine);
+-        await Assert.That(p.FileName).IsEqualTo("config.json");
+-    }
+-
+-    // --- FileNameWithoutExtension ---
+-
+-    [Test]
+-    public async Task FileNameWithoutExtension_ReturnsNameOnly()
+-    {
+-        var p = new PLangPath("archive.tar.gz", _engine);
+-        await Assert.That(p.FileNameWithoutExtension).IsEqualTo("archive.tar");
+-    }
+-
+-    // --- Directory ---
+-
+-    [Test]
+-    public async Task Directory_ReturnsParentPath()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "file.txt"), _engine);
+-        var expected = _fs.Path.Combine(_tempDir, "sub");
+-        await Assert.That(p.Directory).IsEqualTo(expected);
+-    }
+-
+-    // --- MimeType ---
+-
+-    [Test]
+-    public async Task MimeType_Json()
+-    {
+-        var p = new PLangPath("data.json", _engine);
+-        await Assert.That(p.MimeType).IsEqualTo("application/json");
+-    }
+-
+-    [Test]
+-    public async Task MimeType_Markdown()
+-    {
+-        var p = new PLangPath("README.md", _engine);
+-        await Assert.That(p.MimeType).IsEqualTo("text/markdown");
+-    }
+-
+-    [Test]
+-    public async Task MimeType_Unknown_ReturnsOctetStream()
+-    {
+-        var p = new PLangPath("data.xyz", _engine);
+-        await Assert.That(p.MimeType).IsEqualTo("application/octet-stream");
+-    }
+-
+-    // --- IsFile (structural: has extension) ---
+-
+-    [Test]
+-    public async Task IsFile_WithExtension_ReturnsTrue()
+-    {
+-        var p = new PLangPath("config.json", _engine);
+-        await Assert.That(p.IsFile).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsFile_NoExtension_ReturnsFalse()
+-    {
+-        var p = new PLangPath("Makefile", _engine);
+-        await Assert.That(p.IsFile).IsFalse();
+-    }
+-
+-    // --- IsDirectory (structural: no extension) ---
+-
+-    [Test]
+-    public async Task IsDirectory_NoExtension_ReturnsTrue()
+-    {
+-        var p = new PLangPath("mydir", _engine);
+-        await Assert.That(p.IsDirectory).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsDirectory_WithExtension_ReturnsFalse()
+-    {
+-        var p = new PLangPath("file.txt", _engine);
+-        await Assert.That(p.IsDirectory).IsFalse();
+-    }
+-
+-    // --- Exists ---
+-
+-    [Test]
+-    public async Task Exists_ExistingFile_ReturnsTrue()
+-    {
+-        var filePath = TempFile("there.txt");
+-        var p = new PLangPath(filePath, _engine);
+-        await Assert.That(p.Exists).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Exists_ExistingDir_ReturnsTrue()
+-    {
+-        var p = new PLangPath(_tempDir, _engine);
+-        await Assert.That(p.Exists).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Exists_Nothing_ReturnsFalse()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "phantom"), _engine);
+-        await Assert.That(p.Exists).IsFalse();
+-    }
+-
+-    // --- Size ---
+-
+-    [Test]
+-    public async Task Size_ExistingFile_ReturnsCorrectSize()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "sized.txt");
+-        _fs.File.WriteAllText(filePath, "12345");
+-        var p = new PLangPath(filePath, _engine);
+-        await Assert.That(p.Size).IsEqualTo(5);
+-    }
+-
+-    [Test]
+-    public async Task Size_NonexistentFile_ReturnsZero()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "nosize.txt"), _engine);
+-        await Assert.That(p.Size).IsEqualTo(0);
+-    }
+-
+-    // --- ToString ---
+-
+-    [Test]
+-    public async Task ToString_ReturnsRelativePath()
+-    {
+-        var abs = _fs.Path.Combine(_tempDir, "test.txt");
+-        var p = new PLangPath(abs, _engine);
+-        await Assert.That(p.ToString()).IsEqualTo("test.txt");
+-    }
+-
+-    // --- Equality ---
+-
+-    [Test]
+-    public async Task Equals_SamePath_ReturnsTrue()
+-    {
+-        var abs = _fs.Path.Combine(_tempDir, "same.txt");
+-        var p1 = new PLangPath(abs, _engine);
+-        var p2 = new PLangPath(abs, _engine);
+-        await Assert.That(p1.Equals(p2)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Equals_String_ReturnsTrue()
+-    {
+-        var abs = _fs.Path.Combine(_tempDir, "str.txt");
+-        var p = new PLangPath(abs, _engine);
+-        await Assert.That(p.Equals(abs)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Equals_DifferentPath_ReturnsFalse()
+-    {
+-        var p1 = new PLangPath(_fs.Path.Combine(_tempDir, "a.txt"), _engine);
+-        var p2 = new PLangPath(_fs.Path.Combine(_tempDir, "b.txt"), _engine);
+-        await Assert.That(p1.Equals(p2)).IsFalse();
+-    }
+-
+-    // --- Resolve (engine-resolvable) ---
+-
+-    [Test]
+-    public async Task Resolve_CreatesPathViaEngine()
+-    {
+-        var p = PLangPath.Resolve("test.txt", _engine);
+-        await Assert.That(p).IsNotNull();
+-        await Assert.That(p.FileName).IsEqualTo("test.txt");
+-    }
+-
+-    // --- Exists is live (not cached) ---
+-
+-    [Test]
+-    public async Task Exists_BecomesTrue_AfterFileCreated()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "later.txt");
+-        var p = new PLangPath(filePath, _engine);
+-
+-        await Assert.That(p.Exists).IsFalse();
+-
+-        _fs.File.WriteAllText(filePath, "created");
+-        await Assert.That(p.Exists).IsTrue();
+-    }
+-
+-    // --- Cached properties are stable ---
+-
+-    [Test]
+-    public async Task CachedProperties_SameOnMultipleAccess()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "stable.json"), _engine);
+-        var ext1 = p.Extension;
+-        var ext2 = p.Extension;
+-        var name1 = p.FileName;
+-        var name2 = p.FileName;
+-
+-        await Assert.That(ext1).IsEqualTo(ext2);
+-        await Assert.That(name1).IsEqualTo(name2);
+-    }
+-
+-    // --- Read ---
+-
+-    [Test]
+-    public async Task Read_ExistingFile_ReturnsFileObject()
+-    {
+-        var filePath = TempFile("read_me.txt");
+-        var p = new PLangPath(filePath, _engine);
+-        var result = p.Read();
+-
+-        await Assert.That(result.Success).IsTrue();
+-        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+-        await Assert.That(f).IsNotNull();
+-        await Assert.That(f!.Value.Value).IsEqualTo("test content");
+-    }
+-
+-    [Test]
+-    public async Task Read_NonexistentFile_ReturnsError()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_such.txt"), _engine);
+-        var result = p.Read();
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+-    }
+-
+-    // --- List ---
+-
+-    [Test]
+-    public async Task List_ExistingDirectory_ReturnsFileArray()
+-    {
+-        var dir = TempDir("list_dir");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.txt"), "b");
+-
+-        var p = new PLangPath(dir, _engine);
+-        var result = p.List(new List { Path = p, Pattern = "*" });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+-        await Assert.That(files).IsNotNull();
+-        await Assert.That(files!.Length).IsEqualTo(2);
+-        var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
+-        await Assert.That(names[0]).IsEqualTo("a.txt");
+-        await Assert.That(names[1]).IsEqualTo("b.txt");
+-    }
+-
+-    [Test]
+-    public async Task List_WithPattern_FiltersFiles()
+-    {
+-        var dir = TempDir("list_pattern");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.md"), "b");
+-
+-        var p = new PLangPath(dir, _engine);
+-        var result = p.List(new List { Path = p, Pattern = "*.txt" });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+-        await Assert.That(files!.Length).IsEqualTo(1);
+-    }
+-
+-    [Test]
+-    public async Task List_Recursive_FindsNestedFiles()
+-    {
+-        var dir = TempDir("list_recursive");
+-        var nested = _fs.Path.Combine(dir, "sub");
+-        _fs.Directory.CreateDirectory(nested);
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "top.txt"), "top");
+-        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
+-
+-        var p = new PLangPath(dir, _engine);
+-        var result = p.List(new List { Path = p, Pattern = "*", Recursive = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+-        await Assert.That(files!.Length).IsEqualTo(2);
+-    }
+-
+-    [Test]
+-    public async Task List_NonexistentDirectory_ReturnsError()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_dir"), _engine);
+-        var result = p.List(new List { Path = p, Pattern = "*" });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+-    }
+-
+-    // --- Save ---
+-
+-    [Test]
+-    public async Task Save_String_WritesFile()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "saved.txt");
+-        var p = new PLangPath(filePath, _engine);
+-
+-        var result = await p.Save(new Save { Path = p, Value = "hello world" });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
+-        await Assert.That(_fs.File.ReadAllText(filePath)).IsEqualTo("hello world");
+-    }
+-
+-    [Test]
+-    public async Task Save_Bytes_WritesFile()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "saved.bin");
+-        var p = new PLangPath(filePath, _engine);
+-
+-        var bytes = new byte[] { 1, 2, 3 };
+-        var result = await p.Save(new Save { Path = p, Value = bytes });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
+-        var actual = _fs.File.ReadAllBytes(filePath);
+-        await Assert.That(actual.SequenceEqual(bytes)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Save_CreatesDirectory_IfNotExists()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "newdir", "saved.txt");
+-        var p = new PLangPath(filePath, _engine);
+-
+-        var result = await p.Save(new Save { Path = p, Value = "nested" });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
+-    }
+-
+-    // --- AsFile ---
+-
+-    [Test]
+-    public async Task AsFile_ReturnsFileObject()
+-    {
+-        var filePath = TempFile("asfile.txt");
+-        var p = new PLangPath(filePath, _engine);
+-        var result = p.AsFile();
+-
+-        await Assert.That(result.Success).IsTrue();
+-        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+-        await Assert.That(f).IsNotNull();
+-        await Assert.That(f!.Exists).IsTrue();
+-    }
+-
+-    // --- Helper for directories ---
+-
+-    private string TempDir(string name)
+-    {
+-        var path = _fs.Path.Combine(_tempDir, name);
+-        _fs.Directory.CreateDirectory(path);
+-        return path;
+-    }
+-
+-    // --- Copy ---
+-
+-    [Test]
+-    public async Task Copy_File_CopiesToDestination()
+-    {
+-        var srcPath = TempFile("copy_src.txt");
+-        var destPath = _fs.Path.Combine(_tempDir, "copy_dst.txt");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(destPath)).IsTrue();
+-        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+-        await Assert.That(_fs.File.Exists(srcPath)).IsTrue(); // copy, not move
+-    }
+-
+-    [Test]
+-    public async Task Copy_Directory_CopiesAllFiles()
+-    {
+-        var srcDir = TempDir("copy_dir_src");
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "aaa");
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "b.txt"), "bbb");
+-
+-        var destDir = _fs.Path.Combine(_tempDir, "copy_dir_dst");
+-        var src = new PLangPath(srcDir, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "b.txt"))).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Copy_Directory_WithSubfolders()
+-    {
+-        var srcDir = TempDir("copy_sub_src");
+-        var nested = _fs.Path.Combine(srcDir, "sub");
+-        _fs.Directory.CreateDirectory(nested);
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "top.txt"), "top");
+-        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
+-
+-        var destDir = _fs.Path.Combine(_tempDir, "copy_sub_dst");
+-        var src = new PLangPath(srcDir, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "sub", "deep.txt"))).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Copy_Directory_WithoutSubfolders()
+-    {
+-        var srcDir = TempDir("copy_nosub_src");
+-        var nested = _fs.Path.Combine(srcDir, "sub");
+-        _fs.Directory.CreateDirectory(nested);
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "top.txt"), "top");
+-        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
+-
+-        var destDir = _fs.Path.Combine(_tempDir, "copy_nosub_dst");
+-        var src = new PLangPath(srcDir, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = false });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(_fs.Path.Combine(destDir, "sub"))).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Copy_NotFound_ReturnsError()
+-    {
+-        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
+-        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = dest });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+-    }
+-
+-    // --- Move ---
+-
+-    [Test]
+-    public async Task Move_File_MovesToDestination()
+-    {
+-        var srcPath = TempFile("move_src.txt");
+-        var destPath = _fs.Path.Combine(_tempDir, "move_dst.txt");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(destPath)).IsTrue();
+-        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Move_Directory_MovesToDestination()
+-    {
+-        var srcDir = TempDir("move_dir_src");
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "aaa");
+-
+-        var destDir = _fs.Path.Combine(_tempDir, "move_dir_dst");
+-        var src = new PLangPath(srcDir, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(destDir)).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Move_NotFound_ReturnsError()
+-    {
+-        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
+-        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
+-        var result = src.Move(new Move { Source = src, Destination = dest });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+-    }
+-
+-    // --- Delete ---
+-
+-    [Test]
+-    public async Task Delete_File_RemovesFile()
+-    {
+-        var filePath = TempFile("del_file.txt");
+-        var p = new PLangPath(filePath, _engine);
+-        var result = p.Delete(new Delete { Path = p });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(filePath)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Delete_EmptyDirectory_RemovesIt()
+-    {
+-        var dirPath = TempDir("del_empty_dir");
+-        var p = new PLangPath(dirPath, _engine);
+-        var result = p.Delete(new Delete { Path = p });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Delete_DirectoryRecursive_RemovesAll()
+-    {
+-        var dirPath = TempDir("del_recursive_dir");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
+-
+-        var p = new PLangPath(dirPath, _engine);
+-        var result = p.Delete(new Delete { Path = p, Recursive = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Delete_NotFound_ReturnsError()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
+-        var result = p.Delete(new Delete { Path = p });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+-    }
+-
+-    [Test]
+-    public async Task Delete_NotFound_IgnoreIfNotFound_ReturnsSuccess()
+-    {
+-        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
+-        var result = p.Delete(new Delete { Path = p, IgnoreIfNotFound = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    // --- #2: Relative prefix-matching bug ---
+-
+-    [Test]
+-    public async Task Relative_DoesNotMatchSimilarPrefix()
+-    {
+-        // Root is _tempDir (e.g., /tmp/plang_path_test_abc).
+-        // A sibling path like _tempDir + "ation" should NOT be treated as relative.
+-        var siblingPath = _tempDir + "ation" + _fs.Path.DirectorySeparatorChar + "file.txt";
+-        var p = new PLangPath(siblingPath, _engine);
+-
+-        // Should return absolute path, not "ation/file.txt"
+-        await Assert.That(p.Relative).IsEqualTo(p.Absolute);
+-    }
+-
+-    // --- #3: Move directory with overwrite ---
+-
+-    [Test]
+-    public async Task Move_Directory_Overwrite_ReplacesExisting()
+-    {
+-        var srcDir = TempDir("move_over_src");
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "new.txt"), "new");
+-
+-        var destDir = TempDir("move_over_dst");
+-        _fs.File.WriteAllText(_fs.Path.Combine(destDir, "old.txt"), "old");
+-
+-        var src = new PLangPath(srcDir, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine), Overwrite = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "new.txt"))).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "old.txt"))).IsFalse();
+-        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
+-    }
+-
+-    // --- #7: Null guard on constructor ---
+-
+-    [Test]
+-    public async Task Constructor_NullPath_ThrowsArgumentNull()
+-    {
+-        await Assert.That(() => new PLangPath(null!, _engine)).Throws<ArgumentNullException>();
+-    }
+-
+-    [Test]
+-    public async Task Constructor_NullEngine_ThrowsArgumentNull()
+-    {
+-        await Assert.That(() => new PLangPath("test.txt", null!)).Throws<ArgumentNullException>();
+-    }
+-
+-    // --- #8: Copy file to existing directory ---
+-
+-    [Test]
+-    public async Task Copy_FileToExistingDirectory_PutsFileInsideDir()
+-    {
+-        var srcPath = TempFile("copy_to_dir.txt");
+-        var destDir = TempDir("copy_target_dir");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "copy_to_dir.txt"))).IsTrue();
+-    }
+-
+-    // --- Move file to existing directory (auditor v2 #1) ---
+-
+-    [Test]
+-    public async Task Move_FileToExistingDirectory_PutsFileInsideDir()
+-    {
+-        var srcPath = TempFile("move_to_dir.txt");
+-        var destDir = TempDir("move_target_dir");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "move_to_dir.txt"))).IsTrue();
+-        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
+-    }
+-
+-    // --- Relative returns "." for root path (auditor v2 #2) ---
+-
+-    [Test]
+-    public async Task Relative_RootPath_ReturnsDot()
+-    {
+-        var p = new PLangPath(_tempDir, _engine);
+-        await Assert.That(p.Relative).IsEqualTo(".");
+-    }
+-
+-    // --- Exception handling tests (tester #1) ---
+-
+-    [Test]
+-    public async Task Copy_DestExists_OverwriteFalse_ReturnsIOError()
+-    {
+-        var srcPath = TempFile("copy_ow_src.txt");
+-        var destPath = TempFile("copy_ow_dst.txt"); // dest already exists
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+-    }
+-
+-    [Test]
+-    public async Task Copy_DestExists_OverwriteTrue_Succeeds()
+-    {
+-        var srcPath = TempFile("copy_owt_src.txt");
+-        var destPath = _fs.Path.Combine(_tempDir, "copy_owt_dst.txt");
+-        _fs.File.WriteAllText(destPath, "old content");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+-    }
+-
+-    [Test]
+-    public async Task Move_DestExists_OverwriteFalse_ReturnsIOError()
+-    {
+-        var srcPath = TempFile("move_ow_src.txt");
+-        var destPath = TempFile("move_ow_dst.txt"); // dest already exists
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+-    }
+-
+-    [Test]
+-    public async Task Move_DestExists_OverwriteTrue_Succeeds()
+-    {
+-        var srcPath = TempFile("move_owt_src.txt");
+-        var destPath = _fs.Path.Combine(_tempDir, "move_owt_dst.txt");
+-        _fs.File.WriteAllText(destPath, "old content");
+-
+-        var src = new PLangPath(srcPath, _engine);
+-        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
+-        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Delete_ReadOnlyParent_ReturnsIOError()
+-    {
+-        var dir = TempDir("del_ro_parent");
+-        var filePath = _fs.Path.Combine(dir, "locked.txt");
+-        _fs.File.WriteAllText(filePath, "data");
+-
+-        // Make parent directory read-only (prevents deletion on Linux)
+-        System.IO.File.SetUnixFileMode(dir,
+-            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
+-
+-        try
+-        {
+-            var p = new PLangPath(filePath, _engine);
+-            var result = p.Delete(new Delete { Path = p });
+-
+-            await Assert.That(result.Success).IsFalse();
+-            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        }
+-        finally
+-        {
+-            // Restore permissions for cleanup
+-            System.IO.File.SetUnixFileMode(dir,
+-                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task Save_ReadOnlyDir_ReturnsIOError()
+-    {
+-        var dir = TempDir("save_ro");
+-        System.IO.File.SetUnixFileMode(dir,
+-            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
+-
+-        try
+-        {
+-            var p = new PLangPath(_fs.Path.Combine(dir, "blocked.txt"), _engine);
+-            var result = await p.Save(new Save { Path = p, Value = "data" });
+-
+-            await Assert.That(result.Success).IsFalse();
+-            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        }
+-        finally
+-        {
+-            System.IO.File.SetUnixFileMode(dir,
+-                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task Read_PermissionDenied_ReturnsIOError()
+-    {
+-        var filePath = TempFile("read_denied.txt");
+-        System.IO.File.SetUnixFileMode(filePath, System.IO.UnixFileMode.None);
+-
+-        try
+-        {
+-            var p = new PLangPath(filePath, _engine);
+-            var result = p.Read();
+-
+-            await Assert.That(result.Success).IsFalse();
+-            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        }
+-        finally
+-        {
+-            System.IO.File.SetUnixFileMode(filePath,
+-                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task List_PermissionDenied_ReturnsIOError()
+-    {
+-        var dir = TempDir("list_denied");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
+-        System.IO.File.SetUnixFileMode(dir, System.IO.UnixFileMode.None);
+-
+-        try
+-        {
+-            var p = new PLangPath(dir, _engine);
+-            var result = p.List(new List { Path = p, Pattern = "*" });
+-
+-            await Assert.That(result.Success).IsFalse();
+-            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+-        }
+-        finally
+-        {
+-            System.IO.File.SetUnixFileMode(dir,
+-                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+-        }
+-    }
+-
+-    // --- Save object serialization (tester #4) ---
+-
+-    [Test]
+-    public async Task Save_Object_SerializesToJson()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "saved_obj.json");
+-        var p = new PLangPath(filePath, _engine);
+-        var data = new Dictionary<string, object> { ["name"] = "test", ["count"] = 42 };
+-
+-        var result = await p.Save(new Save { Path = p, Value = data });
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
+-        var content = _fs.File.ReadAllText(filePath);
+-        await Assert.That(content).Contains("test");
+-        await Assert.That(content).Contains("42");
+-    }
+-
+-    // --- Save serialization error (auditor v4 #1) ---
+-
+-    [Test]
+-    public async Task Save_NonSerializableObject_ReturnsSerializationError()
+-    {
+-        var filePath = _fs.Path.Combine(_tempDir, "bad_obj.json");
+-        var p = new PLangPath(filePath, _engine);
+-
+-        // Create a circular reference — JsonSerializer will throw JsonException
+-        var dict = new Dictionary<string, object>();
+-        dict["self"] = dict;
+-
+-        var result = await p.Save(new Save { Path = p, Value = dict });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("SerializationError");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+-    }
+-
+-    // --- Delete non-empty directory error has correct code ---
+-
+-    [Test]
+-    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsDirectoryNotEmpty()
+-    {
+-        var dirPath = TempDir("del_nonempty_code");
+-        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
+-
+-        var p = new PLangPath(dirPath, _engine);
+-        var result = p.Delete(new Delete { Path = p, Recursive = false });
+-
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("DirectoryNotEmpty");
+-        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+-    }
+-}
+diff --git a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+index 24d4814a..eba38e01 100644
+--- a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+@@ -29,13 +29,7 @@ public class FileHandlerTests : IDisposable
+     }
+ 
+     private string TempPath(string relativePath) =>
+-        _fs.Path.Combine(_tempDir, relativePath);
+-
+-    private PLangPath MakePath(string relativePath) =>
+-        new PLangPath(TempPath(relativePath), _engine);
+-
+-    private PLangPath MakeAbsPath(string absolutePath) =>
+-        new PLangPath(absolutePath, _engine);
++        System.IO.Path.Combine(_tempDir, relativePath);
+ 
+     private PLangContext CreateContext()
+     {
+@@ -47,7 +41,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Save_ReturnsFileWithCorrectPaths()
+     {
+-        var action = new Save { Context = CreateContext(), Path = MakePath("test.txt"), Value = "hello" };
++        var action = new Save { Context = CreateContext(), Path = TempPath("test.txt"), Value = "hello" };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -60,10 +54,10 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Save_FileExists_AfterSave()
+     {
+-        var action = new Save { Context = CreateContext(), Path = MakePath("exists.txt"), Value = "data" };
++        var action = new Save { Context = CreateContext(), Path = TempPath("exists.txt"), Value = "data" };
+         await action.Run();
+ 
+-        await Assert.That(_fs.File.Exists(TempPath("exists.txt"))).IsTrue();
++        await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
+     }
+ 
+     // --- Read ---
+@@ -71,9 +65,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_ReturnsFileObject()
+     {
+-        _fs.File.WriteAllText(TempPath("read.txt"), "content here");
++        System.IO.File.WriteAllText(TempPath("read.txt"), "content here");
+ 
+-        var action = new Read { Context = CreateContext(), Path = MakePath("read.txt") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("read.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -85,9 +79,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_ContentIsLazy()
+     {
+-        _fs.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
++        System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
+ 
+-        var action = new Read { Context = CreateContext(), Path = MakePath("lazy.txt") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("lazy.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -97,7 +91,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_NonexistentFile_ReturnsError()
+     {
+-        var action = new Read { Context = CreateContext(), Path = MakePath("nonexistent.txt") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("nonexistent.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -108,9 +102,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Copy_ReturnsFileWithSource()
+     {
+-        _fs.File.WriteAllText(TempPath("src.txt"), "source data");
++        System.IO.File.WriteAllText(TempPath("src.txt"), "source data");
+ 
+-        var action = new Copy { Context = CreateContext(), Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
++        var action = new Copy { Context = CreateContext(), Source = TempPath("src.txt"), Destination = TempPath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -123,34 +117,20 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Copy_NonexistentSource_ReturnsFileNotFound()
+     {
+-        var action = new Copy { Context = CreateContext(), Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
++        var action = new Copy { Context = CreateContext(), Source = TempPath("nope.txt"), Destination = TempPath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+     }
+ 
+-    [Test]
+-    public async Task Copy_Directory_CopiesAllFiles()
+-    {
+-        var srcDir = TempPath("copy_dir");
+-        _fs.Directory.CreateDirectory(srcDir);
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
+-
+-        var action = new Copy { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
+-    }
+-
+     // --- Move ---
+ 
+     [Test]
+     public async Task Move_ReturnsFileWithSource()
+     {
+-        _fs.File.WriteAllText(TempPath("move_src.txt"), "move data");
++        System.IO.File.WriteAllText(TempPath("move_src.txt"), "move data");
+ 
+-        var action = new Move { Context = CreateContext(), Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
++        var action = new Move { Context = CreateContext(), Source = TempPath("move_src.txt"), Destination = TempPath("move_dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -163,35 +143,20 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Move_NonexistentSource_ReturnsFileNotFound()
+     {
+-        var action = new Move { Context = CreateContext(), Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
++        var action = new Move { Context = CreateContext(), Source = TempPath("nope.txt"), Destination = TempPath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+     }
+ 
+-    [Test]
+-    public async Task Move_Directory_MovesDirectory()
+-    {
+-        var srcDir = TempPath("move_dir");
+-        _fs.Directory.CreateDirectory(srcDir);
+-        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
+-
+-        var action = new Move { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
+-        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
+-    }
+-
+     // --- Delete ---
+ 
+     [Test]
+     public async Task Delete_ReturnsFile()
+     {
+-        _fs.File.WriteAllText(TempPath("del.txt"), "delete me");
++        System.IO.File.WriteAllText(TempPath("del.txt"), "delete me");
+ 
+-        var action = new Delete { Context = CreateContext(), Path = MakePath("del.txt") };
++        var action = new Delete { Context = CreateContext(), Path = TempPath("del.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -203,7 +168,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Delete_NonexistentFile_ReturnsError()
+     {
+-        var action = new Delete { Context = CreateContext(), Path = MakePath("nope.txt") };
++        var action = new Delete { Context = CreateContext(), Path = TempPath("nope.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -212,24 +177,10 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
+     {
+-        var action = new Delete { Context = CreateContext(), Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
+-        var result = await action.Run();
+-
+-        await Assert.That(result.Success).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task Delete_Directory_Recursive()
+-    {
+-        var dir = TempPath("del_dir");
+-        _fs.Directory.CreateDirectory(dir);
+-        _fs.File.WriteAllText(_fs.Path.Combine(dir, "child.txt"), "data");
+-
+-        var action = new Delete { Context = CreateContext(), Path = MakeAbsPath(dir), Recursive = true };
++        var action = new Delete { Context = CreateContext(), Path = TempPath("nope.txt"), IgnoreIfNotFound = true };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_fs.Directory.Exists(dir)).IsFalse();
+     }
+ 
+     // --- Exists ---
+@@ -237,9 +188,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Exists_ExistingFile_ReturnsTrue()
+     {
+-        _fs.File.WriteAllText(TempPath("check.txt"), "present");
++        System.IO.File.WriteAllText(TempPath("check.txt"), "present");
+ 
+-        var action = new Exists { Context = CreateContext(), Path = MakePath("check.txt") };
++        var action = new Exists { Context = CreateContext(), Path = TempPath("check.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -251,7 +202,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Exists_NonexistentFile_ReturnsFalse()
+     {
+-        var action = new Exists { Context = CreateContext(), Path = MakePath("missing.txt") };
++        var action = new Exists { Context = CreateContext(), Path = TempPath("missing.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -266,11 +217,11 @@ public class FileHandlerTests : IDisposable
+     public async Task List_ReturnsFileArray()
+     {
+         var subDir = TempPath("listdir");
+-        _fs.Directory.CreateDirectory(subDir);
+-        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
+-        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.txt"), "b");
++        System.IO.Directory.CreateDirectory(subDir);
++        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
++        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.txt"), "b");
+ 
+-        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir) };
++        var action = new List { Context = CreateContext(), Path = subDir };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -283,11 +234,11 @@ public class FileHandlerTests : IDisposable
+     public async Task List_WithPattern_FiltersFiles()
+     {
+         var subDir = TempPath("listpattern");
+-        _fs.Directory.CreateDirectory(subDir);
+-        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
+-        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.md"), "b");
++        System.IO.Directory.CreateDirectory(subDir);
++        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
++        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
+ 
+-        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Pattern = "*.txt" };
++        var action = new List { Context = CreateContext(), Path = subDir, Pattern = "*.txt" };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -300,13 +251,12 @@ public class FileHandlerTests : IDisposable
+     public async Task List_Recursive_FindsNestedFiles()
+     {
+         var subDir = TempPath("listrecursive");
+-        var nested = _fs.Path.Combine(subDir, "sub");
+-        _fs.Directory.CreateDirectory(subDir);
+-        _fs.Directory.CreateDirectory(nested);
+-        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "top.txt"), "top");
+-        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
++        var nested = System.IO.Path.Combine(subDir, "sub");
++        System.IO.Directory.CreateDirectory(nested);
++        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
++        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
+ 
+-        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Recursive = true };
++        var action = new List { Context = CreateContext(), Path = subDir, Recursive = true };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -318,7 +268,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task List_NonexistentDirectory_ReturnsError()
+     {
+-        var action = new List { Context = CreateContext(), Path = MakePath("nodir") };
++        var action = new List { Context = CreateContext(), Path = TempPath("nodir") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -329,9 +279,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_MimeType_FromExtension()
+     {
+-        _fs.File.WriteAllText(TempPath("doc.md"), "# Hello");
++        System.IO.File.WriteAllText(TempPath("doc.md"), "# Hello");
+ 
+-        var action = new Read { Context = CreateContext(), Path = MakePath("doc.md") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("doc.md") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -341,9 +291,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_Size_IsLazy()
+     {
+-        _fs.File.WriteAllText(TempPath("sized.txt"), "12345");
++        System.IO.File.WriteAllText(TempPath("sized.txt"), "12345");
+ 
+-        var action = new Read { Context = CreateContext(), Path = MakePath("sized.txt") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("sized.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -353,28 +303,33 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_ToString_ReturnsContent()
+     {
+-        _fs.File.WriteAllText(TempPath("tostring.txt"), "file-content");
++        System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
+ 
+-        var action = new Read { Context = CreateContext(), Path = MakePath("tostring.txt") };
++        var action = new Read { Context = CreateContext(), Path = TempPath("tostring.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+         await Assert.That(f!.ToString()).IsEqualTo("file-content");
+     }
+ 
+-    // --- Integration: file.exists -> MemoryStack -> output.write ---
++    // --- Integration: file.exists → MemoryStack → output.write ---
+ 
+     [Test]
+     public async Task Integration_FileExists_FlowsThroughMemoryStack_ToOutput()
+     {
+-        _fs.File.WriteAllText(TempPath("real.txt"), "I exist");
++        // Arrange: create a real file
++        System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
+ 
++        // Build engine with built-in modules
++
++        // Replace default channel on User actor's IO so we can capture output
+         var captureStream = new System.IO.MemoryStream();
+         _engine.User.Channels.Register(new Channel(
+             EngineChannels.Default, captureStream,
+             ChannelDirection.Output, ownsStream: true)
+         { ContentType = "text/plain" });
+ 
++        // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
+         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+         {
+             Name = "TestFileExistsFlow",
+@@ -415,21 +370,26 @@ public class FileHandlerTests : IDisposable
+             }
+         };
+ 
++        // Act: run the goal through the engine
+         var context = _engine.CreateContext();
+         var goalResult = await _engine.RunGoalAsync(goal, context);
+ 
++        // Assert: goal succeeded
+         await Assert.That(goalResult.Success).IsTrue();
+ 
++        // Assert: fileResult variable is in memory and is a @file object
+         var fileData = context.MemoryStack.Get("fileResult");
+         await Assert.That(fileData).IsNotNull();
+         var fileObj = fileData!.Value as FileResult;
+         await Assert.That(fileObj).IsNotNull();
+         await Assert.That(fileObj!.Exists).IsTrue();
+ 
++        // Assert: the lazy %fileResult.Exists% resolved through MemoryStack dot-notation
+         var existsData = context.MemoryStack.Get("fileResult.Exists");
+         await Assert.That(existsData).IsNotNull();
+         await Assert.That(existsData!.Value).IsEqualTo(true);
+ 
++        // Assert: output.write wrote "True" to our capture stream
+         captureStream.Position = 0;
+         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+         await Assert.That(output).IsEqualTo("True" + System.Environment.NewLine);
+@@ -438,6 +398,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Integration_FileNotExists_FlowsThroughMemoryStack_ToOutput()
+     {
++        // Arrange: NO file created — path doesn't exist
++
++
+         var captureStream = new System.IO.MemoryStream();
+         _engine.User.Channels.Register(new Channel(
+             EngineChannels.Default, captureStream,
+@@ -489,10 +452,12 @@ public class FileHandlerTests : IDisposable
+ 
+         await Assert.That(goalResult.Success).IsTrue();
+ 
++        // fileResult.Exists should be false for non-existent file
+         var existsData = context.MemoryStack.Get("fileResult.Exists");
+         await Assert.That(existsData).IsNotNull();
+         await Assert.That(existsData!.Value).IsEqualTo(false);
+ 
++        // Output should be "False"
+         captureStream.Position = 0;
+         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+         await Assert.That(output).IsEqualTo("False" + System.Environment.NewLine);
+diff --git a/PLang.Tests/Runtime2/Types/EngineTypesTests.cs b/PLang.Tests/Runtime2/Types/EngineTypesTests.cs
+new file mode 100644
+index 00000000..8d8e2554
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Types/EngineTypesTests.cs
+@@ -0,0 +1,474 @@
++namespace PLang.Tests.Runtime2.Types;
++
++public class EngineTypesTests
++{
++    private EngineTypes _types = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _types = new EngineTypes();
++    }
++
++    // --- Clr: PLang name → CLR type ---
++
++    [Test]
++    public async Task Clr_String_ReturnsStringType()
++    {
++        await Assert.That(_types.Clr("string")).IsEqualTo(typeof(string));
++    }
++
++    [Test]
++    public async Task Clr_Text_ReturnsStringType()
++    {
++        await Assert.That(_types.Clr("text")).IsEqualTo(typeof(string));
++    }
++
++    [Test]
++    public async Task Clr_Int_ReturnsIntType()
++    {
++        await Assert.That(_types.Clr("int")).IsEqualTo(typeof(int));
++    }
++
++    [Test]
++    public async Task Clr_Long_ReturnsLongType()
++    {
++        await Assert.That(_types.Clr("long")).IsEqualTo(typeof(long));
++    }
++
++    [Test]
++    public async Task Clr_Bool_ReturnsBoolType()
++    {
++        await Assert.That(_types.Clr("bool")).IsEqualTo(typeof(bool));
++    }
++
++    [Test]
++    public async Task Clr_DateTime_ReturnsDateTimeType()
++    {
++        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(DateTime));
++    }
++
++    [Test]
++    public async Task Clr_Bytes_ReturnsByteArrayType()
++    {
++        await Assert.That(_types.Clr("bytes")).IsEqualTo(typeof(byte[]));
++    }
++
++    [Test]
++    public async Task Clr_NullableInt_ReturnsNullableIntType()
++    {
++        await Assert.That(_types.Clr("int?")).IsEqualTo(typeof(int?));
++    }
++
++    [Test]
++    public async Task Clr_NullableGuid_ReturnsNullableGuidType()
++    {
++        await Assert.That(_types.Clr("guid?")).IsEqualTo(typeof(Guid?));
++    }
++
++    [Test]
++    public async Task Clr_GenericListString_ReturnsListOfString()
++    {
++        await Assert.That(_types.Clr("list<string>")).IsEqualTo(typeof(List<string>));
++    }
++
++    [Test]
++    public async Task Clr_GenericListInt_ReturnsListOfInt()
++    {
++        await Assert.That(_types.Clr("list<int>")).IsEqualTo(typeof(List<int>));
++    }
++
++    [Test]
++    public async Task Clr_GenericDictStringInt_ReturnsDictionary()
++    {
++        await Assert.That(_types.Clr("dict<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
++    }
++
++    [Test]
++    public async Task Clr_GenericDictionaryStringInt_ReturnsDictionary()
++    {
++        await Assert.That(_types.Clr("dictionary<string,int>")).IsEqualTo(typeof(Dictionary<string, int>));
++    }
++
++    [Test]
++    public async Task Clr_CaseInsensitive_Works()
++    {
++        await Assert.That(_types.Clr("STRING")).IsEqualTo(typeof(string));
++        await Assert.That(_types.Clr("StRiNg")).IsEqualTo(typeof(string));
++    }
++
++    [Test]
++    public async Task Clr_MimeTextPlain_ReturnsString()
++    {
++        await Assert.That(_types.Clr("text/plain")).IsEqualTo(typeof(string));
++    }
++
++    [Test]
++    public async Task Clr_MimeImageJpeg_ReturnsByteArray()
++    {
++        await Assert.That(_types.Clr("image/jpeg")).IsEqualTo(typeof(byte[]));
++    }
++
++    [Test]
++    public async Task Clr_MimeApplicationJson_ReturnsObject()
++    {
++        await Assert.That(_types.Clr("application/json")).IsEqualTo(typeof(object));
++    }
++
++    [Test]
++    public async Task Clr_MimeOctetStream_ReturnsByteArray()
++    {
++        await Assert.That(_types.Clr("application/octet-stream")).IsEqualTo(typeof(byte[]));
++    }
++
++    [Test]
++    public async Task Clr_NullOrEmpty_ReturnsNull()
++    {
++        await Assert.That(_types.Clr(null!)).IsNull();
++        await Assert.That(_types.Clr("")).IsNull();
++        await Assert.That(_types.Clr("   ")).IsNull();
++    }
++
++    [Test]
++    public async Task Clr_UnknownType_ReturnsNull()
++    {
++        await Assert.That(_types.Clr("unknowntype")).IsNull();
++    }
++
++    // --- Name: CLR type → PLang name ---
++
++    [Test]
++    public async Task Name_String_ReturnsString()
++    {
++        await Assert.That(_types.Name(typeof(string))).IsEqualTo("string");
++    }
++
++    [Test]
++    public async Task Name_Int_ReturnsInt()
++    {
++        await Assert.That(_types.Name(typeof(int))).IsEqualTo("int");
++    }
++
++    [Test]
++    public async Task Name_ByteArray_ReturnsBytes()
++    {
++        await Assert.That(_types.Name(typeof(byte[]))).IsEqualTo("bytes");
++    }
++
++    [Test]
++    public async Task Name_NullableInt_ReturnsIntQuestionMark()
++    {
++        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("int?");
++    }
++
++    [Test]
++    public async Task Name_ListOfString_ReturnsListString()
++    {
++        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<string>");
++    }
++
++    [Test]
++    public async Task Name_IListOfInt_ReturnsListInt()
++    {
++        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<int>");
++    }
++
++    [Test]
++    public async Task Name_DictionaryStringInt_ReturnsDictStringInt()
++    {
++        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<string,int>");
++    }
++
++    [Test]
++    public async Task Name_IntArray_ReturnsListInt()
++    {
++        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<int>");
++    }
++
++    [Test]
++    public async Task Name_Null_ReturnsObject()
++    {
++        await Assert.That(_types.Name(null!)).IsEqualTo("object");
++    }
++
++    [Test]
++    public async Task Name_UnknownType_ReturnsLowercaseName()
++    {
++        await Assert.That(_types.Name(typeof(Uri))).IsEqualTo("uri");
++    }
++
++    // --- Kind: extension → kind ---
++
++    [Test]
++    public async Task Kind_Jpg_ReturnsImage()
++    {
++        await Assert.That(_types.Kind(".jpg")).IsEqualTo("image");
++    }
++
++    [Test]
++    public async Task Kind_Xlsx_ReturnsSpreadsheet()
++    {
++        await Assert.That(_types.Kind(".xlsx")).IsEqualTo("spreadsheet");
++    }
++
++    [Test]
++    public async Task Kind_Mp4_ReturnsVideo()
++    {
++        await Assert.That(_types.Kind(".mp4")).IsEqualTo("video");
++    }
++
++    [Test]
++    public async Task Kind_Mp3_ReturnsAudio()
++    {
++        await Assert.That(_types.Kind(".mp3")).IsEqualTo("audio");
++    }
++
++    [Test]
++    public async Task Kind_Zip_ReturnsArchive()
++    {
++        await Assert.That(_types.Kind(".zip")).IsEqualTo("archive");
++    }
++
++    [Test]
++    public async Task Kind_Cs_ReturnsCode()
++    {
++        await Assert.That(_types.Kind(".cs")).IsEqualTo("code");
++    }
++
++    [Test]
++    public async Task Kind_Pdf_ReturnsDocument()
++    {
++        await Assert.That(_types.Kind(".pdf")).IsEqualTo("document");
++    }
++
++    [Test]
++    public async Task Kind_Goal_ReturnsPlang()
++    {
++        await Assert.That(_types.Kind(".goal")).IsEqualTo("plang");
++    }
++
++    [Test]
++    public async Task Kind_WithoutDot_Works()
++    {
++        await Assert.That(_types.Kind("jpg")).IsEqualTo("image");
++    }
++
++    [Test]
++    public async Task Kind_CaseInsensitive_Works()
++    {
++        await Assert.That(_types.Kind(".JPG")).IsEqualTo("image");
++    }
++
++    [Test]
++    public async Task Kind_UnknownExtension_ReturnsNull()
++    {
++        await Assert.That(_types.Kind(".xyz123")).IsNull();
++    }
++
++    [Test]
++    public async Task Kind_KeyExtension_ReturnsCertificate()
++    {
++        // .key conflict resolved: "certificate" wins over "presentation"
++        await Assert.That(_types.Kind(".key")).IsEqualTo("certificate");
++    }
++
++    // --- Mime: extension → MIME content type ---
++
++    [Test]
++    public async Task Mime_Jpg_ReturnsImageJpeg()
++    {
++        await Assert.That(_types.Mime(".jpg")).IsEqualTo("image/jpeg");
++    }
++
++    [Test]
++    public async Task Mime_Json_ReturnsApplicationJson()
++    {
++        await Assert.That(_types.Mime(".json")).IsEqualTo("application/json");
++    }
++
++    [Test]
++    public async Task Mime_Xlsx_ReturnsCorrectMime()
++    {
++        await Assert.That(_types.Mime(".xlsx"))
++            .IsEqualTo("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
++    }
++
++    [Test]
++    public async Task Mime_UnknownExtension_ReturnsOctetStream()
++    {
++        await Assert.That(_types.Mime(".xyz123")).IsEqualTo("application/octet-stream");
++    }
++
++    [Test]
++    public async Task Mime_WithoutDot_Works()
++    {
++        await Assert.That(_types.Mime("jpg")).IsEqualTo("image/jpeg");
++    }
++
++    // --- Compressible: kind → compressible? ---
++
++    [Test]
++    public async Task Compressible_Text_ReturnsTrue()
++    {
++        await Assert.That(_types.Compressible("text")).IsTrue();
++    }
++
++    [Test]
++    public async Task Compressible_Spreadsheet_ReturnsTrue()
++    {
++        await Assert.That(_types.Compressible("spreadsheet")).IsTrue();
++    }
++
++    [Test]
++    public async Task Compressible_Code_ReturnsTrue()
++    {
++        await Assert.That(_types.Compressible("code")).IsTrue();
++    }
++
++    [Test]
++    public async Task Compressible_Document_ReturnsTrue()
++    {
++        await Assert.That(_types.Compressible("document")).IsTrue();
++    }
++
++    [Test]
++    public async Task Compressible_Image_ReturnsFalse()
++    {
++        await Assert.That(_types.Compressible("image")).IsFalse();
++    }
++
++    [Test]
++    public async Task Compressible_Video_ReturnsFalse()
++    {
++        await Assert.That(_types.Compressible("video")).IsFalse();
++    }
++
++    [Test]
++    public async Task Compressible_Audio_ReturnsFalse()
++    {
++        await Assert.That(_types.Compressible("audio")).IsFalse();
++    }
++
++    [Test]
++    public async Task Compressible_Archive_ReturnsFalse()
++    {
++        await Assert.That(_types.Compressible("archive")).IsFalse();
++    }
++
++    [Test]
++    public async Task Compressible_NullOrEmpty_ReturnsFalse()
++    {
++        await Assert.That(_types.Compressible(null!)).IsFalse();
++        await Assert.That(_types.Compressible("")).IsFalse();
++    }
++
++    // --- Add/Remove: runtime extensibility ---
++
++    [Test]
++    public async Task Add_NewExtension_IsAccessible()
++    {
++        _types.Add(".plx", "plang-extension", "application/x-plang");
++
++        await Assert.That(_types.Kind(".plx")).IsEqualTo("plang-extension");
++        await Assert.That(_types.Mime(".plx")).IsEqualTo("application/x-plang");
++    }
++
++    [Test]
++    public async Task Add_OverrideExisting_ReplacesPrevious()
++    {
++        _types.Add(".txt", "custom-text", "text/x-custom");
++
++        await Assert.That(_types.Kind(".txt")).IsEqualTo("custom-text");
++        await Assert.That(_types.Mime(".txt")).IsEqualTo("text/x-custom");
++    }
++
++    [Test]
++    public async Task Add_MimeOptional_OnlyUpdatesKind()
++    {
++        var originalMime = _types.Mime(".txt");
++
++        _types.Add(".txt", "custom-text");
++
++        await Assert.That(_types.Kind(".txt")).IsEqualTo("custom-text");
++        await Assert.That(_types.Mime(".txt")).IsEqualTo(originalMime);
++    }
++
++    [Test]
++    public async Task Remove_ExistingExtension_RemovesBothKindAndMime()
++    {
++        _types.Remove(".jpg");
++
++        await Assert.That(_types.Kind(".jpg")).IsNull();
++        await Assert.That(_types.Mime(".jpg")).IsEqualTo("application/octet-stream");
++    }
++
++    [Test]
++    public async Task Remove_NonexistentExtension_NoError()
++    {
++        _types.Remove(".doesnotexist");
++        // No exception thrown
++    }
++
++    // --- KindOf: type value → kind ---
++
++    [Test]
++    public async Task KindOf_KnownKindName_ReturnsSelf()
++    {
++        await Assert.That(_types.KindOf("image")).IsEqualTo("image");
++        await Assert.That(_types.KindOf("video")).IsEqualTo("video");
++        await Assert.That(_types.KindOf("text")).IsEqualTo("text");
++        await Assert.That(_types.KindOf("archive")).IsEqualTo("archive");
++        await Assert.That(_types.KindOf("code")).IsEqualTo("code");
++    }
++
++    [Test]
++    public async Task KindOf_KnownKindName_CaseInsensitive()
++    {
++        await Assert.That(_types.KindOf("IMAGE")).IsEqualTo("image");
++        await Assert.That(_types.KindOf("Video")).IsEqualTo("video");
++    }
++
++    [Test]
++    public async Task KindOf_MimeType_ReturnsKind()
++    {
++        await Assert.That(_types.KindOf("image/jpeg")).IsEqualTo("image");
++        await Assert.That(_types.KindOf("video/mp4")).IsEqualTo("video");
++        await Assert.That(_types.KindOf("audio/mpeg")).IsEqualTo("audio");
++        await Assert.That(_types.KindOf("text/plain")).IsEqualTo("text");
++        await Assert.That(_types.KindOf("application/json")).IsEqualTo("text");
++        await Assert.That(_types.KindOf("application/pdf")).IsEqualTo("document");
++    }
++
++    [Test]
++    public async Task KindOf_PlangTypeName_ReturnsNull()
++    {
++        await Assert.That(_types.KindOf("string")).IsNull();
++        await Assert.That(_types.KindOf("int")).IsNull();
++        await Assert.That(_types.KindOf("datetime")).IsNull();
++        await Assert.That(_types.KindOf("bool")).IsNull();
++    }
++
++    [Test]
++    public async Task KindOf_UnknownMime_ReturnsNull()
++    {
++        await Assert.That(_types.KindOf("application/x-unknown-test")).IsNull();
++    }
++
++    [Test]
++    public async Task KindOf_NullOrEmpty_ReturnsNull()
++    {
++        await Assert.That(_types.KindOf(null!)).IsNull();
++        await Assert.That(_types.KindOf("")).IsNull();
++    }
++
++    // --- Engine integration ---
++
++    [Test]
++    public async Task Engine_HasTypesProperty()
++    {
++        await using var engine = new Engine("/test");
++
++        await Assert.That(engine.Types).IsNotNull();
++        await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Context/PLangContext.cs b/PLang/Runtime2/Engine/Context/PLangContext.cs
+index cc2bb683..234f70e6 100644
+--- a/PLang/Runtime2/Engine/Context/PLangContext.cs
++++ b/PLang/Runtime2/Engine/Context/PLangContext.cs
+@@ -102,6 +102,9 @@ public sealed class PLangContext : IDisposable
+         System.Events.OnChanged = InvalidateEventCache;
+         User.Events.OnChanged = InvalidateEventCache;
+ 
++        // Stamp context on MemoryStack (propagates to all existing Data)
++        MemoryStack.Context = this;
++
+         // Register context variables on the memory stack
+         RegisterContextVariables();
+     }
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+index 035693ef..b303c1be 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+@@ -29,6 +29,8 @@ public sealed partial class @this
+             result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
+         }
+ 
++        result.Context = context;
++
+         if (result.Value != null && this.Return != null)
+         {
+             foreach (var returnVar in this.Return)
+diff --git a/PLang/Runtime2/Engine/Memory/Data.cs b/PLang/Runtime2/Engine/Memory/Data.cs
+index a26f5472..98b1efd1 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.cs
+@@ -4,6 +4,7 @@ using PLang.Attributes;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory.Navigators;
++using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Utility;
+ 
+ namespace PLang.Runtime2.Engine.Memory;
+@@ -17,12 +18,25 @@ public sealed class Type
+ {
+     public string Value { get; }
+ 
++    [JsonIgnore]
++    internal PLangContext? Context { get; set; }
++
+     public Type(string value) { Value = value; }
+ 
+     /// <summary>
+-    /// Derive CLR type on the fly via TypeMapping.
++    /// Derive CLR type: navigate through context to Engine.Types, fall back to static TypeMapping.
++    /// </summary>
++    public System.Type? ClrType => Context?.Engine.Types.Clr(Value) ?? TypeMapping.GetType(Value);
++
++    /// <summary>
++    /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
+     /// </summary>
+-    public System.Type? ClrType => TypeMapping.GetType(Value);
++    public string? Kind => Context?.Engine.Types.KindOf(Value);
++
++    /// <summary>
++    /// Whether content of this type benefits from compression.
++    /// </summary>
++    public bool Compressible => Kind != null && (Context?.Engine.Types.Compressible(Kind) ?? false);
+ 
+     public static Type String => new("string");
+     public static Type Int => new("int");
+@@ -54,10 +68,22 @@ public class Data
+ {
+     private object? _value;
+     private Type? _type;
++    private PLangContext? _context;
+ 
+     [JsonPropertyName("name")]
+     public string Name { get; }
+ 
++    [JsonIgnore]
++    public PLangContext? Context
++    {
++        get => _context;
++        set
++        {
++            _context = value;
++            if (_type != null) _type.Context = value;
++        }
++    }
++
+     [JsonIgnore]
+     public string Path { get; }
+ 
+@@ -104,7 +130,7 @@ public class Data
+     {
+         Name = CleanName(name);
+         _value = UnwrapJsonElement(value);
+-        _type = type ?? (_value != null ? new Type(TypeMapping.GetTypeName(_value.GetType())) : null);
++        _type = type;
+         Parent = parent;
+         Path = BuildPath(parent, Name);
+         IsInitialized = _value != null;
+@@ -122,9 +148,7 @@ public class Data
+             _value = UnwrapJsonElement(value);
+             Updated = System.DateTime.UtcNow;
+             IsInitialized = true;
+-            _type = _value != null
+-                ? new Type(TypeMapping.GetTypeName(_value.GetType()))
+-                : null;
++            _type = null;
+         }
+     }
+ 
+@@ -133,8 +157,22 @@ public class Data
+     [JsonConverter(typeof(TypeJsonConverter))]
+     public Type? Type
+     {
+-        get => _type;
+-        set => _type = value;
++        get
++        {
++            if (_type != null) return _type;
++            if (_value == null) return null;
++            var typeName = _context?.Engine.Types.Name(_value.GetType())
++                           ?? TypeMapping.GetTypeName(_value.GetType());
++            var derived = new Type(typeName);
++            derived.Context = _context;
++            _type = derived;
++            return _type;
++        }
++        set
++        {
++            _type = value;
++            if (value != null && _context != null) value.Context = _context;
++        }
+     }
+ 
+     /// <summary>
+@@ -214,6 +252,7 @@ public class Data
+             return null;
+ 
+         var child = new Data(segment, childValue, parent: this);
++        child.Context = _context;
+ 
+         if (string.IsNullOrEmpty(remaining))
+             return child;
+diff --git a/PLang/Runtime2/Engine/Memory/MemoryStack.cs b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+index ca029470..432f9cdf 100644
+--- a/PLang/Runtime2/Engine/Memory/MemoryStack.cs
++++ b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+@@ -1,6 +1,8 @@
+ using System.Collections.Concurrent;
++using System.Text.Json.Serialization;
+ using System.Text.RegularExpressions;
+ using Force.DeepCloner;
++using PLang.Runtime2.Engine.Context;
+ 
+ namespace PLang.Runtime2.Engine.Memory;
+ 
+@@ -10,6 +12,19 @@ namespace PLang.Runtime2.Engine.Memory;
+ public class MemoryStack
+ {
+     private readonly ConcurrentDictionary<string, Data> _variables = new(StringComparer.OrdinalIgnoreCase);
++    private PLangContext? _context;
++
++    [JsonIgnore]
++    internal PLangContext? Context
++    {
++        get => _context;
++        set
++        {
++            _context = value;
++            foreach (var data in _variables.Values)
++                data.Context = value;
++        }
++    }
+ 
+     public MemoryStack()
+     {
+@@ -24,6 +39,7 @@ public class MemoryStack
+     /// </summary>
+     public void Put(Data value)
+     {
++        value.Context = _context;
+         _variables[value.Name] = value;
+     }
+ 
+@@ -41,7 +57,9 @@ public class MemoryStack
+         }
+         else
+         {
+-            _variables[name] = new Data(name, value, type);
++            var data = new Data(name, value, type);
++            data.Context = _context;
++            _variables[name] = data;
+         }
+     }
+ 
+diff --git a/PLang/Runtime2/Engine/Memory/Path.cs b/PLang/Runtime2/Engine/Memory/Path.cs
+deleted file mode 100644
+index 71c035c1..00000000
+--- a/PLang/Runtime2/Engine/Memory/Path.cs
++++ /dev/null
+@@ -1,302 +0,0 @@
+-using PLang.Interfaces;
+-using PLang.Runtime2.Engine.Channels.Serializers;
+-using PLang.Runtime2.Engine.Errors;
+-using PLang.Runtime2.Engine.Utility;
+-
+-namespace PLang.Runtime2.Engine.Memory;
+-
+-/// <summary>
+-/// Rich path wrapper for PLang action parameters.
+-/// Resolves raw path strings into absolute paths with navigable properties.
+-/// The source generator detects Resolve(string, Engine) and auto-wraps string parameters.
+-/// </summary>
+-public sealed class Path
+-{
+-    private readonly Engine.@this _engine;
+-    private readonly IPLangFileSystem _fs;
+-    private readonly string _rawPath;
+-    private readonly string _absolutePath;
+-
+-    // Cached string-derived properties (never change once path is set)
+-    private string? _extension;
+-    private string? _fileName;
+-    private string? _fileNameWithoutExtension;
+-    private string? _directory;
+-
+-    public Path(string rawPath, Engine.@this engine)
+-    {
+-        ArgumentNullException.ThrowIfNull(rawPath);
+-        ArgumentNullException.ThrowIfNull(engine);
+-
+-        _rawPath = rawPath;
+-        _engine = engine;
+-        _fs = engine.FileSystem;
+-        _absolutePath = _fs.Path.GetFullPath(rawPath);
+-    }
+-
+-    /// <summary>
+-    /// Engine-resolvable convention — source generator detects this static method
+-    /// and generates: Path.Resolve(__Resolve&lt;string&gt;("path"), __engine!)
+-    /// </summary>
+-    public static Path Resolve(string rawPath, Engine.@this engine)
+-        => new Path(rawPath, engine);
+-
+-    /// <summary>The raw path string as provided (before resolution)</summary>
+-    public string Raw => _rawPath;
+-
+-    /// <summary>Absolute path on disk</summary>
+-    public string Absolute => _absolutePath;
+-
+-    /// <summary>Path relative to the engine's root directory</summary>
+-    public string Relative
+-    {
+-        get
+-        {
+-            var root = _fs.RootDirectory;
+-
+-            // Ensure comparison includes trailing separator to avoid
+-            // prefix false positives ("/app" matching "/application")
+-            if (!root.EndsWith(_fs.Path.DirectorySeparatorChar) && !root.EndsWith(_fs.Path.AltDirectorySeparatorChar))
+-                root += _fs.Path.DirectorySeparatorChar;
+-
+-            if (_absolutePath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+-                return _absolutePath[root.Length..];
+-
+-            // Exact match (path IS the root directory)
+-            if (string.Equals(_absolutePath, _fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
+-                return ".";
+-
+-            return _absolutePath;
+-        }
+-    }
+-
+-    /// <summary>File extension including the dot (e.g., ".json")</summary>
+-    public string Extension => _extension ??= _fs.Path.GetExtension(_absolutePath);
+-
+-    /// <summary>File name with extension (e.g., "config.json")</summary>
+-    public string FileName => _fileName ??= _fs.Path.GetFileName(_absolutePath);
+-
+-    /// <summary>File name without extension (e.g., "config")</summary>
+-    public string FileNameWithoutExtension
+-        => _fileNameWithoutExtension ??= _fs.Path.GetFileNameWithoutExtension(_absolutePath);
+-
+-    /// <summary>Parent directory path</summary>
+-    public string Directory => _directory ??= _fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+-
+-    /// <summary>MIME type derived from file extension</summary>
+-    public string MimeType => TypeMapping.GetMimeType(Extension);
+-
+-    /// <summary>Structural: has a file extension (no I/O)</summary>
+-    public bool IsFile => !string.IsNullOrEmpty(Extension);
+-
+-    /// <summary>Structural: no file extension (no I/O)</summary>
+-    public bool IsDirectory => string.IsNullOrEmpty(Extension);
+-
+-    /// <summary>Whether anything exists at this path (live filesystem check)</summary>
+-    public bool Exists => _fs.File.Exists(_absolutePath) || _fs.Directory.Exists(_absolutePath);
+-
+-    /// <summary>File size in bytes. Returns 0 if file doesn't exist. (live check)</summary>
+-    public long Size
+-    {
+-        get
+-        {
+-            var info = _fs.FileInfo.New(_absolutePath);
+-            return info.Exists ? info.Length : 0;
+-        }
+-    }
+-
+-    // --- Behavior methods (OBP: behavior belongs to the owner) ---
+-
+-    public Data Copy(actions.file.Copy action)
+-    {
+-        if (!Exists)
+-            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+-
+-        try
+-        {
+-            var dest = ResolveDestination(action.Destination);
+-            EnsureDirectory(dest.Directory);
+-
+-            if (_fs.File.Exists(_absolutePath))
+-                _fs.File.Copy(_absolutePath, dest.Absolute, action.Overwrite);
+-            else
+-                CopyDirectory(_absolutePath, dest.Absolute, action.Overwrite, action.IncludeSubfolders);
+-
+-            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-    }
+-
+-    public Data Move(actions.file.Move action)
+-    {
+-        if (!Exists)
+-            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+-
+-        try
+-        {
+-            var dest = ResolveDestination(action.Destination);
+-            EnsureDirectory(dest.Directory);
+-
+-            if (_fs.File.Exists(_absolutePath))
+-                _fs.File.Move(_absolutePath, dest.Absolute, action.Overwrite);
+-            else
+-            {
+-                if (action.Overwrite && _fs.Directory.Exists(dest.Absolute))
+-                    _fs.Directory.Delete(dest.Absolute, recursive: true);
+-
+-                _fs.Directory.Move(_absolutePath, dest.Absolute);
+-            }
+-
+-            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-    }
+-
+-    public Data Delete(actions.file.Delete action)
+-    {
+-        try
+-        {
+-            if (_fs.File.Exists(_absolutePath))
+-                _fs.File.Delete(_absolutePath);
+-            else if (_fs.Directory.Exists(_absolutePath))
+-            {
+-                if (!action.Recursive && _fs.Directory.GetFileSystemEntries(_absolutePath).Length > 0)
+-                    return Data.FromError(new ServiceError(
+-                        $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
+-
+-                _fs.Directory.Delete(_absolutePath, action.Recursive);
+-            }
+-            else if (!action.IgnoreIfNotFound)
+-                return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+-
+-            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-    }
+-
+-    public Data Read()
+-    {
+-        if (!_fs.File.Exists(_absolutePath))
+-            return Data.FromError(new ServiceError($"File not found: {Raw}", "NotFound", 404));
+-
+-        try
+-        {
+-            var file = new actions.file.types.@file(_absolutePath, _fs);
+-            _ = file.Value; // Eager-read so step cache captures content
+-            return Data.Ok(file);
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-    }
+-
+-    public Data List(actions.file.List action)
+-    {
+-        if (!_fs.Directory.Exists(_absolutePath))
+-            return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+-
+-        try
+-        {
+-            var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+-            var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
+-                .Select(f => new actions.file.types.@file(f, _fs))
+-                .ToArray();
+-            return Data.Ok(files);
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-    }
+-
+-    /// <summary>Wraps this path as a @file object — used by exists handler</summary>
+-    public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+-
+-    public async Task<Data> Save(actions.file.Save action)
+-    {
+-        try
+-        {
+-            EnsureDirectory(Directory);
+-
+-            if (action.Value is byte[] bytes)
+-                await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
+-            else if (action.Value is string str)
+-                await _fs.File.WriteAllTextAsync(_absolutePath, str);
+-            else
+-            {
+-                await using var stream = _fs.File.Create(_absolutePath);
+-                await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+-                    { Stream = stream, Data = action.Value, Extension = Extension });
+-            }
+-
+-            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+-        }
+-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+-        }
+-        catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+-        {
+-            return Data.FromError(new ServiceError(ex.Message, "SerializationError", 500));
+-        }
+-    }
+-
+-    /// <summary>
+-    /// If source is a file and destination is an existing directory,
+-    /// resolve to a file inside that directory with the source filename.
+-    /// </summary>
+-    private Path ResolveDestination(Path destination)
+-    {
+-        if (_fs.File.Exists(_absolutePath) && _fs.Directory.Exists(destination.Absolute))
+-            return new Path(_fs.Path.Combine(destination.Absolute, FileName), _engine);
+-
+-        return destination;
+-    }
+-
+-    private void EnsureDirectory(string dir)
+-    {
+-        if (!string.IsNullOrEmpty(dir) && !_fs.Directory.Exists(dir))
+-            _fs.Directory.CreateDirectory(dir);
+-    }
+-
+-    private void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
+-    {
+-        _fs.Directory.CreateDirectory(dest);
+-
+-        foreach (var file in _fs.Directory.GetFiles(src))
+-        {
+-            var fileName = _fs.Path.GetFileName(file);
+-            _fs.File.Copy(file, _fs.Path.Combine(dest, fileName), overwrite);
+-        }
+-
+-        if (!includeSubfolders) return;
+-
+-        foreach (var subDir in _fs.Directory.GetDirectories(src))
+-        {
+-            var dirName = _fs.Path.GetFileName(subDir);
+-            CopyDirectory(subDir, _fs.Path.Combine(dest, dirName), overwrite, includeSubfolders);
+-        }
+-    }
+-
+-    /// <summary>Returns relative path — PLang users think in relative paths</summary>
+-    public override string ToString() => Relative;
+-
+-    public override bool Equals(object? obj) => obj switch
+-    {
+-        Path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
+-        string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
+-        _ => false
+-    };
+-
+-    public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
+-}
+diff --git a/PLang/Runtime2/Engine/Types/this.cs b/PLang/Runtime2/Engine/Types/this.cs
+new file mode 100644
+index 00000000..9ec4510a
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Types/this.cs
+@@ -0,0 +1,635 @@
++using System.Reflection;
++using System.Text.Json.Serialization;
++
++namespace PLang.Runtime2.Engine.Types;
++
++/// <summary>
++/// Owns all type knowledge in PLang Runtime2.
++/// Consolidates PLang names ↔ CLR types, file extension → Kind, extension → MIME,
++/// and Kind → compressibility into a single live instance on Engine.
++/// </summary>
++public sealed class @this
++{
++    private readonly Dictionary<string, System.Type> _nameToClr = new(StringComparer.OrdinalIgnoreCase)
++    {
++        // Primitives
++        ["string"] = typeof(string),
++        ["text"] = typeof(string),
++        ["int"] = typeof(int),
++        ["integer"] = typeof(int),
++        ["long"] = typeof(long),
++        ["float"] = typeof(float),
++        ["double"] = typeof(double),
++        ["decimal"] = typeof(decimal),
++        ["bool"] = typeof(bool),
++        ["boolean"] = typeof(bool),
++        ["datetime"] = typeof(DateTime),
++        ["date"] = typeof(DateTime),
++        ["time"] = typeof(TimeSpan),
++        ["timespan"] = typeof(TimeSpan),
++        ["guid"] = typeof(Guid),
++        ["byte"] = typeof(byte),
++        ["bytes"] = typeof(byte[]),
++
++        // Collections
++        ["list"] = typeof(List<object>),
++        ["array"] = typeof(object[]),
++        ["dictionary"] = typeof(Dictionary<string, object>),
++        ["dict"] = typeof(Dictionary<string, object>),
++        ["map"] = typeof(Dictionary<string, object>),
++        ["object"] = typeof(object),
++        ["dynamic"] = typeof(object),
++        ["json"] = typeof(System.Text.Json.Nodes.JsonNode),
++        ["json[]"] = typeof(System.Text.Json.Nodes.JsonArray),
++        ["actor"] = typeof(Context.Actor),
++        ["goal.call"] = typeof(Goals.Goal.GoalCall),
++        ["tstring"] = typeof(Memory.TString),
++        ["translatable"] = typeof(Memory.TString),
++
++        // Nullable types
++        ["int?"] = typeof(int?),
++        ["long?"] = typeof(long?),
++        ["double?"] = typeof(double?),
++        ["bool?"] = typeof(bool?),
++        ["datetime?"] = typeof(DateTime?),
++        ["guid?"] = typeof(Guid?),
++    };
++
++    private readonly Dictionary<System.Type, string> _clrToName = new()
++    {
++        [typeof(string)] = "string",
++        [typeof(int)] = "int",
++        [typeof(long)] = "long",
++        [typeof(float)] = "float",
++        [typeof(double)] = "double",
++        [typeof(decimal)] = "decimal",
++        [typeof(bool)] = "bool",
++        [typeof(DateTime)] = "datetime",
++        [typeof(TimeSpan)] = "timespan",
++        [typeof(Guid)] = "guid",
++        [typeof(byte)] = "byte",
++        [typeof(byte[])] = "bytes",
++        [typeof(object)] = "object",
++        [typeof(Goals.Goal.GoalCall)] = "goal.call",
++        [typeof(Memory.TString)] = "tstring",
++    };
++
++    private readonly Dictionary<string, string> _extensionToKind = new(StringComparer.OrdinalIgnoreCase)
++    {
++        // plang
++        [".goal"] = "plang",
++
++        // video
++        [".mp4"] = "video",
++        [".webm"] = "video",
++        [".mkv"] = "video",
++        [".mov"] = "video",
++        [".avi"] = "video",
++        [".flv"] = "video",
++
++        // audio
++        [".mp3"] = "audio",
++        [".wav"] = "audio",
++        [".flac"] = "audio",
++        [".aac"] = "audio",
++        [".ogg"] = "audio",
++        [".m4a"] = "audio",
++
++        // text
++        [".txt"] = "text",
++        [".json"] = "text",
++        [".xml"] = "text",
++        [".csv"] = "text",
++        [".md"] = "text",
++        [".yaml"] = "text",
++        [".yml"] = "text",
++        [".ini"] = "text",
++
++        // image
++        [".jpg"] = "image",
++        [".jpeg"] = "image",
++        [".png"] = "image",
++        [".gif"] = "image",
++        [".bmp"] = "image",
++        [".tif"] = "image",
++        [".tiff"] = "image",
++        [".svg"] = "image",
++        [".webp"] = "image",
++        [".heic"] = "image",
++
++        // archive
++        [".zip"] = "archive",
++        [".rar"] = "archive",
++        [".7z"] = "archive",
++        [".tar"] = "archive",
++        [".gz"] = "archive",
++        [".bz2"] = "archive",
++
++        // spreadsheet
++        [".xls"] = "spreadsheet",
++        [".xlsx"] = "spreadsheet",
++        [".ods"] = "spreadsheet",
++        [".numbers"] = "spreadsheet",
++        [".gsheet"] = "spreadsheet",
++
++        // document
++        [".doc"] = "document",
++        [".docx"] = "document",
++        [".odt"] = "document",
++        [".pages"] = "document",
++        [".gdoc"] = "document",
++        [".pdf"] = "document",
++
++        // presentation
++        [".ppt"] = "presentation",
++        [".pptx"] = "presentation",
++        [".odp"] = "presentation",
++        [".gslides"] = "presentation",
++
++        // code
++        [".cs"] = "code",
++        [".js"] = "code",
++        [".ts"] = "code",
++        [".py"] = "code",
++        [".java"] = "code",
++        [".cpp"] = "code",
++        [".h"] = "code",
++        [".html"] = "code",
++        [".css"] = "code",
++        [".go"] = "code",
++        [".rb"] = "code",
++        [".sh"] = "code",
++        [".bat"] = "code",
++        [".ps1"] = "code",
++
++        // vector
++        [".ai"] = "vector",
++        [".eps"] = "vector",
++
++        // 3d-model
++        [".obj"] = "3d-model",
++        [".fbx"] = "3d-model",
++        [".stl"] = "3d-model",
++        [".gltf"] = "3d-model",
++        [".glb"] = "3d-model",
++
++        // database
++        [".db"] = "database",
++        [".sqlite"] = "database",
++        [".mdb"] = "database",
++        [".sql"] = "database",
++        [".parquet"] = "database",
++        [".orc"] = "database",
++        [".avro"] = "database",
++        [".h5"] = "database",
++        [".feather"] = "database",
++        [".arrow"] = "database",
++
++        // subtitle
++        [".srt"] = "subtitle",
++        [".vtt"] = "subtitle",
++        [".sub"] = "subtitle",
++
++        // ebook
++        [".epub"] = "ebook",
++        [".mobi"] = "ebook",
++        [".azw3"] = "ebook",
++
++        // font
++        [".ttf"] = "font",
++        [".otf"] = "font",
++        [".woff"] = "font",
++        [".woff2"] = "font",
++
++        // package
++        [".msi"] = "package",
++        [".deb"] = "package",
++        [".rpm"] = "package",
++        [".pkg"] = "package",
++        [".dmg"] = "package",
++        [".nupkg"] = "package",
++
++        // disk-image
++        [".iso"] = "disk-image",
++        [".img"] = "disk-image",
++        [".vhd"] = "disk-image",
++        [".vmdk"] = "disk-image",
++        [".qcow2"] = "disk-image",
++        [".ova"] = "disk-image",
++
++        // mobile-app
++        [".apk"] = "mobile-app",
++        [".aab"] = "mobile-app",
++        [".ipa"] = "mobile-app",
++        [".xapk"] = "mobile-app",
++
++        // certificate (.key conflict resolved: "certificate" wins over "presentation")
++        [".crt"] = "certificate",
++        [".cer"] = "certificate",
++        [".pem"] = "certificate",
++        [".der"] = "certificate",
++        [".p12"] = "certificate",
++        [".pfx"] = "certificate",
++        [".key"] = "certificate",
++
++        // config
++        [".conf"] = "config",
++        [".cfg"] = "config",
++        [".toml"] = "config",
++        [".properties"] = "config",
++        [".env"] = "config",
++
++        // log
++        [".log"] = "log",
++
++        // machine-learning
++        [".pt"] = "machine-learning",
++        [".pth"] = "machine-learning",
++        [".pb"] = "machine-learning",
++        [".onnx"] = "machine-learning",
++        [".joblib"] = "machine-learning",
++
++        // email
++        [".eml"] = "email",
++        [".msg"] = "email",
++
++        // calendar
++        [".ics"] = "calendar",
++
++        // gis-data
++        [".shp"] = "gis-data",
++        [".geojson"] = "gis-data",
++        [".kml"] = "gis-data",
++        [".gpx"] = "gis-data",
++
++        // checksum
++        [".sha256"] = "checksum",
++        [".md5"] = "checksum",
++        [".sfv"] = "checksum",
++
++        // executable
++        [".exe"] = "executable",
++        [".dll"] = "executable",
++
++        // binary
++        [".bin"] = "binary",
++    };
++
++    private readonly Dictionary<string, string> _extensionToMime = new(StringComparer.OrdinalIgnoreCase)
++    {
++        // video
++        [".mp4"] = "video/mp4",
++        [".webm"] = "video/webm",
++        [".mkv"] = "video/x-matroska",
++        [".mov"] = "video/quicktime",
++        [".avi"] = "video/x-msvideo",
++        [".flv"] = "video/x-flv",
++
++        // audio
++        [".mp3"] = "audio/mpeg",
++        [".wav"] = "audio/wav",
++        [".flac"] = "audio/flac",
++        [".aac"] = "audio/aac",
++        [".ogg"] = "audio/ogg",
++        [".m4a"] = "audio/mp4",
++
++        // text
++        [".txt"] = "text/plain",
++        [".json"] = "application/json",
++        [".xml"] = "application/xml",
++        [".csv"] = "text/csv",
++        [".md"] = "text/markdown",
++        [".yaml"] = "text/yaml",
++        [".yml"] = "text/yaml",
++        [".ini"] = "text/plain",
++
++        // image
++        [".jpg"] = "image/jpeg",
++        [".jpeg"] = "image/jpeg",
++        [".png"] = "image/png",
++        [".gif"] = "image/gif",
++        [".bmp"] = "image/bmp",
++        [".tif"] = "image/tiff",
++        [".tiff"] = "image/tiff",
++        [".svg"] = "image/svg+xml",
++        [".webp"] = "image/webp",
++        [".heic"] = "image/heic",
++
++        // pdf
++        [".pdf"] = "application/pdf",
++
++        // archive
++        [".zip"] = "application/zip",
++        [".rar"] = "application/vnd.rar",
++        [".7z"] = "application/x-7z-compressed",
++        [".tar"] = "application/x-tar",
++        [".gz"] = "application/gzip",
++        [".bz2"] = "application/x-bzip2",
++
++        // spreadsheet
++        [".xls"] = "application/vnd.ms-excel",
++        [".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
++        [".ods"] = "application/vnd.oasis.opendocument.spreadsheet",
++
++        // document
++        [".doc"] = "application/msword",
++        [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
++        [".odt"] = "application/vnd.oasis.opendocument.text",
++
++        // presentation
++        [".ppt"] = "application/vnd.ms-powerpoint",
++        [".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
++        [".odp"] = "application/vnd.oasis.opendocument.presentation",
++
++        // code
++        [".cs"] = "text/x-csharp",
++        [".js"] = "text/javascript",
++        [".ts"] = "text/typescript",
++        [".py"] = "text/x-python",
++        [".java"] = "text/x-java",
++        [".cpp"] = "text/x-c++src",
++        [".h"] = "text/x-chdr",
++        [".html"] = "text/html",
++        [".css"] = "text/css",
++        [".go"] = "text/x-go",
++        [".rb"] = "text/x-ruby",
++        [".sh"] = "text/x-shellscript",
++
++        // ebook
++        [".epub"] = "application/epub+zip",
++
++        // font
++        [".ttf"] = "font/ttf",
++        [".otf"] = "font/otf",
++        [".woff"] = "font/woff",
++        [".woff2"] = "font/woff2",
++
++        // calendar
++        [".ics"] = "text/calendar",
++
++        // gis
++        [".geojson"] = "application/geo+json",
++        [".kml"] = "application/vnd.google-earth.kml+xml",
++
++        // fallback
++        [".bin"] = "application/octet-stream",
++        [".exe"] = "application/octet-stream",
++        [".dll"] = "application/octet-stream",
++    };
++
++    private static readonly HashSet<string> _notCompressible = new(StringComparer.OrdinalIgnoreCase)
++    {
++        "image", "video", "audio", "archive"
++    };
++
++    private readonly HashSet<string> _allKinds;
++    private readonly Dictionary<string, string> _mimeToKind;
++
++    public @this()
++    {
++        _allKinds = new HashSet<string>(_extensionToKind.Values, StringComparer.OrdinalIgnoreCase);
++        _mimeToKind = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
++        foreach (var kvp in _extensionToMime)
++        {
++            if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
++                _mimeToKind.TryAdd(kvp.Value, kind);
++        }
++    }
++
++    /// <summary>
++    /// PLang type name → CLR type.
++    /// Handles generics (list&lt;string&gt;), dictionaries (dict&lt;K,V&gt;), nullable (int?), and MIME types.
++    /// </summary>
++    public System.Type? Clr(string plangName)
++    {
++        if (string.IsNullOrWhiteSpace(plangName))
++            return null;
++
++        // Handle generic list syntax: list<string>
++        if (plangName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && plangName.EndsWith(">"))
++        {
++            var innerTypeName = plangName[5..^1];
++            var innerType = Clr(innerTypeName) ?? typeof(object);
++            return typeof(List<>).MakeGenericType(innerType);
++        }
++
++        // Handle generic dictionary syntax: dict<string,int>
++        if ((plangName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
++             plangName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && plangName.EndsWith(">"))
++        {
++            var prefix = plangName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
++            var inner = plangName[prefix..^1];
++            var parts = inner.Split(',');
++            if (parts.Length == 2)
++            {
++                var keyType = Clr(parts[0].Trim()) ?? typeof(string);
++                var valueType = Clr(parts[1].Trim()) ?? typeof(object);
++                return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
++            }
++        }
++
++        if (_nameToClr.TryGetValue(plangName, out var type))
++            return type;
++
++        // MIME type resolution
++        if (plangName.Contains('/'))
++        {
++            if (plangName.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
++                return typeof(string);
++            if (plangName.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ||
++                plangName.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ||
++                plangName.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
++                return typeof(byte[]);
++            if (plangName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
++                return typeof(object);
++            if (plangName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
++                return typeof(byte[]);
++        }
++
++        return null;
++    }
++
++    /// <summary>
++    /// CLR type → PLang type name.
++    /// Handles nullable, generics, arrays, and ValidValues convention types.
++    /// </summary>
++    public string Name(System.Type clrType)
++    {
++        if (clrType == null)
++            return "object";
++
++        // Handle nullable types
++        var underlying = Nullable.GetUnderlyingType(clrType);
++        if (underlying != null)
++            return Name(underlying) + "?";
++
++        // Handle generic types
++        if (clrType.IsGenericType)
++        {
++            var generic = clrType.GetGenericTypeDefinition();
++            if (generic == typeof(List<>) || generic == typeof(IList<>))
++                return $"list<{Name(clrType.GetGenericArguments()[0])}>";
++            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
++            {
++                var args = clrType.GetGenericArguments();
++                return $"dict<{Name(args[0])},{Name(args[1])}>";
++            }
++        }
++
++        // Handle arrays
++        if (clrType.IsArray)
++        {
++            var elementType = clrType.GetElementType()!;
++            if (elementType == typeof(byte))
++                return "bytes";
++            return $"list<{Name(elementType)}>";
++        }
++
++        if (_clrToName.TryGetValue(clrType, out var name))
++            return name;
++
++        // Check for ValidValues static property (convention for constrained types)
++        var validValuesProp = clrType.GetProperty("ValidValues",
++            BindingFlags.Public | BindingFlags.Static);
++        if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
++            return clrType.Name.ToLowerInvariant();
++
++        return clrType.Name.ToLowerInvariant();
++    }
++
++    /// <summary>
++    /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
++    /// Returns null for unknown extensions.
++    /// </summary>
++    public string? Kind(string extension)
++    {
++        var ext = NormalizeExtension(extension);
++        return _extensionToKind.TryGetValue(ext, out var kind) ? kind : null;
++    }
++
++    /// <summary>
++    /// File extension → MIME content type (e.g. ".jpg" → "image/jpeg").
++    /// Returns "application/octet-stream" for unknown extensions.
++    /// </summary>
++    public string Mime(string extension)
++    {
++        var ext = NormalizeExtension(extension);
++        return _extensionToMime.TryGetValue(ext, out var mime) ? mime : "application/octet-stream";
++    }
++
++    /// <summary>
++    /// Whether content of this Kind benefits from compression.
++    /// Image, video, audio, archive are already compressed — returns false.
++    /// </summary>
++    public bool Compressible(string kind)
++    {
++        if (string.IsNullOrEmpty(kind))
++            return false;
++        return !_notCompressible.Contains(kind);
++    }
++
++    /// <summary>
++    /// PLang type value → Kind. Recognizes known kind names and MIME types.
++    /// Returns null for PLang type names (string, int, etc.) and unknown values.
++    /// </summary>
++    public string? KindOf(string typeValue)
++    {
++        if (string.IsNullOrEmpty(typeValue))
++            return null;
++        if (_allKinds.TryGetValue(typeValue, out var canonical))
++            return canonical;
++        if (typeValue.Contains('/') && _mimeToKind.TryGetValue(typeValue, out var kind))
++            return kind;
++        return null;
++    }
++
++    /// <summary>
++    /// Add a file extension mapping at runtime.
++    /// </summary>
++    public void Add(string extension, string kind, string? mime = null)
++    {
++        var ext = NormalizeExtension(extension);
++        _extensionToKind[ext] = kind;
++        if (mime != null)
++            _extensionToMime[ext] = mime;
++    }
++
++    /// <summary>
++    /// Remove a file extension mapping at runtime.
++    /// </summary>
++    public void Remove(string extension)
++    {
++        var ext = NormalizeExtension(extension);
++        _extensionToKind.Remove(ext);
++        _extensionToMime.Remove(ext);
++    }
++
++    /// <summary>
++    /// Returns canonical builder type names (excludes aliases like "text"→"string").
++    /// Keeps shortest name per CLR type, skips nullable variants.
++    /// </summary>
++    public List<string> BuilderNames()
++    {
++        var seen = new HashSet<System.Type>();
++        var names = new List<string>();
++        foreach (var kvp in _nameToClr)
++        {
++            if (kvp.Key.EndsWith("?")) continue;
++            if (seen.Contains(kvp.Value)) continue;
++            seen.Add(kvp.Value);
++
++            var validValues = ValidValues(kvp.Value);
++            if (validValues != null)
++                names.Add($"{kvp.Key}({string.Join("|", validValues)})");
++            else
++                names.Add(kvp.Key);
++        }
++        return names;
++    }
++
++    /// <summary>
++    /// Returns schemas for complex types (goal.call, etc.) based on [LlmBuilder] attributes.
++    /// </summary>
++    public Dictionary<string, string> ComplexSchemas()
++    {
++        var schemas = new Dictionary<string, string>();
++        foreach (var kvp in _nameToClr)
++        {
++            var name = kvp.Key;
++            var type = kvp.Value;
++            if (name.EndsWith("?") || Utility.TypeMapping.IsPrimitive(type) || type == typeof(object)) continue;
++            if (type.IsArray || type.IsGenericType) continue;
++            if (ValidValues(type) != null) continue;
++
++            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
++                .Where(p => p.CanRead && p.Name != "EqualityContract")
++                .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
++                .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
++                .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {Name(p.PropertyType)}");
++
++            if (props.Any())
++                schemas[name] = $"{{ {string.Join(", ", props)} }}";
++        }
++        return schemas;
++    }
++
++    /// <summary>
++    /// Gets the valid values for a constrained type (e.g. Actor → ["user","service","system"]).
++    /// Returns null if the type has no ValidValues convention property.
++    /// </summary>
++    public static string[]? ValidValues(System.Type type)
++    {
++        var prop = type.GetProperty("ValidValues",
++            BindingFlags.Public | BindingFlags.Static);
++        if (prop != null && prop.PropertyType == typeof(string[]))
++            return (string[])prop.GetValue(null)!;
++        return null;
++    }
++
++    private static string NormalizeExtension(string extension)
++    {
++        if (string.IsNullOrEmpty(extension))
++            return extension;
++        return extension.StartsWith('.') ? extension : $".{extension}";
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Utility/TypeMapping.cs b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+index 64f665ca..78cde6d3 100644
+--- a/PLang/Runtime2/Engine/Utility/TypeMapping.cs
++++ b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+@@ -46,7 +46,6 @@ public static class TypeMapping
+         ["goal.call"] = typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall),
+         ["tstring"] = typeof(PLang.Runtime2.Engine.Memory.TString),
+         ["translatable"] = typeof(PLang.Runtime2.Engine.Memory.TString),
+-        ["path"] = typeof(PLang.Runtime2.Engine.Memory.Path),
+ 
+         // Nullable types
+         ["int?"] = typeof(int?),
+@@ -74,7 +73,6 @@ public static class TypeMapping
+         [typeof(object)] = "object",
+         [typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall)] = "goal.call",
+         [typeof(PLang.Runtime2.Engine.Memory.TString)] = "tstring",
+-        [typeof(PLang.Runtime2.Engine.Memory.Path)] = "path",
+     };
+ 
+     /// <summary>
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 012bd211..1ab1da83 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -116,6 +116,11 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public Testing Testing { get; }
+ 
++    /// <summary>
++    /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
++    /// </summary>
++    public Types.@this Types { get; }
++
+     /// <summary>
+     /// System actor for internal engine operations. Created lazily on first access.
+     /// </summary>
+@@ -181,6 +186,7 @@ public sealed class @this : IAsyncDisposable
+         Events = new EngineEvents();
+         Debug = new Debugging(this);
+         Testing = new Testing(this);
++        Types = new Types.@this();
+         Property = new Property(this);
+         _libraries = libraries ?? new EngineLibraries();
+         _goals = new EngineGoals { Engine = this };
+diff --git a/PLang/Runtime2/GlobalUsings.cs b/PLang/Runtime2/GlobalUsings.cs
+index b503eea6..f5af0990 100644
+--- a/PLang/Runtime2/GlobalUsings.cs
++++ b/PLang/Runtime2/GlobalUsings.cs
+@@ -31,8 +31,8 @@ global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
+ global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
+ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
+ 
+-// Memory types
+-global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
++// Type system
++global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
+ 
+ // Standalone concepts
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+diff --git a/PLang/Runtime2/actions/file/copy.cs b/PLang/Runtime2/actions/file/copy.cs
+index 0da2a801..c5f7dde3 100644
+--- a/PLang/Runtime2/actions/file/copy.cs
++++ b/PLang/Runtime2/actions/file/copy.cs
+@@ -5,14 +5,25 @@ namespace PLang.Runtime2.actions.file;
+ [Action("copy", Cacheable = false)]
+ public partial class Copy : IContext
+ {
+-    public partial PLangPath Source { get; init; }
+-    public partial PLangPath Destination { get; init; }
+-
+-    [Default(false)]
++    public partial string Source { get; init; }
++    public partial string Destination { get; init; }
+     public partial bool Overwrite { get; init; }
+ 
+-    [Default(true)]
+-    public partial bool IncludeSubfolders { get; init; }
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absSource = fs.Path.GetFullPath(Source);
++        var absDest = fs.Path.GetFullPath(Destination);
++
++        if (!fs.File.Exists(absSource))
++            return Task.FromResult(Data.FromError(
++                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
++
++        var destDir = fs.Path.GetDirectoryName(absDest);
++        if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
++            fs.Directory.CreateDirectory(destDir);
+ 
+-    public Task<Data> Run() => Task.FromResult(Source.Copy(this));
++        fs.File.Copy(absSource, absDest, Overwrite);
++        return Task.FromResult(Data.Ok(new types.@file(absDest, fs, source: absSource)));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/delete.cs b/PLang/Runtime2/actions/file/delete.cs
+index 7313eba6..5f8a352e 100644
+--- a/PLang/Runtime2/actions/file/delete.cs
++++ b/PLang/Runtime2/actions/file/delete.cs
+@@ -5,13 +5,25 @@ namespace PLang.Runtime2.actions.file;
+ [Action("delete", Cacheable = false)]
+ public partial class Delete : IContext
+ {
+-    public partial PLangPath Path { get; init; }
++    public partial string Path { get; init; }
+ 
+     [Default(false)]
+     public partial bool IgnoreIfNotFound { get; init; }
+ 
+-    [Default(false)]
+-    public partial bool Recursive { get; init; }
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absPath = fs.Path.GetFullPath(Path);
++
++        if (!fs.File.Exists(absPath))
++        {
++            if (IgnoreIfNotFound)
++                return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
++            return Task.FromResult(Data.FromError(
++                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}", "FileNotFound", 404)));
++        }
+ 
+-    public Task<Data> Run() => Task.FromResult(Path.Delete(this));
++        fs.File.Delete(absPath);
++        return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/exists.cs b/PLang/Runtime2/actions/file/exists.cs
+index 13382130..24345fdc 100644
+--- a/PLang/Runtime2/actions/file/exists.cs
++++ b/PLang/Runtime2/actions/file/exists.cs
+@@ -5,7 +5,12 @@ namespace PLang.Runtime2.actions.file;
+ [Action("exists")]
+ public partial class Exists : IContext
+ {
+-    public partial PLangPath Path { get; init; }
++    public partial string Path { get; init; }
+ 
+-    public Task<Data> Run() => Task.FromResult(Path.AsFile());
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absPath = fs.Path.GetFullPath(Path);
++        return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/list.cs b/PLang/Runtime2/actions/file/list.cs
+index 482d6557..fc1f59e3 100644
+--- a/PLang/Runtime2/actions/file/list.cs
++++ b/PLang/Runtime2/actions/file/list.cs
+@@ -5,7 +5,7 @@ namespace PLang.Runtime2.actions.file;
+ [Action("list")]
+ public partial class List : IContext
+ {
+-    public partial PLangPath Path { get; init; }
++    public partial string Path { get; init; }
+ 
+     [Default("*")]
+     public partial string Pattern { get; init; }
+@@ -13,5 +13,20 @@ public partial class List : IContext
+     [Default(false)]
+     public partial bool Recursive { get; init; }
+ 
+-    public Task<Data> Run() => Task.FromResult(Path.List(this));
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absPath = fs.Path.GetFullPath(Path);
++
++        if (!fs.Directory.Exists(absPath))
++            return Task.FromResult(Data.FromError(
++                new PLang.Runtime2.Engine.Errors.ServiceError($"Directory not found: {Path}", "FileNotFound", 404)));
++
++        var searchOption = Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
++        var files = fs.Directory.GetFiles(absPath, Pattern, searchOption)
++            .Select(f => new types.@file(f, fs))
++            .ToArray();
++
++        return Task.FromResult(Data.Ok(files));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/move.cs b/PLang/Runtime2/actions/file/move.cs
+index 5a42dd92..a87c4005 100644
+--- a/PLang/Runtime2/actions/file/move.cs
++++ b/PLang/Runtime2/actions/file/move.cs
+@@ -5,11 +5,25 @@ namespace PLang.Runtime2.actions.file;
+ [Action("move", Cacheable = false)]
+ public partial class Move : IContext
+ {
+-    public partial PLangPath Source { get; init; }
+-    public partial PLangPath Destination { get; init; }
+-
+-    [Default(false)]
++    public partial string Source { get; init; }
++    public partial string Destination { get; init; }
+     public partial bool Overwrite { get; init; }
+ 
+-    public Task<Data> Run() => Task.FromResult(Source.Move(this));
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absSource = fs.Path.GetFullPath(Source);
++        var absDest = fs.Path.GetFullPath(Destination);
++
++        if (!fs.File.Exists(absSource))
++            return Task.FromResult(Data.FromError(
++                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
++
++        var destDir = fs.Path.GetDirectoryName(absDest);
++        if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
++            fs.Directory.CreateDirectory(destDir);
++
++        fs.File.Move(absSource, absDest, Overwrite);
++        return Task.FromResult(Data.Ok(new types.@file(absDest, fs, source: absSource)));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/read.cs b/PLang/Runtime2/actions/file/read.cs
+index 54ed155a..648adbf6 100644
+--- a/PLang/Runtime2/actions/file/read.cs
++++ b/PLang/Runtime2/actions/file/read.cs
+@@ -5,7 +5,19 @@ namespace PLang.Runtime2.actions.file;
+ [Action("read")]
+ public partial class Read : IContext
+ {
+-    public partial PLangPath Path { get; init; }
++    public partial string Path { get; init; }
+ 
+-    public Task<Data> Run() => Task.FromResult(Path.Read());
++    public Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absPath = fs.Path.GetFullPath(Path);
++
++        if (!fs.File.Exists(absPath))
++            return Task.FromResult(Data.FromError(
++                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}")));
++
++        var file = new types.@file(absPath, fs);
++        _ = file.Value; // Eager-read so step cache captures actual content
++        return Task.FromResult(Data.Ok(file));
++    }
+ }
+diff --git a/PLang/Runtime2/actions/file/save.cs b/PLang/Runtime2/actions/file/save.cs
+index 74b362e1..4967ef0e 100644
+--- a/PLang/Runtime2/actions/file/save.cs
++++ b/PLang/Runtime2/actions/file/save.cs
+@@ -5,8 +5,34 @@ namespace PLang.Runtime2.actions.file;
+ [Action("save", Cacheable = false)]
+ public partial class Save : IContext
+ {
+-    public partial PLangPath Path { get; init; }
++    public partial string Path { get; init; }
+     public partial object Value { get; init; }
+ 
+-    public Task<Data> Run() => Path.Save(this);
++    public async Task<Data> Run()
++    {
++        var fs = Context.Engine!.FileSystem;
++        var absPath = fs.Path.GetFullPath(Path);
++        var dir = fs.Path.GetDirectoryName(absPath);
++
++        if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
++            fs.Directory.CreateDirectory(dir);
++
++        if (Value is byte[] bytes)
++        {
++            await fs.File.WriteAllBytesAsync(absPath, bytes);
++        }
++        else if (Value is string str)
++        {
++            await fs.File.WriteAllTextAsync(absPath, str);
++        }
++        else
++        {
++            var ext = fs.Path.GetExtension(absPath);
++            await using var stream = fs.File.Create(absPath);
++            await Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
++                { Stream = stream, Data = Value, Extension = ext });
++        }
++
++        return Data.Ok(new types.@file(absPath, fs));
++    }
+ }
+diff --git a/learnings/data-envelope-architecture/architect/v1/learnings.md b/learnings/data-envelope-architecture/architect/v1/learnings.md
+new file mode 100644
+index 00000000..6d213b4d
+--- /dev/null
++++ b/learnings/data-envelope-architecture/architect/v1/learnings.md
+@@ -0,0 +1,57 @@
++# OBP Learnings — Data Envelope Architecture Session
++
++## 1. No verbs or prepositions in OBP APIs
++
++`Get`, `Resolve`, `From`, `Is` — these are procedural patterns. They describe *operations on* an object, not *behavior of* an object.
++
++- Bad: `TypeMapping.GetCategory(extension)`, `Type.FromExtension(".xlsx")`, `ResolveKind()`, `IsCompressible(category)`
++- Good: `Context.Types.Kind(value)`, `data.Type.Kind`, `data.Type.Compressible`
++
++The object navigates to the knowledge it needs. The caller never tells it *how* to figure things out.
++
++**Why it matters:** Verbs create coupling — the caller must know what operation to request and what service provides it. Navigation lets the object find its own answer through the graph.
++
++## 2. Objects navigate, they don't look things up
++
++Instead of a lookup service (`TypeMapping.GetCategory(extension)` — handing data to a service, getting an answer back), the object navigates through its context to whoever owns the knowledge.
++
++```csharp
++// Procedural: caller orchestrates the lookup
++var category = TypeMapping.GetCategory(data.Type.Value);
++var compressible = TypeMapping.IsCompressible(category);
++
++// OBP: Type navigates through context
++data.Type.Kind          // Type asks Context.Types
++data.Type.Compressible  // derived from Kind, still through navigation
++```
++
++The caller says *what* it wants (Kind), the object figures out *where* to get it (Context → Engine.Types).
++
++## 3. Lazy navigation over eager resolution
++
++Properties like `.Kind` resolve on first access by navigating through context. Not through factory methods, not through constructors, not through static lookups. Zero cost until someone asks.
++
++This is the PLang laziness principle applied to OBP navigation — nothing loads until it's needed. 99% of Type instances in the runtime never need their Kind, so it never resolves.
++
++## 4. Static classes break OBP
++
++A static class (`public static class TypeMapping`) has no identity, no state ownership, no lifecycle. It can't be extended at runtime. It's a bag of functions pretending to be an object.
++
++Instance on engine = live object, extensible (Add/Remove at runtime), owns its knowledge, participates in the object graph. `Engine.Types` is something. `TypeMapping` is a utility.
++
++## 5. Object names are nouns, not service descriptions
++
++- `TypeMapping` — describes what it does (maps types). Service name.
++- `Types` — what it *is*. The engine's type knowledge. Object name.
++
++One word. Noun. Same pattern as `Engine.Goals`, `Engine.Actions`.
++
++## 6. Factory methods are outside-in
++
++`Type.FromExtension(".xlsx")` tells the object what it is from the outside — the factory knows the construction logic, the object is passive. In OBP, the object is constructed simply (`new Type("string")`) and discovers what it needs lazily through navigation when asked.
++
++Construction is simple. Knowledge is navigated.
++
++## 7. Architect role = think, don't code
++
++When the CLAUDE.md says "Your job is not to write code. Your job is to think" — that means: discuss architecture, show example snippets to illustrate design points, but never draft implementation plans or enter plan mode unprompted. The default mode is whiteboard conversation, not task execution.
