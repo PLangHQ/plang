@@ -149,90 +149,48 @@
       }
     },
     {
-      "id": "c0d3r-s2-2026-0220-phase2-context",
-      "bot": "coder",
-      "timestamp_start": "2026-02-20T14:00:00Z",
-      "intent": "Implement Phase 2: Type context + lazy derivation, Data late-bound context, MemoryStack context stamping",
+      "id": "tstr-s2-2026-0220-test-phase2",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T16:00:00Z",
+      "timestamp_end": "2026-02-20T16:45:00Z",
+      "intent": "Test quality analysis of coder v2 — Phase 2 context + lazy derivation tests, plus tracking v1 carry-forward issues",
       "before": {
-        "assumptions": "Phase 1 complete — Engine.Types exists with full type knowledge. Type currently derives ClrType via static TypeMapping. Data eagerly creates Type in constructor and Value setter. No context threading through Data/Type/MemoryStack.",
-        "risk": "Medium — changes Data constructor, Value setter, and Type getter. All existing tests must pass with new lazy derivation. Fallback to static TypeMapping ensures contextless path works."
+        "assumptions": "Coder added Phase 2 (context, lazy derivation) with 23 new tests. v1 findings likely not addressed since coder focused on new functionality.",
+        "risk": "Add() method may not update derived data structures (KindOf depends on _allKinds/_mimeToKind built at construction time). Phase 2 context wiring is complex — subtle bugs in stamping chain could be masked by static TypeMapping fallback."
       },
-      "plan": "Type gets Context property + lazy Kind/Compressible/ClrType navigation. Engine.Types gets KindOf() for MIME/kind resolution. Data gets Context property with lazy Type derivation. MemoryStack gets Context property with stamping on Set/Put. PLangContext stamps MemoryStack.Context. Action.RunAsync stamps context on result Data.",
+      "plan": "Run tests, verify v1 findings carry forward, analyze Phase 2 test quality, check Add→KindOf pipeline, check Methods.cs coverage, write test-report.json.",
       "actions": [
         {
           "paths": [
-            "PLang/Runtime2/Engine/Types/this.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Added constructor building _allKinds HashSet and _mimeToKind reverse map. Added KindOf(string typeValue) method resolving kind names and MIME types to kinds."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Memory/Data.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Type class: added Context + Kind + Compressible. Data class: added Context property, lazy Type derivation, child context inheritance. Constructor stores explicit type only, Value setter invalidates, Type getter lazily derives."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Memory/MemoryStack.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Added Context property with setter stamping all existing Data. Put and Set stamp context on new Data."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Context/PLangContext.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Constructor sets MemoryStack.Context = this before RegisterContextVariables."
-        },
-        {
-          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
             "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs"
           ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Stamp result.Context = context on handler result Data before return variable binding."
-        },
-        {
-          "paths": [
-            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
-            "PLang.Tests/Runtime2/Memory/DataTests.cs",
-            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs"
-          ],
-          "type": "modify",
+          "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Added 23 new tests: 6 KindOf tests, 12 Data context/lazy derivation tests, 5 MemoryStack context stamping tests."
+          "context": "Full Phase 2 test quality analysis. Found critical bug: Add() doesn't update _allKinds/_mimeToKind, breaking KindOf for dynamic extensions. Verified experimentally. v1 findings all carry forward."
         },
         {
           "paths": [
-            ".bot/data-envelope-architecture/coder/v2/plan.md",
-            ".bot/data-envelope-architecture/coder/v2/summary.md",
-            ".bot/data-envelope-architecture/coder/summary.md"
+            ".bot/data-envelope-architecture/test-report.json"
           ],
-          "type": "create",
+          "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Plan, version summary, and bot root summary update."
+          "context": "Updated to v2: 8 findings (2 critical, 3 major, 3 minor). Verdict: needs-fixes."
         }
       ],
       "after": {
-        "status": "Phase 2 complete. Type navigates lazily through context. Data has late-bound context with lazy Type derivation. MemoryStack/PLangContext propagate context automatically.",
-        "health": "Green. Build succeeds with 0 errors. 1233 Runtime2 tests pass with 0 failures. No regressions.",
-        "notes": "Phase 3 next: Data partial class split + Out view."
-      },
-      "timestamp_end": "2026-02-20T15:00:00Z"
+        "status": "v2 test analysis complete. Found real bug in Add→KindOf pipeline. v1 findings carry forward with escalated impact.",
+        "health": "1324 tests pass but Add() is broken for KindOf(). Phase 2 context chain is well-tested but has a masking problem (fallback to TypeMapping makes it hard to verify context path is used).",
+        "notes": "Critical: Add() must update _allKinds and _mimeToKind. Must fix before Phase 3."
+      }
     }
   ]
 }
