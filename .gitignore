@@ -23,3 +23,4 @@ coverage-report/
 coverage.cobertura.xml
 
 .claude/settings.local.json
+characters/
