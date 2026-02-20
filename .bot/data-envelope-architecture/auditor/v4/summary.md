@@ -15,23 +15,24 @@ Code review of the data-envelope-architecture branch, covering Phases 1-4 of the
 
 ## Findings
 
-### 2 Major
+### 3 Major
 
-1. **Engine.Types thread safety** — Uses mutable `Dictionary<>` and `HashSet<>` with public `Add()`/`Remove()` methods, but Engine is a singleton shared across concurrent PLangContexts. No synchronization. Concurrent mutations will corrupt state.
+1. **Engine.Types thread safety** — Uses mutable `Dictionary<>` and `HashSet<>` with public `Add()`/`Remove()`. Engine is pooled (not global singleton), but concurrent goals within one Engine can race on Add/Remove.
 
 2. **RehydrateNestedData temporal coupling** — Mutates Data via Value setter (which clears `_type`), then immediately restores Type. Creates a window of inconsistent state and is fragile against future refactoring.
 
+3. **GZip decompression unbounded (zip bomb)** — No size limit on decompressed output. A 45-byte malicious payload can decompress to 1GB+, OOMing the runtime. This is the inbound path processing untrusted Data from channels. DoS vector.
+
 ### 3 Minor
 
-3. **Decompress uses generic `Error` instead of `ServiceError`** — Misses the project convention for service-layer errors with distinct keys.
-4. **Compress double-navigates** — Bypasses `Type.Compressible` to call `Engine.Types.Compressible()` directly.
-5. **Remove() uses O(n) ContainsValue** — Acceptable for current scale.
+4. **Decompress uses generic `Error` instead of `ServiceError`** — Misses the project convention for service-layer errors with distinct keys.
+5. **Compress double-navigates** — Bypasses `Type.Compressible` to call `Engine.Types.Compressible()` directly.
+6. **Remove() uses O(n) ContainsValue** — Acceptable for current scale.
 
-### 3 Nit
+### 2 Nit
 
-6. Newtonsoft `[JsonConstructor]` attribute on Data constructor (should be System.Text.Json only in Runtime2).
-7. Decompress error tests don't assert `Error.Key`.
-8. GZip helpers are unbounded (zip bomb risk for untrusted input).
+7. Newtonsoft `[JsonConstructor]` attribute on Data constructor (should be System.Text.Json only in Runtime2).
+8. Decompress error tests don't assert `Error.Key`.
 
 ## OBP Assessment
 
@@ -46,7 +47,7 @@ Tests are thorough. 1372 pass, covering all phases including error paths, multi-
 
 ## Verdict
 
-**Approved with fixes recommended.** The two major findings should be addressed before merge. The thread safety issue (finding #1) is the higher priority — it's a latent race that becomes real as PLang adds concurrent execution or plugin loading.
+**Approved with fixes recommended.** The three major findings should be addressed before merge. The zip bomb (finding #3) is the highest priority — it's a DoS vector on the inbound pipeline. Thread safety (finding #1) is next.
 
 ## Files reviewed
 
