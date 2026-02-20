@@ -1,0 +1,100 @@
+{
+  "tester": "tester",
+  "branch": "data-envelope-architecture",
+  "timestamp": "2026-02-20T15:30:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 1229, "passed": 1229, "failed": 0, "skipped": 0 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 3,
+    "uncovered_files": [],
+    "notes": "Engine/Types/this.cs tested by EngineTypesTests (62 tests). Engine/this.cs tested by Engine_HasTypesProperty. GlobalUsings changes are compile-time only. Coverage tool (dotnet-coverage) not available in this environment."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Kind(null) and Mime(null) throw unhandled ArgumentNullException. NormalizeExtension returns null for null input, then Dictionary.TryGetValue with OrdinalIgnoreCase comparer throws on null key. No test covers this crash path. Verified: TryGetValue(null) throws ArgumentNullException.",
+      "impact": "Any caller passing null to Kind() or Mime() gets an unhandled exception. This is inconsistent with Clr(null) which returns null gracefully. In Phase 4 (envelope pipeline), if a Data with no extension reaches the Wrap() method, it would crash instead of failing gracefully.",
+      "suggestion": "Add null guard in Kind() and Mime() (return null/fallback for null input). Add tests: Kind_Null_ReturnsNull and Mime_Null_ReturnsOctetStream."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Name_UnknownType_ReturnsLowercaseName tests typeof(Uri) which is non-generic. It passes because Uri.Name is 'Uri' → 'uri'. But typeof(HashSet<string>).Name is 'HashSet`1' → 'hashset`1'. The backtick-arity suffix is CLR metadata, not a valid PLang name. The test gives a false green by testing a type that doesn't trigger the bug.",
+      "impact": "Any handler returning a HashSet<T>, Queue<T>, Stack<T>, or other unrecognized generic CLR type gets a broken PLang name with backtick. Phase 2 wires Name() into Data's type derivation — users see 'hashset`1' in variable types and error messages.",
+      "suggestion": "Add test: Name(typeof(HashSet<string>)) — this will reveal the backtick issue. Fix: strip arity suffix (Name.Split('`')[0]) or produce 'hashset<string>' for generic fallbacks."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "BuilderNames() has zero tests. This is a public API method with non-trivial logic: iterates _nameToClr, deduplicates by CLR type (first seen wins), skips nullable variants, and appends ValidValues for constrained types. The dedup depends on Dictionary iteration order which is not contractually guaranteed.",
+      "impact": "BuilderNames() feeds type lists to the LLM builder. A regression here silently changes what the LLM sees, potentially breaking builds. No safety net.",
+      "suggestion": "Add tests: (1) BuilderNames returns a list without duplicates (e.g., contains 'string' but not 'text'); (2) does not contain nullable variants (no 'int?'); (3) contains expected constrained types with ValidValues like 'actor(user|service|system)'."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "ComplexSchemas() has zero tests. This method uses reflection to build schemas from [LlmBuilder]-attributed properties, filtering out EqualityContract, JsonIgnore, primitives, arrays, generics, and ValidValues types. It also depends on Utility.TypeMapping.IsPrimitive() — a coupling to the legacy class.",
+      "impact": "ComplexSchemas() is used by the builder to give the LLM schema context for complex types like 'goal.call'. A bug here means the LLM gets wrong/missing schemas, producing broken .pr files. The TypeMapping.IsPrimitive() coupling will break when Phase 2 refactors static TypeMapping.",
+      "suggestion": "Add tests: (1) ComplexSchemas() returns a schema for 'goal.call' containing expected property names; (2) does not return schemas for primitives like 'string' or 'int'; (3) result is not empty (at least goal.call should produce a schema)."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Compressible() tests don't expose the 'unknown kind = true' semantic. Compressible('nonsense') returns true because the implementation uses a deny-list (_notCompressible). No test verifies this boundary — is it intentional that unknown kinds are compressible?",
+      "impact": "When Phase 4 calls data.Compress(), a Data with an unrecognized kind (e.g., 'certificate', 'executable', 'machine-learning') would be compressed. For some of these, compression is wasteful. For others it's harmless. The test suite doesn't clarify the intent.",
+      "suggestion": "Add test: Compressible_UnknownKind_ReturnsTrue (or ReturnsFalse, depending on the design intent). This forces a decision: is the deny-list approach intentional? If yes, document and test it. If no, switch to a positive set."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Clr() has no tests for PLang-specific types: 'actor', 'goal.call', 'tstring', 'translatable', 'json', 'json[]'. These types involve cross-namespace references (Context.Actor, Goals.Goal.GoalCall, Memory.TString) that could break if namespaces are refactored.",
+      "impact": "Low risk in Phase 1 since nothing uses Engine.Types.Clr() yet. But Phase 2 switches Data's constructor to use it — if the actor/goal.call mappings are wrong, every PLang program using those types breaks.",
+      "suggestion": "Add tests for at least: Clr('actor') → typeof(Actor), Clr('goal.call') → typeof(GoalCall), Clr('tstring') → typeof(TString)."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Clr() generic parsing has no test for nested generics (list<list<string>>) or wrong-arity dictionaries (dict<a,b,c>). The comma-split in dict parsing would produce 3 parts and silently return null.",
+      "impact": "Low — nested generics are uncommon in PLang. But the behavior should be documented (returns null for unsupported generic forms).",
+      "suggestion": "Add test: Clr('list<list<string>>') → typeof(List<List<string>>) (verifying recursive resolution works). Add test: Clr('dict<a,b,c>') → null (verifying graceful failure for wrong arity)."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "No PLang .goal tests exist for Engine.Types. The coder deferred PLang tests to Phase 2 (when Data starts using Engine.Types). This is reasonable — Phase 1 is additive with no runtime behavior change.",
+      "impact": "None in Phase 1. PLang tests become critical in Phase 2 to validate the full pipeline (builder → .pr → GoalMapper → runtime) uses Engine.Types correctly.",
+      "suggestion": "Accepted for Phase 1. Track as a Phase 2 requirement."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "62 tests pass with no regressions (1229 total). Test quality is good for the core mapping methods (Clr, Kind, Mime, Compressible, Add/Remove) — they verify side effects, not just return values. However: (1) Kind(null)/Mime(null) crash with unhandled ArgumentNullException — critical gap since Clr(null) handles null gracefully; (2) Name() test for unknown types is a false green — it tests Uri (no backtick) but misses HashSet<string> (produces invalid 'hashset`1'); (3) BuilderNames() and ComplexSchemas() have zero tests despite being public API methods consumed by the LLM builder. Verdict: needs-fixes for findings #1-#4 before passing to auditor."
+}
