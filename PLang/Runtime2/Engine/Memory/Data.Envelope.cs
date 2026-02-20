@@ -61,6 +61,9 @@ public partial class Data
     /// (e.g. "spreadsheet"). Checks compressibility through context → Engine.Types.
     /// Serializes current Data to JSON, compresses with GZip, wraps in archived envelope.
     /// Returns self if not compressible or no context.
+    /// Note: Properties are not preserved through the compression cycle — they are [JsonIgnore]
+    /// and will be empty after Decompress(). This is by design: Properties are for the [Out]
+    /// transport view, not intermediate compression.
     /// </summary>
     public Data Compress()
     {
@@ -129,15 +132,26 @@ public partial class Data
         if (compressed == null)
             return FromError(new Errors.Error("Archived inner Data has no byte[] value"));
 
-        var decompressed = GZipDecompress(compressed);
+        try
+        {
+            var decompressed = GZipDecompress(compressed);
 
-        var result = JsonSerializer.Deserialize<Data>(decompressed, _envelopeJsonOptions);
-        if (result == null)
-            return FromError(new Errors.Error("Failed to deserialize decompressed Data"));
+            var result = JsonSerializer.Deserialize<Data>(decompressed, _envelopeJsonOptions);
+            if (result == null)
+                return FromError(new Errors.Error("Failed to deserialize decompressed Data"));
 
-        RehydrateNestedData(result);
-        result.Context = _context;
-        return result;
+            RehydrateNestedData(result);
+            result.Context = _context;
+            return result;
+        }
+        catch (InvalidDataException ex)
+        {
+            return FromError(new Errors.Error("Decompression failed: " + ex.Message));
+        }
+        catch (JsonException ex)
+        {
+            return FromError(new Errors.Error("Deserialization failed after decompression: " + ex.Message));
+        }
     }
 
     /// <summary>

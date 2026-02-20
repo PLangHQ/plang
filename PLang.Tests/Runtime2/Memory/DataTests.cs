@@ -663,6 +663,7 @@ public class DataTests
         await Assert.That(wrapped).IsNotEqualTo(data);
         await Assert.That(wrapped.Type!.Value).IsEqualTo("image");
         await Assert.That(wrapped.Value).IsTypeOf<Data>();
+        await Assert.That(wrapped.Context).IsEqualTo(context);
         var inner = (Data)wrapped.Value!;
         await Assert.That(inner.Type!.Value).IsEqualTo("image/jpeg");
     }
@@ -795,6 +796,8 @@ public class DataTests
         await Assert.That(decompressed.Success).IsTrue();
         await Assert.That(decompressed.Type!.Value).IsEqualTo("text");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
+        var decompressedInner = (Data)decompressed.Value!;
+        await Assert.That(decompressedInner.Value).IsEqualTo("Hello world");
     }
 
     [Test]
@@ -895,6 +898,122 @@ public class DataTests
 
         await Assert.That(inbound.Success).IsTrue();
         await Assert.That(inbound.Value).IsEqualTo("Report content here");
+    }
+
+    // --- Phase 4 fixes: error paths + edge cases ---
+
+    [Test]
+    public async Task Decompress_InvalidInner_ReturnsError()
+    {
+        // Value is string, not Data — should return error
+        var data = new Data("", "not a Data object", Type.FromName("archived"));
+
+        var result = data.Decompress();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).IsEqualTo("Archived Data has no inner Data");
+    }
+
+    [Test]
+    public async Task Decompress_NullBytes_ReturnsError()
+    {
+        // Inner Data has null value — no byte[] to decompress
+        var inner = new Data("", null, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).IsEqualTo("Archived inner Data has no byte[] value");
+    }
+
+    [Test]
+    public async Task Decompress_CorruptData_ReturnsError()
+    {
+        // Random bytes — not valid GZip
+        var inner = new Data("", new byte[] { 0xFF, 0xFE, 0x00, 0x42 }, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("Decompression failed");
+    }
+
+    [Test]
+    public async Task Decompress_InvalidJsonAfterDecompression_ReturnsError()
+    {
+        // Valid GZip of non-JSON bytes
+        var plainBytes = System.Text.Encoding.UTF8.GetBytes("this is not json {{{}}}");
+        byte[] gzipped;
+        using (var ms = new System.IO.MemoryStream())
+        {
+            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            {
+                gz.Write(plainBytes, 0, plainBytes.Length);
+            }
+            gzipped = ms.ToArray();
+        }
+
+        var inner = new Data("", gzipped, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Message).Contains("Deserialization failed");
+    }
+
+    [Test]
+    public async Task CompressDecompress_MultiLevelNesting_PreservesAllLevels()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Two-level nesting: text envelope containing another text envelope
+        var leaf = new Data("", "deep content", Type.FromMime("text/plain"));
+        leaf.Context = context;
+        var mid = new Data("", leaf, Type.FromName("text"));
+        mid.Context = context;
+        var outer = new Data("", mid, Type.FromName("document"));
+        outer.Context = context;
+
+        // Compress (document is compressible) and decompress
+        var compressed = outer.Compress();
+        compressed.Context = context;
+        var decompressed = compressed.Decompress();
+
+        await Assert.That(decompressed.Success).IsTrue();
+        await Assert.That(decompressed.Type!.Value).IsEqualTo("document");
+        await Assert.That(decompressed.Value).IsTypeOf<Data>();
+
+        var midResult = (Data)decompressed.Value!;
+        await Assert.That(midResult.Type!.Value).IsEqualTo("text");
+        await Assert.That(midResult.Value).IsTypeOf<Data>();
+
+        var leafResult = (Data)midResult.Value!;
+        await Assert.That(leafResult.Value).IsEqualTo("deep content");
+    }
+
+    [Test]
+    public async Task CompressDecompress_PropertiesNotPreserved()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var content = new Data("", "Hello", Type.FromMime("text/plain"));
+        content.Context = context;
+        var wrapped = new Data("", content, Type.FromName("text"));
+        wrapped.Context = context;
+        wrapped.Properties.Add(new Data("metadata", "some value"));
+
+        var compressed = wrapped.Compress();
+        compressed.Context = context;
+        var decompressed = compressed.Decompress();
+
+        await Assert.That(decompressed.Success).IsTrue();
+        // Properties are [JsonIgnore] — not preserved through compression cycle
+        await Assert.That(decompressed.Properties.Count).IsEqualTo(0);
     }
 }
 

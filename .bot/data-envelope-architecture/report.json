@@ -281,6 +281,43 @@
         "health": "1366 tests pass but Decompress will crash on corrupt data instead of returning Error. Error paths are completely untested.",
         "notes": "Fix finding #1 (exception handling in Decompress) and add error path tests (#2) before auditor reviews. Round-trip happy path is solid."
       }
+    },
+    {
+      "id": "c0d3r-s5-2026-0220-tester-v4-fixes",
+      "bot": "coder",
+      "timestamp_start": "2026-02-20T21:00:00Z",
+      "timestamp_end": "2026-02-20T21:30:00Z",
+      "intent": "Fix all 7 tester v4 findings — exception handling in Decompress, error path tests, weak assertions, edge case coverage",
+      "before": {
+        "assumptions": "Tester found 1 critical (Decompress unhandled exceptions), 2 major (untested error paths, weak assertions), 4 minor (multi-level nesting, Wrap context, Properties loss, Compress on unwrapped). All findings are valid.",
+        "risk": "Low. Fixes are additive — try/catch in Decompress, new tests, doc comments. No behavioral change to happy path."
+      },
+      "plan": "Fix #1: wrap GZipDecompress+Deserialize in try/catch returning FromError. Fix #2: add 4 error path tests. Fix #3: strengthen Decompress assertion. Fix #4: multi-level nesting test. Fix #5: Wrap context assertion. Fix #6: Properties loss comment + test. Fix #7: document Compress behavior.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added try/catch around GZipDecompress+Deserialize catching InvalidDataException and JsonException separately. Added doc comment about Properties not surviving compression cycle."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 new tests: Decompress error paths (4), multi-level nesting (1), Properties loss (1). Strengthened existing assertions: Decompress value verification, Wrap context propagation."
+        }
+      ],
+      "after": {
+        "status": "All 7 tester v4 findings fixed. 1372 tests pass, 0 failures.",
+        "health": "Green. Decompress now handles corrupt data gracefully at the transport boundary. All error paths tested.",
+        "notes": "Ready for auditor review."
+      }
     }
   ]
 }
