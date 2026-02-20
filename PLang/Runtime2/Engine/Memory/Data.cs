@@ -106,7 +106,6 @@ public partial class Data
     public Properties Properties { get; set; }
 
     [JsonConstructor]
-    [Newtonsoft.Json.JsonConstructor]
     public Data(string name, object? value = null, Type? type = null, Data? parent = null)
     {
         Name = CleanName(name);
@@ -131,6 +130,18 @@ public partial class Data
             IsInitialized = true;
             _type = null;
         }
+    }
+
+    /// <summary>
+    /// Updates _value without triggering Value setter side effects (no type clearing, no unwrap).
+    /// Used by RehydrateNestedData to replace a dictionary with a reconstructed Data object
+    /// without losing the outer Type.
+    /// </summary>
+    private void SetValueDirect(object? value)
+    {
+        _value = value;
+        Updated = System.DateTime.UtcNow;
+        IsInitialized = true;
     }
 
     [JsonPropertyName("type")]

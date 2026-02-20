@@ -911,6 +911,7 @@ public class DataTests
         var result = data.Decompress();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).IsEqualTo("Archived Data has no inner Data");
     }
 
@@ -924,6 +925,7 @@ public class DataTests
         var result = archived.Decompress();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).IsEqualTo("Archived inner Data has no byte[] value");
     }
 
@@ -937,6 +939,7 @@ public class DataTests
         var result = archived.Decompress();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("Decompression failed");
     }
 
@@ -961,6 +964,7 @@ public class DataTests
         var result = archived.Decompress();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("Deserialization failed");
     }
 

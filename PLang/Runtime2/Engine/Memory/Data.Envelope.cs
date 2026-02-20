@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
 
 namespace PLang.Runtime2.Engine.Memory;
 
@@ -12,6 +13,11 @@ namespace PLang.Runtime2.Engine.Memory;
 /// </summary>
 public partial class Data
 {
+    /// <summary>
+    /// Maximum decompressed payload size (100 MB). Prevents zip bomb attacks at the transport boundary.
+    /// </summary>
+    private const long MaxDecompressedSize = 100 * 1024 * 1024;
+
     private static readonly JsonSerializerOptions _envelopeJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -70,7 +76,7 @@ public partial class Data
         if (_context == null || Type == null)
             return this;
 
-        if (!_context.Engine.Types.Compressible(Type.Value))
+        if (!Type.Compressible)
             return this;
 
         var json = JsonSerializer.SerializeToUtf8Bytes(this, typeof(Data), _envelopeJsonOptions);
@@ -126,11 +132,11 @@ public partial class Data
             return this;
 
         if (Value is not Data inner)
-            return FromError(new Errors.Error("Archived Data has no inner Data"));
+            return FromError(new ServiceError("Archived Data has no inner Data", "DecompressError", 500));
 
         var compressed = inner.GetValue<byte[]>();
         if (compressed == null)
-            return FromError(new Errors.Error("Archived inner Data has no byte[] value"));
+            return FromError(new ServiceError("Archived inner Data has no byte[] value", "DecompressError", 500));
 
         try
         {
@@ -138,7 +144,7 @@ public partial class Data
 
             var result = JsonSerializer.Deserialize<Data>(decompressed, _envelopeJsonOptions);
             if (result == null)
-                return FromError(new Errors.Error("Failed to deserialize decompressed Data"));
+                return FromError(new ServiceError("Failed to deserialize decompressed Data", "DecompressError", 500));
 
             RehydrateNestedData(result);
             result.Context = _context;
@@ -146,11 +152,11 @@ public partial class Data
         }
         catch (InvalidDataException ex)
         {
-            return FromError(new Errors.Error("Decompression failed: " + ex.Message));
+            return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
         }
         catch (JsonException ex)
         {
-            return FromError(new Errors.Error("Deserialization failed after decompression: " + ex.Message));
+            return FromError(new ServiceError("Deserialization failed after decompression: " + ex.Message, "DecompressError", 500));
         }
     }
 
@@ -188,10 +194,8 @@ public partial class Data
             var inner = new Data(name, value, type);
             RehydrateNestedData(inner);
 
-            // Save outer type — Value setter clears _type
-            var outerType = data.Type;
-            data.Value = inner;
-            data.Type = outerType;
+            // Use SetValueDirect to avoid Value setter clearing _type
+            data.SetValueDirect(inner);
         }
     }
 
@@ -212,7 +216,16 @@ public partial class Data
         using var input = new MemoryStream(compressed);
         using var gzip = new GZipStream(input, CompressionMode.Decompress);
         using var output = new MemoryStream();
-        gzip.CopyTo(output);
+        var buffer = new byte[81920];
+        int bytesRead;
+        long totalRead = 0;
+        while ((bytesRead = gzip.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > MaxDecompressedSize)
+                throw new InvalidDataException($"Decompressed payload exceeds size limit ({MaxDecompressedSize / (1024 * 1024)} MB)");
+            output.Write(buffer, 0, bytesRead);
+        }
         return output.ToArray();
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -10,6 +11,7 @@ namespace PLang.Runtime2.Engine.Types;
 /// </summary>
 public sealed class @this
 {
+    // Read-only after construction — never modified by Add/Remove. Order-preserving for BuilderNames.
     private readonly Dictionary<string, System.Type> _nameToClr = new(StringComparer.OrdinalIgnoreCase)
     {
         // Primitives
@@ -55,6 +57,7 @@ public sealed class @this
         ["guid?"] = typeof(Guid?),
     };
 
+    // Read-only after construction — never modified by Add/Remove.
     private readonly Dictionary<System.Type, string> _clrToName = new()
     {
         [typeof(string)] = "string",
@@ -74,7 +77,7 @@ public sealed class @this
         [typeof(Memory.TString)] = "tstring",
     };
 
-    private readonly Dictionary<string, string> _extensionToKind = new(StringComparer.OrdinalIgnoreCase)
+    private readonly ConcurrentDictionary<string, string> _extensionToKind = new(StringComparer.OrdinalIgnoreCase)
     {
         // plang
         [".goal"] = "plang",
@@ -275,7 +278,7 @@ public sealed class @this
         [".bin"] = "binary",
     };
 
-    private readonly Dictionary<string, string> _extensionToMime = new(StringComparer.OrdinalIgnoreCase)
+    private readonly ConcurrentDictionary<string, string> _extensionToMime = new(StringComparer.OrdinalIgnoreCase)
     {
         // video
         [".mp4"] = "video/mp4",
@@ -382,13 +385,14 @@ public sealed class @this
         "image", "video", "audio", "archive"
     };
 
+    private readonly object _derivedLock = new();
     private readonly HashSet<string> _allKinds;
-    private readonly Dictionary<string, string> _mimeToKind;
+    private readonly ConcurrentDictionary<string, string> _mimeToKind;
 
     public @this()
     {
         _allKinds = new HashSet<string>(_extensionToKind.Values, StringComparer.OrdinalIgnoreCase);
-        _mimeToKind = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _mimeToKind = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in _extensionToMime)
         {
             if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
@@ -546,8 +550,11 @@ public sealed class @this
     {
         if (string.IsNullOrEmpty(typeValue))
             return null;
-        if (_allKinds.TryGetValue(typeValue, out var canonical))
-            return canonical;
+        lock (_derivedLock)
+        {
+            if (_allKinds.TryGetValue(typeValue, out var canonical))
+                return canonical;
+        }
         if (typeValue.Contains('/') && _mimeToKind.TryGetValue(typeValue, out var kind))
             return kind;
         return null;
@@ -561,7 +568,7 @@ public sealed class @this
     {
         var ext = NormalizeExtension(extension);
         _extensionToKind[ext] = kind;
-        _allKinds.Add(kind);
+        lock (_derivedLock) { _allKinds.Add(kind); }
         if (mime != null)
         {
             _extensionToMime[ext] = mime;
@@ -576,12 +583,12 @@ public sealed class @this
     public void Remove(string extension)
     {
         var ext = NormalizeExtension(extension);
-        _extensionToKind.Remove(ext, out var removedKind);
-        if (_extensionToMime.Remove(ext, out var removedMime))
-            _mimeToKind.Remove(removedMime);
+        _extensionToKind.TryRemove(ext, out var removedKind);
+        if (_extensionToMime.TryRemove(ext, out var removedMime))
+            _mimeToKind.TryRemove(removedMime, out _);
         // Only remove from _allKinds if no other extension maps to this kind
-        if (removedKind != null && !_extensionToKind.ContainsValue(removedKind))
-            _allKinds.Remove(removedKind);
+        if (removedKind != null && !_extensionToKind.Values.Contains(removedKind, StringComparer.OrdinalIgnoreCase))
+            lock (_derivedLock) { _allKinds.Remove(removedKind); }
     }
 
     /// <summary>
