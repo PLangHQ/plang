@@ -1,0 +1,2180 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 9a168596..cde28bbe 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -53,3 +53,276 @@
+ 
+ ## Todo Capture
+ When the user writes "todo:" or "dodo:" (typo), append to `Documentation/Runtime2/todos.md` with date and context. Ask at most one clarifying question. Accept dismissals ("n", "no", "nah", "neibb") and move on.
++
++---
++
++## About the User (Ingi)
++
++- When Ingi says "could we allow..." or "can we allow...", he means "what if we designed it so that...". It's a design direction, not a question about feasibility.
++- Ingi is the creator of PLang. He thinks in terms of language design and user experience for PLang developers.
++- He prefers concise, direct answers. Show the reasoning but don't over-explain.
++- Icelandic is his first language — he sometimes mixes Icelandic into prompts. Respond in English unless he writes fully in Icelandic.
++
++---
++
++﻿
++
++---
++
++# PLang Design Rules â€” MUST FOLLOW
++
++## Object-Based Pattern (OBP) â€” MANDATORY
++All code you write or propose MUST follow these rules:
++
++1. **Behavior belongs to the owner** â€” Put methods on the object that owns the data. `Steps.Run()` does the iteration, not the caller. Never loop over another object's collection from the outside.
++2. **Navigate, don't pass** â€” Reach dependencies through the object graph (`Engine.IO`, `Engine.FileSystem`, `context.MemoryStack`). Never decompose an object into separate parameters; pass the root and let the caller navigate. This also applies to the caller itself: if a handler calls `Path.Delete(Recursive, IgnoreIfNotFound)`, it's decomposing itself into parameters. The OBP form is `Path.Delete(this)` â€” let the callee navigate the action record for what it needs. This keeps coupling one-directional: the callee knows about the caller's structure, but the caller doesn't know what the callee needs.
++3. **Keep object references, not extracted fields** â€” Store `Step`, not `step.Text`. Store `Goal`, not `goal.Name`. Wrapper DTOs are only allowed at serialization boundaries.
++4. **Per-request state is a parameter, per-object state is a property** â€” Never cache `PLangContext` on shared objects like `Goal` or `Step`. Pass context through method parameters; store only structural data as properties.
++5. **Collections are smart wrappers** â€” Collection types (`Steps`, `Actions`) inherit `List<T>` and own domain operations (`Load`, `RunAsync`, `Merge`). Parents delegate â€” they never iterate directly.
++
++**Before writing or proposing any code**, read `Documentation/Runtime2/plang_object_based_pattern.md` for full OBP details with code examples. Every code change must follow this pattern â€” no exceptions.
++
++## Critical Constraints
++- **NEVER use System.IO** â€” Always use `fileSystem.File`, `fileSystem.Directory`, `fileSystem.Path` (IPLangFileSystem abstraction)
++- **NEVER change strongly-typed parameters to `object`** â€” PLang is strongly typed. Diagnose the real problem instead.
++- **NEVER manually edit or delete .pr files** â€” Only the plang builder generates these. Explain the problem and rebuild.
++- **Use System.Text.Json**, not Newtonsoft â€” suggest migration when you see Newtonsoft in Runtime2 code
++- **Strong typing is a design goal** â€” The stronger typed PLang and C# communicate, the more stable everything becomes
++
++## Runtime2 Object Graph
++- **Engine is the root** â€” all capabilities: `Engine.IO`, `Engine.Goals`, `Engine.Actions`, `Engine.FileSystem`, `Engine.Serializers`
++- **Entity hierarchy**: Goal â†’ Steps â†’ Actions. Each has `.Events` (EntityEvents with Before/After Ã— Load/Runtime phases)
++- **Handlers extend `BaseClass<TParams>`** â€” get Engine/Context via Initialize(), use `MemoryStack` for variables
++- **`Data` is the universal result type** â€” has `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`
++- **`ICodeGenerated` is REQUIRED** on all handlers â€” Engine has no fallback path
++
++## Testing Requirements
++- PLang .goal tests are REQUIRED alongside C# tests â€” they validate the FULL pipeline: LLM builder â†’ .pr generation â†’ GoalMapper â†’ runtime
++- Read `Documentation/Runtime2/writing_tests.md` before writing tests
++- Read `Documentation/Runtime2/good_to_know.md` before making architectural assumptions
++
++
++
++---
++
++## Output Directory
++
++Your output lives inside the repo at `.bot/feature/path-class/auditor/`.
++
++**IMPORTANT:** When the branch name contains slashes (e.g. `feature/path-class`), replace `/` with `-` in folder names. So branch `feature/path-class` becomes `.bot/feature-path-class/auditor/`. Always use a flat folder name, never nest by slash.
++
++### Versioning
++
++A new version is created when:
++1. **New plan** â€” You write a new plan â†’ create next `v<N>`, write `plan.md` there.
++2. **Review received** â€” You receive review comments on your work â†’ create next `v<N+1>`, write `v<N>_review_summary.md` there (summarizing the review of the previous version), then write your new `plan.md` for addressing the feedback.
++
++If you're continuing work from a previous plan without a new plan or review, stay in the same version. Check existing directories (v1, v2, ...) to determine the next number.
++
++### Workflow
++
++1. **Plan first** â€” Analyze the task, then write your plan to `v<N>/plan.md`. Read the file back so the user can see it and approve before you start implementing. Do NOT start coding until the user approves.
++2. **Implement** â€” After approval, do the work.
++3. **Before finishing** (in this order):
++   - Write `v<N>/summary.md` (see format below)
++   - Update `summary.md` in the bot root (the light cross-session summary)
++   - Commit all changes (including `.bot/`)
++   - Run `git diff runtime2..HEAD -- ':(exclude).bot'` and write the output to `v<N>/changes.patch`
++   - Commit the patch file, then push
++
++### Session Files (inside `v<N>/`)
++
++- `v<N-1>_review_summary.md` -- Summary of review feedback on the previous version (only when responding to a review). This is about the PREVIOUS version's review, not this version's work.
++- `plan.md` -- Your plan. Written first, read back for user approval.
++- `summary.md` -- This version's full summary (see format below). This is about THIS version's work.
++- `result.md` -- Detailed findings, recommendations, or documentation
++- `changes.patch` -- git diff of code changes (excluding .bot/)
++
++Do NOT confuse `v<N>/v<N-1>_review_summary.md` (review of previous version) with `v<N>/summary.md` (summary of this version's work).
++
++If you have questions that block your work, write them in `plan.md` and note that you are blocked.
++
++### v<N>/summary.md Format
++
++Write this so someone unfamiliar with the task can understand what happened and continue the work.
++
++- **What this is** â€” Describe the feature/change in plain terms. What problem does it solve? Why was it needed?
++- **What was done** â€” The key decisions, approach taken, and files modified (with paths). What is done, what is still in progress, what to do next, any blockers or decisions needed.
++- **Code example** â€” 1-2 short examples that illustrate the pattern of the change. Pick the one that best represents what all the others look like. Don't show every file â€” one example often says the same as all others in pattern terms.
++- **For v2+ after review** â€” What did the reviewer flag? What was changed in response? A before/after snippet if the fix illustrates a pattern.
++
++### summary.md (bot root) Format
++
++This is the light cross-session file at `.bot/feature/path-class/auditor/summary.md`. One short paragraph per version â€” just enough to see the progression at a glance. Link to `v<N>/summary.md` for details.
++
++## Learning from Review Comments
++
++When you encounter `review-comments.json` (or any review feedback), treat it as a learning opportunity. Read the comments carefully and extract insights about:
++- How PLang C# code should be written
++- OBP patterns â€” what violations look like and how to fix them
++- Architectural decisions â€” why things are structured the way they are
++- Common mistakes and how to avoid them
++- Any other patterns or conventions you didn't know before
++
++Write your learnings to `/learnings/feature/path-class/auditor/v<N>/learnings.md` (same slash-to-dash rule for branch names). Use the same v<N> as your session. Structure it as a list of concrete, reusable insights â€” not a summary of the review. State what you learned and why it matters. Note which review comment taught you each thing.
++
++## Branching & PRs
++
++- If you are on `runtime2` (the base branch), you MUST create a feature branch BEFORE making any changes. Use `git checkout -b <descriptive-branch-name>` based on the task. NEVER commit directly to `runtime2`.
++- When your work is complete, commit your changes (including `.bot/`), push your branch, and create a PR targeting `runtime2`
++- The `.bot/` directory is included in PRs to `runtime2` â€” this is intentional and wanted
++- Do NOT include `.bot/` in PRs to `main` â€” the release process strips it automatically
++
++
++
++---
++
++## Session Reporting (MANDATORY)
++
++You MUST produce a structured JSON report alongside your normal work. This is additive - do your normal work AND write the report.
++
++Your reporting context:
++- **Branch**: feature/path-class
++- **Bot identity**: auditor
++- **Report file**: `.bot/feature/path-class/report.json`
++
++Follow these rules strictly:
++1. At session START, read `.bot/feature/path-class/report.json` (create if missing). Add a new session entry with your `before` data and `timestamp_start`. Write the file.
++2. BEFORE you start implementation, once your plan is finalized, write the full plan text into the `plan` field of your session in the report file. Do this BEFORE writing any code or making changes.
++3. As you work, batch actions by intent. When your focus shifts, append action entries to your session in the report file.
++4. At session END, fill in `after` and `timestamp_end`. Write the final report.
++5. When reading/writing the report file, preserve all other sessions - only modify YOUR session entry.
++
++### Full Reporting Spec
++
++# Session Report Schema
++
++## Location
++
++`.bot/{branchName}/report.json` â€” one per branch, all bots append.
++
++## JSON Structure
++
++```json
++{
++  "branch": "branch-name",
++  "sessions": [
++    {
++      "id": "UUID",
++      "bot": "coder|architect|web|marketing",
++      "timestamp_start": "ISO 8601",
++      "timestamp_end": "ISO 8601",
++      "intent": "One sentence goal",
++      "before": { "assumptions": "...", "risk": "..." },
++      "plan": "Full plan text, written before implementation starts",
++      "actions": [
++        {
++          "paths": ["relative/path/to/file"],
++          "type": "create|modify|delete|review|decision|move|rename",
++          "category": "code|test|doc|config",
++          "confidence": "high|medium|low",
++          "context": "reasoning, alternatives considered"
++        }
++      ],
++      "after": { "status": "...", "health": "...", "notes": "..." }
++    }
++  ]
++}
++```
++
++## Required Fields
++
++- **id** â€” UUID
++- **bot**, **timestamp_start**, **timestamp_end**, **intent**
++- **actions[].paths** â€” relative to project root, maps to architecture
++- **actions[].type** â€” create, modify, delete, review, decision, move, rename
++
++Everything else (`before`, `after`, action details) is open â€” include what's relevant.
++
++## Rules
++
++1. Write `before` FIRST, `plan` before coding, `after` LAST.
++2. Batch actions by intent â€” log when your focus shifts, not per file.
++3. Read existing report first, append your session, preserve other sessions.
++4. Use relative paths from project root.
++
++
++---
++
++## Active Character
++
++# The Auditor
++
++**Role:** Code reviewer and foundation integrity analyst for PLang Runtime2.
++
++**Personality:** Methodical, skeptical, detail-obsessed. Assumes every code path will eventually be hit, every edge case will eventually trigger, every race condition will eventually race. Doesn't accept "that won't happen in practice" — if the code allows it, it will happen.
++
++## Review Workflow
++
++When reviewing another bot's work on a branch:
++
++1. **Read the coder's output first.** Check `.bot/<branch>/<botName>/` for `plan.md`, `summary.md`, and `changes.patch`. Understand what was intended before reading the code.
++2. **Review the code changes.** Use `changes.patch` or `git diff runtime2..HEAD -- ':(exclude).bot'` to see exactly what changed. Read the full files for context, not just the diff.
++3. **Review the tests.** Do the tests verify the *intent* of the change, or just the implementation? A test that passes but tests the wrong thing is worse than no test.
++4. **Write findings to `review-comments.json`** in the `.bot/<branch>/` directory (branch root, shared across bots). This is how the coder learns. Format below.
++
++## What to Check
++
++### OBP Compliance (the 5 rules)
++- **Behavior belongs to the owner** — Is a caller iterating someone else's collection? Does the method live on the right object?
++- **Navigate, don't pass** — Are fields being extracted from an object to pass as separate parameters? The caller should pass itself or the root, and let the callee navigate. `path.Delete(actionRecord)` not `path.Delete(recursive, ignoreIfNotFound)`.
++- **Keep object references** — Is code storing `step.Text` instead of `Step`? `goal.Name` instead of `Goal`?
++- **Per-request state is a parameter** — Is `PLangContext` cached on a shared object? It should be passed through methods.
++- **Smart collections** — Do collection types own their domain operations? Parents should delegate, not iterate.
++
++### Code Integrity
++- **Contract violations** — where a method promises one thing (via types, names, or docs) but the implementation allows something else.
++- **Stale state** — caches that aren't invalidated, properties set once but expected to change, singletons holding per-request data.
++- **Boundary crossing** — where does internal code trust external input? Where does a clone share references?
++- **Exception handling** — look for hidden `catch (ex) { return null; }` or similar. It should return IError on exceptions.
++- **Parameters** — Send objects, NOT primitives, when the object instance is available. Bad: `DoStuff(goal.LineNumber)`. Good: `DoStuff(goal)`.
++
++### Test Quality
++- Do tests verify intent or just implementation? If the code is wrong the same way as the test, both pass but the feature is broken.
++- Are edge cases covered? Null inputs, empty collections, concurrent access where applicable.
++- PLang .goal tests: do they validate the full pipeline (builder → .pr → GoalMapper → runtime), not just the C# layer?
++
++### Ripple Impact
++- Rank findings by how many layers are affected. A Data.Value type mismatch affects every handler, every step, every goal. A formatting bug in error output affects one display path.
++
++## review-comments.json Format
++
++Write to `.bot/<branch>/review-comments.json` (branch root, not inside a bot folder):
++
++```json
++{
++  "reviewer": "auditor",
++  "branch": "<branch-name>",
++  "timestamp": "ISO 8601",
++  "reviewed_version": "v<N>",
++  "summary": "One paragraph overview of the review",
++  "findings": [
++    {
++      "id": 1,
++      "severity": "critical|major|minor|nit",
++      "category": "obp|contract|test|safety|style",
++      "file": "relative/path/to/file.cs",
++      "line": 125,
++      "issue": "Concrete description of the problem",
++      "impact": "What breaks, who is affected",
++      "suggestion": "How to fix it"
++    }
++  ]
++}
++```
++
++## What the Auditor Produces
++
++- `review-comments.json` — structured findings the coder can act on
++- Numbered findings with file:line references
++- Concrete issue descriptions (not "could be improved" — instead "Data.Value setter at line 125 does not update _type, causing Type to report stale info after reassignment")
++- Impact assessment and ranked priority list
++
++## Philosophy
++
++The foundation carries the weight. A bug in Data.cs is a bug in every module. A race in MemoryStack is a race in every concurrent goal. Fix the foundation first — the layers above get more stable for free.
+diff --git a/PLang.Tests/GlobalUsings.cs b/PLang.Tests/GlobalUsings.cs
+index 7e4abd66..c32b88cf 100644
+--- a/PLang.Tests/GlobalUsings.cs
++++ b/PLang.Tests/GlobalUsings.cs
+@@ -36,6 +36,9 @@ global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
+ global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
+ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
+ 
++// Memory types
++global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
++
+ // Standalone concepts (no v1 conflicts in tests)
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+ global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
+diff --git a/PLang.Tests/Runtime2/Core/StartGoalTests.cs b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+index 16871468..0524786e 100644
+--- a/PLang.Tests/Runtime2/Core/StartGoalTests.cs
++++ b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
++using Path = System.IO.Path;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+new file mode 100644
+index 00000000..2f8c3a2e
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+@@ -0,0 +1,911 @@
++using PLang.SafeFileSystem;
++using PLang.Runtime2.actions.file;
++
++namespace PLang.Tests.Runtime2.Modules.Path;
++
++public class PathTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLangFileSystem _fs;
++    private readonly Engine _engine;
++
++    public PathTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_path_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _fs = new PLangFileSystem(_tempDir, "");
++        _engine = new Engine(_tempDir, fileSystem: _fs);
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private string TempFile(string name)
++    {
++        var path = _fs.Path.Combine(_tempDir, name);
++        _fs.File.WriteAllText(path, "test content");
++        return path;
++    }
++
++    // --- Constructor & Absolute ---
++
++    [Test]
++    public async Task Absolute_ResolvesRelativePath()
++    {
++        var p = new PLangPath("config.json", _engine);
++        var expected = _fs.Path.GetFullPath("config.json");
++        await Assert.That(p.Absolute).IsEqualTo(expected);
++    }
++
++    [Test]
++    public async Task Absolute_PreservesAbsolutePath()
++    {
++        var abs = _fs.Path.Combine(_tempDir, "test.txt");
++        var p = new PLangPath(abs, _engine);
++        await Assert.That(p.Absolute).IsEqualTo(abs);
++    }
++
++    // --- Raw ---
++
++    [Test]
++    public async Task Raw_PreservesOriginalInput()
++    {
++        var p = new PLangPath("relative/file.txt", _engine);
++        await Assert.That(p.Raw).IsEqualTo("relative/file.txt");
++    }
++
++    // --- Relative ---
++
++    [Test]
++    public async Task Relative_StripsRootDirectory()
++    {
++        var abs = _fs.Path.Combine(_tempDir, "sub", "file.txt");
++        var p = new PLangPath(abs, _engine);
++        var expected = "sub" + _fs.Path.DirectorySeparatorChar + "file.txt";
++        await Assert.That(p.Relative).IsEqualTo(expected);
++    }
++
++    // --- Extension ---
++
++    [Test]
++    public async Task Extension_ReturnsWithDot()
++    {
++        var p = new PLangPath("config.json", _engine);
++        await Assert.That(p.Extension).IsEqualTo(".json");
++    }
++
++    [Test]
++    public async Task Extension_NoExtension_ReturnsEmpty()
++    {
++        var p = new PLangPath("Makefile", _engine);
++        await Assert.That(p.Extension).IsEqualTo("");
++    }
++
++    // --- FileName ---
++
++    [Test]
++    public async Task FileName_ReturnsFileNameWithExtension()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "config.json"), _engine);
++        await Assert.That(p.FileName).IsEqualTo("config.json");
++    }
++
++    // --- FileNameWithoutExtension ---
++
++    [Test]
++    public async Task FileNameWithoutExtension_ReturnsNameOnly()
++    {
++        var p = new PLangPath("archive.tar.gz", _engine);
++        await Assert.That(p.FileNameWithoutExtension).IsEqualTo("archive.tar");
++    }
++
++    // --- Directory ---
++
++    [Test]
++    public async Task Directory_ReturnsParentPath()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "sub", "file.txt"), _engine);
++        var expected = _fs.Path.Combine(_tempDir, "sub");
++        await Assert.That(p.Directory).IsEqualTo(expected);
++    }
++
++    // --- MimeType ---
++
++    [Test]
++    public async Task MimeType_Json()
++    {
++        var p = new PLangPath("data.json", _engine);
++        await Assert.That(p.MimeType).IsEqualTo("application/json");
++    }
++
++    [Test]
++    public async Task MimeType_Markdown()
++    {
++        var p = new PLangPath("README.md", _engine);
++        await Assert.That(p.MimeType).IsEqualTo("text/markdown");
++    }
++
++    [Test]
++    public async Task MimeType_Unknown_ReturnsOctetStream()
++    {
++        var p = new PLangPath("data.xyz", _engine);
++        await Assert.That(p.MimeType).IsEqualTo("application/octet-stream");
++    }
++
++    // --- IsFile (structural: has extension) ---
++
++    [Test]
++    public async Task IsFile_WithExtension_ReturnsTrue()
++    {
++        var p = new PLangPath("config.json", _engine);
++        await Assert.That(p.IsFile).IsTrue();
++    }
++
++    [Test]
++    public async Task IsFile_NoExtension_ReturnsFalse()
++    {
++        var p = new PLangPath("Makefile", _engine);
++        await Assert.That(p.IsFile).IsFalse();
++    }
++
++    // --- IsDirectory (structural: no extension) ---
++
++    [Test]
++    public async Task IsDirectory_NoExtension_ReturnsTrue()
++    {
++        var p = new PLangPath("mydir", _engine);
++        await Assert.That(p.IsDirectory).IsTrue();
++    }
++
++    [Test]
++    public async Task IsDirectory_WithExtension_ReturnsFalse()
++    {
++        var p = new PLangPath("file.txt", _engine);
++        await Assert.That(p.IsDirectory).IsFalse();
++    }
++
++    // --- Exists ---
++
++    [Test]
++    public async Task Exists_ExistingFile_ReturnsTrue()
++    {
++        var filePath = TempFile("there.txt");
++        var p = new PLangPath(filePath, _engine);
++        await Assert.That(p.Exists).IsTrue();
++    }
++
++    [Test]
++    public async Task Exists_ExistingDir_ReturnsTrue()
++    {
++        var p = new PLangPath(_tempDir, _engine);
++        await Assert.That(p.Exists).IsTrue();
++    }
++
++    [Test]
++    public async Task Exists_Nothing_ReturnsFalse()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "phantom"), _engine);
++        await Assert.That(p.Exists).IsFalse();
++    }
++
++    // --- Size ---
++
++    [Test]
++    public async Task Size_ExistingFile_ReturnsCorrectSize()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "sized.txt");
++        _fs.File.WriteAllText(filePath, "12345");
++        var p = new PLangPath(filePath, _engine);
++        await Assert.That(p.Size).IsEqualTo(5);
++    }
++
++    [Test]
++    public async Task Size_NonexistentFile_ReturnsZero()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "nosize.txt"), _engine);
++        await Assert.That(p.Size).IsEqualTo(0);
++    }
++
++    // --- ToString ---
++
++    [Test]
++    public async Task ToString_ReturnsRelativePath()
++    {
++        var abs = _fs.Path.Combine(_tempDir, "test.txt");
++        var p = new PLangPath(abs, _engine);
++        await Assert.That(p.ToString()).IsEqualTo("test.txt");
++    }
++
++    // --- Equality ---
++
++    [Test]
++    public async Task Equals_SamePath_ReturnsTrue()
++    {
++        var abs = _fs.Path.Combine(_tempDir, "same.txt");
++        var p1 = new PLangPath(abs, _engine);
++        var p2 = new PLangPath(abs, _engine);
++        await Assert.That(p1.Equals(p2)).IsTrue();
++    }
++
++    [Test]
++    public async Task Equals_String_ReturnsTrue()
++    {
++        var abs = _fs.Path.Combine(_tempDir, "str.txt");
++        var p = new PLangPath(abs, _engine);
++        await Assert.That(p.Equals(abs)).IsTrue();
++    }
++
++    [Test]
++    public async Task Equals_DifferentPath_ReturnsFalse()
++    {
++        var p1 = new PLangPath(_fs.Path.Combine(_tempDir, "a.txt"), _engine);
++        var p2 = new PLangPath(_fs.Path.Combine(_tempDir, "b.txt"), _engine);
++        await Assert.That(p1.Equals(p2)).IsFalse();
++    }
++
++    // --- Resolve (engine-resolvable) ---
++
++    [Test]
++    public async Task Resolve_CreatesPathViaEngine()
++    {
++        var p = PLangPath.Resolve("test.txt", _engine);
++        await Assert.That(p).IsNotNull();
++        await Assert.That(p.FileName).IsEqualTo("test.txt");
++    }
++
++    // --- Exists is live (not cached) ---
++
++    [Test]
++    public async Task Exists_BecomesTrue_AfterFileCreated()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "later.txt");
++        var p = new PLangPath(filePath, _engine);
++
++        await Assert.That(p.Exists).IsFalse();
++
++        _fs.File.WriteAllText(filePath, "created");
++        await Assert.That(p.Exists).IsTrue();
++    }
++
++    // --- Cached properties are stable ---
++
++    [Test]
++    public async Task CachedProperties_SameOnMultipleAccess()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "stable.json"), _engine);
++        var ext1 = p.Extension;
++        var ext2 = p.Extension;
++        var name1 = p.FileName;
++        var name2 = p.FileName;
++
++        await Assert.That(ext1).IsEqualTo(ext2);
++        await Assert.That(name1).IsEqualTo(name2);
++    }
++
++    // --- Read ---
++
++    [Test]
++    public async Task Read_ExistingFile_ReturnsFileObject()
++    {
++        var filePath = TempFile("read_me.txt");
++        var p = new PLangPath(filePath, _engine);
++        var result = p.Read();
++
++        await Assert.That(result.Success).IsTrue();
++        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
++        await Assert.That(f).IsNotNull();
++        await Assert.That(f!.Value.Value).IsEqualTo("test content");
++    }
++
++    [Test]
++    public async Task Read_NonexistentFile_ReturnsError()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_such.txt"), _engine);
++        var result = p.Read();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
++    }
++
++    // --- List ---
++
++    [Test]
++    public async Task List_ExistingDirectory_ReturnsFileArray()
++    {
++        var dir = TempDir("list_dir");
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.txt"), "b");
++
++        var p = new PLangPath(dir, _engine);
++        var result = p.List(new List { Path = p, Pattern = "*" });
++
++        await Assert.That(result.Success).IsTrue();
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
++        await Assert.That(files).IsNotNull();
++        await Assert.That(files!.Length).IsEqualTo(2);
++        var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
++        await Assert.That(names[0]).IsEqualTo("a.txt");
++        await Assert.That(names[1]).IsEqualTo("b.txt");
++    }
++
++    [Test]
++    public async Task List_WithPattern_FiltersFiles()
++    {
++        var dir = TempDir("list_pattern");
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "b.md"), "b");
++
++        var p = new PLangPath(dir, _engine);
++        var result = p.List(new List { Path = p, Pattern = "*.txt" });
++
++        await Assert.That(result.Success).IsTrue();
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
++        await Assert.That(files!.Length).IsEqualTo(1);
++    }
++
++    [Test]
++    public async Task List_Recursive_FindsNestedFiles()
++    {
++        var dir = TempDir("list_recursive");
++        var nested = _fs.Path.Combine(dir, "sub");
++        _fs.Directory.CreateDirectory(nested);
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "top.txt"), "top");
++        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
++
++        var p = new PLangPath(dir, _engine);
++        var result = p.List(new List { Path = p, Pattern = "*", Recursive = true });
++
++        await Assert.That(result.Success).IsTrue();
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
++        await Assert.That(files!.Length).IsEqualTo(2);
++    }
++
++    [Test]
++    public async Task List_NonexistentDirectory_ReturnsError()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "no_dir"), _engine);
++        var result = p.List(new List { Path = p, Pattern = "*" });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
++    }
++
++    // --- Save ---
++
++    [Test]
++    public async Task Save_String_WritesFile()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "saved.txt");
++        var p = new PLangPath(filePath, _engine);
++
++        var result = await p.Save(new Save { Path = p, Value = "hello world" });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
++        await Assert.That(_fs.File.ReadAllText(filePath)).IsEqualTo("hello world");
++    }
++
++    [Test]
++    public async Task Save_Bytes_WritesFile()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "saved.bin");
++        var p = new PLangPath(filePath, _engine);
++
++        var bytes = new byte[] { 1, 2, 3 };
++        var result = await p.Save(new Save { Path = p, Value = bytes });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
++        var actual = _fs.File.ReadAllBytes(filePath);
++        await Assert.That(actual.SequenceEqual(bytes)).IsTrue();
++    }
++
++    [Test]
++    public async Task Save_CreatesDirectory_IfNotExists()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "newdir", "saved.txt");
++        var p = new PLangPath(filePath, _engine);
++
++        var result = await p.Save(new Save { Path = p, Value = "nested" });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
++    }
++
++    // --- AsFile ---
++
++    [Test]
++    public async Task AsFile_ReturnsFileObject()
++    {
++        var filePath = TempFile("asfile.txt");
++        var p = new PLangPath(filePath, _engine);
++        var result = p.AsFile();
++
++        await Assert.That(result.Success).IsTrue();
++        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
++        await Assert.That(f).IsNotNull();
++        await Assert.That(f!.Exists).IsTrue();
++    }
++
++    // --- Helper for directories ---
++
++    private string TempDir(string name)
++    {
++        var path = _fs.Path.Combine(_tempDir, name);
++        _fs.Directory.CreateDirectory(path);
++        return path;
++    }
++
++    // --- Copy ---
++
++    [Test]
++    public async Task Copy_File_CopiesToDestination()
++    {
++        var srcPath = TempFile("copy_src.txt");
++        var destPath = _fs.Path.Combine(_tempDir, "copy_dst.txt");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(destPath)).IsTrue();
++        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
++        await Assert.That(_fs.File.Exists(srcPath)).IsTrue(); // copy, not move
++    }
++
++    [Test]
++    public async Task Copy_Directory_CopiesAllFiles()
++    {
++        var srcDir = TempDir("copy_dir_src");
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "aaa");
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "b.txt"), "bbb");
++
++        var destDir = _fs.Path.Combine(_tempDir, "copy_dir_dst");
++        var src = new PLangPath(srcDir, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "b.txt"))).IsTrue();
++    }
++
++    [Test]
++    public async Task Copy_Directory_WithSubfolders()
++    {
++        var srcDir = TempDir("copy_sub_src");
++        var nested = _fs.Path.Combine(srcDir, "sub");
++        _fs.Directory.CreateDirectory(nested);
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "top.txt"), "top");
++        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
++
++        var destDir = _fs.Path.Combine(_tempDir, "copy_sub_dst");
++        var src = new PLangPath(srcDir, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = true });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "sub", "deep.txt"))).IsTrue();
++    }
++
++    [Test]
++    public async Task Copy_Directory_WithoutSubfolders()
++    {
++        var srcDir = TempDir("copy_nosub_src");
++        var nested = _fs.Path.Combine(srcDir, "sub");
++        _fs.Directory.CreateDirectory(nested);
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "top.txt"), "top");
++        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
++
++        var destDir = _fs.Path.Combine(_tempDir, "copy_nosub_dst");
++        var src = new PLangPath(srcDir, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine), IncludeSubfolders = false });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "top.txt"))).IsTrue();
++        await Assert.That(_fs.Directory.Exists(_fs.Path.Combine(destDir, "sub"))).IsFalse();
++    }
++
++    [Test]
++    public async Task Copy_NotFound_ReturnsError()
++    {
++        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
++        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = dest });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    // --- Move ---
++
++    [Test]
++    public async Task Move_File_MovesToDestination()
++    {
++        var srcPath = TempFile("move_src.txt");
++        var destPath = _fs.Path.Combine(_tempDir, "move_dst.txt");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(destPath)).IsTrue();
++        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
++    }
++
++    [Test]
++    public async Task Move_Directory_MovesToDestination()
++    {
++        var srcDir = TempDir("move_dir_src");
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "aaa");
++
++        var destDir = _fs.Path.Combine(_tempDir, "move_dir_dst");
++        var src = new PLangPath(srcDir, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.Directory.Exists(destDir)).IsTrue();
++        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "a.txt"))).IsTrue();
++    }
++
++    [Test]
++    public async Task Move_NotFound_ReturnsError()
++    {
++        var src = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
++        var dest = new PLangPath(_fs.Path.Combine(_tempDir, "dst.txt"), _engine);
++        var result = src.Move(new Move { Source = src, Destination = dest });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    // --- Delete ---
++
++    [Test]
++    public async Task Delete_File_RemovesFile()
++    {
++        var filePath = TempFile("del_file.txt");
++        var p = new PLangPath(filePath, _engine);
++        var result = p.Delete(new Delete { Path = p });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(filePath)).IsFalse();
++    }
++
++    [Test]
++    public async Task Delete_EmptyDirectory_RemovesIt()
++    {
++        var dirPath = TempDir("del_empty_dir");
++        var p = new PLangPath(dirPath, _engine);
++        var result = p.Delete(new Delete { Path = p });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
++    }
++
++    [Test]
++    public async Task Delete_DirectoryRecursive_RemovesAll()
++    {
++        var dirPath = TempDir("del_recursive_dir");
++        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
++
++        var p = new PLangPath(dirPath, _engine);
++        var result = p.Delete(new Delete { Path = p, Recursive = true });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.Directory.Exists(dirPath)).IsFalse();
++    }
++
++    [Test]
++    public async Task Delete_NotFound_ReturnsError()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
++        var result = p.Delete(new Delete { Path = p });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Delete_NotFound_IgnoreIfNotFound_ReturnsSuccess()
++    {
++        var p = new PLangPath(_fs.Path.Combine(_tempDir, "ghost.txt"), _engine);
++        var result = p.Delete(new Delete { Path = p, IgnoreIfNotFound = true });
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    // --- #2: Relative prefix-matching bug ---
++
++    [Test]
++    public async Task Relative_DoesNotMatchSimilarPrefix()
++    {
++        // Root is _tempDir (e.g., /tmp/plang_path_test_abc).
++        // A sibling path like _tempDir + "ation" should NOT be treated as relative.
++        var siblingPath = _tempDir + "ation" + _fs.Path.DirectorySeparatorChar + "file.txt";
++        var p = new PLangPath(siblingPath, _engine);
++
++        // Should return absolute path, not "ation/file.txt"
++        await Assert.That(p.Relative).IsEqualTo(p.Absolute);
++    }
++
++    // --- #3: Move directory with overwrite ---
++
++    [Test]
++    public async Task Move_Directory_Overwrite_ReplacesExisting()
++    {
++        var srcDir = TempDir("move_over_src");
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "new.txt"), "new");
++
++        var destDir = TempDir("move_over_dst");
++        _fs.File.WriteAllText(_fs.Path.Combine(destDir, "old.txt"), "old");
++
++        var src = new PLangPath(srcDir, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine), Overwrite = true });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "new.txt"))).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "old.txt"))).IsFalse();
++        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
++    }
++
++    // --- #4: Delete non-empty directory without recursive ---
++
++    [Test]
++    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsError()
++    {
++        var dirPath = TempDir("del_nonempty");
++        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
++
++        var p = new PLangPath(dirPath, _engine);
++        var result = p.Delete(new Delete { Path = p, Recursive = false });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(_fs.Directory.Exists(dirPath)).IsTrue(); // not deleted
++    }
++
++    // --- #7: Null guard on constructor ---
++
++    [Test]
++    public async Task Constructor_NullPath_ThrowsArgumentNull()
++    {
++        await Assert.That(() => new PLangPath(null!, _engine)).Throws<ArgumentNullException>();
++    }
++
++    [Test]
++    public async Task Constructor_NullEngine_ThrowsArgumentNull()
++    {
++        await Assert.That(() => new PLangPath("test.txt", null!)).Throws<ArgumentNullException>();
++    }
++
++    // --- #8: Copy file to existing directory ---
++
++    [Test]
++    public async Task Copy_FileToExistingDirectory_PutsFileInsideDir()
++    {
++        var srcPath = TempFile("copy_to_dir.txt");
++        var destDir = TempDir("copy_target_dir");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destDir, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "copy_to_dir.txt"))).IsTrue();
++    }
++
++    // --- Move file to existing directory (auditor v2 #1) ---
++
++    [Test]
++    public async Task Move_FileToExistingDirectory_PutsFileInsideDir()
++    {
++        var srcPath = TempFile("move_to_dir.txt");
++        var destDir = TempDir("move_target_dir");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destDir, _engine) });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(destDir, "move_to_dir.txt"))).IsTrue();
++        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
++    }
++
++    // --- Relative returns "." for root path (auditor v2 #2) ---
++
++    [Test]
++    public async Task Relative_RootPath_ReturnsDot()
++    {
++        var p = new PLangPath(_tempDir, _engine);
++        await Assert.That(p.Relative).IsEqualTo(".");
++    }
++
++    // --- Exception handling tests (tester #1) ---
++
++    [Test]
++    public async Task Copy_DestExists_OverwriteFalse_ReturnsIOError()
++    {
++        var srcPath = TempFile("copy_ow_src.txt");
++        var destPath = TempFile("copy_ow_dst.txt"); // dest already exists
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
++    }
++
++    [Test]
++    public async Task Copy_DestExists_OverwriteTrue_Succeeds()
++    {
++        var srcPath = TempFile("copy_owt_src.txt");
++        var destPath = _fs.Path.Combine(_tempDir, "copy_owt_dst.txt");
++        _fs.File.WriteAllText(destPath, "old content");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Copy(new Copy { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
++    }
++
++    [Test]
++    public async Task Move_DestExists_OverwriteFalse_ReturnsIOError()
++    {
++        var srcPath = TempFile("move_ow_src.txt");
++        var destPath = TempFile("move_ow_dst.txt"); // dest already exists
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = false });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
++    }
++
++    [Test]
++    public async Task Move_DestExists_OverwriteTrue_Succeeds()
++    {
++        var srcPath = TempFile("move_owt_src.txt");
++        var destPath = _fs.Path.Combine(_tempDir, "move_owt_dst.txt");
++        _fs.File.WriteAllText(destPath, "old content");
++
++        var src = new PLangPath(srcPath, _engine);
++        var result = src.Move(new Move { Source = src, Destination = new PLangPath(destPath, _engine), Overwrite = true });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.ReadAllText(destPath)).IsEqualTo("test content");
++        await Assert.That(_fs.File.Exists(srcPath)).IsFalse();
++    }
++
++    [Test]
++    public async Task Delete_ReadOnlyParent_ReturnsIOError()
++    {
++        var dir = TempDir("del_ro_parent");
++        var filePath = _fs.Path.Combine(dir, "locked.txt");
++        _fs.File.WriteAllText(filePath, "data");
++
++        // Make parent directory read-only (prevents deletion on Linux)
++        System.IO.File.SetUnixFileMode(dir,
++            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
++
++        try
++        {
++            var p = new PLangPath(filePath, _engine);
++            var result = p.Delete(new Delete { Path = p });
++
++            await Assert.That(result.Success).IsFalse();
++            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        }
++        finally
++        {
++            // Restore permissions for cleanup
++            System.IO.File.SetUnixFileMode(dir,
++                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
++        }
++    }
++
++    [Test]
++    public async Task Save_ReadOnlyDir_ReturnsIOError()
++    {
++        var dir = TempDir("save_ro");
++        System.IO.File.SetUnixFileMode(dir,
++            System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserExecute);
++
++        try
++        {
++            var p = new PLangPath(_fs.Path.Combine(dir, "blocked.txt"), _engine);
++            var result = await p.Save(new Save { Path = p, Value = "data" });
++
++            await Assert.That(result.Success).IsFalse();
++            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        }
++        finally
++        {
++            System.IO.File.SetUnixFileMode(dir,
++                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
++        }
++    }
++
++    [Test]
++    public async Task Read_PermissionDenied_ReturnsIOError()
++    {
++        var filePath = TempFile("read_denied.txt");
++        System.IO.File.SetUnixFileMode(filePath, System.IO.UnixFileMode.None);
++
++        try
++        {
++            var p = new PLangPath(filePath, _engine);
++            var result = p.Read();
++
++            await Assert.That(result.Success).IsFalse();
++            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        }
++        finally
++        {
++            System.IO.File.SetUnixFileMode(filePath,
++                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite);
++        }
++    }
++
++    [Test]
++    public async Task List_PermissionDenied_ReturnsIOError()
++    {
++        var dir = TempDir("list_denied");
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "a.txt"), "a");
++        System.IO.File.SetUnixFileMode(dir, System.IO.UnixFileMode.None);
++
++        try
++        {
++            var p = new PLangPath(dir, _engine);
++            var result = p.List(new List { Path = p, Pattern = "*" });
++
++            await Assert.That(result.Success).IsFalse();
++            await Assert.That(result.Error!.Key).IsEqualTo("IOError");
++        }
++        finally
++        {
++            System.IO.File.SetUnixFileMode(dir,
++                System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
++        }
++    }
++
++    // --- Save object serialization (tester #4) ---
++
++    [Test]
++    public async Task Save_Object_SerializesToJson()
++    {
++        var filePath = _fs.Path.Combine(_tempDir, "saved_obj.json");
++        var p = new PLangPath(filePath, _engine);
++        var data = new Dictionary<string, object> { ["name"] = "test", ["count"] = 42 };
++
++        var result = await p.Save(new Save { Path = p, Value = data });
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(filePath)).IsTrue();
++        var content = _fs.File.ReadAllText(filePath);
++        await Assert.That(content).Contains("test");
++        await Assert.That(content).Contains("42");
++    }
++
++    // --- Delete non-empty directory error has correct code ---
++
++    [Test]
++    public async Task Delete_NonEmptyDirectory_WithoutRecursive_ReturnsDirectoryNotEmpty()
++    {
++        var dirPath = TempDir("del_nonempty_code");
++        _fs.File.WriteAllText(_fs.Path.Combine(dirPath, "child.txt"), "data");
++
++        var p = new PLangPath(dirPath, _engine);
++        var result = p.Delete(new Delete { Path = p, Recursive = false });
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("DirectoryNotEmpty");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+index eba38e01..24d4814a 100644
+--- a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+@@ -29,7 +29,13 @@ public class FileHandlerTests : IDisposable
+     }
+ 
+     private string TempPath(string relativePath) =>
+-        System.IO.Path.Combine(_tempDir, relativePath);
++        _fs.Path.Combine(_tempDir, relativePath);
++
++    private PLangPath MakePath(string relativePath) =>
++        new PLangPath(TempPath(relativePath), _engine);
++
++    private PLangPath MakeAbsPath(string absolutePath) =>
++        new PLangPath(absolutePath, _engine);
+ 
+     private PLangContext CreateContext()
+     {
+@@ -41,7 +47,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Save_ReturnsFileWithCorrectPaths()
+     {
+-        var action = new Save { Context = CreateContext(), Path = TempPath("test.txt"), Value = "hello" };
++        var action = new Save { Context = CreateContext(), Path = MakePath("test.txt"), Value = "hello" };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -54,10 +60,10 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Save_FileExists_AfterSave()
+     {
+-        var action = new Save { Context = CreateContext(), Path = TempPath("exists.txt"), Value = "data" };
++        var action = new Save { Context = CreateContext(), Path = MakePath("exists.txt"), Value = "data" };
+         await action.Run();
+ 
+-        await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
++        await Assert.That(_fs.File.Exists(TempPath("exists.txt"))).IsTrue();
+     }
+ 
+     // --- Read ---
+@@ -65,9 +71,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_ReturnsFileObject()
+     {
+-        System.IO.File.WriteAllText(TempPath("read.txt"), "content here");
++        _fs.File.WriteAllText(TempPath("read.txt"), "content here");
+ 
+-        var action = new Read { Context = CreateContext(), Path = TempPath("read.txt") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("read.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -79,9 +85,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_ContentIsLazy()
+     {
+-        System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
++        _fs.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
+ 
+-        var action = new Read { Context = CreateContext(), Path = TempPath("lazy.txt") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("lazy.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -91,7 +97,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Read_NonexistentFile_ReturnsError()
+     {
+-        var action = new Read { Context = CreateContext(), Path = TempPath("nonexistent.txt") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("nonexistent.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -102,9 +108,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Copy_ReturnsFileWithSource()
+     {
+-        System.IO.File.WriteAllText(TempPath("src.txt"), "source data");
++        _fs.File.WriteAllText(TempPath("src.txt"), "source data");
+ 
+-        var action = new Copy { Context = CreateContext(), Source = TempPath("src.txt"), Destination = TempPath("dst.txt") };
++        var action = new Copy { Context = CreateContext(), Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -117,20 +123,34 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Copy_NonexistentSource_ReturnsFileNotFound()
+     {
+-        var action = new Copy { Context = CreateContext(), Source = TempPath("nope.txt"), Destination = TempPath("dst.txt") };
++        var action = new Copy { Context = CreateContext(), Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+     }
+ 
++    [Test]
++    public async Task Copy_Directory_CopiesAllFiles()
++    {
++        var srcDir = TempPath("copy_dir");
++        _fs.Directory.CreateDirectory(srcDir);
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
++
++        var action = new Copy { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
++    }
++
+     // --- Move ---
+ 
+     [Test]
+     public async Task Move_ReturnsFileWithSource()
+     {
+-        System.IO.File.WriteAllText(TempPath("move_src.txt"), "move data");
++        _fs.File.WriteAllText(TempPath("move_src.txt"), "move data");
+ 
+-        var action = new Move { Context = CreateContext(), Source = TempPath("move_src.txt"), Destination = TempPath("move_dst.txt") };
++        var action = new Move { Context = CreateContext(), Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -143,20 +163,35 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Move_NonexistentSource_ReturnsFileNotFound()
+     {
+-        var action = new Move { Context = CreateContext(), Source = TempPath("nope.txt"), Destination = TempPath("dst.txt") };
++        var action = new Move { Context = CreateContext(), Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+     }
+ 
++    [Test]
++    public async Task Move_Directory_MovesDirectory()
++    {
++        var srcDir = TempPath("move_dir");
++        _fs.Directory.CreateDirectory(srcDir);
++        _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
++
++        var action = new Move { Context = CreateContext(), Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.Directory.Exists(srcDir)).IsFalse();
++        await Assert.That(_fs.File.Exists(_fs.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
++    }
++
+     // --- Delete ---
+ 
+     [Test]
+     public async Task Delete_ReturnsFile()
+     {
+-        System.IO.File.WriteAllText(TempPath("del.txt"), "delete me");
++        _fs.File.WriteAllText(TempPath("del.txt"), "delete me");
+ 
+-        var action = new Delete { Context = CreateContext(), Path = TempPath("del.txt") };
++        var action = new Delete { Context = CreateContext(), Path = MakePath("del.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -168,7 +203,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Delete_NonexistentFile_ReturnsError()
+     {
+-        var action = new Delete { Context = CreateContext(), Path = TempPath("nope.txt") };
++        var action = new Delete { Context = CreateContext(), Path = MakePath("nope.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -177,10 +212,24 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
+     {
+-        var action = new Delete { Context = CreateContext(), Path = TempPath("nope.txt"), IgnoreIfNotFound = true };
++        var action = new Delete { Context = CreateContext(), Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Delete_Directory_Recursive()
++    {
++        var dir = TempPath("del_dir");
++        _fs.Directory.CreateDirectory(dir);
++        _fs.File.WriteAllText(_fs.Path.Combine(dir, "child.txt"), "data");
++
++        var action = new Delete { Context = CreateContext(), Path = MakeAbsPath(dir), Recursive = true };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
++        await Assert.That(_fs.Directory.Exists(dir)).IsFalse();
+     }
+ 
+     // --- Exists ---
+@@ -188,9 +237,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Exists_ExistingFile_ReturnsTrue()
+     {
+-        System.IO.File.WriteAllText(TempPath("check.txt"), "present");
++        _fs.File.WriteAllText(TempPath("check.txt"), "present");
+ 
+-        var action = new Exists { Context = CreateContext(), Path = TempPath("check.txt") };
++        var action = new Exists { Context = CreateContext(), Path = MakePath("check.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -202,7 +251,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Exists_NonexistentFile_ReturnsFalse()
+     {
+-        var action = new Exists { Context = CreateContext(), Path = TempPath("missing.txt") };
++        var action = new Exists { Context = CreateContext(), Path = MakePath("missing.txt") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -217,11 +266,11 @@ public class FileHandlerTests : IDisposable
+     public async Task List_ReturnsFileArray()
+     {
+         var subDir = TempPath("listdir");
+-        System.IO.Directory.CreateDirectory(subDir);
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.txt"), "b");
++        _fs.Directory.CreateDirectory(subDir);
++        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
++        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.txt"), "b");
+ 
+-        var action = new List { Context = CreateContext(), Path = subDir };
++        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir) };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -234,11 +283,11 @@ public class FileHandlerTests : IDisposable
+     public async Task List_WithPattern_FiltersFiles()
+     {
+         var subDir = TempPath("listpattern");
+-        System.IO.Directory.CreateDirectory(subDir);
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
++        _fs.Directory.CreateDirectory(subDir);
++        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
++        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.md"), "b");
+ 
+-        var action = new List { Context = CreateContext(), Path = subDir, Pattern = "*.txt" };
++        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Pattern = "*.txt" };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -251,12 +300,13 @@ public class FileHandlerTests : IDisposable
+     public async Task List_Recursive_FindsNestedFiles()
+     {
+         var subDir = TempPath("listrecursive");
+-        var nested = System.IO.Path.Combine(subDir, "sub");
+-        System.IO.Directory.CreateDirectory(nested);
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
+-        System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
++        var nested = _fs.Path.Combine(subDir, "sub");
++        _fs.Directory.CreateDirectory(subDir);
++        _fs.Directory.CreateDirectory(nested);
++        _fs.File.WriteAllText(_fs.Path.Combine(subDir, "top.txt"), "top");
++        _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
+ 
+-        var action = new List { Context = CreateContext(), Path = subDir, Recursive = true };
++        var action = new List { Context = CreateContext(), Path = MakeAbsPath(subDir), Recursive = true };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -268,7 +318,7 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task List_NonexistentDirectory_ReturnsError()
+     {
+-        var action = new List { Context = CreateContext(), Path = TempPath("nodir") };
++        var action = new List { Context = CreateContext(), Path = MakePath("nodir") };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsFalse();
+@@ -279,9 +329,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_MimeType_FromExtension()
+     {
+-        System.IO.File.WriteAllText(TempPath("doc.md"), "# Hello");
++        _fs.File.WriteAllText(TempPath("doc.md"), "# Hello");
+ 
+-        var action = new Read { Context = CreateContext(), Path = TempPath("doc.md") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("doc.md") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -291,9 +341,9 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_Size_IsLazy()
+     {
+-        System.IO.File.WriteAllText(TempPath("sized.txt"), "12345");
++        _fs.File.WriteAllText(TempPath("sized.txt"), "12345");
+ 
+-        var action = new Read { Context = CreateContext(), Path = TempPath("sized.txt") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("sized.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+@@ -303,33 +353,28 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task FileType_ToString_ReturnsContent()
+     {
+-        System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
++        _fs.File.WriteAllText(TempPath("tostring.txt"), "file-content");
+ 
+-        var action = new Read { Context = CreateContext(), Path = TempPath("tostring.txt") };
++        var action = new Read { Context = CreateContext(), Path = MakePath("tostring.txt") };
+         var result = await action.Run();
+         var f = result.Value as FileResult;
+ 
+         await Assert.That(f!.ToString()).IsEqualTo("file-content");
+     }
+ 
+-    // --- Integration: file.exists → MemoryStack → output.write ---
++    // --- Integration: file.exists -> MemoryStack -> output.write ---
+ 
+     [Test]
+     public async Task Integration_FileExists_FlowsThroughMemoryStack_ToOutput()
+     {
+-        // Arrange: create a real file
+-        System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
++        _fs.File.WriteAllText(TempPath("real.txt"), "I exist");
+ 
+-        // Build engine with built-in modules
+-
+-        // Replace default channel on User actor's IO so we can capture output
+         var captureStream = new System.IO.MemoryStream();
+         _engine.User.Channels.Register(new Channel(
+             EngineChannels.Default, captureStream,
+             ChannelDirection.Output, ownsStream: true)
+         { ContentType = "text/plain" });
+ 
+-        // Build a goal: step 1 = file.exists, step 2 = output.write %fileResult.Exists%
+         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+         {
+             Name = "TestFileExistsFlow",
+@@ -370,26 +415,21 @@ public class FileHandlerTests : IDisposable
+             }
+         };
+ 
+-        // Act: run the goal through the engine
+         var context = _engine.CreateContext();
+         var goalResult = await _engine.RunGoalAsync(goal, context);
+ 
+-        // Assert: goal succeeded
+         await Assert.That(goalResult.Success).IsTrue();
+ 
+-        // Assert: fileResult variable is in memory and is a @file object
+         var fileData = context.MemoryStack.Get("fileResult");
+         await Assert.That(fileData).IsNotNull();
+         var fileObj = fileData!.Value as FileResult;
+         await Assert.That(fileObj).IsNotNull();
+         await Assert.That(fileObj!.Exists).IsTrue();
+ 
+-        // Assert: the lazy %fileResult.Exists% resolved through MemoryStack dot-notation
+         var existsData = context.MemoryStack.Get("fileResult.Exists");
+         await Assert.That(existsData).IsNotNull();
+         await Assert.That(existsData!.Value).IsEqualTo(true);
+ 
+-        // Assert: output.write wrote "True" to our capture stream
+         captureStream.Position = 0;
+         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+         await Assert.That(output).IsEqualTo("True" + System.Environment.NewLine);
+@@ -398,9 +438,6 @@ public class FileHandlerTests : IDisposable
+     [Test]
+     public async Task Integration_FileNotExists_FlowsThroughMemoryStack_ToOutput()
+     {
+-        // Arrange: NO file created — path doesn't exist
+-
+-
+         var captureStream = new System.IO.MemoryStream();
+         _engine.User.Channels.Register(new Channel(
+             EngineChannels.Default, captureStream,
+@@ -452,12 +489,10 @@ public class FileHandlerTests : IDisposable
+ 
+         await Assert.That(goalResult.Success).IsTrue();
+ 
+-        // fileResult.Exists should be false for non-existent file
+         var existsData = context.MemoryStack.Get("fileResult.Exists");
+         await Assert.That(existsData).IsNotNull();
+         await Assert.That(existsData!.Value).IsEqualTo(false);
+ 
+-        // Output should be "False"
+         captureStream.Position = 0;
+         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+         await Assert.That(output).IsEqualTo("False" + System.Environment.NewLine);
+diff --git a/PLang/Runtime2/Engine/Memory/Path.cs b/PLang/Runtime2/Engine/Memory/Path.cs
+new file mode 100644
+index 00000000..f06eaa21
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Memory/Path.cs
+@@ -0,0 +1,298 @@
++using PLang.Interfaces;
++using PLang.Runtime2.Engine.Channels.Serializers;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Utility;
++
++namespace PLang.Runtime2.Engine.Memory;
++
++/// <summary>
++/// Rich path wrapper for PLang action parameters.
++/// Resolves raw path strings into absolute paths with navigable properties.
++/// The source generator detects Resolve(string, Engine) and auto-wraps string parameters.
++/// </summary>
++public sealed class Path
++{
++    private readonly Engine.@this _engine;
++    private readonly IPLangFileSystem _fs;
++    private readonly string _rawPath;
++    private readonly string _absolutePath;
++
++    // Cached string-derived properties (never change once path is set)
++    private string? _extension;
++    private string? _fileName;
++    private string? _fileNameWithoutExtension;
++    private string? _directory;
++
++    public Path(string rawPath, Engine.@this engine)
++    {
++        ArgumentNullException.ThrowIfNull(rawPath);
++        ArgumentNullException.ThrowIfNull(engine);
++
++        _rawPath = rawPath;
++        _engine = engine;
++        _fs = engine.FileSystem;
++        _absolutePath = _fs.Path.GetFullPath(rawPath);
++    }
++
++    /// <summary>
++    /// Engine-resolvable convention — source generator detects this static method
++    /// and generates: Path.Resolve(__Resolve&lt;string&gt;("path"), __engine!)
++    /// </summary>
++    public static Path Resolve(string rawPath, Engine.@this engine)
++        => new Path(rawPath, engine);
++
++    /// <summary>The raw path string as provided (before resolution)</summary>
++    public string Raw => _rawPath;
++
++    /// <summary>Absolute path on disk</summary>
++    public string Absolute => _absolutePath;
++
++    /// <summary>Path relative to the engine's root directory</summary>
++    public string Relative
++    {
++        get
++        {
++            var root = _fs.RootDirectory;
++
++            // Ensure comparison includes trailing separator to avoid
++            // prefix false positives ("/app" matching "/application")
++            if (!root.EndsWith(_fs.Path.DirectorySeparatorChar) && !root.EndsWith(_fs.Path.AltDirectorySeparatorChar))
++                root += _fs.Path.DirectorySeparatorChar;
++
++            if (_absolutePath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
++                return _absolutePath[root.Length..];
++
++            // Exact match (path IS the root directory)
++            if (string.Equals(_absolutePath, _fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
++                return ".";
++
++            return _absolutePath;
++        }
++    }
++
++    /// <summary>File extension including the dot (e.g., ".json")</summary>
++    public string Extension => _extension ??= _fs.Path.GetExtension(_absolutePath);
++
++    /// <summary>File name with extension (e.g., "config.json")</summary>
++    public string FileName => _fileName ??= _fs.Path.GetFileName(_absolutePath);
++
++    /// <summary>File name without extension (e.g., "config")</summary>
++    public string FileNameWithoutExtension
++        => _fileNameWithoutExtension ??= _fs.Path.GetFileNameWithoutExtension(_absolutePath);
++
++    /// <summary>Parent directory path</summary>
++    public string Directory => _directory ??= _fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
++
++    /// <summary>MIME type derived from file extension</summary>
++    public string MimeType => TypeMapping.GetMimeType(Extension);
++
++    /// <summary>Structural: has a file extension (no I/O)</summary>
++    public bool IsFile => !string.IsNullOrEmpty(Extension);
++
++    /// <summary>Structural: no file extension (no I/O)</summary>
++    public bool IsDirectory => string.IsNullOrEmpty(Extension);
++
++    /// <summary>Whether anything exists at this path (live filesystem check)</summary>
++    public bool Exists => _fs.File.Exists(_absolutePath) || _fs.Directory.Exists(_absolutePath);
++
++    /// <summary>File size in bytes. Returns 0 if file doesn't exist. (live check)</summary>
++    public long Size
++    {
++        get
++        {
++            var info = _fs.FileInfo.New(_absolutePath);
++            return info.Exists ? info.Length : 0;
++        }
++    }
++
++    // --- Behavior methods (OBP: behavior belongs to the owner) ---
++
++    public Data Copy(actions.file.Copy action)
++    {
++        if (!Exists)
++            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
++
++        try
++        {
++            var dest = ResolveDestination(action.Destination);
++            EnsureDirectory(dest.Directory);
++
++            if (_fs.File.Exists(_absolutePath))
++                _fs.File.Copy(_absolutePath, dest.Absolute, action.Overwrite);
++            else
++                CopyDirectory(_absolutePath, dest.Absolute, action.Overwrite, action.IncludeSubfolders);
++
++            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    public Data Move(actions.file.Move action)
++    {
++        if (!Exists)
++            return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
++
++        try
++        {
++            var dest = ResolveDestination(action.Destination);
++            EnsureDirectory(dest.Directory);
++
++            if (_fs.File.Exists(_absolutePath))
++                _fs.File.Move(_absolutePath, dest.Absolute, action.Overwrite);
++            else
++            {
++                if (action.Overwrite && _fs.Directory.Exists(dest.Absolute))
++                    _fs.Directory.Delete(dest.Absolute, recursive: true);
++
++                _fs.Directory.Move(_absolutePath, dest.Absolute);
++            }
++
++            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    public Data Delete(actions.file.Delete action)
++    {
++        try
++        {
++            if (_fs.File.Exists(_absolutePath))
++                _fs.File.Delete(_absolutePath);
++            else if (_fs.Directory.Exists(_absolutePath))
++            {
++                if (!action.Recursive && _fs.Directory.GetFileSystemEntries(_absolutePath).Length > 0)
++                    return Data.FromError(new ServiceError(
++                        $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
++
++                _fs.Directory.Delete(_absolutePath, action.Recursive);
++            }
++            else if (!action.IgnoreIfNotFound)
++                return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
++
++            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    public Data Read()
++    {
++        if (!_fs.File.Exists(_absolutePath))
++            return Data.FromError(new ServiceError($"File not found: {Raw}", "NotFound", 404));
++
++        try
++        {
++            var file = new actions.file.types.@file(_absolutePath, _fs);
++            _ = file.Value; // Eager-read so step cache captures content
++            return Data.Ok(file);
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    public Data List(actions.file.List action)
++    {
++        if (!_fs.Directory.Exists(_absolutePath))
++            return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
++
++        try
++        {
++            var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
++            var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
++                .Select(f => new actions.file.types.@file(f, _fs))
++                .ToArray();
++            return Data.Ok(files);
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    /// <summary>Wraps this path as a @file object — used by exists handler</summary>
++    public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
++
++    public async Task<Data> Save(actions.file.Save action)
++    {
++        try
++        {
++            EnsureDirectory(Directory);
++
++            if (action.Value is byte[] bytes)
++                await _fs.File.WriteAllBytesAsync(_absolutePath, bytes);
++            else if (action.Value is string str)
++                await _fs.File.WriteAllTextAsync(_absolutePath, str);
++            else
++            {
++                await using var stream = _fs.File.Create(_absolutePath);
++                await _engine.Channels.Serializers.SerializeAsync(new SerializeOptions
++                    { Stream = stream, Data = action.Value, Extension = Extension });
++            }
++
++            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
++        }
++    }
++
++    /// <summary>
++    /// If source is a file and destination is an existing directory,
++    /// resolve to a file inside that directory with the source filename.
++    /// </summary>
++    private Path ResolveDestination(Path destination)
++    {
++        if (_fs.File.Exists(_absolutePath) && _fs.Directory.Exists(destination.Absolute))
++            return new Path(_fs.Path.Combine(destination.Absolute, FileName), _engine);
++
++        return destination;
++    }
++
++    private void EnsureDirectory(string dir)
++    {
++        if (!string.IsNullOrEmpty(dir) && !_fs.Directory.Exists(dir))
++            _fs.Directory.CreateDirectory(dir);
++    }
++
++    private void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
++    {
++        _fs.Directory.CreateDirectory(dest);
++
++        foreach (var file in _fs.Directory.GetFiles(src))
++        {
++            var fileName = _fs.Path.GetFileName(file);
++            _fs.File.Copy(file, _fs.Path.Combine(dest, fileName), overwrite);
++        }
++
++        if (!includeSubfolders) return;
++
++        foreach (var subDir in _fs.Directory.GetDirectories(src))
++        {
++            var dirName = _fs.Path.GetFileName(subDir);
++            CopyDirectory(subDir, _fs.Path.Combine(dest, dirName), overwrite, includeSubfolders);
++        }
++    }
++
++    /// <summary>Returns relative path — PLang users think in relative paths</summary>
++    public override string ToString() => Relative;
++
++    public override bool Equals(object? obj) => obj switch
++    {
++        Path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
++        string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
++        _ => false
++    };
++
++    public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
++}
+diff --git a/PLang/Runtime2/Engine/Utility/TypeMapping.cs b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+index 78cde6d3..64f665ca 100644
+--- a/PLang/Runtime2/Engine/Utility/TypeMapping.cs
++++ b/PLang/Runtime2/Engine/Utility/TypeMapping.cs
+@@ -46,6 +46,7 @@ public static class TypeMapping
+         ["goal.call"] = typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall),
+         ["tstring"] = typeof(PLang.Runtime2.Engine.Memory.TString),
+         ["translatable"] = typeof(PLang.Runtime2.Engine.Memory.TString),
++        ["path"] = typeof(PLang.Runtime2.Engine.Memory.Path),
+ 
+         // Nullable types
+         ["int?"] = typeof(int?),
+@@ -73,6 +74,7 @@ public static class TypeMapping
+         [typeof(object)] = "object",
+         [typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall)] = "goal.call",
+         [typeof(PLang.Runtime2.Engine.Memory.TString)] = "tstring",
++        [typeof(PLang.Runtime2.Engine.Memory.Path)] = "path",
+     };
+ 
+     /// <summary>
+diff --git a/PLang/Runtime2/GlobalUsings.cs b/PLang/Runtime2/GlobalUsings.cs
+index 6ccb93d2..b503eea6 100644
+--- a/PLang/Runtime2/GlobalUsings.cs
++++ b/PLang/Runtime2/GlobalUsings.cs
+@@ -31,6 +31,9 @@ global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
+ global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
+ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
+ 
++// Memory types
++global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
++
+ // Standalone concepts
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+ global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
+diff --git a/PLang/Runtime2/actions/file/copy.cs b/PLang/Runtime2/actions/file/copy.cs
+index c5f7dde3..0da2a801 100644
+--- a/PLang/Runtime2/actions/file/copy.cs
++++ b/PLang/Runtime2/actions/file/copy.cs
+@@ -5,25 +5,14 @@ namespace PLang.Runtime2.actions.file;
+ [Action("copy", Cacheable = false)]
+ public partial class Copy : IContext
+ {
+-    public partial string Source { get; init; }
+-    public partial string Destination { get; init; }
+-    public partial bool Overwrite { get; init; }
+-
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absSource = fs.Path.GetFullPath(Source);
+-        var absDest = fs.Path.GetFullPath(Destination);
++    public partial PLangPath Source { get; init; }
++    public partial PLangPath Destination { get; init; }
+ 
+-        if (!fs.File.Exists(absSource))
+-            return Task.FromResult(Data.FromError(
+-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
++    [Default(false)]
++    public partial bool Overwrite { get; init; }
+ 
+-        var destDir = fs.Path.GetDirectoryName(absDest);
+-        if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
+-            fs.Directory.CreateDirectory(destDir);
++    [Default(true)]
++    public partial bool IncludeSubfolders { get; init; }
+ 
+-        fs.File.Copy(absSource, absDest, Overwrite);
+-        return Task.FromResult(Data.Ok(new types.@file(absDest, fs, source: absSource)));
+-    }
++    public Task<Data> Run() => Task.FromResult(Source.Copy(this));
+ }
+diff --git a/PLang/Runtime2/actions/file/delete.cs b/PLang/Runtime2/actions/file/delete.cs
+index 5f8a352e..7313eba6 100644
+--- a/PLang/Runtime2/actions/file/delete.cs
++++ b/PLang/Runtime2/actions/file/delete.cs
+@@ -5,25 +5,13 @@ namespace PLang.Runtime2.actions.file;
+ [Action("delete", Cacheable = false)]
+ public partial class Delete : IContext
+ {
+-    public partial string Path { get; init; }
++    public partial PLangPath Path { get; init; }
+ 
+     [Default(false)]
+     public partial bool IgnoreIfNotFound { get; init; }
+ 
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absPath = fs.Path.GetFullPath(Path);
+-
+-        if (!fs.File.Exists(absPath))
+-        {
+-            if (IgnoreIfNotFound)
+-                return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
+-            return Task.FromResult(Data.FromError(
+-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}", "FileNotFound", 404)));
+-        }
++    [Default(false)]
++    public partial bool Recursive { get; init; }
+ 
+-        fs.File.Delete(absPath);
+-        return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
+-    }
++    public Task<Data> Run() => Task.FromResult(Path.Delete(this));
+ }
+diff --git a/PLang/Runtime2/actions/file/exists.cs b/PLang/Runtime2/actions/file/exists.cs
+index 24345fdc..13382130 100644
+--- a/PLang/Runtime2/actions/file/exists.cs
++++ b/PLang/Runtime2/actions/file/exists.cs
+@@ -5,12 +5,7 @@ namespace PLang.Runtime2.actions.file;
+ [Action("exists")]
+ public partial class Exists : IContext
+ {
+-    public partial string Path { get; init; }
++    public partial PLangPath Path { get; init; }
+ 
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absPath = fs.Path.GetFullPath(Path);
+-        return Task.FromResult(Data.Ok(new types.@file(absPath, fs)));
+-    }
++    public Task<Data> Run() => Task.FromResult(Path.AsFile());
+ }
+diff --git a/PLang/Runtime2/actions/file/list.cs b/PLang/Runtime2/actions/file/list.cs
+index fc1f59e3..482d6557 100644
+--- a/PLang/Runtime2/actions/file/list.cs
++++ b/PLang/Runtime2/actions/file/list.cs
+@@ -5,7 +5,7 @@ namespace PLang.Runtime2.actions.file;
+ [Action("list")]
+ public partial class List : IContext
+ {
+-    public partial string Path { get; init; }
++    public partial PLangPath Path { get; init; }
+ 
+     [Default("*")]
+     public partial string Pattern { get; init; }
+@@ -13,20 +13,5 @@ public partial class List : IContext
+     [Default(false)]
+     public partial bool Recursive { get; init; }
+ 
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absPath = fs.Path.GetFullPath(Path);
+-
+-        if (!fs.Directory.Exists(absPath))
+-            return Task.FromResult(Data.FromError(
+-                new PLang.Runtime2.Engine.Errors.ServiceError($"Directory not found: {Path}", "FileNotFound", 404)));
+-
+-        var searchOption = Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+-        var files = fs.Directory.GetFiles(absPath, Pattern, searchOption)
+-            .Select(f => new types.@file(f, fs))
+-            .ToArray();
+-
+-        return Task.FromResult(Data.Ok(files));
+-    }
++    public Task<Data> Run() => Task.FromResult(Path.List(this));
+ }
+diff --git a/PLang/Runtime2/actions/file/move.cs b/PLang/Runtime2/actions/file/move.cs
+index a87c4005..5a42dd92 100644
+--- a/PLang/Runtime2/actions/file/move.cs
++++ b/PLang/Runtime2/actions/file/move.cs
+@@ -5,25 +5,11 @@ namespace PLang.Runtime2.actions.file;
+ [Action("move", Cacheable = false)]
+ public partial class Move : IContext
+ {
+-    public partial string Source { get; init; }
+-    public partial string Destination { get; init; }
+-    public partial bool Overwrite { get; init; }
+-
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absSource = fs.Path.GetFullPath(Source);
+-        var absDest = fs.Path.GetFullPath(Destination);
++    public partial PLangPath Source { get; init; }
++    public partial PLangPath Destination { get; init; }
+ 
+-        if (!fs.File.Exists(absSource))
+-            return Task.FromResult(Data.FromError(
+-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Source}", "FileNotFound", 404)));
+-
+-        var destDir = fs.Path.GetDirectoryName(absDest);
+-        if (!string.IsNullOrEmpty(destDir) && !fs.Directory.Exists(destDir))
+-            fs.Directory.CreateDirectory(destDir);
++    [Default(false)]
++    public partial bool Overwrite { get; init; }
+ 
+-        fs.File.Move(absSource, absDest, Overwrite);
+-        return Task.FromResult(Data.Ok(new types.@file(absDest, fs, source: absSource)));
+-    }
++    public Task<Data> Run() => Task.FromResult(Source.Move(this));
+ }
+diff --git a/PLang/Runtime2/actions/file/read.cs b/PLang/Runtime2/actions/file/read.cs
+index 648adbf6..54ed155a 100644
+--- a/PLang/Runtime2/actions/file/read.cs
++++ b/PLang/Runtime2/actions/file/read.cs
+@@ -5,19 +5,7 @@ namespace PLang.Runtime2.actions.file;
+ [Action("read")]
+ public partial class Read : IContext
+ {
+-    public partial string Path { get; init; }
++    public partial PLangPath Path { get; init; }
+ 
+-    public Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absPath = fs.Path.GetFullPath(Path);
+-
+-        if (!fs.File.Exists(absPath))
+-            return Task.FromResult(Data.FromError(
+-                new PLang.Runtime2.Engine.Errors.ServiceError($"File not found: {Path}")));
+-
+-        var file = new types.@file(absPath, fs);
+-        _ = file.Value; // Eager-read so step cache captures actual content
+-        return Task.FromResult(Data.Ok(file));
+-    }
++    public Task<Data> Run() => Task.FromResult(Path.Read());
+ }
+diff --git a/PLang/Runtime2/actions/file/save.cs b/PLang/Runtime2/actions/file/save.cs
+index 4967ef0e..74b362e1 100644
+--- a/PLang/Runtime2/actions/file/save.cs
++++ b/PLang/Runtime2/actions/file/save.cs
+@@ -5,34 +5,8 @@ namespace PLang.Runtime2.actions.file;
+ [Action("save", Cacheable = false)]
+ public partial class Save : IContext
+ {
+-    public partial string Path { get; init; }
++    public partial PLangPath Path { get; init; }
+     public partial object Value { get; init; }
+ 
+-    public async Task<Data> Run()
+-    {
+-        var fs = Context.Engine!.FileSystem;
+-        var absPath = fs.Path.GetFullPath(Path);
+-        var dir = fs.Path.GetDirectoryName(absPath);
+-
+-        if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
+-            fs.Directory.CreateDirectory(dir);
+-
+-        if (Value is byte[] bytes)
+-        {
+-            await fs.File.WriteAllBytesAsync(absPath, bytes);
+-        }
+-        else if (Value is string str)
+-        {
+-            await fs.File.WriteAllTextAsync(absPath, str);
+-        }
+-        else
+-        {
+-            var ext = fs.Path.GetExtension(absPath);
+-            await using var stream = fs.File.Create(absPath);
+-            await Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
+-                { Stream = stream, Data = Value, Extension = ext });
+-        }
+-
+-        return Data.Ok(new types.@file(absPath, fs));
+-    }
++    public Task<Data> Run() => Path.Save(this);
+ }

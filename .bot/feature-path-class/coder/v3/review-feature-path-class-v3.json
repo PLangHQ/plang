@@ -1,0 +1,58 @@
+{
+  "reviewKey": "feature-path-class::coder::v3",
+  "folder": "feature-path-class",
+  "bot": "coder",
+  "version": "v3",
+  "exportedAt": "2026-02-19T16:17:17.390Z",
+  "comments": [
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 20,
+      "selection": "if (!Source.IsFile)",
+      "text": "should it be Exists, it doesnt have be a file, it could be folder",
+      "time": "2026-02-19T11:20:05.976Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 32,
+      "selection": null,
+      "text": "I think we are breaking odp here, should we let the Path class handle this. source.copy(destination, overwrite);  then path knows how to copy if it's file or directory. should we include subdir or other properties?? ",
+      "time": "2026-02-19T11:21:40.832Z"
+    },
+    {
+      "file": "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs",
+      "line": 45,
+      "selection": null,
+      "text": "why is there System.IO.File. usage going on, this is forbidden in any c# code, unless specifally allowed by developers.. we have IO.Abstract if needed.",
+      "time": "2026-02-19T16:05:55.711Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 75,
+      "selection": null,
+      "text": "",
+      "time": "2026-02-19T16:11:38.313Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 130,
+      "selection": null,
+      "text": "can we discuss, why you dont have the file.exist / directory.exist here, instead of doing it in the action? I think it´s wrong to have it in action, action only job is the transfer the mappings from plang to c#",
+      "time": "2026-02-19T16:13:49.840Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 168,
+      "selection": null,
+      "text": "",
+      "time": "2026-02-19T16:15:12.929Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/save.cs",
+      "line": 24,
+      "selection": null,
+      "text": "OBP still wrong here, make sure to read over all the code see it breaking",
+      "time": "2026-02-19T16:16:39.967Z"
+    }
+  ]
+}

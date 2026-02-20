@@ -46,6 +46,7 @@ public static class TypeMapping
         ["goal.call"] = typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall),
         ["tstring"] = typeof(PLang.Runtime2.Engine.Memory.TString),
         ["translatable"] = typeof(PLang.Runtime2.Engine.Memory.TString),
+        ["path"] = typeof(PLang.Runtime2.Engine.Memory.Path),
 
         // Nullable types
         ["int?"] = typeof(int?),
@@ -73,6 +74,7 @@ public static class TypeMapping
         [typeof(object)] = "object",
         [typeof(PLang.Runtime2.Engine.Goals.Goal.GoalCall)] = "goal.call",
         [typeof(PLang.Runtime2.Engine.Memory.TString)] = "tstring",
+        [typeof(PLang.Runtime2.Engine.Memory.Path)] = "path",
     };
 
     /// <summary>

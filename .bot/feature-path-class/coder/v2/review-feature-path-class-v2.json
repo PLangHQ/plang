@@ -1,0 +1,86 @@
+{
+  "reviewKey": "feature-path-class::coder::v2",
+  "folder": "feature-path-class",
+  "bot": "coder",
+  "version": "v2",
+  "exportedAt": "2026-02-19T15:47:22.585Z",
+  "comments": [
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 20,
+      "selection": "if (!Source.IsFile)",
+      "text": "should it be Exists, it doesnt have be a file, it could be folder",
+      "time": "2026-02-19T11:20:05.976Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/copy.cs",
+      "line": 32,
+      "selection": null,
+      "text": "I think we are breaking odp here, should we let the Path class handle this. source.copy(destination, overwrite);  then path knows how to copy if it's file or directory. should we include subdir or other properties?? then even the question comes, does this action even need to check if it exists, isn't that the job of Path?? Only job of this action is basically recieve the data and forward to correct code execution",
+      "time": "2026-02-19T11:30:15.269Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/delete.cs",
+      "line": 19,
+      "selection": null,
+      "text": "Same applies this file and all other action files for file, doesn't it??",
+      "time": "2026-02-19T11:30:58.900Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 96,
+      "selection": "ToString() => _absolutePath;",
+      "text": "I think this should just be relative path, users in plang mostly use relative path",
+      "time": "2026-02-19T12:30:34.485Z"
+    },
+    {
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 77,
+      "selection": null,
+      "text": "I feel like IsFile would just be checking if it has extension '.jpg' or not, then IsDirectory if it doesn´t, not sure that it really needs here to check if it exists, I think that belongs to the Exists property",
+      "time": "2026-02-19T12:32:06.310Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/list.cs",
+      "line": 22,
+      "selection": null,
+      "text": "what is with wrapping error into error, Data.FromError should be creating error on the Data, no need to do that here. ",
+      "time": "2026-02-19T15:45:52.684Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/list.cs",
+      "line": 26,
+      "selection": null,
+      "text": "not OBP, what did we do for copy and other, path should give the files, action should be super thin layer. only connecting the json(mapping) and an underlaying class",
+      "time": "2026-02-19T15:45:59.211Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/move.cs",
+      "line": 32,
+      "selection": null,
+      "text": "obp, Source.Move...",
+      "time": "2026-02-19T15:46:10.003Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/save.cs",
+      "line": 24,
+      "selection": null,
+      "text": "OBP",
+      "time": "2026-02-19T15:46:24.770Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/save.cs",
+      "line": 29,
+      "selection": null,
+      "text": "OBP",
+      "time": "2026-02-19T15:46:27.234Z"
+    },
+    {
+      "file": "PLang/Runtime2/actions/file/save.cs",
+      "line": 35,
+      "selection": null,
+      "text": "OBP\nall of this could be and should be 1 line, not even creating a directory should be here, and it will return it´s own Data object",
+      "time": "2026-02-19T15:46:31.874Z"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "feature/path-class",
+  "timestamp": "2026-02-20T02:00:00Z",
+  "reviewed_version": "v7",
+  "summary": "Fresh audit of final coder v7 state with test adequacy lens. OBP compliance remains strong. Found 1 major issue: Save's exception filter only catches IOException/UnauthorizedAccessException, but the serialization branch can throw JsonException/NotSupportedException — violating the 'behavior methods must never throw' rule and leaving a partial file on disk. Also found 3 minor/nit observations. All 1239 tests pass. Test adequacy is strong after tester v1 fixes — every catch block now has a test except the serialization failure path.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 238,
+      "issue": "Save's catch filter (`when (ex is IOException or UnauthorizedAccessException)`) does not catch serialization exceptions. The `else` branch calls `_engine.Channels.Serializers.SerializeAsync()`, which delegates to `JsonSerializer.SerializeAsync()`. This can throw `JsonException` (circular reference, unsupported type), `NotSupportedException`, or `ArgumentException` — none of which pass the catch filter. The exception propagates as unhandled, violating the 'behavior methods must never throw' rule.",
+      "impact": "If a PLang user writes `save %complexObject% to file.json` and the object is non-serializable, the step crashes instead of returning a Data error. Additionally, `_fs.File.Create(_absolutePath)` at line 237 has already created the file, so a partial/empty file is left on disk. The Channel pipeline wraps SerializeAsync in a general `catch (Exception ex)` (in Engine/Channels/this.cs:128-143), but Path.Save does not.",
+      "suggestion": "Add a second catch for serialization failures, or broaden the existing filter. Recommended approach:\n\n```csharp\ncatch (Exception ex) when (ex is IOException or UnauthorizedAccessException)\n{\n    return Data.FromError(new ServiceError(ex.Message, \"IOError\", 500));\n}\ncatch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)\n{\n    return Data.FromError(new ServiceError(ex.Message, \"SerializationError\", 500));\n}\n```\n\nAlso add a test: `Save_NonSerializableObject_ReturnsSerializationError` that passes a circular reference or object with unsupported types."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Memory/Path.cs",
+      "line": 147,
+      "issue": "Move directory overwrite is non-atomic. Line 148 deletes the existing destination (`_fs.Directory.Delete(dest.Absolute, recursive: true)`), then line 150 moves the source. If the Move fails after the delete (e.g., cross-device move, permission on source), the destination data is gone and the source is untouched — the user loses their existing destination.",
+      "impact": "Data loss in a rare but real scenario: overwriting a directory across volumes or when source becomes inaccessible between delete and move. This is the same behavior as `mv` on Unix, so it's industry-standard. But PLang could be safer.",
+      "suggestion": "Not blocking merge. For future improvement: move the existing destination to a temp name first, do the move, then delete the temp. On failure, restore from temp. Or document the limitation. Low priority."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 515,
+      "issue": "Inconsistent StatusCode assertions on NotFound errors. The IOError tests (lines 730-876) check both `Error.Key` and `Error.StatusCode`. The NotFound error tests at lines 515 (Copy), 558 (Move), and 606 (Delete) check `Error.Key` but not `Error.StatusCode`. The Read and List NotFound tests (lines 311-312, 375-376) DO check both.",
+      "impact": "If Copy/Move/Delete returned a 500 instead of 404 for not-found, the tests would still pass. Low risk since the code clearly returns 404, but the tests should be consistent.",
+      "suggestion": "Add `await Assert.That(result.Error!.StatusCode).IsEqualTo(404);` to Copy_NotFound, Move_NotFound, Delete_NotFound."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+      "line": 661,
+      "issue": "Duplicate test for the same scenario. `Delete_NonEmptyDirectory_WithoutRecursive_ReturnsError` (line 661) and `Delete_NonEmptyDirectory_WithoutRecursive_ReturnsDirectoryNotEmpty` (line 899) test the same code path. The second is strictly stronger (checks Error.Key and StatusCode). The first is redundant.",
+      "impact": "No functional impact. Just test suite clutter.",
+      "suggestion": "Remove the weaker test at line 661, keep the stronger one at line 899."
+    }
+  ]
+}

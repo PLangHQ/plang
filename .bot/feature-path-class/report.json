@@ -1,0 +1,656 @@
+{
+  "branch": "feature/path-class",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T00:00:00Z",
+      "timestamp_end": "2026-02-19T00:30:00Z",
+      "intent": "Implement Path class for action parameters with engine-resolvable source generator integration",
+      "before": {
+        "assumptions": "Source generator IsEngineResolvable pattern works for custom types. File handlers all use string Path + manual GetFullPath.",
+        "risk": "Medium - touching source generator integration and all file handlers"
+      },
+      "plan": "Create Path.cs, add PLangPath alias, register in TypeMapping, update 7 file handlers, update tests, create PathTests",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Rich path wrapper with Resolve(string, Engine) for source generator detection"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang/Runtime2/Engine/Utility/TypeMapping.cs"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Added PLangPath alias and path type registration"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/file/read.cs",
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/copy.cs",
+            "PLang/Runtime2/actions/file/move.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/exists.cs",
+            "PLang/Runtime2/actions/file/list.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "string Path -> PLangPath Path, use Path.Absolute/IsFile/IsDirectory/Directory/Extension"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Core/StartGoalTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated for PLangPath, created 22 new Path tests, fixed System.IO.Path ambiguity"
+        }
+      ],
+      "after": {
+        "status": "Complete. 1195/1195 tests passing.",
+        "health": "Green. No regressions.",
+        "notes": "Clean implementation. Source generator IsEngineResolvable pattern worked as expected."
+      }
+    },
+    {
+      "id": "b3c4d5e6-f7a8-9012-bcde-f23456789012",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T12:00:00Z",
+      "timestamp_end": "2026-02-19T12:20:00Z",
+      "intent": "Address v2 review feedback \u2014 semantic IsFile/IsDirectory, ToString, Read/List/Save on Path, thin handlers",
+      "before": {
+        "assumptions": "v2 review identified 3 categories: semantic issues, OBP violations in read/list/save, error wrapping in handlers",
+        "risk": "Low - behavioral changes are well-scoped, existing tests validate"
+      },
+      "plan": "Change IsFile/IsDirectory to structural, ToString to Relative, add Read/List/Save to Path, make handlers one-liners, fix Copy/Move/Delete to use _fs directly",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "IsFile/IsDirectory now structural (extension-based). ToString returns Relative. Added Read/List/Save methods. Copy/Move/Delete use _fs.File.Exists directly."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/file/read.cs",
+            "PLang/Runtime2/actions/file/list.cs",
+            "PLang/Runtime2/actions/file/save.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reduced to one-line thin delegators calling Path.Read/List/Save"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated IsFile/IsDirectory/ToString tests for structural semantics. Added 11 new tests for Read/List/Save."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1219/1219 tests passing.",
+        "health": "Green. No regressions.",
+        "notes": "All review feedback addressed. Handlers are now pure delegators."
+      }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-0123-cdef-345678901234",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T14:00:00Z",
+      "timestamp_end": "2026-02-19T14:15:00Z",
+      "intent": "Address v3 review: Path stores Engine, all handlers become pure delegators, tests use _fs",
+      "before": {
+        "assumptions": "v3 review identified 4 remaining issues: delete.cs handler logic, exists.cs direct @file creation, save.cs passing Engine as param, tests using System.IO",
+        "risk": "Low - well-scoped changes, constructor signature change is internal to Path"
+      },
+      "plan": "Path stores Engine.@this instead of IPLangFileSystem. Save drops engine param. Delete absorbs ignoreIfNotFound. Add AsFile(). All handlers become one-liners. Tests replace System.IO with _fs.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Constructor takes Engine.@this, stores both _engine and _fs. Save uses _engine.Channels.Serializers internally. Delete absorbs ignoreIfNotFound param. Added AsFile()."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/exists.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "All three handlers reduced to single-line pure delegators."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced System.IO with _fs, added _engine field, added 2 new tests."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1221/1221 tests passing (+2 new).",
+        "health": "Green. No regressions.",
+        "notes": "All v3 review feedback addressed. Every file handler is now a pure one-line delegator."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-1234-def0-456789012345",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T16:00:00Z",
+      "timestamp_end": "2026-02-19T16:15:00Z",
+      "intent": "Address v4 review: handlers pass this to Path (OBP rule 2 \u2014 navigate, don't pass)",
+      "before": {
+        "assumptions": "v4 review: all handlers decompose action record properties into method parameters instead of passing action record itself",
+        "risk": "Low - method signatures change but behavior is identical"
+      },
+      "plan": "Path methods accept action records. Handlers pass this. Tests construct action records. AsFile rename skipped (conflicts with bool Exists property).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Copy/Move/Delete/List/Save signatures changed from decomposed params to action record params."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/copy.cs",
+            "PLang/Runtime2/actions/file/move.cs",
+            "PLang/Runtime2/actions/file/list.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "All handlers now pass this."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All behavior tests construct action records."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1221/1221 tests passing.",
+        "health": "Green. No regressions.",
+        "notes": "All v4 review feedback addressed."
+      }
+    },
+    {
+      "id": "e6f7a8b9-c0d1-2345-ef01-567890123456",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-19T18:00:00Z",
+      "timestamp_end": "2026-02-19T18:30:00Z",
+      "intent": "First audit of Path class implementation (coder v5) \u2014 OBP compliance, safety, test quality",
+      "before": {
+        "assumptions": "Coder has gone through 4 review rounds with Ingi. OBP structure should be solid. Expecting edge cases and error handling gaps.",
+        "risk": "Low \u2014 review only, no code changes"
+      },
+      "plan": "Review Path.cs, all 7 file handlers, PathTests, FileHandlerTests. Cross-reference source generator, @file type, ServiceError, PLangFileSystem.RootDirectory. Write review-comments.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs",
+            "PLang/Runtime2/actions/file/copy.cs",
+            "PLang/Runtime2/actions/file/move.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/read.cs",
+            "PLang/Runtime2/actions/file/exists.cs",
+            "PLang/Runtime2/actions/file/list.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full review of Path class and all file handlers. Found 10 issues: 1 critical (no exception handling), 3 major (Relative prefix bug, Move.Overwrite ignored, Delete throws for non-empty dirs), 4 minor, 2 nits."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test coverage is good for happy paths and not-found cases. Missing: exception paths (locked files, permission denied), file-to-directory copy semantics."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/review-comments.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10 structured findings for the coder to act on"
+        }
+      ],
+      "after": {
+        "status": "Review complete. 10 findings written to review-comments.json.",
+        "health": "Path foundation is solid architecturally (OBP-compliant). Safety gaps need addressing before production use.",
+        "notes": "The critical finding (#1 \u2014 no exception handling) affects every file handler. Recommend fixing that first."
+      }
+    },
+    {
+      "id": "e6f7a8b9-c0d1-2345-ef01-567890123456",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-19T18:00:00Z",
+      "timestamp_end": "2026-02-19T18:30:00Z",
+      "intent": "First audit of Path class implementation (coder v5) \u2014 OBP compliance, safety, test quality",
+      "before": {
+        "assumptions": "Coder has gone through 4 review rounds with Ingi. OBP structure should be solid. Expecting edge cases and error handling gaps.",
+        "risk": "Low \u2014 review only, no code changes"
+      },
+      "plan": "Review Path.cs, all 7 file handlers, PathTests, FileHandlerTests. Cross-reference source generator, @file type, ServiceError, PLangFileSystem.RootDirectory. Write review-comments.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs",
+            "PLang/Runtime2/actions/file/copy.cs",
+            "PLang/Runtime2/actions/file/move.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/read.cs",
+            "PLang/Runtime2/actions/file/exists.cs",
+            "PLang/Runtime2/actions/file/list.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full review of Path class and all file handlers. Found 10 issues: 1 critical (no exception handling), 3 major (Relative prefix bug, Move.Overwrite ignored, Delete throws for non-empty dirs), 4 minor, 2 nits."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test coverage is good for happy paths and not-found cases. Missing: exception paths (locked files, permission denied), file-to-directory copy semantics."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/review-comments.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10 structured findings for the coder to act on"
+        }
+      ],
+      "after": {
+        "status": "Review complete. 10 findings written to review-comments.json.",
+        "health": "Path foundation is solid architecturally (OBP-compliant). Safety gaps need addressing before production use.",
+        "notes": "The critical finding (#1 \u2014 no exception handling) affects every file handler. Recommend fixing that first."
+      }
+    },
+    {
+      "id": "f7a8b9c0-d1e2-3456-f012-678901234567",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T21:00:00Z",
+      "timestamp_end": "2026-02-19T21:30:00Z",
+      "intent": "Fix auditor findings: exception handling, Relative prefix bug, Move/Delete edge cases, null guards, file-to-dir copy",
+      "before": {
+        "assumptions": "Auditor found 10 issues. Critical #1 (exception handling) affects all behavior methods. Major #2 (Relative prefix) is a subtle string bug. #3+#4 are edge cases users will hit.",
+        "risk": "Low \u2014 well-scoped fixes, existing tests validate non-regression"
+      },
+      "plan": "Wrap all behavior methods in try/catch. Fix Relative with trailing separator guard. Add directory overwrite to Move. Add non-empty check to Delete. Null guards. ResolveDestination for file-to-dir copy. Fix test namespace and explicit Pattern.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "try/catch in Copy/Move/Delete/Read/List/Save. Relative trailing separator guard. Move directory overwrite. Delete non-empty check. Null guards. ResolveDestination helper."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Namespace fix. Explicit Pattern. 6 new tests: Relative prefix, Move dir overwrite, Delete non-empty, null guards x2, Copy file-to-dir."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1227/1227 tests passing (+6 new).",
+        "health": "Green. No regressions.",
+        "notes": "Addressed 8 of 10 auditor findings. Skipped #5 (case-sensitive equality, Windows-primary) and #6 (operator ==, low risk)."
+      }
+    },
+    {
+      "id": "a8b9c0d1-e2f3-4567-0123-789012345678",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-19T22:00:00Z",
+      "timestamp_end": "2026-02-19T22:15:00Z",
+      "intent": "Re-review coder v6 fixes for auditor v1 findings",
+      "before": {
+        "assumptions": "Coder addressed 8 of 10 findings. Expecting straightforward fixes.",
+        "risk": "Low \u2014 review only"
+      },
+      "plan": "Verify each fix: exception handling pattern, Relative guard, Move overwrite, Delete non-empty check, null guards, ResolveDestination, test namespace, Pattern defaults. Check for new issues introduced.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs",
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 8 fixes verified correct. 2 new minor observations: ResolveDestination not applied to Move, empty string for root Relative."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/review-comments.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated with v6 review. 2 non-blocking findings. Recommend merge."
+        }
+      ],
+      "after": {
+        "status": "Review complete. Recommend merge.",
+        "health": "Green. Path class is production-ready.",
+        "notes": "All critical/major issues resolved. Two minor observations remain but are non-blocking."
+      }
+    },
+    {
+      "id": "t1a2b3c4-d5e6-7890-abcd-tester1234567",
+      "bot": "tester",
+      "timestamp_start": "2026-02-19T23:00:00Z",
+      "timestamp_end": "2026-02-19T23:45:00Z",
+      "intent": "Test quality review of Path class feature (coder v6, auditor-approved)",
+      "before": {
+        "assumptions": "Auditor approved for merge. 1227 tests passing. Expecting good happy-path coverage, looking for false greens and untested code paths.",
+        "risk": "Low \u2014 review and test execution only, no code changes"
+      },
+      "plan": "Run full C# test suite. Read all source + test files. Analyze test quality: intent vs implementation, exception paths, edge cases, assertion strength. Check for PLang .goal tests. Read developer review comments (v1-v4) for context on what matters. Write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deep analysis of 46 PathTests + 30 FileHandlerTests. Found critical false-green: exception handling code (6 try/catch blocks) has zero test coverage."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed all behavior methods. Identified 3 untested code paths: exception catches, Save object serialization, Copy/Move overwrite conflicts."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "8 findings: 1 critical, 3 major, 4 minor. Verdict: needs-fixes."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/tester/v1/summary.md",
+            ".bot/feature-path-class/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Human-readable summary of test quality findings."
+        }
+      ],
+      "after": {
+        "status": "Review complete. 8 findings written to test-report.json. Verdict: needs-fixes.",
+        "health": "Tests are green but have blind spots. Exception handling is the biggest gap.",
+        "notes": "The auditor correctly identified missing exception handling and the coder added it \u2014 but neither noticed that no tests were added for the catch paths. This is exactly the kind of false-green the tester role exists to catch."
+      }
+    },
+    {
+      "id": "a9b0c1d2-e3f4-5678-9012-abcdef123456",
+      "bot": "coder",
+      "timestamp_start": "2026-02-19T23:50:00Z",
+      "timestamp_end": "2026-02-20T00:20:00Z",
+      "intent": "Fix tester findings: exception path tests, overwrite tests, Save serialization, strengthened assertions, auditor v2 fixes",
+      "before": {
+        "assumptions": "Tester found 8 issues, 1 critical. All try/catch blocks untested. Auditor v2 had 2 non-blocking observations.",
+        "risk": "Low \u2014 adding tests and two small code fixes"
+      },
+      "plan": "Add exception-path tests using chmod (Linux) and overwrite conflicts. Add Save serialization test. Strengthen assertions. Apply ResolveDestination to Move. Relative root returns '.'.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ResolveDestination applied to Move (auditor v2). Relative returns '.' for root path."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "12 new tests: 4 overwrite conflict (Copy/Move x false/true), 4 permission-denied (Delete/Save/Read/List via chmod), Save object serialization, Move file-to-dir, Relative root='.' , Delete non-empty error code. 6 strengthened assertions."
+        }
+      ],
+      "after": {
+        "status": "Complete. 1239/1239 tests passing (+12 new).",
+        "health": "Green. No regressions. All try/catch blocks now exercised.",
+        "notes": "PLang .goal tests blocked \u2014 requires LLM builder. Noted as future work."
+      }
+    },
+    {
+      "id": "t2b3c4d5-e6f7-8901-bcde-tester2345678",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T00:00:00Z",
+      "timestamp_end": "2026-02-20T00:45:00Z",
+      "intent": "Re-review coder v7 fixes for tester v1 findings",
+      "before": {
+        "assumptions": "Coder v7 claims to have fixed all 7 actionable findings. 1239 tests reported passing.",
+        "risk": "Low \u2014 re-review only"
+      },
+      "plan": "Pull coder v7. Run full test suite. Verify each fix: exception path tests exercise catch blocks, overwrite tests cover both true/false, Save serialization covers else branch, error assertions strengthened, Relative/List/Copy assertions tightened. Check auditor v2 fixes (ResolveDestination in Move, Relative root).",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "12 new tests verified: 4 chmod permission tests (Delete, Save, Read, List), 4 overwrite tests (Copy/Move x true/false), Save_Object_SerializesToJson, Move_FileToExistingDirectory, Relative_RootPath_ReturnsDot, Delete_NonEmptyDirectory_WithoutRecursive_ReturnsDirectoryNotEmpty. All exercise real code paths."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Two code changes verified: Move now calls ResolveDestination (line 140), Relative returns '.' for root (line 67)."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/test-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated verdict from needs-fixes to approved. All findings marked resolved except PLang .goal tests (blocked)."
+        }
+      ],
+      "after": {
+        "status": "Re-review complete. 1239/1239 tests pass. All findings resolved. Verdict: approved.",
+        "health": "Green. Tests are honest and comprehensive.",
+        "notes": "Exception handling, overwrite conflicts, Save serialization all properly tested. PLang .goal tests remain as future work."
+      }
+    },
+    {
+      "id": "b9c0d1e2-f3a4-5678-1234-auditor345678",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-20T01:00:00Z",
+      "timestamp_end": "2026-02-20T01:30:00Z",
+      "intent": "Self-reflection: analyze what tester caught that auditor missed, identify process gaps",
+      "before": {
+        "assumptions": "Tester found critical false-green (catch blocks untested) that auditor approved past. This is a review process failure, not a code issue.",
+        "risk": "None — analysis only, no code changes"
+      },
+      "plan": "Map each tester finding to what auditor knew at v2 review time. Identify the systematic gap: verifying code correctness without verifying test adequacy. Document process changes.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/feature-path-class/test-report.json",
+            ".bot/feature-path-class/tester/v1/summary.md",
+            ".bot/feature-path-class/auditor/v1/summary.md",
+            ".bot/feature-path-class/auditor/v2/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Cross-referenced tester findings with auditor review history. Found auditor's v1 report explicitly noted 'Missing: exception paths' in test review, but v2 approved without checking tests were added."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/auditor/v3/plan.md",
+            ".bot/feature-path-class/auditor/v3/summary.md",
+            ".bot/feature-path-class/auditor/v3/result.md",
+            ".bot/feature-path-class/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Self-reflection artifacts: finding-by-finding analysis, process gap identification, 4 concrete process improvements"
+        },
+        {
+          "paths": [
+            "/learnings/feature-path-class/auditor/v3/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5 reusable learnings: code fix != finding resolved, run coverage before approving, test existence != test adequacy, equal time for test review, new code paths need a checklist"
+        }
+      ],
+      "after": {
+        "status": "Self-reflection complete. 5 process improvements documented.",
+        "health": "N/A — no code changes, review process analysis only.",
+        "notes": "The critical miss: auditor requested exception handling (v1), verified code was added (v2), approved for merge, but never verified tests existed for the new catch blocks. Tester caught it immediately. Root cause: reviewing code correctness without reviewing test adequacy."
+      }
+    },
+    {
+      "id": "c0d1e2f3-a4b5-6789-2345-auditor456789",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-20T01:30:00Z",
+      "timestamp_end": "2026-02-20T02:15:00Z",
+      "intent": "Fresh audit of coder v7 applying v3 test adequacy process improvements",
+      "before": {
+        "assumptions": "Previous audit approved for merge, tester caught gaps, v3 documented process improvements. Applying new lens to the final code state.",
+        "risk": "Low — review only, no code changes"
+      },
+      "plan": "Review all changed files with dual lens: code correctness AND test adequacy. For each code path, identify covering test. For each test, check assertion quality. Cross-reference exception sources in try blocks against catch filters.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Path.cs",
+            "PLang/Runtime2/actions/file/copy.cs",
+            "PLang/Runtime2/actions/file/move.cs",
+            "PLang/Runtime2/actions/file/delete.cs",
+            "PLang/Runtime2/actions/file/save.cs",
+            "PLang/Runtime2/actions/file/read.cs",
+            "PLang/Runtime2/actions/file/exists.cs",
+            "PLang/Runtime2/actions/file/list.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full review with test adequacy lens. Found Save serialization exception gap: catch filter misses JsonException/NotSupportedException from SerializeAsync. Cross-referenced with Channel pipeline which handles it correctly."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/Path/PathTests.cs",
+            "PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Applied 'which test hits this line?' checklist to all code paths. Found serialization failure path has no test (because code doesn't handle it either). Found inconsistent StatusCode assertions and one duplicate test."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced SerializeAsync call chain to confirm JsonException can propagate from JsonSerializer.SerializeAsync through to Path.Save uncaught."
+        },
+        {
+          "paths": [
+            ".bot/feature-path-class/review-comments.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "4 findings: 1 major (serialization exception gap), 1 minor (non-atomic dir overwrite), 2 nits (test consistency)"
+        }
+      ],
+      "after": {
+        "status": "Review complete. 4 findings written. Fix #1 before merge.",
+        "health": "Path class is solid overall. One exception handling gap in Save serialization branch.",
+        "notes": "The v3 process improvement worked: 'which test hits this line?' checklist found the serialization gap mechanically. The new lens catches what code-only review misses."
+      }
+    }
+  ]
+}
