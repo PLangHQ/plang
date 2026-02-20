@@ -1,3 +1,5 @@
+using System.Reflection;
+using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using Type = PLang.Runtime2.Engine.Memory.Type;
 
@@ -568,6 +570,81 @@ public class DataTests
 
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Context).IsEqualTo(context);
+    }
+
+    // --- Phase 3: Envelope properties + Out view ---
+
+    [Test]
+    public async Task Signature_DefaultsToNull()
+    {
+        var data = new Data("test", "hello");
+
+        await Assert.That(data.Signature).IsNull();
+    }
+
+    [Test]
+    public async Task Signature_CanBeSet()
+    {
+        var data = new Data("test", "hello");
+        var sig = new byte[] { 1, 2, 3, 4 };
+
+        data.Signature = sig;
+
+        await Assert.That(data.Signature).IsEqualTo(sig);
+    }
+
+    [Test]
+    public async Task Verified_DefaultsToNull()
+    {
+        var data = new Data("test", "hello");
+
+        await Assert.That(data.Verified).IsNull();
+    }
+
+    [Test]
+    public async Task Verified_CanBeSetTrue()
+    {
+        var data = new Data("test", "hello");
+
+        data.Verified = true;
+
+        await Assert.That(data.Verified).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task Verified_CanBeSetFalse()
+    {
+        var data = new Data("test", "hello");
+
+        data.Verified = false;
+
+        await Assert.That(data.Verified).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task Signature_HasOutAttribute()
+    {
+        var prop = typeof(Data).GetProperty(nameof(Data.Signature));
+
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
+    }
+
+    [Test]
+    public async Task Properties_HasOutAttribute()
+    {
+        var prop = typeof(Data).GetProperty(nameof(Data.Properties));
+
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
+    }
+
+    [Test]
+    public async Task OutView_ExistsInViewEnum()
+    {
+        var outValue = View.Out;
+
+        await Assert.That(outValue.ToString()).IsEqualTo("Out");
     }
 }
 

@@ -1,0 +1,73 @@
+using PLang.Runtime2.Engine.Memory.Navigators;
+
+namespace PLang.Runtime2.Engine.Memory;
+
+/// <summary>
+/// Data — navigation concern.
+/// GetChild traverses dot notation and bracket indexing into nested values.
+/// </summary>
+public partial class Data
+{
+    /// <summary>
+    /// Gets a child value by path (dot notation or index).
+    /// </summary>
+    public Data? GetChild(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return this;
+
+        // Handle dot notation
+        var dotIndex = path.IndexOf('.');
+        var bracketIndex = path.IndexOf('[');
+
+        string segment;
+        string remaining;
+
+        if (dotIndex >= 0 && (bracketIndex < 0 || dotIndex < bracketIndex))
+        {
+            segment = path[..dotIndex];
+            remaining = path[(dotIndex + 1)..];
+        }
+        else if (bracketIndex >= 0)
+        {
+            if (bracketIndex > 0)
+            {
+                segment = path[..bracketIndex];
+                remaining = path[bracketIndex..];
+            }
+            else
+            {
+                var closeBracket = path.IndexOf(']');
+                if (closeBracket < 0)
+                    return null;
+                segment = path[1..closeBracket];
+                remaining = closeBracket + 1 < path.Length ? path[(closeBracket + 1)..].TrimStart('.') : "";
+            }
+        }
+        else
+        {
+            segment = path;
+            remaining = "";
+        }
+
+        // Get child value from current value
+        var childValue = GetChildValue(segment);
+        if (childValue == null)
+            return null;
+
+        var child = new Data(segment, childValue, parent: this);
+        child.Context = _context;
+
+        if (string.IsNullOrEmpty(remaining))
+            return child;
+
+        return child.GetChild(remaining);
+    }
+
+    private object? GetChildValue(string key)
+    {
+        var val = Value;
+        if (val == null) return null;
+        return ValueNavigators.Navigate(val, key);
+    }
+}
