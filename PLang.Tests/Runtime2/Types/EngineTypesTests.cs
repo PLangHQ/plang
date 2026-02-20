@@ -409,6 +409,58 @@ public class EngineTypesTests
         // No exception thrown
     }
 
+    // --- KindOf: type value → kind ---
+
+    [Test]
+    public async Task KindOf_KnownKindName_ReturnsSelf()
+    {
+        await Assert.That(_types.KindOf("image")).IsEqualTo("image");
+        await Assert.That(_types.KindOf("video")).IsEqualTo("video");
+        await Assert.That(_types.KindOf("text")).IsEqualTo("text");
+        await Assert.That(_types.KindOf("archive")).IsEqualTo("archive");
+        await Assert.That(_types.KindOf("code")).IsEqualTo("code");
+    }
+
+    [Test]
+    public async Task KindOf_KnownKindName_CaseInsensitive()
+    {
+        await Assert.That(_types.KindOf("IMAGE")).IsEqualTo("image");
+        await Assert.That(_types.KindOf("Video")).IsEqualTo("video");
+    }
+
+    [Test]
+    public async Task KindOf_MimeType_ReturnsKind()
+    {
+        await Assert.That(_types.KindOf("image/jpeg")).IsEqualTo("image");
+        await Assert.That(_types.KindOf("video/mp4")).IsEqualTo("video");
+        await Assert.That(_types.KindOf("audio/mpeg")).IsEqualTo("audio");
+        await Assert.That(_types.KindOf("text/plain")).IsEqualTo("text");
+        await Assert.That(_types.KindOf("application/json")).IsEqualTo("text");
+        await Assert.That(_types.KindOf("application/pdf")).IsEqualTo("document");
+    }
+
+    [Test]
+    public async Task KindOf_PlangTypeName_ReturnsNull()
+    {
+        await Assert.That(_types.KindOf("string")).IsNull();
+        await Assert.That(_types.KindOf("int")).IsNull();
+        await Assert.That(_types.KindOf("datetime")).IsNull();
+        await Assert.That(_types.KindOf("bool")).IsNull();
+    }
+
+    [Test]
+    public async Task KindOf_UnknownMime_ReturnsNull()
+    {
+        await Assert.That(_types.KindOf("application/x-unknown-test")).IsNull();
+    }
+
+    [Test]
+    public async Task KindOf_NullOrEmpty_ReturnsNull()
+    {
+        await Assert.That(_types.KindOf(null!)).IsNull();
+        await Assert.That(_types.KindOf("")).IsNull();
+    }
+
     // --- Engine integration ---
 
     [Test]

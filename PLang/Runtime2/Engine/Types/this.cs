@@ -382,6 +382,20 @@ public sealed class @this
         "image", "video", "audio", "archive"
     };
 
+    private readonly HashSet<string> _allKinds;
+    private readonly Dictionary<string, string> _mimeToKind;
+
+    public @this()
+    {
+        _allKinds = new HashSet<string>(_extensionToKind.Values, StringComparer.OrdinalIgnoreCase);
+        _mimeToKind = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in _extensionToMime)
+        {
+            if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
+                _mimeToKind.TryAdd(kvp.Value, kind);
+        }
+    }
+
     /// <summary>
     /// PLang type name → CLR type.
     /// Handles generics (list&lt;string&gt;), dictionaries (dict&lt;K,V&gt;), nullable (int?), and MIME types.
@@ -512,6 +526,21 @@ public sealed class @this
         if (string.IsNullOrEmpty(kind))
             return false;
         return !_notCompressible.Contains(kind);
+    }
+
+    /// <summary>
+    /// PLang type value → Kind. Recognizes known kind names and MIME types.
+    /// Returns null for PLang type names (string, int, etc.) and unknown values.
+    /// </summary>
+    public string? KindOf(string typeValue)
+    {
+        if (string.IsNullOrEmpty(typeValue))
+            return null;
+        if (_allKinds.TryGetValue(typeValue, out var canonical))
+            return canonical;
+        if (typeValue.Contains('/') && _mimeToKind.TryGetValue(typeValue, out var kind))
+            return kind;
+        return null;
     }
 
     /// <summary>

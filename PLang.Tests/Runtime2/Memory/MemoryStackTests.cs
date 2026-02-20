@@ -485,6 +485,76 @@ public class MemoryStackTests
         await Assert.That(dict.ContainsKey("name")).IsTrue();
         await Assert.That(dict.ContainsKey("NAME")).IsTrue();
     }
+
+    // --- Phase 2: Context stamping via PLangContext ---
+
+    [Test]
+    public async Task PLangContext_StampsContextOnMemoryStackData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Variables set through PLangContext's MemoryStack get context stamped
+        context.MemoryStack.Set("name", "John");
+
+        await Assert.That(context.MemoryStack.Get("name")!.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task PLangContext_Put_StampsContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("test", "hello");
+        context.MemoryStack.Put(data);
+
+        await Assert.That(data.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task PLangContext_ExistingData_GetsContext()
+    {
+        // Pre-populate a MemoryStack, then create PLangContext with it
+        var stack = new MemoryStack();
+        stack.Set("name", "John");
+
+        // Data has no context before PLangContext creation
+        await Assert.That(stack.Get("name")!.Context).IsNull();
+
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine, stack);
+
+        // After PLangContext creation, existing data gets context
+        await Assert.That(stack.Get("name")!.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task Clone_DataHasNoContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        context.MemoryStack.Set("name", "John");
+
+        var clone = context.MemoryStack.Clone();
+
+        // Cloned data has no context until a new PLangContext stamps it
+        await Assert.That(clone.Get("name")!.Context).IsNull();
+    }
+
+    [Test]
+    public async Task ChildContext_StampsClonedData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var parentContext = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+        parentContext.MemoryStack.Set("name", "John");
+
+        var childContext = parentContext.CreateChild();
+
+        // Child context stamps its own context on the cloned data
+        await Assert.That(childContext.MemoryStack.Get("name")!.Context).IsEqualTo(childContext);
+    }
 }
 
 public class MemoryStackAccessorTests

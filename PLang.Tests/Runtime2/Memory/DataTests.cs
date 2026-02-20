@@ -420,6 +420,155 @@ public class DataTests
 
         await Assert.That(ov.Parent).IsNull();
     }
+
+    // --- Phase 2: Context + Lazy Type derivation ---
+
+    [Test]
+    public async Task Context_DefaultsToNull()
+    {
+        var ov = new Data("test", "hello");
+
+        await Assert.That(ov.Context).IsNull();
+    }
+
+    [Test]
+    public async Task Context_WhenSet_PropagesToType()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Use MIME type — Kind is only non-null when context is set
+        var ov = new Data("test", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
+        ov.Context = context;
+
+        // Type has context: Kind navigation works
+        await Assert.That(ov.Type!.Kind).IsEqualTo("image");
+    }
+
+    [Test]
+    public async Task Type_LazyDerivation_WithoutContext()
+    {
+        var ov = new Data("test", 42);
+
+        // Type is lazily derived on first access
+        await Assert.That(ov.Type).IsNotNull();
+        await Assert.That(ov.Type!.Value).IsEqualTo("int");
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
+    }
+
+    [Test]
+    public async Task Type_LazyDerivation_WithContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var ov = new Data("test", "hello");
+        ov.Context = context;
+
+        // Type lazily derived through context's Engine.Types
+        await Assert.That(ov.Type).IsNotNull();
+        await Assert.That(ov.Type!.Value).IsEqualTo("string");
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
+    }
+
+    [Test]
+    public async Task Type_LazyDerivation_InvalidatedByValueSetter()
+    {
+        var ov = new Data("test", "hello");
+
+        await Assert.That(ov.Type!.Value).IsEqualTo("string");
+
+        ov.Value = 42;
+
+        await Assert.That(ov.Type!.Value).IsEqualTo("int");
+        await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
+    }
+
+    [Test]
+    public async Task Type_NullValue_ReturnsNull()
+    {
+        var ov = new Data("test");
+
+        await Assert.That(ov.Type).IsNull();
+    }
+
+    [Test]
+    public async Task Type_ExplicitType_NotOverridden()
+    {
+        var explicitType = new Type("image/jpeg");
+        var ov = new Data("test", new byte[] { 1, 2, 3 }, explicitType);
+
+        // Explicit type is preserved, not lazily derived
+        await Assert.That(ov.Type).IsEqualTo(explicitType);
+        await Assert.That(ov.Type!.Value).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task Type_Setter_StampsContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var ov = new Data("test", "hello");
+        ov.Context = context;
+
+        var newType = new Type("text/plain");
+        ov.Type = newType;
+
+        // Type gets context from Data — Kind navigation works
+        await Assert.That(newType.Kind).IsEqualTo("text");
+    }
+
+    [Test]
+    public async Task Type_Kind_WithContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
+        data.Context = context;
+
+        await Assert.That(data.Type!.Kind).IsEqualTo("image");
+        await Assert.That(data.Type!.Compressible).IsFalse();
+    }
+
+    [Test]
+    public async Task Type_Kind_WithoutContext_ReturnsNull()
+    {
+        var imageType = new Type("image/jpeg");
+
+        await Assert.That(imageType.Kind).IsNull();
+        await Assert.That(imageType.Compressible).IsFalse();
+    }
+
+    [Test]
+    public async Task Type_Compressible_TextKind()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("txt", "hello", Type.FromMime("text/plain"));
+        data.Context = context;
+
+        await Assert.That(data.Type!.Kind).IsEqualTo("text");
+        await Assert.That(data.Type!.Compressible).IsTrue();
+    }
+
+    [Test]
+    public async Task GetChild_InheritsContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Dictionary<string, object?> { { "name", "test" } };
+        var ov = new Data("data", data);
+        ov.Context = context;
+
+        var child = ov.GetChild("name");
+
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Context).IsEqualTo(context);
+    }
 }
 
 public class DynamicDataTests

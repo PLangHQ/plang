@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Force.DeepCloner;
+using PLang.Runtime2.Engine.Context;
 
 namespace PLang.Runtime2.Engine.Memory;
 
@@ -10,6 +12,19 @@ namespace PLang.Runtime2.Engine.Memory;
 public class MemoryStack
 {
     private readonly ConcurrentDictionary<string, Data> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private PLangContext? _context;
+
+    [JsonIgnore]
+    internal PLangContext? Context
+    {
+        get => _context;
+        set
+        {
+            _context = value;
+            foreach (var data in _variables.Values)
+                data.Context = value;
+        }
+    }
 
     public MemoryStack()
     {
@@ -24,6 +39,7 @@ public class MemoryStack
     /// </summary>
     public void Put(Data value)
     {
+        value.Context = _context;
         _variables[value.Name] = value;
     }
 
@@ -41,7 +57,9 @@ public class MemoryStack
         }
         else
         {
-            _variables[name] = new Data(name, value, type);
+            var data = new Data(name, value, type);
+            data.Context = _context;
+            _variables[name] = data;
         }
     }
 
