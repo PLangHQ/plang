@@ -193,150 +193,56 @@
       }
     },
     {
-      "id": "c0d3r-s2-2026-0220-phase2-context",
-      "bot": "coder",
-      "timestamp_start": "2026-02-20T14:00:00Z",
-      "intent": "Implement Phase 2: Type context + lazy derivation, Data late-bound context, MemoryStack context stamping",
+      "id": "tstr-s3-2026-0220-verify-fixes-phase3",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T17:00:00Z",
+      "timestamp_end": "2026-02-20T17:30:00Z",
+      "intent": "Verify v2 fixes + test quality analysis of Phase 3 (Data partial class split + Out view)",
       "before": {
-        "assumptions": "Phase 1 complete — Engine.Types exists with full type knowledge. Type currently derives ClrType via static TypeMapping. Data eagerly creates Type in constructor and Value setter. No context threading through Data/Type/MemoryStack.",
-        "risk": "Medium — changes Data constructor, Value setter, and Type getter. All existing tests must pass with new lazy derivation. Fallback to static TypeMapping ensures contextless path works."
+        "assumptions": "Coder fixed v2 critical/major findings and implemented Phase 3. Fixes should address Add→KindOf, null guards, backtick, BuilderNames/ComplexSchemas. Phase 3 is structural — no behavior change expected.",
+        "risk": "Low. Phase 3 is a partial class split. Main risk is that field access across partials breaks compilation, but tests would catch that."
       },
-      "plan": "Type gets Context property + lazy Kind/Compressible/ClrType navigation. Engine.Types gets KindOf() for MIME/kind resolution. Data gets Context property with lazy Type derivation. MemoryStack gets Context property with stamping on Set/Put. PLangContext stamps MemoryStack.Context. Action.RunAsync stamps context on result Data.",
+      "plan": "Run tests, verify fixes with new tests, analyze Phase 3 test quality, write test-report.json.",
       "actions": [
         {
           "paths": [
-            "PLang/Runtime2/Engine/Types/this.cs"
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
           ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Added constructor building _allKinds HashSet and _mimeToKind reverse map. Added KindOf(string typeValue) method resolving kind names and MIME types to kinds."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Memory/Data.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Type class: added Context + Kind + Compressible. Data class: added Context property, lazy Type derivation, child context inheritance. Constructor stores explicit type only, Value setter invalidates, Type getter lazily derives."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Memory/MemoryStack.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Added Context property with setter stamping all existing Data. Put and Set stamp context on new Data."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Context/PLangContext.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Constructor sets MemoryStack.Context = this before RegisterContextVariables."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Stamp result.Context = context on handler result Data before return variable binding."
-        },
-        {
-          "paths": [
-            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
-            "PLang.Tests/Runtime2/Memory/DataTests.cs",
-            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs"
-          ],
-          "type": "modify",
+          "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Added 23 new tests: 6 KindOf tests, 12 Data context/lazy derivation tests, 5 MemoryStack context stamping tests."
+          "context": "Verified 16 new fix tests: Add→KindOf (4), null guards (4), backtick (2), BuilderNames/ComplexSchemas (6). All fixes correct."
         },
-        {
-          "paths": [
-            ".bot/data-envelope-architecture/coder/v2/plan.md",
-            ".bot/data-envelope-architecture/coder/v2/summary.md",
-            ".bot/data-envelope-architecture/coder/summary.md"
-          ],
-          "type": "create",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Plan, version summary, and bot root summary update."
-        }
-      ],
-      "after": {
-        "status": "Phase 2 complete. Type navigates lazily through context. Data has late-bound context with lazy Type derivation. MemoryStack/PLangContext propagate context automatically.",
-        "health": "Green. Build succeeds with 0 errors. 1233 Runtime2 tests pass with 0 failures. No regressions.",
-        "notes": "Phase 3 next: Data partial class split + Out view."
-      },
-      "timestamp_end": "2026-02-20T15:00:00Z"
-    },
-    {
-      "id": "c0d3r-s3-2026-0220-phase3-split",
-      "bot": "coder",
-      "timestamp_start": "2026-02-20T16:00:00Z",
-      "intent": "Implement Phase 3: Data partial class split + Out view — organize Data by concern, add transport serialization surface",
-      "before": {
-        "assumptions": "Phase 2 complete — Data has context, lazy Type derivation, MemoryStack context stamping. Data.cs is 432 lines with 4 concerns mixed together. No Out view exists for transport serialization.",
-        "risk": "Low — partial class split is zero-behavior-change refactor. Out attribute and envelope stubs are additive. All existing tests should pass unchanged."
-      },
-      "plan": "Split Data.cs into 4 partial files: Data.cs (core), Data.Result.cs (error/result), Data.Navigation.cs (GetChild), Data.Envelope.cs (Signature/Verified stubs). Add Out to View enum + OutAttribute. Tag Properties and Signature with [Out]. Write tests for new surface.",
-      "actions": [
         {
           "paths": [
             "PLang/Runtime2/Engine/Memory/Data.cs",
             "PLang/Runtime2/Engine/Memory/Data.Result.cs",
             "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
-            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Split Data.cs into 4 partial class files. Core keeps Type, Data fields/constructor/Value/Type/GetValue/helpers/Data<T>/DynamicData. Result.cs gets Error/Success/Handled/Ok/FromError/Merge. Navigation.cs gets GetChild/GetChildValue. Envelope.cs gets Signature/Verified stubs."
-        },
-        {
-          "paths": [
-            "PLang/Runtime2/Engine/View.cs"
-          ],
-          "type": "modify",
-          "category": "code",
-          "confidence": "high",
-          "context": "Added Out to View enum. Added OutAttribute class following same pattern as Store/LlmBuilder/Debug attributes."
-        },
-        {
-          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/View.cs",
             "PLang.Tests/Runtime2/Memory/DataTests.cs"
           ],
-          "type": "modify",
+          "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Added 8 new tests: Signature defaults/set, Verified defaults/set true/false, [Out] attribute on Signature and Properties, Out view enum value."
+          "context": "Phase 3 partial class split: clean structural refactor. 8 new envelope/attribute tests. All existing tests pass unchanged."
         },
         {
           "paths": [
-            ".bot/data-envelope-architecture/coder/v3/plan.md",
-            ".bot/data-envelope-architecture/coder/v3/summary.md",
-            ".bot/data-envelope-architecture/coder/summary.md"
+            ".bot/data-envelope-architecture/test-report.json"
           ],
-          "type": "create",
+          "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Plan, version summary, and bot root summary update."
+          "context": "Updated to v3: 3 minor findings only. Verdict: approved."
         }
       ],
       "after": {
-        "status": "Phase 3 complete. Data split into 4 partial class files by concern. Out view added with OutAttribute. Signature and Verified envelope stubs ready for Phase 4.",
-        "health": "Green. Build succeeds with 0 errors. 1313 Runtime2 tests pass with 0 failures. No regressions.",
-        "notes": "Phase 4 next: Envelope pipeline — Wrap/Compress/Encrypt/Decrypt/Decompress/Unwrap methods in Data.Envelope.cs."
-      },
-      "timestamp_end": "2026-02-20T16:30:00Z"
+        "status": "All v2 critical/major findings verified fixed. Phase 3 clean. Verdict: approved for auditor.",
+        "health": "1349 tests pass, 0 failures. Code and tests are solid. Only minor findings remain.",
+        "notes": "Ready for auditor review. Phase 4 (envelope pipeline) will need serializer-level tests for [Out] attribute."
+      }
     }
   ]
 }
