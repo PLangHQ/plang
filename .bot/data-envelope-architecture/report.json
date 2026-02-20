@@ -243,6 +243,54 @@
         "health": "1349 tests pass, 0 failures. Code and tests are solid. Only minor findings remain.",
         "notes": "Ready for auditor review. Phase 4 (envelope pipeline) will need serializer-level tests for [Out] attribute."
       }
+    },
+    {
+      "id": "c0d3r-s4-2026-0220-phase4-pipeline",
+      "bot": "coder",
+      "timestamp_start": "2026-02-20T17:00:00Z",
+      "timestamp_end": "2026-02-20T17:30:00Z",
+      "intent": "Implement Phase 4: Envelope pipeline — Wrap/Compress/Encrypt/Decrypt/Decompress/Unwrap methods on Data",
+      "before": {
+        "assumptions": "Phase 3 complete — Data split into partial classes, Signature/Verified stubs in Data.Envelope.cs, Out view exists. Engine.Types has KindOf and Compressible. No crypto service in Runtime2 yet.",
+        "risk": "Low-medium. Wrap/Unwrap are pure data. Compress/Decompress use .NET GZip. Encrypt/Decrypt are pass-throughs until crypto is added."
+      },
+      "plan": "Add 6 pipeline methods to Data.Envelope.cs: Wrap (kind envelope from Type.Kind), Unwrap (strip envelope), Compress (GZip + JSON serialization if compressible), Decompress (reverse), Encrypt/Decrypt (structural pass-through, no crypto yet). Static JsonSerializerOptions for intermediate serialization. Tests for all methods + round-trip.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added 6 pipeline methods (Wrap, Compress, Encrypt, Decrypt, Decompress, Unwrap), static _envelopeJsonOptions, GZipCompress/GZipDecompress helpers, RehydrateNestedData for JSON round-trip. Encrypt/Decrypt are structural pass-throughs."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "17 new tests: Wrap (3), Unwrap (3), Compress (3), Decompress (2), round-trip (2), Encrypt/Decrypt (3), pipeline chain (1)."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/coder/v4/plan.md",
+            ".bot/data-envelope-architecture/coder/v4/summary.md",
+            ".bot/data-envelope-architecture/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, version summary, and bot root summary update."
+        }
+      ],
+      "after": {
+        "status": "Phase 4 complete. All four phases of the Data Envelope Architecture are implemented. Wrap/Compress/Decompress/Unwrap fully functional. Encrypt/Decrypt structural pass-throughs until crypto service is added to Engine.",
+        "health": "Green. Build succeeds with 0 errors. 1347 Runtime2 tests pass with 0 failures. No regressions.",
+        "notes": "All four phases complete. Encrypt/Decrypt need a crypto service on Engine to become functional. The pipeline chain data.Wrap().Compress().Encrypt() ↔ received.Decrypt().Decompress().Unwrap() works end-to-end for non-encrypted scenarios."
+      }
     }
   ]
 }

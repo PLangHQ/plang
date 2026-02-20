@@ -646,6 +646,256 @@ public class DataTests
 
         await Assert.That(outValue.ToString()).IsEqualTo("Out");
     }
+
+    // --- Phase 4: Envelope pipeline ---
+
+    [Test]
+    public async Task Wrap_MimeType_CreatesKindEnvelope()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("file", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
+        data.Context = context;
+
+        var wrapped = data.Wrap();
+
+        await Assert.That(wrapped).IsNotEqualTo(data);
+        await Assert.That(wrapped.Type!.Value).IsEqualTo("image");
+        await Assert.That(wrapped.Value).IsTypeOf<Data>();
+        var inner = (Data)wrapped.Value!;
+        await Assert.That(inner.Type!.Value).IsEqualTo("image/jpeg");
+    }
+
+    [Test]
+    public async Task Wrap_PlangPrimitive_ReturnsSelf()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("count", 42);
+        data.Context = context;
+
+        var wrapped = data.Wrap();
+
+        // "int" has no Kind — returns self
+        await Assert.That(wrapped).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Wrap_NoContext_ReturnsSelf()
+    {
+        var data = new Data("file", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
+
+        var wrapped = data.Wrap();
+
+        await Assert.That(wrapped).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Unwrap_Envelope_ReturnsInner()
+    {
+        var inner = new Data("", "Hello", Type.FromMime("text/plain"));
+        var envelope = new Data("", inner, Type.FromName("text"));
+
+        var unwrapped = envelope.Unwrap();
+
+        await Assert.That(unwrapped.Type!.Value).IsEqualTo("text/plain");
+        await Assert.That(unwrapped.Value).IsEqualTo("Hello");
+    }
+
+    [Test]
+    public async Task Unwrap_FlatData_ReturnsSelf()
+    {
+        var data = new Data("test", "Hello");
+
+        var unwrapped = data.Unwrap();
+
+        await Assert.That(unwrapped).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Unwrap_StampsContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var inner = new Data("", "Hello", Type.FromMime("text/plain"));
+        var envelope = new Data("", inner, Type.FromName("text"));
+        envelope.Context = context;
+
+        var unwrapped = envelope.Unwrap();
+
+        await Assert.That(unwrapped.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task Compress_CompressibleType_CreatesArchivedEnvelope()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Create a "text" envelope (text is compressible)
+        var inner = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
+        inner.Context = context;
+        var wrapped = new Data("", inner, Type.FromName("text"));
+        wrapped.Context = context;
+
+        var compressed = wrapped.Compress();
+
+        await Assert.That(compressed.Type!.Value).IsEqualTo("archived");
+        await Assert.That(compressed.Value).IsTypeOf<Data>();
+        var gzipInner = (Data)compressed.Value!;
+        await Assert.That(gzipInner.Type!.Value).IsEqualTo("gzip");
+        await Assert.That(gzipInner.Value).IsTypeOf<byte[]>();
+    }
+
+    [Test]
+    public async Task Compress_NonCompressible_ReturnsSelf()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // "image" is not compressible
+        var inner = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
+        inner.Context = context;
+        var wrapped = new Data("", inner, Type.FromName("image"));
+        wrapped.Context = context;
+
+        var result = wrapped.Compress();
+
+        await Assert.That(result).IsEqualTo(wrapped);
+    }
+
+    [Test]
+    public async Task Compress_NoContext_ReturnsSelf()
+    {
+        var data = new Data("", "Hello", Type.FromName("text"));
+
+        var result = data.Compress();
+
+        await Assert.That(result).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Decompress_ArchivedData_ReturnsOriginal()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Build a text envelope, compress it, then decompress
+        var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
+        inner.Context = context;
+        var wrapped = new Data("", inner, Type.FromName("text"));
+        wrapped.Context = context;
+
+        var compressed = wrapped.Compress();
+        var decompressed = compressed.Decompress();
+
+        await Assert.That(decompressed.Success).IsTrue();
+        await Assert.That(decompressed.Type!.Value).IsEqualTo("text");
+        await Assert.That(decompressed.Value).IsTypeOf<Data>();
+    }
+
+    [Test]
+    public async Task Decompress_NonArchived_ReturnsSelf()
+    {
+        var data = new Data("", "Hello", Type.FromName("text"));
+
+        var result = data.Decompress();
+
+        await Assert.That(result).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task CompressDecompress_RoundTrip_PreservesData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
+        content.Context = context;
+        var wrapped = new Data("", content, Type.FromName("text"));
+        wrapped.Context = context;
+
+        var compressed = wrapped.Compress();
+        compressed.Context = context;
+        var decompressed = compressed.Decompress();
+
+        await Assert.That(decompressed.Success).IsTrue();
+        await Assert.That(decompressed.Type!.Value).IsEqualTo("text");
+
+        // Unwrap to get back to the content
+        var unwrapped = decompressed.Unwrap();
+        await Assert.That(unwrapped.Value).IsEqualTo("The quick brown fox jumps over the lazy dog");
+    }
+
+    [Test]
+    public async Task Encrypt_ReturnsSelf_NoCryptoYet()
+    {
+        var data = new Data("", "secret", Type.FromName("text"));
+
+        var result = data.Encrypt();
+
+        await Assert.That(result).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Decrypt_NonEncrypted_ReturnsSelf()
+    {
+        var data = new Data("", "Hello", Type.FromName("text"));
+
+        var result = data.Decrypt();
+
+        await Assert.That(result).IsEqualTo(data);
+    }
+
+    [Test]
+    public async Task Decrypt_EncryptedType_ReturnsSelf_NoCryptoYet()
+    {
+        var inner = new Data("", new byte[] { 1, 2 }, Type.FromName("ed25519"));
+        var encrypted = new Data("", inner, Type.FromName("encrypted"));
+
+        var result = encrypted.Decrypt();
+
+        // No crypto service — returns self
+        await Assert.That(result).IsEqualTo(encrypted);
+    }
+
+    [Test]
+    public async Task WrapCompressChain_TextData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"));
+        data.Context = context;
+
+        var envelope = data.Wrap().Compress();
+
+        // text/plain → Kind "text" (compressible) → archived envelope
+        await Assert.That(envelope.Type!.Value).IsEqualTo("archived");
+    }
+
+    [Test]
+    public async Task FullPipeline_WrapCompressUnwrap_RoundTrip()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var original = new Data("doc", "Report content here", Type.FromMime("text/plain"));
+        original.Context = context;
+
+        // Outbound: Wrap → Compress → Encrypt (encrypt is no-op)
+        var outbound = original.Wrap().Compress().Encrypt();
+        outbound.Context = context;
+
+        // Inbound: Decrypt → Decompress → Unwrap
+        var inbound = outbound.Decrypt().Decompress().Unwrap();
+
+        await Assert.That(inbound.Success).IsTrue();
+        await Assert.That(inbound.Value).IsEqualTo("Report content here");
+    }
 }
 
 public class DynamicDataTests
