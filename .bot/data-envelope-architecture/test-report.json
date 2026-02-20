@@ -1,90 +1,30 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-20T20:30:00Z",
-  "tested_version": "v4",
+  "timestamp": "2026-02-20T21:00:00Z",
+  "tested_version": "v5",
   "test_run": {
-    "csharp": { "total": 1366, "passed": 1366, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 1372, "passed": 1372, "failed": 0, "skipped": 0 },
     "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
   },
   "coverage": {
     "changed_files_covered": 2,
     "changed_files_total": 2,
     "uncovered_files": [],
-    "notes": "Data.Envelope.cs covered by 17 new tests. All 6 pipeline methods exercised. GZip helpers and RehydrateNestedData exercised through round-trip tests. Error paths in Decompress() are untested."
+    "notes": "All v4 fixes verified: Decompress exception handling (InvalidDataException + JsonException), 4 error path tests, strengthened Decompress assertion, multi-level nesting test, Wrap context assertion, Properties-not-preserved documentation test. +6 tests from v4."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Decompress() has no exception handling around GZipDecompress() and JsonSerializer.Deserialize(). Corrupt compressed data throws System.IO.InvalidDataException, invalid JSON throws JsonException — both propagate unhandled to the caller. The method uses FromError() for null/missing checks but leaves the actual decompression/deserialization calls unprotected.",
-      "impact": "Any corrupt or tampered 'archived' Data that enters the inbound pipeline will crash the runtime with an unhandled exception instead of returning a Data with Error. This is the transport boundary — the exact place where untrusted data arrives.",
-      "suggestion": "Wrap lines 116-120 (GZipDecompress + Deserialize) in try/catch(Exception ex) and return Data.FromError(new Errors.Error(\"Decompression failed: \" + ex.Message)). Alternatively, catch InvalidDataException and JsonException separately for distinct error keys. Add tests for corrupt GZip bytes and invalid JSON after decompression."
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "All three Decompress error paths (invalid inner, null bytes, failed deserialization) return Data.FromError() but have zero test coverage. No test verifies that Decompress handles: (a) Value that is not a Data object, (b) inner Data with null byte[] value, (c) GZip decompression of corrupt bytes, (d) JSON deserialization returning null.",
-      "impact": "The FromError() paths exist in code but are never exercised. If the error message or error type changes, no test would detect it. More importantly, the corrupt-data case (c) would actually throw an exception (finding #1), which means the error handling is doubly broken: the code that does handle errors is untested, and the code that should handle errors doesn't.",
-      "suggestion": "Add 3-4 tests: Decompress_InvalidInner_ReturnsError (Value is string, not Data), Decompress_NullBytes_ReturnsError (inner Data has null value), Decompress_CorruptData_ReturnsError (random byte[]), Decompress_InvalidJson_ReturnsError (valid GZip of non-JSON bytes)."
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Decompress_ArchivedData_ReturnsOriginal only asserts Success==true, Type.Value==\"text\", and Value is Data. It does NOT verify the inner Data's value — the actual content that was compressed. The test could pass even if deserialization produced a Data with the right type but wrong/missing value. The round-trip test (CompressDecompress_RoundTrip_PreservesData) does verify value through Unwrap(), but Decompress_ArchivedData_ReturnsOriginal gives false confidence standing alone.",
-      "impact": "If RehydrateNestedData had a bug that dropped the inner value, this test would still pass. The round-trip test catches it, but having a standalone Decompress test that doesn't verify the decompressed content is misleading — it appears to test decompression but only tests the envelope structure.",
-      "suggestion": "After asserting Value is Data, cast to Data and verify the inner Data's Value equals the original content string. Or remove this test entirely since CompressDecompress_RoundTrip covers it better."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "RehydrateNestedData is only exercised through the happy-path round-trip. No test verifies: (a) multi-level nesting (Data containing Data containing Data), (b) dict with 'value' key but no 'name' key (code defaults to empty string), (c) dict with non-string 'type' value (code skips type assignment). These are all reachable paths in the method.",
-      "impact": "Low-medium. Multi-level nesting would happen for complex payloads (e.g., a spreadsheet envelope containing a text envelope). The current round-trip test only tests one level of nesting. A bug in the recursive case would go undetected.",
-      "suggestion": "Add a test that compresses a Data whose Value is itself a Data (two-level nesting), then decompresses and verifies both levels are correctly rehydrated."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Wrap() context propagation is untested. The code sets envelope.Context = _context on the wrapped result, but no test verifies that the envelope's Context is set. Unwrap has a context propagation test (Unwrap_StampsContext) but Wrap does not.",
-      "impact": "Low. If Wrap() stopped stamping context, the subsequent Compress() call in the chain would fail (it checks _context != null). The chain tests would catch this indirectly, but there's no explicit test for the contract.",
-      "suggestion": "Add assertion to Wrap_MimeType_CreatesKindEnvelope: await Assert.That(wrapped.Context).IsEqualTo(context);"
-    },
-    {
-      "id": 6,
       "severity": "minor",
       "type": "edge-case",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
       "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Properties are silently lost through the Compress/Decompress cycle. Data.Properties is [JsonIgnore], so Compress() excludes it from the JSON payload. After Decompress(), the reconstructed Data has a fresh empty Properties. No test documents or verifies this behavior.",
-      "impact": "Low for now. Properties are intended for the [Out] transport view, not the intermediate compression format. But if a caller sets Properties before Compress and expects them after Decompress, they'll be silently lost. This is a design decision that should be documented, not a bug.",
-      "suggestion": "Add a comment in Compress() noting that Properties are not preserved through the compression cycle. Optionally add a test that documents this: compress Data with Properties, decompress, verify Properties are empty."
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "edge-case",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Compress() called on unwrapped data accepts any type not in _notCompressible. If called directly (without Wrap first) on Data with Type 'string', Compressible('string') returns true because 'string' is not in _notCompressible (which only contains 'image', 'video', 'audio', 'archive'). This means Compress would serialize and compress a simple string variable. No test covers this path.",
-      "impact": "Low. The intended usage is Wrap→Compress chain. But nothing prevents Compress() from being called independently, and the behavior may surprise callers who expect only 'wrapped' data to be compressible.",
-      "suggestion": "Either document that Compress() is designed to be called after Wrap(), or add a KindOf check so only known kinds trigger compression. Add a test either way to document the intended behavior."
+      "issue": "Compress() accepts any type not in _notCompressible (image, video, audio, archive). PLang primitives like 'string' or 'int' would pass the Compressible check if called without Wrap() first. This is a design choice — the intended usage is Wrap→Compress — but nothing enforces it.",
+      "impact": "Low. Callers who skip Wrap() would get compressed PLang primitives, which is wasteful but not broken.",
+      "suggestion": "Document that Compress() is intended to be called after Wrap(), or add a KindOf check. Acceptable as-is."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "1366 tests pass, 0 failures. Phase 4 adds 17 new envelope pipeline tests covering Wrap/Unwrap/Compress/Decompress/Encrypt/Decrypt and chain operations. The happy path is well-tested with a full round-trip that verifies data preservation. However, there is 1 critical finding: Decompress() has no exception handling around GZip decompression and JSON deserialization — corrupt data at the transport boundary will crash the runtime instead of returning an error. This is compounded by the complete absence of error-path tests for Decompress (finding #2). Additionally, the standalone Decompress test has weak assertions that don't verify the actual decompressed content (finding #3). Verdict: needs-fixes — the critical exception handling gap must be addressed before the auditor reviews this."
+  "verdict": "approved",
+  "summary": "1372 tests pass, 0 failures. All v4 critical/major findings verified fixed: Decompress now has exception handling for corrupt GZip (InvalidDataException) and invalid JSON (JsonException) with distinct error messages. All 4 Decompress error paths are tested. Standalone Decompress test now verifies actual decompressed value. Multi-level nesting (3 levels) preserves all Data objects through compress/decompress. Wrap context propagation verified. Properties-not-preserved behavior documented and tested. Only 1 minor finding remains (Compress accepts any non-blacklisted type). Verdict: approved for auditor review."
 }
