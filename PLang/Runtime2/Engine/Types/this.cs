@@ -488,31 +488,41 @@ public sealed class @this
         if (_clrToName.TryGetValue(clrType, out var name))
             return name;
 
+        // Strip arity suffix from generic types (e.g. "HashSet`1" → "hashset")
+        var typeName = clrType.Name;
+        var backtickIndex = typeName.IndexOf('`');
+        if (backtickIndex >= 0)
+            typeName = typeName[..backtickIndex];
+
         // Check for ValidValues static property (convention for constrained types)
         var validValuesProp = clrType.GetProperty("ValidValues",
             BindingFlags.Public | BindingFlags.Static);
         if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
-            return clrType.Name.ToLowerInvariant();
+            return typeName.ToLowerInvariant();
 
-        return clrType.Name.ToLowerInvariant();
+        return typeName.ToLowerInvariant();
     }
 
     /// <summary>
     /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
-    /// Returns null for unknown extensions.
+    /// Returns null for unknown or null extensions.
     /// </summary>
     public string? Kind(string extension)
     {
+        if (string.IsNullOrEmpty(extension))
+            return null;
         var ext = NormalizeExtension(extension);
         return _extensionToKind.TryGetValue(ext, out var kind) ? kind : null;
     }
 
     /// <summary>
     /// File extension → MIME content type (e.g. ".jpg" → "image/jpeg").
-    /// Returns "application/octet-stream" for unknown extensions.
+    /// Returns "application/octet-stream" for unknown or null extensions.
     /// </summary>
     public string Mime(string extension)
     {
+        if (string.IsNullOrEmpty(extension))
+            return "application/octet-stream";
         var ext = NormalizeExtension(extension);
         return _extensionToMime.TryGetValue(ext, out var mime) ? mime : "application/octet-stream";
     }
@@ -545,23 +555,33 @@ public sealed class @this
 
     /// <summary>
     /// Add a file extension mapping at runtime.
+    /// Updates derived lookup structures (_allKinds, _mimeToKind) so KindOf() sees the new mapping.
     /// </summary>
     public void Add(string extension, string kind, string? mime = null)
     {
         var ext = NormalizeExtension(extension);
         _extensionToKind[ext] = kind;
+        _allKinds.Add(kind);
         if (mime != null)
+        {
             _extensionToMime[ext] = mime;
+            _mimeToKind.TryAdd(mime, kind);
+        }
     }
 
     /// <summary>
     /// Remove a file extension mapping at runtime.
+    /// Cleans up derived structures: removes kind from _allKinds only if no other extension maps to it.
     /// </summary>
     public void Remove(string extension)
     {
         var ext = NormalizeExtension(extension);
-        _extensionToKind.Remove(ext);
-        _extensionToMime.Remove(ext);
+        _extensionToKind.Remove(ext, out var removedKind);
+        if (_extensionToMime.Remove(ext, out var removedMime))
+            _mimeToKind.Remove(removedMime);
+        // Only remove from _allKinds if no other extension maps to this kind
+        if (removedKind != null && !_extensionToKind.ContainsValue(removedKind))
+            _allKinds.Remove(removedKind);
     }
 
     /// <summary>

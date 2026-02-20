@@ -461,6 +461,162 @@ public class EngineTypesTests
         await Assert.That(_types.KindOf("")).IsNull();
     }
 
+    // --- Finding #1: Add() must update _allKinds/_mimeToKind for KindOf ---
+
+    [Test]
+    public async Task Add_NewExtension_KindOfFindsNewKind()
+    {
+        _types.Add(".custom", "custom-kind", "application/custom");
+
+        await Assert.That(_types.KindOf("custom-kind")).IsEqualTo("custom-kind");
+    }
+
+    [Test]
+    public async Task Add_NewExtension_KindOfFindsByMime()
+    {
+        _types.Add(".custom", "custom-kind", "application/custom");
+
+        await Assert.That(_types.KindOf("application/custom")).IsEqualTo("custom-kind");
+    }
+
+    [Test]
+    public async Task Remove_Extension_KindOfNoLongerFindsKind_WhenLastOfItsKind()
+    {
+        _types.Add(".custom", "unique-kind", "application/unique");
+
+        _types.Remove(".custom");
+
+        await Assert.That(_types.KindOf("unique-kind")).IsNull();
+        await Assert.That(_types.KindOf("application/unique")).IsNull();
+    }
+
+    [Test]
+    public async Task Remove_Extension_KindOfStillFindsKind_WhenOtherExtensionSharesKind()
+    {
+        // .jpg and .jpeg both map to "image" — removing .jpg should NOT remove "image" from _allKinds
+        _types.Remove(".jpg");
+
+        await Assert.That(_types.KindOf("image")).IsEqualTo("image");
+    }
+
+    // --- Finding #2: Kind(null)/Mime(null) null guard ---
+
+    [Test]
+    public async Task Kind_Null_ReturnsNull()
+    {
+        await Assert.That(_types.Kind(null!)).IsNull();
+    }
+
+    [Test]
+    public async Task Kind_Empty_ReturnsNull()
+    {
+        await Assert.That(_types.Kind("")).IsNull();
+    }
+
+    [Test]
+    public async Task Mime_Null_ReturnsOctetStream()
+    {
+        await Assert.That(_types.Mime(null!)).IsEqualTo("application/octet-stream");
+    }
+
+    [Test]
+    public async Task Mime_Empty_ReturnsOctetStream()
+    {
+        await Assert.That(_types.Mime("")).IsEqualTo("application/octet-stream");
+    }
+
+    // --- Finding #3: Name() backtick fix for generics ---
+
+    [Test]
+    public async Task Name_HashSetOfString_ReturnsHashsetWithoutBacktick()
+    {
+        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("hashset");
+    }
+
+    [Test]
+    public async Task Name_GenericTypeNotInMap_StripsAritySuffix()
+    {
+        // SortedSet<int> is not in _clrToName — should return "sortedset" not "sortedset`1"
+        await Assert.That(_types.Name(typeof(SortedSet<int>))).IsEqualTo("sortedset");
+    }
+
+    // --- Finding #4: BuilderNames/ComplexSchemas tests ---
+
+    [Test]
+    public async Task BuilderNames_ReturnsNonEmptyList()
+    {
+        var names = _types.BuilderNames();
+
+        await Assert.That(names).IsNotNull();
+        await Assert.That(names.Count).IsGreaterThan(0);
+    }
+
+    [Test]
+    public async Task BuilderNames_ContainsCommonTypes()
+    {
+        var names = _types.BuilderNames();
+
+        await Assert.That(names).Contains("string");
+        await Assert.That(names).Contains("int");
+        await Assert.That(names).Contains("bool");
+        await Assert.That(names).Contains("datetime");
+    }
+
+    [Test]
+    public async Task BuilderNames_ExcludesNullableVariants()
+    {
+        var names = _types.BuilderNames();
+
+        await Assert.That(names).DoesNotContain("int?");
+        await Assert.That(names).DoesNotContain("bool?");
+    }
+
+    [Test]
+    public async Task BuilderNames_ExcludesDuplicateClrTypes()
+    {
+        var names = _types.BuilderNames();
+
+        // "string" and "text" both map to typeof(string) — only the first should appear
+        var stringCount = names.Count(n => n == "string" || n == "text");
+        await Assert.That(stringCount).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task ComplexSchemas_ReturnsDict()
+    {
+        var schemas = _types.ComplexSchemas();
+
+        await Assert.That(schemas).IsNotNull();
+    }
+
+    [Test]
+    public async Task ComplexSchemas_GoalCallHasSchema()
+    {
+        var schemas = _types.ComplexSchemas();
+
+        // goal.call maps to GoalCall which has [LlmBuilder] properties
+        await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
+    }
+
+    // --- Finding #7: Lazy derivation distinguishes context path from fallback ---
+
+    [Test]
+    public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
+    {
+        await using var engine = new Engine("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Add a custom type mapping that static TypeMapping does NOT have
+        engine.Types.Add(".custom", "custom-kind", "application/custom");
+
+        var data = new PLang.Runtime2.Engine.Memory.Data("test", new byte[] { 1 },
+            PLang.Runtime2.Engine.Memory.Type.FromMime("application/custom"));
+        data.Context = context;
+
+        // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
+        await Assert.That(data.Type!.Kind).IsEqualTo("custom-kind");
+    }
+
     // --- Engine integration ---
 
     [Test]
