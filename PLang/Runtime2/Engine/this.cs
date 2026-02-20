@@ -117,6 +117,11 @@ public sealed class @this : IAsyncDisposable
     public Testing Testing { get; }
 
     /// <summary>
+    /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
+    /// </summary>
+    public Types.@this Types { get; }
+
+    /// <summary>
     /// System actor for internal engine operations. Created lazily on first access.
     /// </summary>
     public Actor System => _system ??= new Actor("System", this);
@@ -181,6 +186,7 @@ public sealed class @this : IAsyncDisposable
         Events = new EngineEvents();
         Debug = new Debugging(this);
         Testing = new Testing(this);
+        Types = new Types.@this();
         Property = new Property(this);
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };

@@ -22,7 +22,7 @@
           "type": "move",
           "category": "doc",
           "confidence": "high",
-          "context": "Moved handover docs from Documentation/Runtime2/architect-handover/ to .bot/ — they belong in the architect workspace, not the runtime docs tree"
+          "context": "Moved handover docs from Documentation/Runtime2/architect-handover/ to .bot/"
         },
         {
           "paths": [
@@ -33,7 +33,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Design spec and summaries from architectural discussion session. Four-phase plan for coder handoff."
+          "context": "Design spec and summaries"
         },
         {
           "paths": [
@@ -42,13 +42,72 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "OBP learnings from design session — no verbs in APIs, navigate through context, lazy properties, instance not static, one-word noun names"
+          "context": "OBP learnings from design session"
         }
       ],
       "after": {
         "status": "Design complete. Four-phase plan ready for coder handoff.",
-        "health": "Good. No code changes, pure design. All existing code untouched.",
-        "notes": "Key OBP insights captured in learnings and memory. Coder should read plan.md + learnings.md before starting Phase 1."
+        "health": "Good. No code changes, pure design.",
+        "notes": "Coder should read plan.md + learnings.md before starting Phase 1."
+      }
+    },
+    {
+      "id": "c0d3r-s1-2026-0220-phase1-types",
+      "bot": "coder",
+      "timestamp_start": "2026-02-20T10:00:00Z",
+      "timestamp_end": "2026-02-20T11:30:00Z",
+      "intent": "Implement Phase 1: Engine.Types — consolidate scattered type knowledge into a single live instance on Engine",
+      "before": {
+        "assumptions": "Type knowledge is scattered across static TypeMapping (Engine/Utility), FileModule.TypeMapping (instance), and MimeTypeHelper (Utils). Data.cs, file/types.cs, and StepActions reference static TypeMapping directly.",
+        "risk": "Phase 1 is additive — no existing behavior changes. Risk is low."
+      },
+      "plan": "Create PLang/Runtime2/Engine/Types/this.cs with all type knowledge. Add Types property to Engine. Add EngineTypes global alias. Write 62 TUnit tests. Keep old static TypeMapping as-is until Phase 2.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Types/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New @this class consolidating PLang name<->CLR type, extension->Kind, extension->MIME, Kind->compressibility. OBP-compliant API with noun names."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Types property to Engine, EngineTypes global alias to both PLang and PLang.Tests."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "62 TUnit tests covering Clr, Name, Kind, Mime, Compressible, Add/Remove, .key conflict, generics, nullable, MIME resolution, Engine integration."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/coder/v1/plan.md",
+            ".bot/data-envelope-architecture/coder/v1/summary.md",
+            ".bot/data-envelope-architecture/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, version summary, and bot root summary."
+        }
+      ],
+      "after": {
+        "status": "Phase 1 complete. Engine.Types created with full type knowledge. 62 tests pass, 78 existing TypeMapping tests still pass.",
+        "health": "Green. Build succeeds with 0 errors. All tests pass. No regressions.",
+        "notes": "Phase 2 next: Type gets context + lazy derivation, Data gets late-bound context."
       }
     }
   ]
