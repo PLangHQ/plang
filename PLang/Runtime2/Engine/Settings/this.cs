@@ -31,15 +31,22 @@ public sealed class @this
             if (current.SettingsScope != null)
             {
                 var value = current.SettingsScope.Get(key);
-                if (value != null) return (T)value;
+                if (value != null) return Cast<T>(value, classDefault);
             }
             current = current.Parent;
         }
 
         var defaultValue = Defaults.Get(key);
-        if (defaultValue != null) return (T)defaultValue;
+        if (defaultValue != null) return Cast<T>(defaultValue, classDefault);
 
         return classDefault;
+    }
+
+    private static T Cast<T>(object value, T fallback)
+    {
+        if (value is T typed) return typed;
+        try { return (T)Convert.ChangeType(value, typeof(T)); }
+        catch { return fallback; }
     }
 
     /// <summary>

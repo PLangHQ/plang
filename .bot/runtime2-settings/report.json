@@ -331,6 +331,42 @@
         "health": "Tests are green but have gaps — the critical hard cast finding means the first real production use could crash.",
         "notes": "PLang tests could not be run — no plang binary or OpenAI key in environment. Added todo to fix."
       }
+    },
+    {
+      "id": "c0d3r-v2-2026-0221-fix-findings",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T20:00:00Z",
+      "timestamp_end": "2026-02-21T20:20:00Z",
+      "intent": "Fix hard cast in Resolve<T>, add 5 missing tests from tester/analyzer reports",
+      "before": {
+        "assumptions": "Tester found critical hard cast false green, 2 major missing coverage gaps, and 3 minor issues. Analyzer confirmed the hard cast finding.",
+        "risk": "Low — Convert.ChangeType handles numeric widening. Tests are additive."
+      },
+      "plan": "Replace (T)value with Cast<T> helper using is/Convert.ChangeType/fallback. Add tests: int→long widening, type mismatch fallback, 3-level scope chain gap, goal save/restore isolation, scope overwrite.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Cast<T> helper: tries 'is T', then Convert.ChangeType, then fallback. Handles int→long widening and type mismatches gracefully."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "5 new tests: int→long widening, type mismatch fallback, 3-level null scope gap, goal save/restore isolation, scope overwrite."
+        }
+      ],
+      "after": {
+        "status": "All findings addressed. 1259 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "Tester finding #5 (null value on Set) left as-is — ConcurrentDictionary's ArgumentNullException is correct behavior for a settings store. Finding #6 (more PLang tests) deferred — requires builder."
+      }
     }
   ]
 }

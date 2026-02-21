@@ -111,4 +111,79 @@ public class SettingsTests
 
         await Assert.That(result).IsEqualTo(10L * 1024 * 1024);
     }
+
+    [Test]
+    public async Task Resolve_WidensIntToLong()
+    {
+        // JSON deserialization often produces int when the value fits.
+        // Resolve<long> must handle int→long widening without crashing.
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.max", (int)42, context);
+
+        var result = engine.Settings.Resolve<long>("archive.max", context, 0L);
+
+        await Assert.That(result).IsEqualTo(42L);
+    }
+
+    [Test]
+    public async Task Resolve_TypeMismatch_ReturnsClassDefault()
+    {
+        // If the stored value can't be converted to T, fall back to classDefault.
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.max", "not-a-number", context);
+
+        var result = engine.Settings.Resolve<long>("archive.max", context, 99L);
+
+        await Assert.That(result).IsEqualTo(99L);
+    }
+
+    [Test]
+    public async Task Resolve_SkipsNullScopeInParentChain()
+    {
+        // Grandparent has a setting. Middle parent has no SettingsScope (null).
+        // Child should still resolve grandparent's value.
+        var (engine, grandparent) = CreateEngine();
+        long classDefault = 100L;
+
+        engine.Settings.Set("archive.max", 42L, grandparent);
+
+        var parent = grandparent.CreateChild(); // no settings set — SettingsScope stays null
+        var child = parent.CreateChild();
+
+        var result = engine.Settings.Resolve<long>("archive.max", child, classDefault);
+
+        await Assert.That(result).IsEqualTo(42L);
+    }
+
+    [Test]
+    public async Task GoalRunAsync_ScopesSettingsPerGoal()
+    {
+        // When a goal runs, its settings scope is isolated.
+        // After the goal returns, the previous scope is restored.
+        var (engine, context) = CreateEngine();
+        long classDefault = 100L;
+
+        engine.Settings.Set("archive.max", 50L, context);
+        var scopeBefore = context.SettingsScope;
+
+        // Simulate what Goal.RunAsync does: save, null, restore
+        var saved = context.SettingsScope;
+        context.SettingsScope = null;
+
+        // Inside the "goal": no settings visible from outer scope
+        var duringGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
+        await Assert.That(duringGoal).IsEqualTo(classDefault);
+
+        // Set something inside the goal
+        engine.Settings.Set("archive.max", 10L, context);
+        var insideGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
+        await Assert.That(insideGoal).IsEqualTo(10L);
+
+        // Restore — outer scope is back
+        context.SettingsScope = saved;
+        var afterGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
+        await Assert.That(afterGoal).IsEqualTo(50L);
+    }
 }

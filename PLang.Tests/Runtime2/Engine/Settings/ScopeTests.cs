@@ -53,4 +53,16 @@ public class ScopeTests
 
         await Assert.That(result).IsEqualTo(42L);
     }
+
+    [Test]
+    public async Task Set_OverwritesExistingValue()
+    {
+        var scope = new Scope();
+
+        scope.Set("archive.max", 1L);
+        scope.Set("archive.max", 2L);
+        var result = scope.Get("archive.max");
+
+        await Assert.That(result).IsEqualTo(2L);
+    }
 }
