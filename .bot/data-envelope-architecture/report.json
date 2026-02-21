@@ -572,6 +572,47 @@
         "health": "Code is structurally sound but has cross-concern gaps that file-by-file review missed.",
         "notes": "Clone methods are a recurring blind spot — both branches have the same pattern of Clone not propagating new properties."
       }
+    },
+    {
+      "id": "c0d3r-v6-2026-0221-analyzer-v2-fixes",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T21:00:00Z",
+      "timestamp_end": "2026-02-21T21:30:00Z",
+      "intent": "Fix 4 cross-concern gaps from code analyzer higher-level review",
+      "before": {
+        "assumptions": "Code analyzer found: decimal precision loss, Clone missing Context, MemoryStack.Get depth contract, fromJson masking depth error.",
+        "risk": "Low-medium — decimal change affects all JSON number parsing. Clone context propagation changes a pre-existing test."
+      },
+      "plan": "1. UnwrapJsonNumber: TryGetInt64→TryGetDecimal→GetDouble. 2. MemoryStack.Clone sets Context. 3. fromJson: separate InvalidOperationException catch. 4. Tests for all.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Decimal precision via UnwrapJsonNumber, Clone context propagation, separate depth error catch in fromJson."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 new tests + 1 updated. Decimal precision, integer type, clone context, depth navigation, fromJson depth/decimal."
+        }
+      ],
+      "after": {
+        "status": "All 4 analyzer findings fixed. 1390 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "JSON 19.99 now stays decimal. Clone_DataHasNoContext updated to Clone_PreservesDataContext."
+      }
     }
   ]
 }
