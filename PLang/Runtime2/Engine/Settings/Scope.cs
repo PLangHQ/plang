@@ -19,6 +19,7 @@ public sealed class Scope
 
     public void Set(string key, object value)
     {
+        if (value == null) { _values.TryRemove(key, out _); return; }
         _values[key] = value;
     }
 

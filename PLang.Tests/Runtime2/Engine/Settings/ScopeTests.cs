@@ -65,4 +65,16 @@ public class ScopeTests
 
         await Assert.That(result).IsEqualTo(2L);
     }
+
+    [Test]
+    public async Task Set_NullValue_RemovesKey()
+    {
+        var scope = new Scope();
+
+        scope.Set("archive.max", 100L);
+        scope.Set("archive.max", null!);
+
+        await Assert.That(scope.Contains("archive.max")).IsFalse();
+        await Assert.That(scope.Get("archive.max")).IsNull();
+    }
 }
