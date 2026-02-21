@@ -242,6 +242,62 @@
         "health": "Code is correct but two security-critical features lack regression tests.",
         "notes": "Critical: zip bomb protection (MaxDecompressedSize) has zero test coverage. Major: ConcurrentDictionary/lock has no concurrent test."
       }
+    },
+    {
+      "id": "sec-s1-2026-0221-security-audit",
+      "bot": "security",
+      "timestamp_start": "2026-02-21T00:00:00Z",
+      "timestamp_end": "2026-02-21T01:00:00Z",
+      "intent": "Security audit of data-envelope-architecture — blue team + red team analysis of Data envelope pipeline, navigation, type registry, and memory stack",
+      "before": {
+        "assumptions": "Auditor found 8 functional findings but did not perform adversarial security analysis. Code handles untrusted data at transport boundaries (Decompress). Zip bomb mitigation was added. No other security-focused review has been done.",
+        "risk": "Data is the universal type. Navigation, envelope pipeline, and type resolution all process potentially untrusted input. Stack overflow, type confusion, and reflection-based exfiltration are primary concerns."
+      },
+      "plan": "Phase 1: Blue team defensive audit — map attack surface for Data.cs (all partials), MemoryStack, Engine.Types, ValueNavigators. Phase 2: Red team offensive testing — construct exploit scenarios for stack overflow via recursion, zip bomb edge cases, reflection exfiltration, variable resolution loops, type registry poisoning. Phase 3: Record findings in security-report.json and learnings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ValueNavigators.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ObjectNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ListNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/DictionaryNavigator.cs",
+            "PLang/Runtime2/Engine/View.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/actions/variable/set.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue team: mapped 6 attack surface areas. Red team: identified 12 findings (4 high, 6 medium, 2 low). Primary pattern: unbounded recursion in 5 locations."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/security-report.json",
+            ".bot/data-envelope-architecture/security/v1/result.md",
+            ".bot/data-envelope-architecture/security/v1/summary.md",
+            ".bot/data-envelope-architecture/security/summary.md",
+            "learnings/data-envelope-architecture/security/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, detailed findings, summaries, and learnings."
+        }
+      ],
+      "after": {
+        "status": "Security audit complete. 12 findings in security-report.json. 4 HIGH: unbounded recursion (x3) + system variable injection. 6 MEDIUM: reflection exposure, JSON size limits, variable resolution cycles, namespace spoofing, unimplemented crypto, recursive type parsing. 2 LOW: merge growth, deepclone limits.",
+        "health": "Code has good defensive intent (gzip bomb protection, ServiceError, try/catch on decompress) but incomplete boundary hardening. Recommend addressing HIGH findings before merge.",
+        "notes": "The recurring pattern is unbounded recursion — same fix applies everywhere (add depth parameter). System variable injection is an architectural gap in MemoryStack.Set(). ObjectNavigator reflection is a capability leak by design."
+      }
     }
   ]
 }
