@@ -1,7 +1,7 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-21T13:00:00Z",
+  "timestamp": "2026-02-21T13:30:00Z",
   "tested_version": "v6",
   "test_run": {
     "csharp": { "total": 1372, "passed": 1372, "failed": 0, "skipped": 0 },
@@ -11,7 +11,7 @@
     "changed_files_covered": 3,
     "changed_files_total": 4,
     "uncovered_files": [],
-    "notes": "All 4 changed files have some test coverage, but specific new code paths from the auditor-fix commit are untested: GZipDecompress size limit (Data.Envelope.cs:219-227), ConcurrentDictionary/lock behavior (Types/this.cs), SetValueDirect (Data.cs — indirectly covered via multi-level nesting round-trip). Deep analysis also found Data.Merge() used in production but completely untested, and RehydrateNestedData has a false-positive heuristic that corrupts user dictionaries."
+    "notes": "All 4 changed files have some test coverage, but specific new code paths from the auditor-fix commit are untested: GZipDecompress size limit (Data.Envelope.cs:219-227), ConcurrentDictionary/lock behavior (Types/this.cs), SetValueDirect (Data.cs — indirectly covered via multi-level nesting round-trip). Data.Merge() used in production Actions loop but has zero tests."
   },
   "findings": [
     {
@@ -27,16 +27,6 @@
     {
       "id": 2,
       "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "RehydrateNestedData (line 186) uses heuristic `dict.ContainsKey(\"value\")` to detect serialized Data in dictionaries. This matches ANY user dictionary with a 'value' key, silently replacing it with a reconstructed Data object. Extra dictionary keys beyond name/value/type are lost.",
-      "impact": "Data corruption at the transport boundary. A user dictionary like {\"value\": \"prod\", \"name\": \"env\", \"timeout\": 30} becomes a Data object after compress/decompress — the 'timeout' key is silently dropped. No test exists for this scenario.",
-      "suggestion": "Tighten the heuristic: check that the dictionary has ONLY the expected keys (name, value, type), or add a discriminator key during serialization (e.g. '__data': true). At minimum add a test proving the current behavior so the data loss is documented."
-    },
-    {
-      "id": 3,
-      "severity": "major",
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
       "code_file": "PLang/Runtime2/Engine/Types/this.cs",
@@ -45,7 +35,7 @@
       "suggestion": "Add a Parallel.For stress test: concurrent Add() + KindOf() calls. Dictionary corruption throws InvalidOperationException on concurrent modification — a concurrent test would catch reversion."
     },
     {
-      "id": 4,
+      "id": 3,
       "severity": "major",
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
@@ -55,7 +45,7 @@
       "suggestion": "Add tests for: (a) merging two List<Data> values, (b) non-List values (document or fix silent failure), (c) overlapping names (replace behavior), (d) null other value."
     },
     {
-      "id": 5,
+      "id": 4,
       "severity": "minor",
       "type": "weak-assertion",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
@@ -65,7 +55,7 @@
       "suggestion": "Add Assert.That(result.Error!.StatusCode).IsEqualTo(500) to each Decompress error test."
     },
     {
-      "id": 6,
+      "id": 5,
       "severity": "minor",
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
@@ -75,7 +65,7 @@
       "suggestion": "Add assertion on inner Data context after Decompress, or document that Unwrap/GetChild is required for context propagation."
     },
     {
-      "id": 7,
+      "id": 6,
       "severity": "minor",
       "type": "edge-case",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
@@ -85,6 +75,14 @@
       "suggestion": "Document or test the numeric widening behavior. Consider adding a dedicated test: compress int, decompress, verify GetValue<int>() returns 42."
     }
   ],
+  "withdrawn": [
+    {
+      "original_id": "v6-draft-5",
+      "type": "false-green",
+      "issue": "RehydrateNestedData false positives on user dictionaries with 'value' key",
+      "reason": "Withdrawn after architecture clarification. The envelope pipeline always operates on Data layers. At the transport boundary, the serialized JSON IS nested Data objects — the 'value' key heuristic correctly identifies them. User dictionaries at the leaf level are the value of the innermost Data, not mistaken for Data themselves. The rehydration only reconstructs Data wrapper layers that JSON flattened into dictionaries."
+    }
+  ],
   "verdict": "needs-fixes",
-  "summary": "1372 tests pass, 0 failures. All 8 auditor fixes are structurally correct in code. Deep analysis surfaced issues beyond the auditor fixes: (1) CRITICAL: zip bomb protection untested — security feature with no regression test. (2) MAJOR: RehydrateNestedData false positives — user dictionaries with 'value' key are silently corrupted on compress/decompress round-trip. (3) MAJOR: Thread safety untested. (4) MAJOR: Data.Merge() used in production Actions loop but completely untested, with silent data loss on non-List values. Plus 3 minor findings. Verdict: needs-fixes."
+  "summary": "1372 tests pass, 0 failures. All 8 auditor fixes structurally correct. Deep analysis: (1) CRITICAL: zip bomb protection untested — security feature with no regression test. (2) MAJOR: Thread safety (ConcurrentDictionary/lock) has no concurrent test. (3) MAJOR: Data.Merge() used in production Actions loop but zero tests, with silent data loss on non-List values. Plus 3 minor findings. One finding (RehydrateNestedData false positives) withdrawn after architecture clarification — the heuristic is correct by design. Verdict: needs-fixes."
 }
