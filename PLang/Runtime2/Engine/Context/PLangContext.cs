@@ -190,7 +190,8 @@ public sealed class PLangContext : IDisposable
     {
         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
         {
-            IsAsync = IsAsync
+            IsAsync = IsAsync,
+            SettingsScope = SettingsScope
         };
 
         foreach (var kvp in _data)

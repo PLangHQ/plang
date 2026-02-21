@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
@@ -185,5 +186,34 @@ public class SettingsTests
         context.SettingsScope = saved;
         var afterGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
         await Assert.That(afterGoal).IsEqualTo(50L);
+    }
+
+    [Test]
+    public async Task Resolve_WidensIntToEnum()
+    {
+        // JSON deserialization often produces int for enum values.
+        // Resolve<CompressionLevel> must handle int→enum conversion.
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.level", (int)CompressionLevel.Fastest, context);
+
+        var result = engine.Settings.Resolve("archive.level", context, CompressionLevel.Optimal);
+
+        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
+    }
+
+    [Test]
+    public async Task Clone_PreservesSettingsScope()
+    {
+        // A cloned context should see the same settings as the original.
+        var (engine, context) = CreateEngine();
+        long classDefault = 100L;
+
+        engine.Settings.Set("archive.max", 42L, context);
+
+        var clone = context.Clone();
+
+        var result = engine.Settings.Resolve<long>("archive.max", clone, classDefault);
+        await Assert.That(result).IsEqualTo(42L);
     }
 }

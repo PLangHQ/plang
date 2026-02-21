@@ -45,7 +45,12 @@ public sealed class @this
     private static T Cast<T>(object value, T fallback)
     {
         if (value is T typed) return typed;
-        try { return (T)Convert.ChangeType(value, typeof(T)); }
+        try
+        {
+            var target = typeof(T);
+            if (target.IsEnum) return (T)Enum.ToObject(target, value);
+            return (T)Convert.ChangeType(value, target);
+        }
         catch { return fallback; }
     }
 
