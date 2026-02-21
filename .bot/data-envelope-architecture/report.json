@@ -298,6 +298,45 @@
         "health": "Code has good defensive intent (gzip bomb protection, ServiceError, try/catch on decompress) but incomplete boundary hardening. Recommend addressing HIGH findings before merge.",
         "notes": "The recurring pattern is unbounded recursion — same fix applies everywhere (add depth parameter). System variable injection is an architectural gap in MemoryStack.Set(). ObjectNavigator reflection is a capability leak by design."
       }
+    },
+    {
+      "id": "sec-s2-2026-0221-post-review",
+      "bot": "security",
+      "timestamp_start": "2026-02-21T02:00:00Z",
+      "timestamp_end": "2026-02-21T02:30:00Z",
+      "intent": "Update security report after creator review — correct threat model, reclassify findings",
+      "before": {
+        "assumptions": "v1 applied a traditional security model (defend against the user). Creator corrected: PLang is user-sovereign, .pr files are trusted, trust boundary is cryptographic signatures.",
+        "risk": "Incorrect threat model leads to wasted effort on non-issues and missed focus on real boundaries."
+      },
+      "plan": "Reclassify #4/#5 as by-design, upgrade #9 to HIGH (Verified is the trust boundary), downgrade #8 to LOW, update all deliverables.",
+      "actions": [
+        {
+          "paths": [".bot/data-envelope-architecture/security-report.json"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated threat model, reclassified 4 findings, added threat_model field."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/security/v2/v1_review_summary.md",
+            ".bot/data-envelope-architecture/security/v2/plan.md",
+            ".bot/data-envelope-architecture/security/v2/summary.md",
+            ".bot/data-envelope-architecture/security/summary.md",
+            "learnings/data-envelope-architecture/security/v1/learnings.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated all deliverables with corrected threat model and reclassified findings."
+        }
+      ],
+      "after": {
+        "status": "v2 complete. Threat model corrected. Priority: #9 (Verified integrity) > #1-3 (recursion at transport) > #7/#10 (recursion elsewhere).",
+        "health": "Findings properly calibrated to PLang's actual security model.",
+        "notes": "Key insight: don't flag user-sovereign actions as vulnerabilities. Focus on transport boundaries and signature integrity."
+      }
     }
   ]
 }
