@@ -1252,6 +1252,31 @@ index cc5aa32d..00000000
 -
 -    return this; // already flat
 -}
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index 659ba25e..98229d2c 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -146,3 +146,20 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun.
+ - **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
+ - **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
+ - Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
++
++---
++
++## Error Reporting — When to use what
++
++**Rule: match the error mechanism to the return type.**
++
++| Return type | Error mechanism | Example |
++|-------------|----------------|---------|
++| `Data` or `Data?` | `Data.FromError(new ServiceError(...))` | `GetChild` depth exceeded → `FromError("NavigationDepthExceeded", 400)` |
++| `Task<Data>` | Same — return `Data.FromError(...)` | Handler `Run()` methods |
++| Constructor / `void` | `throw` — caller must catch | `Data` constructor, `UnwrapJsonElement` |
++| `string`, `Type?`, etc. | Return type's natural "not found" (`null`, unchanged value) | `Clr()` → `null`, `ResolveVariablesInPath` → leave unresolved |
++
++**Why this matters:** `Data` has `Error`, `Success`, `Error.Key`, `Error.StatusCode` built in. Returning `null` from a `Data?` method loses information — the caller can't distinguish "not found" from "depth exceeded" or "permission denied." Use `Data.FromError` so the error travels through the normal pipeline with a clear key and status code.
++
++**When a throw converts to Data.FromError:** Methods like `RehydrateNestedData` throw because they're called inside `Decompress()` which has a try/catch that converts exceptions to `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists.
 diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
 index e4fe5a6a..2636639f 100644
 --- a/Documentation/Runtime2/todos.md
@@ -1287,7 +1312,7 @@ index c32b88cf..42b9ccdf 100644
  global using ICache = PLang.Runtime2.Engine.Cache.ICache;
  global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
 diff --git a/PLang.Tests/Runtime2/Memory/DataTests.cs b/PLang.Tests/Runtime2/Memory/DataTests.cs
-index bc83e01d..7c005d02 100644
+index bc83e01d..03fca098 100644
 --- a/PLang.Tests/Runtime2/Memory/DataTests.cs
 +++ b/PLang.Tests/Runtime2/Memory/DataTests.cs
 @@ -1,3 +1,5 @@
@@ -1296,7 +1321,7 @@ index bc83e01d..7c005d02 100644
  using PLang.Runtime2.Engine.Memory;
  using Type = PLang.Runtime2.Engine.Memory.Type;
  
-@@ -420,6 +422,789 @@ public class DataTests
+@@ -420,6 +422,791 @@ public class DataTests
  
          await Assert.That(ov.Parent).IsNull();
      }
@@ -1927,7 +1952,7 @@ index bc83e01d..7c005d02 100644
 +    }
 +
 +    [Test]
-+    public async Task GetChild_DeeplyNestedPath_ReturnsNull()
++    public async Task GetChild_DeeplyNestedPath_ReturnsDepthError()
 +    {
 +        // Build a path with 150 dot segments — exceeds MaxNavigationDepth (100)
 +        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
@@ -1945,8 +1970,10 @@ index bc83e01d..7c005d02 100644
 +
 +        var result = data.GetChild(path);
 +
-+        // Should return null (depth exceeded), not throw
-+        await Assert.That(result).IsNull();
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
++        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
 +    }
 +
 +    // --- v5: Zip bomb test ---
@@ -3111,10 +3138,11 @@ index 00000000..7973ee41
 +}
 diff --git a/PLang/Runtime2/Engine/Memory/Data.Navigation.cs b/PLang/Runtime2/Engine/Memory/Data.Navigation.cs
 new file mode 100644
-index 00000000..d8aae638
+index 00000000..2a8e46e7
 --- /dev/null
 +++ b/PLang/Runtime2/Engine/Memory/Data.Navigation.cs
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,81 @@
++using PLang.Runtime2.Engine.Errors;
 +using PLang.Runtime2.Engine.Memory.Navigators;
 +
 +namespace PLang.Runtime2.Engine.Memory;
@@ -3136,7 +3164,9 @@ index 00000000..d8aae638
 +            return this;
 +
 +        if (depth > MaxNavigationDepth)
-+            return null;
++            return FromError(new ServiceError(
++                $"Navigation path exceeds maximum depth ({MaxNavigationDepth})",
++                "NavigationDepthExceeded", 400));
 +
 +        // Handle dot notation
 +        var dotIndex = path.IndexOf('.');
@@ -4463,61 +4493,764 @@ index 722c92ba..76816fcb 100644
 -        };
 -    }
  }
+diff --git a/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr b/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr
+new file mode 100644
+index 00000000..da7f563b
+--- /dev/null
++++ b/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr
+@@ -0,0 +1,173 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%deep%", "type": "string" },
++            {
++              "name": "value",
++              "value": { "a": { "b": { "c": { "d": { "e": "found" } } } } },
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %deep.a% is not null",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            { "name": "value", "value": "%deep.a%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %deep.a.b.c.d.e% equals \u0022found\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": "found", "type": "string" },
++            { "name": "actual", "value": "%deep.a.b.c.d.e%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%list%", "type": "string" },
++            {
++              "name": "value",
++              "value": [
++                { "items": [{ "val": 1 }, { "val": 2 }] },
++                { "items": [{ "val": 3 }] }
++              ],
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "assert %list[0].items[0].val% equals 1",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 1, "type": "int" },
++            { "name": "actual", "value": "%list[0].items[0].val%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %list[0].items[1].val% equals 2",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 2, "type": "int" },
++            { "name": "actual", "value": "%list[0].items[1].val%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "assert %list[1].items[0].val% equals 3",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 3, "type": "int" },
++            { "name": "actual", "value": "%list[1].items[0].val%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "\\DeepNavigation\\DeepNavigation.test.goal",
++  "prPath": "\\DeepNavigation\\.build\\deepnavigation.test.pr",
++  "hash": "",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+diff --git a/Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal b/Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal
+new file mode 100644
+index 00000000..b2212082
+--- /dev/null
++++ b/Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal
+@@ -0,0 +1,8 @@
++Start
++- set %deep% = {a:{b:{c:{d:{e:"found"}}}}}
++- assert %deep.a% is not null
++- assert %deep.a.b.c.d.e% equals "found"
++- set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]
++- assert %list[0].items[0].val% equals 1
++- assert %list[0].items[1].val% equals 2
++- assert %list[1].items[0].val% equals 3
+diff --git a/Tests/Runtime2/DeepNavigation/Start.goal b/Tests/Runtime2/DeepNavigation/Start.goal
+new file mode 100644
+index 00000000..b6fb9b50
+--- /dev/null
++++ b/Tests/Runtime2/DeepNavigation/Start.goal
+@@ -0,0 +1,6 @@
++Start
++- set %deep% = {a:{b:{c:{d:{e:"found"}}}}}
++- write out %deep.a.b.c.d.e%
++- set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]
++- write out %list[0].items[1].val%
++- write out %list[1].items[0].val%
+diff --git a/Tests/Runtime2/FromJson/.build/fromjson.test.pr b/Tests/Runtime2/FromJson/.build/fromjson.test.pr
+new file mode 100644
+index 00000000..a6e400b4
+--- /dev/null
++++ b/Tests/Runtime2/FromJson/.build/fromjson.test.pr
+@@ -0,0 +1,195 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "convert '{\"name\":\"test\",\"values\":[1,2,3],\"nested\":{\"flag\":true,\"data\":null}}' from json, write to %obj%",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "convert",
++          "action": "fromjson",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "{\"name\":\"test\",\"values\":[1,2,3],\"nested\":{\"flag\":true,\"data\":null}}",
++              "type": "string"
++            }
++          ],
++          "return": [
++            { "name": "obj" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %obj.name% equals \u0022test\u0022",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": "test", "type": "string" },
++            { "name": "actual", "value": "%obj.name%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %obj.values[0]% equals 1",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 1, "type": "int" },
++            { "name": "actual", "value": "%obj.values[0]%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "assert %obj.values[2]% equals 3",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 3, "type": "int" },
++            { "name": "actual", "value": "%obj.values[2]%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "assert %obj.nested.flag% is true",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            { "name": "value", "value": "%obj.nested.flag%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "convert '[{\"id\":1},{\"id\":2}]' from json, write to %arr%",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "convert",
++          "action": "fromjson",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "[{\"id\":1},{\"id\":2}]",
++              "type": "string"
++            }
++          ],
++          "return": [
++            { "name": "arr" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "assert %arr[0].id% equals 1",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 1, "type": "int" },
++            { "name": "actual", "value": "%arr[0].id%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "assert %arr[1].id% equals 2",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": 2, "type": "int" },
++            { "name": "actual", "value": "%arr[1].id%", "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "\\FromJson\\FromJson.test.goal",
++  "prPath": "\\FromJson\\.build\\fromjson.test.pr",
++  "hash": "",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+diff --git a/Tests/Runtime2/FromJson/FromJson.test.goal b/Tests/Runtime2/FromJson/FromJson.test.goal
+new file mode 100644
+index 00000000..51a3ec2e
+--- /dev/null
++++ b/Tests/Runtime2/FromJson/FromJson.test.goal
+@@ -0,0 +1,9 @@
++Start
++- convert '{"name":"test","values":[1,2,3],"nested":{"flag":true,"data":null}}' from json, write to %obj%
++- assert %obj.name% equals "test"
++- assert %obj.values[0]% equals 1
++- assert %obj.values[2]% equals 3
++- assert %obj.nested.flag% is true
++- convert '[{"id":1},{"id":2}]' from json, write to %arr%
++- assert %arr[0].id% equals 1
++- assert %arr[1].id% equals 2
+diff --git a/Tests/Runtime2/FromJson/Start.goal b/Tests/Runtime2/FromJson/Start.goal
+new file mode 100644
+index 00000000..6eebd812
+--- /dev/null
++++ b/Tests/Runtime2/FromJson/Start.goal
+@@ -0,0 +1,9 @@
++Start
++- convert '{"name":"test","values":[1,2,3],"nested":{"flag":true,"data":null}}' from json, write to %obj%
++- write out %obj.name%
++- write out %obj.values[0]%
++- write out %obj.values[2]%
++- write out %obj.nested.flag%
++- convert '[{"id":1},{"id":2}]' from json, write to %arr%
++- write out %arr[0].id%
++- write out %arr[1].id%
+diff --git a/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr b/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr
+new file mode 100644
+index 00000000..684d0d82
+--- /dev/null
++++ b/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr
+@@ -0,0 +1,163 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%items%", "type": "string" },
++            { "name": "value", "value": ["a", "b", "c"], "type": "object" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "set %idx% = 1",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%idx%", "type": "string" },
++            { "name": "value", "value": 1, "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %items[idx]% equals \u0022b\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": "b", "type": "string" },
++            { "name": "actual", "value": "%items[idx]%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %i% = 0",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%i%", "type": "string" },
++            { "name": "value", "value": 0, "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "set %j% = 2",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            { "name": "name", "value": "%j%", "type": "string" },
++            { "name": "value", "value": 2, "type": "int" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %items[i]% equals \u0022a\u0022",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": "a", "type": "string" },
++            { "name": "actual", "value": "%items[i]%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "assert %items[j]% equals \u0022c\u0022",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            { "name": "expected", "value": "c", "type": "string" },
++            { "name": "actual", "value": "%items[j]%", "type": "string" }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "\\VariableIndexing\\VariableIndexing.test.goal",
++  "prPath": "\\VariableIndexing\\.build\\variableindexing.test.pr",
++  "hash": "",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+diff --git a/Tests/Runtime2/VariableIndexing/Start.goal b/Tests/Runtime2/VariableIndexing/Start.goal
+new file mode 100644
+index 00000000..f3ab49d4
+--- /dev/null
++++ b/Tests/Runtime2/VariableIndexing/Start.goal
+@@ -0,0 +1,8 @@
++Start
++- set %items% = ["a", "b", "c"]
++- set %idx% = 1
++- write out %items[idx]%
++- set %i% = 0
++- set %j% = 2
++- write out %items[i]%
++- write out %items[j]%
+diff --git a/Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal b/Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal
+new file mode 100644
+index 00000000..347ddf6d
+--- /dev/null
++++ b/Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal
+@@ -0,0 +1,8 @@
++Start
++- set %items% = ["a", "b", "c"]
++- set %idx% = 1
++- assert %items[idx]% equals "b"
++- set %i% = 0
++- set %j% = 2
++- assert %items[i]% equals "a"
++- assert %items[j]% equals "c"
+diff --git a/learnings/data-envelope-architecture/auditor/v4/learnings.md b/learnings/data-envelope-architecture/auditor/v4/learnings.md
+new file mode 100644
+index 00000000..069d1ec0
+--- /dev/null
++++ b/learnings/data-envelope-architecture/auditor/v4/learnings.md
+@@ -0,0 +1,39 @@
++# Auditor Learnings — data-envelope-architecture v4
++
++## Review Process
++
++### Always review the fix as fresh code
++The first-pass review found 8 issues. The coder fixed all 8 in one commit. I initially verified the fixes matched my suggestions and said "approved" — without looking for NEW issues introduced by the fix itself. Ingi called this out. Second-pass review found 2 real issues: a missing test for the security fix (major) and a race window in the concurrency fix (minor). **Lesson:** Never treat fix review as checkbox verification. Read fix code with the same skepticism as original code. The fix is new code — it can introduce new bugs.
++
++### Rate findings for the code path's purpose, not today's callers
++I rated the zip bomb risk as "nit" because "today it only processes internal data." Ingi corrected this to major. The Decompress() method exists ON the inbound pipeline — its entire purpose is processing external Data. **Lesson:** If a code path's design intent is to handle untrusted input, rate security findings for that intent, regardless of whether untrusted input reaches it today.
++
++### Security fixes without tests are incomplete
++The 100MB decompression limit was correctly implemented, but had zero test coverage. If someone later changes `MaxDecompressedSize` to `long.MaxValue` or removes the check, no test fails. A security fix that can be silently reverted is not a fix — it's a speed bump. **Lesson:** Every security guard must have a test that would fail if the guard were removed.
++
++## PLang Architecture
++
++### Engine is pooled, not singleton
++I initially wrote that Engine is a "singleton shared across all PLangContexts." Ingi corrected: Engine is pooled — one per execution scope (web request, run-and-forget). Multiple concurrent goals share one pooled Engine, so thread safety still matters, but the scope is narrower than "global singleton shared by all requests." **Lesson:** Don't infer lifecycle from code structure alone. Ask about deployment model.
++
++### Actors run in sync — real concurrency comes from async I/O
++System, Service, and User actors each have their own PLangContext, but they execute synchronously within one Engine. The real concurrency risk is async I/O: an HTTP async stream callback fires on a threadpool thread while main execution continues. That's where MemoryStack's ConcurrentDictionary earns its keep, and where Engine.Types could get hit from two threads if a stream handler touches type registration. **Lesson:** When reviewing thread safety in PLang, think about async I/O callbacks (stream handlers, HTTP responses), not actor-to-actor races.
++
++### HashSet has no concurrent variant in .NET
++There is no `ConcurrentHashSet<T>`. The workaround is `ConcurrentDictionary<T, byte>` (value ignored). But this loses `TryGetValue` returning the canonical stored key (useful for case-insensitive lookups). Better approach for PLang: make the value meaningful — store a rich `Kind` object instead of a dummy byte. This turns a concurrency workaround into a design improvement.
++
++## OBP Patterns
++
++### Double navigation is an OBP smell
++Compress() bypassed `Type.Compressible` to call `Engine.Types.Compressible()` directly. Both paths return the same result today, but if `Type.Compressible` ever adds logic (e.g., per-instance overrides), the bypass misses it. **Lesson:** If an object already has a property that answers the question, use it. Going around it to reach the same answer through a different path is double navigation — a violation of "behavior belongs to the owner."
++
++### SetValueDirect pattern for avoiding setter side effects
++When a setter has side effects (clearing `_type`, timestamping), but an internal operation needs to update the backing field without those effects, add a private method. `SetValueDirect()` updates `_value` + `Updated` + `IsInitialized` without clearing `_type` or calling `UnwrapJsonElement`. Clean separation — the public setter is for external mutations with full side effects, the private method is for internal reconstruction.
++
++## Error Handling
++
++### Use ServiceError with distinct keys at service boundaries
++Generic `Error` with default key "Error" makes it impossible for callers to distinguish error types programmatically. Decompress errors should use `ServiceError("...", "DecompressError", 500)` so callers can match on `Error.Key`. **Lesson:** Every error domain (IO, serialization, compression, auth) should have its own key. The key is the programmatic contract — the message is for humans.
++
++### Tests must assert Error.Key, not just Success == false
++`Success == false` is a weak assertion. If the code returns the wrong error type or key, the test still passes. Always assert `Error.Key` (and `Error.StatusCode` for HTTP-facing errors). **Lesson:** Ask "if the code returned a different error for the same failure, would this test catch it?" If no, the assertion is too weak.
 diff --git a/learnings/data-envelope-architecture/security/v1/learnings.md b/learnings/data-envelope-architecture/security/v1/learnings.md
 new file mode 100644
-index 00000000..ed3edafc
+index 00000000..aa669caa
 --- /dev/null
 +++ b/learnings/data-envelope-architecture/security/v1/learnings.md
-@@ -0,0 +1,52 @@
-+# Security Learnings — data-envelope-architecture v1
+@@ -0,0 +1,77 @@
++# Security Learnings — data-envelope-architecture
 +
-+## 2026-02-21 — Unbounded recursion is the #1 pattern in this codebase
++## 2026-02-21 — PLang's threat model is user-sovereign (CORRECTED)
 +
-+**Vector:** UnwrapJsonElement, RehydrateNestedData, GetChild, ResolveVariablesInPath, Clr() — all recurse without depth limits
-+**Severity:** high
-+**Status:** open
-+**Details:** Every time PLang processes structured data (JSON, Data objects, navigation paths, type names), it uses recursive descent. None of these have depth counters. StackOverflowException is unrecoverable in .NET — the process crashes, no catch block can save it.
-+**Fix:** Add `int depth = 0` parameter to every recursive method. Check against a const max (100-128 for JSON, 100 for navigation, 20 for generics).
-+**Lesson:** When reviewing PLang code, check EVERY recursive method for a depth parameter. If it doesn't have one, it's a bug. The pattern is always the same: add depth param, increment on recurse, throw InvalidDataException at limit.
++**Severity:** critical learning
++**Status:** permanent
++**Details:** PLang's security model is NOT "defend against the user." The user owns their software. .pr files run in a trusted environment. Writing `set %!fileSystem% = null` is the user's prerogative — same as `Environment.Exit()` in C#. System variable writes and ObjectNavigator reflection are BY DESIGN.
++**The real trust boundary:** Cryptographic signatures on Data. Once data is verified, everything inside runs with full trust. Security focuses on: (1) DoS at transport boundaries, (2) integrity of signature/verification, (3) robustness against malformed external input.
++**Lesson:** Don't flag user-sovereign actions as injection vulnerabilities. Focus on where untrusted external data enters the system (transport channels, decompressed payloads). The wall is signatures, not .pr files.
++**Source:** Creator review of v1 findings.
 +
-+## 2026-02-21 — MemoryStack system variables have no write protection
-+
-+**Vector:** MemoryStack.Set() accepts any name including !-prefixed system variables
-+**Severity:** high
-+**Status:** open
-+**Details:** PLangContext registers !engine, !context, !fileSystem, !memoryStack etc as system variables. The ! prefix hides them from enumeration (GetNames/GetAll), but Set() has no guard — any code can overwrite them. The variable/set action passes Name directly from .pr parameters, so a crafted .pr file can set %!engine% = null.
-+**Fix:** Guard Set() with if (name.StartsWith("!")) throw.
-+**Lesson:** "Hidden" is not "protected". The ! prefix is a visibility convention, not a security mechanism. Always check if hiding from enumeration also prevents direct write access.
-+
-+## 2026-02-21 — ObjectNavigator reflection is an unintended capability amplifier
-+
-+**Vector:** ObjectNavigator exposes ALL public properties of ANY object stored in Data.Value
-+**Severity:** medium
-+**Status:** open
-+**Details:** If Engine, PLangContext, or MemoryStack are navigable (they are — stored as Data values in system variables), reflection gives access to FileSystem, Libraries, Goals, System/Service actors. This is not just information disclosure — it's a capability leak.
-+**Fix:** Add a type blocklist or property blocklist to ObjectNavigator. Or use a [Navigable] attribute whitelist.
-+**Lesson:** Reflection-based navigators are dangerous in a system where objects carry capabilities. Every public property on Engine/Context is a potential escalation path. Principle of least privilege: only expose what's needed.
-+
-+## 2026-02-21 — Gzip bomb protection is good but incomplete
-+
-+**Vector:** MaxDecompressedSize=100MB correctly enforced in GZipDecompress
-+**Severity:** info
-+**Status:** mitigated (partially)
-+**Details:** The chunked read with cumulative size check is well-implemented. But the protection only covers raw decompressed bytes — no corresponding limit exists for the downstream JSON parsing. A 90MB JSON document (under the limit) can allocate 300MB+ of Dictionary/List objects during UnwrapJsonElement.
-+**Lesson:** Size limits must be applied at every transformation stage, not just the first one. Bytes → JSON → CLR objects is a 3x amplification chain.
-+
-+## 2026-02-21 — Duplicate code is a security debt multiplier
-+
-+**Vector:** UnwrapJsonElement exists in both Data.cs and fromJson.cs with identical logic
-+**Severity:** info
-+**Status:** open
-+**Details:** When a security fix is applied to Data.cs (e.g., adding depth limits), the duplicate in fromJson.cs won't get it unless someone remembers. This is exactly how security regressions happen.
-+**Lesson:** When finding duplicate code during security review, flag it explicitly. The fix must reference both locations, or better yet, consolidate to a single implementation.
-+
-+## 2026-02-21 — Signature/Verified properties without implementation are dangerous
++## 2026-02-21 — Verified must NEVER be a settable bool (UPGRADED to HIGH)
 +
 +**Vector:** Verified is a public settable bool with no crypto backing
-+**Severity:** medium (time bomb)
++**Severity:** high — this IS the trust boundary
 +**Status:** open
-+**Details:** Today, no code checks Verified. But the property exists and tests exercise it. A future developer will assume it works and build on it. The property name implies a security guarantee that doesn't exist.
-+**Lesson:** Never ship security-related properties without implementation. Either implement verification, or don't create the property. A "placeholder" security feature is worse than no feature — it creates false confidence.
++**Details:** Signatures are PLang's wall. Everything inside the wall has full power. If `Verified` is a public setter, any code can claim "verified" without cryptographic proof. This directly undermines the trust model. The fix direction: `{ get; private set; }` or computed from Signature. A `VerifySignature()` method should do actual crypto and set Verified. No external code should be able to claim verified without a valid signature.
++**Lesson:** Security properties that represent trust boundaries must be computed, never settable. A settable "verified" flag is a door in the wall that anyone can open.
++**Source:** Creator review — "signatures are the wall, everything inside the wall has full power."
++
++## 2026-02-21 — Unbounded recursion is the #1 DoS pattern
++
++**Vector:** UnwrapJsonElement, RehydrateNestedData, GetChild, ResolveVariablesInPath, Clr() — all recurse without depth limits
++**Severity:** high (at transport boundaries), medium (elsewhere)
++**Status:** open
++**Details:** Every time PLang processes structured data, it uses recursive descent without depth counters. StackOverflowException is unrecoverable in .NET. The highest-priority instance is RehydrateNestedData which sits at the transport boundary processing decompressed untrusted data.
++**Fix:** Add `int depth = 0` parameter. Check against const max (100-128 for JSON, 100 for navigation, 20 for generics).
++**Lesson:** Check EVERY recursive method for a depth parameter. At trust boundaries (transport), this is HIGH severity. In user code paths, it's lower.
++
++## 2026-02-21 — Gzip bomb protection is good but transformation chain is incomplete
++
++**Severity:** info
++**Status:** mitigated (partially)
++**Details:** MaxDecompressedSize=100MB is well-implemented. But no corresponding limit for downstream JSON parsing. 90MB JSON → 300MB+ CLR objects.
++**Lesson:** Size limits at every transformation stage. Bytes → JSON → CLR is a 3x amplification chain.
++
++## 2026-02-21 — Duplicate UnwrapJsonElement = inconsistent fixes
++
++**Severity:** info
++**Status:** open
++**Details:** UnwrapJsonElement in both Data.cs and fromJson.cs. Fixes applied to one won't reach the other.
++**Lesson:** Consolidate to single implementation, or flag both locations in every fix.
++
++## 2026-02-21 — Newtonsoft shim: low practical risk
++
++**Severity:** low
++**Status:** open
++**Details:** Namespace-based detection worth hardening (check assembly name), but if library.load already gives RCE, namespace spoofing adds nothing.
++**Lesson:** Evaluate redundant attack vectors. If a prerequisite already grants full access, the downstream vector is informational, not blocking.
++
++---
++
++# Meta-Learnings — Process & Mindset
++
++## 2026-02-21 — Establish the threat model BEFORE auditing
++
++**Status:** permanent
++**Details:** I walked in with a generic web-app threat model ("users are untrusted, defend every boundary") and burned effort on findings #4 and #5 that turned out to be features, not bugs. PLang is developer tooling — the user IS the developer. The question "who is the attacker and what do they control?" should be answered before writing a single finding.
++**Lesson:** First session action for any new codebase: ask the creator about the deployment model and trust assumptions. Don't assume a web-app threat model. Developer tools, CLIs, language runtimes, and infrastructure software all have fundamentally different threat models.
++
++## 2026-02-21 — Read previous bots' reports before starting
++
++**Status:** permanent
++**Details:** The auditor already identified thread safety issues, temporal coupling, and other findings. I partially re-covered that ground. The security analyst's job is adversarial analysis at trust boundaries — specifically what the auditor didn't do. Reading the auditor-report.json more carefully would have let me skip re-treading and focus on genuine attack vectors from the start.
++**Lesson:** The multi-bot pipeline (architect → coder → tester → auditor → security) means each bot builds on the previous. Read what's already been done. Focus on what's missing, not what's covered.
++
++## 2026-02-21 — The trust model determines finding severity, not technical impact alone
++
++**Status:** permanent
++**Details:** Finding #9 (Verified settable bool) went from "medium time bomb" to "the most important finding" once I understood that signatures are PLang's trust boundary. Without the trust model, I ranked it by current exploitability. With it, I ranked it by what it undermines. Conversely, #4 (system variable writes) went from "high injection" to "by design" — same technical capability, completely different meaning.
++**Lesson:** A finding's severity is threat-model-relative. Two codebases with identical code can have opposite severity ratings for the same pattern. Always calibrate to the actual trust architecture.
++
++## 2026-02-21 — Evaluate attack chains end-to-end before rating individual links
++
++**Status:** permanent
++**Details:** I rated #8 (Newtonsoft namespace spoofing) as medium because it enables code execution via reflection. But the prerequisite (library.load) already gives unrestricted code execution. The chain adds zero incremental risk. I should have traced the full chain first: "attacker needs library.load → which already gives RCE → so namespace spoofing is redundant."
++**Lesson:** Map the full attack chain before rating individual vulnerabilities. If an early link already grants the attacker's goal, later links are noise. Rate the chain, not the link.
