@@ -16,7 +16,7 @@ public class SettingsTests
     }
 
     [Test]
-    public void Resolve_ReturnsClassDefault_WhenNoScopeSet()
+    public async Task Resolve_ReturnsClassDefault_WhenNoScopeSet()
     {
         // No settings have been written to any scope.
         // Resolve should fall through to the class default.
@@ -25,11 +25,11 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
 
-        Assert.That(result).IsEqualTo(classDefault);
+        await Assert.That(result).IsEqualTo(classDefault);
     }
 
     [Test]
-    public void Resolve_ReturnsGoalScopedValue_WhenSet()
+    public async Task Resolve_ReturnsGoalScopedValue_WhenSet()
     {
         // A settings handler writes to the context's goal scope.
         // Resolve should find it.
@@ -41,11 +41,11 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
 
-        Assert.That(result).IsEqualTo(goalValue);
+        await Assert.That(result).IsEqualTo(goalValue);
     }
 
     [Test]
-    public void Resolve_InheritsFromParentContext()
+    public async Task Resolve_InheritsFromParentContext()
     {
         // Parent context has a setting. Child context (no local setting) should inherit it.
         var (engine, parentContext) = CreateEngine();
@@ -58,11 +58,11 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", childContext, classDefault);
 
-        Assert.That(result).IsEqualTo(parentValue);
+        await Assert.That(result).IsEqualTo(parentValue);
     }
 
     [Test]
-    public void Resolve_EngineDefaultOverridesClassDefault()
+    public async Task Resolve_EngineDefaultOverridesClassDefault()
     {
         // Engine default is set, no goal scope set.
         // Should return engine default, not class default.
@@ -74,11 +74,11 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
 
-        Assert.That(result).IsEqualTo(engineDefault);
+        await Assert.That(result).IsEqualTo(engineDefault);
     }
 
     [Test]
-    public void Resolve_GoalScopeOverridesEngineDefault()
+    public async Task Resolve_GoalScopeOverridesEngineDefault()
     {
         // Both engine default and goal scope are set.
         // Goal scope should win.
@@ -92,11 +92,11 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
 
-        Assert.That(result).IsEqualTo(goalValue);
+        await Assert.That(result).IsEqualTo(goalValue);
     }
 
     [Test]
-    public void Resolve_ChildGoalScope_OverridesParentGoalScope()
+    public async Task Resolve_ChildGoalScope_OverridesParentGoalScope()
     {
         // Parent has a goal-scoped value. Child sets its own. Child's value wins.
         var (engine, parentContext) = CreateEngine();
@@ -109,6 +109,6 @@ public class SettingsTests
 
         var result = engine.Settings.Resolve<long>("archive.max", childContext, classDefault);
 
-        Assert.That(result).IsEqualTo(10L * 1024 * 1024);
+        await Assert.That(result).IsEqualTo(10L * 1024 * 1024);
     }
 }

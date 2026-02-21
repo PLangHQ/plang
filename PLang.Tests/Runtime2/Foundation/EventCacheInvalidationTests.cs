@@ -15,7 +15,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
@@ -43,7 +43,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
@@ -75,7 +75,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = new PLangContext(engine);
         var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
         {
@@ -107,7 +107,7 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_ManualInvalidation_Works()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = new PLangContext(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 

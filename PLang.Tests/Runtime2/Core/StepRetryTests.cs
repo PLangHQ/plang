@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
@@ -11,13 +10,13 @@ namespace PLang.Tests.Runtime2.Core;
 /// </summary>
 public class StepRetryTests
 {
-    private Engine _engine = null!;
+    private PLang.Runtime2.Engine.@this _engine = null!;
     private FlakyHandler _flaky = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new Engine("/app");
+        _engine = new PLang.Runtime2.Engine.@this("/app");
         _flaky = new FlakyHandler();
         _engine.Libraries.Register("test", "flaky", _flaky);
     }
@@ -450,11 +449,11 @@ public class StepRetryTests
         public int FailCount { get; set; } = 0;
         public int CallCount { get; private set; } = 0;
 
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context)
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Engine = engine;
             Context = context;
@@ -470,7 +469,7 @@ public class StepRetryTests
             return Task.FromResult(Data.Ok("success"));
         }
 
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

@@ -12,11 +12,11 @@ public class LibraryLoadTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (PLangContext context, Engine engine, string assemblyPath) CreateContextWithAssembly()
+    private static (PLangContext context, PLang.Runtime2.Engine.@this engine, string assemblyPath) CreateContextWithAssembly()
     {
-        var assemblyPath = typeof(Engine).Assembly.Location;
+        var assemblyPath = typeof(PLang.Runtime2.Engine.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var engine = new Engine(assemblyDir);
+        var engine = new PLang.Runtime2.Engine.@this(assemblyDir);
         var context = engine.CreateContext();
         return (context, engine, assemblyPath);
     }
@@ -24,7 +24,7 @@ public class LibraryLoadTests
     [Test]
     public async Task Load_NonexistentPath_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = engine.CreateContext();
 
         var load = new Load

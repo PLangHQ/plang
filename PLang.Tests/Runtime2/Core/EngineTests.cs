@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
@@ -54,7 +53,7 @@ public class EngineTests
     [Test]
     public async Task System_ReturnsActorWithCorrectName()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var system = engine.System;
 
@@ -64,7 +63,7 @@ public class EngineTests
     [Test]
     public async Task Service_ReturnsActorWithCorrectName()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var service = engine.Service;
 
@@ -74,7 +73,7 @@ public class EngineTests
     [Test]
     public async Task User_ReturnsActorWithCorrectName()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var user = engine.User;
 
@@ -84,7 +83,7 @@ public class EngineTests
     [Test]
     public async Task Actors_AreLazilyCreated()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Access only User actor
         var user = engine.User;
@@ -98,7 +97,7 @@ public class EngineTests
     [Test]
     public async Task Actors_HaveIsolatedContexts()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         engine.User.Context.MemoryStack.Set("key", "user-value");
         engine.System.Context.MemoryStack.Set("key", "system-value");
@@ -110,7 +109,7 @@ public class EngineTests
     [Test]
     public async Task Actors_HaveIsolatedIO()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         engine.User.Channels.CreateMemoryChannel("test");
         engine.System.Channels.CreateMemoryChannel("test");
@@ -124,7 +123,7 @@ public class EngineTests
     [Test]
     public async Task Actor_Context_HasBackReference()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.User.Context.Actor).IsEqualTo(engine.User);
         await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
@@ -134,7 +133,7 @@ public class EngineTests
     [Test]
     public async Task Actor_SameInstanceOnMultipleAccess()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var user1 = engine.User;
         var user2 = engine.User;
@@ -147,7 +146,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Libraries).IsNotNull();
@@ -159,7 +158,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Id).IsNotNull();
         await Assert.That(engine.Id.Length).IsEqualTo(12);
@@ -168,7 +167,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_DefaultsNameToRuntime2()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Name).IsEqualTo("Runtime2");
     }
@@ -176,7 +175,7 @@ public class EngineTests
     [Test]
     public async Task Name_CanBeChanged()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         engine.Name = "CustomEngine";
 
@@ -186,7 +185,7 @@ public class EngineTests
     [Test]
     public async Task Debug_IsEnabled_ReflectsEngine()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         engine.Debug.IsEnabled = true;
 
@@ -197,7 +196,7 @@ public class EngineTests
     public async Task Constructor_AcceptsCustomLibraries()
     {
         var libraries = new EngineLibraries();
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
 
         await Assert.That(engine.Libraries).IsEqualTo(libraries);
     }
@@ -205,7 +204,7 @@ public class EngineTests
     [Test]
     public async Task Channels_HasSerializers()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
@@ -214,7 +213,7 @@ public class EngineTests
     [Test]
     public async Task Libraries_HasVariableActions()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
         await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
@@ -223,7 +222,7 @@ public class EngineTests
     [Test]
     public async Task Libraries_HasOutputActions()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
     }
@@ -231,7 +230,7 @@ public class EngineTests
     [Test]
     public async Task CreateContext_CreatesNewContext()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         using var context = engine.CreateContext();
 
@@ -243,7 +242,7 @@ public class EngineTests
     [Test]
     public async Task CreateContext_AcceptsCustomMemoryStack()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var memoryStack = new MemoryStack();
         memoryStack.Set("test", "value");
 
@@ -255,7 +254,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_NonexistentGoal_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var result = await engine.RunGoalAsync("NonexistentGoal");
 
@@ -266,7 +265,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var goal = new Goal { Name = "EmptyGoal" };
         engine.Goals.Add(goal);
 
@@ -278,7 +277,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var goal = new Goal { Name = "TestGoal" };
         engine.Goals.Add(goal);
         var cts = new CancellationTokenSource();
@@ -293,7 +292,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_SetsContextGoal()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var goal = new Goal { Name = "TestGoal" };
         engine.Goals.Add(goal);
         using var context = engine.CreateContext();
@@ -308,7 +307,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_PushesCallFrame()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var goal = new Goal { Name = "TestGoal" };
         engine.Goals.Add(goal);
 
@@ -322,7 +321,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ExecutesSteps()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -346,7 +345,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_StepFailure_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -367,7 +366,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_StepWithIgnoreError_ContinuesOnError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -407,7 +406,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_ActionNotFound_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var step = MakeStep("nonexistent", "method");
         using var context = engine.CreateContext();
 
@@ -420,7 +419,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_SetsReturnVariable()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
@@ -434,7 +433,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_RecordsStep()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var step = MakeStep("variable", "clear", index: 5, text: "test step");
 
@@ -450,7 +449,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var throwingHandler = new ThrowingHandler();
         engine.Libraries.Register("throwing", "fail", throwingHandler);
@@ -467,7 +466,7 @@ public class EngineTests
     [Test]
     public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
         engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
@@ -484,7 +483,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesDisposableHandlers()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         var disposableHandler = new DisposableHandler();
         engine.Libraries.Register("disposable", "do", disposableHandler);
 
@@ -496,7 +495,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesAsyncDisposableHandlers()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
         engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
 
@@ -508,7 +507,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_CalledTwice_DoesNotThrow()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await engine.DisposeAsync();
         await engine.DisposeAsync();
@@ -519,7 +518,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_DisposesCreatedActors()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Access actors to create them
         var user = engine.User;
@@ -540,7 +539,7 @@ public class EngineTests
     [Test]
     public async Task DisposeAsync_HandlesUncreatedActors()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Don't access any actors
         await engine.DisposeAsync();
@@ -552,7 +551,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_WithActor_UsesActorContext()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -577,7 +576,7 @@ public class EngineTests
     [Test]
     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -600,24 +599,24 @@ public class EngineTests
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
     private class NonGeneratedHandler : IClass
     {
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
     private class DisposableHandler : IClass, ICodeGenerated, IDisposable
     {
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -627,14 +626,14 @@ public class EngineTests
 
     private class AsyncDisposableHandler : IClass, ICodeGenerated, IAsyncDisposable
     {
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -644,16 +643,16 @@ public class EngineTests
 
     private class ThrowingHandler : IClass, ICodeGenerated
     {
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters)
         {
             throw new InvalidOperationException("Test exception");
         }
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);
@@ -665,7 +664,7 @@ public class EngineTests
     [Test]
     public async Task Property_Get_WithNormalValue_ReturnsValue()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         engine.Property["greeting"] = "hello";
 
         var result = await engine.Property.Get("greeting");
@@ -676,7 +675,7 @@ public class EngineTests
     [Test]
     public async Task Property_Get_WithNullKey_ReturnsNull()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var result = await engine.Property.Get("nonexistent");
 
@@ -686,7 +685,7 @@ public class EngineTests
     [Test]
     public async Task Property_Get_WithGoalCall_RunsGoal()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Set up a goal that sets a variable
         var goal = new Goal
@@ -713,7 +712,7 @@ public class EngineTests
     [Test]
     public async Task Property_Indexer_WithGoalCall_ReturnsRawGoalCall()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var goalCall = new GoalCall { Name = "SummaryGoal" };
         engine.Property["Summary"] = goalCall;
 
@@ -727,7 +726,7 @@ public class EngineTests
     [Test]
     public async Task Property_Get_Generic_WithNormalValue_ReturnsTyped()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         engine.Property["count"] = 42;
 
         var result = await engine.Property.Get<int>("count");
@@ -738,7 +737,7 @@ public class EngineTests
     [Test]
     public async Task Property_Get_Generic_TypeMismatch_ReturnsDefault()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         engine.Property["count"] = "not-an-int";
 
         var result = await engine.Property.Get<int>("count");

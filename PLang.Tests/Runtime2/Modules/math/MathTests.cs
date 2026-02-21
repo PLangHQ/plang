@@ -9,7 +9,7 @@ public class MathTests
 {
     private (PLangContext context, MemoryStack memory) CreateContext()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         var memory = new MemoryStack();
         var context = new PLangContext(engine, memory);
         return (context, memory);

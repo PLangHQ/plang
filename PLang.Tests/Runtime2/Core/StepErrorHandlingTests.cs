@@ -5,12 +5,12 @@ namespace PLang.Tests.Runtime2.Core;
 
 public class StepErrorHandlingTests
 {
-    private Engine _engine = null!;
+    private PLang.Runtime2.Engine.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new Engine("/app");
+        _engine = new PLang.Runtime2.Engine.@this("/app");
     }
 
     [Test]
