@@ -147,3 +147,11 @@ Target audiences:
 **Context:** Currently the only way to capture "do this tomorrow" reminders is the todo list. Need a proper reminder mechanism so bots can flag time-sensitive items.
 
 **Idea:** For now, todos serve as reminders. Longer term, consider a structured reminder system (date-tagged entries that surface at session start).
+
+---
+
+## Safe cast in Settings.Resolve<T>
+**Date:** 2026-02-21
+**Context:** Code analyzer found `Settings.Resolve<T>` uses hard cast `(T)value` (lines 34 and 40 in `Engine/Settings/this.cs`). If a setting value is stored with the wrong type (e.g., int instead of long), this throws InvalidCastException instead of falling through to the class default.
+
+**Fix:** Replace `return (T)value;` with `if (value is T typed) return typed; else continue;` (or fall through to classDefault). One-line change, two locations. Add a test for the type mismatch scenario.
