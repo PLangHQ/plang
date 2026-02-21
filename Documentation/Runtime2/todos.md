@@ -150,8 +150,37 @@ Target audiences:
 
 ---
 
-## Safe cast in Settings.Resolve<T>
+## ~~Safe cast in Settings.Resolve<T>~~ ✅ DONE (2026-02-21)
 **Date:** 2026-02-21
-**Context:** Code analyzer found `Settings.Resolve<T>` uses hard cast `(T)value` (lines 34 and 40 in `Engine/Settings/this.cs`). If a setting value is stored with the wrong type (e.g., int instead of long), this throws InvalidCastException instead of falling through to the class default.
+**Context:** Code analyzer found `Settings.Resolve<T>` uses hard cast `(T)value`. Tester elevated to CRITICAL — C# unboxing + JSON deserialization = production crash.
+**Completed:** Coder v2 replaced with `Cast<T>` helper: `is T` → `Convert.ChangeType` → fallback. Tests added for int→long widening and type mismatch fallback.
 
-**Fix:** Replace `return (T)value;` with `if (value is T typed) return typed; else continue;` (or fall through to classDefault). One-line change, two locations. Add a test for the type mismatch scenario.
+---
+
+## Cast<T> doesn't handle enums
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review of coder's `Cast<T>` fix. `archive.Settings.Level` is `CompressionLevel` (enum). `Convert.ChangeType` does not support enum conversions — if JSON deserializes the level as `int` or `string`, the cast silently falls to the class default. Same class of bug as the int→long issue.
+
+**Fix:** Add enum branch to `Cast<T>`: `if (typeof(T).IsEnum) return (T)Enum.ToObject(typeof(T), value);`. Add test storing `int` and resolving as `CompressionLevel`.
+
+---
+
+## Clone() loses SettingsScope
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review. `PLangContext.Clone()` copies `IsAsync` and `_data` but not `SettingsScope`. Unlike `CreateChild()` (which inherits via Parent chain), `Clone` shares the same Parent — so settings set on the original context are lost in the clone. No test covers this.
+
+**Fix:** Either copy `SettingsScope` in `Clone()`, or document that cloning intentionally strips settings. Add a test either way.
+
+---
+
+## GoalRunAsync settings test is simulation, not integration
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review. `GoalRunAsync_ScopesSettingsPerGoal` manually does `context.SettingsScope = null` / `context.SettingsScope = saved` to simulate RunAsync. If the real RunAsync changes its save/restore logic, this test still passes. Doesn't exercise the actual code path in `Goal/Methods.cs:29-32,89`.
+
+**Fix:** Write an integration test that creates a Goal with Steps and actually calls `RunAsync`, then verifies settings isolation. Requires test infrastructure for minimal Goal construction.
+
+---
+
+## Verify Defaults scope is ConcurrentDictionary
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review. `engine.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.
