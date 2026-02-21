@@ -1,88 +1,88 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-21T13:30:00Z",
-  "tested_version": "v6",
+  "timestamp": "2026-02-21T14:30:00Z",
+  "tested_version": "v7",
   "test_run": {
-    "csharp": { "total": 1372, "passed": 1372, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 1384, "passed": 1384, "failed": 0, "skipped": 0 },
     "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 3,
-    "changed_files_total": 4,
+    "changed_files_covered": 7,
+    "changed_files_total": 7,
     "uncovered_files": [],
-    "notes": "All 4 changed files have some test coverage, but specific new code paths from the auditor-fix commit are untested: GZipDecompress size limit (Data.Envelope.cs:219-227), ConcurrentDictionary/lock behavior (Types/this.cs), SetValueDirect (Data.cs — indirectly covered via multi-level nesting round-trip). Data.Merge() used in production Actions loop but has zero tests."
+    "notes": "All changed files have test coverage. But two security features have zero test coverage for the specific protection they provide: ResolveVariablesInPath cycle detection and GetChild depth error through MemoryStack integration."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
+      "severity": "major",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Zip bomb protection (MaxDecompressedSize = 100MB, lines 19, 219-227) has zero test coverage. The chunked read with size limit was added to fix auditor finding #8 (major safety concern), but no test verifies the limit triggers.",
-      "impact": "If someone refactors GZipDecompress back to gzip.CopyTo(output), removing the protection entirely, no test fails. The security feature silently disappears.",
-      "suggestion": "Add a test that creates a compressed payload of zeros (~100KB compressed → 100MB+ decompressed). Use InternalsVisibleTo to lower MaxDecompressedSize for testing, or accept the ~100MB memory allocation. Verify the Decompress result returns ServiceError with message containing 'exceeds size limit'."
+      "test_file": "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+      "issue": "ResolveVariablesInPath cycle detection (lines 203-237) is completely untested. Uses [ThreadStatic] HashSet to prevent infinite loops from circular variable references in bracket-index paths. Zero tests exist for this security feature.",
+      "impact": "If the _resolvingVars.Add() check is removed, no test fails. If the finally cleanup is removed, the set leaks between calls. If isRoot cleanup is removed, ThreadStatic accumulates. All these regressions are undetectable.",
+      "suggestion": "Add tests: (a) circular reference x→y→x in bracket paths terminates, (b) self-reference terminates, (c) after cycle detection, normal resolution still works (no HashSet leak)."
     },
     {
       "id": 2,
       "severity": "major",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
-      "issue": "Thread safety fix (ConcurrentDictionary + _derivedLock) has no concurrent test. All 65+ EngineTypesTests are single-threaded. The fix addresses auditor finding #1 (major safety concern) but regression is undetectable.",
-      "impact": "If ConcurrentDictionary is reverted to Dictionary, or lock blocks are removed, no test catches it. Thread safety guarantee is based on code review only.",
-      "suggestion": "Add a Parallel.For stress test: concurrent Add() + KindOf() calls. Dictionary corruption throws InvalidOperationException on concurrent modification — a concurrent test would catch reversion."
+      "test_file": "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+      "issue": "MemoryStack.Get() at line 90 returns GetChild result directly. GetChild now returns Data.FromError at depth 100 instead of null. No integration test verifies that MemoryStack.Get with a 101+ segment path returns error Data. Callers checking 'result != null' would proceed on an error Data.",
+      "impact": "The behavior change (null → error Data) is tested in isolation at the Data level but not through the caller. Callers doing 'stack.Get(deepPath)?.Value' get null from an error Data instead of the expected null-means-not-found.",
+      "suggestion": "Add MemoryStackTests.Get_DeeplyNestedPath_ReturnsErrorData() — 101+ dot path, assert result.Success == false and result.Error.Key == 'NavigationDepthExceeded'."
     },
     {
       "id": 3,
-      "severity": "major",
+      "severity": "minor",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Result.cs",
-      "issue": "Data.Merge() is called in production (Actions/this.cs:66) to combine step results but has zero tests. It silently returns an empty List<Data> when Value is not List<Data>, meaning non-list values are silently lost.",
-      "impact": "The method works at its one call site (Action loop) but the contract is fragile. Any caller with non-List values gets silent data loss. No regression protection exists.",
-      "suggestion": "Add tests for: (a) merging two List<Data> values, (b) non-List values (document or fix silent failure), (c) overlapping names (replace behavior), (d) null other value."
+      "test_file": "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs",
+      "code_file": "PLang/Runtime2/actions/convert/fromJson.cs",
+      "issue": "FromJson action not tested with deeply nested JSON. The action's catch-all wraps depth-exceeded InvalidOperationException as ValidationError('Invalid JSON: ...') with key 'JsonParseError'. The error message is misleading (JSON is valid, just too deep) and the key is wrong for this case.",
+      "impact": "Low. The depth limit IS tested at Data level. But the user-facing error through the action is inaccurate.",
+      "suggestion": "Add ConvertTests with 200-level nested JSON. Consider distinguishing depth-exceeded from parse errors in fromJson.Run()."
     },
     {
       "id": 4,
       "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Decompress error tests verify Error.Key == 'DecompressError' but never verify Error.StatusCode == 500. The coder explicitly chose 500 (infrastructure error) over 400 (default), but this value is unasserted.",
-      "impact": "Low. StatusCode regression (500 → 400) would go undetected.",
-      "suggestion": "Add Assert.That(result.Error!.StatusCode).IsEqualTo(500) to each Decompress error test."
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Clr() generic depth limit tested at 25 (exceeds 20), but not at the boundary. No test for exactly 20 (should succeed) or 21 (should fail). Off-by-one bug in 'depth > MaxGenericDepth' would go undetected.",
+      "impact": "Low. Code is correct today.",
+      "suggestion": "Add boundary tests: 20 levels → valid, 21 levels → null."
+    }
+  ],
+  "carry_forward": [
+    {
+      "from_version": "v6",
+      "id": 2,
+      "severity": "major",
+      "issue": "Thread safety (ConcurrentDictionary/lock) has no concurrent test. Code correct but regression undetectable.",
+      "status": "open"
     },
     {
+      "from_version": "v6",
       "id": 5,
       "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Context not propagated to inner Data during RehydrateNestedData. After Decompress, top-level result gets context but rehydrated inner Data objects do not. No test verifies context state of inner Data after decompression.",
-      "impact": "Low. Callers typically use Unwrap() or GetChild() which stamp context. Direct cast to inner Data is an edge case.",
-      "suggestion": "Add assertion on inner Data context after Decompress, or document that Unwrap/GetChild is required for context propagation."
+      "issue": "Inner context not propagated in RehydrateNestedData. By design — Unwrap/GetChild stamp context lazily.",
+      "status": "open"
     },
     {
+      "from_version": "v6",
       "id": 6,
       "severity": "minor",
-      "type": "edge-case",
-      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/Data.cs",
-      "issue": "Numeric type widening: UnwrapJsonElement (line 215) converts JSON numbers to long first, double as fallback. int 42 → compress → decompress → long 42L. Type metadata says 'int' but CLR value is long.",
-      "impact": "Low. GetValue<int>() handles this via TypeMapping.ConvertTo (Convert.ChangeType). Only raw Value access + 'is int' check would fail.",
-      "suggestion": "Document or test the numeric widening behavior. Consider adding a dedicated test: compress int, decompress, verify GetValue<int>() returns 42."
+      "issue": "Numeric type widening (int → long) through compress/decompress. Mitigated by GetValue<T>().",
+      "status": "open"
     }
   ],
-  "withdrawn": [
-    {
-      "original_id": "v6-draft-5",
-      "type": "false-green",
-      "issue": "RehydrateNestedData false positives on user dictionaries with 'value' key",
-      "reason": "Withdrawn after architecture clarification. The envelope pipeline always operates on Data layers. At the transport boundary, the serialized JSON IS nested Data objects — the 'value' key heuristic correctly identifies them. User dictionaries at the leaf level are the value of the innermost Data, not mistaken for Data themselves. The rehydration only reconstructs Data wrapper layers that JSON flattened into dictionaries."
-    }
+  "resolved_from_v6": [
+    { "id": 1, "issue": "Zip bomb protection untested", "resolution": "Decompress_ExceedsSizeLimit_ReturnsError test added" },
+    { "id": 3, "issue": "Merge() untested", "resolution": "3 Merge tests added" },
+    { "id": 4, "issue": "StatusCode unasserted", "resolution": "4 StatusCode 500 tests added" }
   ],
   "verdict": "needs-fixes",
-  "summary": "1372 tests pass, 0 failures. All 8 auditor fixes structurally correct. Deep analysis: (1) CRITICAL: zip bomb protection untested — security feature with no regression test. (2) MAJOR: Thread safety (ConcurrentDictionary/lock) has no concurrent test. (3) MAJOR: Data.Merge() used in production Actions loop but zero tests, with silent data loss on non-List values. Plus 3 minor findings. One finding (RehydrateNestedData false positives) withdrawn after architecture clarification — the heuristic is correct by design. Verdict: needs-fixes."
+  "summary": "1384 tests pass. Coder v5 resolved 3 of 6 v6 findings (zip bomb, Merge, StatusCode). Security hardening code is correct and well-structured. But two security features from this release have zero test coverage: (1) ResolveVariablesInPath cycle detection — entirely untested, (2) GetChild depth error through MemoryStack — not tested through the integration point. Plus carry-forward: thread safety concurrent test still open. Verdict: needs-fixes for the two new major gaps."
 }
