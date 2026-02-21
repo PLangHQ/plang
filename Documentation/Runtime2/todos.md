@@ -157,19 +157,17 @@ Target audiences:
 
 ---
 
-## Cast<T> doesn't handle enums
+## ~~Cast<T> doesn't handle enums~~ ✅ DONE (2026-02-21)
 **Date:** 2026-02-21
-**Context:** Code analyzer v2 review of coder's `Cast<T>` fix. `archive.Settings.Level` is `CompressionLevel` (enum). `Convert.ChangeType` does not support enum conversions — if JSON deserializes the level as `int` or `string`, the cast silently falls to the class default. Same class of bug as the int→long issue.
-
-**Fix:** Add enum branch to `Cast<T>`: `if (typeof(T).IsEnum) return (T)Enum.ToObject(typeof(T), value);`. Add test storing `int` and resolving as `CompressionLevel`.
+**Context:** Code analyzer v2 review of coder's `Cast<T>` fix.
+**Completed:** Coder added `if (target.IsEnum) return (T)Enum.ToObject(target, value)` to `Cast<T>`. Test `Resolve_WidensIntToEnum` added.
 
 ---
 
-## Clone() loses SettingsScope
+## ~~Clone() loses SettingsScope~~ ✅ DONE (2026-02-21)
 **Date:** 2026-02-21
-**Context:** Code analyzer v2 review. `PLangContext.Clone()` copies `IsAsync` and `_data` but not `SettingsScope`. Unlike `CreateChild()` (which inherits via Parent chain), `Clone` shares the same Parent — so settings set on the original context are lost in the clone. No test covers this.
-
-**Fix:** Either copy `SettingsScope` in `Clone()`, or document that cloning intentionally strips settings. Add a test either way.
+**Context:** Code analyzer v2 review.
+**Completed:** Coder added `SettingsScope = SettingsScope` to `PLangContext.Clone()` object initializer. Test `Clone_PreservesSettingsScope` added.
 
 ---
 
