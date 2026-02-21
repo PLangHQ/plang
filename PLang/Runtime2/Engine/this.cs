@@ -107,6 +107,12 @@ public sealed class @this : IAsyncDisposable
     public Property Property { get; }
 
     /// <summary>
+    /// Strongly typed, goal-scoped module settings.
+    /// Navigation: engine.Settings.For&lt;ArchiveSettings&gt;(context).Max
+    /// </summary>
+    public Settings.@this Settings { get; }
+
+    /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
     /// </summary>
     public Debugging Debug { get; }
@@ -182,6 +188,7 @@ public sealed class @this : IAsyncDisposable
         Debug = new Debugging(this);
         Testing = new Testing(this);
         Property = new Property(this);
+        Settings = new Settings.@this();
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
