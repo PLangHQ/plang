@@ -367,6 +367,50 @@
         "health": "Green.",
         "notes": "Tester finding #5 (null value on Set) left as-is — ConcurrentDictionary's ArgumentNullException is correct behavior for a settings store. Finding #6 (more PLang tests) deferred — requires builder."
       }
+    },
+    {
+      "id": "tester-v2-2026-0221-settings-rereview",
+      "bot": "tester",
+      "timestamp_start": "2026-02-21T23:30:00Z",
+      "timestamp_end": "2026-02-21T23:50:00Z",
+      "intent": "Re-review coder v2 fixes — verify all v1 findings are properly addressed",
+      "before": {
+        "assumptions": "Coder v2 fixed Cast<T>, added 8 tests (widening, enum, mismatch, gap, save/restore, overwrite, null removal, clone). Code analyzer contributed enum and clone fixes.",
+        "risk": "Low — review only."
+      },
+      "plan": "Run tests. Read all new/changed code and tests. Verify each v1 finding is properly resolved. Check for new issues introduced by fixes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified all v1 findings resolved. Two minor items remain (simulation test, PLang tests). Verdict: approved."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v2/summary.md",
+            ".bot/runtime2-settings/tester/v2/v1_review_summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated test report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Approved. All critical/major findings resolved. 1262 tests pass.",
+        "health": "Green — test suite is honest.",
+        "notes": "Two minor deferred items: GoalRunAsync integration test (needs infrastructure), PLang tests (needs builder)."
+      }
     }
   ]
 }
