@@ -13,7 +13,8 @@
       "line": 193,
       "issue": "Clone() copies SettingsScope by reference: `SettingsScope = SettingsScope`. The clone and original share the same Scope instance. If the clone writes a setting via Set(), the original's SettingsScope sees it too. This violates the isolation contract — Clone() is supposed to produce an independent context.",
       "impact": "Any code that clones a context and then sets settings in the clone will pollute the original context's settings. This is the same pattern as `IsAsync = IsAsync` (value type, safe) but SettingsScope is a reference type. The test `Clone_PreservesSettingsScope` only verifies reading — it doesn't test that writing to the clone is isolated from the original.",
-      "suggestion": "Clone the Scope: `SettingsScope = SettingsScope?.Clone()` (requires adding a Clone() method to Scope that creates a new ConcurrentDictionary from the existing one). Alternatively, if shared-reference is intentional (clone should see parent's settings), document this explicitly and remove the isolation implication."
+      "suggestion": "Clone the Scope: `SettingsScope = SettingsScope?.Clone()` (requires adding a Clone() method to Scope that creates a new ConcurrentDictionary from the existing one). Alternatively, if shared-reference is intentional (clone should see parent's settings), document this explicitly and remove the isolation implication.",
+      "security_comment": "Agree — this is the most security-relevant finding. Clone() is used for async goal execution. If a cloned context runs in parallel and writes settings, both contexts see the mutation. Today all settings come from trusted .pr files, so this is a contract bug, not an exploit. But if settings ever carry values from transport-received Data, shared-reference becomes a cross-context pollution vector. Fix recommended before merge."
     },
     {
       "id": 2,
@@ -23,7 +24,8 @@
       "line": 29,
       "issue": "Goal.RunAsync saves/nulls/restores SettingsScope but the restore happens in finally alongside Goal and Step restoration. If an exception occurs during the goal AND the caller inspects SettingsScope in a catch block before the finally runs, they'd see null. This is standard try/finally semantics and probably not a real issue, but the save/null/restore pattern for three different fields (Goal, Step, SettingsScope) is getting complex. If a fourth field is added, someone might forget the restore.",
       "impact": "Low. The finally block always runs. But the pattern complexity is growing — three save/restore pairs in one method.",
-      "suggestion": "Consider extracting the save/restore pattern into a disposable scope object (e.g., `using var scope = context.EnterGoal(this)`) that restores all three fields on Dispose. This is a future-proofing suggestion, not urgent."
+      "suggestion": "Consider extracting the save/restore pattern into a disposable scope object (e.g., `using var scope = context.EnterGoal(this)`) that restores all three fields on Dispose. This is a future-proofing suggestion, not urgent.",
+      "security_comment": "The disposable scope idea is good defensive design — forgotten restores are a real class of bug. From a security standpoint the finally block is sufficient today. No immediate risk, but +1 on the refactor when a fourth field appears."
     },
     {
       "id": 3,
@@ -33,7 +35,8 @@
       "line": 162,
       "issue": "GoalRunAsync_ScopesSettingsPerGoal is a simulation test — it manually does save/null/restore instead of calling Goal.RunAsync. The tester already flagged this and downgraded to 'minor (deferred)'. The test proves the mechanism but doesn't exercise the actual code path in Methods.cs:29-32,89.",
       "impact": "If someone removes the save/restore in Methods.cs, this test still passes. The test is honest about what it tests (the mechanism works) but doesn't guard the actual integration.",
-      "suggestion": "Acknowledged as deferred. When test infrastructure exists for constructing Goals with Steps, add an integration test that verifies settings isolation through actual RunAsync."
+      "suggestion": "Acknowledged as deferred. When test infrastructure exists for constructing Goals with Steps, add an integration test that verifies settings isolation through actual RunAsync.",
+      "security_comment": "Simulation tests don't guard the real code path — if someone removes the save/restore in Methods.cs, the security property (goal-scoped isolation) disappears silently. This is a regression risk, not an active vulnerability. Defer is fine."
     },
     {
       "id": 4,
@@ -43,7 +46,8 @@
       "line": 54,
       "issue": "Cast<T> has a bare `catch { return fallback; }` that swallows all exceptions including critical ones like OutOfMemoryException. Both tester and security audit flagged this as accepted-risk.",
       "impact": "Negligible in practice — Convert.ChangeType only throws FormatException/InvalidCastException/OverflowException. But bare catch is technically dangerous.",
-      "suggestion": "Narrow to `catch (Exception)` and add a comment that this is intentional. Or catch specific types: `catch (InvalidCastException) catch (FormatException) catch (OverflowException)`. Low priority."
+      "suggestion": "Narrow to `catch (Exception)` and add a comment that this is intentional. Or catch specific types: `catch (InvalidCastException) catch (FormatException) catch (OverflowException)`. Low priority.",
+      "security_comment": "Already flagged in security-report.json finding #3. Agree with narrowing the catch. In practice Convert.ChangeType never throws critical exceptions, so this is hygiene, not a real risk."
     }
   ]
 }
