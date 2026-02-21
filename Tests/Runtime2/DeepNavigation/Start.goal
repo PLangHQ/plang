@@ -1,0 +1,6 @@
+Start
+- set %deep% = {a:{b:{c:{d:{e:"found"}}}}}
+- write out %deep.a.b.c.d.e%
+- set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]
+- write out %list[0].items[1].val%
+- write out %list[1].items[0].val%

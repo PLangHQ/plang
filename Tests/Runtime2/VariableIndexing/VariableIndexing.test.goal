@@ -1,0 +1,8 @@
+Start
+- set %items% = ["a", "b", "c"]
+- set %idx% = 1
+- assert %items[idx]% equals "b"
+- set %i% = 0
+- set %j% = 2
+- assert %items[i]% equals "a"
+- assert %items[j]% equals "c"
