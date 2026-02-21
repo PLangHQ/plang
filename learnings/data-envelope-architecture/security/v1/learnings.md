@@ -47,3 +47,31 @@
 **Status:** open
 **Details:** Namespace-based detection worth hardening (check assembly name), but if library.load already gives RCE, namespace spoofing adds nothing.
 **Lesson:** Evaluate redundant attack vectors. If a prerequisite already grants full access, the downstream vector is informational, not blocking.
+
+---
+
+# Meta-Learnings — Process & Mindset
+
+## 2026-02-21 — Establish the threat model BEFORE auditing
+
+**Status:** permanent
+**Details:** I walked in with a generic web-app threat model ("users are untrusted, defend every boundary") and burned effort on findings #4 and #5 that turned out to be features, not bugs. PLang is developer tooling — the user IS the developer. The question "who is the attacker and what do they control?" should be answered before writing a single finding.
+**Lesson:** First session action for any new codebase: ask the creator about the deployment model and trust assumptions. Don't assume a web-app threat model. Developer tools, CLIs, language runtimes, and infrastructure software all have fundamentally different threat models.
+
+## 2026-02-21 — Read previous bots' reports before starting
+
+**Status:** permanent
+**Details:** The auditor already identified thread safety issues, temporal coupling, and other findings. I partially re-covered that ground. The security analyst's job is adversarial analysis at trust boundaries — specifically what the auditor didn't do. Reading the auditor-report.json more carefully would have let me skip re-treading and focus on genuine attack vectors from the start.
+**Lesson:** The multi-bot pipeline (architect → coder → tester → auditor → security) means each bot builds on the previous. Read what's already been done. Focus on what's missing, not what's covered.
+
+## 2026-02-21 — The trust model determines finding severity, not technical impact alone
+
+**Status:** permanent
+**Details:** Finding #9 (Verified settable bool) went from "medium time bomb" to "the most important finding" once I understood that signatures are PLang's trust boundary. Without the trust model, I ranked it by current exploitability. With it, I ranked it by what it undermines. Conversely, #4 (system variable writes) went from "high injection" to "by design" — same technical capability, completely different meaning.
+**Lesson:** A finding's severity is threat-model-relative. Two codebases with identical code can have opposite severity ratings for the same pattern. Always calibrate to the actual trust architecture.
+
+## 2026-02-21 — Evaluate attack chains end-to-end before rating individual links
+
+**Status:** permanent
+**Details:** I rated #8 (Newtonsoft namespace spoofing) as medium because it enables code execution via reflection. But the prerequisite (library.load) already gives unrestricted code execution. The chain adds zero incremental risk. I should have traced the full chain first: "attacker needs library.load → which already gives RCE → so namespace spoofing is redundant."
+**Lesson:** Map the full attack chain before rating individual vulnerabilities. If an early link already grants the attacker's goal, later links are noise. Rate the chain, not the link.
