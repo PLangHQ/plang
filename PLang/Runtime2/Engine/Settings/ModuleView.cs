@@ -31,6 +31,7 @@ public sealed class ModuleView<T> where T : ISettings, new()
     /// </summary>
     public TValue Resolve<TValue>(string propertyName, TValue classDefault)
     {
-        throw new NotImplementedException();
+        var key = $"{_modulePrefix}.{propertyName}";
+        return _settings.Resolve(key, _context, classDefault);
     }
 }

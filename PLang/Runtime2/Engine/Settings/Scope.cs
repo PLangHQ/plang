@@ -14,16 +14,16 @@ public sealed class Scope
 
     public object? Get(string key)
     {
-        throw new NotImplementedException();
+        return _values.TryGetValue(key, out var value) ? value : null;
     }
 
     public void Set(string key, object value)
     {
-        throw new NotImplementedException();
+        _values[key] = value;
     }
 
     public bool Contains(string key)
     {
-        throw new NotImplementedException();
+        return _values.ContainsKey(key);
     }
 }

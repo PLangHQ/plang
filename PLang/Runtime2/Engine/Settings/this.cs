@@ -24,7 +24,22 @@ public sealed class @this
     /// </summary>
     public T Resolve<T>(string key, PLangContext context, T classDefault)
     {
-        throw new NotImplementedException();
+        // Walk: context.SettingsScope → parent.SettingsScope → ... → Defaults → classDefault
+        var current = context;
+        while (current != null)
+        {
+            if (current.SettingsScope != null)
+            {
+                var value = current.SettingsScope.Get(key);
+                if (value != null) return (T)value;
+            }
+            current = current.Parent;
+        }
+
+        var defaultValue = Defaults.Get(key);
+        if (defaultValue != null) return (T)defaultValue;
+
+        return classDefault;
     }
 
     /// <summary>
@@ -33,7 +48,12 @@ public sealed class @this
     /// </summary>
     public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
     {
-        throw new NotImplementedException();
+        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.actions.archive" → "archive")
+        var fullName = typeof(T).Namespace ?? "";
+        var lastDot = fullName.LastIndexOf('.');
+        var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+
+        return new ModuleView<T>(this, context, modulePrefix);
     }
 
     /// <summary>
@@ -42,6 +62,14 @@ public sealed class @this
     /// </summary>
     public void Set(string key, object value, PLangContext context, bool isDefault = false)
     {
-        throw new NotImplementedException();
+        if (isDefault)
+        {
+            Defaults.Set(key, value);
+        }
+        else
+        {
+            context.SettingsScope ??= new Scope();
+            context.SettingsScope.Set(key, value);
+        }
     }
 }
