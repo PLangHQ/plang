@@ -1049,7 +1049,7 @@ public class DataTests
     }
 
     [Test]
-    public async Task GetChild_DeeplyNestedPath_ReturnsNull()
+    public async Task GetChild_DeeplyNestedPath_ReturnsDepthError()
     {
         // Build a path with 150 dot segments — exceeds MaxNavigationDepth (100)
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
@@ -1067,8 +1067,10 @@ public class DataTests
 
         var result = data.GetChild(path);
 
-        // Should return null (depth exceeded), not throw
-        await Assert.That(result).IsNull();
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
     }
 
     // --- v5: Zip bomb test ---

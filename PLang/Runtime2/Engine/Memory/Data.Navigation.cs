@@ -1,3 +1,4 @@
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory.Navigators;
 
 namespace PLang.Runtime2.Engine.Memory;
@@ -19,7 +20,9 @@ public partial class Data
             return this;
 
         if (depth > MaxNavigationDepth)
-            return null;
+            return FromError(new ServiceError(
+                $"Navigation path exceeds maximum depth ({MaxNavigationDepth})",
+                "NavigationDepthExceeded", 400));
 
         // Handle dot notation
         var dotIndex = path.IndexOf('.');
