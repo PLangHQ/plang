@@ -107,6 +107,85 @@
         "health": "Green — 0 new compilation errors. All tests fail with NotImplementedException (red phase).",
         "notes": "Test project has 148 pre-existing errors (not from this work). Source generator changes (Phase 2) deferred to coder."
       }
+    },
+    {
+      "id": "b2dff594-scaf-fix-0002-session002",
+      "bot": "scaffolder",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T15:00:00Z",
+      "intent": "Fix 148 test compilation errors — Engine namespace shadowing global alias",
+      "before": {
+        "assumptions": "The 148 errors are all CS0118: 'Engine' is a namespace but is used like a type. Root cause: global using alias Engine = PLang.Runtime2.Engine.@this is shadowed by namespace PLang.Runtime2.Engine when test files import sub-namespaces.",
+        "risk": "Mass rename across 35 files. Low risk — mechanical replacement of type reference, no logic changes."
+      },
+      "plan": "Replace all uses of Engine as a type (constructor calls, field declarations, parameters) with fully-qualified PLang.Runtime2.Engine.@this across all affected test files. Also fix TUnit await assertion errors in Settings test files and archive namespace resolution in ModuleViewTests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Core/EngineTests.cs",
+            "PLang.Tests/Runtime2/Core/StartGoalTests.cs",
+            "PLang.Tests/Runtime2/Core/StepCacheTests.cs",
+            "PLang.Tests/Runtime2/Core/EventCollectionTests.cs",
+            "PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/EventIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs",
+            "PLang.Tests/Runtime2/Core/StepRetryTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in core test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/LibrariesTests.cs",
+            "PLang.Tests/Runtime2/Modules/assert/AssertTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs",
+            "PLang.Tests/Runtime2/Modules/error/ThrowTests.cs",
+            "PLang.Tests/Runtime2/Modules/list/ListTests.cs",
+            "PLang.Tests/Runtime2/Modules/math/MathTests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/settests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/gettests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/cleartests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/removetests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/existstests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in module test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Context/PLangContextTests.cs",
+            "PLang.Tests/Runtime2/Context/ContextVariableTests.cs",
+            "PLang.Tests/Runtime2/Phase0Proof.cs",
+            "PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs",
+            "PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs",
+            "PLang.Tests/Runtime2/IO/IOTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in other test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fix TUnit await assertions, fix archive namespace reference via using alias"
+        }
+      ],
+      "after": {
+        "status": "All 148 errors fixed. Build: 0 errors, 87 warnings. Tests: 1239 pass, 15 fail (all NotImplementedException from Settings skeletons — expected red phase).",
+        "health": "Green — clean build, all pre-existing tests passing",
+        "notes": "Root cause: global using alias shadowed by namespace. Fix: fully-qualified PLang.Runtime2.Engine.@this. This is a pre-existing issue that affects any test file importing Engine sub-namespaces."
+      }
     }
   ]
 }
