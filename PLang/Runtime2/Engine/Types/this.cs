@@ -400,21 +400,29 @@ public sealed class @this
         }
     }
 
+    private const int MaxGenericDepth = 20;
+
     /// <summary>
     /// PLang type name → CLR type.
     /// Handles generics (list&lt;string&gt;), dictionaries (dict&lt;K,V&gt;), nullable (int?), and MIME types.
     /// </summary>
-    public System.Type? Clr(string plangName)
+    public System.Type? Clr(string plangName) => Clr(plangName, 0);
+
+    private System.Type? Clr(string plangName, int depth)
     {
         if (string.IsNullOrWhiteSpace(plangName))
+            return null;
+
+        if (depth > MaxGenericDepth)
             return null;
 
         // Handle generic list syntax: list<string>
         if (plangName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && plangName.EndsWith(">"))
         {
             var innerTypeName = plangName[5..^1];
-            var innerType = Clr(innerTypeName) ?? typeof(object);
-            return typeof(List<>).MakeGenericType(innerType);
+            var innerType = Clr(innerTypeName, depth + 1);
+            // If inner resolution failed (depth exceeded or unknown), propagate null for generics
+            return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
         }
 
         // Handle generic dictionary syntax: dict<string,int>
@@ -426,8 +434,9 @@ public sealed class @this
             var parts = inner.Split(',');
             if (parts.Length == 2)
             {
-                var keyType = Clr(parts[0].Trim()) ?? typeof(string);
-                var valueType = Clr(parts[1].Trim()) ?? typeof(object);
+                var keyType = Clr(parts[0].Trim(), depth + 1);
+                var valueType = Clr(parts[1].Trim(), depth + 1);
+                if (keyType == null || valueType == null) return null;
                 return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
             }
         }

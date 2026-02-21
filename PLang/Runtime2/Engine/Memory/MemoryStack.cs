@@ -200,18 +200,40 @@ public class MemoryStack
         return dict;
     }
 
+    [ThreadStatic]
+    private static HashSet<string>? _resolvingVars;
+
     /// <summary>
     /// Resolves variable names inside bracket indices.
     /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
+    /// Uses a thread-static visited set to detect circular references (a→b→a).
     /// </summary>
     private string ResolveVariablesInPath(string path)
     {
-        return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+        var isRoot = _resolvingVars == null;
+        _resolvingVars ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
         {
-            var varName = match.Groups[1].Value;
-            var resolved = GetValue(varName);
-            return resolved != null ? $"[{resolved}]" : match.Value;
-        });
+            return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+            {
+                var varName = match.Groups[1].Value;
+                if (!_resolvingVars!.Add(varName))
+                    return match.Value; // Circular reference — leave unresolved
+                try
+                {
+                    var resolved = GetValue(varName);
+                    return resolved != null ? $"[{resolved}]" : match.Value;
+                }
+                finally
+                {
+                    _resolvingVars.Remove(varName);
+                }
+            });
+        }
+        finally
+        {
+            if (isRoot) _resolvingVars = null;
+        }
     }
 
     private static string CleanName(string name)

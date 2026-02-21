@@ -37,9 +37,15 @@ public partial class Data
     /// <summary>
     /// Verification result after receiving signed Data.
     /// true = signature verified, false = verification failed, null = unsigned/not checked.
+    /// Private set — only SetVerified() (called by crypto verification) can change this.
     /// </summary>
     [JsonIgnore]
-    public bool? Verified { get; set; }
+    public bool? Verified { get; private set; }
+
+    /// <summary>
+    /// Sets the verification result. Must only be called by crypto verification logic.
+    /// </summary>
+    internal void SetVerified(bool value) => Verified = value;
 
     // --- Outbound pipeline: Wrap → Compress → Encrypt ---
 
@@ -181,8 +187,13 @@ public partial class Data
     /// when the original value was a nested Data. This method detects dictionaries that look
     /// like serialized Data (have "name" and "value" keys) and reconstructs them as Data objects.
     /// </summary>
-    private static void RehydrateNestedData(Data data)
+    private const int MaxRehydrationDepth = 128;
+
+    private static void RehydrateNestedData(Data data, int depth = 0)
     {
+        if (depth > MaxRehydrationDepth)
+            throw new InvalidDataException($"Nested Data exceeds maximum rehydration depth ({MaxRehydrationDepth})");
+
         if (data.Value is Dictionary<string, object?> dict && dict.ContainsKey("value"))
         {
             var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
@@ -192,7 +203,7 @@ public partial class Data
                 type = new Type(typeStr);
 
             var inner = new Data(name, value, type);
-            RehydrateNestedData(inner);
+            RehydrateNestedData(inner, depth + 1);
 
             // Use SetValueDirect to avoid Value setter clearing _type
             data.SetValueDirect(inner);

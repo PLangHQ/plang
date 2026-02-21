@@ -627,4 +627,20 @@ public class EngineTypesTests
         await Assert.That(engine.Types).IsNotNull();
         await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));
     }
+
+    // --- v5: Depth limit ---
+
+    [Test]
+    public async Task Clr_DeeplyNestedGeneric_ReturnsNull()
+    {
+        // Build list<list<list<...>>> nested 25 times — exceeds MaxGenericDepth (20)
+        var typeName = "string";
+        for (int i = 0; i < 25; i++)
+            typeName = $"list<{typeName}>";
+
+        var result = _types.Clr(typeName);
+
+        // Should return null (depth exceeded), not throw
+        await Assert.That(result).IsNull();
+    }
 }

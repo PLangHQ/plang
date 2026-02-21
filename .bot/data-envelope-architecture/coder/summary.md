@@ -9,3 +9,5 @@
 **v3.5** — Tester fixes: Fixed Add/KindOf pipeline bug (Add() now updates _allKinds/_mimeToKind), null guards on Kind()/Mime(), Name() backtick stripping for generics, BuilderNames/ComplexSchemas tests. 17 new tests, 1330 total pass.
 
 **v4** — Phase 4: Envelope pipeline methods on Data: Wrap (kind envelope from Type.Kind), Compress (GZip if compressible), Encrypt (pass-through — no crypto yet), Decrypt/Decompress/Unwrap (inbound reverse). Includes JSON rehydration for nested Data after deserialization. Full pipeline round-trip: `data.Wrap().Compress().Encrypt()` ↔ `received.Decrypt().Decompress().Unwrap()`. 17 new tests, 1347 total pass. See [v4/summary.md](v4/summary.md) for details.
+
+**v5** — Security hardening: depth limits on all 5 unbounded recursive methods (UnwrapJsonElement, RehydrateNestedData, GetChild, Clr, ResolveVariablesInPath), deduplicated fromJson.cs, Verified → private set with internal SetVerified(), zip bomb test, Merge tests, StatusCode assertions. 12 new tests, 1384 total pass. See [v5/summary.md](v5/summary.md) for details.

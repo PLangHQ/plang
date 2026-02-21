@@ -205,8 +205,13 @@ public partial class Data
     public override string ToString() =>
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
-    private static object? UnwrapJsonElement(object? value)
+    private const int MaxJsonDepth = 128;
+
+    internal static object? UnwrapJsonElement(object? value, int depth = 0)
     {
+        if (depth > MaxJsonDepth)
+            throw new InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxJsonDepth})");
+
         if (value is JsonElement element)
         {
             return element.ValueKind switch
@@ -217,8 +222,8 @@ public partial class Data
                 JsonValueKind.False => false,
                 JsonValueKind.Null => null,
                 JsonValueKind.Undefined => null,
-                JsonValueKind.Object => UnwrapJsonObject(element),
-                JsonValueKind.Array => UnwrapJsonArray(element),
+                JsonValueKind.Object => UnwrapJsonObject(element, depth),
+                JsonValueKind.Array => UnwrapJsonArray(element, depth),
                 _ => element
             };
         }
@@ -227,7 +232,7 @@ public partial class Data
         // Detected by namespace so Runtime2 has no Newtonsoft import.
         if (value != null && value.GetType().Namespace == "Newtonsoft.Json.Linq")
         {
-            return UnwrapNewtonsoftToken(value);
+            return UnwrapNewtonsoftToken(value, depth);
         }
 
         return value;
@@ -238,7 +243,7 @@ public partial class Data
     /// JValue → extract underlying CLR value via reflection.
     /// JObject/JArray → round-trip through JSON string → System.Text.Json.
     /// </summary>
-    private static object? UnwrapNewtonsoftToken(object value)
+    private static object? UnwrapNewtonsoftToken(object value, int depth)
     {
         var typeName = value.GetType().Name;
 
@@ -254,25 +259,25 @@ public partial class Data
         if (string.IsNullOrEmpty(json)) return null;
 
         using var doc = JsonDocument.Parse(json);
-        return UnwrapJsonElement(doc.RootElement);
+        return UnwrapJsonElement(doc.RootElement, depth);
     }
 
-    private static Dictionary<string, object?> UnwrapJsonObject(JsonElement element)
+    private static Dictionary<string, object?> UnwrapJsonObject(JsonElement element, int depth)
     {
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         foreach (var prop in element.EnumerateObject())
         {
-            dict[prop.Name] = UnwrapJsonElement(prop.Value);
+            dict[prop.Name] = UnwrapJsonElement(prop.Value, depth + 1);
         }
         return dict;
     }
 
-    private static List<object?> UnwrapJsonArray(JsonElement element)
+    private static List<object?> UnwrapJsonArray(JsonElement element, int depth)
     {
         var list = new List<object?>();
         foreach (var item in element.EnumerateArray())
         {
-            list.Add(UnwrapJsonElement(item));
+            list.Add(UnwrapJsonElement(item, depth + 1));
         }
         return list;
     }

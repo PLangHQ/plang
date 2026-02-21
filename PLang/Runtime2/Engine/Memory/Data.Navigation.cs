@@ -8,13 +8,18 @@ namespace PLang.Runtime2.Engine.Memory;
 /// </summary>
 public partial class Data
 {
+    private const int MaxNavigationDepth = 100;
+
     /// <summary>
     /// Gets a child value by path (dot notation or index).
     /// </summary>
-    public Data? GetChild(string path)
+    public Data? GetChild(string path, int depth = 0)
     {
         if (string.IsNullOrEmpty(path))
             return this;
+
+        if (depth > MaxNavigationDepth)
+            return null;
 
         // Handle dot notation
         var dotIndex = path.IndexOf('.');
@@ -61,7 +66,7 @@ public partial class Data
         if (string.IsNullOrEmpty(remaining))
             return child;
 
-        return child.GetChild(remaining);
+        return child.GetChild(remaining, depth + 1);
     }
 
     private object? GetChildValue(string key)

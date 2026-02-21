@@ -337,6 +337,62 @@
         "health": "Findings properly calibrated to PLang's actual security model.",
         "notes": "Key insight: don't flag user-sovereign actions as vulnerabilities. Focus on transport boundaries and signature integrity."
       }
+    },
+    {
+      "id": "c0d3r-v5-2026-0221-security-hardening",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T15:00:00Z",
+      "intent": "Fix unbounded recursion (5 locations), dedup fromJson, Verified private set, add missing tests",
+      "before": {
+        "assumptions": "Security audit found 5 unbounded recursion DoS vectors, auditor found zip bomb test gap, tester found Merge test gap. User rejected #4 and #5 as by-design.",
+        "risk": "Medium — depth limits are mechanical but Clr() fallback change could affect type resolution. InternalsVisibleTo is new for this project."
+      },
+      "plan": "1. Add depth params to all 5 recursive methods. 2. Cycle detection for ResolveVariablesInPath. 3. Dedup fromJson. 4. Verified private set. 5. Tests for all changes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Depth limits on all 5 recursive methods. ResolveVariablesInPath uses HashSet cycle detection instead of depth counter."
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/convert/fromJson.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Deleted duplicate UnwrapJsonElement, now calls Data.UnwrapJsonElement (internal static)."
+        },
+        {
+          "paths": ["PLang/PLang.csproj"],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Added InternalsVisibleTo for PLang.Tests."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "12 new tests: depth limits (3), zip bomb (1), StatusCode (4), Merge (3), Verified (1 new + 2 updated)."
+        }
+      ],
+      "after": {
+        "status": "All 5 recursion DoS vectors fixed. 1384 tests pass (12 new). Ready for review.",
+        "health": "Green. All security HIGH findings addressed except #4 (by design).",
+        "notes": "Clr() behavior change: list<unknownType> now returns null instead of List<object>. No existing tests depended on old behavior."
+      }
     }
   ]
 }

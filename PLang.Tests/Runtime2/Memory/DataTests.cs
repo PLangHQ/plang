@@ -602,23 +602,31 @@ public class DataTests
     }
 
     [Test]
-    public async Task Verified_CanBeSetTrue()
+    public async Task Verified_SetVerified_True()
     {
         var data = new Data("test", "hello");
 
-        data.Verified = true;
+        data.SetVerified(true);
 
         await Assert.That(data.Verified).IsEqualTo(true);
     }
 
     [Test]
-    public async Task Verified_CanBeSetFalse()
+    public async Task Verified_SetVerified_False()
     {
         var data = new Data("test", "hello");
 
-        data.Verified = false;
+        data.SetVerified(false);
 
         await Assert.That(data.Verified).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task Verified_DefaultIsNull()
+    {
+        var data = new Data("test", "hello");
+
+        await Assert.That(data.Verified).IsNull();
     }
 
     [Test]
@@ -1018,6 +1026,184 @@ public class DataTests
         await Assert.That(decompressed.Success).IsTrue();
         // Properties are [JsonIgnore] — not preserved through compression cycle
         await Assert.That(decompressed.Properties.Count).IsEqualTo(0);
+    }
+
+    // --- v5: Depth limit tests ---
+
+    [Test]
+    public async Task UnwrapJsonElement_DeeplyNestedJson_ThrowsAtDepthLimit()
+    {
+        // Build valid nested JSON: {"a":{"a":{"a":...}}}  200 levels deep
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < 200; i++) sb.Append("{\"a\":");
+        sb.Append("1");
+        for (int i = 0; i < 200; i++) sb.Append('}');
+        var json = sb.ToString();
+
+        // JsonDocument.Parse has MaxDepth=64 by default, so use higher limit for parsing
+        var options = new System.Text.Json.JsonDocumentOptions { MaxDepth = 300 };
+        using var doc = System.Text.Json.JsonDocument.Parse(json, options);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => Data.UnwrapJsonElement(doc.RootElement));
+        await Assert.That(ex.Message).Contains("maximum depth");
+    }
+
+    [Test]
+    public async Task GetChild_DeeplyNestedPath_ReturnsNull()
+    {
+        // Build a path with 150 dot segments — exceeds MaxNavigationDepth (100)
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var current = dict;
+        for (int i = 0; i < 150; i++)
+        {
+            var inner = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            current["a"] = inner;
+            current = inner;
+        }
+        current["a"] = "leaf";
+
+        var data = new Data("root", dict);
+        var path = string.Join(".", Enumerable.Repeat("a", 151));
+
+        var result = data.GetChild(path);
+
+        // Should return null (depth exceeded), not throw
+        await Assert.That(result).IsNull();
+    }
+
+    // --- v5: Zip bomb test ---
+
+    [Test]
+    public async Task Decompress_ExceedsSizeLimit_ReturnsError()
+    {
+        // Create a compressed payload of zeros — compresses very well
+        // 10MB of zeros → small compressed, but tests the limit check path
+        var bigPayload = new byte[10 * 1024 * 1024]; // 10MB of zeros
+        byte[] compressed;
+        using (var ms = new System.IO.MemoryStream())
+        {
+            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            {
+                // Write 11 times = 110MB total — exceeds 100MB limit
+                for (int i = 0; i < 11; i++)
+                    gz.Write(bigPayload, 0, bigPayload.Length);
+            }
+            compressed = ms.ToArray();
+        }
+
+        var inner = new Data("", compressed, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Message).Contains("size limit");
+    }
+
+    // --- v5: Decompress StatusCode assertions ---
+
+    [Test]
+    public async Task Decompress_InvalidInner_ReturnsStatusCode500()
+    {
+        var data = new Data("", "not a Data object", Type.FromName("archived"));
+
+        var result = data.Decompress();
+
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Decompress_NullBytes_ReturnsStatusCode500()
+    {
+        var inner = new Data("", null, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Decompress_CorruptData_ReturnsStatusCode500()
+    {
+        var inner = new Data("", new byte[] { 0xFF, 0xFE, 0x00, 0x42 }, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Decompress_InvalidJson_ReturnsStatusCode500()
+    {
+        var plainBytes = System.Text.Encoding.UTF8.GetBytes("this is not json {{{}}}");
+        byte[] gzipped;
+        using (var ms = new System.IO.MemoryStream())
+        {
+            using (var gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal))
+            {
+                gz.Write(plainBytes, 0, plainBytes.Length);
+            }
+            gzipped = ms.ToArray();
+        }
+
+        var inner = new Data("", gzipped, Type.FromName("gzip"));
+        var archived = new Data("", inner, Type.FromName("archived"));
+
+        var result = archived.Decompress();
+
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    // --- v5: Merge tests ---
+
+    [Test]
+    public async Task Merge_TwoLists_CombinesByName()
+    {
+        var list1 = new List<Data> { new Data("x", 1), new Data("y", 2) };
+        var list2 = new List<Data> { new Data("y", 99), new Data("z", 3) };
+
+        var a = new Data("") { Value = list1 };
+        var b = new Data("") { Value = list2 };
+
+        var result = a.Merge(b);
+        var merged = result.Value as List<Data>;
+
+        await Assert.That(merged).IsNotNull();
+        await Assert.That(merged!.Count).IsEqualTo(3); // x, y (replaced), z
+        await Assert.That(merged[0].Value).IsEqualTo(1); // x unchanged
+        await Assert.That(merged[1].Value).IsEqualTo(99); // y replaced
+        await Assert.That(merged[2].Value).IsEqualTo(3); // z appended
+    }
+
+    [Test]
+    public async Task Merge_NullOtherValue_ReturnsSelf()
+    {
+        var list = new List<Data> { new Data("x", 1) };
+        var a = new Data("") { Value = list };
+        var b = new Data("", null);
+
+        var result = a.Merge(b);
+
+        await Assert.That(result).IsSameReferenceAs(a);
+    }
+
+    [Test]
+    public async Task Merge_NonListValues_ReturnsEmptyList()
+    {
+        // Current behavior: non-List values cast to null → empty list, other items added
+        var a = new Data("", "not a list");
+        var b = new Data("", "also not a list");
+
+        var result = a.Merge(b);
+        var merged = result.Value as List<Data>;
+
+        // Both cast as List<Data> produce empty lists — result is empty
+        await Assert.That(merged).IsNotNull();
+        await Assert.That(merged!.Count).IsEqualTo(0);
     }
 }
 
