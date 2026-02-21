@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-settings",
+  "timestamp": "2026-02-21T14:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "Clean, minimal infrastructure. ~200 LOC production code, 23 tests, 1262 total pass. The Settings system follows OBP well — navigate through engine.Settings, behavior on owner (Scope owns its dictionary, Settings owns resolution). Security audit already done (4 accepted-risk, no critical). One major finding: Clone() shares the same Scope instance (reference copy, not deep clone), so mutations in the clone affect the original. Two minor findings. One nit.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Context/PLangContext.cs",
+      "line": 193,
+      "issue": "Clone() copies SettingsScope by reference: `SettingsScope = SettingsScope`. The clone and original share the same Scope instance. If the clone writes a setting via Set(), the original's SettingsScope sees it too. This violates the isolation contract — Clone() is supposed to produce an independent context.",
+      "impact": "Any code that clones a context and then sets settings in the clone will pollute the original context's settings. This is the same pattern as `IsAsync = IsAsync` (value type, safe) but SettingsScope is a reference type. The test `Clone_PreservesSettingsScope` only verifies reading — it doesn't test that writing to the clone is isolated from the original.",
+      "suggestion": "Clone the Scope: `SettingsScope = SettingsScope?.Clone()` (requires adding a Clone() method to Scope that creates a new ConcurrentDictionary from the existing one). Alternatively, if shared-reference is intentional (clone should see parent's settings), document this explicitly and remove the isolation implication."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+      "line": 29,
+      "issue": "Goal.RunAsync saves/nulls/restores SettingsScope but the restore happens in finally alongside Goal and Step restoration. If an exception occurs during the goal AND the caller inspects SettingsScope in a catch block before the finally runs, they'd see null. This is standard try/finally semantics and probably not a real issue, but the save/null/restore pattern for three different fields (Goal, Step, SettingsScope) is getting complex. If a fourth field is added, someone might forget the restore.",
+      "impact": "Low. The finally block always runs. But the pattern complexity is growing — three save/restore pairs in one method.",
+      "suggestion": "Consider extracting the save/restore pattern into a disposable scope object (e.g., `using var scope = context.EnterGoal(this)`) that restores all three fields on Dispose. This is a future-proofing suggestion, not urgent."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+      "line": 162,
+      "issue": "GoalRunAsync_ScopesSettingsPerGoal is a simulation test — it manually does save/null/restore instead of calling Goal.RunAsync. The tester already flagged this and downgraded to 'minor (deferred)'. The test proves the mechanism but doesn't exercise the actual code path in Methods.cs:29-32,89.",
+      "impact": "If someone removes the save/restore in Methods.cs, this test still passes. The test is honest about what it tests (the mechanism works) but doesn't guard the actual integration.",
+      "suggestion": "Acknowledged as deferred. When test infrastructure exists for constructing Goals with Steps, add an integration test that verifies settings isolation through actual RunAsync."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Settings/this.cs",
+      "line": 54,
+      "issue": "Cast<T> has a bare `catch { return fallback; }` that swallows all exceptions including critical ones like OutOfMemoryException. Both tester and security audit flagged this as accepted-risk.",
+      "impact": "Negligible in practice — Convert.ChangeType only throws FormatException/InvalidCastException/OverflowException. But bare catch is technically dangerous.",
+      "suggestion": "Narrow to `catch (Exception)` and add a comment that this is intentional. Or catch specific types: `catch (InvalidCastException) catch (FormatException) catch (OverflowException)`. Low priority."
+    }
+  ]
+}
