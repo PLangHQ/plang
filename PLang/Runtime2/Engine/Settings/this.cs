@@ -8,7 +8,7 @@ namespace PLang.Runtime2.Engine.Settings;
 /// - Engine-level default scope (persistent across goals)
 /// - Resolution logic: context scope → parent scope → engine defaults → class defaults
 ///
-/// Navigation: engine.Settings.For&lt;ArchiveSettings&gt;(context).Max
+/// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
 /// </summary>
 public sealed class @this
 {

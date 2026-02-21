@@ -108,7 +108,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Strongly typed, goal-scoped module settings.
-    /// Navigation: engine.Settings.For&lt;ArchiveSettings&gt;(context).Max
+    /// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
     /// </summary>
     public Settings.@this Settings { get; }
 

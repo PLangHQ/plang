@@ -8,7 +8,7 @@ namespace PLang.Runtime2.Engine.Settings;
 /// 3. A settings manifest entry (for builder discovery)
 ///
 /// Example:
-///   public partial class ArchiveSettings : ISettings
+///   public partial class Settings : ISettings
 ///   {
 ///       public long Max { get; set; } = 100 * 1024 * 1024;
 ///   }

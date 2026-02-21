@@ -12,7 +12,7 @@ namespace PLang.Runtime2.actions.archive;
 /// Generated read side (what the source generator will produce):
 ///   public long Max => _context?.Engine.Settings.Resolve&lt;long&gt;("archive.max", _context, 100 * 1024 * 1024);
 /// </summary>
-public partial class ArchiveSettings : ISettings
+public partial class Settings : ISettings
 {
     /// <summary>
     /// Maximum decompressed size in bytes. Default: 100MB.
