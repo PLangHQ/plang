@@ -116,3 +116,15 @@ Target audiences:
 3. **Remove `PLangContext` from `Libraries.GetCodeGenerated` signature** — context only used for error creation, use context-free `ActionError` overloads instead.
 
 **Plan file:** `/home/claude/.claude/plans/sequential-roaming-dragon.md` has the full plan with file list and test changes.
+
+---
+
+## Investigate: Kind as a Rich Object (ConcurrentDictionary<string, Kind>)
+**Date:** 2026-02-21
+**Context:** Auditor review of data-envelope-architecture. `_allKinds` is a `HashSet<string>` protected by manual locking. No `ConcurrentHashSet` exists in .NET. Using `ConcurrentDictionary<string, byte>` as workaround loses `TryGetValue` returning the canonical key.
+
+**Idea:** Instead of a dummy value, store a `Kind` object. `_allKinds` becomes `ConcurrentDictionary<string, Kind>`. This eliminates manual locking AND makes Kind powerful:
+- `kind.ContentTypes` — list all MIME content types for this kind (e.g. `image` → `image/jpeg`, `image/png`, ...)
+- `kind.Extensions` — list all extensions (e.g. `image` → `.jpg`, `.png`, ...)
+- `kind.Compressible` — whether this kind is compressible
+- Kind becomes a first-class domain object instead of a bare string
