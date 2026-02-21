@@ -14,9 +14,10 @@ Type skeletons and failing tests for a strongly typed, goal-scoped module settin
 | `PLang/Runtime2/Engine/Settings/this.cs` | `@this` — registry, resolution logic, `For<T>()`, `Resolve<T>()`, `Set()` |
 | `PLang/Runtime2/Engine/Settings/Scope.cs` | Key-value store for one goal level (`Get`, `Set`, `Contains`) |
 | `PLang/Runtime2/Engine/Settings/ModuleView.cs` | `ModuleView<T>` — context-bound view with `Resolve<TValue>()` |
-| `PLang/Runtime2/actions/archive/ArchiveSettings.cs` | First use case: `Max` (100MB), `Level` (Optimal) |
-| `PLang/Runtime2/actions/archive/settings.cs` | `[Action("settings")]` handler with nullable props + `IsDefault` |
+| `PLang/Runtime2/actions/archive/Settings.cs` | First use case: `archive.Settings : ISettings` with `Max` (100MB), `Level` (Optimal) |
 | `PLang/Runtime2/actions/archive/types.cs` | Result type `settingsResult` |
+
+**Note:** The `[Action("settings")]` handler was removed from source — it will be produced by the source generator from `archive.Settings`.
 
 ### Existing files modified
 
@@ -38,13 +39,15 @@ Type skeletons and failing tests for a strongly typed, goal-scoped module settin
 
 ## Key design decisions (departures from architect)
 
-1. **No `Module<T>()` on Engine** — premature. Used `engine.Settings.For<ArchiveSettings>(context)` instead. When a Module system arrives, it can delegate.
+1. **No `Module<T>()` on Engine** — premature. Used `engine.Settings.For<archive.Settings>(context)` instead. Long-term this may become `engine.Action<archive.@this>().Settings.Max` — see todos.md.
 
 2. **Settings behavior on `Engine.Settings`, not PLangContext** — OBP: behavior belongs to the owner. PLangContext stores raw `Scope` data; `Engine.Settings` owns resolution chain logic.
 
 3. **`IsDefault` not `Default`** — avoids C# keyword collision (architect flagged this as open question).
 
-4. **File naming: `ArchiveSettings.cs`** — avoids case collision with `settings.cs` (action handler) on case-insensitive filesystems.
+4. **`archive.Settings` not `ArchiveSettings`** — namespace carries the context, no need to repeat. Renamed from `ArchiveSettings` after review.
+
+5. **Action handler removed from source** — the `[Action("settings")]` handler will be source-generated from `archive.Settings`. A reference copy exists in `.bot/` skeletons showing the target shape.
 
 ## Code example
 
@@ -79,10 +82,12 @@ public T Resolve<T>(string key, PLangContext context, T classDefault)
 ## What's next for the coder
 
 1. Implement `Scope.Get/Set/Contains` (trivial — ConcurrentDictionary wrapper)
-2. Implement `Settings.Resolve<T>()` (walk context chain)
-3. Implement `Settings.Set()` (lazy-init context.SettingsScope)
-4. Implement `Settings.For<T>()` (create ModuleView with module prefix)
-5. Implement `ModuleView.Resolve<TValue>()` (delegate to Settings.Resolve with prefix)
-6. Implement `archive/settings.cs Run()` (write non-null props to scope via Engine.Settings.Set)
-7. Make all 15 C# tests green
-8. Source generator changes (Phase 2) — detect ISettings, generate scope-aware properties
+2. Implement `Settings.Resolve<T>()` (walk context chain — see code example above)
+3. Implement `Settings.Set()` (lazy-init context.SettingsScope, write to it or to Defaults if isDefault)
+4. Implement `Settings.For<T>()` (create ModuleView with module prefix derived from T's namespace)
+5. Implement `ModuleView.Resolve<TValue>()` (delegate to Settings.Resolve with prefixed key)
+6. Make all 15 C# tests green
+7. Source generator (Phase 2) — detect `ISettings` classes, generate:
+   - Scope-aware property bodies (read side): `public long Max => context.Engine.Settings.Resolve<long>("archive.max", context, 100 * 1024 * 1024);`
+   - `[Action("settings")]` handler (write side): nullable props, `IsDefault` flag, `Run()` writes non-null props to scope
+   - Reference for target handler shape: `.bot/runtime2-settings/scaffolder/v1/skeletons/archive_settings.cs`
