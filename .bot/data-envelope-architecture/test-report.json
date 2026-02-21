@@ -1,30 +1,60 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-20T21:00:00Z",
-  "tested_version": "v5",
+  "timestamp": "2026-02-21T12:00:00Z",
+  "tested_version": "v6",
   "test_run": {
     "csharp": { "total": 1372, "passed": 1372, "failed": 0, "skipped": 0 },
     "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 2,
-    "changed_files_total": 2,
+    "changed_files_covered": 3,
+    "changed_files_total": 4,
     "uncovered_files": [],
-    "notes": "All v4 fixes verified: Decompress exception handling (InvalidDataException + JsonException), 4 error path tests, strengthened Decompress assertion, multi-level nesting test, Wrap context assertion, Properties-not-preserved documentation test. +6 tests from v4."
+    "notes": "All 4 changed files have some test coverage, but specific new code paths from the auditor-fix commit are untested: GZipDecompress size limit (Data.Envelope.cs:219-227), ConcurrentDictionary/lock behavior (Types/this.cs), SetValueDirect (Data.cs — indirectly covered via multi-level nesting round-trip)."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
-      "type": "edge-case",
+      "severity": "critical",
+      "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
       "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-      "issue": "Compress() accepts any type not in _notCompressible (image, video, audio, archive). PLang primitives like 'string' or 'int' would pass the Compressible check if called without Wrap() first. This is a design choice — the intended usage is Wrap→Compress — but nothing enforces it.",
-      "impact": "Low. Callers who skip Wrap() would get compressed PLang primitives, which is wasteful but not broken.",
-      "suggestion": "Document that Compress() is intended to be called after Wrap(), or add a KindOf check. Acceptable as-is."
+      "issue": "Zip bomb protection (MaxDecompressedSize = 100MB, lines 19, 219-227) has zero test coverage. The chunked read with size limit was added to fix auditor finding #8 (major safety concern), but no test verifies the limit triggers.",
+      "impact": "If someone refactors GZipDecompress back to gzip.CopyTo(output), removing the protection entirely, no test fails. The security feature silently disappears.",
+      "suggestion": "Add a test that creates a compressed payload of zeros (~100KB compressed → 100MB+ decompressed). Use InternalsVisibleTo to lower MaxDecompressedSize for testing, or accept the ~100MB memory allocation. Verify the Decompress result returns ServiceError with message containing 'exceeds size limit'."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Thread safety fix (ConcurrentDictionary + _derivedLock) has no concurrent test. All 65+ EngineTypesTests are single-threaded. The fix addresses auditor finding #1 (major safety concern) but regression is undetectable.",
+      "impact": "If ConcurrentDictionary is reverted to Dictionary, or lock blocks are removed, no test catches it. Thread safety guarantee is based on code review only.",
+      "suggestion": "Add a Parallel.For stress test: concurrent Add() + KindOf() calls. Dictionary corruption throws InvalidOperationException on concurrent modification — a concurrent test would catch reversion."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "issue": "Decompress error tests verify Error.Key == 'DecompressError' but never verify Error.StatusCode == 500. The coder explicitly chose 500 (infrastructure error) over 400 (default), but this value is unasserted.",
+      "impact": "Low. StatusCode regression (500 → 400) would go undetected.",
+      "suggestion": "Add Assert.That(result.Error!.StatusCode).IsEqualTo(500) to each Decompress error test."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "issue": "Context not propagated to inner Data during RehydrateNestedData. After Decompress, top-level result gets context but rehydrated inner Data objects do not. No test verifies context state of inner Data after decompression.",
+      "impact": "Low. Callers typically use Unwrap() or GetChild() which stamp context. Direct cast to inner Data is an edge case.",
+      "suggestion": "Add assertion on inner Data context after Decompress, or document that Unwrap/GetChild is required for context propagation."
     }
   ],
-  "verdict": "approved",
-  "summary": "1372 tests pass, 0 failures. All v4 critical/major findings verified fixed: Decompress now has exception handling for corrupt GZip (InvalidDataException) and invalid JSON (JsonException) with distinct error messages. All 4 Decompress error paths are tested. Standalone Decompress test now verifies actual decompressed value. Multi-level nesting (3 levels) preserves all Data objects through compress/decompress. Wrap context propagation verified. Properties-not-preserved behavior documented and tested. Only 1 minor finding remains (Compress accepts any non-blacklisted type). Verdict: approved for auditor review."
+  "verdict": "needs-fixes",
+  "summary": "1372 tests pass, 0 failures. All 8 auditor fixes are structurally correct in code. However, the two most security-critical fixes — zip bomb protection (auditor #8) and thread safety (auditor #1) — have zero test coverage for the new code they introduce. The zip bomb protection is particularly concerning: it's a safety feature at the transport boundary with no regression test. If removed during future refactoring, nothing breaks. Verdict: needs-fixes for critical finding #1 (zip bomb test) and major finding #2 (concurrent test). Minor findings #3-4 are optional."
 }
