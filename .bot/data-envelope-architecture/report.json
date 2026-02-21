@@ -395,6 +395,42 @@
       }
     },
     {
+      "id": "c0d3r-v5b-2026-0221-plang-tests",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T18:00:00Z",
+      "timestamp_end": "2026-02-21T18:30:00Z",
+      "intent": "Run and commit PLang integration tests for data-envelope-architecture features",
+      "before": {
+        "assumptions": "3 PLang test suites created with hand-written .pr files in previous session. Need to verify they pass and commit.",
+        "risk": "Low — tests only, no production code changes."
+      },
+      "plan": "Build PlangConsole, run all PLang tests with !test flag, verify 3 new suites pass, commit.",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Runtime2/DeepNavigation/Start.goal",
+            "Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal",
+            "Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr",
+            "Tests/Runtime2/VariableIndexing/Start.goal",
+            "Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal",
+            "Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr",
+            "Tests/Runtime2/FromJson/Start.goal",
+            "Tests/Runtime2/FromJson/FromJson.test.goal",
+            "Tests/Runtime2/FromJson/.build/fromjson.test.pr"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new PLang test suites verified and committed. All 17 PLang tests pass (14 existing + 3 new)."
+        }
+      ],
+      "after": {
+        "status": "Complete. 17/17 PLang integration tests pass. Committed to data-envelope-architecture.",
+        "health": "Green.",
+        "notes": "Hand-written .pr files work correctly. Test runner only needs *.test.pr — app.pr and start.pr are optional."
+      }
+    },
+    {
       "id": "ca-s1-2026-0221-code-analysis",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-02-21T16:00:00Z",

@@ -52,6 +52,27 @@ Removed the `?? typeof(object)` fallback in generic type parsing. Now `list<unkn
 | `PLang.Tests/Runtime2/Memory/DataTests.cs` | 12 new tests + 2 updated |
 | `PLang.Tests/Runtime2/Types/EngineTypesTests.cs` | 1 new test |
 
+### 6. PLang integration tests (3 new suites, 17 total)
+
+Created hand-written `.goal` + `.pr` files for 3 new test suites:
+- **DeepNavigation**: 5-level deep object navigation + array-of-objects with nested bracket+dot paths (`%list[0].items[1].val%`)
+- **VariableIndexing**: Variable references inside bracket indices (`%items[idx]%`)
+- **FromJson**: fromJson → navigation pipeline with objects, arrays, booleans, nested structures
+
+All 17 PLang integration tests pass (14 existing + 3 new).
+
+| File | Type |
+|------|------|
+| `Tests/Runtime2/DeepNavigation/Start.goal` | PLang goal |
+| `Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal` | PLang test |
+| `Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr` | Compiled .pr |
+| `Tests/Runtime2/VariableIndexing/Start.goal` | PLang goal |
+| `Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal` | PLang test |
+| `Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr` | Compiled .pr |
+| `Tests/Runtime2/FromJson/Start.goal` | PLang goal |
+| `Tests/Runtime2/FromJson/FromJson.test.goal` | PLang test |
+| `Tests/Runtime2/FromJson/.build/fromjson.test.pr` | Compiled .pr |
+
 ## Code example
 
 The depth limit pattern (same across all 5 locations):
