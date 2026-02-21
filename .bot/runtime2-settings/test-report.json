@@ -1,0 +1,84 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-settings",
+  "timestamp": "2026-02-21T12:00:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 1254, "passed": 1254, "failed": 0, "skipped": 0 },
+    "plang": { "total": 1, "passed": 0, "failed": 0, "skipped": 1, "note": "Builder requires --llmservice=openai, not available in this environment" }
+  },
+  "coverage": {
+    "changed_files_covered": 3,
+    "changed_files_total": 4,
+    "uncovered_files": ["PLang/Runtime2/Engine/Goals/Goal/Methods.cs (SettingsScope save/restore path)"],
+    "note": "dotnet-coverage profiler failed to initialize. Manual code-path analysis performed."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Settings/this.cs",
+      "lines": "34,40",
+      "issue": "Resolve<T> does (T)value — a hard unboxing cast. C# unboxing requires exact type match: (long)(object)42 throws InvalidCastException when 42 is boxed as int. All tests store values as long literals, so the cast always succeeds.",
+      "impact": "First production use with a JSON-deserialized int parameter (e.g., 20971520 fits in int32) resolved as long will crash at runtime.",
+      "suggestion": "Add test: store int, resolve as long. Then fix cast to use Convert.ChangeType or safe pattern."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+      "lines": "29-32,89",
+      "issue": "RunAsync saves/restores context.SettingsScope in try/finally (goal scoping). Tests only use CreateChild() which creates a new context with Parent chain — a completely different isolation mechanism. If lines 29-32 and 89 were deleted, no test fails.",
+      "impact": "Settings could leak between goals when same context is passed to sequential goal executions. Core goal-scoping behavior is unverified.",
+      "suggestion": "Write test: run Goal A (sets setting), run Goal B (same context) — B should NOT see A's setting."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Settings/this.cs",
+      "lines": "28-37",
+      "issue": "Scope chain walk has 'if (current.SettingsScope != null)' skip logic, but only 2-level parent chains are tested. No test has a gap (middle parent with null SettingsScope).",
+      "impact": "A bug where null SettingsScope terminates the walk instead of skipping would go undetected.",
+      "suggestion": "Add 3-level test: grandparent(scope) → parent(no scope) → child. Child should resolve grandparent's value."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Settings/Scope.cs",
+      "issue": "No test verifies that setting the same key twice updates the value. The overwrite contract is undocumented in tests.",
+      "impact": "Low — ConcurrentDictionary handles this correctly. But test should document the expected behavior.",
+      "suggestion": "Add: Set('key', 1), Set('key', 2), Get('key') == 2"
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Settings/Scope.cs",
+      "lines": "20-23",
+      "issue": "Scope.Set(key, null) will throw ArgumentNullException (ConcurrentDictionary constraint). No way to unset a value. Hidden constraint, not tested or documented.",
+      "impact": "Low — settings are typically write-once per scope. But unexpected ArgumentNullException if someone tries to clear a setting.",
+      "suggestion": "Document in test or add null guard in Set() that either no-ops or removes the key."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal",
+      "code_file": "PLang/Runtime2/actions/archive/Settings.cs",
+      "issue": "Only one PLang test exists (set max gzip size). Missing tests for: engine defaults, compression level (enum), settings inheritance across goal calls.",
+      "impact": "Builder's ability to parse diverse settings steps is unverified. Only the happy path for one numeric setting is covered.",
+      "suggestion": "Add PLang tests: set default max gzip size, set compression level to fastest, test inheritance."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "1254 C# tests pass. 15 settings-specific tests cover all happy paths through the scope chain (class default → engine default → goal scope → parent inheritance → child override). However, two critical gaps exist: (1) Resolve<T>'s hard unboxing cast will throw InvalidCastException on numeric type widening — a real production scenario with JSON-deserialized parameters — and no test guards against it; (2) the goal-scoped save/restore mechanism in Goal.RunAsync is completely untested — tests only exercise the CreateChild parent-chain mechanism, which is a different isolation strategy. Three minor findings round out the report."
+}

@@ -128,3 +128,22 @@ Target audiences:
 **Why parked:** Right now settings is the only capability that would hang off it. One capability doesn't justify a new abstraction. Introduce `Action<T>` when a second capability needs a home — then settings moves under it, internals unchanged, just the navigation path changes.
 
 **When to revisit:** When any of these come up — per-module config, module health checks, module-level events, or any other per-module concern beyond settings.
+
+---
+
+## Set Up PLang Test Environment for Bot Pipeline
+**Date:** 2026-02-21
+**Context:** Tester bot cannot run PLang .goal tests because (1) `plang` binary is not on PATH (PlangConsole not built), (2) `OPENAI_API_KEY` env var not set. Both needed for `plang p build && plang p !test`.
+
+**Action items:**
+- Build PlangConsole and add to PATH (or symlink)
+- Set `OPENAI_API_KEY` in the environment so bots can run PLang tests
+- Consider a config file or `.env` approach so the key persists across sessions
+
+---
+
+## Bot Reminder/Notification System
+**Date:** 2026-02-21
+**Context:** Currently the only way to capture "do this tomorrow" reminders is the todo list. Need a proper reminder mechanism so bots can flag time-sensitive items.
+
+**Idea:** For now, todos serve as reminders. Longer term, consider a structured reminder system (date-tagged entries that surface at session start).
