@@ -128,3 +128,35 @@ Target audiences:
 - `kind.Extensions` — list all extensions (e.g. `image` → `.jpg`, `.png`, ...)
 - `kind.Compressible` — whether this kind is compressible
 - Kind becomes a first-class domain object instead of a bare string
+
+---
+
+## UnwrapJsonElement loses decimal precision
+**Date:** 2026-02-21
+**Context:** Code analyzer higher-level review of data-envelope-architecture. `UnwrapJsonElement` does `TryGetInt64(out var l) ? l : GetDouble()`. JSON numbers like `19.99` (prices) become `double` — `19.989999999999998...`. No `decimal` path exists. Any downstream equality check or financial calculation will be wrong.
+
+**Fix:** Add `TryGetDecimal` before `GetDouble`, or after `TryGetInt64` fails, check if the number has a fractional part and use decimal for those. Consider: `TryGetInt64 → TryGetDecimal → GetDouble` as the resolution order.
+
+---
+
+## MemoryStack.Clone() doesn't propagate Context
+**Date:** 2026-02-21
+**Context:** Code analyzer review. `MemoryStack.Clone()` creates a new stack but never sets `_context`. All cloned Data objects lose context stamping (`Type.Kind`, `Type.Compressible`, `Type.ClrType` context paths return null/fallback). `PLangContext.CreateChild` compensates by setting Context after clone, but direct `Clone()` callers get a permanently context-less stack.
+
+**Fix:** Set `clone.Context = _context;` before returning from `Clone()`. Add a test that clones a stack and verifies `Type.Kind` still resolves on cloned Data.
+
+---
+
+## MemoryStack.Get returns error Data for depth-exceeded paths
+**Date:** 2026-02-21
+**Context:** Tester v7 Finding #2. `MemoryStack.Get()` returns `root.GetChild(remaining)` directly. `GetChild` now returns `Data.FromError(...)` on depth exceeded instead of null. Callers checking `result != null` proceed on error Data. Contract change untested at the integration level.
+
+**Fix:** Add `MemoryStackTests.Get_DeeplyNestedPath_ReturnsErrorData()` — 101+ dot path, assert `result.Success == false`.
+
+---
+
+## fromJson wraps depth-exceeded as "Invalid JSON"
+**Date:** 2026-02-21
+**Context:** Tester v7 Finding #3. `fromJson.Run()` catches all exceptions as `ValidationError("Invalid JSON: ...", "JsonParseError")`. When `UnwrapJsonElement` throws depth exceeded, the error says "Invalid JSON" with key "JsonParseError" — but the JSON IS valid, it's just too deep. Wrong error message and key.
+
+**Fix:** Catch `InvalidOperationException` separately before the generic `Exception` catch, return a distinct error key like "JsonDepthExceeded".

@@ -528,6 +528,50 @@
         "health": "Security hardening code is correct. But two security features have zero test coverage at the integration level.",
         "notes": "Pattern: depth limits tested in isolation but not through callers. Cycle detection entirely untested."
       }
+    },
+    {
+      "id": "ca-v2-2026-0221-higher-level-review",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-21T23:30:00Z",
+      "timestamp_end": "2026-02-21T23:55:00Z",
+      "intent": "Higher-level review of coder v5 + tester v7 — applying learnings from runtime2-settings to find cross-concern gaps",
+      "before": {
+        "assumptions": "Coder v5 added depth limits, cycle detection, fromJson dedup, Verified → private set. Tester v7 found cycle detection untested and GetChild→MemoryStack integration gap. My v1 analysis was file-by-file. Applying new learnings: trace data origins, check clone/copy families, review fixes against full type surface.",
+        "risk": "Low — analysis only."
+      },
+      "plan": "Read all changed production files + tests. Apply learnings: trace JSON data through full lifecycle, audit clone/copy methods as a family, check every code path for test coverage, review Cast/Convert patterns against full type surface.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Higher-level cross-concern analysis. Found: (1) decimal precision loss in UnwrapJsonElement, (2) MemoryStack.Clone doesn't propagate Context, (3) GetChild→MemoryStack contract change untested (tester v7 carry-forward), (4) fromJson masks depth error as JsonParseError. Added 4 todos."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md",
+            "learnings/data-envelope-architecture/codeanalyzer/v2/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "4 new todos, 6 learnings from applying runtime2-settings insights to this branch."
+        }
+      ],
+      "after": {
+        "status": "Higher-level review complete. 4 new todos added. 6 learnings recorded. Key insight: JSON number precision loss (decimal→double) is same class of bug as Settings int→long.",
+        "health": "Code is structurally sound but has cross-concern gaps that file-by-file review missed.",
+        "notes": "Clone methods are a recurring blind spot — both branches have the same pattern of Clone not propagating new properties."
+      }
     }
   ]
 }
