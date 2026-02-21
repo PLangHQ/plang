@@ -1049,6 +1049,32 @@ public class DataTests
     }
 
     [Test]
+    public async Task UnwrapJsonElement_DecimalNumber_PreservesPrecision()
+    {
+        var json = "{\"price\":19.99}";
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var result = Data.UnwrapJsonElement(doc.RootElement) as Dictionary<string, object?>;
+
+        await Assert.That(result).IsNotNull();
+        var price = result!["price"];
+        await Assert.That(price).IsTypeOf<decimal>();
+        await Assert.That(price).IsEqualTo(19.99m);
+    }
+
+    [Test]
+    public async Task UnwrapJsonElement_IntegerNumber_ReturnsLong()
+    {
+        var json = "{\"count\":42}";
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var result = Data.UnwrapJsonElement(doc.RootElement) as Dictionary<string, object?>;
+
+        await Assert.That(result).IsNotNull();
+        var count = result!["count"];
+        await Assert.That(count).IsTypeOf<long>();
+        await Assert.That(count).IsEqualTo(42L);
+    }
+
+    [Test]
     public async Task GetChild_DeeplyNestedPath_ReturnsDepthError()
     {
         // Build a path with 150 dot segments — exceeds MaxNavigationDepth (100)

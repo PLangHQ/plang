@@ -182,6 +182,7 @@ public class MemoryStack
                 clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
             }
         }
+        clone.Context = Context;
         return clone;
     }
 

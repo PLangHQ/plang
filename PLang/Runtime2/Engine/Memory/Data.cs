@@ -217,7 +217,7 @@ public partial class Data
             return element.ValueKind switch
             {
                 JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
+                JsonValueKind.Number => UnwrapJsonNumber(element),
                 JsonValueKind.True => true,
                 JsonValueKind.False => false,
                 JsonValueKind.Null => null,
@@ -280,6 +280,13 @@ public partial class Data
             list.Add(UnwrapJsonElement(item, depth + 1));
         }
         return list;
+    }
+
+    private static object UnwrapJsonNumber(JsonElement element)
+    {
+        if (element.TryGetInt64(out var l)) return l;
+        if (element.TryGetDecimal(out var d)) return d;
+        return element.GetDouble();
     }
 
     private static string CleanName(string name)

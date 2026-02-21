@@ -530,7 +530,7 @@ public class MemoryStackTests
     }
 
     [Test]
-    public async Task Clone_DataHasNoContext()
+    public async Task Clone_PreservesDataContext()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/test");
         var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
@@ -539,8 +539,8 @@ public class MemoryStackTests
 
         var clone = context.MemoryStack.Clone();
 
-        // Cloned data has no context until a new PLangContext stamps it
-        await Assert.That(clone.Get("name")!.Context).IsNull();
+        // Clone preserves the context so Type.Kind/Compressible/ClrType still resolve
+        await Assert.That(clone.Context).IsEqualTo(context);
     }
 
     [Test]
@@ -578,5 +578,45 @@ public class MemoryStackAccessorTests
         accessor.Current = stack;
 
         await Assert.That(accessor.Current).IsEqualTo(stack);
+    }
+
+    [Test]
+    public async Task Clone_PreservesContext()
+    {
+        var engine = new PLang.Runtime2.Engine.@this("/app");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine, new MemoryStack());
+        context.MemoryStack.Set("x", 1);
+
+        var clone = context.MemoryStack.Clone();
+
+        await Assert.That(clone.Context).IsNotNull();
+        await Assert.That(clone.Context).IsEqualTo(context.MemoryStack.Context);
+    }
+
+    [Test]
+    public async Task Get_DeeplyNestedPath_ReturnsErrorData()
+    {
+        var stack = new MemoryStack();
+        // Build a 101-level deep dictionary
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var current = dict;
+        for (int i = 0; i < 101; i++)
+        {
+            var next = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            current["a"] = next;
+            current = next;
+        }
+        current["val"] = "end";
+
+        stack.Set("deep", dict);
+
+        // Build a path with 102 segments — exceeds MaxNavigationDepth (100)
+        var path = "deep." + string.Join(".", Enumerable.Repeat("a", 101)) + ".val";
+        var result = stack.Get(path);
+
+        // GetChild returns Data.FromError on depth exceeded
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
     }
 }
