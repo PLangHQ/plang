@@ -13,3 +13,5 @@
 **v5** — Security hardening: depth limits on all 5 unbounded recursive methods (UnwrapJsonElement, RehydrateNestedData, GetChild, Clr, ResolveVariablesInPath), deduplicated fromJson.cs, Verified → private set with internal SetVerified(), zip bomb test, Merge tests, StatusCode assertions. 12 new C# tests, 1384 total pass. Added 3 PLang integration test suites (DeepNavigation, VariableIndexing, FromJson) — 17 PLang tests pass. See [v5/summary.md](v5/summary.md) for details.
 
 **v6** — Cross-concern fixes from code analyzer higher-level review: JSON decimal precision (19.99 stays `decimal` not `double`), MemoryStack.Clone() propagates Context, fromJson depth error gets distinct "JsonDepthExceeded" key, MemoryStack.Get depth-exceeded integration test. 7 new tests + 1 updated, 1390 total pass.
+
+**v7** — Tester v8 findings: cycle detection test (reflection-based, pre-seeds thread-static `_resolvingVars` to verify guard fires), Clr() depth boundary tests at 20/21. Test-only, no production changes. 4 new tests, 1394 total pass. See [v7/summary.md](v7/summary.md) for details.

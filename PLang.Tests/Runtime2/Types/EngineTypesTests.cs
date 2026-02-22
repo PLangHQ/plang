@@ -643,4 +643,32 @@ public class EngineTypesTests
         // Should return null (depth exceeded), not throw
         await Assert.That(result).IsNull();
     }
+
+    [Test]
+    public async Task Clr_ExactlyAtMaxDepth_Resolves()
+    {
+        // Build list<list<...list<string>...>> nested exactly 20 times
+        // MaxGenericDepth=20, depth starts at 0, so 20 nestings reaches depth=20 (allowed)
+        var typeName = "string";
+        for (int i = 0; i < 20; i++)
+            typeName = $"list<{typeName}>";
+
+        var result = _types.Clr(typeName);
+
+        await Assert.That(result).IsNotNull();
+    }
+
+    [Test]
+    public async Task Clr_OneOverMaxDepth_ReturnsNull()
+    {
+        // Build list<list<...list<string>...>> nested exactly 21 times
+        // At depth=21, check (21 > 20) is true → returns null
+        var typeName = "string";
+        for (int i = 0; i < 21; i++)
+            typeName = $"list<{typeName}>";
+
+        var result = _types.Clr(typeName);
+
+        await Assert.That(result).IsNull();
+    }
 }

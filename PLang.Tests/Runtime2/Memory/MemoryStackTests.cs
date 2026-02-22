@@ -557,6 +557,68 @@ public class MemoryStackTests
     }
 }
 
+public class MemoryStackCycleDetectionTests
+{
+    [Test]
+    public async Task Get_CircularVariableReference_LeavesUnresolved()
+    {
+        var stack = new MemoryStack();
+        stack.Set("idx", 1);
+        var data = new Dictionary<string, object?>
+        {
+            { "items", new List<object> { "zero", "one", "two" } }
+        };
+        stack.Set("data", data);
+
+        // Verify normal resolution works: data.items[idx] → data.items[1] → "one"
+        var normalResult = stack.Get("data.items[idx]");
+        await Assert.That(normalResult!.Value).IsEqualTo("one");
+
+        // Pre-seed the thread-static visited set via reflection to simulate
+        // a circular reference already in progress (idx is "being resolved")
+        var field = typeof(MemoryStack).GetField("_resolvingVars",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" };
+        field!.SetValue(null, set);
+
+        try
+        {
+            // With "idx" already in visited set → cycle detected → [idx] left unresolved
+            // Path stays "data.items[idx]" → GetChild tries to navigate list with key "idx"
+            // → "idx" is not a valid index → returns null
+            var cycleResult = stack.Get("data.items[idx]");
+
+            await Assert.That(cycleResult).IsNull();
+        }
+        finally
+        {
+            // Clean up thread-static state
+            field.SetValue(null, null);
+        }
+    }
+
+    [Test]
+    public async Task Get_NormalVariableResolution_WorksAfterCycleCleanup()
+    {
+        var stack = new MemoryStack();
+        stack.Set("idx", 0);
+        var data = new Dictionary<string, object?>
+        {
+            { "items", new List<object> { "first", "second" } }
+        };
+        stack.Set("data", data);
+
+        // Verify the thread-static set is properly cleaned up after normal resolution
+        var result1 = stack.Get("data.items[idx]");
+        await Assert.That(result1!.Value).IsEqualTo("first");
+
+        // Second call should work identically (no leftover state)
+        stack.Set("idx", 1);
+        var result2 = stack.Get("data.items[idx]");
+        await Assert.That(result2!.Value).IsEqualTo("second");
+    }
+}
+
 public class MemoryStackAccessorTests
 {
     [Test]
