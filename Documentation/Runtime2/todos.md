@@ -152,6 +152,26 @@ Target audiences:
 
 ---
 
+## JsonStringNavigator: Parse Once on First Access, Update Value + Type
+**Date:** 2026-02-22
+**Context:** Security finding #6 — JsonStringNavigator re-parses the full JSON string on every `.` navigation. Size limit (10MB) added, but the re-parse-every-time behavior remains.
+
+**Problem:** `%response.name%` then `%response.email%` parses the same string twice. For a 5MB API response accessed 10 times, that's 50MB of unnecessary parsing.
+
+**Fix for coder:**
+1. On first navigation in `JsonStringNavigator.GetProperty`, parse the string via `UnwrapElement`
+2. Replace `Data.Value` with the parsed result (either `Dictionary<string, object?>` for `{...}` or `List<object?>` for `[...]`)
+3. Update `Data.Type` accordingly — JSON can be object OR array:
+   - `{...}` → `dict` (or whatever PLang type is correct for `Dictionary<string, object?>`)
+   - `[...]` → `list` (for `List<object?>`)
+4. Subsequent navigations then go through `DictionaryNavigator` or `ListNavigator` (both higher priority than `JsonStringNavigator`) — no re-parsing
+
+**Key insight:** JSON is not one type — `{object}` and `[array]` are different. The parsed Value type determines which navigator handles it. Don't assume dict.
+
+**Note:** This changes what `Value` returns after first access (string → dict/list). Callers that expect the raw JSON string need to read Value *before* navigating, or we need to preserve the original string somewhere (e.g., a `RawValue` property). Check if any caller depends on `Value` being a string after navigation.
+
+---
+
 ## ~~fromJson wraps depth-exceeded as "Invalid JSON"~~ ✅ DONE (2026-02-21)
 **Date:** 2026-02-21
 **Context:** Tester v7 Finding #3.
