@@ -48,10 +48,15 @@ public sealed class @this
         try
         {
             var target = typeof(T);
-            if (target.IsEnum) return (T)Enum.ToObject(target, value);
+            if (target.IsEnum)
+            {
+                if (value is string s && Enum.TryParse(target, s, ignoreCase: true, out var parsed))
+                    return (T)parsed;
+                return (T)Enum.ToObject(target, value);
+            }
             return (T)Convert.ChangeType(value, target);
         }
-        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException)
         { return fallback; }
     }
 

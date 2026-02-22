@@ -238,4 +238,42 @@ public class SettingsTests
         var originalResult = engine.Settings.Resolve<long>("archive.max", context, classDefault);
         await Assert.That(originalResult).IsEqualTo(42L);
     }
+
+    [Test]
+    public async Task Resolve_ConvertsStringToEnum()
+    {
+        // Builder may store enum settings as strings (natural language input).
+        // Cast<T> must handle string→enum via Enum.TryParse.
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.level", "Fastest", context);
+
+        var result = engine.Settings.Resolve("archive.level", context, CompressionLevel.Optimal);
+
+        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
+    }
+
+    [Test]
+    public async Task Resolve_ConvertsStringToEnum_CaseInsensitive()
+    {
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.level", "fastest", context);
+
+        var result = engine.Settings.Resolve("archive.level", context, CompressionLevel.Optimal);
+
+        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
+    }
+
+    [Test]
+    public async Task Resolve_InvalidEnumString_ReturnsClassDefault()
+    {
+        var (engine, context) = CreateEngine();
+
+        engine.Settings.Set("archive.level", "not-a-level", context);
+
+        var result = engine.Settings.Resolve("archive.level", context, CompressionLevel.Optimal);
+
+        await Assert.That(result).IsEqualTo(CompressionLevel.Optimal);
+    }
 }

@@ -609,6 +609,39 @@
         "health": "One regression path. Clone isolation is solid.",
         "notes": "One-line fix: add ArgumentException to catch filter, or use Enum.TryParse for string→enum."
       }
+    },
+    {
+      "id": "c0d3r-v4-2026-0222-fix-enum-regression",
+      "bot": "coder",
+      "timestamp_start": "2026-02-22T01:30:00Z",
+      "timestamp_end": "2026-02-22T01:45:00Z",
+      "intent": "Fix string→enum regression in Cast<T> — add Enum.TryParse and ArgumentException to catch filter",
+      "before": {
+        "assumptions": "Tester v3 found that narrowed catch in v3 misses ArgumentException from Enum.ToObject when value is string.",
+        "risk": "Low — targeted fix to one method, additive tests."
+      },
+      "plan": "Add Enum.TryParse for string values before Enum.ToObject. Add ArgumentException to catch filter. 3 new tests for string→enum paths.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Enum.TryParse(target, s, ignoreCase: true) for string→enum. Added ArgumentException to catch filter."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: string→enum exact, case-insensitive, invalid string fallback."
+        }
+      ],
+      "after": {
+        "status": "Regression fixed. 1268 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "String→enum now works correctly via TryParse. All enum paths covered: int→enum, string→enum, invalid string→fallback."
+      }
     }
   ]
 }
