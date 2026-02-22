@@ -27,4 +27,18 @@ public sealed class Scope
     {
         return _values.ContainsKey(key);
     }
+
+    /// <summary>
+    /// Creates an independent shallow copy of this scope.
+    /// The new scope has its own dictionary with the same key-value pairs.
+    /// </summary>
+    public Scope Clone()
+    {
+        var clone = new Scope();
+        foreach (var kvp in _values)
+        {
+            clone._values[kvp.Key] = kvp.Value;
+        }
+        return clone;
+    }
 }

@@ -77,4 +77,35 @@ public class ScopeTests
         await Assert.That(scope.Contains("archive.max")).IsFalse();
         await Assert.That(scope.Get("archive.max")).IsNull();
     }
+
+    [Test]
+    public async Task Clone_CreatesIndependentCopy()
+    {
+        var scope = new Scope();
+        scope.Set("archive.max", 100L);
+
+        var clone = scope.Clone();
+
+        // Clone has the same values
+        await Assert.That(clone.Get("archive.max")).IsEqualTo(100L);
+
+        // Writes to clone don't affect original
+        clone.Set("archive.max", 999L);
+        await Assert.That(scope.Get("archive.max")).IsEqualTo(100L);
+        await Assert.That(clone.Get("archive.max")).IsEqualTo(999L);
+
+        // Writes to original don't affect clone
+        scope.Set("archive.max", 1L);
+        await Assert.That(clone.Get("archive.max")).IsEqualTo(999L);
+    }
+
+    [Test]
+    public async Task Clone_EmptyScope_ReturnsEmptyScope()
+    {
+        var scope = new Scope();
+
+        var clone = scope.Clone();
+
+        await Assert.That(clone.Contains("archive.max")).IsFalse();
+    }
 }

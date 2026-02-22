@@ -216,4 +216,26 @@ public class SettingsTests
         var result = engine.Settings.Resolve<long>("archive.max", clone, classDefault);
         await Assert.That(result).IsEqualTo(42L);
     }
+
+    [Test]
+    public async Task Clone_WritesToClone_DoNotAffectOriginal()
+    {
+        // Clone gets an independent copy of SettingsScope.
+        // Writing to the clone must not pollute the original.
+        var (engine, context) = CreateEngine();
+        long classDefault = 100L;
+
+        engine.Settings.Set("archive.max", 42L, context);
+
+        var clone = context.Clone();
+        engine.Settings.Set("archive.max", 999L, clone);
+
+        // Clone sees the new value
+        var cloneResult = engine.Settings.Resolve<long>("archive.max", clone, classDefault);
+        await Assert.That(cloneResult).IsEqualTo(999L);
+
+        // Original is untouched
+        var originalResult = engine.Settings.Resolve<long>("archive.max", context, classDefault);
+        await Assert.That(originalResult).IsEqualTo(42L);
+    }
 }

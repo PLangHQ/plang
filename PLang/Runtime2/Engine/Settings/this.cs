@@ -51,7 +51,8 @@ public sealed class @this
             if (target.IsEnum) return (T)Enum.ToObject(target, value);
             return (T)Convert.ChangeType(value, target);
         }
-        catch { return fallback; }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
+        { return fallback; }
     }
 
     /// <summary>

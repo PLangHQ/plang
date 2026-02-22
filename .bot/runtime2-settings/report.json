@@ -515,6 +515,56 @@
         "health": "Clean infrastructure. OBP compliant. One contract bug (Clone isolation).",
         "notes": "Finding #1 is the only one that should block merge. Minor findings are future-proofing suggestions."
       }
+    },
+    {
+      "id": "c0d3r-v3-2026-0222-fix-auditor",
+      "bot": "coder",
+      "timestamp_start": "2026-02-22T00:00:00Z",
+      "timestamp_end": "2026-02-22T00:15:00Z",
+      "intent": "Fix auditor major finding: Clone() shares SettingsScope by reference; narrow Cast<T> bare catch",
+      "before": {
+        "assumptions": "Auditor found major contract bug: Clone() copies SettingsScope by reference, so mutations in clone pollute original. Security/tester flagged bare catch in Cast<T>.",
+        "risk": "Low — targeted fixes to 3 files, additive tests."
+      },
+      "plan": "1. Add Scope.Clone() method (new ConcurrentDictionary from existing). 2. PLangContext.Clone() uses SettingsScope?.Clone(). 3. Narrow Cast<T> catch to InvalidCastException/FormatException/OverflowException. 4. Add 3 tests: Scope clone isolation, empty scope clone, context clone write isolation.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/Scope.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Clone() method — creates new Scope with independent ConcurrentDictionary snapshot."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/PLangContext.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Changed SettingsScope = SettingsScope to SettingsScope = SettingsScope?.Clone() in Clone()."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Narrowed bare catch to catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: Scope clone isolation (bidirectional), empty scope clone, context clone write isolation."
+        }
+      ],
+      "after": {
+        "status": "All auditor/security findings addressed. 1265 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "Major contract bug fixed. Clone now produces fully independent contexts."
+      }
     }
   ]
 }
