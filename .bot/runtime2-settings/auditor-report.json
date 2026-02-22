@@ -51,7 +51,7 @@
       "suggestion": "Narrow to `catch (Exception)` and add a comment that this is intentional. Or catch specific types: `catch (InvalidCastException) catch (FormatException) catch (OverflowException)`. Low priority.",
       "security_comment": "Already flagged in security-report.json finding #3. Agree with narrowing the catch. In practice Convert.ChangeType never throws critical exceptions, so this is hygiene, not a real risk.",
       "status": "fixed",
-      "resolution": "Coder v3: Narrowed to `catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)`. Critical exceptions now propagate. Clean fix."
+      "resolution": "Coder v3: Narrowed catch filter. Tester v3 found regression — ArgumentException from Enum.ToObject not caught, crashing on string→enum. Coder v4: Added Enum.TryParse(string, ignoreCase) + ArgumentException to catch filter. 3 new tests cover string→enum (exact, case-insensitive, invalid). Clean."
     }
   ]
 }

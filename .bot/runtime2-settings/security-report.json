@@ -92,7 +92,7 @@
       "exploit_sketch": "N/A — theoretical only.",
       "proposed_fix": "Narrow the catch to catch (Exception) and re-throw critical exceptions (OutOfMemoryException, StackOverflowException). Very low priority.",
       "status": "fixed",
-      "resolution": "Coder v3: Narrowed to `catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)`. Critical exceptions now propagate."
+      "resolution": "Coder v3: Narrowed catch filter. Coder v4: Added ArgumentException (Enum.ToObject throws it for strings) and Enum.TryParse for string→enum path. Final filter: `catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException)`. Critical exceptions propagate, known conversion exceptions caught."
     },
     {
       "id": 4,
