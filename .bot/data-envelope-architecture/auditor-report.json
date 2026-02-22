@@ -1,9 +1,9 @@
 {
   "reviewer": "auditor",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-21T12:00:00Z",
-  "reviewed_version": "v4 + fix commit",
-  "summary": "Solid architectural work across 4 phases. Original review found 8 findings (3 major, 3 minor, 2 nit). Coder fixed all 8 in one commit. Second-pass review of the fix commit found 2 new issues: (9) zip bomb size limit has zero test coverage — the security fix is unguarded against regression; (10) Add()/Remove() have a race window between ConcurrentDictionary write and _allKinds lock — benign but real. Findings 1-8 closed. Findings 9-10 open.",
+  "timestamp": "2026-02-22T14:00:00Z",
+  "reviewed_version": "v7",
+  "summary": "Re-review after coder v5 (security hardening) and v7 (test gaps). All major findings resolved. Depth limits on all 5 recursive methods, cycle detection, zip bomb tested, Verified locked down, fromJson deduplicated. 1394 tests pass. One new nit (JsonStringNavigator duplication). Approved.",
   "findings": [
     {
       "id": 1,
@@ -11,10 +11,9 @@
       "category": "safety",
       "file": "PLang/Runtime2/Engine/Types/this.cs",
       "line": 13,
-      "issue": "Engine.Types uses non-thread-safe Dictionary<> and HashSet<> for all lookup tables (_nameToClr, _extensionToKind, _extensionToMime, _allKinds, _mimeToKind). Engine is not a global singleton (it's pooled — one per request/execution scope), but within a single Engine, multiple goals can execute concurrently (run-and-forget, parallel steps). If two concurrent goals call Add()/Remove() on the same Engine.Types, or one calls Add() while another reads via Clr()/Kind()/KindOf(), the dictionaries can corrupt.",
-      "impact": "Narrower than a global singleton race, but still real for concurrent goal execution within one pooled Engine. The public API allows Add/Remove at any time — nothing enforces setup-only usage.",
-      "suggestion": "Either (a) make the lookup dictionaries ConcurrentDictionary and _allKinds use locking around mutations, or (b) make Add/Remove internal and document that they must only be called during engine setup before concurrent access begins. Option (b) is simpler if Add/Remove is only needed at startup.",
-      "status": "fixed — ConcurrentDictionary for mutable collections, lock for _allKinds. See finding #10 for remaining race window."
+      "issue": "Engine.Types uses non-thread-safe Dictionary<> and HashSet<> for all lookup tables.",
+      "status": "closed",
+      "resolution": "ConcurrentDictionary for mutable collections, lock for _allKinds."
     },
     {
       "id": 2,
@@ -22,10 +21,9 @@
       "category": "contract",
       "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
       "line": 178,
-      "issue": "RehydrateNestedData mutates the `data` parameter in-place: it sets `data.Value = inner` (line 193), which triggers the Value setter that clears `_type` to null (Data.cs:132). The method then immediately restores `data.Type = outerType` (line 194). This works but is fragile — the two-step mutation (set Value, restore Type) is a temporal coupling that breaks if anyone changes the Value setter or adds logic between those lines. It also means for the brief moment between lines 193-194, the Data has Value=inner but Type=null.",
-      "impact": "If any observer (event, concurrent reader) accesses the Data between lines 193-194, they see inconsistent state. Also, any future refactoring of the Value setter that adds side effects beyond clearing _type would silently break rehydration.",
-      "suggestion": "Add a private method or internal setter that updates _value without triggering the full Value setter side effects. Something like `SetValueDirect(object? value)` that updates `_value` and `Updated` but does NOT clear `_type`. This eliminates the save/restore dance and the transient inconsistency.",
-      "status": "fixed — SetValueDirect() added, RehydrateNestedData uses it."
+      "issue": "RehydrateNestedData mutates data.Value in-place, clearing _type transiently.",
+      "status": "closed",
+      "resolution": "SetValueDirect() added — updates _value without triggering Value setter side effects."
     },
     {
       "id": 3,
@@ -33,10 +31,9 @@
       "category": "contract",
       "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
       "line": 129,
-      "issue": "Decompress() uses `Errors.Error` (generic base error class) for all error paths, but the project convention for service-layer errors is `ServiceError` with a distinct key. The envelope pipeline is a service operation — serialization/compression failures should use ServiceError with keys like 'DecompressError' to distinguish them from generic application errors.",
-      "impact": "Low. Error handling works, but callers cannot distinguish decompression errors from other errors by Key alone. All three error paths at lines 129, 133, 149/153 use the default key 'Error'.",
-      "suggestion": "Use `new ServiceError(message, \"DecompressError\", 500)` for all Decompress error paths. The status code 500 is appropriate since this is an infrastructure failure, not a user input error.",
-      "status": "fixed"
+      "issue": "Decompress used generic Error instead of ServiceError with distinct key.",
+      "status": "closed",
+      "resolution": "All error paths use ServiceError('...', 'DecompressError', 500)."
     },
     {
       "id": 4,
@@ -44,10 +41,9 @@
       "category": "obp",
       "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
       "line": 73,
-      "issue": "Compress() navigates to Engine.Types.Compressible(Type.Value) directly at line 73, but Type already has a Compressible property (Data.cs:38) that does the same navigation. This is double navigation — the caller bypasses Type's own knowledge to reach the same answer through a different path.",
-      "impact": "Low. Both paths produce the same result today. But if Type.Compressible ever adds logic (e.g., override for specific instances), Compress() would not pick it up because it goes around Type.",
-      "suggestion": "Replace `_context.Engine.Types.Compressible(Type.Value)` with `Type.Compressible`. The null-check at line 70 already guarantees Type is non-null.",
-      "status": "fixed"
+      "issue": "Compress bypassed Type.Compressible to navigate directly to Engine.Types.",
+      "status": "closed",
+      "resolution": "Now uses Type.Compressible."
     },
     {
       "id": 5,
@@ -55,10 +51,9 @@
       "category": "contract",
       "file": "PLang/Runtime2/Engine/Types/this.cs",
       "line": 583,
-      "issue": "Remove() uses `_extensionToKind.ContainsValue(removedKind)` at line 583 to check if any other extension still maps to the removed kind. ContainsValue on Dictionary is O(n) — it scans all values. With ~100 extensions this is negligible, but it's worth noting since Add() is O(1) while Remove() is O(n).",
-      "impact": "Negligible for current dataset. Would matter if extension mappings grew to thousands (unlikely but possible with plugin ecosystems).",
-      "suggestion": "Acceptable as-is. If performance ever matters, maintain a reverse count dictionary (kind → count of extensions mapping to it). This is not worth doing now.",
-      "status": "accepted — now uses ConcurrentDictionary.Values.Contains()"
+      "issue": "Remove() uses ContainsValue O(n) scan.",
+      "status": "closed-accepted",
+      "resolution": "Acceptable for current dataset. Now uses ConcurrentDictionary.Values.Contains()."
     },
     {
       "id": 6,
@@ -66,10 +61,9 @@
       "category": "style",
       "file": "PLang/Runtime2/Engine/Memory/Data.cs",
       "line": 109,
-      "issue": "Data constructor still references `[Newtonsoft.Json.JsonConstructor]` at line 109. Runtime2 convention is System.Text.Json only — Newtonsoft should not appear in new code.",
-      "impact": "No functional impact. The attribute is harmless but signals v1 compatibility that may not be needed for Data (a Runtime2-only class).",
-      "suggestion": "If Data is purely Runtime2 (never deserialized by v1 code), remove the Newtonsoft attribute. If v1 compatibility is still needed for Data specifically, document why with a comment.",
-      "status": "fixed — Newtonsoft attribute removed"
+      "issue": "Newtonsoft.Json.JsonConstructor attribute on Data constructor.",
+      "status": "closed",
+      "resolution": "Attribute removed."
     },
     {
       "id": 7,
@@ -77,10 +71,9 @@
       "category": "test",
       "file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
       "line": 906,
-      "issue": "Decompress error path tests (lines 906-965) verify `result.Success == false` and check the error message string. But they don't verify `result.Error.Key` — once finding #3 is fixed to use ServiceError with 'DecompressError' key, these tests should also assert the key to prevent regressions.",
-      "impact": "Low. Tests would still pass if someone changed the error type back to generic Error, missing the regression.",
-      "suggestion": "After fixing finding #3, add `await Assert.That(result.Error!.Key).IsEqualTo(\"DecompressError\");` to each decompress error test.",
-      "status": "fixed — Error.Key assertions added to all 4 decompress error tests"
+      "issue": "Decompress error tests missing Error.Key assertions.",
+      "status": "closed",
+      "resolution": "Error.Key assertions added to all 4 decompress error tests."
     },
     {
       "id": 8,
@@ -88,10 +81,9 @@
       "category": "safety",
       "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
       "line": 200,
-      "issue": "GZipDecompress is unbounded — no size limit on decompressed output. A malicious compressed payload (zip bomb) could decompress to gigabytes, causing OOM. This is the inbound path — Decompress() processes Data arriving from external sources (network channels, file reads, untrusted peers). A 45-byte gzip payload can decompress to 1GB+.",
-      "impact": "Any channel that receives compressed Data is vulnerable. An attacker sends a small zip bomb payload typed as 'archived', and the runtime OOMs processing it. This is a denial-of-service vector on every PLang app that receives Data from external sources.",
-      "suggestion": "Add a max decompressed size constant (e.g., 100MB) and use a size-limiting wrapper stream that throws when the limit is exceeded. Return a ServiceError('Decompressed payload exceeds size limit', 'DecompressError', 413). The limit should be configurable per-engine or per-channel.",
-      "status": "fixed"
+      "issue": "GZipDecompress unbounded — no size limit on decompressed output (zip bomb vector).",
+      "status": "closed",
+      "resolution": "MaxDecompressedSize=100MB, chunked read with size check."
     },
     {
       "id": 9,
@@ -99,9 +91,9 @@
       "category": "test",
       "file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
       "line": 965,
-      "issue": "The zip bomb size limit (MaxDecompressedSize = 100MB) added in the fix commit has zero test coverage. No test verifies that decompression stops at the limit and returns an error. If someone changes MaxDecompressedSize to long.MaxValue or removes the size check, no test catches it.",
-      "impact": "The security fix (finding #8) is effectively unguarded. A regression could silently reintroduce the zip bomb vulnerability with no test failure.",
-      "suggestion": "Add a test that creates a compressed payload that would decompress beyond the limit, calls Decompress(), and asserts: (a) result.Success is false, (b) result.Error.Key is 'DecompressError', (c) error message contains 'size limit'. The test doesn't need to create a real 100MB payload — either use a small test limit via an internal override, or create a gzip stream that expands enough to exceed the limit."
+      "issue": "Zip bomb size limit (MaxDecompressedSize=100MB) had zero test coverage.",
+      "status": "closed",
+      "resolution": "Decompress_ExceedsSizeLimit_ReturnsError: compresses 110MB of zeros, asserts DecompressError with StatusCode 500 and 'size limit' in message."
     },
     {
       "id": 10,
@@ -109,9 +101,20 @@
       "category": "safety",
       "file": "PLang/Runtime2/Engine/Types/this.cs",
       "line": 567,
-      "issue": "Add() and Remove() have a race window between their non-atomic steps. Add() writes to _extensionToKind (ConcurrentDictionary) then separately locks _allKinds. Between those two operations, a concurrent reader calling Kind('.custom') gets 'custom-kind' but KindOf('custom-kind') returns null (not yet in _allKinds). Same issue in Remove() — extension disappears from _extensionToKind before _allKinds is cleaned up.",
-      "impact": "Transient inconsistency. A concurrent reader sees a kind from Kind() that KindOf() doesn't recognize. Window is tiny (nanoseconds) and consequence is a null return, not corruption. Benign in practice.",
-      "suggestion": "Either widen _derivedLock to cover the entire Add()/Remove() body, or accept as known benign race. The planned Kind-as-rich-object refactor (see todos.md) would solve this naturally by making _allKinds a ConcurrentDictionary<string, Kind>."
+      "issue": "Add()/Remove() race window between ConcurrentDictionary write and _allKinds lock.",
+      "impact": "Transient inconsistency. Nanosecond window. Null return, not corruption.",
+      "suggestion": "Accept as benign. Kind-as-rich-object refactor would solve naturally.",
+      "status": "open-accepted"
+    },
+    {
+      "id": 11,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs",
+      "line": 44,
+      "issue": "UnwrapElement/UnwrapObject/UnwrapArray duplicate Data.UnwrapJsonElement logic. Same recursive JSON unwrapping in two places. Not a security risk (bounded by STJ MaxDepth=64) but a maintenance risk — fixes must be applied in two places.",
+      "impact": "Low. Bug fixes to JSON unwrapping could miss one of the two implementations.",
+      "suggestion": "Have JsonStringNavigator call Data.UnwrapJsonElement (internal static, same assembly). Align number handling (int vs long for small integers)."
     }
   ]
 }
