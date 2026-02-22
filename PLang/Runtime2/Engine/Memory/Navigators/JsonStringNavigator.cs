@@ -8,9 +8,14 @@ namespace PLang.Runtime2.Engine.Memory.Navigators;
 /// </summary>
 public class JsonStringNavigator : IValueNavigator
 {
+    private const int MaxJsonStringSize = 10 * 1024 * 1024; // 10MB
+
     public bool CanNavigate(object value)
     {
         if (value is not string str)
+            return false;
+
+        if (str.Length > MaxJsonStringSize)
             return false;
 
         var trimmed = str.TrimStart();

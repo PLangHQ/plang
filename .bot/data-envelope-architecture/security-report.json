@@ -106,7 +106,8 @@
       "impact": "Memory exhaustion. Amplified by repeated access.",
       "affected_files": ["PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs"],
       "proposed_fix": "Add size limit before parsing (e.g., 10MB). Consider caching.",
-      "status": "open"
+      "status": "fixed",
+      "resolution": "Added 10MB size limit in CanNavigate — strings over 10MB are not treated as navigable JSON. Caching (parse once on first access) is a separate design improvement, not a security fix."
     },
     {
       "id": 7,
