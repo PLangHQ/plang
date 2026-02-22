@@ -9,7 +9,7 @@
       "exposure": "Resolve<T> walks PLangContext.Parent chain to find settings values. Cast<T> performs type conversion via Convert.ChangeType and Enum.ToObject.",
       "trust_boundary": "Settings values originate from .pr file actions (trusted) or engine defaults (trusted). No external/untrusted input enters via this path.",
       "mitigations": [
-        "Cast<T> catches all conversion exceptions and returns class default",
+        "Cast<T> catches only expected conversion exceptions (InvalidCastException, FormatException, OverflowException) — critical exceptions propagate",
         "ConcurrentDictionary for thread safety",
         "Case-insensitive key matching prevents shadow attacks",
         "Goal scoping (save/null/restore) isolates settings per goal"
@@ -91,7 +91,8 @@
       "affected_files": ["PLang/Runtime2/Engine/Settings/this.cs"],
       "exploit_sketch": "N/A — theoretical only.",
       "proposed_fix": "Narrow the catch to catch (Exception) and re-throw critical exceptions (OutOfMemoryException, StackOverflowException). Very low priority.",
-      "status": "accepted-risk"
+      "status": "fixed",
+      "resolution": "Coder v3: Narrowed to `catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)`. Critical exceptions now propagate."
     },
     {
       "id": 4,
@@ -106,5 +107,5 @@
       "status": "accepted-risk"
     }
   ],
-  "summary": "The Settings infrastructure is well-designed and introduces minimal new attack surface. All settings originate from .pr files (trusted) or engine defaults (trusted). The scope chain properly isolates goal-level settings and restores state on exit. Thread safety is handled via ConcurrentDictionary. Type conversion is defensive with silent fallback to defaults. No critical or high severity findings. The 4 low/medium findings are all accepted-risk under the user-sovereign threat model. The most important future consideration is: if settings ever become writable from untrusted sources (e.g., transport-received Data), the lack of value validation (finding #4) and unbounded dictionary growth (finding #1) would need to be addressed."
+  "summary": "The Settings infrastructure is well-designed and introduces minimal new attack surface. All settings originate from .pr files (trusted) or engine defaults (trusted). The scope chain properly isolates goal-level settings and restores state on exit. Thread safety is handled via ConcurrentDictionary. Type conversion is defensive with narrowed exception handling. Post coder v3: Clone() now deep-copies Scope (auditor finding #1 fixed — context isolation restored), Cast<T> bare catch narrowed (finding #3 fixed). 2 findings remain accepted-risk: unbounded Scope dictionary (#1) and configurable security limits (#4). The most important future consideration is: if settings ever become writable from untrusted sources, value validation and dictionary size limits would need to be addressed."
 }
