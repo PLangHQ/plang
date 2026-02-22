@@ -119,6 +119,24 @@ Target audiences:
 
 ---
 
+## Foundation Checklist — Before Mass Action Production
+**Date:** 2026-02-22
+**Context:** Engine graph audit. These must be resolved before we can start cranking out actions assembly-line style.
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | **system.sqlite** | NOT STARTED | System database. Ingi bringing details. |
+| 2 | **Setup.goal** | NOT STARTED | How DB and store are set up. Depends on system.sqlite. |
+| 3 | **Settings** | IN PROGRESS | Goal-scoped module settings. On `runtime2-settings` branch. |
+| 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+| 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+| 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverSeconds fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
+
+**Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
+
+---
+
 ## engine.Action<T> — First-Class Module Objects on Engine
 **Date:** 2026-02-21
 **Context:** During ISettings scaffolding. Settings currently lives at `engine.Settings.For<archive.Settings>(context)`. Works, but the long-term navigation should be `engine.Action<archive.@this>().Settings.Max` — each action module as a first-class object on the engine with capabilities hanging off it (settings, and later potentially config, health, metrics, etc.).
