@@ -11,14 +11,14 @@ public class ConditionHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly Engine _engine;
+    private readonly PLang.Runtime2.Engine.@this _engine;
 
     public ConditionHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new Engine(_tempDir, fileSystem: _fs);
+        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()

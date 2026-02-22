@@ -1,0 +1,111 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-settings",
+  "timestamp": "2026-02-21T01:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "settings-resolution",
+      "exposure": "Resolve<T> walks PLangContext.Parent chain to find settings values. Cast<T> performs type conversion via Convert.ChangeType and Enum.ToObject.",
+      "trust_boundary": "Settings values originate from .pr file actions (trusted) or engine defaults (trusted). No external/untrusted input enters via this path.",
+      "mitigations": [
+        "Cast<T> catches only expected conversion exceptions (InvalidCastException, FormatException, OverflowException) — critical exceptions propagate",
+        "ConcurrentDictionary for thread safety",
+        "Case-insensitive key matching prevents shadow attacks",
+        "Goal scoping (save/null/restore) isolates settings per goal"
+      ],
+      "gaps": [
+        "Parent chain traversal has no depth limit (mitigated by CallStack.MaxDepth=1000)",
+        "Scope dictionary has no max size",
+        "No key format validation"
+      ]
+    },
+    {
+      "area": "settings-write",
+      "exposure": "Set() writes to context.SettingsScope (goal-local) or engine.Settings.Defaults (persistent). SettingsScope is public settable on PLangContext.",
+      "trust_boundary": "Only reachable from action handlers, which are dispatched from .pr files (trusted environment).",
+      "mitigations": [
+        "Set(null) removes the key rather than storing null",
+        "Lazy initialization (context.SettingsScope ??= new Scope())",
+        "isDefault flag separates persistent vs goal-scoped writes"
+      ],
+      "gaps": [
+        "No validation that stored values match the expected type for the key"
+      ]
+    },
+    {
+      "area": "settings-security-control-weakening",
+      "exposure": "archive.Settings.Max controls the gzip bomb protection limit (MaxDecompressedSize). A PLang goal can set this to 0 or long.MaxValue.",
+      "trust_boundary": "User-sovereign: the user controls their own .pr files. Setting Max to 0 is equivalent to calling Environment.Exit() — the user's prerogative.",
+      "mitigations": [
+        "Class default is 100MB (safe default)",
+        "Goal-scoped: a rogue setting in one goal doesn't persist to others (unless isDefault=true)"
+      ],
+      "gaps": [
+        "No minimum value enforcement — Max can be set to 0 (disabling decompression) or negative (undefined behavior in size comparison)"
+      ]
+    },
+    {
+      "area": "module-view",
+      "exposure": "ModuleView<T> extracts module prefix from namespace via string manipulation (LastIndexOf('.')). For<T> creates a new instance per call.",
+      "trust_boundary": "Module prefix derived from compile-time namespace, not user input.",
+      "mitigations": [
+        "Prefix comes from typeof(T).Namespace — attacker cannot control this at runtime",
+        "New instance per call prevents cross-context leakage"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "Scope dictionary (ConcurrentDictionary) has no maximum entry count. A PLang goal in a loop could call settings.set repeatedly with unique keys, growing the dictionary unboundedly.",
+      "preconditions": "User writes a PLang goal that sets many unique settings keys in a loop. Requires user-authored .pr file.",
+      "impact": "Memory exhaustion over time. Goal-scoped settings are cleared on goal exit, so this only persists if isDefault=true.",
+      "affected_files": ["PLang/Runtime2/Engine/Settings/Scope.cs"],
+      "exploit_sketch": "foreach %items%, call SetUniqueSetting item=%item% — where each item generates a new key like 'archive.key_{item}'",
+      "proposed_fix": "Add a max entry count (e.g., 1000) to Scope. Log a warning when exceeded. Low priority since this is user-authored code.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Resolve<T> walks the PLangContext.Parent chain with no depth counter. If contexts nest deeply (goal calls goal calls goal...), the while loop traverses the entire chain on every settings lookup.",
+      "preconditions": "Deeply nested goal calls (up to CallStack.MaxDepth=1000). Each goal lookup walks the full chain.",
+      "impact": "O(n) traversal per settings read where n = nesting depth. At MaxDepth=1000 this is negligible. Not a stack overflow — it's iterative (while loop), not recursive.",
+      "affected_files": ["PLang/Runtime2/Engine/Settings/this.cs"],
+      "exploit_sketch": "N/A — mitigated by CallStack depth limit. The while loop is iterative, not recursive, so no stack overflow risk.",
+      "proposed_fix": "No fix needed. The iterative while loop is safe even at depth 1000. Document the O(depth) complexity.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Cast<T> swallows all exceptions with a bare catch. If Convert.ChangeType throws an unexpected exception (OutOfMemoryException, ThreadAbortException), it would be silently swallowed.",
+      "preconditions": "Extremely unusual runtime conditions (OOM during type conversion).",
+      "impact": "Silent failure — returns class default instead of propagating a critical exception. In practice, Convert.ChangeType only throws FormatException, InvalidCastException, OverflowException.",
+      "affected_files": ["PLang/Runtime2/Engine/Settings/this.cs"],
+      "exploit_sketch": "N/A — theoretical only.",
+      "proposed_fix": "Narrow the catch to catch (Exception) and re-throw critical exceptions (OutOfMemoryException, StackOverflowException). Very low priority.",
+      "status": "fixed",
+      "resolution": "Coder v3: Narrowed catch filter. Coder v4: Added ArgumentException (Enum.ToObject throws it for strings) and Enum.TryParse for string→enum path. Final filter: `catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException)`. Critical exceptions propagate, known conversion exceptions caught."
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "injection",
+      "vector": "archive.Settings.Max can be set to 0 or negative values, effectively disabling gzip bomb protection or causing undefined behavior in size comparisons.",
+      "preconditions": "User writes a PLang goal that sets max gzip size to 0 or -1.",
+      "impact": "By threat model, this is user-sovereign behavior. The user controls their own .pr files. However, if a future transport-received Data envelope carries settings, this could become an attack vector.",
+      "affected_files": ["PLang/Runtime2/actions/archive/Settings.cs"],
+      "exploit_sketch": "set max gzip size to 0 — then decompress a 10GB payload",
+      "proposed_fix": "Add a minimum floor (e.g., 1MB) in the Decompress method: Math.Max(settings.Max, MIN_DECOMPRESSED_SIZE). Only matters if settings become settable from untrusted sources.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "The Settings infrastructure is well-designed and introduces minimal new attack surface. All settings originate from .pr files (trusted) or engine defaults (trusted). The scope chain properly isolates goal-level settings and restores state on exit. Thread safety is handled via ConcurrentDictionary. Type conversion is defensive with narrowed exception handling. Post coder v3: Clone() now deep-copies Scope (auditor finding #1 fixed — context isolation restored), Cast<T> bare catch narrowed (finding #3 fixed). 2 findings remain accepted-risk: unbounded Scope dictionary (#1) and configurable security limits (#4). The most important future consideration is: if settings ever become writable from untrusted sources, value validation and dictionary size limits would need to be addressed."
+}

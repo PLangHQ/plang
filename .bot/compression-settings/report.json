@@ -1,0 +1,38 @@
+{
+  "branch": "compression-settings",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-comp-sett-arch-session001",
+      "bot": "architect",
+      "timestamp_start": "2026-02-21T00:00:00Z",
+      "timestamp_end": "2026-02-21T01:00:00Z",
+      "intent": "Design ISettings pattern — strongly typed, per-module, goal-scoped settings with source generator support",
+      "before": {
+        "assumptions": "Data.Envelope.cs on data-envelope-architecture branch has hardcoded 100MB gzip bomb limit. No settings mechanism exists in Runtime2 for action/module configuration.",
+        "risk": "New pattern touching source generator, context scoping, engine navigation, and builder discovery. Broad surface but well-contained design."
+      },
+      "plan": "ISettings design: each module declares a strongly typed settings class implementing ISettings. Source generator produces scope-aware property bodies (read), settings action handler (write), and builder registry. Settings are goal-scoped with Default flag for engine persistence. Navigation: engine.Module<Archive>().Settings.Max. First use case: replace hardcoded gzip bomb limit.",
+      "actions": [
+        {
+          "paths": [".bot/compression-settings/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full design spec for ISettings pattern — phases, scoping, source generator, open questions for coder"
+        },
+        {
+          "paths": [".bot/compression-settings/architect/v1/summary.md", ".bot/compression-settings/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summary and cross-session summary"
+        }
+      ],
+      "after": {
+        "status": "Design complete, ready for coder handoff",
+        "health": "Clean — no code changes, design only",
+        "notes": "Builder integration (discovery action, LLM prompt design) deferred. Depends on data-envelope-architecture branch for Data.Envelope.cs and Module<T> pattern."
+      }
+    }
+  ]
+}

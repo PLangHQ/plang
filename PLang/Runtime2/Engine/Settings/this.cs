@@ -1,0 +1,93 @@
+using PLang.Runtime2.Engine.Context;
+
+namespace PLang.Runtime2.Engine.Settings;
+
+/// <summary>
+/// Engine-level settings registry. Owns:
+/// - Module type registration (which ISettings types exist)
+/// - Engine-level default scope (persistent across goals)
+/// - Resolution logic: context scope → parent scope → engine defaults → class defaults
+///
+/// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
+/// </summary>
+public sealed class @this
+{
+    /// <summary>
+    /// Engine-level default scope. Values here persist across goal executions.
+    /// Written when a settings action has Default=true.
+    /// </summary>
+    public Scope Defaults { get; } = new();
+
+    /// <summary>
+    /// Resolves a setting value by walking the scope chain:
+    /// context.SettingsScope → context.Parent.SettingsScope → ... → Defaults → classDefault.
+    /// </summary>
+    public T Resolve<T>(string key, PLangContext context, T classDefault)
+    {
+        // Walk: context.SettingsScope → parent.SettingsScope → ... → Defaults → classDefault
+        var current = context;
+        while (current != null)
+        {
+            if (current.SettingsScope != null)
+            {
+                var value = current.SettingsScope.Get(key);
+                if (value != null) return Cast<T>(value, classDefault);
+            }
+            current = current.Parent;
+        }
+
+        var defaultValue = Defaults.Get(key);
+        if (defaultValue != null) return Cast<T>(defaultValue, classDefault);
+
+        return classDefault;
+    }
+
+    private static T Cast<T>(object value, T fallback)
+    {
+        if (value is T typed) return typed;
+        try
+        {
+            var target = typeof(T);
+            if (target.IsEnum)
+            {
+                if (value is string s && Enum.TryParse(target, s, ignoreCase: true, out var parsed))
+                    return (T)parsed;
+                return (T)Enum.ToObject(target, value);
+            }
+            return (T)Convert.ChangeType(value, target);
+        }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException)
+        { return fallback; }
+    }
+
+    /// <summary>
+    /// Returns a context-bound view for a specific ISettings type.
+    /// The view resolves property values through the scope chain for the given context.
+    /// </summary>
+    public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
+    {
+        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.actions.archive" → "archive")
+        var fullName = typeof(T).Namespace ?? "";
+        var lastDot = fullName.LastIndexOf('.');
+        var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+
+        return new ModuleView<T>(this, context, modulePrefix);
+    }
+
+    /// <summary>
+    /// Writes a setting value to the appropriate scope.
+    /// If isDefault is true, writes to engine Defaults. Otherwise writes to the context's goal scope.
+    /// </summary>
+    public void Set(string key, object value, PLangContext context, bool isDefault = false)
+    {
+        if (isDefault)
+        {
+            Defaults.Set(key, value);
+        }
+        else
+        {
+            context.SettingsScope ??= new Scope();
+            context.SettingsScope.Set(key, value);
+        }
+    }
+}

@@ -6,7 +6,7 @@ public class IOTests
 {
     private static EngineChannels CreateIO()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         return new EngineChannels(engine);
     }
 
@@ -186,7 +186,7 @@ public class IOTests
             // Use a block scope to ensure IO is disposed before file delete
             {
                 // Engine must be rooted at temp dir so filesystem allows access
-                await using var engine = new Engine(Path.GetTempPath());
+                await using var engine = new PLang.Runtime2.Engine.@this(Path.GetTempPath());
                 await using var io = new EngineChannels(engine);
                 var channel = io.CreateFileChannel("test", tempFile);
 

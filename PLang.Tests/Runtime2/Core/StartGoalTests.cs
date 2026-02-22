@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 using Path = System.IO.Path;
@@ -13,7 +12,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
@@ -61,7 +60,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
@@ -96,7 +95,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -123,7 +122,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Libraries.Register("output", "write", capture);
@@ -153,7 +152,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Libraries.Register("output", "write", capture);
@@ -180,7 +179,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
         engine.Libraries.Register("output", "write", capture);
@@ -207,7 +206,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var goal = new Goal
         {
@@ -279,11 +278,11 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context)
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Engine = engine;
             Context = context;
@@ -291,7 +290,7 @@ public class StartGoalTests
 
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "content", StringComparison.OrdinalIgnoreCase));

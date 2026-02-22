@@ -9,7 +9,7 @@ public class EventsTests
 {
     private static PLangContext CreateContext()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         return new PLangContext(engine);
     }
 

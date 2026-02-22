@@ -1,0 +1,2638 @@
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index e4fe5a6a..fefde92f 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -116,3 +116,69 @@ Target audiences:
+ 3. **Remove `PLangContext` from `Libraries.GetCodeGenerated` signature** — context only used for error creation, use context-free `ActionError` overloads instead.
+ 
+ **Plan file:** `/home/claude/.claude/plans/sequential-roaming-dragon.md` has the full plan with file list and test changes.
++
++---
++
++## engine.Action<T> — First-Class Module Objects on Engine
++**Date:** 2026-02-21
++**Context:** During ISettings scaffolding. Settings currently lives at `engine.Settings.For<archive.Settings>(context)`. Works, but the long-term navigation should be `engine.Action<archive.@this>().Settings.Max` — each action module as a first-class object on the engine with capabilities hanging off it (settings, and later potentially config, health, metrics, etc.).
++
++**Idea:** Introduce `engine.Action<T>()` where T is the module's `@this` class (e.g., `actions.archive.@this`). Returns a module-level aggregate object that carries per-module capabilities. Settings slots under it as the first capability.
++
++**Why parked:** Right now settings is the only capability that would hang off it. One capability doesn't justify a new abstraction. Introduce `Action<T>` when a second capability needs a home — then settings moves under it, internals unchanged, just the navigation path changes.
++
++**When to revisit:** When any of these come up — per-module config, module health checks, module-level events, or any other per-module concern beyond settings.
++
++---
++
++## Set Up PLang Test Environment for Bot Pipeline
++**Date:** 2026-02-21
++**Context:** Tester bot cannot run PLang .goal tests because (1) `plang` binary is not on PATH (PlangConsole not built), (2) `OPENAI_API_KEY` env var not set. Both needed for `plang p build && plang p !test`.
++
++**Action items:**
++- Build PlangConsole and add to PATH (or symlink)
++- Set `OPENAI_API_KEY` in the environment so bots can run PLang tests
++- Consider a config file or `.env` approach so the key persists across sessions
++
++---
++
++## Bot Reminder/Notification System
++**Date:** 2026-02-21
++**Context:** Currently the only way to capture "do this tomorrow" reminders is the todo list. Need a proper reminder mechanism so bots can flag time-sensitive items.
++
++**Idea:** For now, todos serve as reminders. Longer term, consider a structured reminder system (date-tagged entries that surface at session start).
++
++---
++
++## ~~Safe cast in Settings.Resolve<T>~~ ✅ DONE (2026-02-21)
++**Date:** 2026-02-21
++**Context:** Code analyzer found `Settings.Resolve<T>` uses hard cast `(T)value`. Tester elevated to CRITICAL — C# unboxing + JSON deserialization = production crash.
++**Completed:** Coder v2 replaced with `Cast<T>` helper: `is T` → `Convert.ChangeType` → fallback. Tests added for int→long widening and type mismatch fallback.
++
++---
++
++## ~~Cast<T> doesn't handle enums~~ ✅ DONE (2026-02-21)
++**Date:** 2026-02-21
++**Context:** Code analyzer v2 review of coder's `Cast<T>` fix.
++**Completed:** Coder added `if (target.IsEnum) return (T)Enum.ToObject(target, value)` to `Cast<T>`. Test `Resolve_WidensIntToEnum` added.
++
++---
++
++## ~~Clone() loses SettingsScope~~ ✅ DONE (2026-02-21)
++**Date:** 2026-02-21
++**Context:** Code analyzer v2 review.
++**Completed:** Coder added `SettingsScope = SettingsScope` to `PLangContext.Clone()` object initializer. Test `Clone_PreservesSettingsScope` added.
++
++---
++
++## GoalRunAsync settings test is simulation, not integration
++**Date:** 2026-02-21
++**Context:** Code analyzer v2 review. `GoalRunAsync_ScopesSettingsPerGoal` manually does `context.SettingsScope = null` / `context.SettingsScope = saved` to simulate RunAsync. If the real RunAsync changes its save/restore logic, this test still passes. Doesn't exercise the actual code path in `Goal/Methods.cs:29-32,89`.
++
++**Fix:** Write an integration test that creates a Goal with Steps and actually calls `RunAsync`, then verifies settings isolation. Requires test infrastructure for minimal Goal construction.
++
++---
++
++## Verify Defaults scope is ConcurrentDictionary
++**Date:** 2026-02-21
++**Context:** Code analyzer v2 review. `engine.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.
+diff --git a/PLang.Tests/Runtime2/Context/ContextVariableTests.cs b/PLang.Tests/Runtime2/Context/ContextVariableTests.cs
+index c10ea298..3c35131d 100644
+--- a/PLang.Tests/Runtime2/Context/ContextVariableTests.cs
++++ b/PLang.Tests/Runtime2/Context/ContextVariableTests.cs
+@@ -6,12 +6,12 @@ namespace PLang.Tests.Runtime2.Context;
+ 
+ public class ContextVariableTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/test");
++        _engine = new PLang.Runtime2.Engine.@this("/test");
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/Runtime2/Context/PLangContextTests.cs b/PLang.Tests/Runtime2/Context/PLangContextTests.cs
+index c5784809..22bc01b2 100644
+--- a/PLang.Tests/Runtime2/Context/PLangContextTests.cs
++++ b/PLang.Tests/Runtime2/Context/PLangContextTests.cs
+@@ -9,7 +9,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Constructor_SetsProperties()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         await Assert.That(context.Engine).IsEqualTo(engine);
+@@ -20,7 +20,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Constructor_GeneratesId()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         await Assert.That(context.Id).IsNotNull();
+@@ -30,7 +30,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Constructor_SetsCreatedAt()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var before = DateTime.UtcNow;
+ 
+         using var context = new PLangContext(engine);
+@@ -43,7 +43,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Constructor_AcceptsCustomMemoryStack()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memoryStack = new MemoryStack();
+         memoryStack.Set("test", "value");
+ 
+@@ -55,7 +55,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Constructor_WithParent_SetsParent()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var parent = new PLangContext(engine);
+ 
+         using var child = new PLangContext(engine, parent: parent);
+@@ -66,7 +66,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CallStack_DefaultsToNull()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         await Assert.That(context.CallStack).IsNull();
+@@ -75,7 +75,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CallStack_CanBeSet()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var callStack = new CallStack();
+ 
+@@ -87,7 +87,7 @@ public class PLangContextTests
+     [Test]
+     public async Task IsAsync_DefaultsFalse()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         await Assert.That(context.IsAsync).IsFalse();
+@@ -96,7 +96,7 @@ public class PLangContextTests
+     [Test]
+     public async Task IsAsync_CanBeSet()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         context.IsAsync = true;
+@@ -107,7 +107,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CancellationToken_LinkedToAppShutdown()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         engine.RequestShutdown();
+@@ -118,7 +118,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Indexer_SetsAndGetsValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         context["key"] = "value";
+@@ -129,7 +129,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Indexer_SetNull_RemovesKey()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         context["key"] = "value";
+ 
+@@ -141,7 +141,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Indexer_CaseInsensitive()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         context["Key"] = "value";
+ 
+@@ -152,7 +152,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Get_ReturnsTypedValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         context["count"] = 42;
+ 
+@@ -164,7 +164,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Get_NonexistentKey_ReturnsDefault()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         var value = context.Get<int>("nonexistent");
+@@ -175,7 +175,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Set_StoresTypedValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         context.Set("count", 42);
+@@ -186,7 +186,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Set_Null_RemovesKey()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         context.Set<string>("key", "value");
+ 
+@@ -198,7 +198,7 @@ public class PLangContextTests
+     [Test]
+     public async Task ContainsKey_ExistingKey_ReturnsTrue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         context["key"] = "value";
+ 
+@@ -208,7 +208,7 @@ public class PLangContextTests
+     [Test]
+     public async Task ContainsKey_NonexistentKey_ReturnsFalse()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         await Assert.That(context.ContainsKey("nonexistent")).IsFalse();
+@@ -217,7 +217,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CreateChild_CreatesWithClonedMemoryStack()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var parent = new PLangContext(engine);
+         parent.MemoryStack.Set("test", "value");
+ 
+@@ -230,7 +230,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CreateChild_SetsParent()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var parent = new PLangContext(engine);
+ 
+         using var child = parent.CreateChild();
+@@ -241,7 +241,7 @@ public class PLangContextTests
+     [Test]
+     public async Task CreateChild_AcceptsCustomMemoryStack()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var parent = new PLangContext(engine);
+         var customStack = new MemoryStack();
+         customStack.Set("custom", "value");
+@@ -254,7 +254,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Clone_CreatesIndependentCopy()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var original = new PLangContext(engine);
+         original["key"] = "value";
+         original.IsAsync = true;
+@@ -268,7 +268,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Clone_IndependentData()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var original = new PLangContext(engine);
+         original["key"] = "value";
+ 
+@@ -282,7 +282,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Clone_AcceptsCustomMemoryStack()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var original = new PLangContext(engine);
+         var customStack = new MemoryStack();
+         customStack.Set("custom", "value");
+@@ -295,7 +295,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Cancel_CancelsCancellationToken()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         context.Cancel();
+@@ -306,7 +306,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Duration_ReturnsPositiveTimeSpan()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         await Task.Delay(10);
+ 
+@@ -318,7 +318,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Dispose_CancelsToken()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine);
+         var token = context.CancellationToken;
+ 
+@@ -330,7 +330,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Dispose_ClearsData()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine);
+         context["key"] = "value";
+ 
+@@ -342,7 +342,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Dispose_DisposesDisposableValues()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine);
+         var disposable = new TestDisposable();
+         context["disposable"] = disposable;
+@@ -355,7 +355,7 @@ public class PLangContextTests
+     [Test]
+     public async Task Dispose_CalledTwice_DoesNotThrow()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine);
+ 
+         context.Dispose();
+@@ -389,7 +389,7 @@ public class PLangContextAccessorTests
+     public async Task Current_SetAndGet_ReturnsSameContext()
+     {
+         var accessor = new PLangContextAccessor();
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+ 
+         accessor.Current = context;
+@@ -401,7 +401,7 @@ public class PLangContextAccessorTests
+     public async Task Current_SetNull_ReturnsNull()
+     {
+         var accessor = new PLangContextAccessor();
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         accessor.Current = context;
+ 
+diff --git a/PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs b/PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs
+index 1663068b..7573b35a 100644
+--- a/PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs
++++ b/PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs
+@@ -5,12 +5,12 @@ namespace PLang.Tests.Runtime2.Core;
+ 
+ public class CallStackIntegrationTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/test");
++        _engine = new PLang.Runtime2.Engine.@this("/test");
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/Runtime2/Core/EngineTests.cs b/PLang.Tests/Runtime2/Core/EngineTests.cs
+index 228b212a..d0bf3169 100644
+--- a/PLang.Tests/Runtime2/Core/EngineTests.cs
++++ b/PLang.Tests/Runtime2/Core/EngineTests.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+ 
+@@ -54,7 +53,7 @@ public class EngineTests
+     [Test]
+     public async Task System_ReturnsActorWithCorrectName()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var system = engine.System;
+ 
+@@ -64,7 +63,7 @@ public class EngineTests
+     [Test]
+     public async Task Service_ReturnsActorWithCorrectName()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var service = engine.Service;
+ 
+@@ -74,7 +73,7 @@ public class EngineTests
+     [Test]
+     public async Task User_ReturnsActorWithCorrectName()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var user = engine.User;
+ 
+@@ -84,7 +83,7 @@ public class EngineTests
+     [Test]
+     public async Task Actors_AreLazilyCreated()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Access only User actor
+         var user = engine.User;
+@@ -98,7 +97,7 @@ public class EngineTests
+     [Test]
+     public async Task Actors_HaveIsolatedContexts()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         engine.User.Context.MemoryStack.Set("key", "user-value");
+         engine.System.Context.MemoryStack.Set("key", "system-value");
+@@ -110,7 +109,7 @@ public class EngineTests
+     [Test]
+     public async Task Actors_HaveIsolatedIO()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         engine.User.Channels.CreateMemoryChannel("test");
+         engine.System.Channels.CreateMemoryChannel("test");
+@@ -124,7 +123,7 @@ public class EngineTests
+     [Test]
+     public async Task Actor_Context_HasBackReference()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.User.Context.Actor).IsEqualTo(engine.User);
+         await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
+@@ -134,7 +133,7 @@ public class EngineTests
+     [Test]
+     public async Task Actor_SameInstanceOnMultipleAccess()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var user1 = engine.User;
+         var user2 = engine.User;
+@@ -147,7 +146,7 @@ public class EngineTests
+     [Test]
+     public async Task Constructor_SetsProperties()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
+         await Assert.That(engine.Libraries).IsNotNull();
+@@ -159,7 +158,7 @@ public class EngineTests
+     [Test]
+     public async Task Constructor_GeneratesId()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Id).IsNotNull();
+         await Assert.That(engine.Id.Length).IsEqualTo(12);
+@@ -168,7 +167,7 @@ public class EngineTests
+     [Test]
+     public async Task Constructor_DefaultsNameToRuntime2()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Name).IsEqualTo("Runtime2");
+     }
+@@ -176,7 +175,7 @@ public class EngineTests
+     [Test]
+     public async Task Name_CanBeChanged()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         engine.Name = "CustomEngine";
+ 
+@@ -186,7 +185,7 @@ public class EngineTests
+     [Test]
+     public async Task Debug_IsEnabled_ReflectsEngine()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         engine.Debug.IsEnabled = true;
+ 
+@@ -197,7 +196,7 @@ public class EngineTests
+     public async Task Constructor_AcceptsCustomLibraries()
+     {
+         var libraries = new EngineLibraries();
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+ 
+         await Assert.That(engine.Libraries).IsEqualTo(libraries);
+     }
+@@ -205,7 +204,7 @@ public class EngineTests
+     [Test]
+     public async Task Channels_HasSerializers()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Channels.Serializers).IsNotNull();
+         await Assert.That(engine.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
+@@ -214,7 +213,7 @@ public class EngineTests
+     [Test]
+     public async Task Libraries_HasVariableActions()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
+         await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
+@@ -223,7 +222,7 @@ public class EngineTests
+     [Test]
+     public async Task Libraries_HasOutputActions()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
+     }
+@@ -231,7 +230,7 @@ public class EngineTests
+     [Test]
+     public async Task CreateContext_CreatesNewContext()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         using var context = engine.CreateContext();
+ 
+@@ -243,7 +242,7 @@ public class EngineTests
+     [Test]
+     public async Task CreateContext_AcceptsCustomMemoryStack()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memoryStack = new MemoryStack();
+         memoryStack.Set("test", "value");
+ 
+@@ -255,7 +254,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_NonexistentGoal_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var result = await engine.RunGoalAsync("NonexistentGoal");
+ 
+@@ -266,7 +265,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var goal = new Goal { Name = "EmptyGoal" };
+         engine.Goals.Add(goal);
+ 
+@@ -278,7 +277,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_CancelledToken_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var goal = new Goal { Name = "TestGoal" };
+         engine.Goals.Add(goal);
+         var cts = new CancellationTokenSource();
+@@ -293,7 +292,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_SetsContextGoal()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var goal = new Goal { Name = "TestGoal" };
+         engine.Goals.Add(goal);
+         using var context = engine.CreateContext();
+@@ -308,7 +307,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_PushesCallFrame()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var goal = new Goal { Name = "TestGoal" };
+         engine.Goals.Add(goal);
+ 
+@@ -322,7 +321,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_ExecutesSteps()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -346,7 +345,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_StepFailure_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -367,7 +366,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_StepWithIgnoreError_ContinuesOnError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -407,7 +406,7 @@ public class EngineTests
+     [Test]
+     public async Task StepRunAsync_ActionNotFound_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var step = MakeStep("nonexistent", "method");
+         using var context = engine.CreateContext();
+ 
+@@ -420,7 +419,7 @@ public class EngineTests
+     [Test]
+     public async Task StepRunAsync_SetsReturnVariable()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var step = MakeStep("variable", "set",
+             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
+@@ -434,7 +433,7 @@ public class EngineTests
+     [Test]
+     public async Task StepRunAsync_RecordsStep()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var step = MakeStep("variable", "clear", index: 5, text: "test step");
+ 
+@@ -450,7 +449,7 @@ public class EngineTests
+     [Test]
+     public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var throwingHandler = new ThrowingHandler();
+         engine.Libraries.Register("throwing", "fail", throwingHandler);
+@@ -467,7 +466,7 @@ public class EngineTests
+     [Test]
+     public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var nonGeneratedHandler = new NonGeneratedHandler();
+         engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
+@@ -484,7 +483,7 @@ public class EngineTests
+     [Test]
+     public async Task DisposeAsync_DisposesDisposableHandlers()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var disposableHandler = new DisposableHandler();
+         engine.Libraries.Register("disposable", "do", disposableHandler);
+ 
+@@ -496,7 +495,7 @@ public class EngineTests
+     [Test]
+     public async Task DisposeAsync_DisposesAsyncDisposableHandlers()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var asyncDisposableHandler = new AsyncDisposableHandler();
+         engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
+ 
+@@ -508,7 +507,7 @@ public class EngineTests
+     [Test]
+     public async Task DisposeAsync_CalledTwice_DoesNotThrow()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await engine.DisposeAsync();
+         await engine.DisposeAsync();
+@@ -519,7 +518,7 @@ public class EngineTests
+     [Test]
+     public async Task DisposeAsync_DisposesCreatedActors()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Access actors to create them
+         var user = engine.User;
+@@ -540,7 +539,7 @@ public class EngineTests
+     [Test]
+     public async Task DisposeAsync_HandlesUncreatedActors()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Don't access any actors
+         await engine.DisposeAsync();
+@@ -552,7 +551,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_WithActor_UsesActorContext()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -577,7 +576,7 @@ public class EngineTests
+     [Test]
+     public async Task RunGoalAsync_ByName_WithActor_UsesActorContext()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -600,24 +599,24 @@ public class EngineTests
+     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
+     private class NonGeneratedHandler : IClass
+     {
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+     }
+ 
+     private class DisposableHandler : IClass, ICodeGenerated, IDisposable
+     {
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+         public bool IsDisposed { get; private set; }
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             return ExecuteAsync(null);
+@@ -627,14 +626,14 @@ public class EngineTests
+ 
+     private class AsyncDisposableHandler : IClass, ICodeGenerated, IAsyncDisposable
+     {
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+         public bool IsDisposed { get; private set; }
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             return ExecuteAsync(null);
+@@ -644,16 +643,16 @@ public class EngineTests
+ 
+     private class ThrowingHandler : IClass, ICodeGenerated
+     {
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters)
+         {
+             throw new InvalidOperationException("Test exception");
+         }
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             return ExecuteAsync(null);
+@@ -665,7 +664,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Get_WithNormalValue_ReturnsValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         engine.Property["greeting"] = "hello";
+ 
+         var result = await engine.Property.Get("greeting");
+@@ -676,7 +675,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Get_WithNullKey_ReturnsNull()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var result = await engine.Property.Get("nonexistent");
+ 
+@@ -686,7 +685,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Get_WithGoalCall_RunsGoal()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Set up a goal that sets a variable
+         var goal = new Goal
+@@ -713,7 +712,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Indexer_WithGoalCall_ReturnsRawGoalCall()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         var goalCall = new GoalCall { Name = "SummaryGoal" };
+         engine.Property["Summary"] = goalCall;
+ 
+@@ -727,7 +726,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Get_Generic_WithNormalValue_ReturnsTyped()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         engine.Property["count"] = 42;
+ 
+         var result = await engine.Property.Get<int>("count");
+@@ -738,7 +737,7 @@ public class EngineTests
+     [Test]
+     public async Task Property_Get_Generic_TypeMismatch_ReturnsDefault()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         engine.Property["count"] = "not-an-int";
+ 
+         var result = await engine.Property.Get<int>("count");
+diff --git a/PLang.Tests/Runtime2/Core/EventCollectionTests.cs b/PLang.Tests/Runtime2/Core/EventCollectionTests.cs
+index 3f432465..278c0c9f 100644
+--- a/PLang.Tests/Runtime2/Core/EventCollectionTests.cs
++++ b/PLang.Tests/Runtime2/Core/EventCollectionTests.cs
+@@ -9,7 +9,7 @@ public class EventsTests
+ {
+     private static PLangContext CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         return new PLangContext(engine);
+     }
+ 
+diff --git a/PLang.Tests/Runtime2/Core/EventIntegrationTests.cs b/PLang.Tests/Runtime2/Core/EventIntegrationTests.cs
+index 9fd2a2d4..8c09b432 100644
+--- a/PLang.Tests/Runtime2/Core/EventIntegrationTests.cs
++++ b/PLang.Tests/Runtime2/Core/EventIntegrationTests.cs
+@@ -7,12 +7,12 @@ namespace PLang.Tests.Runtime2.Core;
+ 
+ public class EventIntegrationTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/test");
++        _engine = new PLang.Runtime2.Engine.@this("/test");
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/Runtime2/Core/StartGoalTests.cs b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+index 0524786e..6306bc50 100644
+--- a/PLang.Tests/Runtime2/Core/StartGoalTests.cs
++++ b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+ using Path = System.IO.Path;
+@@ -13,7 +12,7 @@ public class StartGoalTests
+     [Test]
+     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Replace output.write with capturing version
+         var capture = new CapturingWriteHandler();
+@@ -61,7 +60,7 @@ public class StartGoalTests
+     [Test]
+     public async Task StartGoal_LoadFromPrJson_SetsVariablesAndWritesOutput()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // Replace output.write with capturing version
+         var capture = new CapturingWriteHandler();
+@@ -96,7 +95,7 @@ public class StartGoalTests
+     [Test]
+     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -123,7 +122,7 @@ public class StartGoalTests
+     [Test]
+     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var capture = new CapturingWriteHandler();
+         engine.Libraries.Register("output", "write", capture);
+@@ -153,7 +152,7 @@ public class StartGoalTests
+     [Test]
+     public async Task ResolveValue_LiteralString_RemainsUnchanged()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var capture = new CapturingWriteHandler();
+         engine.Libraries.Register("output", "write", capture);
+@@ -180,7 +179,7 @@ public class StartGoalTests
+     [Test]
+     public async Task ResolveValue_MissingVariable_ResolvesToEmptyString()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var capture = new CapturingWriteHandler();
+         engine.Libraries.Register("output", "write", capture);
+@@ -207,7 +206,7 @@ public class StartGoalTests
+     [Test]
+     public async Task ResolveValue_FullMissingVariable_ResolvesToNull()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var goal = new Goal
+         {
+@@ -279,11 +278,11 @@ public class StartGoalTests
+     {
+         public List<string> Lines { get; } = new();
+ 
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context)
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Engine = engine;
+             Context = context;
+@@ -291,7 +290,7 @@ public class StartGoalTests
+ 
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+ 
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             var contentData = parameters.FirstOrDefault(d => string.Equals(d.Name, "content", StringComparison.OrdinalIgnoreCase));
+diff --git a/PLang.Tests/Runtime2/Core/StepCacheTests.cs b/PLang.Tests/Runtime2/Core/StepCacheTests.cs
+index 78c5cf76..e5eb2058 100644
+--- a/PLang.Tests/Runtime2/Core/StepCacheTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepCacheTests.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+ 
+@@ -34,7 +33,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_SecondRun_SkipsHandler()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("first-result");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -63,7 +62,7 @@ public class StepCacheTests
+     [Test]
+     public async Task NoCacheSettings_HandlerAlwaysCalled()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("value");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -88,7 +87,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_RestoresVariableValue()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("cached-value");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -117,7 +116,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_RestoresTypeName()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler(42L); // long value
+         engine.Libraries.Register("test", "compute", handler);
+@@ -153,7 +152,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_FailedAction_NotCached()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new FailOnFirstCallHandler();
+         engine.Libraries.Register("test", "flaky", handler);
+@@ -184,7 +183,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_DifferentSteps_DifferentCacheKeys()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new SequenceHandler("a", "b");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -217,7 +216,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_CustomKey_WithVariableResolution()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("result");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -296,7 +295,7 @@ public class StepCacheTests
+     [Test]
+     public async Task Engine_Cache_DefaultsToMemoryStepCache()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         await Assert.That(engine.Cache).IsNotNull();
+         await Assert.That(engine.Cache).IsTypeOf<MemoryStepCache>();
+@@ -305,7 +304,7 @@ public class StepCacheTests
+     [Test]
+     public async Task Engine_Cache_CanBeSwapped()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var custom = new FakeCache();
+         engine.Cache = custom;
+@@ -316,7 +315,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CachedStep_UsesCustomCacheImplementation()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var fakeCache = new FakeCache();
+         engine.Cache = fakeCache;
+@@ -404,7 +403,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CacheHitEvent_Fires_OnSecondCall()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("value");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -433,7 +432,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CacheMissEvent_Fires_OnFirstCall()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("value");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -462,7 +461,7 @@ public class StepCacheTests
+     [Test]
+     public async Task CacheEvents_BothFireCorrectly()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         var handler = new CountingHandler("value");
+         engine.Libraries.Register("test", "fetch", handler);
+@@ -534,14 +533,14 @@ public class StepCacheTests
+         public CountingHandler(object returnValue) { _returnValue = returnValue; }
+ 
+         public int CallCount { get; private set; }
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok(_returnValue));
+ 
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             CallCount++;
+@@ -555,14 +554,14 @@ public class StepCacheTests
+     private class FailOnFirstCallHandler : IClass, ICodeGenerated
+     {
+         public int CallCount { get; private set; }
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+ 
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             CallCount++;
+@@ -582,14 +581,14 @@ public class StepCacheTests
+         public SequenceHandler(params string[] values) { _values = values; }
+ 
+         public int CallCount { get; private set; }
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+ 
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             var value = _values[Math.Min(CallCount, _values.Length - 1)];
+diff --git a/PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs b/PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs
+index b654e8e6..5a029c3e 100644
+--- a/PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs
+@@ -5,12 +5,12 @@ namespace PLang.Tests.Runtime2.Core;
+ 
+ public class StepErrorHandlingTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/app");
++        _engine = new PLang.Runtime2.Engine.@this("/app");
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/Runtime2/Core/StepRetryTests.cs b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+index f4b0e6ae..2e4def21 100644
+--- a/PLang.Tests/Runtime2/Core/StepRetryTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+ 
+@@ -11,13 +10,13 @@ namespace PLang.Tests.Runtime2.Core;
+ /// </summary>
+ public class StepRetryTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+     private FlakyHandler _flaky = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/app");
++        _engine = new PLang.Runtime2.Engine.@this("/app");
+         _flaky = new FlakyHandler();
+         _engine.Libraries.Register("test", "flaky", _flaky);
+     }
+@@ -450,11 +449,11 @@ public class StepRetryTests
+         public int FailCount { get; set; } = 0;
+         public int CallCount { get; private set; } = 0;
+ 
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+ 
+-        public void Initialize(Engine engine, PLangContext context)
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Engine = engine;
+             Context = context;
+@@ -470,7 +469,7 @@ public class StepRetryTests
+             return Task.FromResult(Data.Ok("success"));
+         }
+ 
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             return ExecuteAsync(null);
+diff --git a/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs b/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
+new file mode 100644
+index 00000000..19b34357
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
+@@ -0,0 +1,78 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Settings;
++using ArchiveSettings = PLang.Runtime2.actions.archive.Settings;
++using EngineType = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Engine.Settings;
++
++public class ModuleViewTests
++{
++    private (EngineType engine, PLangContext context) CreateEngine()
++    {
++        var engine = new EngineType("/app");
++        var context = new PLangContext(engine, new MemoryStack());
++        return (engine, context);
++    }
++
++    [Test]
++    public async Task For_ReturnsModuleView()
++    {
++        var (engine, context) = CreateEngine();
++
++        var view = engine.Settings.For<ArchiveSettings>(context);
++
++        await Assert.That(view).IsNotNull();
++    }
++
++    [Test]
++    public async Task ModuleView_ResolvesClassDefault()
++    {
++        // No settings set — ModuleView should resolve to the class default.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++
++        var view = engine.Settings.For<ArchiveSettings>(context);
++        var result = view.Resolve<long>("max", classDefault);
++
++        await Assert.That(result).IsEqualTo(classDefault);
++    }
++
++    [Test]
++    public async Task ModuleView_ResolvesGoalScopedValue()
++    {
++        // A value has been set in goal scope — ModuleView should find it.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++        long goalValue = 20 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", goalValue, context);
++
++        var view = engine.Settings.For<ArchiveSettings>(context);
++        var result = view.Resolve<long>("max", classDefault);
++
++        await Assert.That(result).IsEqualTo(goalValue);
++    }
++
++    [Test]
++    public async Task ModuleView_DifferentContextsGetDifferentValues()
++    {
++        // Two contexts with different settings. Each ModuleView should see its own value.
++        var (engine, context1) = CreateEngine();
++        var context2 = new PLangContext(engine, new MemoryStack());
++        long classDefault = 100 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", 20L * 1024 * 1024, context1);
++        engine.Settings.Set("archive.max", 50L * 1024 * 1024, context2);
++
++        var view1 = engine.Settings.For<ArchiveSettings>(context1);
++        var view2 = engine.Settings.For<ArchiveSettings>(context2);
++
++        var result1 = view1.Resolve<long>("max", classDefault);
++        var result2 = view2.Resolve<long>("max", classDefault);
++
++        await Assert.That(result1).IsEqualTo(20L * 1024 * 1024);
++        await Assert.That(result2).IsEqualTo(50L * 1024 * 1024);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs b/PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs
+new file mode 100644
+index 00000000..0cbd90a9
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs
+@@ -0,0 +1,111 @@
++using PLang.Runtime2.Engine.Settings;
++
++namespace PLang.Tests.Runtime2.Engine.Settings;
++
++public class ScopeTests
++{
++    [Test]
++    public async Task Set_ThenGet_ReturnsValue()
++    {
++        var scope = new Scope();
++
++        scope.Set("archive.max", 20L * 1024 * 1024);
++        var result = scope.Get("archive.max");
++
++        await Assert.That(result).IsEqualTo(20L * 1024 * 1024);
++    }
++
++    [Test]
++    public async Task Get_WhenNotSet_ReturnsNull()
++    {
++        var scope = new Scope();
++
++        var result = scope.Get("archive.max");
++
++        await Assert.That(result).IsNull();
++    }
++
++    [Test]
++    public async Task Contains_WhenSet_ReturnsTrue()
++    {
++        var scope = new Scope();
++
++        scope.Set("archive.max", 100L);
++
++        await Assert.That(scope.Contains("archive.max")).IsTrue();
++    }
++
++    [Test]
++    public async Task Contains_WhenNotSet_ReturnsFalse()
++    {
++        var scope = new Scope();
++
++        await Assert.That(scope.Contains("archive.max")).IsFalse();
++    }
++
++    [Test]
++    public async Task Keys_AreCaseInsensitive()
++    {
++        var scope = new Scope();
++
++        scope.Set("Archive.Max", 42L);
++        var result = scope.Get("archive.max");
++
++        await Assert.That(result).IsEqualTo(42L);
++    }
++
++    [Test]
++    public async Task Set_OverwritesExistingValue()
++    {
++        var scope = new Scope();
++
++        scope.Set("archive.max", 1L);
++        scope.Set("archive.max", 2L);
++        var result = scope.Get("archive.max");
++
++        await Assert.That(result).IsEqualTo(2L);
++    }
++
++    [Test]
++    public async Task Set_NullValue_RemovesKey()
++    {
++        var scope = new Scope();
++
++        scope.Set("archive.max", 100L);
++        scope.Set("archive.max", null!);
++
++        await Assert.That(scope.Contains("archive.max")).IsFalse();
++        await Assert.That(scope.Get("archive.max")).IsNull();
++    }
++
++    [Test]
++    public async Task Clone_CreatesIndependentCopy()
++    {
++        var scope = new Scope();
++        scope.Set("archive.max", 100L);
++
++        var clone = scope.Clone();
++
++        // Clone has the same values
++        await Assert.That(clone.Get("archive.max")).IsEqualTo(100L);
++
++        // Writes to clone don't affect original
++        clone.Set("archive.max", 999L);
++        await Assert.That(scope.Get("archive.max")).IsEqualTo(100L);
++        await Assert.That(clone.Get("archive.max")).IsEqualTo(999L);
++
++        // Writes to original don't affect clone
++        scope.Set("archive.max", 1L);
++        await Assert.That(clone.Get("archive.max")).IsEqualTo(999L);
++    }
++
++    [Test]
++    public async Task Clone_EmptyScope_ReturnsEmptyScope()
++    {
++        var scope = new Scope();
++
++        var clone = scope.Clone();
++
++        await Assert.That(clone.Contains("archive.max")).IsFalse();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs b/PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs
+new file mode 100644
+index 00000000..3f0625c2
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs
+@@ -0,0 +1,241 @@
++using System.IO.Compression;
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Settings;
++using EngineType = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Engine.Settings;
++
++public class SettingsTests
++{
++    private (EngineType engine, PLangContext context) CreateEngine()
++    {
++        var engine = new EngineType("/app");
++        var context = new PLangContext(engine, new MemoryStack());
++        return (engine, context);
++    }
++
++    [Test]
++    public async Task Resolve_ReturnsClassDefault_WhenNoScopeSet()
++    {
++        // No settings have been written to any scope.
++        // Resolve should fall through to the class default.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++
++        await Assert.That(result).IsEqualTo(classDefault);
++    }
++
++    [Test]
++    public async Task Resolve_ReturnsGoalScopedValue_WhenSet()
++    {
++        // A settings handler writes to the context's goal scope.
++        // Resolve should find it.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++        long goalValue = 20 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", goalValue, context);
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++
++        await Assert.That(result).IsEqualTo(goalValue);
++    }
++
++    [Test]
++    public async Task Resolve_InheritsFromParentContext()
++    {
++        // Parent context has a setting. Child context (no local setting) should inherit it.
++        var (engine, parentContext) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++        long parentValue = 50 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", parentValue, parentContext);
++
++        var childContext = parentContext.CreateChild();
++
++        var result = engine.Settings.Resolve<long>("archive.max", childContext, classDefault);
++
++        await Assert.That(result).IsEqualTo(parentValue);
++    }
++
++    [Test]
++    public async Task Resolve_EngineDefaultOverridesClassDefault()
++    {
++        // Engine default is set, no goal scope set.
++        // Should return engine default, not class default.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++        long engineDefault = 200 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", engineDefault, context, isDefault: true);
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++
++        await Assert.That(result).IsEqualTo(engineDefault);
++    }
++
++    [Test]
++    public async Task Resolve_GoalScopeOverridesEngineDefault()
++    {
++        // Both engine default and goal scope are set.
++        // Goal scope should win.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++        long engineDefault = 200 * 1024 * 1024;
++        long goalValue = 20 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", engineDefault, context, isDefault: true);
++        engine.Settings.Set("archive.max", goalValue, context);
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++
++        await Assert.That(result).IsEqualTo(goalValue);
++    }
++
++    [Test]
++    public async Task Resolve_ChildGoalScope_OverridesParentGoalScope()
++    {
++        // Parent has a goal-scoped value. Child sets its own. Child's value wins.
++        var (engine, parentContext) = CreateEngine();
++        long classDefault = 100 * 1024 * 1024;
++
++        engine.Settings.Set("archive.max", 50L * 1024 * 1024, parentContext);
++
++        var childContext = parentContext.CreateChild();
++        engine.Settings.Set("archive.max", 10L * 1024 * 1024, childContext);
++
++        var result = engine.Settings.Resolve<long>("archive.max", childContext, classDefault);
++
++        await Assert.That(result).IsEqualTo(10L * 1024 * 1024);
++    }
++
++    [Test]
++    public async Task Resolve_WidensIntToLong()
++    {
++        // JSON deserialization often produces int when the value fits.
++        // Resolve<long> must handle int→long widening without crashing.
++        var (engine, context) = CreateEngine();
++
++        engine.Settings.Set("archive.max", (int)42, context);
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, 0L);
++
++        await Assert.That(result).IsEqualTo(42L);
++    }
++
++    [Test]
++    public async Task Resolve_TypeMismatch_ReturnsClassDefault()
++    {
++        // If the stored value can't be converted to T, fall back to classDefault.
++        var (engine, context) = CreateEngine();
++
++        engine.Settings.Set("archive.max", "not-a-number", context);
++
++        var result = engine.Settings.Resolve<long>("archive.max", context, 99L);
++
++        await Assert.That(result).IsEqualTo(99L);
++    }
++
++    [Test]
++    public async Task Resolve_SkipsNullScopeInParentChain()
++    {
++        // Grandparent has a setting. Middle parent has no SettingsScope (null).
++        // Child should still resolve grandparent's value.
++        var (engine, grandparent) = CreateEngine();
++        long classDefault = 100L;
++
++        engine.Settings.Set("archive.max", 42L, grandparent);
++
++        var parent = grandparent.CreateChild(); // no settings set — SettingsScope stays null
++        var child = parent.CreateChild();
++
++        var result = engine.Settings.Resolve<long>("archive.max", child, classDefault);
++
++        await Assert.That(result).IsEqualTo(42L);
++    }
++
++    [Test]
++    public async Task GoalRunAsync_ScopesSettingsPerGoal()
++    {
++        // When a goal runs, its settings scope is isolated.
++        // After the goal returns, the previous scope is restored.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100L;
++
++        engine.Settings.Set("archive.max", 50L, context);
++        var scopeBefore = context.SettingsScope;
++
++        // Simulate what Goal.RunAsync does: save, null, restore
++        var saved = context.SettingsScope;
++        context.SettingsScope = null;
++
++        // Inside the "goal": no settings visible from outer scope
++        var duringGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++        await Assert.That(duringGoal).IsEqualTo(classDefault);
++
++        // Set something inside the goal
++        engine.Settings.Set("archive.max", 10L, context);
++        var insideGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++        await Assert.That(insideGoal).IsEqualTo(10L);
++
++        // Restore — outer scope is back
++        context.SettingsScope = saved;
++        var afterGoal = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++        await Assert.That(afterGoal).IsEqualTo(50L);
++    }
++
++    [Test]
++    public async Task Resolve_WidensIntToEnum()
++    {
++        // JSON deserialization often produces int for enum values.
++        // Resolve<CompressionLevel> must handle int→enum conversion.
++        var (engine, context) = CreateEngine();
++
++        engine.Settings.Set("archive.level", (int)CompressionLevel.Fastest, context);
++
++        var result = engine.Settings.Resolve("archive.level", context, CompressionLevel.Optimal);
++
++        await Assert.That(result).IsEqualTo(CompressionLevel.Fastest);
++    }
++
++    [Test]
++    public async Task Clone_PreservesSettingsScope()
++    {
++        // A cloned context should see the same settings as the original.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100L;
++
++        engine.Settings.Set("archive.max", 42L, context);
++
++        var clone = context.Clone();
++
++        var result = engine.Settings.Resolve<long>("archive.max", clone, classDefault);
++        await Assert.That(result).IsEqualTo(42L);
++    }
++
++    [Test]
++    public async Task Clone_WritesToClone_DoNotAffectOriginal()
++    {
++        // Clone gets an independent copy of SettingsScope.
++        // Writing to the clone must not pollute the original.
++        var (engine, context) = CreateEngine();
++        long classDefault = 100L;
++
++        engine.Settings.Set("archive.max", 42L, context);
++
++        var clone = context.Clone();
++        engine.Settings.Set("archive.max", 999L, clone);
++
++        // Clone sees the new value
++        var cloneResult = engine.Settings.Resolve<long>("archive.max", clone, classDefault);
++        await Assert.That(cloneResult).IsEqualTo(999L);
++
++        // Original is untouched
++        var originalResult = engine.Settings.Resolve<long>("archive.max", context, classDefault);
++        await Assert.That(originalResult).IsEqualTo(42L);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs b/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
+index da0fa91e..02c87ed4 100644
+--- a/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
++++ b/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
+@@ -345,7 +345,7 @@ public class StepErrorTests
+     public async Task FromException_CreatesStepErrorWithStep()
+     {
+         var ex = new Exception("Step crashed");
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var step = new Step { Text = "test step" };
+         context.Step = step;
+diff --git a/PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs b/PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs
+index d60b390a..fd44da51 100644
+--- a/PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs
++++ b/PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs
+@@ -15,7 +15,7 @@ public class EventCacheInvalidationTests
+     [Test]
+     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+ 
+@@ -43,7 +43,7 @@ public class EventCacheInvalidationTests
+     [Test]
+     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+         var step = new Step { Text = "do something" };
+@@ -75,7 +75,7 @@ public class EventCacheInvalidationTests
+     [Test]
+     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var action = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+         {
+@@ -107,7 +107,7 @@ public class EventCacheInvalidationTests
+     [Test]
+     public async Task EventsFor_ManualInvalidation_Works()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = new PLangContext(engine);
+         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
+ 
+diff --git a/PLang.Tests/Runtime2/IO/IOTests.cs b/PLang.Tests/Runtime2/IO/IOTests.cs
+index a70685b7..697fec2c 100644
+--- a/PLang.Tests/Runtime2/IO/IOTests.cs
++++ b/PLang.Tests/Runtime2/IO/IOTests.cs
+@@ -6,7 +6,7 @@ public class IOTests
+ {
+     private static EngineChannels CreateIO()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         return new EngineChannels(engine);
+     }
+ 
+@@ -186,7 +186,7 @@ public class IOTests
+             // Use a block scope to ensure IO is disposed before file delete
+             {
+                 // Engine must be rooted at temp dir so filesystem allows access
+-                await using var engine = new Engine(Path.GetTempPath());
++                await using var engine = new PLang.Runtime2.Engine.@this(Path.GetTempPath());
+                 await using var io = new EngineChannels(engine);
+                 var channel = io.CreateFileChannel("test", tempFile);
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/LibrariesTests.cs b/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
+index e703bdba..6a5e226c 100644
+--- a/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
++++ b/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+ 
+@@ -230,7 +229,7 @@ public class LibrariesTests
+     public async Task GetCodeGenerated_BuiltInAction_ReturnsHandler()
+     {
+         var libraries = new EngineLibraries();
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (handler, error) = libraries.GetCodeGenerated("variable", "set", context);
+@@ -245,7 +244,7 @@ public class LibrariesTests
+         var libraries = new EngineLibraries();
+         var handler = new MockCodeGenHandler();
+         libraries.Register("custom", "run", handler);
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
+@@ -259,7 +258,7 @@ public class LibrariesTests
+     {
+         var libraries = new EngineLibraries();
+         libraries.Register("legacy", "do", new MockHandler());
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (handler, error) = libraries.GetCodeGenerated("legacy", "do", context);
+@@ -273,7 +272,7 @@ public class LibrariesTests
+     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
+     {
+         var libraries = new EngineLibraries();
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (handler, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
+@@ -295,7 +294,7 @@ public class LibrariesTests
+         external.Register("custom", "run", externalHandler);
+         libraries.Add(external);
+ 
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
+@@ -315,7 +314,7 @@ public class LibrariesTests
+         external.Register("exotic", "magic", externalHandler);
+         libraries.Add(external);
+ 
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (result, error) = libraries.GetCodeGenerated("exotic", "magic", context);
+@@ -328,7 +327,7 @@ public class LibrariesTests
+     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
+     {
+         var libraries = new EngineLibraries();
+-        await using var engine = new Engine("/app", libraries);
++        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         // variable.set is type-registered (discovered via [Action] attribute)
+@@ -419,7 +418,7 @@ public class LibrariesTests
+     [Test]
+     public async Task Library_Discover_NonMatchingNamespace_FindsNothing()
+     {
+-        var library = new Library("test", typeof(Engine).Assembly);
++        var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
+ 
+         library.Discover("Some.Completely.Wrong.Namespace");
+ 
+@@ -429,7 +428,7 @@ public class LibrariesTests
+     [Test]
+     public async Task Library_Discover_CorrectNamespace_FindsHandlers()
+     {
+-        var library = new Library("test", typeof(Engine).Assembly);
++        var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
+ 
+         library.Discover("PLang.Runtime2.actions");
+ 
+@@ -654,7 +653,7 @@ public class LibrariesTests
+     [Test]
+     public async Task Library_Assembly_Property()
+     {
+-        var assembly = typeof(Engine).Assembly;
++        var assembly = typeof(PLang.Runtime2.Engine.@this).Assembly;
+         var library = new Library("test", assembly);
+ 
+         await Assert.That(library.Assembly).IsEqualTo(assembly);
+@@ -678,10 +677,10 @@ public class LibrariesTests
+     /// </summary>
+     private class MockHandler : IClass
+     {
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+     }
+ 
+@@ -691,12 +690,12 @@ public class LibrariesTests
+     private class MockCodeGenHandler : IClass, ICodeGenerated
+     {
+         public string Tag { get; set; } = "";
+-        public Engine Engine { get; private set; } = null!;
++        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+         public System.Type? ParameterType => null;
+-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
++        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
++        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
+         {
+             Initialize(engine, context);
+             return ExecuteAsync(null);
+diff --git a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+index f199b2b3..813ded66 100644
+--- a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
++++ b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+@@ -7,14 +7,14 @@ public class PathTests : IDisposable
+ {
+     private readonly string _tempDir;
+     private readonly PLangFileSystem _fs;
+-    private readonly Engine _engine;
++    private readonly PLang.Runtime2.Engine.@this _engine;
+ 
+     public PathTests()
+     {
+         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_path_test_" + Guid.NewGuid().ToString("N"));
+         System.IO.Directory.CreateDirectory(_tempDir);
+         _fs = new PLangFileSystem(_tempDir, "");
+-        _engine = new Engine(_tempDir, fileSystem: _fs);
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
+     }
+ 
+     public void Dispose()
+diff --git a/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs b/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
+index c9a3d2cf..c517ec14 100644
+--- a/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
++++ b/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
+@@ -18,7 +18,7 @@ public class AssertTests
+ {
+     private (PLangContext context, MemoryStack memory) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+diff --git a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+index 870ce384..b278b5a6 100644
+--- a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+@@ -11,14 +11,14 @@ public class ConditionHandlerTests : IDisposable
+ {
+     private readonly string _tempDir;
+     private readonly PLangFileSystem _fs;
+-    private readonly Engine _engine;
++    private readonly PLang.Runtime2.Engine.@this _engine;
+ 
+     public ConditionHandlerTests()
+     {
+         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
+         System.IO.Directory.CreateDirectory(_tempDir);
+         _fs = new PLangFileSystem(_tempDir, "");
+-        _engine = new Engine(_tempDir, fileSystem: _fs);
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
+     }
+ 
+     public void Dispose()
+diff --git a/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs b/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
+index 7e3de5b0..5ee30865 100644
+--- a/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
++++ b/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
+@@ -9,7 +9,7 @@ public class ConvertTests
+ {
+     private (PLangContext context, MemoryStack memory) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+diff --git a/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs b/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
+index 459c217f..4f90ce7f 100644
+--- a/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
++++ b/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
+@@ -9,7 +9,7 @@ public class ThrowTests
+ {
+     private (PLangContext context, MemoryStack memory) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+diff --git a/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs b/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
+index 08752409..28d87b7a 100644
+--- a/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
+@@ -8,12 +8,12 @@ namespace PLang.Tests.Runtime2.actions.EventTests;
+ 
+ public class EventHandlerTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/test");
++        _engine = new PLang.Runtime2.Engine.@this("/test");
+     }
+ 
+     private PLangContext CreateContext()
+diff --git a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+index 24d4814a..973beb55 100644
+--- a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+@@ -11,14 +11,14 @@ public class FileHandlerTests : IDisposable
+ {
+     private readonly string _tempDir;
+     private readonly PLangFileSystem _fs;
+-    private readonly Engine _engine;
++    private readonly PLang.Runtime2.Engine.@this _engine;
+ 
+     public FileHandlerTests()
+     {
+         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
+         System.IO.Directory.CreateDirectory(_tempDir);
+         _fs = new PLangFileSystem(_tempDir, "");
+-        _engine = new Engine(_tempDir, fileSystem: _fs);
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
+     }
+ 
+     public void Dispose()
+diff --git a/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs b/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
+index d611d86d..f7076f27 100644
+--- a/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
++++ b/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
+@@ -12,11 +12,11 @@ public class LibraryLoadTests
+     /// Creates an engine rooted at the directory containing the PLang assembly,
+     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
+     /// </summary>
+-    private static (PLangContext context, Engine engine, string assemblyPath) CreateContextWithAssembly()
++    private static (PLangContext context, PLang.Runtime2.Engine.@this engine, string assemblyPath) CreateContextWithAssembly()
+     {
+-        var assemblyPath = typeof(Engine).Assembly.Location;
++        var assemblyPath = typeof(PLang.Runtime2.Engine.@this).Assembly.Location;
+         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
+-        var engine = new Engine(assemblyDir);
++        var engine = new PLang.Runtime2.Engine.@this(assemblyDir);
+         var context = engine.CreateContext();
+         return (context, engine, assemblyPath);
+     }
+@@ -24,7 +24,7 @@ public class LibraryLoadTests
+     [Test]
+     public async Task Load_NonexistentPath_ReturnsError()
+     {
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+         using var context = engine.CreateContext();
+ 
+         var load = new Load
+diff --git a/PLang.Tests/Runtime2/Modules/list/ListTests.cs b/PLang.Tests/Runtime2/Modules/list/ListTests.cs
+index 7016a8f2..6b3542a1 100644
+--- a/PLang.Tests/Runtime2/Modules/list/ListTests.cs
++++ b/PLang.Tests/Runtime2/Modules/list/ListTests.cs
+@@ -10,7 +10,7 @@ public class ListTests
+ {
+     private (PLangContext context, MemoryStack memory) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+diff --git a/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs b/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
+index 80dc1c61..6eff82b9 100644
+--- a/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
++++ b/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
+@@ -8,12 +8,12 @@ namespace PLang.Tests.Runtime2.actions.loop;
+ 
+ public class ForeachTests
+ {
+-    private Engine _engine = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
+ 
+     [Before(Test)]
+     public void Setup()
+     {
+-        _engine = new Engine("/app");
++        _engine = new PLang.Runtime2.Engine.@this("/app");
+     }
+ 
+     private PLangContext CreateContext(MemoryStack? memory = null)
+diff --git a/PLang.Tests/Runtime2/Modules/math/MathTests.cs b/PLang.Tests/Runtime2/Modules/math/MathTests.cs
+index 7067d7d5..f1e03c0d 100644
+--- a/PLang.Tests/Runtime2/Modules/math/MathTests.cs
++++ b/PLang.Tests/Runtime2/Modules/math/MathTests.cs
+@@ -9,7 +9,7 @@ public class MathTests
+ {
+     private (PLangContext context, MemoryStack memory) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+diff --git a/PLang.Tests/Runtime2/Modules/mock/MockTests.cs b/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
+index 846d8474..dc8299f4 100644
+--- a/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
++++ b/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
+@@ -9,9 +9,9 @@ namespace PLang.Tests.Runtime2.Modules.mock;
+ 
+ public class MockTests
+ {
+-    private (PLangContext context, MemoryStack memory, Engine engine) CreateContext()
++    private (PLangContext context, MemoryStack memory, PLang.Runtime2.Engine.@this engine) CreateContext()
+     {
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var memory = new MemoryStack();
+         var context = new PLangContext(engine, memory);
+         return (context, memory, engine);
+diff --git a/PLang.Tests/Runtime2/Modules/variable/cleartests.cs b/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
+index 061fd11f..ecf074e7 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
+@@ -10,7 +10,7 @@ public class ClearTests
+     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
+     {
+         var memory = memoryStack ?? new MemoryStack();
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/variable/existstests.cs b/PLang.Tests/Runtime2/Modules/variable/existstests.cs
+index f5482191..a0cfa72c 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/existstests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/existstests.cs
+@@ -11,7 +11,7 @@ public class ExistsTests
+     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
+     {
+         var memory = memoryStack ?? new MemoryStack();
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/variable/gettests.cs b/PLang.Tests/Runtime2/Modules/variable/gettests.cs
+index 40c59c0e..a854db14 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/gettests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/gettests.cs
+@@ -10,7 +10,7 @@ public class GetTests
+     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
+     {
+         var memory = memoryStack ?? new MemoryStack();
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/variable/removetests.cs b/PLang.Tests/Runtime2/Modules/variable/removetests.cs
+index 7a012c91..2665bd3c 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/removetests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/removetests.cs
+@@ -11,7 +11,7 @@ public class RemoveTests
+     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
+     {
+         var memory = memoryStack ?? new MemoryStack();
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/variable/settests.cs b/PLang.Tests/Runtime2/Modules/variable/settests.cs
+index ea807ad8..a768d57f 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/settests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/settests.cs
+@@ -12,7 +12,7 @@ public class SetTests
+     private (PLangContext context, MemoryStack memory) CreateContext(MemoryStack? memoryStack = null)
+     {
+         var memory = memoryStack ?? new MemoryStack();
+-        var engine = new Engine("/app");
++        var engine = new PLang.Runtime2.Engine.@this("/app");
+         var context = new PLangContext(engine, memory);
+         return (context, memory);
+     }
+diff --git a/PLang.Tests/Runtime2/Phase0Proof.cs b/PLang.Tests/Runtime2/Phase0Proof.cs
+index 89c02d43..d66276a7 100644
+--- a/PLang.Tests/Runtime2/Phase0Proof.cs
++++ b/PLang.Tests/Runtime2/Phase0Proof.cs
+@@ -267,7 +267,7 @@ public class Phase0Proof
+     public async Task Phase05_CultureInfo_DefaultsToInvariant()
+     {
+         // INPUT: new Engine
+-        await using var engine = new Engine("/app");
++        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+ 
+         // OUTPUT: culture defaults to InvariantCulture
+         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);
+diff --git a/PLang/Runtime2/Engine/Context/PLangContext.cs b/PLang/Runtime2/Engine/Context/PLangContext.cs
+index cc2bb683..c8d8d52d 100644
+--- a/PLang/Runtime2/Engine/Context/PLangContext.cs
++++ b/PLang/Runtime2/Engine/Context/PLangContext.cs
+@@ -87,6 +87,13 @@ public sealed class PLangContext : IDisposable
+     /// </summary>
+     public Data? EventOverride { get; set; }
+ 
++    /// <summary>
++    /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
++    /// to this context. Keys are "module.property" format (e.g., "archive.max").
++    /// Resolution walks: this.SettingsScope → Parent.SettingsScope → Engine.Settings.Defaults → class default.
++    /// </summary>
++    public Settings.Scope? SettingsScope { get; set; }
++
+     public PLangContext(Engine.@this engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
+     {
+         Id = Guid.NewGuid().ToString("N")[..12];
+@@ -183,7 +190,8 @@ public sealed class PLangContext : IDisposable
+     {
+         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
+         {
+-            IsAsync = IsAsync
++            IsAsync = IsAsync,
++            SettingsScope = SettingsScope?.Clone()
+         };
+ 
+         foreach (var kvp in _data)
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+index 10b05b08..4a3bb61b 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+@@ -26,8 +26,10 @@ public sealed partial class @this
+     {
+         var savedGoal = context.Goal;
+         var savedStep = context.Step;
++        var savedSettingsScope = context.SettingsScope;
+ 
+         context.Goal = this;
++        context.SettingsScope = null; // new goal starts with no local settings; inherits via Parent chain
+ 
+         if (cancellationToken.IsCancellationRequested)
+             return Data.FromError(GoalError.Cancelled(context));
+@@ -84,6 +86,7 @@ public sealed partial class @this
+         finally
+         {
+             context.CallStack?.Pop();
++            context.SettingsScope = savedSettingsScope;
+             context.Goal = savedGoal;
+             context.Step = savedStep;
+         }
+diff --git a/PLang/Runtime2/Engine/Settings/ISettings.cs b/PLang/Runtime2/Engine/Settings/ISettings.cs
+new file mode 100644
+index 00000000..b209b2d7
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Settings/ISettings.cs
+@@ -0,0 +1,18 @@
++namespace PLang.Runtime2.Engine.Settings;
++
++/// <summary>
++/// Marker interface for strongly typed module settings.
++/// Classes implementing ISettings are detected by the source generator, which produces:
++/// 1. Scope-aware property bodies (read side) — each property resolves from the settings scope chain
++/// 2. A settings action handler (write side) — [Action("settings")] in the module namespace
++/// 3. A settings manifest entry (for builder discovery)
++///
++/// Example:
++///   public partial class Settings : ISettings
++///   {
++///       public long Max { get; set; } = 100 * 1024 * 1024;
++///   }
++/// </summary>
++public interface ISettings
++{
++}
+diff --git a/PLang/Runtime2/Engine/Settings/ModuleView.cs b/PLang/Runtime2/Engine/Settings/ModuleView.cs
+new file mode 100644
+index 00000000..e465c418
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Settings/ModuleView.cs
+@@ -0,0 +1,37 @@
++using PLang.Runtime2.Engine.Context;
++
++namespace PLang.Runtime2.Engine.Settings;
++
++/// <summary>
++/// Context-bound view of a module's settings. Returned by engine.Settings.For&lt;T&gt;(context).
++/// Each call to For&lt;T&gt; returns a new lightweight instance stamped with the current context,
++/// so concurrent goals get isolated views. Properties resolve through the scope chain
++/// via Engine.Settings.Resolve.
++///
++/// Usage:
++///   var view = engine.Settings.For&lt;archive.Settings&gt;(context);
++///   long max = view.Resolve&lt;long&gt;("max", defaultValue);
++/// </summary>
++public sealed class ModuleView<T> where T : ISettings, new()
++{
++    private readonly @this _settings;
++    private readonly PLangContext _context;
++    private readonly string _modulePrefix;
++
++    public ModuleView(@this settings, PLangContext context, string modulePrefix)
++    {
++        _settings = settings;
++        _context = context;
++        _modulePrefix = modulePrefix;
++    }
++
++    /// <summary>
++    /// Resolves a property value through the scope chain.
++    /// Key is the property name (e.g., "max"), which gets prefixed with the module name.
++    /// </summary>
++    public TValue Resolve<TValue>(string propertyName, TValue classDefault)
++    {
++        var key = $"{_modulePrefix}.{propertyName}";
++        return _settings.Resolve(key, _context, classDefault);
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Settings/Scope.cs b/PLang/Runtime2/Engine/Settings/Scope.cs
+new file mode 100644
+index 00000000..e7332889
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Settings/Scope.cs
+@@ -0,0 +1,44 @@
++using System.Collections.Concurrent;
++
++namespace PLang.Runtime2.Engine.Settings;
++
++/// <summary>
++/// One level of the settings scope chain — a key-value store for settings
++/// set within a single goal execution. Keys are "module.property" format
++/// (e.g., "archive.max"). Thread-safe via ConcurrentDictionary.
++/// </summary>
++public sealed class Scope
++{
++    private readonly ConcurrentDictionary<string, object> _values =
++        new(StringComparer.OrdinalIgnoreCase);
++
++    public object? Get(string key)
++    {
++        return _values.TryGetValue(key, out var value) ? value : null;
++    }
++
++    public void Set(string key, object value)
++    {
++        if (value == null) { _values.TryRemove(key, out _); return; }
++        _values[key] = value;
++    }
++
++    public bool Contains(string key)
++    {
++        return _values.ContainsKey(key);
++    }
++
++    /// <summary>
++    /// Creates an independent shallow copy of this scope.
++    /// The new scope has its own dictionary with the same key-value pairs.
++    /// </summary>
++    public Scope Clone()
++    {
++        var clone = new Scope();
++        foreach (var kvp in _values)
++        {
++            clone._values[kvp.Key] = kvp.Value;
++        }
++        return clone;
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Settings/this.cs b/PLang/Runtime2/Engine/Settings/this.cs
+new file mode 100644
+index 00000000..41deb003
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Settings/this.cs
+@@ -0,0 +1,88 @@
++using PLang.Runtime2.Engine.Context;
++
++namespace PLang.Runtime2.Engine.Settings;
++
++/// <summary>
++/// Engine-level settings registry. Owns:
++/// - Module type registration (which ISettings types exist)
++/// - Engine-level default scope (persistent across goals)
++/// - Resolution logic: context scope → parent scope → engine defaults → class defaults
++///
++/// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
++/// </summary>
++public sealed class @this
++{
++    /// <summary>
++    /// Engine-level default scope. Values here persist across goal executions.
++    /// Written when a settings action has Default=true.
++    /// </summary>
++    public Scope Defaults { get; } = new();
++
++    /// <summary>
++    /// Resolves a setting value by walking the scope chain:
++    /// context.SettingsScope → context.Parent.SettingsScope → ... → Defaults → classDefault.
++    /// </summary>
++    public T Resolve<T>(string key, PLangContext context, T classDefault)
++    {
++        // Walk: context.SettingsScope → parent.SettingsScope → ... → Defaults → classDefault
++        var current = context;
++        while (current != null)
++        {
++            if (current.SettingsScope != null)
++            {
++                var value = current.SettingsScope.Get(key);
++                if (value != null) return Cast<T>(value, classDefault);
++            }
++            current = current.Parent;
++        }
++
++        var defaultValue = Defaults.Get(key);
++        if (defaultValue != null) return Cast<T>(defaultValue, classDefault);
++
++        return classDefault;
++    }
++
++    private static T Cast<T>(object value, T fallback)
++    {
++        if (value is T typed) return typed;
++        try
++        {
++            var target = typeof(T);
++            if (target.IsEnum) return (T)Enum.ToObject(target, value);
++            return (T)Convert.ChangeType(value, target);
++        }
++        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
++        { return fallback; }
++    }
++
++    /// <summary>
++    /// Returns a context-bound view for a specific ISettings type.
++    /// The view resolves property values through the scope chain for the given context.
++    /// </summary>
++    public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
++    {
++        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.actions.archive" → "archive")
++        var fullName = typeof(T).Namespace ?? "";
++        var lastDot = fullName.LastIndexOf('.');
++        var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
++
++        return new ModuleView<T>(this, context, modulePrefix);
++    }
++
++    /// <summary>
++    /// Writes a setting value to the appropriate scope.
++    /// If isDefault is true, writes to engine Defaults. Otherwise writes to the context's goal scope.
++    /// </summary>
++    public void Set(string key, object value, PLangContext context, bool isDefault = false)
++    {
++        if (isDefault)
++        {
++            Defaults.Set(key, value);
++        }
++        else
++        {
++            context.SettingsScope ??= new Scope();
++            context.SettingsScope.Set(key, value);
++        }
++    }
++}
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 012bd211..6eed0779 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -106,6 +106,12 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public Property Property { get; }
+ 
++    /// <summary>
++    /// Strongly typed, goal-scoped module settings.
++    /// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
++    /// </summary>
++    public Settings.@this Settings { get; }
++
+     /// <summary>
+     /// Debug mode controller. Registers event handlers for step/goal debug output.
+     /// </summary>
+@@ -182,6 +188,7 @@ public sealed class @this : IAsyncDisposable
+         Debug = new Debugging(this);
+         Testing = new Testing(this);
+         Property = new Property(this);
++        Settings = new Settings.@this();
+         _libraries = libraries ?? new EngineLibraries();
+         _goals = new EngineGoals { Engine = this };
+         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
+diff --git a/PLang/Runtime2/GlobalUsings.cs b/PLang/Runtime2/GlobalUsings.cs
+index b503eea6..caf7da0a 100644
+--- a/PLang/Runtime2/GlobalUsings.cs
++++ b/PLang/Runtime2/GlobalUsings.cs
+@@ -34,6 +34,10 @@ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.Des
+ // Memory types
+ global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
+ 
++// Settings subsystem
++global using EngineSettings = PLang.Runtime2.Engine.Settings.@this;
++global using SettingsScope = PLang.Runtime2.Engine.Settings.Scope;
++
+ // Standalone concepts
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+ global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
+diff --git a/PLang/Runtime2/actions/archive/Settings.cs b/PLang/Runtime2/actions/archive/Settings.cs
+new file mode 100644
+index 00000000..23ced13d
+--- /dev/null
++++ b/PLang/Runtime2/actions/archive/Settings.cs
+@@ -0,0 +1,28 @@
++using System.IO.Compression;
++using PLang.Runtime2.Engine.Settings;
++
++namespace PLang.Runtime2.actions.archive;
++
++/// <summary>
++/// Archive module settings. First use case for ISettings.
++///
++/// The source generator will rewrite these properties to resolve from the
++/// settings scope chain. Until then, they return their class defaults.
++///
++/// Generated read side (what the source generator will produce):
++///   public long Max => _context?.Engine.Settings.Resolve&lt;long&gt;("archive.max", _context, 100 * 1024 * 1024);
++/// </summary>
++public partial class Settings : ISettings
++{
++    /// <summary>
++    /// Maximum decompressed size in bytes. Default: 100MB.
++    /// PLang: "set max gzip size to 20mb"
++    /// </summary>
++    public long Max { get; set; } = 100 * 1024 * 1024;
++
++    /// <summary>
++    /// Compression level for archive operations.
++    /// PLang: "set compression level to fastest"
++    /// </summary>
++    public CompressionLevel Level { get; set; } = CompressionLevel.Optimal;
++}
+diff --git a/PLang/Runtime2/actions/archive/types.cs b/PLang/Runtime2/actions/archive/types.cs
+new file mode 100644
+index 00000000..d6ed6c97
+--- /dev/null
++++ b/PLang/Runtime2/actions/archive/types.cs
+@@ -0,0 +1,14 @@
++namespace PLang.Runtime2.actions.archive;
++
++/// <summary>
++/// Result types for archive module actions.
++/// </summary>
++public static class types
++{
++    public record settingsResult
++    {
++        public long? max { get; init; }
++        public string? level { get; init; }
++        public bool isDefault { get; init; }
++    }
++}
+diff --git a/Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal b/Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal
+new file mode 100644
+index 00000000..0f44b551
+--- /dev/null
++++ b/Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal
+@@ -0,0 +1,4 @@
++Start
++- set max gzip size to 20mb
++- get archive.max, write to %maxSize%
++- assert %maxSize% equals 20971520
+diff --git a/learnings/runtime2-settings/codeanalyzer/v1/learnings.md b/learnings/runtime2-settings/codeanalyzer/v1/learnings.md
+new file mode 100644
+index 00000000..e22353a6
+--- /dev/null
++++ b/learnings/runtime2-settings/codeanalyzer/v1/learnings.md
+@@ -0,0 +1,53 @@
++# Learnings — runtime2-settings / Code Analyzer v1
++
++**Source:** Tester v1 findings (`.bot/runtime2-settings/tester/v1/summary.md`)
++
++## 1. Trace data origin to assess cast severity
++
++I flagged `(T)value` as medium severity. The tester elevated it to CRITICAL by tracing *where the value comes from*: `System.Text.Json` boxes `20971520` as `int` (fits 32 bits), but `archive.Settings.Max` declares `long`. C# unboxing requires exact type match — `(long)(object)intBoxedValue` throws `InvalidCastException`.
++
++**Rule:** When reviewing casts, don't just look at the cast site. Trace the data origin. Severity depends on what feeds the value, not how the cast looks in isolation.
++
++## 2. Add a "test gap" pass to code analysis
++
++I reviewed `Goal/Methods.cs` save/restore of `SettingsScope` and noted it was "correct." The tester pointed out it has zero test coverage — if those lines were deleted, no test would fail. Same for the 3+ level parent chain walk.
++
++**Rule:** For every code path I review, ask: "if I deleted this code, would a test fail?" If the answer is no, that's a finding — even if the code is correct. Code correctness and proven correctness are different things.
++
++## 3. Use deletion tests to prove coverage gaps
++
++The tester's method for demonstrating gaps is rigorous: "if you deleted lines X-Y, no test would fail." This is stronger than saying "this isn't tested" — it's a falsifiable claim. They also provided concrete test code that *should* exist.
++
++**Rule:** When flagging a test gap, state it as a deletion test: which lines could be removed without breaking any test. And provide the concrete test that would close the gap.
++
++## 4. Code analysis and test analysis are complementary
++
++My analysis was code-focused (is the code correct?). The tester's was test-gap-focused (is correctness proven?). Both perspectives are needed. I should incorporate test gap analysis into my workflow, at least for critical code paths.
++
++## 5. Numeric widening is a recurring C# hazard with JSON
++
++The `int` vs `long` boxing issue with `System.Text.Json` is not specific to Settings — it applies anywhere PLang deserializes JSON into typed storage and later retrieves via generic cast. Watch for this pattern in other `Resolve<T>` or generic retrieval methods across the codebase.
++
++---
++
++**Source:** Reviewing coder v2 fixes with fresh eyes (2026-02-21)
++
++## 6. A fix can introduce the same class of bug it solves
++
++The coder fixed `(T)value` with `Convert.ChangeType` — handles numeric widening. But `Convert.ChangeType` doesn't handle enums, and the very same Settings class has an enum property (`CompressionLevel Level`). The fix solved the int→long case but missed the int→enum case. When reviewing a fix, ask: "does this fix cover ALL the types that flow through this code path, not just the one that was reported?"
++
++## 7. Review fixes against the full type surface, not just the reported type
++
++The bug was reported as int→long. The fix was tested as int→long. But `ISettings` implementations can have any property type — `long`, `int`, `string`, `bool`, enums, etc. A generic `Cast<T>` must handle the full surface. I should have caught this in v1 by looking at `archive.Settings` and asking: "what happens when Level goes through this path?"
++
++## 8. Context operations (Clone, CreateChild) are a family — review them together
++
++I looked at `CreateChild()` and `Clone()` separately. CreateChild works for settings because it creates a parent chain. Clone doesn't copy SettingsScope and has no parent chain back to the original. When a new property is added to PLangContext, ALL context-creation methods must be audited: constructor, CreateChild, Clone. They're a family.
++
++## 9. Simulation tests are weaker than integration tests
++
++A test that manually reproduces what production code does (save/null/restore) proves the *concept* works but not that the *actual code* does it. If someone refactors RunAsync, the simulation test still passes. When testing infrastructure mechanisms (save/restore, scope isolation), prefer calling the real code path even if setup is harder.
++
++## 10. Trust framework guarantees, test the choice
++
++For thread safety via ConcurrentDictionary: don't test that concurrent writes work (that's testing the framework). Instead, assert the TYPE is ConcurrentDictionary — so a refactor to Dictionary breaks a test. Test your architectural decisions, not the framework's correctness. This is Ingi's insight.

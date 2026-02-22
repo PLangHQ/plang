@@ -116,3 +116,87 @@ Target audiences:
 3. **Remove `PLangContext` from `Libraries.GetCodeGenerated` signature** — context only used for error creation, use context-free `ActionError` overloads instead.
 
 **Plan file:** `/home/claude/.claude/plans/sequential-roaming-dragon.md` has the full plan with file list and test changes.
+
+---
+
+## Foundation Checklist — Before Mass Action Production
+**Date:** 2026-02-22
+**Context:** Engine graph audit. These must be resolved before we can start cranking out actions assembly-line style.
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | **system.sqlite** | NOT STARTED | System database. Ingi bringing details. |
+| 2 | **Setup.goal** | NOT STARTED | How DB and store are set up. Depends on system.sqlite. |
+| 3 | **Settings** | IN PROGRESS | Goal-scoped module settings. On `runtime2-settings` branch. |
+| 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+| 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+| 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverSeconds fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
+
+**Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
+
+---
+
+## engine.Action<T> — First-Class Module Objects on Engine
+**Date:** 2026-02-21
+**Context:** During ISettings scaffolding. Settings currently lives at `engine.Settings.For<archive.Settings>(context)`. Works, but the long-term navigation should be `engine.Action<archive.@this>().Settings.Max` — each action module as a first-class object on the engine with capabilities hanging off it (settings, and later potentially config, health, metrics, etc.).
+
+**Idea:** Introduce `engine.Action<T>()` where T is the module's `@this` class (e.g., `actions.archive.@this`). Returns a module-level aggregate object that carries per-module capabilities. Settings slots under it as the first capability.
+
+**Why parked:** Right now settings is the only capability that would hang off it. One capability doesn't justify a new abstraction. Introduce `Action<T>` when a second capability needs a home — then settings moves under it, internals unchanged, just the navigation path changes.
+
+**When to revisit:** When any of these come up — per-module config, module health checks, module-level events, or any other per-module concern beyond settings.
+
+---
+
+## Set Up PLang Test Environment for Bot Pipeline
+**Date:** 2026-02-21
+**Context:** Tester bot cannot run PLang .goal tests because (1) `plang` binary is not on PATH (PlangConsole not built), (2) `OPENAI_API_KEY` env var not set. Both needed for `plang p build && plang p !test`.
+
+**Action items:**
+- Build PlangConsole and add to PATH (or symlink)
+- Set `OPENAI_API_KEY` in the environment so bots can run PLang tests
+- Consider a config file or `.env` approach so the key persists across sessions
+
+---
+
+## Bot Reminder/Notification System
+**Date:** 2026-02-21
+**Context:** Currently the only way to capture "do this tomorrow" reminders is the todo list. Need a proper reminder mechanism so bots can flag time-sensitive items.
+
+**Idea:** For now, todos serve as reminders. Longer term, consider a structured reminder system (date-tagged entries that surface at session start).
+
+---
+
+## ~~Safe cast in Settings.Resolve<T>~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Code analyzer found `Settings.Resolve<T>` uses hard cast `(T)value`. Tester elevated to CRITICAL — C# unboxing + JSON deserialization = production crash.
+**Completed:** Coder v2 replaced with `Cast<T>` helper: `is T` → `Convert.ChangeType` → fallback. Tests added for int→long widening and type mismatch fallback.
+
+---
+
+## ~~Cast<T> doesn't handle enums~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review of coder's `Cast<T>` fix.
+**Completed:** Coder added `if (target.IsEnum) return (T)Enum.ToObject(target, value)` to `Cast<T>`. Test `Resolve_WidensIntToEnum` added.
+
+---
+
+## ~~Clone() loses SettingsScope~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review.
+**Completed:** Coder added `SettingsScope = SettingsScope` to `PLangContext.Clone()` object initializer. Test `Clone_PreservesSettingsScope` added.
+
+---
+
+## GoalRunAsync settings test is simulation, not integration
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review. `GoalRunAsync_ScopesSettingsPerGoal` manually does `context.SettingsScope = null` / `context.SettingsScope = saved` to simulate RunAsync. If the real RunAsync changes its save/restore logic, this test still passes. Doesn't exercise the actual code path in `Goal/Methods.cs:29-32,89`.
+
+**Fix:** Write an integration test that creates a Goal with Steps and actually calls `RunAsync`, then verifies settings isolation. Requires test infrastructure for minimal Goal construction.
+
+---
+
+## Verify Defaults scope is ConcurrentDictionary
+**Date:** 2026-02-21
+**Context:** Code analyzer v2 review. `engine.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.

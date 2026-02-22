@@ -87,6 +87,13 @@ public sealed class PLangContext : IDisposable
     /// </summary>
     public Data? EventOverride { get; set; }
 
+    /// <summary>
+    /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
+    /// to this context. Keys are "module.property" format (e.g., "archive.max").
+    /// Resolution walks: this.SettingsScope → Parent.SettingsScope → Engine.Settings.Defaults → class default.
+    /// </summary>
+    public Settings.Scope? SettingsScope { get; set; }
+
     public PLangContext(Engine.@this engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -183,7 +190,8 @@ public sealed class PLangContext : IDisposable
     {
         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
         {
-            IsAsync = IsAsync
+            IsAsync = IsAsync,
+            SettingsScope = SettingsScope?.Clone()
         };
 
         foreach (var kvp in _data)

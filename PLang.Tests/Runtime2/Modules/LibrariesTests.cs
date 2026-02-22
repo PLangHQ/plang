@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
@@ -230,7 +229,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_BuiltInAction_ReturnsHandler()
     {
         var libraries = new EngineLibraries();
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (handler, error) = libraries.GetCodeGenerated("variable", "set", context);
@@ -245,7 +244,7 @@ public class LibrariesTests
         var libraries = new EngineLibraries();
         var handler = new MockCodeGenHandler();
         libraries.Register("custom", "run", handler);
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
@@ -259,7 +258,7 @@ public class LibrariesTests
     {
         var libraries = new EngineLibraries();
         libraries.Register("legacy", "do", new MockHandler());
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (handler, error) = libraries.GetCodeGenerated("legacy", "do", context);
@@ -273,7 +272,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
         var libraries = new EngineLibraries();
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (handler, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
@@ -295,7 +294,7 @@ public class LibrariesTests
         external.Register("custom", "run", externalHandler);
         libraries.Add(external);
 
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
@@ -315,7 +314,7 @@ public class LibrariesTests
         external.Register("exotic", "magic", externalHandler);
         libraries.Add(external);
 
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (result, error) = libraries.GetCodeGenerated("exotic", "magic", context);
@@ -328,7 +327,7 @@ public class LibrariesTests
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
         var libraries = new EngineLibraries();
-        await using var engine = new Engine("/app", libraries);
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         // variable.set is type-registered (discovered via [Action] attribute)
@@ -419,7 +418,7 @@ public class LibrariesTests
     [Test]
     public async Task Library_Discover_NonMatchingNamespace_FindsNothing()
     {
-        var library = new Library("test", typeof(Engine).Assembly);
+        var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
 
         library.Discover("Some.Completely.Wrong.Namespace");
 
@@ -429,7 +428,7 @@ public class LibrariesTests
     [Test]
     public async Task Library_Discover_CorrectNamespace_FindsHandlers()
     {
-        var library = new Library("test", typeof(Engine).Assembly);
+        var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
 
         library.Discover("PLang.Runtime2.actions");
 
@@ -654,7 +653,7 @@ public class LibrariesTests
     [Test]
     public async Task Library_Assembly_Property()
     {
-        var assembly = typeof(Engine).Assembly;
+        var assembly = typeof(PLang.Runtime2.Engine.@this).Assembly;
         var library = new Library("test", assembly);
 
         await Assert.That(library.Assembly).IsEqualTo(assembly);
@@ -678,10 +677,10 @@ public class LibrariesTests
     /// </summary>
     private class MockHandler : IClass
     {
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
@@ -691,12 +690,12 @@ public class LibrariesTests
     private class MockCodeGenHandler : IClass, ICodeGenerated
     {
         public string Tag { get; set; } = "";
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             return ExecuteAsync(null);

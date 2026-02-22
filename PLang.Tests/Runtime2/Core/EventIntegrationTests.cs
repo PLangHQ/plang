@@ -7,12 +7,12 @@ namespace PLang.Tests.Runtime2.Core;
 
 public class EventIntegrationTests
 {
-    private Engine _engine = null!;
+    private PLang.Runtime2.Engine.@this _engine = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _engine = new Engine("/test");
+        _engine = new PLang.Runtime2.Engine.@this("/test");
     }
 
     [Test]

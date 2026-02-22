@@ -1,0 +1,732 @@
+{
+  "branch": "runtime2-settings",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-comp-sett-arch-session001",
+      "bot": "architect",
+      "timestamp_start": "2026-02-21T00:00:00Z",
+      "timestamp_end": "2026-02-21T01:00:00Z",
+      "intent": "Design ISettings pattern — strongly typed, per-module, goal-scoped settings with source generator support",
+      "before": {
+        "assumptions": "Data.Envelope.cs on data-envelope-architecture branch has hardcoded 100MB gzip bomb limit. No settings mechanism exists in Runtime2 for action/module configuration.",
+        "risk": "New pattern touching source generator, context scoping, engine navigation, and builder discovery. Broad surface but well-contained design."
+      },
+      "plan": "ISettings design: each module declares a strongly typed settings class implementing ISettings. Source generator produces scope-aware property bodies (read), settings action handler (write), and builder registry. Settings are goal-scoped with Default flag for engine persistence. Navigation: engine.Module<Archive>().Settings.Max. First use case: replace hardcoded gzip bomb limit.",
+      "actions": [
+        {
+          "paths": [".bot/compression-settings/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full design spec for ISettings pattern — phases, scoping, source generator, open questions for coder"
+        },
+        {
+          "paths": [".bot/compression-settings/architect/v1/summary.md", ".bot/compression-settings/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summary and cross-session summary"
+        }
+      ],
+      "after": {
+        "status": "Design complete, ready for coder handoff",
+        "health": "Clean — no code changes, design only",
+        "notes": "Builder integration (discovery action, LLM prompt design) deferred. Depends on data-envelope-architecture branch for Data.Envelope.cs and Module<T> pattern."
+      }
+    },
+    {
+      "id": "a1b2c3d4-scaf-sett-0001-session001",
+      "bot": "scaffolder",
+      "timestamp_start": "2026-02-21T12:00:00Z",
+      "timestamp_end": "2026-02-21T13:30:00Z",
+      "intent": "Scaffold ISettings type skeletons and failing tests for strongly typed, goal-scoped module settings",
+      "before": {
+        "assumptions": "Architect plan exists in .bot/compression-settings/architect/v1/plan.md. No settings infrastructure exists in Runtime2 yet. No Module<T>() pattern, no SettingsScope, no ISettings. data-envelope-architecture branch (with Archive module) does not exist on this branch — archive use case will be skeleton-only.",
+        "risk": "New cross-cutting feature touching Engine, PLangContext, source generator, and a new action module. Large surface area but well-defined by architect plan."
+      },
+      "plan": "Translate architect ISettings design into compilable type skeletons and failing tests. Phase 1-3: ISettings marker interface, Scope (key-value store), Settings @this (registry + resolution), ModuleView<T> (context-bound view). Add Settings to Engine, SettingsScope to PLangContext, push/pop in Goal.RunAsync. Archive module as first use case. 15 failing tests (C# + PLang). Departed from architect: Engine.Settings owns resolution behavior (OBP), not PLangContext. No Module<T>() on Engine (premature).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/ISettings.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Core settings infrastructure — marker interface, scope store, registry with resolution, context-bound view"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wire settings into Engine (property), PLangContext (scope storage), Goal runner (push/pop), global aliases"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/archive/ArchiveSettings.cs",
+            "PLang/Runtime2/actions/archive/settings.cs",
+            "PLang/Runtime2/actions/archive/types.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "First use case — archive module settings class, action handler, result types"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "15 failing C# tests covering scope resolution, inheritance, defaults, thread safety"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "PLang integration test — will fully pass only after builder integration"
+        }
+      ],
+      "after": {
+        "status": "Scaffolding complete — 7 new files, 4 modified, 15 failing tests. PLang builds clean. Ready for coder.",
+        "health": "Green — 0 new compilation errors. All tests fail with NotImplementedException (red phase).",
+        "notes": "Test project has 148 pre-existing errors (not from this work). Source generator changes (Phase 2) deferred to coder."
+      }
+    },
+    {
+      "id": "b2dff594-scaf-fix-0002-session002",
+      "bot": "scaffolder",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T15:00:00Z",
+      "intent": "Fix 148 test compilation errors — Engine namespace shadowing global alias",
+      "before": {
+        "assumptions": "The 148 errors are all CS0118: 'Engine' is a namespace but is used like a type. Root cause: global using alias Engine = PLang.Runtime2.Engine.@this is shadowed by namespace PLang.Runtime2.Engine when test files import sub-namespaces.",
+        "risk": "Mass rename across 35 files. Low risk — mechanical replacement of type reference, no logic changes."
+      },
+      "plan": "Replace all uses of Engine as a type (constructor calls, field declarations, parameters) with fully-qualified PLang.Runtime2.Engine.@this across all affected test files. Also fix TUnit await assertion errors in Settings test files and archive namespace resolution in ModuleViewTests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Core/EngineTests.cs",
+            "PLang.Tests/Runtime2/Core/StartGoalTests.cs",
+            "PLang.Tests/Runtime2/Core/StepCacheTests.cs",
+            "PLang.Tests/Runtime2/Core/EventCollectionTests.cs",
+            "PLang.Tests/Runtime2/Core/CallStackIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/EventIntegrationTests.cs",
+            "PLang.Tests/Runtime2/Core/StepErrorHandlingTests.cs",
+            "PLang.Tests/Runtime2/Core/StepRetryTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in core test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/LibrariesTests.cs",
+            "PLang.Tests/Runtime2/Modules/assert/AssertTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs",
+            "PLang.Tests/Runtime2/Modules/error/ThrowTests.cs",
+            "PLang.Tests/Runtime2/Modules/list/ListTests.cs",
+            "PLang.Tests/Runtime2/Modules/math/MathTests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/settests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/gettests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/cleartests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/removetests.cs",
+            "PLang.Tests/Runtime2/Modules/variable/existstests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in module test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Context/PLangContextTests.cs",
+            "PLang.Tests/Runtime2/Context/ContextVariableTests.cs",
+            "PLang.Tests/Runtime2/Phase0Proof.cs",
+            "PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs",
+            "PLang.Tests/Runtime2/Foundation/EventCacheInvalidationTests.cs",
+            "PLang.Tests/Runtime2/IO/IOTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace Engine type with PLang.Runtime2.Engine.@this in other test files"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fix TUnit await assertions, fix archive namespace reference via using alias"
+        }
+      ],
+      "after": {
+        "status": "All 148 errors fixed. Build: 0 errors, 87 warnings. Tests: 1239 pass, 15 fail (all NotImplementedException from Settings skeletons — expected red phase).",
+        "health": "Green — clean build, all pre-existing tests passing",
+        "notes": "Root cause: global using alias shadowed by namespace. Fix: fully-qualified PLang.Runtime2.Engine.@this. This is a pre-existing issue that affects any test file importing Engine sub-namespaces."
+      }
+    },
+    {
+      "id": "c0d3r-v1-2026-0221-implement-settings",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T19:00:00Z",
+      "timestamp_end": "2026-02-21T19:15:00Z",
+      "intent": "Implement Settings method bodies — make 15 red tests green",
+      "before": {
+        "assumptions": "Scaffolder created all types with NotImplementedException bodies. 15 tests define the spec. Tests are the contract.",
+        "risk": "Low — straightforward dictionary/scope-chain logic. No architectural decisions needed."
+      },
+      "plan": "Implement Scope (ConcurrentDictionary wrapper), @this.Resolve (walk context→parent→defaults→classDefault), @this.Set (isDefault→Defaults, else→context.SettingsScope), @this.For (namespace→prefix, new ModuleView), ModuleView.Resolve (prefix+delegate).",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Replaced all 6 NotImplementedException bodies with working implementations. Scope: 3 one-liners. Settings: Resolve walks scope chain, Set writes to context or defaults, For derives module prefix from namespace. ModuleView: prefixes and delegates."
+        }
+      ],
+      "after": {
+        "status": "All 15 settings tests green. 1254 total tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "Clean implementation — no surprises. Tests were well-specified."
+      }
+    },
+    {
+      "id": "ca-s1-2026-0221-settings-analysis",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-21T17:00:00Z",
+      "timestamp_end": "2026-02-21T23:30:00Z",
+      "intent": "Code simplicity analysis of runtime2-settings branch — OBP compliance, simplification, readability",
+      "before": {
+        "assumptions": "Branch adds ISettings, Settings, Scope, ModuleView, archive.Settings. Previous bots covered scaffolding and implementation. No simplicity review done yet.",
+        "risk": "Low — analysis only."
+      },
+      "plan": "Analyze all new/changed production files (Settings subsystem + Engine/Context diffs + archive.Settings) and test files. Three-pass: OBP, simplification, readability.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/ISettings.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs",
+            "PLang/Runtime2/actions/archive/Settings.cs",
+            "PLang/Runtime2/actions/archive/types.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 3-pass analysis. 10 production files, all CLEAN. No OBP violations. One medium finding: hard cast in Resolve<T>."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Readability pass. 4 test files, all CLEAN. Good scope chain coverage."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/codeanalyzer/v1/result.md",
+            ".bot/runtime2-settings/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-settings/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Analysis report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Analysis complete. 14 CLEAN, 0 NEEDS WORK. No OBP violations. 3 findings (1 medium, 1 low, 1 info). Post-analysis: reviewed tester v1 findings and recorded 5 learnings.",
+        "health": "Code is clean, minimal, and OBP-compliant.",
+        "notes": "Most actionable: hard cast (T)value in Resolve<T> — one-line fix. Tester correctly elevated this to CRITICAL (C# unboxing + JSON deserialization). Learned to add test-gap analysis to my passes."
+      }
+    },
+    {
+      "id": "tester-v1-2026-0221-settings-review",
+      "bot": "tester",
+      "timestamp_start": "2026-02-21T22:00:00Z",
+      "timestamp_end": "2026-02-21T23:00:00Z",
+      "intent": "Test quality analysis of coder v1 Settings infrastructure — hunt for false greens and missing coverage",
+      "before": {
+        "assumptions": "Coder v1 implemented 6 method bodies. 15 C# tests and 1 PLang test exist. Code analyzer found all files CLEAN with one medium finding (hard cast).",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "Run full test suite. Read all source and test files. Analyze test quality: false greens, missing coverage, weak assertions, edge cases. Cross-reference code analyzer findings. Write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deep test quality analysis. Found 6 issues: 1 critical (hard cast false green), 2 major (goal save/restore untested, scope chain gap untested), 3 minor."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v1/plan.md",
+            ".bot/runtime2-settings/tester/v1/summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester report and summaries."
+        },
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added two todos: set up PLang test environment for bots, bot reminder system."
+        }
+      ],
+      "after": {
+        "status": "Test review complete. Verdict: needs-fixes. 6 findings (1 critical, 2 major, 3 minor).",
+        "health": "Tests are green but have gaps — the critical hard cast finding means the first real production use could crash.",
+        "notes": "PLang tests could not be run — no plang binary or OpenAI key in environment. Added todo to fix."
+      }
+    },
+    {
+      "id": "c0d3r-v2-2026-0221-fix-findings",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T20:00:00Z",
+      "timestamp_end": "2026-02-21T20:20:00Z",
+      "intent": "Fix hard cast in Resolve<T>, add 5 missing tests from tester/analyzer reports",
+      "before": {
+        "assumptions": "Tester found critical hard cast false green, 2 major missing coverage gaps, and 3 minor issues. Analyzer confirmed the hard cast finding.",
+        "risk": "Low — Convert.ChangeType handles numeric widening. Tests are additive."
+      },
+      "plan": "Replace (T)value with Cast<T> helper using is/Convert.ChangeType/fallback. Add tests: int→long widening, type mismatch fallback, 3-level scope chain gap, goal save/restore isolation, scope overwrite.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Cast<T> helper: tries 'is T', then Convert.ChangeType, then fallback. Handles int→long widening and type mismatches gracefully."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "5 new tests: int→long widening, type mismatch fallback, 3-level null scope gap, goal save/restore isolation, scope overwrite."
+        }
+      ],
+      "after": {
+        "status": "All findings addressed. 1259 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "Tester finding #5 (null value on Set) left as-is — ConcurrentDictionary's ArgumentNullException is correct behavior for a settings store. Finding #6 (more PLang tests) deferred — requires builder."
+      }
+    },
+    {
+      "id": "tester-v2-2026-0221-settings-rereview",
+      "bot": "tester",
+      "timestamp_start": "2026-02-21T23:30:00Z",
+      "timestamp_end": "2026-02-21T23:50:00Z",
+      "intent": "Re-review coder v2 fixes — verify all v1 findings are properly addressed",
+      "before": {
+        "assumptions": "Coder v2 fixed Cast<T>, added 8 tests (widening, enum, mismatch, gap, save/restore, overwrite, null removal, clone). Code analyzer contributed enum and clone fixes.",
+        "risk": "Low — review only."
+      },
+      "plan": "Run tests. Read all new/changed code and tests. Verify each v1 finding is properly resolved. Check for new issues introduced by fixes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified all v1 findings resolved. Two minor items remain (simulation test, PLang tests). Verdict: approved."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v2/summary.md",
+            ".bot/runtime2-settings/tester/v2/v1_review_summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated test report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Approved. All critical/major findings resolved. 1262 tests pass.",
+        "health": "Green — test suite is honest.",
+        "notes": "Two minor deferred items: GoalRunAsync integration test (needs infrastructure), PLang tests (needs builder)."
+      }
+    },
+    {
+      "id": "sec-v1-2026-0221-settings-audit",
+      "bot": "security",
+      "timestamp_start": "2026-02-21T02:00:00Z",
+      "timestamp_end": "2026-02-21T02:30:00Z",
+      "intent": "Security audit of Settings infrastructure — blue/red team analysis",
+      "before": {
+        "assumptions": "Settings adds ~200 LOC of new production code. Previous bots (architect, scaffolder, coder, tester, codeanalyzer) have reviewed functionality and test quality. No security review done yet.",
+        "risk": "Low — small feature, well-isolated, all inputs from trusted .pr files."
+      },
+      "plan": "Read all new/changed code. Map attack surface (resolution, write, security control weakening, module view). Red team: attempt exploitation. Write security-report.json with findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs",
+            "PLang/Runtime2/Engine/Settings/ISettings.cs",
+            "PLang/Runtime2/actions/archive/Settings.cs",
+            "PLang/Runtime2/actions/archive/types.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue/red team security audit. 4 attack surface areas mapped. 4 findings (1 medium, 3 low), all accepted-risk under user-sovereign threat model."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/security-report.json",
+            ".bot/runtime2-settings/security/v1/plan.md",
+            ".bot/runtime2-settings/security/v1/summary.md",
+            ".bot/runtime2-settings/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Audit complete. No critical or high findings. 4 low/medium findings, all accepted-risk.",
+        "health": "Good — Settings infrastructure is well-designed with proper isolation, thread safety, and defensive type conversion.",
+        "notes": "Future watch: if settings become writable from untrusted sources, add value validation and dictionary size limits."
+      }
+    },
+    {
+      "id": "aud-v2-2026-0221-settings-review",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T14:30:00Z",
+      "intent": "Auditor code review of Settings infrastructure — OBP, contracts, test quality, ripple impact",
+      "before": {
+        "assumptions": "Coder v2 fixed all tester findings. Tester v2 approved. Security audit done (4 accepted-risk). ~200 LOC production, 23 tests, 1262 pass. No auditor review yet.",
+        "risk": "Low — small, well-isolated feature. Review only."
+      },
+      "plan": "Read all coder/tester/security summaries. Read all production code and tests. Run test suite. Check OBP compliance, contract integrity, clone semantics, scope chain correctness. Write auditor-report.json with findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/ModuleView.cs",
+            "PLang/Runtime2/Engine/Settings/ISettings.cs",
+            "PLang/Runtime2/actions/archive/Settings.cs",
+            "PLang/Runtime2/actions/archive/types.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full auditor review. OBP clean. 4 findings: 1 major (Clone shares Scope by reference), 2 minor (save/restore complexity, simulation test), 1 nit (bare catch)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test quality review. Tests are honest — good scope chain coverage. Clone test only tests reading, not write isolation."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/auditor-report.json",
+            ".bot/runtime2-settings/auditor/v2/summary.md",
+            ".bot/runtime2-settings/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Approved with one fix recommended. Clone() shares Scope by reference — should deep-clone before merge.",
+        "health": "Clean infrastructure. OBP compliant. One contract bug (Clone isolation).",
+        "notes": "Finding #1 is the only one that should block merge. Minor findings are future-proofing suggestions."
+      }
+    },
+    {
+      "id": "c0d3r-v3-2026-0222-fix-auditor",
+      "bot": "coder",
+      "timestamp_start": "2026-02-22T00:00:00Z",
+      "timestamp_end": "2026-02-22T00:15:00Z",
+      "intent": "Fix auditor major finding: Clone() shares SettingsScope by reference; narrow Cast<T> bare catch",
+      "before": {
+        "assumptions": "Auditor found major contract bug: Clone() copies SettingsScope by reference, so mutations in clone pollute original. Security/tester flagged bare catch in Cast<T>.",
+        "risk": "Low — targeted fixes to 3 files, additive tests."
+      },
+      "plan": "1. Add Scope.Clone() method (new ConcurrentDictionary from existing). 2. PLangContext.Clone() uses SettingsScope?.Clone(). 3. Narrow Cast<T> catch to InvalidCastException/FormatException/OverflowException. 4. Add 3 tests: Scope clone isolation, empty scope clone, context clone write isolation.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/Scope.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Clone() method — creates new Scope with independent ConcurrentDictionary snapshot."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/PLangContext.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Changed SettingsScope = SettingsScope to SettingsScope = SettingsScope?.Clone() in Clone()."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Narrowed bare catch to catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: Scope clone isolation (bidirectional), empty scope clone, context clone write isolation."
+        }
+      ],
+      "after": {
+        "status": "All auditor/security findings addressed. 1265 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "Major contract bug fixed. Clone now produces fully independent contexts."
+      }
+    },
+    {
+      "id": "tester-v3-2026-0222-settings-rereview",
+      "bot": "tester",
+      "timestamp_start": "2026-02-22T01:00:00Z",
+      "timestamp_end": "2026-02-22T01:30:00Z",
+      "intent": "Re-review coder v3 fixes — verify auditor/security findings addressed, check for regressions",
+      "before": {
+        "assumptions": "Coder v3 fixed Clone isolation and narrowed Cast<T> catch. Auditor approved with one fix. Security found 4 accepted-risk items.",
+        "risk": "Low — review only. But narrowing catch clauses can introduce regressions."
+      },
+      "plan": "Run tests. Read all changed code and new tests. Verify auditor findings resolved. Check narrowed catch for gaps. Write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clone isolation resolved. Found regression: narrowed catch misses ArgumentException from Enum.ToObject on string→enum path."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v3/summary.md",
+            ".bot/runtime2-settings/tester/v3/v2_review_summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Needs-fixes. Narrowed catch introduced regression: string→enum crashes with unhandled ArgumentException.",
+        "health": "One regression path. Clone isolation is solid.",
+        "notes": "One-line fix: add ArgumentException to catch filter, or use Enum.TryParse for string→enum."
+      }
+    },
+    {
+      "id": "c0d3r-v4-2026-0222-fix-enum-regression",
+      "bot": "coder",
+      "timestamp_start": "2026-02-22T01:30:00Z",
+      "timestamp_end": "2026-02-22T01:45:00Z",
+      "intent": "Fix string→enum regression in Cast<T> — add Enum.TryParse and ArgumentException to catch filter",
+      "before": {
+        "assumptions": "Tester v3 found that narrowed catch in v3 misses ArgumentException from Enum.ToObject when value is string.",
+        "risk": "Low — targeted fix to one method, additive tests."
+      },
+      "plan": "Add Enum.TryParse for string values before Enum.ToObject. Add ArgumentException to catch filter. 3 new tests for string→enum paths.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Enum.TryParse(target, s, ignoreCase: true) for string→enum. Added ArgumentException to catch filter."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: string→enum exact, case-insensitive, invalid string fallback."
+        }
+      ],
+      "after": {
+        "status": "Regression fixed. 1268 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "String→enum now works correctly via TryParse. All enum paths covered: int→enum, string→enum, invalid string→fallback."
+      }
+    },
+    {
+      "id": "tester-v4-2026-0222-final-review",
+      "bot": "tester",
+      "timestamp_start": "2026-02-22T02:00:00Z",
+      "timestamp_end": "2026-02-22T02:15:00Z",
+      "intent": "Final review of coder v4 — verify string→enum regression resolved",
+      "before": {
+        "assumptions": "Coder v4 added Enum.TryParse + ArgumentException to catch. 3 new tests.",
+        "risk": "Low — targeted fix, review only."
+      },
+      "plan": "Run tests. Read changed code and new tests. Verify regression resolved. Write final report.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "String→enum regression resolved. All tests honest. No new findings."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v4/summary.md",
+            ".bot/runtime2-settings/tester/v4/v3_review_summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final tester report. Verdict: approved."
+        }
+      ],
+      "after": {
+        "status": "Approved. All findings from v1-v3 resolved. 1268 tests pass.",
+        "health": "Green — test suite is comprehensive and honest.",
+        "notes": "Settings infrastructure complete. 28 tests, all conversion paths covered. Pass to auditor."
+      }
+    },
+    {
+      "id": "aud-v4-2026-0222-final-review",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-22T10:00:00Z",
+      "timestamp_end": "2026-02-22T10:20:00Z",
+      "intent": "Final auditor review — verify coder v3/v4 fixes, look for new issues in fix code",
+      "before": {
+        "assumptions": "Coder v3 fixed Clone + bare catch. Tester v3 found regression. Coder v4 fixed regression. Tester v4 approved. 1268 tests pass.",
+        "risk": "Low — review only."
+      },
+      "plan": "Read all updated code and tests. Run test suite. Verify both fixes as fresh code. Check for new issues introduced by changes. Update auditor-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Both fixes verified as correct. No new issues found. Clone isolation solid. Cast<T> conversion chain complete."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/auditor-report.json",
+            ".bot/runtime2-settings/auditor/v4/summary.md",
+            ".bot/runtime2-settings/auditor/v4/v2_review_summary.md",
+            ".bot/runtime2-settings/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final auditor report. Verdict: approved."
+        }
+      ],
+      "after": {
+        "status": "Approved. Major finding fixed, nit fixed (with regression caught and resolved by tester). Two minor deferrals remain.",
+        "health": "Green — 28 Settings tests, 1268 total pass, OBP clean.",
+        "notes": "Settings infrastructure is ready for merge. No blockers."
+      }
+    }
+  ]
+}

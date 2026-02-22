@@ -34,6 +34,10 @@ global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.Des
 // Memory types
 global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
 
+// Settings subsystem
+global using EngineSettings = PLang.Runtime2.Engine.Settings.@this;
+global using SettingsScope = PLang.Runtime2.Engine.Settings.Scope;
+
 // Standalone concepts
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;

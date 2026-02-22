@@ -9,9 +9,9 @@ namespace PLang.Tests.Runtime2.Modules.mock;
 
 public class MockTests
 {
-    private (PLangContext context, MemoryStack memory, Engine engine) CreateContext()
+    private (PLangContext context, MemoryStack memory, PLang.Runtime2.Engine.@this engine) CreateContext()
     {
-        var engine = new Engine("/app");
+        var engine = new PLang.Runtime2.Engine.@this("/app");
         var memory = new MemoryStack();
         var context = new PLangContext(engine, memory);
         return (context, memory, engine);

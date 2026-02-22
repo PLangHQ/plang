@@ -1,5 +1,4 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
 
@@ -34,7 +33,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_SecondRun_SkipsHandler()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("first-result");
         engine.Libraries.Register("test", "fetch", handler);
@@ -63,7 +62,7 @@ public class StepCacheTests
     [Test]
     public async Task NoCacheSettings_HandlerAlwaysCalled()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
         engine.Libraries.Register("test", "fetch", handler);
@@ -88,7 +87,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_RestoresVariableValue()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("cached-value");
         engine.Libraries.Register("test", "fetch", handler);
@@ -117,7 +116,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_RestoresTypeName()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler(42L); // long value
         engine.Libraries.Register("test", "compute", handler);
@@ -153,7 +152,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_FailedAction_NotCached()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new FailOnFirstCallHandler();
         engine.Libraries.Register("test", "flaky", handler);
@@ -184,7 +183,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_DifferentSteps_DifferentCacheKeys()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new SequenceHandler("a", "b");
         engine.Libraries.Register("test", "fetch", handler);
@@ -217,7 +216,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_CustomKey_WithVariableResolution()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("result");
         engine.Libraries.Register("test", "fetch", handler);
@@ -296,7 +295,7 @@ public class StepCacheTests
     [Test]
     public async Task Engine_Cache_DefaultsToMemoryStepCache()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.Cache).IsNotNull();
         await Assert.That(engine.Cache).IsTypeOf<MemoryStepCache>();
@@ -305,7 +304,7 @@ public class StepCacheTests
     [Test]
     public async Task Engine_Cache_CanBeSwapped()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var custom = new FakeCache();
         engine.Cache = custom;
@@ -316,7 +315,7 @@ public class StepCacheTests
     [Test]
     public async Task CachedStep_UsesCustomCacheImplementation()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var fakeCache = new FakeCache();
         engine.Cache = fakeCache;
@@ -404,7 +403,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheHitEvent_Fires_OnSecondCall()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
         engine.Libraries.Register("test", "fetch", handler);
@@ -433,7 +432,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheMissEvent_Fires_OnFirstCall()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
         engine.Libraries.Register("test", "fetch", handler);
@@ -462,7 +461,7 @@ public class StepCacheTests
     [Test]
     public async Task CacheEvents_BothFireCorrectly()
     {
-        await using var engine = new Engine("/app");
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
         engine.Libraries.Register("test", "fetch", handler);
@@ -534,14 +533,14 @@ public class StepCacheTests
         public CountingHandler(object returnValue) { _returnValue = returnValue; }
 
         public int CallCount { get; private set; }
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok(_returnValue));
 
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             CallCount++;
@@ -555,14 +554,14 @@ public class StepCacheTests
     private class FailOnFirstCallHandler : IClass, ICodeGenerated
     {
         public int CallCount { get; private set; }
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             CallCount++;
@@ -582,14 +581,14 @@ public class StepCacheTests
         public SequenceHandler(params string[] values) { _values = values; }
 
         public int CallCount { get; private set; }
-        public Engine Engine { get; private set; } = null!;
+        public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(Engine engine, PLangContext context) { Engine = engine; Context = context; }
+        public void Initialize(PLang.Runtime2.Engine.@this engine, PLangContext context) { Engine = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
 
-        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, Engine engine, PLangContext context)
+        public Task<Data> CodeGeneratedExecuteAsync(List<Data> parameters, PLang.Runtime2.Engine.@this engine, PLangContext context)
         {
             Initialize(engine, context);
             var value = _values[Math.Min(CallCount, _values.Length - 1)];

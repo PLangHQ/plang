@@ -1,0 +1,55 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-settings",
+  "timestamp": "2026-02-22T10:00:00Z",
+  "reviewed_version": "v4",
+  "summary": "Re-review after coder v3/v4 fixes. Both auditor findings (#1 Clone shares Scope, #4 bare catch) properly fixed. Tester caught a regression in v3 (string→enum crash from narrowed catch), coder v4 resolved it with Enum.TryParse. 28 tests, 1268 total pass. No new issues found in fixes. Two minor findings remain as acknowledged deferrals. Approved.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Context/PLangContext.cs",
+      "line": 194,
+      "issue": "Clone() copies SettingsScope by reference: `SettingsScope = SettingsScope`. The clone and original share the same Scope instance.",
+      "impact": "Writes in clone pollute original context's settings.",
+      "suggestion": "Clone the Scope: `SettingsScope = SettingsScope?.Clone()`",
+      "status": "closed",
+      "resolution": "Coder v3: Added Scope.Clone() with independent ConcurrentDictionary snapshot. PLangContext.Clone() calls SettingsScope?.Clone(). Tests verify bidirectional isolation."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+      "line": 29,
+      "issue": "Save/restore pattern complexity growing — three save/restore pairs (Goal, Step, SettingsScope) in RunAsync.",
+      "impact": "Low. If a fourth field is added, someone might forget the restore.",
+      "suggestion": "Consider extracting to disposable scope (e.g., `using var scope = context.EnterGoal(this)`).",
+      "status": "open-deferred"
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
+      "line": 162,
+      "issue": "GoalRunAsync_ScopesSettingsPerGoal is a simulation test — doesn't exercise actual Methods.cs code path.",
+      "impact": "If save/restore is removed from Methods.cs, this test still passes.",
+      "suggestion": "Deferred until test infrastructure supports constructing Goals with Steps.",
+      "status": "open-deferred"
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Settings/this.cs",
+      "line": 59,
+      "issue": "Bare catch swallowed all exceptions including critical ones.",
+      "impact": "Negligible in practice but bad hygiene.",
+      "suggestion": "Narrow to specific exception types.",
+      "status": "closed",
+      "resolution": "Coder v3: Narrowed catch. Tester v3 found regression (string→enum crash). Coder v4: Added Enum.TryParse + ArgumentException to filter. 3 new enum tests. Clean."
+    }
+  ]
+}
