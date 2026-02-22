@@ -565,6 +565,50 @@
         "health": "Green.",
         "notes": "Major contract bug fixed. Clone now produces fully independent contexts."
       }
+    },
+    {
+      "id": "tester-v3-2026-0222-settings-rereview",
+      "bot": "tester",
+      "timestamp_start": "2026-02-22T01:00:00Z",
+      "timestamp_end": "2026-02-22T01:30:00Z",
+      "intent": "Re-review coder v3 fixes — verify auditor/security findings addressed, check for regressions",
+      "before": {
+        "assumptions": "Coder v3 fixed Clone isolation and narrowed Cast<T> catch. Auditor approved with one fix. Security found 4 accepted-risk items.",
+        "risk": "Low — review only. But narrowing catch clauses can introduce regressions."
+      },
+      "plan": "Run tests. Read all changed code and new tests. Verify auditor findings resolved. Check narrowed catch for gaps. Write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/Scope.cs",
+            "PLang/Runtime2/Engine/Settings/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clone isolation resolved. Found regression: narrowed catch misses ArgumentException from Enum.ToObject on string→enum path."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-settings/test-report.json",
+            ".bot/runtime2-settings/tester/v3/summary.md",
+            ".bot/runtime2-settings/tester/v3/v2_review_summary.md",
+            ".bot/runtime2-settings/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester report and summaries."
+        }
+      ],
+      "after": {
+        "status": "Needs-fixes. Narrowed catch introduced regression: string→enum crashes with unhandled ArgumentException.",
+        "health": "One regression path. Clone isolation is solid.",
+        "notes": "One-line fix: add ArgumentException to catch filter, or use Enum.TryParse for string→enum."
+      }
     }
   ]
 }

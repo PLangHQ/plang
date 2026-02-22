@@ -1,50 +1,50 @@
 {
   "tester": "tester",
   "branch": "runtime2-settings",
-  "timestamp": "2026-02-21T23:30:00Z",
-  "tested_version": "v2",
+  "timestamp": "2026-02-22T01:00:00Z",
+  "tested_version": "v3",
   "test_run": {
-    "csharp": { "total": 1262, "passed": 1262, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 1265, "passed": 1265, "failed": 0, "skipped": 0 },
     "plang": { "total": 1, "passed": 0, "failed": 0, "skipped": 1, "note": "Builder requires --llmservice=openai, not available" }
   },
   "coverage": {
-    "changed_files_covered": 4,
-    "changed_files_total": 4,
+    "changed_files_covered": 3,
+    "changed_files_total": 3,
     "uncovered_files": [],
-    "note": "Manual analysis. All changed methods have test coverage. Goal.RunAsync save/restore covered by simulation test (not integration)."
+    "note": "Manual analysis. Scope.Clone(), PLangContext.Clone(), Cast<T> narrowed catch all have tests. String→enum path in Cast<T> NOT covered."
   },
-  "resolved_from_v1": [
-    { "id": 1, "status": "resolved", "how": "Cast<T> helper with is/Convert.ChangeType/fallback. 3 tests added." },
-    { "id": 2, "status": "partially-resolved", "how": "Simulation test proves concept. Integration test deferred (tracked in todos.md)." },
-    { "id": 3, "status": "resolved", "how": "3-level scope chain test with null gap." },
-    { "id": 4, "status": "resolved", "how": "Set_OverwritesExistingValue test." },
-    { "id": 5, "status": "resolved", "how": "Scope.Set now removes key on null. Set_NullValue_RemovesKey test." },
-    { "id": 6, "status": "deferred", "how": "Requires builder + OpenAI key. Todo exists." }
+  "resolved_from_v2": [
+    { "id": "auditor-1", "status": "resolved", "how": "Scope.Clone() + SettingsScope?.Clone(). Bidirectional isolation tested." },
+    { "id": "auditor-4", "status": "resolved-with-regression", "how": "Narrowed catch, but misses ArgumentException from Enum.ToObject." }
   ],
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
-      "type": "edge-case",
+      "severity": "major",
+      "type": "false-green",
       "test_file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
       "code_file": "PLang/Runtime2/Engine/Settings/this.cs",
-      "lines": "54",
-      "issue": "Cast<T> bare catch swallows all exceptions including OverflowException. Silent fallback to default with no diagnostic path.",
-      "impact": "Hard to debug 'why is my setting not taking effect?' when the value is the right type but wrong range.",
-      "suggestion": "Acceptable for now. Consider adding a debug log when fallback is used."
+      "lines": "51,54",
+      "issue": "Cast<T> narrowed catch misses ArgumentException from Enum.ToObject. String values (e.g., 'Fastest') for enum settings crash with unhandled ArgumentException. Regression from v2 where bare catch handled this.",
+      "impact": "If PLang builder stores enum setting as string (natural language input), Resolve crashes instead of falling back to default.",
+      "suggestion": "Add ArgumentException to catch filter. Or better: use Enum.TryParse for string values before Enum.ToObject. Add test for string→enum conversion."
     },
     {
       "id": 2,
       "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Engine/Settings/SettingsTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
-      "lines": "29-32,89",
-      "issue": "GoalRunAsync_ScopesSettingsPerGoal is a simulation test, not an integration test. Doesn't exercise actual RunAsync code path.",
-      "impact": "Low — simulation proves the mechanism. Integration test needs Goal construction infrastructure.",
-      "suggestion": "Tracked in todos.md. Build test when Goal construction helpers exist."
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Engine/Settings/ScopeTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Settings/Scope.cs",
+      "lines": "38-41",
+      "issue": "Scope.Clone() shallow-copies values by reference. Mutable object values shared between clone and original.",
+      "impact": "None today — all settings are primitives/enums. Document for future reference.",
+      "suggestion": "No fix needed. Note in doc if complex settings values are ever introduced."
     }
   ],
-  "verdict": "approved",
-  "summary": "1262 C# tests pass. All critical and major findings from v1 are resolved. Cast<T> helper handles numeric widening, enum conversion, and type mismatches gracefully. Scope chain gaps, overwrite, null removal, and clone preservation all tested. Two minor deferred items remain (simulation vs integration test, PLang tests). Verdict: approved — pass to auditor."
+  "carry_forward": [
+    { "from": "v1", "id": 2, "issue": "GoalRunAsync simulation test, not integration. Tracked in todos.md." },
+    { "from": "v1", "id": 6, "issue": "Missing PLang tests. Requires builder + API key. Tracked in todos.md." }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "1265 C# tests pass. Auditor's major finding (Clone isolation) fully resolved with honest tests. However, the narrowed catch clause in Cast<T> introduced a regression: Enum.ToObject throws ArgumentException for string values, which is not in the catch filter. The bare catch in v2 handled this gracefully. One-line fix: add ArgumentException to the filter, or use Enum.TryParse for strings."
 }
