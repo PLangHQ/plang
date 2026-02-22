@@ -1,18 +1,22 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-21T14:30:00Z",
-  "tested_version": "v7",
+  "timestamp": "2026-02-22T03:00:00Z",
+  "tested_version": "v8",
   "test_run": {
-    "csharp": { "total": 1384, "passed": 1384, "failed": 0, "skipped": 0 },
-    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+    "csharp": { "total": 1390, "passed": 1390, "failed": 0, "skipped": 0 },
+    "plang": { "total": 17, "passed": 0, "failed": 0, "skipped": 17, "note": "Hand-written .pr files, requires plang binary to run" }
   },
   "coverage": {
-    "changed_files_covered": 7,
-    "changed_files_total": 7,
+    "changed_files_covered": 5,
+    "changed_files_total": 5,
     "uncovered_files": [],
-    "notes": "All changed files have test coverage. But two security features have zero test coverage for the specific protection they provide: ResolveVariablesInPath cycle detection and GetChild depth error through MemoryStack integration."
+    "note": "All coder v6 changes have test coverage. One carry-forward gap: ResolveVariablesInPath cycle detection still untested."
   },
+  "resolved_from_v7": [
+    { "id": 2, "status": "resolved", "how": "Get_DeeplyNestedPath_ReturnsErrorData integration test." },
+    { "id": 3, "status": "resolved", "how": "FromJson_DeeplyNested_Fails + distinct JsonDepthExceeded catch (though unreachable today)." }
+  ],
   "findings": [
     {
       "id": 1,
@@ -20,19 +24,20 @@
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
       "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
-      "issue": "ResolveVariablesInPath cycle detection (lines 203-237) is completely untested. Uses [ThreadStatic] HashSet to prevent infinite loops from circular variable references in bracket-index paths. Zero tests exist for this security feature.",
-      "impact": "If the _resolvingVars.Add() check is removed, no test fails. If the finally cleanup is removed, the set leaks between calls. If isRoot cleanup is removed, ThreadStatic accumulates. All these regressions are undetectable.",
-      "suggestion": "Add tests: (a) circular reference x→y→x in bracket paths terminates, (b) self-reference terminates, (c) after cycle detection, normal resolution still works (no HashSet leak)."
+      "lines": "203-237",
+      "issue": "ResolveVariablesInPath cycle detection ([ThreadStatic] HashSet) completely untested. Open since tester v7. If _resolvingVars.Add() check, finally cleanup, or isRoot cleanup were removed, no test fails.",
+      "impact": "Security feature with zero coverage. Circular variable references (%x% → %y% → %x%) could cause infinite loops if detection were removed.",
+      "suggestion": "Add tests: (a) circular reference terminates, (b) self-reference terminates, (c) after cycle, normal resolution still works.",
+      "status": "open-since-v7"
     },
     {
       "id": 2,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
-      "issue": "MemoryStack.Get() at line 90 returns GetChild result directly. GetChild now returns Data.FromError at depth 100 instead of null. No integration test verifies that MemoryStack.Get with a 101+ segment path returns error Data. Callers checking 'result != null' would proceed on an error Data.",
-      "impact": "The behavior change (null → error Data) is tested in isolation at the Data level but not through the caller. Callers doing 'stack.Get(deepPath)?.Value' get null from an error Data instead of the expected null-means-not-found.",
-      "suggestion": "Add MemoryStackTests.Get_DeeplyNestedPath_ReturnsErrorData() — 101+ dot path, assert result.Success == false and result.Error.Key == 'NavigationDepthExceeded'."
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
+      "issue": "Clr() depth limit not tested at boundary (20 OK, 21 fail). Open since tester v7.",
+      "status": "open-since-v7"
     },
     {
       "id": 3,
@@ -40,49 +45,16 @@
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs",
       "code_file": "PLang/Runtime2/actions/convert/fromJson.cs",
-      "issue": "FromJson action not tested with deeply nested JSON. The action's catch-all wraps depth-exceeded InvalidOperationException as ValidationError('Invalid JSON: ...') with key 'JsonParseError'. The error message is misleading (JSON is valid, just too deep) and the key is wrong for this case.",
-      "impact": "Low. The depth limit IS tested at Data level. But the user-facing error through the action is inaccurate.",
-      "suggestion": "Add ConvertTests with 200-level nested JSON. Consider distinguishing depth-exceeded from parse errors in fromJson.Run()."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "edge-case",
-      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
-      "issue": "Clr() generic depth limit tested at 25 (exceeds 20), but not at the boundary. No test for exactly 20 (should succeed) or 21 (should fail). Off-by-one bug in 'depth > MaxGenericDepth' would go undetected.",
-      "impact": "Low. Code is correct today.",
-      "suggestion": "Add boundary tests: 20 levels → valid, 21 levels → null."
+      "lines": "19-22",
+      "issue": "JsonDepthExceeded catch is unreachable — STJ's MaxDepth (64) is hit before our limit (128). The error key has zero test coverage.",
+      "impact": "None today. Defensive code for future .NET changes."
     }
   ],
   "carry_forward": [
-    {
-      "from_version": "v6",
-      "id": 2,
-      "severity": "major",
-      "issue": "Thread safety (ConcurrentDictionary/lock) has no concurrent test. Code correct but regression undetectable.",
-      "status": "open"
-    },
-    {
-      "from_version": "v6",
-      "id": 5,
-      "severity": "minor",
-      "issue": "Inner context not propagated in RehydrateNestedData. By design — Unwrap/GetChild stamp context lazily.",
-      "status": "open"
-    },
-    {
-      "from_version": "v6",
-      "id": 6,
-      "severity": "minor",
-      "issue": "Numeric type widening (int → long) through compress/decompress. Mitigated by GetValue<T>().",
-      "status": "open"
-    }
-  ],
-  "resolved_from_v6": [
-    { "id": 1, "issue": "Zip bomb protection untested", "resolution": "Decompress_ExceedsSizeLimit_ReturnsError test added" },
-    { "id": 3, "issue": "Merge() untested", "resolution": "3 Merge tests added" },
-    { "id": 4, "issue": "StatusCode unasserted", "resolution": "4 StatusCode 500 tests added" }
+    { "from_version": "v6", "id": 2, "severity": "major", "issue": "Thread safety concurrent test. Code correct but regression undetectable.", "status": "open" },
+    { "from_version": "v6", "id": 5, "severity": "minor", "issue": "Inner context not propagated in RehydrateNestedData.", "status": "open" },
+    { "from_version": "v6", "id": 6, "severity": "minor", "issue": "Numeric type widening through compress/decompress.", "status": "open" }
   ],
   "verdict": "needs-fixes",
-  "summary": "1384 tests pass. Coder v5 resolved 3 of 6 v6 findings (zip bomb, Merge, StatusCode). Security hardening code is correct and well-structured. But two security features from this release have zero test coverage: (1) ResolveVariablesInPath cycle detection — entirely untested, (2) GetChild depth error through MemoryStack — not tested through the integration point. Plus carry-forward: thread safety concurrent test still open. Verdict: needs-fixes for the two new major gaps."
+  "summary": "1390 C# tests pass. Coder v6 cross-concern fixes all verified (decimal precision, Clone context, fromJson error key, GetChild integration). 2 of 4 v7 findings resolved. Blocking: ResolveVariablesInPath cycle detection still has zero test coverage (open since v7). This is a security feature — if removed, no test detects the regression."
 }
