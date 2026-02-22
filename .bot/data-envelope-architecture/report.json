@@ -1,0 +1,790 @@
+{
+  "branch": "data-envelope-architecture",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "architect",
+      "timestamp_start": "2026-02-19T00:00:00Z",
+      "timestamp_end": "2026-02-19T23:59:00Z",
+      "intent": "Design Data envelope architecture — Engine.Types, Type context, Data restructure, envelope pipeline",
+      "before": {
+        "assumptions": "Type knowledge scattered across three static/instance sources. Data has no context. Type is eagerly derived. No transport serialization view exists.",
+        "risk": "Large architectural change touching Data (universal type), Type, and TypeMapping. Phased approach mitigates — each phase independently shippable."
+      },
+      "plan": "Four-phase design: (1) Engine.Types replaces static TypeMapping, (2) Type gets context + lazy derivation, Data gets late-bound context, (3) Data partial class split + Out view, (4) Envelope pipeline with Wrap/Compress/Encrypt chain. OBP throughout.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/architect/v1/DATA_DEEP_DIVE.md",
+            ".bot/data-envelope-architecture/architect/v1/DATA_ENVELOPE_ARCHITECTURE.md",
+            ".bot/data-envelope-architecture/architect/v1/DataEnvelopePipelineExample.cs"
+          ],
+          "type": "move",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Moved handover docs from Documentation/Runtime2/architect-handover/ to .bot/"
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/architect/v1/plan.md",
+            ".bot/data-envelope-architecture/architect/v1/summary.md",
+            ".bot/data-envelope-architecture/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Design spec and summaries"
+        },
+        {
+          "paths": [
+            "learnings/data-envelope-architecture/architect/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "OBP learnings from design session"
+        }
+      ],
+      "after": {
+        "status": "Design complete. Four-phase plan ready for coder handoff.",
+        "health": "Good. No code changes, pure design.",
+        "notes": "Coder should read plan.md + learnings.md before starting Phase 1."
+      }
+    },
+    {
+      "id": "c0d3r-s1-2026-0220-phase1-types",
+      "bot": "coder",
+      "timestamp_start": "2026-02-20T10:00:00Z",
+      "timestamp_end": "2026-02-20T11:30:00Z",
+      "intent": "Implement Phase 1: Engine.Types — consolidate scattered type knowledge into a single live instance on Engine",
+      "before": {
+        "assumptions": "Type knowledge is scattered across static TypeMapping (Engine/Utility), FileModule.TypeMapping (instance), and MimeTypeHelper (Utils). Data.cs, file/types.cs, and StepActions reference static TypeMapping directly.",
+        "risk": "Phase 1 is additive — no existing behavior changes. Risk is low."
+      },
+      "plan": "Create PLang/Runtime2/Engine/Types/this.cs with all type knowledge. Add Types property to Engine. Add EngineTypes global alias. Write 62 TUnit tests. Keep old static TypeMapping as-is until Phase 2.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Types/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New @this class consolidating PLang name<->CLR type, extension->Kind, extension->MIME, Kind->compressibility."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs", "PLang/Runtime2/GlobalUsings.cs", "PLang.Tests/GlobalUsings.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Types property to Engine, EngineTypes global alias."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Types/EngineTypesTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "62 TUnit tests covering all public methods."
+        }
+      ],
+      "after": {
+        "status": "Phase 1 complete. Engine.Types created with full type knowledge. 62 tests pass.",
+        "health": "Green.",
+        "notes": "Phase 2 next."
+      }
+    },
+    {
+      "id": "tstr-s1-2026-0220-test-phase1",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T15:00:00Z",
+      "timestamp_end": null,
+      "intent": "Test quality analysis of coder v1",
+      "before": { "assumptions": "62 tests for new class, likely happy path only.", "risk": "False greens compound." },
+      "plan": "Run tests, analyze for intent vs implementation, check edge cases.",
+      "actions": [
+        { "paths": ["PLang.Tests/Runtime2/Types/EngineTypesTests.cs"], "type": "review", "category": "test", "confidence": "high", "context": "8 findings." }
+      ],
+      "after": { "status": "Test analysis complete. Verdict: needs-fixes.", "health": "Mostly solid, some gaps." }
+    },
+    {
+      "id": "tstr-s2-2026-0220-test-phase2",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T16:00:00Z",
+      "timestamp_end": "2026-02-20T16:45:00Z",
+      "intent": "Test quality analysis of coder v2 — Phase 2 context + lazy derivation",
+      "before": { "assumptions": "v1 findings likely not addressed yet.", "risk": "Add→KindOf pipeline broken." },
+      "plan": "Run tests, verify v1 carry-forward, analyze Phase 2 quality.",
+      "actions": [
+        { "paths": ["PLang.Tests/Runtime2/Memory/DataTests.cs", "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs"], "type": "review", "category": "test", "confidence": "high", "context": "Critical Add→KindOf bug found." }
+      ],
+      "after": { "status": "v2 analysis complete. Verdict: needs-fixes.", "health": "Add() broken for KindOf()." }
+    },
+    {
+      "id": "tstr-s3-2026-0220-verify-fixes-phase3",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T17:00:00Z",
+      "timestamp_end": "2026-02-20T17:30:00Z",
+      "intent": "Verify v2 fixes + Phase 3 test quality",
+      "before": { "assumptions": "Coder fixed v2 findings and implemented Phase 3.", "risk": "Low." },
+      "plan": "Run tests, verify fixes, analyze Phase 3.",
+      "actions": [
+        { "paths": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs", "PLang/Runtime2/Engine/View.cs"], "type": "review", "category": "test", "confidence": "high", "context": "All fixes verified. Verdict: approved." }
+      ],
+      "after": { "status": "Approved. 1349 tests pass.", "health": "Solid." }
+    },
+    {
+      "id": "tstr-s4-2026-0220-test-phase4",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T20:15:00Z",
+      "timestamp_end": "2026-02-20T20:45:00Z",
+      "intent": "Test quality analysis of Phase 4 envelope pipeline",
+      "before": { "assumptions": "Pipeline involves serialization and compression — failure modes at transport boundary.", "risk": "Decompress handles untrusted data." },
+      "plan": "Analyze pipeline tests, check error paths.",
+      "actions": [
+        { "paths": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"], "type": "review", "category": "test", "confidence": "high", "context": "Critical: Decompress no exception handling. Verdict: needs-fixes." }
+      ],
+      "after": { "status": "Needs fixes. 1366 tests pass but Decompress will crash on corrupt data.", "health": "Critical gap." }
+    },
+    {
+      "id": "tstr-s5-2026-0220-verify-phase4-fixes",
+      "bot": "tester",
+      "timestamp_start": "2026-02-20T20:50:00Z",
+      "timestamp_end": "2026-02-20T21:05:00Z",
+      "intent": "Verify Phase 4 fixes",
+      "before": { "assumptions": "Decompress try/catch added, 6 new tests.", "risk": "Low." },
+      "plan": "Verify each fix, update report.",
+      "actions": [
+        { "paths": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs", "PLang.Tests/Runtime2/Memory/DataTests.cs"], "type": "review", "category": "test", "confidence": "high", "context": "All fixes verified. Verdict: approved." }
+      ],
+      "after": { "status": "Approved. 1372 tests pass. Ready for auditor.", "health": "Solid." }
+    },
+    {
+      "id": "aud-s1-2026-0220-review-v4",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-20T21:10:00Z",
+      "timestamp_end": "2026-02-20T21:35:00Z",
+      "intent": "Full code review of data-envelope-architecture Phases 1-4",
+      "before": {
+        "assumptions": "Tester v5 approved, 1372 tests pass. Code should be functionally correct. Review focuses on OBP compliance, thread safety, contract fidelity, and ripple impact.",
+        "risk": "Data is the universal type — any issue in Data.cs affects every module. Engine.Types is shared singleton — thread safety is critical."
+      },
+      "plan": "Read all production code and tests. Verify tests pass independently. Check OBP compliance, thread safety, error handling conventions, serialization correctness. Write auditor-report.json with numbered findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang/Runtime2/Engine/View.cs",
+            "PLang/Runtime2/Engine/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full review of all changed production files. Found 8 findings: 2 major (thread safety, temporal coupling), 3 minor (ServiceError, double-navigation, ContainsValue), 3 nit."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test quality verified independently. 1372 pass. Adequate coverage for all phases. Gap: error key assertions after ServiceError fix."
+        },
+        {
+          "paths": [".bot/data-envelope-architecture/auditor-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "8 findings written. Approved with fixes recommended."
+        }
+      ],
+      "after": {
+        "status": "Review complete. 8 findings in auditor-report.json. Approved with fixes recommended.",
+        "health": "Good overall. Thread safety (finding #1) is the priority fix. Code is clean, well-structured, and OBP-compliant.",
+        "notes": "Two major findings should be addressed before merge. Thread safety in Engine.Types is latent but becomes real with concurrent contexts. RehydrateNestedData temporal coupling is fragile but functional."
+      }
+    },
+    {
+      "id": "tstr-s6-2026-0221-verify-auditor-fixes",
+      "bot": "tester",
+      "timestamp_start": "2026-02-21T12:00:00Z",
+      "timestamp_end": "2026-02-21T12:45:00Z",
+      "intent": "Verify auditor fix commit + deep test quality analysis of fixes themselves",
+      "before": {
+        "assumptions": "Coder fixed all 8 auditor findings. Code changes are correct structurally. Question is whether the fixes themselves have test coverage.",
+        "risk": "Safety features (zip bomb, thread safety) added without regression tests."
+      },
+      "plan": "Run full test suite, verify each auditor fix in code, analyze whether new code paths are tested, identify false greens where fixes exist in code but not in tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified all 8 auditor fixes correct in code. Found 1 critical gap (zip bomb untested), 1 major gap (thread safety untested), 2 minor gaps (StatusCode, inner context). Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "Review complete. 4 findings in test-report.json. Verdict: needs-fixes.",
+        "health": "Code is correct but two security-critical features lack regression tests.",
+        "notes": "Critical: zip bomb protection (MaxDecompressedSize) has zero test coverage. Major: ConcurrentDictionary/lock has no concurrent test."
+      }
+    },
+    {
+      "id": "sec-s1-2026-0221-security-audit",
+      "bot": "security",
+      "timestamp_start": "2026-02-21T00:00:00Z",
+      "timestamp_end": "2026-02-21T01:00:00Z",
+      "intent": "Security audit of data-envelope-architecture — blue team + red team analysis of Data envelope pipeline, navigation, type registry, and memory stack",
+      "before": {
+        "assumptions": "Auditor found 8 functional findings but did not perform adversarial security analysis. Code handles untrusted data at transport boundaries (Decompress). Zip bomb mitigation was added. No other security-focused review has been done.",
+        "risk": "Data is the universal type. Navigation, envelope pipeline, and type resolution all process potentially untrusted input. Stack overflow, type confusion, and reflection-based exfiltration are primary concerns."
+      },
+      "plan": "Phase 1: Blue team defensive audit — map attack surface for Data.cs (all partials), MemoryStack, Engine.Types, ValueNavigators. Phase 2: Red team offensive testing — construct exploit scenarios for stack overflow via recursion, zip bomb edge cases, reflection exfiltration, variable resolution loops, type registry poisoning. Phase 3: Record findings in security-report.json and learnings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ValueNavigators.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ObjectNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/ListNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/DictionaryNavigator.cs",
+            "PLang/Runtime2/Engine/View.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/actions/variable/set.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue team: mapped 6 attack surface areas. Red team: identified 12 findings (4 high, 6 medium, 2 low). Primary pattern: unbounded recursion in 5 locations."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/security-report.json",
+            ".bot/data-envelope-architecture/security/v1/result.md",
+            ".bot/data-envelope-architecture/security/v1/summary.md",
+            ".bot/data-envelope-architecture/security/summary.md",
+            "learnings/data-envelope-architecture/security/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, detailed findings, summaries, and learnings."
+        }
+      ],
+      "after": {
+        "status": "Security audit complete. 12 findings in security-report.json. 4 HIGH: unbounded recursion (x3) + system variable injection. 6 MEDIUM: reflection exposure, JSON size limits, variable resolution cycles, namespace spoofing, unimplemented crypto, recursive type parsing. 2 LOW: merge growth, deepclone limits.",
+        "health": "Code has good defensive intent (gzip bomb protection, ServiceError, try/catch on decompress) but incomplete boundary hardening. Recommend addressing HIGH findings before merge.",
+        "notes": "The recurring pattern is unbounded recursion — same fix applies everywhere (add depth parameter). System variable injection is an architectural gap in MemoryStack.Set(). ObjectNavigator reflection is a capability leak by design."
+      }
+    },
+    {
+      "id": "sec-s2-2026-0221-post-review",
+      "bot": "security",
+      "timestamp_start": "2026-02-21T02:00:00Z",
+      "timestamp_end": "2026-02-21T02:30:00Z",
+      "intent": "Update security report after creator review — correct threat model, reclassify findings",
+      "before": {
+        "assumptions": "v1 applied a traditional security model (defend against the user). Creator corrected: PLang is user-sovereign, .pr files are trusted, trust boundary is cryptographic signatures.",
+        "risk": "Incorrect threat model leads to wasted effort on non-issues and missed focus on real boundaries."
+      },
+      "plan": "Reclassify #4/#5 as by-design, upgrade #9 to HIGH (Verified is the trust boundary), downgrade #8 to LOW, update all deliverables.",
+      "actions": [
+        {
+          "paths": [".bot/data-envelope-architecture/security-report.json"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated threat model, reclassified 4 findings, added threat_model field."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/security/v2/v1_review_summary.md",
+            ".bot/data-envelope-architecture/security/v2/plan.md",
+            ".bot/data-envelope-architecture/security/v2/summary.md",
+            ".bot/data-envelope-architecture/security/summary.md",
+            "learnings/data-envelope-architecture/security/v1/learnings.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated all deliverables with corrected threat model and reclassified findings."
+        }
+      ],
+      "after": {
+        "status": "v2 complete. Threat model corrected. Priority: #9 (Verified integrity) > #1-3 (recursion at transport) > #7/#10 (recursion elsewhere).",
+        "health": "Findings properly calibrated to PLang's actual security model.",
+        "notes": "Key insight: don't flag user-sovereign actions as vulnerabilities. Focus on transport boundaries and signature integrity."
+      }
+    },
+    {
+      "id": "c0d3r-v5-2026-0221-security-hardening",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T15:00:00Z",
+      "intent": "Fix unbounded recursion (5 locations), dedup fromJson, Verified private set, add missing tests",
+      "before": {
+        "assumptions": "Security audit found 5 unbounded recursion DoS vectors, auditor found zip bomb test gap, tester found Merge test gap. User rejected #4 and #5 as by-design.",
+        "risk": "Medium — depth limits are mechanical but Clr() fallback change could affect type resolution. InternalsVisibleTo is new for this project."
+      },
+      "plan": "1. Add depth params to all 5 recursive methods. 2. Cycle detection for ResolveVariablesInPath. 3. Dedup fromJson. 4. Verified private set. 5. Tests for all changes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Depth limits on all 5 recursive methods. ResolveVariablesInPath uses HashSet cycle detection instead of depth counter."
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/convert/fromJson.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Deleted duplicate UnwrapJsonElement, now calls Data.UnwrapJsonElement (internal static)."
+        },
+        {
+          "paths": ["PLang/PLang.csproj"],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Added InternalsVisibleTo for PLang.Tests."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "12 new tests: depth limits (3), zip bomb (1), StatusCode (4), Merge (3), Verified (1 new + 2 updated)."
+        }
+      ],
+      "after": {
+        "status": "All 5 recursion DoS vectors fixed. 1384 tests pass (12 new). Ready for review.",
+        "health": "Green. All security HIGH findings addressed except #4 (by design).",
+        "notes": "Clr() behavior change: list<unknownType> now returns null instead of List<object>. No existing tests depended on old behavior."
+      }
+    },
+    {
+      "id": "c0d3r-v5b-2026-0221-plang-tests",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T18:00:00Z",
+      "timestamp_end": "2026-02-21T18:30:00Z",
+      "intent": "Run and commit PLang integration tests for data-envelope-architecture features",
+      "before": {
+        "assumptions": "3 PLang test suites created with hand-written .pr files in previous session. Need to verify they pass and commit.",
+        "risk": "Low — tests only, no production code changes."
+      },
+      "plan": "Build PlangConsole, run all PLang tests with !test flag, verify 3 new suites pass, commit.",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Runtime2/DeepNavigation/Start.goal",
+            "Tests/Runtime2/DeepNavigation/DeepNavigation.test.goal",
+            "Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr",
+            "Tests/Runtime2/VariableIndexing/Start.goal",
+            "Tests/Runtime2/VariableIndexing/VariableIndexing.test.goal",
+            "Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr",
+            "Tests/Runtime2/FromJson/Start.goal",
+            "Tests/Runtime2/FromJson/FromJson.test.goal",
+            "Tests/Runtime2/FromJson/.build/fromjson.test.pr"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new PLang test suites verified and committed. All 17 PLang tests pass (14 existing + 3 new)."
+        }
+      ],
+      "after": {
+        "status": "Complete. 17/17 PLang integration tests pass. Committed to data-envelope-architecture.",
+        "health": "Green.",
+        "notes": "Hand-written .pr files work correctly. Test runner only needs *.test.pr — app.pr and start.pr are optional."
+      }
+    },
+    {
+      "id": "ca-s1-2026-0221-code-analysis",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-21T16:00:00Z",
+      "timestamp_end": null,
+      "intent": "Code simplicity analysis of data-envelope-architecture branch changes — OBP compliance, simplification, readability",
+      "before": {
+        "assumptions": "Branch has been through coder, tester, auditor, and security review cycles. Code is functionally correct with 1384 tests passing. Previous reviews focused on correctness/security, not OBP and simplicity.",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "Analyze all 17 changed files in data-envelope-architecture branch. Three-pass: OBP compliance, simplification, readability. Production code gets full analysis, test code gets lighter readability pass.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/Engine/View.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 3-pass analysis of all production files. 10 CLEAN, 2 NEEDS WORK (minor). No OBP violations."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Readability + pattern consistency pass. 3 CLEAN, 1 NEEDS WORK (minor — test name doesn't match what it tests)."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/codeanalyzer/v1/result.md",
+            ".bot/data-envelope-architecture/codeanalyzer/v1/summary.md",
+            ".bot/data-envelope-architecture/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Analysis report, session summary, cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "Analysis complete. 12 CLEAN, 3 NEEDS WORK (minor). No OBP violations. 7 findings (1 medium, 5 low, 1 info).",
+        "health": "Code is well-structured and OBP-compliant. Minor duplication and consistency issues.",
+        "notes": "Most actionable finding: duplicated CleanName in Data.cs and MemoryStack.cs."
+      }
+    },
+    {
+      "id": "tstr-s7-2026-0221-verify-coder-v5",
+      "bot": "tester",
+      "timestamp_start": "2026-02-21T14:00:00Z",
+      "timestamp_end": "2026-02-21T14:30:00Z",
+      "intent": "Test quality analysis of coder v5 security hardening — depth limits, cycle detection, fromJson dedup, Verified private set",
+      "before": {
+        "assumptions": "Coder v5 addresses security audit + tester v6 findings. 12 new tests. Should resolve zip bomb, Merge, StatusCode gaps.",
+        "risk": "New security features (cycle detection, depth limits) may be untested at integration level."
+      },
+      "plan": "Run full test suite. Verify v6 findings resolved. Hunt for gaps in new security code — especially cycle detection and depth limit integration paths.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs",
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 of 6 v6 findings resolved. Found 2 new major gaps: cycle detection untested, GetChild depth error not tested through MemoryStack. Plus 2 minor. Thread safety carry-forward."
+        }
+      ],
+      "after": {
+        "status": "Review complete. 4 new findings + 1 carry-forward in test-report.json. Verdict: needs-fixes.",
+        "health": "Security hardening code is correct. But two security features have zero test coverage at the integration level.",
+        "notes": "Pattern: depth limits tested in isolation but not through callers. Cycle detection entirely untested."
+      }
+    },
+    {
+      "id": "ca-v2-2026-0221-higher-level-review",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-21T23:30:00Z",
+      "timestamp_end": "2026-02-21T23:55:00Z",
+      "intent": "Higher-level review of coder v5 + tester v7 — applying learnings from runtime2-settings to find cross-concern gaps",
+      "before": {
+        "assumptions": "Coder v5 added depth limits, cycle detection, fromJson dedup, Verified → private set. Tester v7 found cycle detection untested and GetChild→MemoryStack integration gap. My v1 analysis was file-by-file. Applying new learnings: trace data origins, check clone/copy families, review fixes against full type surface.",
+        "risk": "Low — analysis only."
+      },
+      "plan": "Read all changed production files + tests. Apply learnings: trace JSON data through full lifecycle, audit clone/copy methods as a family, check every code path for test coverage, review Cast/Convert patterns against full type surface.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Result.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Higher-level cross-concern analysis. Found: (1) decimal precision loss in UnwrapJsonElement, (2) MemoryStack.Clone doesn't propagate Context, (3) GetChild→MemoryStack contract change untested (tester v7 carry-forward), (4) fromJson masks depth error as JsonParseError. Added 4 todos."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md",
+            "learnings/data-envelope-architecture/codeanalyzer/v2/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "4 new todos, 6 learnings from applying runtime2-settings insights to this branch."
+        }
+      ],
+      "after": {
+        "status": "Higher-level review complete. 4 new todos added. 6 learnings recorded. Key insight: JSON number precision loss (decimal→double) is same class of bug as Settings int→long.",
+        "health": "Code is structurally sound but has cross-concern gaps that file-by-file review missed.",
+        "notes": "Clone methods are a recurring blind spot — both branches have the same pattern of Clone not propagating new properties."
+      }
+    },
+    {
+      "id": "c0d3r-v6-2026-0221-analyzer-v2-fixes",
+      "bot": "coder",
+      "timestamp_start": "2026-02-21T21:00:00Z",
+      "timestamp_end": "2026-02-21T21:30:00Z",
+      "intent": "Fix 4 cross-concern gaps from code analyzer higher-level review",
+      "before": {
+        "assumptions": "Code analyzer found: decimal precision loss, Clone missing Context, MemoryStack.Get depth contract, fromJson masking depth error.",
+        "risk": "Low-medium — decimal change affects all JSON number parsing. Clone context propagation changes a pre-existing test."
+      },
+      "plan": "1. UnwrapJsonNumber: TryGetInt64→TryGetDecimal→GetDouble. 2. MemoryStack.Clone sets Context. 3. fromJson: separate InvalidOperationException catch. 4. Tests for all.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Decimal precision via UnwrapJsonNumber, Clone context propagation, separate depth error catch in fromJson."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 new tests + 1 updated. Decimal precision, integer type, clone context, depth navigation, fromJson depth/decimal."
+        }
+      ],
+      "after": {
+        "status": "All 4 analyzer findings fixed. 1390 tests pass, 0 failures.",
+        "health": "Green.",
+        "notes": "JSON 19.99 now stays decimal. Clone_DataHasNoContext updated to Clone_PreservesDataContext."
+      }
+    },
+    {
+      "id": "tester-v8-2026-0222-cross-concern-review",
+      "bot": "tester",
+      "timestamp_start": "2026-02-22T03:00:00Z",
+      "timestamp_end": "2026-02-22T03:30:00Z",
+      "intent": "Review coder v5 PLang tests + coder v6 cross-concern fixes, check v7 carry-forwards",
+      "before": {
+        "assumptions": "Coder v5 added 3 PLang test suites (17 tests). Coder v6 fixed 4 cross-concern gaps from analyzer v2. v7 had 2 major findings (cycle detection, GetChild integration).",
+        "risk": "Low — review only."
+      },
+      "plan": "Run tests. Read code changes. Verify v7 findings addressed. Verify analyzer v2 cross-concern fixes. Write report.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs",
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Cross-concern fixes verified. v7 #2 resolved, #1 (cycle detection) still open. New observation: JsonDepthExceeded catch unreachable."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/test-report.json",
+            ".bot/data-envelope-architecture/tester/v8/summary.md",
+            ".bot/data-envelope-architecture/tester/v8/v7_review_summary.md",
+            ".bot/data-envelope-architecture/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v8 report."
+        }
+      ],
+      "after": {
+        "status": "Needs-fixes. Cycle detection still untested (open since v7). All cross-concern fixes verified.",
+        "health": "Good — 1390 tests pass. One blocking gap remains.",
+        "notes": "Cycle detection is the only blocking item. Everything else is minor or carry-forward."
+      }
+    },
+    {
+      "id": "c0d3r-v7-2026-0222-cycle-tests",
+      "bot": "coder",
+      "timestamp_start": "2026-02-22T12:00:00Z",
+      "timestamp_end": null,
+      "intent": "Add tests for cycle detection in ResolveVariablesInPath and Clr() depth boundary",
+      "before": {
+        "assumptions": "Tester v8 has one blocking finding: cycle detection untested. Two minor: Clr boundary, JsonDepthExceeded dead code. No production code changes needed.",
+        "risk": "Low — test-only changes. Cycle detection test uses reflection to access thread-static field."
+      },
+      "plan": "1. Add cycle detection test using reflection to pre-seed _resolvingVars. 2. Add Clr() boundary tests at 20/21. 3. No production code changes.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 new tests: 2 cycle detection (reflection-based guard verification + cleanup verification), 2 Clr boundary (20 nesting resolves, 21 returns null)."
+        }
+      ],
+      "after": {
+        "status": "Complete. All tester v8 findings addressed. 1394 tests pass (4 new).",
+        "health": "Green.",
+        "notes": "Cycle detection is defensive code — structurally unreachable through current API. Test uses reflection to verify the guard mechanism directly."
+      }
+    },
+    {
+      "id": "tester-v9-2026-0222-cycle-review",
+      "bot": "tester",
+      "timestamp_start": "2026-02-22T12:30:00Z",
+      "timestamp_end": "2026-02-22T12:45:00Z",
+      "intent": "Review coder v7 cycle detection + Clr boundary tests — verify v8 findings resolved",
+      "before": {
+        "assumptions": "Coder v7 is test-only (4 new tests). Cycle detection was the only blocking finding since v7. Reflection-based approach is the only way to reach the defensive guard.",
+        "risk": "Low — reviewing tests, no code changes."
+      },
+      "plan": "Run full test suite. Analyze each test for honesty (would it fail if the guard were removed?). Check ThreadStatic cleanup verification. Check Clr boundary pair constrains from both sides. Write report.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "All 4 tests are honest. Cycle guard removal causes test 1 failure. Inner cleanup removal causes test 2 failure. Clr boundary pair constrains MaxGenericDepth=20 from both sides."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/test-report.json",
+            ".bot/data-envelope-architecture/tester/v9/summary.md",
+            ".bot/data-envelope-architecture/tester/v9/v8_review_summary.md",
+            ".bot/data-envelope-architecture/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v9 report — approved for auditor."
+        }
+      ],
+      "after": {
+        "status": "Approved. All v8 findings resolved. 1394 tests pass. No new findings.",
+        "health": "Green. Test suite provides adequate coverage for auditor review.",
+        "notes": "Carry-forwards from v6 remain (thread safety, inner context, numeric widening) but don't block. This branch is ready for auditor."
+      }
+    },
+    {
+      "id": "aud-v7-2026-0222-final-review",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-22T14:00:00Z",
+      "timestamp_end": "2026-02-22T14:30:00Z",
+      "intent": "Final auditor review — verify security hardening, depth limits, cycle detection, test coverage",
+      "before": {
+        "assumptions": "Coder v5 hardened all 5 recursive methods with depth limits, added cycle detection, zip bomb test, Verified→private set, fromJson dedup. Coder v7 added cycle detection and Clr boundary tests. Tester v9 approved. 1394 tests pass.",
+        "risk": "Low — review only."
+      },
+      "plan": "Read all updated production code and tests. Run test suite. Verify all v4 findings resolved. Review new code (depth limits, cycle detection) as fresh code. Check for new issues. Update auditor-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Types/this.cs",
+            "PLang/Runtime2/actions/convert/fromJson.cs",
+            "PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All depth limits correctly placed. Cycle detection is clean. Zip bomb tested. One new nit: JsonStringNavigator duplicates Data.UnwrapJsonElement."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
+            "PLang.Tests/Runtime2/Types/EngineTypesTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Tests are honest. Boundary tests constrain depth limits. Cycle detection tests use reflection — correct for defensive code."
+        },
+        {
+          "paths": [
+            ".bot/data-envelope-architecture/auditor-report.json",
+            ".bot/data-envelope-architecture/auditor/v7/summary.md",
+            ".bot/data-envelope-architecture/auditor/v7/v4_review_summary.md",
+            ".bot/data-envelope-architecture/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final auditor report. Verdict: approved."
+        }
+      ],
+      "after": {
+        "status": "Approved. All major findings closed. Security hardening comprehensive. One nit (JsonStringNavigator duplication), one minor open-accepted (race window).",
+        "health": "Green — 1394 tests, OBP clean, all recursive methods guarded.",
+        "notes": "Ready for merge."
+      }
+    }
+  ]
+}

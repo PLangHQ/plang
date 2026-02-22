@@ -200,3 +200,63 @@ Target audiences:
 ## Verify Defaults scope is ConcurrentDictionary
 **Date:** 2026-02-21
 **Context:** Code analyzer v2 review. `engine.Settings.Defaults` is shared across all contexts. Thread safety is assumed via ConcurrentDictionary. Rather than testing concurrent behavior, verify the type choice is correct — assert it IS a ConcurrentDictionary so a future refactor to Dictionary would break a test.
+
+---
+
+## Investigate: Kind as a Rich Object (ConcurrentDictionary<string, Kind>)
+**Date:** 2026-02-21
+**Context:** Auditor review of data-envelope-architecture. `_allKinds` is a `HashSet<string>` protected by manual locking. No `ConcurrentHashSet` exists in .NET. Using `ConcurrentDictionary<string, byte>` as workaround loses `TryGetValue` returning the canonical key.
+
+**Idea:** Instead of a dummy value, store a `Kind` object. `_allKinds` becomes `ConcurrentDictionary<string, Kind>`. This eliminates manual locking AND makes Kind powerful:
+- `kind.ContentTypes` — list all MIME content types for this kind (e.g. `image` → `image/jpeg`, `image/png`, ...)
+- `kind.Extensions` — list all extensions (e.g. `image` → `.jpg`, `.png`, ...)
+- `kind.Compressible` — whether this kind is compressible
+- Kind becomes a first-class domain object instead of a bare string
+
+---
+
+## ~~UnwrapJsonElement loses decimal precision~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Code analyzer higher-level review of data-envelope-architecture.
+**Completed:** Coder extracted `UnwrapJsonNumber`: `TryGetInt64 → TryGetDecimal → GetDouble`. Tests verify `19.99` stays `decimal` and `42` stays `long`.
+
+---
+
+## ~~MemoryStack.Clone() doesn't propagate Context~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Code analyzer review.
+**Completed:** Coder added `clone.Context = Context` to `MemoryStack.Clone()`. Existing test updated, new `Clone_PreservesContext` test added.
+
+---
+
+## ~~MemoryStack.Get returns error Data for depth-exceeded paths~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Tester v7 Finding #2.
+**Completed:** Coder added `Get_DeeplyNestedPath_ReturnsErrorData` test — 101+ dot path, asserts `Success == false` and `Error.Key == "NavigationDepthExceeded"`.
+
+---
+
+## JsonStringNavigator: Parse Once on First Access, Update Value + Type
+**Date:** 2026-02-22
+**Context:** Security finding #6 — JsonStringNavigator re-parses the full JSON string on every `.` navigation. Size limit (10MB) added, but the re-parse-every-time behavior remains.
+
+**Problem:** `%response.name%` then `%response.email%` parses the same string twice. For a 5MB API response accessed 10 times, that's 50MB of unnecessary parsing.
+
+**Fix for coder:**
+1. On first navigation in `JsonStringNavigator.GetProperty`, parse the string via `UnwrapElement`
+2. Replace `Data.Value` with the parsed result (either `Dictionary<string, object?>` for `{...}` or `List<object?>` for `[...]`)
+3. Update `Data.Type` accordingly — JSON can be object OR array:
+   - `{...}` → `dict` (or whatever PLang type is correct for `Dictionary<string, object?>`)
+   - `[...]` → `list` (for `List<object?>`)
+4. Subsequent navigations then go through `DictionaryNavigator` or `ListNavigator` (both higher priority than `JsonStringNavigator`) — no re-parsing
+
+**Key insight:** JSON is not one type — `{object}` and `[array]` are different. The parsed Value type determines which navigator handles it. Don't assume dict.
+
+**Note:** This changes what `Value` returns after first access (string → dict/list). Callers that expect the raw JSON string need to read Value *before* navigating, or we need to preserve the original string somewhere (e.g., a `RawValue` property). Check if any caller depends on `Value` being a string after navigation.
+
+---
+
+## ~~fromJson wraps depth-exceeded as "Invalid JSON"~~ ✅ DONE (2026-02-21)
+**Date:** 2026-02-21
+**Context:** Tester v7 Finding #3.
+**Completed:** Coder catches `InvalidOperationException` separately with key `"JsonDepthExceeded"`. Test `FromJson_DeeplyNested_Fails` and `FromJson_DecimalNumber_PreservesPrecision` added.

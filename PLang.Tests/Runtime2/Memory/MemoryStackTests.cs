@@ -485,6 +485,138 @@ public class MemoryStackTests
         await Assert.That(dict.ContainsKey("name")).IsTrue();
         await Assert.That(dict.ContainsKey("NAME")).IsTrue();
     }
+
+    // --- Phase 2: Context stamping via PLangContext ---
+
+    [Test]
+    public async Task PLangContext_StampsContextOnMemoryStackData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        // Variables set through PLangContext's MemoryStack get context stamped
+        context.MemoryStack.Set("name", "John");
+
+        await Assert.That(context.MemoryStack.Get("name")!.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task PLangContext_Put_StampsContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        var data = new Data("test", "hello");
+        context.MemoryStack.Put(data);
+
+        await Assert.That(data.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task PLangContext_ExistingData_GetsContext()
+    {
+        // Pre-populate a MemoryStack, then create PLangContext with it
+        var stack = new MemoryStack();
+        stack.Set("name", "John");
+
+        // Data has no context before PLangContext creation
+        await Assert.That(stack.Get("name")!.Context).IsNull();
+
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine, stack);
+
+        // After PLangContext creation, existing data gets context
+        await Assert.That(stack.Get("name")!.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task Clone_PreservesDataContext()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+
+        context.MemoryStack.Set("name", "John");
+
+        var clone = context.MemoryStack.Clone();
+
+        // Clone preserves the context so Type.Kind/Compressible/ClrType still resolve
+        await Assert.That(clone.Context).IsEqualTo(context);
+    }
+
+    [Test]
+    public async Task ChildContext_StampsClonedData()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/test");
+        var parentContext = new PLang.Runtime2.Engine.Context.PLangContext(engine);
+        parentContext.MemoryStack.Set("name", "John");
+
+        var childContext = parentContext.CreateChild();
+
+        // Child context stamps its own context on the cloned data
+        await Assert.That(childContext.MemoryStack.Get("name")!.Context).IsEqualTo(childContext);
+    }
+}
+
+public class MemoryStackCycleDetectionTests
+{
+    [Test]
+    public async Task Get_CircularVariableReference_LeavesUnresolved()
+    {
+        var stack = new MemoryStack();
+        stack.Set("idx", 1);
+        var data = new Dictionary<string, object?>
+        {
+            { "items", new List<object> { "zero", "one", "two" } }
+        };
+        stack.Set("data", data);
+
+        // Verify normal resolution works: data.items[idx] → data.items[1] → "one"
+        var normalResult = stack.Get("data.items[idx]");
+        await Assert.That(normalResult!.Value).IsEqualTo("one");
+
+        // Pre-seed the thread-static visited set via reflection to simulate
+        // a circular reference already in progress (idx is "being resolved")
+        var field = typeof(MemoryStack).GetField("_resolvingVars",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" };
+        field!.SetValue(null, set);
+
+        try
+        {
+            // With "idx" already in visited set → cycle detected → [idx] left unresolved
+            // Path stays "data.items[idx]" → GetChild tries to navigate list with key "idx"
+            // → "idx" is not a valid index → returns null
+            var cycleResult = stack.Get("data.items[idx]");
+
+            await Assert.That(cycleResult).IsNull();
+        }
+        finally
+        {
+            // Clean up thread-static state
+            field.SetValue(null, null);
+        }
+    }
+
+    [Test]
+    public async Task Get_NormalVariableResolution_WorksAfterCycleCleanup()
+    {
+        var stack = new MemoryStack();
+        stack.Set("idx", 0);
+        var data = new Dictionary<string, object?>
+        {
+            { "items", new List<object> { "first", "second" } }
+        };
+        stack.Set("data", data);
+
+        // Verify the thread-static set is properly cleaned up after normal resolution
+        var result1 = stack.Get("data.items[idx]");
+        await Assert.That(result1!.Value).IsEqualTo("first");
+
+        // Second call should work identically (no leftover state)
+        stack.Set("idx", 1);
+        var result2 = stack.Get("data.items[idx]");
+        await Assert.That(result2!.Value).IsEqualTo("second");
+    }
 }
 
 public class MemoryStackAccessorTests
@@ -508,5 +640,45 @@ public class MemoryStackAccessorTests
         accessor.Current = stack;
 
         await Assert.That(accessor.Current).IsEqualTo(stack);
+    }
+
+    [Test]
+    public async Task Clone_PreservesContext()
+    {
+        var engine = new PLang.Runtime2.Engine.@this("/app");
+        var context = new PLang.Runtime2.Engine.Context.PLangContext(engine, new MemoryStack());
+        context.MemoryStack.Set("x", 1);
+
+        var clone = context.MemoryStack.Clone();
+
+        await Assert.That(clone.Context).IsNotNull();
+        await Assert.That(clone.Context).IsEqualTo(context.MemoryStack.Context);
+    }
+
+    [Test]
+    public async Task Get_DeeplyNestedPath_ReturnsErrorData()
+    {
+        var stack = new MemoryStack();
+        // Build a 101-level deep dictionary
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var current = dict;
+        for (int i = 0; i < 101; i++)
+        {
+            var next = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            current["a"] = next;
+            current = next;
+        }
+        current["val"] = "end";
+
+        stack.Set("deep", dict);
+
+        // Build a path with 102 segments — exceeds MaxNavigationDepth (100)
+        var path = "deep." + string.Join(".", Enumerable.Repeat("a", 101)) + ".val";
+        var result = stack.Get(path);
+
+        // GetChild returns Data.FromError on depth exceeded
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
     }
 }

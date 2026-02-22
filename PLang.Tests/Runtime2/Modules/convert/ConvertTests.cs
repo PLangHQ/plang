@@ -210,6 +210,40 @@ public class ConvertTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonParseError");
+    }
+
+    [Test]
+    public async Task FromJson_DeeplyNested_Fails()
+    {
+        var (context, _) = CreateContext();
+
+        // Build 200-level nested JSON — exceeds JsonSerializer default MaxDepth (64)
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < 200; i++) sb.Append("{\"a\":");
+        sb.Append("1");
+        for (int i = 0; i < 200; i++) sb.Append('}');
+
+        var action = new FromJson { Context = context, Value = sb.ToString() };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        // JsonSerializer.Deserialize hits its own depth limit (64) before our UnwrapJsonElement limit (128)
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonParseError");
+    }
+
+    [Test]
+    public async Task FromJson_DecimalNumber_PreservesPrecision()
+    {
+        var (context, _) = CreateContext();
+
+        var action = new FromJson { Context = context, Value = "{\"price\":19.99}" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var dict = result.Value as Dictionary<string, object?>;
+        await Assert.That(dict!["price"]).IsTypeOf<decimal>();
+        await Assert.That(dict!["price"]).IsEqualTo(19.99m);
     }
 
     // --- ToBase64 / FromBase64 ---

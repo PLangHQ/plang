@@ -13,30 +13,18 @@ public partial class FromJson : IContext
         try
         {
             var element = JsonSerializer.Deserialize<JsonElement>(Value);
-            var result = UnwrapJsonElement(element);
+            var result = Data.UnwrapJsonElement(element);
             return Task.FromResult(Data.Ok(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Task.FromResult(Data.FromError(
+                new PLang.Runtime2.Engine.Errors.ValidationError(ex.Message, "JsonDepthExceeded")));
         }
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 new PLang.Runtime2.Engine.Errors.ValidationError($"Invalid JSON: {ex.Message}", "JsonParseError")));
         }
-    }
-
-    private static object? UnwrapJsonElement(JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.Object => element.EnumerateObject()
-                .ToDictionary(p => p.Name, p => UnwrapJsonElement(p.Value)),
-            JsonValueKind.Array => element.EnumerateArray()
-                .Select(UnwrapJsonElement).ToList() as object,
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt64(out var l) ? l : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => null,
-            _ => element.GetRawText()
-        };
     }
 }

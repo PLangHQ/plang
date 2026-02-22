@@ -1,0 +1,120 @@
+{
+  "reviewer": "auditor",
+  "branch": "data-envelope-architecture",
+  "timestamp": "2026-02-22T14:00:00Z",
+  "reviewed_version": "v7",
+  "summary": "Re-review after coder v5 (security hardening) and v7 (test gaps). All major findings resolved. Depth limits on all 5 recursive methods, cycle detection, zip bomb tested, Verified locked down, fromJson deduplicated. 1394 tests pass. One new nit (JsonStringNavigator duplication). Approved.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Types/this.cs",
+      "line": 13,
+      "issue": "Engine.Types uses non-thread-safe Dictionary<> and HashSet<> for all lookup tables.",
+      "status": "closed",
+      "resolution": "ConcurrentDictionary for mutable collections, lock for _allKinds."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 178,
+      "issue": "RehydrateNestedData mutates data.Value in-place, clearing _type transiently.",
+      "status": "closed",
+      "resolution": "SetValueDirect() added — updates _value without triggering Value setter side effects."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 129,
+      "issue": "Decompress used generic Error instead of ServiceError with distinct key.",
+      "status": "closed",
+      "resolution": "All error paths use ServiceError('...', 'DecompressError', 500)."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "obp",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 73,
+      "issue": "Compress bypassed Type.Compressible to navigate directly to Engine.Types.",
+      "status": "closed",
+      "resolution": "Now uses Type.Compressible."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Types/this.cs",
+      "line": 583,
+      "issue": "Remove() uses ContainsValue O(n) scan.",
+      "status": "closed-accepted",
+      "resolution": "Acceptable for current dataset. Now uses ConcurrentDictionary.Values.Contains()."
+    },
+    {
+      "id": 6,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Memory/Data.cs",
+      "line": 109,
+      "issue": "Newtonsoft.Json.JsonConstructor attribute on Data constructor.",
+      "status": "closed",
+      "resolution": "Attribute removed."
+    },
+    {
+      "id": 7,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
+      "line": 906,
+      "issue": "Decompress error tests missing Error.Key assertions.",
+      "status": "closed",
+      "resolution": "Error.Key assertions added to all 4 decompress error tests."
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 200,
+      "issue": "GZipDecompress unbounded — no size limit on decompressed output (zip bomb vector).",
+      "status": "closed",
+      "resolution": "MaxDecompressedSize=100MB, chunked read with size check."
+    },
+    {
+      "id": 9,
+      "severity": "major",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
+      "line": 965,
+      "issue": "Zip bomb size limit (MaxDecompressedSize=100MB) had zero test coverage.",
+      "status": "closed",
+      "resolution": "Decompress_ExceedsSizeLimit_ReturnsError: compresses 110MB of zeros, asserts DecompressError with StatusCode 500 and 'size limit' in message."
+    },
+    {
+      "id": 10,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Types/this.cs",
+      "line": 567,
+      "issue": "Add()/Remove() race window between ConcurrentDictionary write and _allKinds lock.",
+      "impact": "Transient inconsistency. Nanosecond window. Null return, not corruption.",
+      "suggestion": "Accept as benign. Kind-as-rich-object refactor would solve naturally.",
+      "status": "open-accepted"
+    },
+    {
+      "id": 11,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs",
+      "line": 44,
+      "issue": "UnwrapElement/UnwrapObject/UnwrapArray duplicate Data.UnwrapJsonElement logic. Same recursive JSON unwrapping in two places. Not a security risk (bounded by STJ MaxDepth=64) but a maintenance risk — fixes must be applied in two places.",
+      "impact": "Low. Bug fixes to JSON unwrapping could miss one of the two implementations.",
+      "suggestion": "Have JsonStringNavigator call Data.UnwrapJsonElement (internal static, same assembly). Align number handling (int vs long for small integers)."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "tester": "tester",
+  "branch": "data-envelope-architecture",
+  "timestamp": "2026-02-22T12:30:00Z",
+  "tested_version": "v9",
+  "test_run": {
+    "csharp": { "total": 1394, "passed": 1394, "failed": 0, "skipped": 0 },
+    "plang": { "total": 17, "passed": 0, "failed": 0, "skipped": 17, "note": "Hand-written .pr files, requires plang binary to run" }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 2,
+    "uncovered_files": [],
+    "note": "Coder v7 test-only changes. Both modified test files verified."
+  },
+  "resolved_from_v8": [
+    { "id": 1, "status": "resolved", "how": "MemoryStackCycleDetectionTests — reflection-based guard + cleanup verification. Honest tests that catch removal of cycle guard or cleanup." },
+    { "id": 2, "status": "resolved", "how": "Clr_ExactlyAtMaxDepth_Resolves + Clr_OneOverMaxDepth_ReturnsNull — clean boundary pair at 20/21." },
+    { "id": 3, "status": "acknowledged", "how": "Dead code observation. No action needed." }
+  ],
+  "findings": [],
+  "carry_forward": [
+    { "from_version": "v6", "id": 2, "severity": "major", "issue": "Thread safety concurrent test. Code correct but regression undetectable.", "status": "open" },
+    { "from_version": "v6", "id": 5, "severity": "minor", "issue": "Inner context not propagated in RehydrateNestedData.", "status": "open" },
+    { "from_version": "v6", "id": 6, "severity": "minor", "issue": "Numeric type widening through compress/decompress.", "status": "open" }
+  ],
+  "verdict": "approved",
+  "summary": "1394 C# tests pass. All v8 findings resolved. Cycle detection tests are honest — reflection-based pre-seeding verifies the guard fires and cleanup works. Clr boundary tests constrain MaxGenericDepth=20 from both sides. No new findings. Carry-forward items are structural (thread safety) or minor edge cases. Approved for auditor."
+}

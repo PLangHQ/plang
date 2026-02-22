@@ -1,0 +1,8 @@
+Start
+- set %deep% = {a:{b:{c:{d:{e:"found"}}}}}
+- assert %deep.a% is not null
+- assert %deep.a.b.c.d.e% equals "found"
+- set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]
+- assert %list[0].items[0].val% equals 1
+- assert %list[0].items[1].val% equals 2
+- assert %list[1].items[0].val% equals 3

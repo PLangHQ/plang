@@ -1,0 +1,183 @@
+{
+  "analyst": "security",
+  "branch": "data-envelope-architecture",
+  "timestamp": "2026-02-22T00:00:00Z",
+  "version": 3,
+  "phase": "both",
+  "threat_model": "PLang is user-sovereign software. The user owns their .pr files and runs them in a trusted environment. The trust boundary is cryptographic signatures on Data — once verified, everything inside runs with full trust. Security focuses on: (1) DoS at transport boundaries where untrusted data enters, (2) integrity of the signature/verification mechanism, (3) robustness against malformed external input.",
+  "attack_surface": [
+    {
+      "area": "json-deserialization",
+      "exposure": "UnwrapJsonElement (Data.cs:210) recursively unwraps JSON. fromJson.cs now delegates to Data.UnwrapJsonElement (deduplication complete).",
+      "trust_boundary": "External data entering via transport channels, API responses, file reads from untrusted sources, decompressed envelope payloads",
+      "mitigations": ["Depth limit of 128 on UnwrapJsonElement recursion", "System.Text.Json default MaxDepth=64 on JsonDocument.Parse", "Exception caught in fromJson action", "Code deduplicated — single implementation in Data.cs"],
+      "gaps": ["No size limit on JSON string parsing in JsonStringNavigator"]
+    },
+    {
+      "area": "envelope-pipeline",
+      "exposure": "GZip compress/decompress (Data.Envelope.cs), RehydrateNestedData (Data.Envelope.cs:192), Signature/Verified properties",
+      "trust_boundary": "Decompress processes untrusted compressed+serialized Data from external channels/transport. This is the PRIMARY trust boundary.",
+      "mitigations": ["MaxDecompressedSize = 100MB", "GZipDecompress chunks reads in 81920-byte buffers", "RehydrateNestedData depth limit of 128", "Verified is { get; private set; } — only SetVerified() can change it", "InvalidDataException + JsonException caught in Decompress"],
+      "gaps": ["No actual crypto in SetVerified() yet — method exists but verification logic is future work"]
+    },
+    {
+      "area": "navigation-depth",
+      "exposure": "Data.GetChild (Data.Navigation.cs:17) recursive path navigation",
+      "trust_boundary": "Navigation paths derived from external data (e.g., navigating into decompressed/deserialized structures from transport)",
+      "mitigations": ["Depth limit of 100 on GetChild", "Null returns for missing properties", "List index bounds checking"],
+      "gaps": []
+    },
+    {
+      "area": "type-registry",
+      "exposure": "Clr() recursive generic parsing (Types/this.cs:411)",
+      "trust_boundary": "Type names from external sources (e.g., type field in deserialized Data from transport)",
+      "mitigations": ["Depth limit of 20 on Clr() generic parsing", "Known type names are finite in _nameToClr"],
+      "gaps": []
+    },
+    {
+      "area": "variable-resolution",
+      "exposure": "MemoryStack.ResolveVariablesInPath (MemoryStack.cs:205-236) resolves bracket variables",
+      "trust_boundary": "Variable values that may originate from external data",
+      "mitigations": ["ThreadStatic HashSet cycle detection — circular references leave bracket unresolved instead of crashing"],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "UnwrapJsonElement recursively unwraps JsonElement objects/arrays. Duplicate existed in fromJson.cs.",
+      "preconditions": "Untrusted JSON enters via transport channel, API response, or external file.",
+      "impact": "Process crash (StackOverflowException). Denial of service.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.cs", "PLang/Runtime2/actions/convert/fromJson.cs"],
+      "proposed_fix": "Add depth parameter. Deduplicate fromJson.cs.",
+      "status": "fixed",
+      "resolution": "Coder v5: Added depth parameter (max 128) to UnwrapJsonElement, UnwrapJsonObject, UnwrapJsonArray. fromJson.cs now delegates to Data.UnwrapJsonElement — duplication eliminated. Tests cover 200-level nested JSON."
+    },
+    {
+      "id": 2,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "RehydrateNestedData recursively reconstructs Data from dictionaries at the transport boundary.",
+      "preconditions": "Compressed payload with deeply nested {name,value} structures.",
+      "impact": "Process crash (StackOverflowException). DoS at transport boundary.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "proposed_fix": "Add depth parameter. Max 100.",
+      "status": "fixed",
+      "resolution": "Coder v5: Added depth parameter (max 128) to RehydrateNestedData. Tested."
+    },
+    {
+      "id": 3,
+      "severity": "high",
+      "category": "resource-exhaustion",
+      "vector": "Data.GetChild recursively parses dot/bracket paths without depth limit.",
+      "preconditions": "Deep path navigating into external data structures.",
+      "impact": "Process crash (StackOverflowException). DoS.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Navigation.cs"],
+      "proposed_fix": "Add depth parameter. Max 100.",
+      "status": "fixed",
+      "resolution": "Coder v5: Added depth parameter (max 100) to GetChild. Returns Data.FromError on depth exceeded. Tested in isolation. Coder v6: Fixed error reporting to return proper Data.FromError instead of null."
+    },
+    {
+      "id": 4,
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "MemoryStack.Set() accepts writes to !-prefixed system variables.",
+      "impact": "N/A — user-sovereign action.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/MemoryStack.cs"],
+      "status": "by-design"
+    },
+    {
+      "id": 5,
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "ObjectNavigator exposes all public properties via reflection.",
+      "impact": "N/A — intentional capability in trusted environment.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Navigators/ObjectNavigator.cs"],
+      "status": "by-design"
+    },
+    {
+      "id": 6,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "JsonStringNavigator parses any string starting with { or [ as JSON with no size limit. Re-parses on every access.",
+      "preconditions": "Large JSON string from external source stored in variable, then navigated.",
+      "impact": "Memory exhaustion. Amplified by repeated access.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Navigators/JsonStringNavigator.cs"],
+      "proposed_fix": "Add size limit before parsing (e.g., 10MB). Consider caching.",
+      "status": "fixed",
+      "resolution": "Added 10MB size limit in CanNavigate — strings over 10MB are not treated as navigable JSON. Caching (parse once on first access) is a separate design improvement, not a security fix."
+    },
+    {
+      "id": 7,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "MemoryStack.ResolveVariablesInPath recursively resolves bracket variables. Circular references cause stack overflow.",
+      "preconditions": "Two variables reference each other in bracket notation.",
+      "impact": "Stack overflow. Process crash.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/MemoryStack.cs"],
+      "proposed_fix": "Add cycle detection.",
+      "status": "fixed",
+      "resolution": "Coder v5: ThreadStatic HashSet cycle detection. Circular references leave bracket unresolved instead of crashing. Coder v7: Added regression tests using reflection to verify cycle guard fires and ThreadStatic cleanup works."
+    },
+    {
+      "id": 8,
+      "severity": "low",
+      "category": "hardening",
+      "vector": "Newtonsoft compatibility shim detects JToken types by namespace string only.",
+      "preconditions": "Requires library.load (which already grants RCE) — redundant vector.",
+      "impact": "Low. Namespace spoofing adds nothing over existing RCE via library.load.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.cs"],
+      "proposed_fix": "Check assembly name is 'Newtonsoft.Json'. Non-blocking.",
+      "status": "open"
+    },
+    {
+      "id": 9,
+      "severity": "high",
+      "category": "integrity-bypass",
+      "vector": "Verified was a public settable bool? with no cryptographic backing. Any code could claim data is verified without proof.",
+      "preconditions": "Any code path sets data.Verified = true.",
+      "impact": "Trust boundary bypass. Signatures are the wall — settable bool was a door anyone could open.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "proposed_fix": "Make Verified { get; private set; }. Add SetVerified() for future crypto.",
+      "status": "fixed",
+      "resolution": "Coder v5: Verified changed to { get; private set; }. SetVerified(bool) added as internal method for future crypto verification. External code can no longer claim verified status. Tested."
+    },
+    {
+      "id": 10,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "Clr() recursively parses generic type syntax without depth limit.",
+      "preconditions": "Deeply nested type name from external source.",
+      "impact": "Process crash. DoS.",
+      "affected_files": ["PLang/Runtime2/Engine/Types/this.cs"],
+      "proposed_fix": "Add depth parameter. Max 20.",
+      "status": "fixed",
+      "resolution": "Coder v5: Added depth parameter (max 20) to Clr(). Coder v7: Added boundary tests — depth 20 resolves, depth 21 returns null."
+    },
+    {
+      "id": 11,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Data.Merge grows list unboundedly.",
+      "preconditions": "Code path merging Data in a loop.",
+      "impact": "Memory exhaustion over time.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Result.cs"],
+      "proposed_fix": "Add max size check on merged list.",
+      "status": "open"
+    },
+    {
+      "id": 12,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "MemoryStack.Clone deep-clones without depth/size limits.",
+      "preconditions": "Debug mode with large/complex variables.",
+      "impact": "Memory exhaustion in debug scenarios.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/MemoryStack.cs"],
+      "proposed_fix": "Consider shallow clone or size limits.",
+      "status": "open"
+    }
+  ],
+  "summary": "v3 — Updated after coder v5-v7 security hardening. 7 of 12 findings now fixed: all HIGH severity recursion DoS vectors (#1-3) have depth limits, Verified is private set (#9), cycle detection in variable resolution (#7), Clr() depth limit (#10), fromJson deduplication (#1). 2 findings by-design (#4, #5). 3 findings remain open: JsonStringNavigator size limit (#6, medium), Newtonsoft namespace check (#8, low — redundant vector), Data.Merge unbounded growth (#11, low), MemoryStack.Clone (#12, low). The critical trust boundary (Verified/Signature) and all transport-facing DoS vectors are now hardened. Remaining open findings are low-priority edge cases."
+}

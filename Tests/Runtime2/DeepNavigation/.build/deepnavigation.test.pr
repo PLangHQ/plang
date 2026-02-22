@@ -1,0 +1,173 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "name", "value": "%deep%", "type": "string" },
+            {
+              "name": "value",
+              "value": { "a": { "b": { "c": { "d": { "e": "found" } } } } },
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %deep.a% is not null",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            { "name": "value", "value": "%deep.a%", "type": "string" }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %deep.a.b.c.d.e% equals \u0022found\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            { "name": "expected", "value": "found", "type": "string" },
+            { "name": "actual", "value": "%deep.a.b.c.d.e%", "type": "string" }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            { "name": "name", "value": "%list%", "type": "string" },
+            {
+              "name": "value",
+              "value": [
+                { "items": [{ "val": 1 }, { "val": 2 }] },
+                { "items": [{ "val": 3 }] }
+              ],
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %list[0].items[0].val% equals 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            { "name": "expected", "value": 1, "type": "int" },
+            { "name": "actual", "value": "%list[0].items[0].val%", "type": "int" }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %list[0].items[1].val% equals 2",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            { "name": "expected", "value": 2, "type": "int" },
+            { "name": "actual", "value": "%list[0].items[1].val%", "type": "int" }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %list[1].items[0].val% equals 3",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            { "name": "expected", "value": 3, "type": "int" },
+            { "name": "actual", "value": "%list[1].items[0].val%", "type": "int" }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "\\DeepNavigation\\DeepNavigation.test.goal",
+  "prPath": "\\DeepNavigation\\.build\\deepnavigation.test.pr",
+  "hash": "",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

@@ -38,6 +38,9 @@ global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
 global using EngineSettings = PLang.Runtime2.Engine.Settings.@this;
 global using SettingsScope = PLang.Runtime2.Engine.Settings.Scope;
 
+// Type system
+global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
+
 // Standalone concepts
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;

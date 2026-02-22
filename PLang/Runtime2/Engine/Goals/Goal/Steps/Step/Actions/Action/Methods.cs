@@ -29,6 +29,8 @@ public sealed partial class @this
             result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
         }
 
+        result.Context = context;
+
         if (result.Value != null && this.Return != null)
         {
             foreach (var returnVar in this.Return)

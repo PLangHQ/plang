@@ -109,6 +109,9 @@ public sealed class PLangContext : IDisposable
         System.Events.OnChanged = InvalidateEventCache;
         User.Events.OnChanged = InvalidateEventCache;
 
+        // Stamp context on MemoryStack (propagates to all existing Data)
+        MemoryStack.Context = this;
+
         // Register context variables on the memory stack
         RegisterContextVariables();
     }

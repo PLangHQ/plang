@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Force.DeepCloner;
+using PLang.Runtime2.Engine.Context;
 
 namespace PLang.Runtime2.Engine.Memory;
 
@@ -10,6 +12,19 @@ namespace PLang.Runtime2.Engine.Memory;
 public class MemoryStack
 {
     private readonly ConcurrentDictionary<string, Data> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private PLangContext? _context;
+
+    [JsonIgnore]
+    internal PLangContext? Context
+    {
+        get => _context;
+        set
+        {
+            _context = value;
+            foreach (var data in _variables.Values)
+                data.Context = value;
+        }
+    }
 
     public MemoryStack()
     {
@@ -24,6 +39,7 @@ public class MemoryStack
     /// </summary>
     public void Put(Data value)
     {
+        value.Context = _context;
         _variables[value.Name] = value;
     }
 
@@ -41,7 +57,9 @@ public class MemoryStack
         }
         else
         {
-            _variables[name] = new Data(name, value, type);
+            var data = new Data(name, value, type);
+            data.Context = _context;
+            _variables[name] = data;
         }
     }
 
@@ -164,6 +182,7 @@ public class MemoryStack
                 clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
             }
         }
+        clone.Context = Context;
         return clone;
     }
 
@@ -182,18 +201,40 @@ public class MemoryStack
         return dict;
     }
 
+    [ThreadStatic]
+    private static HashSet<string>? _resolvingVars;
+
     /// <summary>
     /// Resolves variable names inside bracket indices.
     /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
+    /// Uses a thread-static visited set to detect circular references (a→b→a).
     /// </summary>
     private string ResolveVariablesInPath(string path)
     {
-        return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+        var isRoot = _resolvingVars == null;
+        _resolvingVars ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        try
         {
-            var varName = match.Groups[1].Value;
-            var resolved = GetValue(varName);
-            return resolved != null ? $"[{resolved}]" : match.Value;
-        });
+            return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
+            {
+                var varName = match.Groups[1].Value;
+                if (!_resolvingVars!.Add(varName))
+                    return match.Value; // Circular reference — leave unresolved
+                try
+                {
+                    var resolved = GetValue(varName);
+                    return resolved != null ? $"[{resolved}]" : match.Value;
+                }
+                finally
+                {
+                    _resolvingVars.Remove(varName);
+                }
+            });
+        }
+        finally
+        {
+            if (isRoot) _resolvingVars = null;
+        }
     }
 
     private static string CleanName(string name)

@@ -146,3 +146,20 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 - **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
 - **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
 - Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
+
+---
+
+## Error Reporting — When to use what
+
+**Rule: match the error mechanism to the return type.**
+
+| Return type | Error mechanism | Example |
+|-------------|----------------|---------|
+| `Data` or `Data?` | `Data.FromError(new ServiceError(...))` | `GetChild` depth exceeded → `FromError("NavigationDepthExceeded", 400)` |
+| `Task<Data>` | Same — return `Data.FromError(...)` | Handler `Run()` methods |
+| Constructor / `void` | `throw` — caller must catch | `Data` constructor, `UnwrapJsonElement` |
+| `string`, `Type?`, etc. | Return type's natural "not found" (`null`, unchanged value) | `Clr()` → `null`, `ResolveVariablesInPath` → leave unresolved |
+
+**Why this matters:** `Data` has `Error`, `Success`, `Error.Key`, `Error.StatusCode` built in. Returning `null` from a `Data?` method loses information — the caller can't distinguish "not found" from "depth exceeded" or "permission denied." Use `Data.FromError` so the error travels through the normal pipeline with a clear key and status code.
+
+**When a throw converts to Data.FromError:** Methods like `RehydrateNestedData` throw because they're called inside `Decompress()` which has a try/catch that converts exceptions to `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists.
