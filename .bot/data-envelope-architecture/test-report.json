@@ -1,60 +1,29 @@
 {
   "tester": "tester",
   "branch": "data-envelope-architecture",
-  "timestamp": "2026-02-22T03:00:00Z",
-  "tested_version": "v8",
+  "timestamp": "2026-02-22T12:30:00Z",
+  "tested_version": "v9",
   "test_run": {
-    "csharp": { "total": 1390, "passed": 1390, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 1394, "passed": 1394, "failed": 0, "skipped": 0 },
     "plang": { "total": 17, "passed": 0, "failed": 0, "skipped": 17, "note": "Hand-written .pr files, requires plang binary to run" }
   },
   "coverage": {
-    "changed_files_covered": 5,
-    "changed_files_total": 5,
+    "changed_files_covered": 2,
+    "changed_files_total": 2,
     "uncovered_files": [],
-    "note": "All coder v6 changes have test coverage. One carry-forward gap: ResolveVariablesInPath cycle detection still untested."
+    "note": "Coder v7 test-only changes. Both modified test files verified."
   },
-  "resolved_from_v7": [
-    { "id": 2, "status": "resolved", "how": "Get_DeeplyNestedPath_ReturnsErrorData integration test." },
-    { "id": 3, "status": "resolved", "how": "FromJson_DeeplyNested_Fails + distinct JsonDepthExceeded catch (though unreachable today)." }
+  "resolved_from_v8": [
+    { "id": 1, "status": "resolved", "how": "MemoryStackCycleDetectionTests — reflection-based guard + cleanup verification. Honest tests that catch removal of cycle guard or cleanup." },
+    { "id": 2, "status": "resolved", "how": "Clr_ExactlyAtMaxDepth_Resolves + Clr_OneOverMaxDepth_ReturnsNull — clean boundary pair at 20/21." },
+    { "id": 3, "status": "acknowledged", "how": "Dead code observation. No action needed." }
   ],
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Memory/MemoryStackTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
-      "lines": "203-237",
-      "issue": "ResolveVariablesInPath cycle detection ([ThreadStatic] HashSet) completely untested. Open since tester v7. If _resolvingVars.Add() check, finally cleanup, or isRoot cleanup were removed, no test fails.",
-      "impact": "Security feature with zero coverage. Circular variable references (%x% → %y% → %x%) could cause infinite loops if detection were removed.",
-      "suggestion": "Add tests: (a) circular reference terminates, (b) self-reference terminates, (c) after cycle, normal resolution still works.",
-      "status": "open-since-v7"
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "type": "edge-case",
-      "test_file": "PLang.Tests/Runtime2/Types/EngineTypesTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Types/this.cs",
-      "issue": "Clr() depth limit not tested at boundary (20 OK, 21 fail). Open since tester v7.",
-      "status": "open-since-v7"
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs",
-      "code_file": "PLang/Runtime2/actions/convert/fromJson.cs",
-      "lines": "19-22",
-      "issue": "JsonDepthExceeded catch is unreachable — STJ's MaxDepth (64) is hit before our limit (128). The error key has zero test coverage.",
-      "impact": "None today. Defensive code for future .NET changes."
-    }
-  ],
+  "findings": [],
   "carry_forward": [
     { "from_version": "v6", "id": 2, "severity": "major", "issue": "Thread safety concurrent test. Code correct but regression undetectable.", "status": "open" },
     { "from_version": "v6", "id": 5, "severity": "minor", "issue": "Inner context not propagated in RehydrateNestedData.", "status": "open" },
     { "from_version": "v6", "id": 6, "severity": "minor", "issue": "Numeric type widening through compress/decompress.", "status": "open" }
   ],
-  "verdict": "needs-fixes",
-  "summary": "1390 C# tests pass. Coder v6 cross-concern fixes all verified (decimal precision, Clone context, fromJson error key, GetChild integration). 2 of 4 v7 findings resolved. Blocking: ResolveVariablesInPath cycle detection still has zero test coverage (open since v7). This is a security feature — if removed, no test detects the regression."
+  "verdict": "approved",
+  "summary": "1394 C# tests pass. All v8 findings resolved. Cycle detection tests are honest — reflection-based pre-seeding verifies the guard fires and cleanup works. Clr boundary tests constrain MaxGenericDepth=20 from both sides. No new findings. Carry-forward items are structural (thread safety) or minor edge cases. Approved for auditor."
 }
