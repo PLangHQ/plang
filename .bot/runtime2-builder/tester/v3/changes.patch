@@ -1,0 +1,4412 @@
+diff --git a/.build/app.pr b/.build/app.pr
+new file mode 100644
+index 00000000..254e1e1c
+--- /dev/null
++++ b/.build/app.pr
+@@ -0,0 +1,7 @@
++{
++  "id": "fddae97b-f931-418e-8b3b-66d530a4e674",
++  "created": "2026-02-23T13:52:25.5131819Z",
++  "updated": "2026-02-23T13:52:25.5132081Z",
++  "name": "plang",
++  "version": "0.2"
++}
+\ No newline at end of file
+diff --git a/.build/info.txt b/.build/info.txt
+new file mode 100644
+index 00000000..9a96b77e
+--- /dev/null
++++ b/.build/info.txt
+@@ -0,0 +1,3 @@
++
++
++AppId: efdb39e9-3507-403a-be87-208e57ad500d
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Assert/.build/assert.test.pr b/Tests/Runtime2/Assert/.build/assert.test.pr
+new file mode 100644
+index 00000000..020cbbc9
+--- /dev/null
++++ b/Tests/Runtime2/Assert/.build/assert.test.pr
+@@ -0,0 +1,213 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "assert 5 not equals 10",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "notEquals",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "notEquals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": 5,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": 10,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "set %flag% = false",
++      "lineNumber": 5,
++      "indent": 0,
++      "comment": "isFalse",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%flag%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": false,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %flag% is false",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isFalse",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%flag%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %nothing% = null",
++      "lineNumber": 8,
++      "indent": 0,
++      "comment": "isNull",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%nothing%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "assert %nothing% is null",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNull",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%nothing%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert 10 is greater than 5",
++      "lineNumber": 11,
++      "indent": 0,
++      "comment": "greaterThan",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "greaterThan",
++          "parameters": [
++            {
++              "name": "a",
++              "value": 10,
++              "type": "int"
++            },
++            {
++              "name": "b",
++              "value": 5,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "assert 3 is less than 7",
++      "lineNumber": 13,
++      "indent": 0,
++      "comment": "lessThan",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "lessThan",
++          "parameters": [
++            {
++              "name": "a",
++              "value": 3,
++              "type": "int"
++            },
++            {
++              "name": "b",
++              "value": 7,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Assert/Assert.test.goal",
++  "prPath": "/Assert/.build/assert.test.pr",
++  "hash": "e2d9ffabdf5587e81ef59702f5e9e92e3993b0d7ab302a3a95928ba2333a3993",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Assert/Assert.test.goal b/Tests/Runtime2/Assert/Assert.test.goal
+new file mode 100644
+index 00000000..fd7dd79a
+--- /dev/null
++++ b/Tests/Runtime2/Assert/Assert.test.goal
+@@ -0,0 +1,13 @@
++Start
++/ notEquals
++- assert 5 not equals 10
++/ isFalse
++- set %flag% = false
++- assert %flag% is false
++/ isNull
++- set %nothing% = null
++- assert %nothing% is null
++/ greaterThan
++- assert 10 is greater than 5
++/ lessThan
++- assert 3 is less than 7
+diff --git a/Tests/Runtime2/Cache/.build/cache.test.pr b/Tests/Runtime2/Cache/.build/cache.test.pr
+index 3c62ed91..89fa638e 100644
+--- a/Tests/Runtime2/Cache/.build/cache.test.pr
++++ b/Tests/Runtime2/Cache/.build/cache.test.pr
+@@ -199,8 +199,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Cache\\Cache.test.goal",
+-  "prPath": "\\Cache\\.build\\cache.test.pr",
++  "path": "/Cache/Cache.test.goal",
++  "prPath": "/Cache/.build/cache.test.pr",
+   "hash": "486a37bc35b087547fd9e706d230c7a846c3c0dfdb504874c2ee77a84e25f742",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Cache/.build/cachedgoal.pr b/Tests/Runtime2/Cache/.build/cachedgoal.pr
+index 1187676c..2415986c 100644
+--- a/Tests/Runtime2/Cache/.build/cachedgoal.pr
++++ b/Tests/Runtime2/Cache/.build/cachedgoal.pr
+@@ -72,8 +72,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Cache\\CachedGoal.goal",
+-  "prPath": "\\Cache\\.build\\cachedgoal.pr",
++  "path": "/Cache/CachedGoal.goal",
++  "prPath": "/Cache/.build/cachedgoal.pr",
+   "hash": "e6aa2a46fdb912cc64765511b166d5dce92bcfb00c03ff3abd69a79f24001b7b",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Cache/.build/readcached.pr b/Tests/Runtime2/Cache/.build/readcached.pr
+index ae7c075f..01da035e 100644
+--- a/Tests/Runtime2/Cache/.build/readcached.pr
++++ b/Tests/Runtime2/Cache/.build/readcached.pr
+@@ -37,8 +37,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Cache\\ReadCached.goal",
+-  "prPath": "\\Cache\\.build\\readcached.pr",
++  "path": "/Cache/ReadCached.goal",
++  "prPath": "/Cache/.build/readcached.pr",
+   "hash": "5f68681458a1ffb0d4acce31cf8cbec954a4886d1b5bea3bed4c1000bb400d82",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Cache/.build/readwithkey.pr b/Tests/Runtime2/Cache/.build/readwithkey.pr
+index 2e88896d..ba2614f0 100644
+--- a/Tests/Runtime2/Cache/.build/readwithkey.pr
++++ b/Tests/Runtime2/Cache/.build/readwithkey.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Cache\\ReadWithKey.goal",
+-  "prPath": "\\Cache\\.build\\readwithkey.pr",
++  "path": "/Cache/ReadWithKey.goal",
++  "prPath": "/Cache/.build/readwithkey.pr",
+   "hash": "20b2c0fd939cfd65dba6a294d13b9ad732fd1563c72725dc3b82dc735921444b",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Cache/.build/start.pr b/Tests/Runtime2/Cache/.build/start.pr
+index 74887128..d878e236 100644
+--- a/Tests/Runtime2/Cache/.build/start.pr
++++ b/Tests/Runtime2/Cache/.build/start.pr
+@@ -413,8 +413,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Cache\\Start.goal",
+-  "prPath": "\\Cache\\.build\\start.pr",
++  "path": "/Cache/Start.goal",
++  "prPath": "/Cache/.build/start.pr",
+   "hash": "f17e477ae931c5181d12dec73240bf06296bd740508379e29bb6fd291fe2721d",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/CallStack/.build/callstack.test.pr b/Tests/Runtime2/CallStack/.build/callstack.test.pr
+index 165c50ac..0bcce608 100644
+--- a/Tests/Runtime2/CallStack/.build/callstack.test.pr
++++ b/Tests/Runtime2/CallStack/.build/callstack.test.pr
+@@ -149,8 +149,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\CallStack\\CallStack.test.goal",
+-  "prPath": "\\CallStack\\.build\\callstack.test.pr",
++  "path": "/CallStack/CallStack.test.goal",
++  "prPath": "/CallStack/.build/callstack.test.pr",
+   "hash": "d50e9c9d6654e30b4718662ee58a2a6d5c004db12369642c4186bf48b0080099",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/CallStack/.build/inner.pr b/Tests/Runtime2/CallStack/.build/inner.pr
+index d747b8c5..8a4b842c 100644
+--- a/Tests/Runtime2/CallStack/.build/inner.pr
++++ b/Tests/Runtime2/CallStack/.build/inner.pr
+@@ -74,8 +74,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\CallStack\\Inner.goal",
+-  "prPath": "\\CallStack\\.build\\inner.pr",
++  "path": "/CallStack/Inner.goal",
++  "prPath": "/CallStack/.build/inner.pr",
+   "hash": "52ff33cb8a1a04394f6719f7673e978785d8c953ec09b0229eed9f74e8ce6d0a",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/CallStack/.build/innertest.pr b/Tests/Runtime2/CallStack/.build/innertest.pr
+index 0ef225d5..c54a4a2e 100644
+--- a/Tests/Runtime2/CallStack/.build/innertest.pr
++++ b/Tests/Runtime2/CallStack/.build/innertest.pr
+@@ -62,8 +62,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\CallStack\\InnerTest.goal",
+-  "prPath": "\\CallStack\\.build\\innertest.pr",
++  "path": "/CallStack/InnerTest.goal",
++  "prPath": "/CallStack/.build/innertest.pr",
+   "hash": "a0d1c2c18daadf2830d295223c957d36d744628c4a5f9499b77cfe081ae2496c",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/CallStack/.build/start.pr b/Tests/Runtime2/CallStack/.build/start.pr
+index ee0c2064..e19ef5f9 100644
+--- a/Tests/Runtime2/CallStack/.build/start.pr
++++ b/Tests/Runtime2/CallStack/.build/start.pr
+@@ -121,8 +121,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\CallStack\\Start.goal",
+-  "prPath": "\\CallStack\\.build\\start.pr",
++  "path": "/CallStack/Start.goal",
++  "prPath": "/CallStack/.build/start.pr",
+   "hash": "6ca1d78db436f64b203279cc93b3f7586f696520593adef279ecdf58102cbbcc",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Condition/.build/condition.test.pr b/Tests/Runtime2/Condition/.build/condition.test.pr
+new file mode 100644
+index 00000000..8fa758b8
+--- /dev/null
++++ b/Tests/Runtime2/Condition/.build/condition.test.pr
+@@ -0,0 +1,205 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %x% = 10",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%x%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 10,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "if %x% equals 10, call SetTrue",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "condition",
++          "action": "if",
++          "parameters": [
++            {
++              "name": "condition",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "goalIfTrue",
++              "value": {
++                "goalName": "SetTrue"
++              },
++              "type": "goal.call"
++            },
++            {
++              "name": "goalIfFalse",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %wasTrue% is true, \u0022if-true branch should execute\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%wasTrue%",
++              "type": "object"
++            },
++            {
++              "name": "message",
++              "value": "if-true branch should execute",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %y% = 5",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%y%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 5,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "if %y% equals 99, call SetWrong, else call SetFalse",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "condition",
++          "action": "if",
++          "parameters": [
++            {
++              "name": "condition",
++              "value": false,
++              "type": "bool"
++            },
++            {
++              "name": "goalIfTrue",
++              "value": {
++                "goalName": "SetWrong"
++              },
++              "type": "goal.call"
++            },
++            {
++              "name": "goalIfFalse",
++              "value": {
++                "goalName": "SetFalse"
++              },
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %wasFalse% is true, \u0022else branch should execute\u0022",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%wasFalse%",
++              "type": "object"
++            },
++            {
++              "name": "message",
++              "value": "else branch should execute",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Condition/Condition.test.goal",
++  "prPath": "/Condition/.build/condition.test.pr",
++  "hash": "79d551cabb69b799200487e1dd8eeca58ae78a3324cd0d66de71d480bb7da256",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/.build/setfalse.pr b/Tests/Runtime2/Condition/.build/setfalse.pr
+new file mode 100644
+index 00000000..fe406ce5
+--- /dev/null
++++ b/Tests/Runtime2/Condition/.build/setfalse.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "SetFalse",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %wasFalse% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%wasFalse%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Condition/SetFalse.goal",
++  "prPath": "/Condition/.build/setfalse.pr",
++  "hash": "dbd15c49b05285835e4fc63384468e771ada0a67012516e3945311e2d5b0117b",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "SetFalse"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/.build/settrue.pr b/Tests/Runtime2/Condition/.build/settrue.pr
+new file mode 100644
+index 00000000..322c2711
+--- /dev/null
++++ b/Tests/Runtime2/Condition/.build/settrue.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "SetTrue",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %wasTrue% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%wasTrue%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Condition/SetTrue.goal",
++  "prPath": "/Condition/.build/settrue.pr",
++  "hash": "8f32560e33c6d83f655a923794dc4e4fac2d0e7c878bad4a56b7c3967d090af3",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "SetTrue"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/.build/setwrong.pr b/Tests/Runtime2/Condition/.build/setwrong.pr
+new file mode 100644
+index 00000000..a0b49bf2
+--- /dev/null
++++ b/Tests/Runtime2/Condition/.build/setwrong.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "SetWrong",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %wasWrong% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%wasWrong%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Condition/SetWrong.goal",
++  "prPath": "/Condition/.build/setwrong.pr",
++  "hash": "3235da80ce0ade81fe3d32c1e6355171f60ef8d8f86f7a1f1d89f3ace8e2cbea",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "SetWrong"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/Condition.test.goal b/Tests/Runtime2/Condition/Condition.test.goal
+new file mode 100644
+index 00000000..e222dc1a
+--- /dev/null
++++ b/Tests/Runtime2/Condition/Condition.test.goal
+@@ -0,0 +1,7 @@
++Start
++- set %x% = 10
++- if %x% equals 10, call SetTrue
++- assert %wasTrue% is true, "if-true branch should execute"
++- set %y% = 5
++- if %y% equals 99, call SetWrong, else call SetFalse
++- assert %wasFalse% is true, "else branch should execute"
+diff --git a/Tests/Runtime2/Condition/SetFalse.goal b/Tests/Runtime2/Condition/SetFalse.goal
+new file mode 100644
+index 00000000..0014344b
+--- /dev/null
++++ b/Tests/Runtime2/Condition/SetFalse.goal
+@@ -0,0 +1,2 @@
++SetFalse
++- set %wasFalse% = true
+diff --git a/Tests/Runtime2/Condition/SetTrue.goal b/Tests/Runtime2/Condition/SetTrue.goal
+new file mode 100644
+index 00000000..72e291ca
+--- /dev/null
++++ b/Tests/Runtime2/Condition/SetTrue.goal
+@@ -0,0 +1,2 @@
++SetTrue
++- set %wasTrue% = true
+diff --git a/Tests/Runtime2/Condition/SetWrong.goal b/Tests/Runtime2/Condition/SetWrong.goal
+new file mode 100644
+index 00000000..b8e4e9c7
+--- /dev/null
++++ b/Tests/Runtime2/Condition/SetWrong.goal
+@@ -0,0 +1,2 @@
++SetWrong
++- set %wasWrong% = true
+diff --git a/Tests/Runtime2/ContextVars/.build/contextvars.test.pr b/Tests/Runtime2/ContextVars/.build/contextvars.test.pr
+index 14786685..fee66a70 100644
+--- a/Tests/Runtime2/ContextVars/.build/contextvars.test.pr
++++ b/Tests/Runtime2/ContextVars/.build/contextvars.test.pr
+@@ -62,8 +62,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ContextVars\\ContextVars.test.goal",
+-  "prPath": "\\ContextVars\\.build\\contextvars.test.pr",
++  "path": "/ContextVars/ContextVars.test.goal",
++  "prPath": "/ContextVars/.build/contextvars.test.pr",
+   "hash": "df75fe9990944fa764eff466f9b0ed11506f5c0ba769ae307a5de0c97f4962b0",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/ContextVars/.build/start.pr b/Tests/Runtime2/ContextVars/.build/start.pr
+index d0236605..c71bcbba 100644
+--- a/Tests/Runtime2/ContextVars/.build/start.pr
++++ b/Tests/Runtime2/ContextVars/.build/start.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ContextVars\\Start.goal",
+-  "prPath": "\\ContextVars\\.build\\start.pr",
++  "path": "/ContextVars/Start.goal",
++  "prPath": "/ContextVars/.build/start.pr",
+   "hash": "8b6374c35852e84debb59b409923cad0cfdc505a033e320c617dbe904aedd593",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Convert/.build/convert.test.pr b/Tests/Runtime2/Convert/.build/convert.test.pr
+index 461fd843..ef16b8d0 100644
+--- a/Tests/Runtime2/Convert/.build/convert.test.pr
++++ b/Tests/Runtime2/Convert/.build/convert.test.pr
+@@ -432,8 +432,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Convert\\Convert.test.goal",
+-  "prPath": "\\Convert\\.build\\convert.test.pr",
++  "path": "/Convert/Convert.test.goal",
++  "prPath": "/Convert/.build/convert.test.pr",
+   "hash": "908ce3b55e34a18822baa86e238e03a4394036e6efa48352fbd13fe74f19d224",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Convert/.build/start.pr b/Tests/Runtime2/Convert/.build/start.pr
+index d5c20f12..85f42ab8 100644
+--- a/Tests/Runtime2/Convert/.build/start.pr
++++ b/Tests/Runtime2/Convert/.build/start.pr
+@@ -477,8 +477,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Convert\\Start.goal",
+-  "prPath": "\\Convert\\.build\\start.pr",
++  "path": "/Convert/Start.goal",
++  "prPath": "/Convert/.build/start.pr",
+   "hash": "95c19ce5ee3f27e273d92738c79c7b11e51e8572ab73ef6ae1131c685f53f6fc",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr b/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr
+index da7f563b..834359ad 100644
+--- a/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr
++++ b/Tests/Runtime2/DeepNavigation/.build/deepnavigation.test.pr
+@@ -11,10 +11,24 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%deep%", "type": "string" },
++            {
++              "name": "name",
++              "value": "%deep%",
++              "type": "string"
++            },
+             {
+               "name": "value",
+-              "value": { "a": { "b": { "c": { "d": { "e": "found" } } } } },
++              "value": {
++                "a": {
++                  "b": {
++                    "c": {
++                      "d": {
++                        "e": "found"
++                      }
++                    }
++                  }
++                }
++              },
+               "type": "object"
+             }
+           ],
+@@ -36,7 +50,11 @@
+           "module": "assert",
+           "action": "isNotNull",
+           "parameters": [
+-            { "name": "value", "value": "%deep.a%", "type": "string" }
++            {
++              "name": "value",
++              "value": "%deep.a%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -56,8 +74,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": "found", "type": "string" },
+-            { "name": "actual", "value": "%deep.a.b.c.d.e%", "type": "string" }
++            {
++              "name": "expected",
++              "value": "found",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%deep.a.b.c.d.e%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -77,12 +103,31 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%list%", "type": "string" },
++            {
++              "name": "name",
++              "value": "%list%",
++              "type": "string"
++            },
+             {
+               "name": "value",
+               "value": [
+-                { "items": [{ "val": 1 }, { "val": 2 }] },
+-                { "items": [{ "val": 3 }] }
++                {
++                  "items": [
++                    {
++                      "val": 1
++                    },
++                    {
++                      "val": 2
++                    }
++                  ]
++                },
++                {
++                  "items": [
++                    {
++                      "val": 3
++                    }
++                  ]
++                }
+               ],
+               "type": "object"
+             }
+@@ -105,8 +150,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 1, "type": "int" },
+-            { "name": "actual", "value": "%list[0].items[0].val%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%list[0].items[0].val%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -126,8 +179,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 2, "type": "int" },
+-            { "name": "actual", "value": "%list[0].items[1].val%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 2,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%list[0].items[1].val%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -147,8 +208,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 3, "type": "int" },
+-            { "name": "actual", "value": "%list[1].items[0].val%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 3,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%list[1].items[0].val%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -161,13 +230,13 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\DeepNavigation\\DeepNavigation.test.goal",
+-  "prPath": "\\DeepNavigation\\.build\\deepnavigation.test.pr",
+-  "hash": "",
++  "path": "/DeepNavigation/DeepNavigation.test.goal",
++  "prPath": "/DeepNavigation/.build/deepnavigation.test.pr",
++  "hash": "c03c380d59ca17e08aece2d916e15ec37b18b588c84c90fc47fc670e699338b4",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+   "errors": [],
+   "warnings": [],
+   "fullPath": "Start"
+-}
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/DeepNavigation/.build/start.pr b/Tests/Runtime2/DeepNavigation/.build/start.pr
+new file mode 100644
+index 00000000..7772eb3e
+--- /dev/null
++++ b/Tests/Runtime2/DeepNavigation/.build/start.pr
+@@ -0,0 +1,174 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%deep%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": {
++                "a": {
++                  "b": {
++                    "c": {
++                      "d": {
++                        "e": "found"
++                      }
++                    }
++                  }
++                }
++              },
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "write out %deep.a.b.c.d.e%",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%deep.a.b.c.d.e%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%list%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": [
++                {
++                  "items": [
++                    {
++                      "val": 1
++                    },
++                    {
++                      "val": 2
++                    }
++                  ]
++                },
++                {
++                  "items": [
++                    {
++                      "val": 3
++                    }
++                  ]
++                }
++              ],
++              "type": "array"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "write out %list[0].items[1].val%",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%list[0].items[1].val%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "write out %list[1].items[0].val%",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%list[1].items[0].val%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/DeepNavigation/Start.goal",
++  "prPath": "/DeepNavigation/.build/start.pr",
++  "hash": "9bcc377d4b3c7d2aca4752fd36f7543311fded743d747a325a9fb0659c0a7d35",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ErrorHandling/.build/errorhandling.test.pr b/Tests/Runtime2/ErrorHandling/.build/errorhandling.test.pr
+index a80b0613..05d25b7d 100644
+--- a/Tests/Runtime2/ErrorHandling/.build/errorhandling.test.pr
++++ b/Tests/Runtime2/ErrorHandling/.build/errorhandling.test.pr
+@@ -74,9 +74,6 @@
+           "warnings": []
+         }
+       ],
+-      "onError": {
+-        "ignoreError": true
+-      },
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
+@@ -142,8 +139,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ErrorHandling\\ErrorHandling.test.goal",
+-  "prPath": "\\ErrorHandling\\.build\\errorhandling.test.pr",
++  "path": "/ErrorHandling/ErrorHandling.test.goal",
++  "prPath": "/ErrorHandling/.build/errorhandling.test.pr",
+   "hash": "8841b0997803f585e337b1afcd43095652156dccb0c3bbe117493bdf6ccda6a6",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/ErrorHandling/.build/start.pr b/Tests/Runtime2/ErrorHandling/.build/start.pr
+index 545966e0..de696f0d 100644
+--- a/Tests/Runtime2/ErrorHandling/.build/start.pr
++++ b/Tests/Runtime2/ErrorHandling/.build/start.pr
+@@ -133,8 +133,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ErrorHandling\\Start.goal",
+-  "prPath": "\\ErrorHandling\\.build\\start.pr",
++  "path": "/ErrorHandling/Start.goal",
++  "prPath": "/ErrorHandling/.build/start.pr",
+   "hash": "a62861f371f2946312c99a533e117f289f0453174b3226594b150eef77078b6c",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/EventOverride/.build/eventoverride.test.pr b/Tests/Runtime2/EventOverride/.build/eventoverride.test.pr
+index ade7a160..396647ac 100644
+--- a/Tests/Runtime2/EventOverride/.build/eventoverride.test.pr
++++ b/Tests/Runtime2/EventOverride/.build/eventoverride.test.pr
+@@ -96,8 +96,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\EventOverride\\EventOverride.test.goal",
+-  "prPath": "\\EventOverride\\.build\\eventoverride.test.pr",
++  "path": "/EventOverride/EventOverride.test.goal",
++  "prPath": "/EventOverride/.build/eventoverride.test.pr",
+   "hash": "43507e972b8277d304cd8138fe796e30b6ba10981497003b76e0fcd7eb11aa18",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/EventOverride/.build/overridefileread.pr b/Tests/Runtime2/EventOverride/.build/overridefileread.pr
+index c14bc5ef..3ecefb23 100644
+--- a/Tests/Runtime2/EventOverride/.build/overridefileread.pr
++++ b/Tests/Runtime2/EventOverride/.build/overridefileread.pr
+@@ -33,8 +33,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\EventOverride\\OverrideFileRead.goal",
+-  "prPath": "\\EventOverride\\.build\\overridefileread.pr",
++  "path": "/EventOverride/OverrideFileRead.goal",
++  "prPath": "/EventOverride/.build/overridefileread.pr",
+   "hash": "7a1abdc24bfa6ea0f58662f9df01a9c3d089d1d4c572a1c32d9e744d3d12e065",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/EventOverride/.build/start.pr b/Tests/Runtime2/EventOverride/.build/start.pr
+index 794223ab..60dbbac1 100644
+--- a/Tests/Runtime2/EventOverride/.build/start.pr
++++ b/Tests/Runtime2/EventOverride/.build/start.pr
+@@ -89,8 +89,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\EventOverride\\Start.goal",
+-  "prPath": "\\EventOverride\\.build\\start.pr",
++  "path": "/EventOverride/Start.goal",
++  "prPath": "/EventOverride/.build/start.pr",
+   "hash": "f08868dabb436d97684c4d8fcf569917a381c2f294bc6747ec46b15e82b9e820",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/events.test.pr b/Tests/Runtime2/Events/.build/events.test.pr
+index 078b67e9..bf7588e8 100644
+--- a/Tests/Runtime2/Events/.build/events.test.pr
++++ b/Tests/Runtime2/Events/.build/events.test.pr
+@@ -168,8 +168,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\Events.test.goal",
+-  "prPath": "\\Events\\.build\\events.test.pr",
++  "path": "/Events/Events.test.goal",
++  "prPath": "/Events/.build/events.test.pr",
+   "hash": "ba25e5c2eb1b356e947fd2566a23eecbceeb8455b600f6d3ff4b96908e638eec",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/logafter.pr b/Tests/Runtime2/Events/.build/logafter.pr
+index 67a2c72e..be2a7232 100644
+--- a/Tests/Runtime2/Events/.build/logafter.pr
++++ b/Tests/Runtime2/Events/.build/logafter.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\LogAfter.goal",
+-  "prPath": "\\Events\\.build\\logafter.pr",
++  "path": "/Events/LogAfter.goal",
++  "prPath": "/Events/.build/logafter.pr",
+   "hash": "440fe9a1c0ef35cbc0d2199db3269ef5a4588202f4992051d7318de4d4e4f4ea",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/logbefore.pr b/Tests/Runtime2/Events/.build/logbefore.pr
+index da99507e..a29037f8 100644
+--- a/Tests/Runtime2/Events/.build/logbefore.pr
++++ b/Tests/Runtime2/Events/.build/logbefore.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\LogBefore.goal",
+-  "prPath": "\\Events\\.build\\logbefore.pr",
++  "path": "/Events/LogBefore.goal",
++  "prPath": "/Events/.build/logbefore.pr",
+   "hash": "3970fdcc3b851d516ab371375343cce2de93d186a3f82d45e783d3c03cfad41c",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/onvarset.pr b/Tests/Runtime2/Events/.build/onvarset.pr
+index 17fd3109..0e60b892 100644
+--- a/Tests/Runtime2/Events/.build/onvarset.pr
++++ b/Tests/Runtime2/Events/.build/onvarset.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\OnVarSet.goal",
+-  "prPath": "\\Events\\.build\\onvarset.pr",
++  "path": "/Events/OnVarSet.goal",
++  "prPath": "/Events/.build/onvarset.pr",
+   "hash": "bcc08541d2a032d3b45309378b304a58d0cc905ba7061ded2f3480acf8cd848f",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/start.pr b/Tests/Runtime2/Events/.build/start.pr
+index d48da8e3..b67eea60 100644
+--- a/Tests/Runtime2/Events/.build/start.pr
++++ b/Tests/Runtime2/Events/.build/start.pr
+@@ -217,8 +217,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\Start.goal",
+-  "prPath": "\\Events\\.build\\start.pr",
++  "path": "/Events/Start.goal",
++  "prPath": "/Events/.build/start.pr",
+   "hash": "20138dfb3333c5de97df97e1d5d015738747efadf807f0fc92c740bde36a2a5e",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Events/.build/testgoal.pr b/Tests/Runtime2/Events/.build/testgoal.pr
+index 5a68239d..f9f5369e 100644
+--- a/Tests/Runtime2/Events/.build/testgoal.pr
++++ b/Tests/Runtime2/Events/.build/testgoal.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Events\\TestGoal.goal",
+-  "prPath": "\\Events\\.build\\testgoal.pr",
++  "path": "/Events/TestGoal.goal",
++  "prPath": "/Events/.build/testgoal.pr",
+   "hash": "45b9aa47af6170f9238cab052a84e9e5f94f7f3d0d8f32f5cba5889b9cf05d40",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/File/.build/file.test.pr b/Tests/Runtime2/File/.build/file.test.pr
+new file mode 100644
+index 00000000..a40ead04
+--- /dev/null
++++ b/Tests/Runtime2/File/.build/file.test.pr
+@@ -0,0 +1,437 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "save \u0022hello world\u0022 to file \u0027test_output.txt\u0027",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "save and read",
++      "actions": [
++        {
++          "module": "file",
++          "action": "save",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_output.txt",
++              "type": "path"
++            },
++            {
++              "name": "value",
++              "value": "hello world",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "read file \u0027test_output.txt\u0027, write to %content%",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "file",
++          "action": "read",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_output.txt",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "content"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %content% equals \u0022hello world\u0022",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": "hello world",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%content%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "check if file \u0027test_output.txt\u0027 exists, write to %info%",
++      "lineNumber": 7,
++      "indent": 0,
++      "comment": "exists",
++      "actions": [
++        {
++          "module": "file",
++          "action": "exists",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_output.txt",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "info"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "assert %info% is not null",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%info%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "copy file \u0027test_output.txt\u0027 to \u0027test_copy.txt\u0027",
++      "lineNumber": 10,
++      "indent": 0,
++      "comment": "copy",
++      "actions": [
++        {
++          "module": "file",
++          "action": "copy",
++          "parameters": [
++            {
++              "name": "source",
++              "value": "test_output.txt",
++              "type": "path"
++            },
++            {
++              "name": "destination",
++              "value": "test_copy.txt",
++              "type": "path"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "read file \u0027test_copy.txt\u0027, write to %copied%",
++      "lineNumber": 11,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "file",
++          "action": "read",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_copy.txt",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "copied"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "assert %copied% equals \u0022hello world\u0022",
++      "lineNumber": 12,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": "hello world",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%copied%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "move file \u0027test_copy.txt\u0027 to \u0027test_moved.txt\u0027",
++      "lineNumber": 14,
++      "indent": 0,
++      "comment": "move",
++      "actions": [
++        {
++          "module": "file",
++          "action": "move",
++          "parameters": [
++            {
++              "name": "source",
++              "value": "test_copy.txt",
++              "type": "path"
++            },
++            {
++              "name": "destination",
++              "value": "test_moved.txt",
++              "type": "path"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 9,
++      "text": "read file \u0027test_moved.txt\u0027, write to %moved%",
++      "lineNumber": 15,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "file",
++          "action": "read",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_moved.txt",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "moved"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 10,
++      "text": "assert %moved% equals \u0022hello world\u0022",
++      "lineNumber": 16,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": "hello world",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%moved%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 11,
++      "text": "list files in \u0027.\u0027, write to %files%",
++      "lineNumber": 18,
++      "indent": 0,
++      "comment": "list",
++      "actions": [
++        {
++          "module": "file",
++          "action": "list",
++          "parameters": [
++            {
++              "name": "path",
++              "value": ".",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "files"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 12,
++      "text": "assert %files% is not null",
++      "lineNumber": 19,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%files%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 13,
++      "text": "delete file \u0027test_output.txt\u0027",
++      "lineNumber": 21,
++      "indent": 0,
++      "comment": "delete \u002B cleanup",
++      "actions": [
++        {
++          "module": "file",
++          "action": "delete",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_output.txt",
++              "type": "path"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 14,
++      "text": "delete file \u0027test_moved.txt\u0027",
++      "lineNumber": 22,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "file",
++          "action": "delete",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_moved.txt",
++              "type": "path"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/File/File.test.goal",
++  "prPath": "/File/.build/file.test.pr",
++  "hash": "2577d85a778d43061cb276ce85c4d34bc85c9005d3b9a13a26bb65719f3010c4",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/File/File.test.goal b/Tests/Runtime2/File/File.test.goal
+new file mode 100644
+index 00000000..2287bb6d
+--- /dev/null
++++ b/Tests/Runtime2/File/File.test.goal
+@@ -0,0 +1,22 @@
++Start
++/ save and read
++- save "hello world" to file 'test_output.txt'
++- read file 'test_output.txt', write to %content%
++- assert %content% equals "hello world"
++/ exists
++- check if file 'test_output.txt' exists, write to %info%
++- assert %info% is not null
++/ copy
++- copy file 'test_output.txt' to 'test_copy.txt'
++- read file 'test_copy.txt', write to %copied%
++- assert %copied% equals "hello world"
++/ move
++- move file 'test_copy.txt' to 'test_moved.txt'
++- read file 'test_moved.txt', write to %moved%
++- assert %moved% equals "hello world"
++/ list
++- list files in '.', write to %files%
++- assert %files% is not null
++/ delete + cleanup
++- delete file 'test_output.txt'
++- delete file 'test_moved.txt'
+diff --git a/Tests/Runtime2/FromJson/.build/fromjson.test.pr b/Tests/Runtime2/FromJson/.build/fromjson.test.pr
+index a6e400b4..d0a8e906 100644
+--- a/Tests/Runtime2/FromJson/.build/fromjson.test.pr
++++ b/Tests/Runtime2/FromJson/.build/fromjson.test.pr
+@@ -3,7 +3,7 @@
+   "steps": [
+     {
+       "index": 0,
+-      "text": "convert '{\"name\":\"test\",\"values\":[1,2,3],\"nested\":{\"flag\":true,\"data\":null}}' from json, write to %obj%",
++      "text": "convert \u0027{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}\u0027 from json, write to %obj%",
+       "lineNumber": 2,
+       "indent": 0,
+       "actions": [
+@@ -13,12 +13,14 @@
+           "parameters": [
+             {
+               "name": "Value",
+-              "value": "{\"name\":\"test\",\"values\":[1,2,3],\"nested\":{\"flag\":true,\"data\":null}}",
++              "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
+               "type": "string"
+             }
+           ],
+           "return": [
+-            { "name": "obj" }
++            {
++              "name": "obj"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -38,8 +40,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": "test", "type": "string" },
+-            { "name": "actual", "value": "%obj.name%", "type": "string" }
++            {
++              "name": "expected",
++              "value": "test",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%obj.name%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -59,8 +69,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 1, "type": "int" },
+-            { "name": "actual", "value": "%obj.values[0]%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%obj.values[0]%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -80,8 +98,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 3, "type": "int" },
+-            { "name": "actual", "value": "%obj.values[2]%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 3,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%obj.values[2]%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -101,7 +127,11 @@
+           "module": "assert",
+           "action": "isTrue",
+           "parameters": [
+-            { "name": "value", "value": "%obj.nested.flag%", "type": "string" }
++            {
++              "name": "value",
++              "value": "%obj.nested.flag%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -113,7 +143,7 @@
+     },
+     {
+       "index": 5,
+-      "text": "convert '[{\"id\":1},{\"id\":2}]' from json, write to %arr%",
++      "text": "convert \u0027[{\u0022id\u0022:1},{\u0022id\u0022:2}]\u0027 from json, write to %arr%",
+       "lineNumber": 7,
+       "indent": 0,
+       "actions": [
+@@ -123,12 +153,14 @@
+           "parameters": [
+             {
+               "name": "Value",
+-              "value": "[{\"id\":1},{\"id\":2}]",
++              "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
+               "type": "string"
+             }
+           ],
+           "return": [
+-            { "name": "arr" }
++            {
++              "name": "arr"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -148,8 +180,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 1, "type": "int" },
+-            { "name": "actual", "value": "%arr[0].id%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%arr[0].id%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -169,8 +209,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": 2, "type": "int" },
+-            { "name": "actual", "value": "%arr[1].id%", "type": "int" }
++            {
++              "name": "expected",
++              "value": 2,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%arr[1].id%",
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -183,13 +231,13 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\FromJson\\FromJson.test.goal",
+-  "prPath": "\\FromJson\\.build\\fromjson.test.pr",
+-  "hash": "",
++  "path": "/FromJson/FromJson.test.goal",
++  "prPath": "/FromJson/.build/fromjson.test.pr",
++  "hash": "104490d5d7202c61aa760753fc1f202f6d3f47896a4d59e2f115c3f04652c3e3",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+   "errors": [],
+   "warnings": [],
+   "fullPath": "Start"
+-}
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/FromJson/.build/start.pr b/Tests/Runtime2/FromJson/.build/start.pr
+new file mode 100644
+index 00000000..7e14f5a8
+--- /dev/null
++++ b/Tests/Runtime2/FromJson/.build/start.pr
+@@ -0,0 +1,278 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "convert \u0027{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}\u0027 from json, write to %obj%",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "convert",
++          "action": "fromjson",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "obj"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "write out %obj.name%",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%obj.name%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "write out %obj.values[0]%",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%obj.values[0]%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "write out %obj.values[2]%",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%obj.values[2]%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "write out %obj.nested.flag%",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%obj.nested.flag%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "convert \u0027[{\u0022id\u0022:1},{\u0022id\u0022:2}]\u0027 from json, write to %arr%",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "convert",
++          "action": "fromjson",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "arr"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "write out %arr[0].id%",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%arr[0].id%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "write out %arr[1].id%",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%arr[1].id%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/FromJson/Start.goal",
++  "prPath": "/FromJson/.build/start.pr",
++  "hash": "a62fafa1076f99c5611a4ba2984dae56849a42b269555da0bf84770f30652af4",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ListOps/.build/listops.test.pr b/Tests/Runtime2/ListOps/.build/listops.test.pr
+index 95a7f14b..111db1fe 100644
+--- a/Tests/Runtime2/ListOps/.build/listops.test.pr
++++ b/Tests/Runtime2/ListOps/.build/listops.test.pr
+@@ -470,6 +470,531 @@
+       "text": "assert %partsCount% equals 3",
+       "lineNumber": 17,
+       "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "get",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "index",
++              "value": 1,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "second"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 16,
++      "text": "get item at index 1 from %myList%, write to %second%",
++      "lineNumber": 19,
++      "indent": 0,
++      "comment": "get by index",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": 20,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%second%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 17,
++      "text": "assert %second% equals 20",
++      "lineNumber": 20,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "remove",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 20,
++              "type": "int"
++            },
++            {
++              "name": "atIndex",
++              "value": -1,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 18,
++      "text": "remove 20 from %myList%",
++      "lineNumber": 22,
++      "indent": 0,
++      "comment": "remove",
++      "actions": [
++        {
++          "module": "list",
++          "action": "contains",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 20,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "still20"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 19,
++      "text": "check if %myList% contains 20, write to %still20%",
++      "lineNumber": 23,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isFalse",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%still20%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 20,
++      "text": "assert %still20% is false",
++      "lineNumber": 24,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "indexof",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 30,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "idx"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 21,
++      "text": "get index of 30 in %myList%, write to %idx%",
++      "lineNumber": 26,
++      "indent": 0,
++      "comment": "indexOf",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "greaterThan",
++          "parameters": [
++            {
++              "name": "a",
++              "value": "%idx%",
++              "type": "string"
++            },
++            {
++              "name": "b",
++              "value": -1,
++              "type": "int"
++            },
++            {
++              "name": "message",
++              "value": "indexOf should find the item",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 22,
++      "text": "assert %idx% is greater than -1, \u0022indexOf should find the item\u0022",
++      "lineNumber": 27,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%unsorted%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": [
++                3,
++                1,
++                2
++              ],
++              "type": "list"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 23,
++      "text": "set %unsorted% = [3, 1, 2]",
++      "lineNumber": 29,
++      "indent": 0,
++      "comment": "sort",
++      "actions": [
++        {
++          "module": "list",
++          "action": "sort",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%unsorted%",
++              "type": "string"
++            },
++            {
++              "name": "descending",
++              "value": false,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 24,
++      "text": "sort %unsorted%",
++      "lineNumber": 30,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "first",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%unsorted%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "sortFirst"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 25,
++      "text": "get first item from %unsorted%, write to %sortFirst%",
++      "lineNumber": 31,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%sortFirst%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 26,
++      "text": "assert %sortFirst% equals 1",
++      "lineNumber": 32,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "reverse",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%unsorted%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 27,
++      "text": "reverse %unsorted%",
++      "lineNumber": 34,
++      "indent": 0,
++      "comment": "reverse",
++      "actions": [
++        {
++          "module": "list",
++          "action": "first",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%unsorted%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "revFirst"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 28,
++      "text": "get first item from %unsorted%, write to %revFirst%",
++      "lineNumber": 35,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": 3,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%revFirst%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 29,
++      "text": "assert %revFirst% equals 3",
++      "lineNumber": 36,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%dupes%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": [
++                1,
++                2,
++                2,
++                3,
++                3,
++                3
++              ],
++              "type": "list"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 30,
++      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
++      "lineNumber": 38,
++      "indent": 0,
++      "comment": "unique",
++      "actions": [
++        {
++          "module": "list",
++          "action": "unique",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%dupes%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "uniq"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 31,
++      "text": "get unique items from %dupes%, write to %uniq%",
++      "lineNumber": 39,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "count",
++          "parameters": [
++            {
++              "name": "listName",
++              "value": "%uniq%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "uniqCount"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 32,
++      "text": "get count of %uniq%, write to %uniqCount%",
++      "lineNumber": 40,
++      "indent": 0,
+       "actions": [
+         {
+           "module": "assert",
+@@ -482,7 +1007,7 @@
+             },
+             {
+               "name": "actual",
+-              "value": "%partsCount%",
++              "value": "%uniqCount%",
+               "type": "string"
+             }
+           ],
+@@ -493,13 +1018,31 @@
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
++    },
++    {
++      "index": 33,
++      "text": "assert %uniqCount% equals 3",
++      "lineNumber": 41,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "",
++          "action": "",
++          "parameters": [],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
+     }
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ListOps\\ListOps.test.goal",
+-  "prPath": "\\ListOps\\.build\\listops.test.pr",
+-  "hash": "9394921285464a29946b693e37adf9d0b879ab5da14e30919f684b06d96c150e",
++  "path": "/ListOps/ListOps.test.goal",
++  "prPath": "/ListOps/.build/listops.test.pr",
++  "hash": "d323a441c6f6ee340056799dd0ae45a7748133d5e4ff59ee97f8bcdd1e978b21",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+diff --git a/Tests/Runtime2/ListOps/.build/start.pr b/Tests/Runtime2/ListOps/.build/start.pr
+index 97cd47ad..56cdee51 100644
+--- a/Tests/Runtime2/ListOps/.build/start.pr
++++ b/Tests/Runtime2/ListOps/.build/start.pr
+@@ -503,8 +503,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\ListOps\\Start.goal",
+-  "prPath": "\\ListOps\\.build\\start.pr",
++  "path": "/ListOps/Start.goal",
++  "prPath": "/ListOps/.build/start.pr",
+   "hash": "6e0c3d1da756b5910e8e4462c7e2d2f957d8660c4e2d9f7a918d9387d09eadfe",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/ListOps/ListOps.test.goal b/Tests/Runtime2/ListOps/ListOps.test.goal
+index a8456ea0..60d7f1cc 100644
+--- a/Tests/Runtime2/ListOps/ListOps.test.goal
++++ b/Tests/Runtime2/ListOps/ListOps.test.goal
+@@ -15,3 +15,27 @@ Start
+ - split "a-b-c" by "-", write to %parts%
+ - get count of %parts%, write to %partsCount%
+ - assert %partsCount% equals 3
++/ get by index
++- get item at index 1 from %myList%, write to %second%
++- assert %second% equals 20
++/ remove
++- remove 20 from %myList%
++- check if %myList% contains 20, write to %still20%
++- assert %still20% is false
++/ indexOf
++- get index of 30 in %myList%, write to %idx%
++- assert %idx% is greater than -1, "indexOf should find the item"
++/ sort
++- set %unsorted% = [3, 1, 2]
++- sort %unsorted%
++- get first item from %unsorted%, write to %sortFirst%
++- assert %sortFirst% equals 1
++/ reverse
++- reverse %unsorted%
++- get first item from %unsorted%, write to %revFirst%
++- assert %revFirst% equals 3
++/ unique
++- set %dupes% = [1, 2, 2, 3, 3, 3]
++- get unique items from %dupes%, write to %uniq%
++- get count of %uniq%, write to %uniqCount%
++- assert %uniqCount% equals 3
+diff --git a/Tests/Runtime2/Loop/.build/countitem.pr b/Tests/Runtime2/Loop/.build/countitem.pr
+index ff577cc1..a5498b91 100644
+--- a/Tests/Runtime2/Loop/.build/countitem.pr
++++ b/Tests/Runtime2/Loop/.build/countitem.pr
+@@ -74,8 +74,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Loop\\CountItem.goal",
+-  "prPath": "\\Loop\\.build\\countitem.pr",
++  "path": "/Loop/CountItem.goal",
++  "prPath": "/Loop/.build/countitem.pr",
+   "hash": "d91c81625be92fafa3785c53cbed6d66a58ef5c4ba6b83fd72db7d0877ebe285",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Loop/.build/loop.test.pr b/Tests/Runtime2/Loop/.build/loop.test.pr
+index 3724ec95..b985cbdc 100644
+--- a/Tests/Runtime2/Loop/.build/loop.test.pr
++++ b/Tests/Runtime2/Loop/.build/loop.test.pr
+@@ -134,8 +134,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Loop\\Loop.test.goal",
+-  "prPath": "\\Loop\\.build\\loop.test.pr",
++  "path": "/Loop/Loop.test.goal",
++  "prPath": "/Loop/.build/loop.test.pr",
+   "hash": "ccb3d486f7dac17e75fde0c7e5523b385096132ff4a1b09f7e8ea55f2214ac24",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Loop/.build/processitem.pr b/Tests/Runtime2/Loop/.build/processitem.pr
+index a0db2f1a..de653345 100644
+--- a/Tests/Runtime2/Loop/.build/processitem.pr
++++ b/Tests/Runtime2/Loop/.build/processitem.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Loop\\ProcessItem.goal",
+-  "prPath": "\\Loop\\.build\\processitem.pr",
++  "path": "/Loop/ProcessItem.goal",
++  "prPath": "/Loop/.build/processitem.pr",
+   "hash": "79cba1bcd1dde984b66475b8a9a2c340253b4dfbff8a38cc6efbe9ffa28214ed",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Loop/.build/start.pr b/Tests/Runtime2/Loop/.build/start.pr
+index 94aff90e..37947427 100644
+--- a/Tests/Runtime2/Loop/.build/start.pr
++++ b/Tests/Runtime2/Loop/.build/start.pr
+@@ -105,8 +105,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Loop\\Start.goal",
+-  "prPath": "\\Loop\\.build\\start.pr",
++  "path": "/Loop/Start.goal",
++  "prPath": "/Loop/.build/start.pr",
+   "hash": "d80e8dac98554661c1d54d320e8decb4295aac916cc08ce6080a5a60a0a52414",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Math/.build/math.test.pr b/Tests/Runtime2/Math/.build/math.test.pr
+index 3c037b3e..db58fc80 100644
+--- a/Tests/Runtime2/Math/.build/math.test.pr
++++ b/Tests/Runtime2/Math/.build/math.test.pr
+@@ -499,13 +499,318 @@
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
++    },
++    {
++      "index": 16,
++      "text": "raise 2 to the power of 3, write to %pow%",
++      "lineNumber": 19,
++      "indent": 0,
++      "comment": "power",
++      "actions": [
++        {
++          "module": "math",
++          "action": "power",
++          "parameters": [
++            {
++              "name": "Base",
++              "value": 2,
++              "type": "int"
++            },
++            {
++              "name": "Exponent",
++              "value": 3,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "pow"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 17,
++      "text": "assert %pow% equals 8",
++      "lineNumber": 20,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 8,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%pow%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 18,
++      "text": "get square root of 16, write to %root%",
++      "lineNumber": 22,
++      "indent": 0,
++      "comment": "sqrt",
++      "actions": [
++        {
++          "module": "math",
++          "action": "sqrt",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": 16,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "root"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 19,
++      "text": "assert %root% equals 4",
++      "lineNumber": 23,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 4,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%root%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 20,
++      "text": "get floor of 3.7, write to %floored%",
++      "lineNumber": 25,
++      "indent": 0,
++      "comment": "floor",
++      "actions": [
++        {
++          "module": "math",
++          "action": "floor",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": 3.7,
++              "type": "double"
++            }
++          ],
++          "return": [
++            {
++              "name": "floored"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 21,
++      "text": "assert %floored% equals 3",
++      "lineNumber": 26,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 3,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%floored%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 22,
++      "text": "get ceiling of 3.2, write to %ceiled%",
++      "lineNumber": 28,
++      "indent": 0,
++      "comment": "ceiling",
++      "actions": [
++        {
++          "module": "math",
++          "action": "ceiling",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": 3.2,
++              "type": "double"
++            }
++          ],
++          "return": [
++            {
++              "name": "ceiled"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 23,
++      "text": "assert %ceiled% equals 4",
++      "lineNumber": 29,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 4,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%ceiled%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 24,
++      "text": "get 10 modulo 3, write to %mod%",
++      "lineNumber": 31,
++      "indent": 0,
++      "comment": "modulo",
++      "actions": [
++        {
++          "module": "math",
++          "action": "modulo",
++          "parameters": [
++            {
++              "name": "A",
++              "value": 10,
++              "type": "int"
++            },
++            {
++              "name": "B",
++              "value": 3,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "mod"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 25,
++      "text": "assert %mod% equals 1",
++      "lineNumber": 32,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%mod%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
+     }
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Math\\Math.test.goal",
+-  "prPath": "\\Math\\.build\\math.test.pr",
+-  "hash": "1f6faf5ea65993a8358ad2b10f42b3e3128c7ff25c83dbb399b04843cf354433",
++  "path": "/Math/Math.test.goal",
++  "prPath": "/Math/.build/math.test.pr",
++  "hash": "b961cb7cea5c08c1adca9237820fc62ae7dc55112faad3649b58bc6a4d7c30b1",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+diff --git a/Tests/Runtime2/Math/.build/start.pr b/Tests/Runtime2/Math/.build/start.pr
+index 30e114bf..2627c9ab 100644
+--- a/Tests/Runtime2/Math/.build/start.pr
++++ b/Tests/Runtime2/Math/.build/start.pr
+@@ -611,8 +611,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Math\\Start.goal",
+-  "prPath": "\\Math\\.build\\start.pr",
++  "path": "/Math/Start.goal",
++  "prPath": "/Math/.build/start.pr",
+   "hash": "b14387a62a0ade6cd3c4631db6ec34dc962c3564c9bc857843d2f574898b5e2d",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Math/Math.test.goal b/Tests/Runtime2/Math/Math.test.goal
+index 61eca215..17fdb4dd 100644
+--- a/Tests/Runtime2/Math/Math.test.goal
++++ b/Tests/Runtime2/Math/Math.test.goal
+@@ -15,3 +15,18 @@ Start
+ - assert %minimum% equals 3
+ - get max of 5 and 3, write to %maximum%
+ - assert %maximum% equals 5
++/ power
++- raise 2 to the power of 3, write to %pow%
++- assert %pow% equals 8
++/ sqrt
++- get square root of 16, write to %root%
++- assert %root% equals 4
++/ floor
++- get floor of 3.7, write to %floored%
++- assert %floored% equals 3
++/ ceiling
++- get ceiling of 3.2, write to %ceiled%
++- assert %ceiled% equals 4
++/ modulo
++- get 10 modulo 3, write to %mod%
++- assert %mod% equals 1
+diff --git a/Tests/Runtime2/Mock/.build/handlemockpost.pr b/Tests/Runtime2/Mock/.build/handlemockpost.pr
+index 767a6aba..7861c45a 100644
+--- a/Tests/Runtime2/Mock/.build/handlemockpost.pr
++++ b/Tests/Runtime2/Mock/.build/handlemockpost.pr
+@@ -28,8 +28,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Mock\\HandleMockPost.goal",
+-  "prPath": "\\Mock\\.build\\handlemockpost.pr",
++  "path": "/Mock/HandleMockPost.goal",
++  "prPath": "/Mock/.build/handlemockpost.pr",
+   "hash": "36bb49288f9713270919dc7fe006fb62cfc983d3f132e4af41c6e850249cd44d",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Mock/.build/mock.test.pr b/Tests/Runtime2/Mock/.build/mock.test.pr
+index dd894470..bc67feeb 100644
+--- a/Tests/Runtime2/Mock/.build/mock.test.pr
++++ b/Tests/Runtime2/Mock/.build/mock.test.pr
+@@ -196,13 +196,166 @@
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "read file \u0027test_output.txt\u0027, write to %mockResult%",
++      "lineNumber": 9,
++      "indent": 0,
++      "comment": "exercise the mock \u2014 call intercepted action, verify callCount",
++      "actions": [
++        {
++          "module": "file",
++          "action": "read",
++          "parameters": [
++            {
++              "name": "path",
++              "value": "test_output.txt",
++              "type": "path"
++            }
++          ],
++          "return": [
++            {
++              "name": "mockResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "assert %mockRead.callCount% equals 1, \u0022callCount should increment after mock intercept\u0022",
++      "lineNumber": 10,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%mockRead.callCount%",
++              "type": "string"
++            },
++            {
++              "name": "Message",
++              "value": "callCount should increment after mock intercept",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "mock verify %mockRead% was called 1 time",
++      "lineNumber": 12,
++      "indent": 0,
++      "comment": "verify",
++      "actions": [
++        {
++          "module": "mock",
++          "action": "verify",
++          "parameters": [
++            {
++              "name": "Mock",
++              "value": "%mockRead%",
++              "type": "object"
++            },
++            {
++              "name": "ExpectedCount",
++              "value": 1,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 9,
++      "text": "mock reset %mockRead%",
++      "lineNumber": 14,
++      "indent": 0,
++      "comment": "reset",
++      "actions": [
++        {
++          "module": "mock",
++          "action": "reset",
++          "parameters": [
++            {
++              "name": "Mock",
++              "value": "%mockRead%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 10,
++      "text": "assert %mockRead.callCount% equals 0, \u0022reset should clear callCount\u0022",
++      "lineNumber": 15,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 0,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%mockRead.callCount%",
++              "type": "string"
++            },
++            {
++              "name": "Message",
++              "value": "reset should clear callCount",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
+     }
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Mock\\Mock.test.goal",
+-  "prPath": "\\Mock\\.build\\mock.test.pr",
+-  "hash": "2a393fef9f45d66633f4f1a63dbd87725e152c3a290f35e32fba12cb64bb65ce",
++  "path": "/Mock/Mock.test.goal",
++  "prPath": "/Mock/.build/mock.test.pr",
++  "hash": "943801d57998b9929e6ddd5fcf82a27a70ee2d2d4c2a7c635c21a1b57668265e",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+diff --git a/Tests/Runtime2/Mock/Mock.test.goal b/Tests/Runtime2/Mock/Mock.test.goal
+index 3890b1db..8cd1163a 100644
+--- a/Tests/Runtime2/Mock/Mock.test.goal
++++ b/Tests/Runtime2/Mock/Mock.test.goal
+@@ -5,3 +5,11 @@ Start
+ - assert %mockRead.isSpy% equals false
+ - mock intercept "output.write", write to %spyWrite%
+ - assert %spyWrite.isSpy% equals true
++/ exercise the mock — call intercepted action, verify callCount
++- read file 'test_output.txt', write to %mockResult%
++- assert %mockRead.callCount% equals 1, "callCount should increment after mock intercept"
++/ verify
++- mock verify %mockRead% was called 1 time
++/ reset
++- mock reset %mockRead%
++- assert %mockRead.callCount% equals 0, "reset should clear callCount"
+diff --git a/Tests/Runtime2/Output/.build/output.test.pr b/Tests/Runtime2/Output/.build/output.test.pr
+new file mode 100644
+index 00000000..80d555e2
+--- /dev/null
++++ b/Tests/Runtime2/Output/.build/output.test.pr
+@@ -0,0 +1,108 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "write out \u0022test output message\u0022",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "test output message",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "set %afterWrite% = true",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%afterWrite%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %afterWrite% is true, \u0022write should complete without error\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%afterWrite%",
++              "type": "bool"
++            },
++            {
++              "name": "message",
++              "value": "write should complete without error",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Output/Output.test.goal",
++  "prPath": "/Output/.build/output.test.pr",
++  "hash": "f06dacba39a098aa34ffac7183305af3b02f3ccfd62063109a502545182438fd",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Output/Output.test.goal b/Tests/Runtime2/Output/Output.test.goal
+new file mode 100644
+index 00000000..dfe2121a
+--- /dev/null
++++ b/Tests/Runtime2/Output/Output.test.goal
+@@ -0,0 +1,4 @@
++Start
++- write out "test output message"
++- set %afterWrite% = true
++- assert %afterWrite% is true, "write should complete without error"
+diff --git a/Tests/Runtime2/Retry/.build/handleretryerror.pr b/Tests/Runtime2/Retry/.build/handleretryerror.pr
+index 198096a9..bc769eda 100644
+--- a/Tests/Runtime2/Retry/.build/handleretryerror.pr
++++ b/Tests/Runtime2/Retry/.build/handleretryerror.pr
+@@ -33,8 +33,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Retry\\HandleRetryError.goal",
+-  "prPath": "\\Retry\\.build\\handleretryerror.pr",
++  "path": "/Retry/HandleRetryError.goal",
++  "prPath": "/Retry/.build/handleretryerror.pr",
+   "hash": "73b3860a35906d869cb5de411b068adead6bdd7c71fe0fb150d31fb361764d07",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Retry/.build/retry.test.pr b/Tests/Runtime2/Retry/.build/retry.test.pr
+index c9e3678f..8a0cd762 100644
+--- a/Tests/Runtime2/Retry/.build/retry.test.pr
++++ b/Tests/Runtime2/Retry/.build/retry.test.pr
+@@ -206,8 +206,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Retry\\Retry.test.goal",
+-  "prPath": "\\Retry\\.build\\retry.test.pr",
++  "path": "/Retry/Retry.test.goal",
++  "prPath": "/Retry/.build/retry.test.pr",
+   "hash": "79e31a2a446a744349397c87f093e59986bd5880f5204646b6b8bf550ef9b074",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr b/Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr
+new file mode 100644
+index 00000000..f9d53ea6
+--- /dev/null
++++ b/Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr
+@@ -0,0 +1,103 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set max gzip size to 20mb",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%max gzip size%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 20971520,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "get archive.max, write to %maxSize%",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "get",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "archive.max",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "maxSize"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %maxSize% equals 20971520",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": 20971520,
++              "type": "int"
++            },
++            {
++              "name": "actual",
++              "value": "%maxSize%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Settings/SetMaxGzipSize/Start.test.goal",
++  "prPath": "/Settings/SetMaxGzipSize/.build/start.test.pr",
++  "hash": "dd339a6a5b660691119cc8bfd3a9acb9d3491a41182a9f680055fbcc4ccb68f4",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/StartupParams/.build/start.pr b/Tests/Runtime2/StartupParams/.build/start.pr
+index 52c08684..455b4f6a 100644
+--- a/Tests/Runtime2/StartupParams/.build/start.pr
++++ b/Tests/Runtime2/StartupParams/.build/start.pr
+@@ -38,8 +38,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\StartupParams\\Start.goal",
+-  "prPath": "\\StartupParams\\.build\\start.pr",
++  "path": "/StartupParams/Start.goal",
++  "prPath": "/StartupParams/.build/start.pr",
+   "hash": "20a2ffffb27b509b6a823dc2404527461169b84e70dbac2c2535776a4cdbacdb",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/StartupParams/.build/startupparams.test.pr b/Tests/Runtime2/StartupParams/.build/startupparams.test.pr
+index d64d9cdd..f2f652be 100644
+--- a/Tests/Runtime2/StartupParams/.build/startupparams.test.pr
++++ b/Tests/Runtime2/StartupParams/.build/startupparams.test.pr
+@@ -121,8 +121,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\StartupParams\\StartupParams.test.goal",
+-  "prPath": "\\StartupParams\\.build\\startupparams.test.pr",
++  "path": "/StartupParams/StartupParams.test.goal",
++  "prPath": "/StartupParams/.build/startupparams.test.pr",
+   "hash": "a7d4ed8f5e49d15054f42a23920b3e2e36418bf9f5e5e99c4d8201538c29019e",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/VariableIndexing/.build/start.pr b/Tests/Runtime2/VariableIndexing/.build/start.pr
+new file mode 100644
+index 00000000..fc333893
+--- /dev/null
++++ b/Tests/Runtime2/VariableIndexing/.build/start.pr
+@@ -0,0 +1,238 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%items%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": [
++                "a",
++                "b",
++                "c"
++              ],
++              "type": "array"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "set %idx% = 1",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%idx%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 1,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "write out %items[idx]%",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%items[%idx%]%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %i% = 0",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%i%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 0,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "set %j% = 2",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%j%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 2,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "write out %items[i]%",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%items[%i%]%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "write out %items[j]%",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "output",
++          "action": "write",
++          "parameters": [
++            {
++              "name": "content",
++              "value": "%items[%j%]%",
++              "type": "string"
++            },
++            {
++              "name": "actor",
++              "value": "user",
++              "type": "actor"
++            },
++            {
++              "name": "channel",
++              "value": "default",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/VariableIndexing/Start.goal",
++  "prPath": "/VariableIndexing/.build/start.pr",
++  "hash": "ec35069c33e7b95ef6b57e462dccc0826c88e3be2a8a4d88aa70e5eea3fa5bae",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr b/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr
+index 684d0d82..77dcafe2 100644
+--- a/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr
++++ b/Tests/Runtime2/VariableIndexing/.build/variableindexing.test.pr
+@@ -11,8 +11,20 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%items%", "type": "string" },
+-            { "name": "value", "value": ["a", "b", "c"], "type": "object" }
++            {
++              "name": "name",
++              "value": "%items%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": [
++                "a",
++                "b",
++                "c"
++              ],
++              "type": "object"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -32,8 +44,16 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%idx%", "type": "string" },
+-            { "name": "value", "value": 1, "type": "int" }
++            {
++              "name": "name",
++              "value": "%idx%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 1,
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -53,8 +73,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": "b", "type": "string" },
+-            { "name": "actual", "value": "%items[idx]%", "type": "string" }
++            {
++              "name": "expected",
++              "value": "b",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%items[idx]%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -74,8 +102,16 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%i%", "type": "string" },
+-            { "name": "value", "value": 0, "type": "int" }
++            {
++              "name": "name",
++              "value": "%i%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 0,
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -95,8 +131,16 @@
+           "module": "variable",
+           "action": "set",
+           "parameters": [
+-            { "name": "name", "value": "%j%", "type": "string" },
+-            { "name": "value", "value": 2, "type": "int" }
++            {
++              "name": "name",
++              "value": "%j%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": 2,
++              "type": "int"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -116,8 +160,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": "a", "type": "string" },
+-            { "name": "actual", "value": "%items[i]%", "type": "string" }
++            {
++              "name": "expected",
++              "value": "a",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%items[i]%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -137,8 +189,16 @@
+           "module": "assert",
+           "action": "equals",
+           "parameters": [
+-            { "name": "expected", "value": "c", "type": "string" },
+-            { "name": "actual", "value": "%items[j]%", "type": "string" }
++            {
++              "name": "expected",
++              "value": "c",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%items[j]%",
++              "type": "string"
++            }
+           ],
+           "errors": [],
+           "warnings": []
+@@ -151,13 +211,13 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\VariableIndexing\\VariableIndexing.test.goal",
+-  "prPath": "\\VariableIndexing\\.build\\variableindexing.test.pr",
+-  "hash": "",
++  "path": "/VariableIndexing/VariableIndexing.test.goal",
++  "prPath": "/VariableIndexing/.build/variableindexing.test.pr",
++  "hash": "fd90d3bde46660e6393e88c41c7707849d9d764cf4e4d8b63e979153e7654ed0",
+   "isSetup": false,
+   "isEvent": false,
+   "isTest": false,
+   "errors": [],
+   "warnings": [],
+   "fullPath": "Start"
+-}
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Variables/.build/start.pr b/Tests/Runtime2/Variables/.build/start.pr
+index ab0c19cf..c22b0c72 100644
+--- a/Tests/Runtime2/Variables/.build/start.pr
++++ b/Tests/Runtime2/Variables/.build/start.pr
+@@ -336,8 +336,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Variables\\Start.goal",
+-  "prPath": "\\Variables\\.build\\start.pr",
++  "path": "/Variables/Start.goal",
++  "prPath": "/Variables/.build/start.pr",
+   "hash": "608845c5b99cac53ca412629bce6f94e6a1a660bde2c5cfe1603fd5bcdb9fde1",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/Tests/Runtime2/Variables/.build/variables.test.pr b/Tests/Runtime2/Variables/.build/variables.test.pr
+index 04ab357f..e1e0d10f 100644
+--- a/Tests/Runtime2/Variables/.build/variables.test.pr
++++ b/Tests/Runtime2/Variables/.build/variables.test.pr
+@@ -278,8 +278,8 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Variables\\Variables.test.goal",
+-  "prPath": "\\Variables\\.build\\variables.test.pr",
++  "path": "/Variables/Variables.test.goal",
++  "prPath": "/Variables/.build/variables.test.pr",
+   "hash": "79834d0510f649a69f1b109c58ef5834b9623fa0fd04c5139d455b3f7b0aee26",
+   "isSetup": false,
+   "isEvent": false,
+diff --git a/system/builder/.build/app.pr b/system/builder/.build/app.pr
+index c6df3b4d..af8f4945 100644
+--- a/system/builder/.build/app.pr
++++ b/system/builder/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+-  "id": "f388ae91-9af0-486b-931f-c51f5761015f",
+-  "created": "2026-02-11T12:19:02.2100807Z",
+-  "updated": "2026-02-11T12:19:02.2101207Z",
+-  "name": "builder",
++  "id": "fddae97b-f931-418e-8b3b-66d530a4e674",
++  "created": "2026-02-23T13:52:25.5131819Z",
++  "updated": "2026-02-23T14:09:54.3610837Z",
++  "name": "plang",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/system/builder/.build/build.pr b/system/builder/.build/build.pr
+index b57f1a56..39c8af5e 100644
+--- a/system/builder/.build/build.pr
++++ b/system/builder/.build/build.pr
+@@ -116,12 +116,7 @@
+             }
+           ],
+           "errors": [],
+-          "warnings": [
+-            {
+-              "key": "missingVariable",
+-              "message": "%path% variable usage in parameters but not explicitly set in this step"
+-            }
+-          ]
++          "warnings": []
+         }
+       ],
+       "errors": [],
+@@ -169,9 +164,25 @@
+       "indent": 0,
+       "actions": [
+         {
+-          "module": "goal",
+-          "action": "call",
+-          "parameters": [],
++          "module": "loop",
++          "action": "foreach",
++          "parameters": [
++            {
++              "name": "Collection",
++              "value": "%goals%",
++              "type": "object"
++            },
++            {
++              "name": "GoalName",
++              "value": "BuildGoal",
++              "type": "goal.call"
++            },
++            {
++              "name": "ItemName",
++              "value": "%goal%",
++              "type": "string"
++            }
++          ],
+           "errors": [],
+           "warnings": []
+         }
+@@ -197,12 +208,7 @@
+             }
+           ],
+           "errors": [],
+-          "warnings": [
+-            {
+-              "key": "missingVariable",
+-              "message": "%app% variable usage in parameters but not explicitly set in this step"
+-            }
+-          ]
++          "warnings": []
+         }
+       ],
+       "errors": [],
+@@ -212,11 +218,12 @@
+   ],
+   "subGoals": [],
+   "visibility": 1,
+-  "path": "\\Build.goal",
+-  "prPath": "\\.build\\build.pr",
++  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/Build.goal",
++  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/build.pr",
+   "hash": "916c269408a028e2d9716cb2a8fc0946364614e665ce1c36eca9b0f61ff863fb",
+   "isSetup": false,
+   "isEvent": false,
++  "isTest": false,
+   "errors": [],
+   "warnings": [],
+   "fullPath": "Build"

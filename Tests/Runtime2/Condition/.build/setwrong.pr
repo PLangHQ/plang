@@ -12,12 +12,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%wasWrong%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": true,
               "type": "bool"
             }

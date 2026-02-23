@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %x% = 10",
+      "text": "set %flag% = true",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -12,14 +12,14 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
-              "value": "%x%",
+              "name": "Name",
+              "value": "%flag%",
               "type": "string"
             },
             {
-              "name": "value",
-              "value": 10,
-              "type": "int"
+              "name": "Value",
+              "value": true,
+              "type": "bool"
             }
           ],
           "errors": [],
@@ -32,7 +32,7 @@
     },
     {
       "index": 1,
-      "text": "if %x% equals 10, call SetTrue",
+      "text": "if %flag%, call SetTrue",
       "lineNumber": 3,
       "indent": 0,
       "actions": [
@@ -41,19 +41,13 @@
           "action": "if",
           "parameters": [
             {
-              "name": "condition",
-              "value": true,
+              "name": "Condition",
+              "value": "%flag%",
               "type": "bool"
             },
             {
-              "name": "goalIfTrue",
-              "value": {
-                "goalName": "SetTrue"
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "goalIfFalse",
+              "name": "GoalIfTrue",
+              "value": "SetTrue",
               "type": "goal.call"
             }
           ],
@@ -76,12 +70,12 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%wasTrue%",
-              "type": "object"
+              "type": "bool"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "if-true branch should execute",
               "type": "string"
             }
@@ -96,7 +90,7 @@
     },
     {
       "index": 3,
-      "text": "set %y% = 5",
+      "text": "set %noFlag% = false",
       "lineNumber": 5,
       "indent": 0,
       "actions": [
@@ -105,14 +99,14 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
-              "value": "%y%",
+              "name": "Name",
+              "value": "%noFlag%",
               "type": "string"
             },
             {
-              "name": "value",
-              "value": 5,
-              "type": "int"
+              "name": "Value",
+              "value": false,
+              "type": "bool"
             }
           ],
           "errors": [],
@@ -125,7 +119,7 @@
     },
     {
       "index": 4,
-      "text": "if %y% equals 99, call SetWrong, else call SetFalse",
+      "text": "if %noFlag%, call SetWrong, else call SetFalse",
       "lineNumber": 6,
       "indent": 0,
       "actions": [
@@ -134,22 +128,18 @@
           "action": "if",
           "parameters": [
             {
-              "name": "condition",
-              "value": false,
+              "name": "Condition",
+              "value": "%noFlag%",
               "type": "bool"
             },
             {
-              "name": "goalIfTrue",
-              "value": {
-                "goalName": "SetWrong"
-              },
+              "name": "GoalIfTrue",
+              "value": "SetWrong",
               "type": "goal.call"
             },
             {
-              "name": "goalIfFalse",
-              "value": {
-                "goalName": "SetFalse"
-              },
+              "name": "GoalIfFalse",
+              "value": "SetFalse",
               "type": "goal.call"
             }
           ],
@@ -172,12 +162,12 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%wasFalse%",
-              "type": "object"
+              "type": "bool"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "else branch should execute",
               "type": "string"
             }
@@ -195,7 +185,7 @@
   "visibility": 1,
   "path": "/Condition/Condition.test.goal",
   "prPath": "/Condition/.build/condition.test.pr",
-  "hash": "79d551cabb69b799200487e1dd8eeca58ae78a3324cd0d66de71d480bb7da256",
+  "hash": "34ae7f966087e92ff21bac194ef7edfd71732de55a675cc84153fd65fab2477e",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

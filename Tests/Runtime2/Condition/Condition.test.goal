@@ -1,7 +1,7 @@
 Start
-- set %x% = 10
-- if %x% equals 10, call SetTrue
+- set %flag% = true
+- if %flag%, call SetTrue
 - assert %wasTrue% is true, "if-true branch should execute"
-- set %y% = 5
-- if %y% equals 99, call SetWrong, else call SetFalse
+- set %noFlag% = false
+- if %noFlag%, call SetWrong, else call SetFalse
 - assert %wasFalse% is true, "else branch should execute"
