@@ -81,6 +81,10 @@ namespace PLang.Services.OpenAi
 				bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
 				settings.SetSharedSettings(null);
 			}
+			if (string.IsNullOrEmpty(bearer))
+			{
+				bearer = Environment.GetEnvironmentVariable("OpenApiKey");
+			}
 			
 			string data = $@"{{
 		""model"":""{question.model}"",
