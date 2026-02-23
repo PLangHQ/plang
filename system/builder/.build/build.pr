@@ -116,12 +116,7 @@
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "missingVariable",
-              "message": "%path% variable usage in parameters but not explicitly set in this step"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -169,9 +164,25 @@
       "indent": 0,
       "actions": [
         {
-          "module": "goal",
-          "action": "call",
-          "parameters": [],
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%goals%",
+              "type": "object"
+            },
+            {
+              "name": "GoalName",
+              "value": "BuildGoal",
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "%goal%",
+              "type": "string"
+            }
+          ],
           "errors": [],
           "warnings": []
         }
@@ -197,12 +208,7 @@
             }
           ],
           "errors": [],
-          "warnings": [
-            {
-              "key": "missingVariable",
-              "message": "%app% variable usage in parameters but not explicitly set in this step"
-            }
-          ]
+          "warnings": []
         }
       ],
       "errors": [],
@@ -212,11 +218,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Build.goal",
-  "prPath": "\\.build\\build.pr",
+  "path": "/PlangConsole/bin/Debug/net10.0/system/builder/Build.goal",
+  "prPath": "/PlangConsole/bin/Debug/net10.0/system/builder/.build/build.pr",
   "hash": "916c269408a028e2d9716cb2a8fc0946364614e665ce1c36eca9b0f61ff863fb",
   "isSetup": false,
   "isEvent": false,
+  "isTest": false,
   "errors": [],
   "warnings": [],
   "fullPath": "Build"

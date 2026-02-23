@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %beforeError% = true",
+      "text": "set %deep% = {a:{b:{c:{d:{e:\u0022found\u0022}}}}}",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -13,13 +13,23 @@
           "parameters": [
             {
               "name": "name",
-              "value": "%beforeError%",
+              "value": "%deep%",
               "type": "string"
             },
             {
               "name": "value",
-              "value": true,
-              "type": "bool"
+              "value": {
+                "a": {
+                  "b": {
+                    "c": {
+                      "d": {
+                        "e": "found"
+                      }
+                    }
+                  }
+                }
+              },
+              "type": "object"
             }
           ],
           "errors": [],
@@ -32,18 +42,18 @@
     },
     {
       "index": 1,
-      "text": "assert %beforeError% is true",
+      "text": "write out %deep.a.b.c.d.e%",
       "lineNumber": 3,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "isTrue",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "value",
-              "value": "%beforeError%",
-              "type": "object"
+              "name": "content",
+              "value": "%deep.a.b.c.d.e%",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -56,18 +66,41 @@
     },
     {
       "index": 2,
-      "text": "throw error \u0022something went wrong\u0022, on error ignore",
+      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "message",
-              "value": "something went wrong",
+              "name": "name",
+              "value": "%list%",
               "type": "string"
+            },
+            {
+              "name": "value",
+              "value": [
+                {
+                  "items": [
+                    {
+                      "val": 1
+                    },
+                    {
+                      "val": 2
+                    }
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "val": 3
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
             }
           ],
           "errors": [],
@@ -80,23 +113,18 @@
     },
     {
       "index": 3,
-      "text": "set %afterIgnored% = true",
+      "text": "write out %list[0].items[1].val%",
       "lineNumber": 5,
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "name",
-              "value": "%afterIgnored%",
+              "name": "content",
+              "value": "%list[0].items[1].val%",
               "type": "string"
-            },
-            {
-              "name": "value",
-              "value": true,
-              "type": "bool"
             }
           ],
           "errors": [],
@@ -109,22 +137,17 @@
     },
     {
       "index": 4,
-      "text": "assert %afterIgnored% is true, \u0022execution should continue after ignored error\u0022",
+      "text": "write out %list[1].items[0].val%",
       "lineNumber": 6,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "isTrue",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "value",
-              "value": "%afterIgnored%",
-              "type": "object"
-            },
-            {
-              "name": "message",
-              "value": "execution should continue after ignored error",
+              "name": "content",
+              "value": "%list[1].items[0].val%",
               "type": "string"
             }
           ],
@@ -139,9 +162,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorHandling/ErrorHandling.test.goal",
-  "prPath": "/ErrorHandling/.build/errorhandling.test.pr",
-  "hash": "8841b0997803f585e337b1afcd43095652156dccb0c3bbe117493bdf6ccda6a6",
+  "path": "/DeepNavigation/Start.goal",
+  "prPath": "/DeepNavigation/.build/start.pr",
+  "hash": "9bcc377d4b3c7d2aca4752fd36f7543311fded743d747a325a9fb0659c0a7d35",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

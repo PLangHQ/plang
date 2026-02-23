@@ -23,7 +23,7 @@
                 "b",
                 "c"
               ],
-              "type": "object"
+              "type": "array"
             }
           ],
           "errors": [],
@@ -65,22 +65,27 @@
     },
     {
       "index": 2,
-      "text": "assert %items[idx]% equals \u0022b\u0022",
+      "text": "write out %items[idx]%",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": "b",
+              "name": "content",
+              "value": "%items[%idx%]%",
               "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%items[idx]%",
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -152,22 +157,27 @@
     },
     {
       "index": 5,
-      "text": "assert %items[i]% equals \u0022a\u0022",
+      "text": "write out %items[i]%",
       "lineNumber": 7,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": "a",
+              "name": "content",
+              "value": "%items[%i%]%",
               "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%items[i]%",
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -181,22 +191,27 @@
     },
     {
       "index": 6,
-      "text": "assert %items[j]% equals \u0022c\u0022",
+      "text": "write out %items[j]%",
       "lineNumber": 8,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": "c",
+              "name": "content",
+              "value": "%items[%j%]%",
               "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%items[j]%",
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -211,9 +226,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/VariableIndexing/VariableIndexing.test.goal",
-  "prPath": "/VariableIndexing/.build/variableindexing.test.pr",
-  "hash": "fd90d3bde46660e6393e88c41c7707849d9d764cf4e4d8b63e979153e7654ed0",
+  "path": "/VariableIndexing/Start.goal",
+  "prPath": "/VariableIndexing/.build/start.pr",
+  "hash": "ec35069c33e7b95ef6b57e462dccc0826c88e3be2a8a4d88aa70e5eea3fa5bae",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

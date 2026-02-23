@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
+      "text": "set max gzip size to 20mb",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -12,18 +12,14 @@
           "action": "set",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%items%",
+              "name": "name",
+              "value": "%max gzip size%",
               "type": "string"
             },
             {
-              "name": "Value",
-              "value": [
-                "apple",
-                "banana",
-                "cherry"
-              ],
-              "type": "array"
+              "name": "value",
+              "value": 20971520,
+              "type": "int"
             }
           ],
           "errors": [],
@@ -36,28 +32,23 @@
     },
     {
       "index": 1,
-      "text": "foreach %items%, call ProcessItem item=%item%",
+      "text": "get archive.max, write to %maxSize%",
       "lineNumber": 3,
       "indent": 0,
       "actions": [
         {
-          "module": "loop",
-          "action": "foreach",
+          "module": "variable",
+          "action": "get",
           "parameters": [
             {
-              "name": "Collection",
-              "value": "%items%",
-              "type": "object"
-            },
-            {
-              "name": "GoalName",
-              "value": "ProcessItem",
-              "type": "goal.call"
-            },
-            {
-              "name": "ItemName",
-              "value": "%item%",
+              "name": "name",
+              "value": "archive.max",
               "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "maxSize"
             }
           ],
           "errors": [],
@@ -70,27 +61,22 @@
     },
     {
       "index": 2,
-      "text": "write out \u0022Loop done\u0022",
+      "text": "assert %maxSize% equals 20971520",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "assert",
+          "action": "equals",
           "parameters": [
             {
-              "name": "Content",
-              "value": "Loop done",
-              "type": "string"
+              "name": "expected",
+              "value": 20971520,
+              "type": "int"
             },
             {
-              "name": "Actor",
-              "value": "user",
-              "type": "actor"
-            },
-            {
-              "name": "Channel",
-              "value": "default",
+              "name": "actual",
+              "value": "%maxSize%",
               "type": "string"
             }
           ],
@@ -105,9 +91,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Loop/Start.goal",
-  "prPath": "/Loop/.build/start.pr",
-  "hash": "d80e8dac98554661c1d54d320e8decb4295aac916cc08ce6080a5a60a0a52414",
+  "path": "/Settings/SetMaxGzipSize/Start.test.goal",
+  "prPath": "/Settings/SetMaxGzipSize/.build/start.test.pr",
+  "hash": "dd339a6a5b660691119cc8bfd3a9acb9d3491a41182a9f680055fbcc4ccb68f4",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

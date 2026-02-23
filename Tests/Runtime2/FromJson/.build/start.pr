@@ -12,7 +12,7 @@
           "action": "fromjson",
           "parameters": [
             {
-              "name": "Value",
+              "name": "value",
               "value": "{\u0022name\u0022:\u0022test\u0022,\u0022values\u0022:[1,2,3],\u0022nested\u0022:{\u0022flag\u0022:true,\u0022data\u0022:null}}",
               "type": "string"
             }
@@ -32,22 +32,27 @@
     },
     {
       "index": 1,
-      "text": "assert %obj.name% equals \u0022test\u0022",
+      "text": "write out %obj.name%",
       "lineNumber": 3,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": "test",
+              "name": "content",
+              "value": "%obj.name%",
               "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%obj.name%",
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -61,23 +66,28 @@
     },
     {
       "index": 2,
-      "text": "assert %obj.values[0]% equals 1",
+      "text": "write out %obj.values[0]%",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": 1,
-              "type": "int"
+              "name": "content",
+              "value": "%obj.values[0]%",
+              "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%obj.values[0]%",
-              "type": "int"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -90,23 +100,28 @@
     },
     {
       "index": 3,
-      "text": "assert %obj.values[2]% equals 3",
+      "text": "write out %obj.values[2]%",
       "lineNumber": 5,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": 3,
-              "type": "int"
+              "name": "content",
+              "value": "%obj.values[2]%",
+              "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%obj.values[2]%",
-              "type": "int"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -119,17 +134,27 @@
     },
     {
       "index": 4,
-      "text": "assert %obj.nested.flag% is true",
+      "text": "write out %obj.nested.flag%",
       "lineNumber": 6,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "isTrue",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "value",
+              "name": "content",
               "value": "%obj.nested.flag%",
+              "type": "string"
+            },
+            {
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
               "type": "string"
             }
           ],
@@ -152,7 +177,7 @@
           "action": "fromjson",
           "parameters": [
             {
-              "name": "Value",
+              "name": "value",
               "value": "[{\u0022id\u0022:1},{\u0022id\u0022:2}]",
               "type": "string"
             }
@@ -172,23 +197,28 @@
     },
     {
       "index": 6,
-      "text": "assert %arr[0].id% equals 1",
+      "text": "write out %arr[0].id%",
       "lineNumber": 8,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": 1,
-              "type": "int"
+              "name": "content",
+              "value": "%arr[0].id%",
+              "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%arr[0].id%",
-              "type": "int"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -201,23 +231,28 @@
     },
     {
       "index": 7,
-      "text": "assert %arr[1].id% equals 2",
+      "text": "write out %arr[1].id%",
       "lineNumber": 9,
       "indent": 0,
       "actions": [
         {
-          "module": "assert",
-          "action": "equals",
+          "module": "output",
+          "action": "write",
           "parameters": [
             {
-              "name": "expected",
-              "value": 2,
-              "type": "int"
+              "name": "content",
+              "value": "%arr[1].id%",
+              "type": "string"
             },
             {
-              "name": "actual",
-              "value": "%arr[1].id%",
-              "type": "int"
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -231,9 +266,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/FromJson/FromJson.test.goal",
-  "prPath": "/FromJson/.build/fromjson.test.pr",
-  "hash": "104490d5d7202c61aa760753fc1f202f6d3f47896a4d59e2f115c3f04652c3e3",
+  "path": "/FromJson/Start.goal",
+  "prPath": "/FromJson/.build/start.pr",
+  "hash": "a62fafa1076f99c5611a4ba2984dae56849a42b269555da0bf84770f30652af4",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

@@ -11,10 +11,24 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "name", "value": "%deep%", "type": "string" },
+            {
+              "name": "name",
+              "value": "%deep%",
+              "type": "string"
+            },
             {
               "name": "value",
-              "value": { "a": { "b": { "c": { "d": { "e": "found" } } } } },
+              "value": {
+                "a": {
+                  "b": {
+                    "c": {
+                      "d": {
+                        "e": "found"
+                      }
+                    }
+                  }
+                }
+              },
               "type": "object"
             }
           ],
@@ -36,7 +50,11 @@
           "module": "assert",
           "action": "isNotNull",
           "parameters": [
-            { "name": "value", "value": "%deep.a%", "type": "string" }
+            {
+              "name": "value",
+              "value": "%deep.a%",
+              "type": "string"
+            }
           ],
           "errors": [],
           "warnings": []
@@ -56,8 +74,16 @@
           "module": "assert",
           "action": "equals",
           "parameters": [
-            { "name": "expected", "value": "found", "type": "string" },
-            { "name": "actual", "value": "%deep.a.b.c.d.e%", "type": "string" }
+            {
+              "name": "expected",
+              "value": "found",
+              "type": "string"
+            },
+            {
+              "name": "actual",
+              "value": "%deep.a.b.c.d.e%",
+              "type": "string"
+            }
           ],
           "errors": [],
           "warnings": []
@@ -77,12 +103,31 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "name", "value": "%list%", "type": "string" },
+            {
+              "name": "name",
+              "value": "%list%",
+              "type": "string"
+            },
             {
               "name": "value",
               "value": [
-                { "items": [{ "val": 1 }, { "val": 2 }] },
-                { "items": [{ "val": 3 }] }
+                {
+                  "items": [
+                    {
+                      "val": 1
+                    },
+                    {
+                      "val": 2
+                    }
+                  ]
+                },
+                {
+                  "items": [
+                    {
+                      "val": 3
+                    }
+                  ]
+                }
               ],
               "type": "object"
             }
@@ -105,8 +150,16 @@
           "module": "assert",
           "action": "equals",
           "parameters": [
-            { "name": "expected", "value": 1, "type": "int" },
-            { "name": "actual", "value": "%list[0].items[0].val%", "type": "int" }
+            {
+              "name": "expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "actual",
+              "value": "%list[0].items[0].val%",
+              "type": "int"
+            }
           ],
           "errors": [],
           "warnings": []
@@ -126,8 +179,16 @@
           "module": "assert",
           "action": "equals",
           "parameters": [
-            { "name": "expected", "value": 2, "type": "int" },
-            { "name": "actual", "value": "%list[0].items[1].val%", "type": "int" }
+            {
+              "name": "expected",
+              "value": 2,
+              "type": "int"
+            },
+            {
+              "name": "actual",
+              "value": "%list[0].items[1].val%",
+              "type": "int"
+            }
           ],
           "errors": [],
           "warnings": []
@@ -147,8 +208,16 @@
           "module": "assert",
           "action": "equals",
           "parameters": [
-            { "name": "expected", "value": 3, "type": "int" },
-            { "name": "actual", "value": "%list[1].items[0].val%", "type": "int" }
+            {
+              "name": "expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "actual",
+              "value": "%list[1].items[0].val%",
+              "type": "int"
+            }
           ],
           "errors": [],
           "warnings": []
@@ -161,9 +230,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\DeepNavigation\\DeepNavigation.test.goal",
-  "prPath": "\\DeepNavigation\\.build\\deepnavigation.test.pr",
-  "hash": "",
+  "path": "/DeepNavigation/DeepNavigation.test.goal",
+  "prPath": "/DeepNavigation/.build/deepnavigation.test.pr",
+  "hash": "c03c380d59ca17e08aece2d916e15ec37b18b588c84c90fc47fc670e699338b4",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
