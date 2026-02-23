@@ -263,7 +263,7 @@ Target audiences:
 
 ---
 
-## ErrorInfoTests still uses "HandlerError" test data
+## ~~ErrorInfoTests still uses "HandlerError" test data~~ ✅ DONE (2026-02-23)
 **Date:** 2026-02-23
 **Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.
 
