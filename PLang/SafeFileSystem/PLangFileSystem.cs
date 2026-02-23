@@ -186,9 +186,25 @@ namespace PLang.SafeFileSystem
 			
 			if (IsPlangRooted(path))
 			{
-				if (!path.StartsWith(RootDirectory))
+				if (!path.StartsWith(RootDirectory)
+					&& !path.StartsWith(SystemDirectory))
 				{
-					path = Path.GetFullPath(Path.Join(RootDirectory, path));
+					var resolved = Path.GetFullPath(Path.Join(RootDirectory, path));
+
+					// When path starts with /system/, fall back to SystemDirectory if not found in RootDirectory
+					var sysPrefix = Path.DirectorySeparatorChar + "system" + Path.DirectorySeparatorChar;
+					if (path.AdjustPathToOs().StartsWith(sysPrefix, StringComparison.OrdinalIgnoreCase)
+						&& !System.IO.File.Exists(resolved) && !System.IO.Directory.Exists(resolved))
+					{
+						var afterPrefix = path.AdjustPathToOs().Substring(sysPrefix.Length);
+						var systemResolved = Path.GetFullPath(Path.Join(SystemDirectory, afterPrefix));
+						if (System.IO.File.Exists(systemResolved) || System.IO.Directory.Exists(systemResolved))
+						{
+							resolved = systemResolved;
+						}
+					}
+
+					path = resolved;
 				}
 			}
 			else if (IsOsRooted(path))
@@ -256,7 +272,20 @@ Your answer:
 					}
 				}
 			}
-			
+
+			// Fall back to SystemDirectory for paths under RootDirectory/system/ that don't exist
+			var rootSystemDir = RootDirectory + Path.DirectorySeparatorChar + "system" + Path.DirectorySeparatorChar;
+			if (path.StartsWith(rootSystemDir, StringComparison.OrdinalIgnoreCase)
+				&& !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
+			{
+				var afterSystem = path.Substring(rootSystemDir.Length);
+				var systemFallback = Path.GetFullPath(Path.Join(SystemDirectory, afterSystem));
+				if (System.IO.File.Exists(systemFallback) || System.IO.Directory.Exists(systemFallback))
+				{
+					path = systemFallback;
+				}
+			}
+
 			return path;
 		}
 

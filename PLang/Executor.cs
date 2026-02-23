@@ -317,6 +317,12 @@ namespace PLang
 			var memoryStack = MemoryStack.New(container, engine);
 			msa.Current = memoryStack;
 
+			// Resolve build path relative to user's project root, not the builder's directory.
+			// The builder goals run from system/builder/, so relative paths must be made absolute here.
+			if (!result.parameters.TryGetValue("path", out var pathValue) || pathValue is not string pathStr)
+				pathStr = ".";
+			result.parameters["path"] = System.IO.Path.GetFullPath(System.IO.Path.Join(fileSystem.RootDirectory, pathStr));
+
 			// Set parameters from command line
 			foreach (var param in result.parameters)
 			{

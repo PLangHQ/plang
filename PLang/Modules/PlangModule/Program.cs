@@ -158,6 +158,15 @@ namespace PLang.Modules.PlangModule
 			if (goalsObj is not List<Goal> v1Goals)
 				return (null, new ProgramError("GetGoals did not return goals"));
 
+			// Exclude system goals — the builder should only build user code.
+			// IsSystem may not be set for parser="goal", so also check by path.
+			// SystemDirectory is a symlink, so check both the symlink and resolved paths.
+			var sysDir = fileSystem.Path.GetFullPath(fileSystem.SystemDirectory);
+			var sysTarget = fileSystem.Path.GetFullPath(fileSystem.Path.Join(fileSystem.RootDirectory, "system"));
+			v1Goals = v1Goals.Where(g => !g.IsSystem
+				&& (g.AbsoluteGoalPath == null
+					|| (!g.AbsoluteGoalPath.StartsWith(sysDir) && !g.AbsoluteGoalPath.StartsWith(sysTarget)))).ToList();
+
 			var runtime2Goals = v1Goals.Select(GoalMapper.ToRuntime2Goal).ToList();
 
 			foreach (var r2Goal in runtime2Goals)
