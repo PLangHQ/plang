@@ -26,6 +26,36 @@
         "health": "Branch created, plan written. Ready for coder handoff.",
         "notes": "Mechanical rename task. ~130 files affected but pattern is simple find-and-replace. Main risk is the source generator namespace strings — those are string literals that must match exactly."
       }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+      "bot": "scaffolder",
+      "timestamp_start": "2026-02-23T14:30:00Z",
+      "timestamp_end": "2026-02-23T14:35:00Z",
+      "intent": "Assess whether scaffolding is needed for terminology rename task",
+      "before": {
+        "assumptions": "Rename task may need type skeletons or failing tests",
+        "risk": "None — assessment only"
+      },
+      "plan": "No scaffolding needed. Pure mechanical rename with no new types or tests.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-terminology-fix/scaffolder/v1/plan.md",
+            ".bot/runtime2-terminology-fix/scaffolder/v1/summary.md",
+            ".bot/runtime2-terminology-fix/scaffolder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verified build is clean (0 errors). No new types or tests to scaffold. Handed off directly to coder."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Ready for coder. No scaffolding artifacts — coder works from architect plan directly.",
+        "notes": "Flagged two risks for coder: GetCodeGenerated tuple rename (Handler → Action) is breaking at call sites, and HandlerError → ActionError affects test assertions."
+      }
     }
   ]
 }
