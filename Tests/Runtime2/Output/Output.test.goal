@@ -1,0 +1,4 @@
+Start
+- write out "test output message"
+- set %afterWrite% = true
+- assert %afterWrite% is true, "write should complete without error"

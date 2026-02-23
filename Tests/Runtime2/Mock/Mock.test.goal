@@ -5,3 +5,11 @@ Start
 - assert %mockRead.isSpy% equals false
 - mock intercept "output.write", write to %spyWrite%
 - assert %spyWrite.isSpy% equals true
+/ exercise the mock — call intercepted action, verify callCount
+- read file 'test_output.txt', write to %mockResult%
+- assert %mockRead.callCount% equals 1, "callCount should increment after mock intercept"
+/ verify
+- mock verify %mockRead% was called 1 time
+/ reset
+- mock reset %mockRead%
+- assert %mockRead.callCount% equals 0, "reset should clear callCount"

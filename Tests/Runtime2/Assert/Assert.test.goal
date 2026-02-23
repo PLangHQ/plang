@@ -1,0 +1,13 @@
+Start
+/ notEquals
+- assert 5 not equals 10
+/ isFalse
+- set %flag% = false
+- assert %flag% is false
+/ isNull
+- set %nothing% = null
+- assert %nothing% is null
+/ greaterThan
+- assert 10 is greater than 5
+/ lessThan
+- assert 3 is less than 7

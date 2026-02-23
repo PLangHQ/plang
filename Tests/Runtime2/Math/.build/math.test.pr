@@ -499,13 +499,318 @@
       "errors": [],
       "warnings": [],
       "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "raise 2 to the power of 3, write to %pow%",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": "power",
+      "actions": [
+        {
+          "module": "math",
+          "action": "power",
+          "parameters": [
+            {
+              "name": "Base",
+              "value": 2,
+              "type": "int"
+            },
+            {
+              "name": "Exponent",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "pow"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "assert %pow% equals 8",
+      "lineNumber": 20,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 8,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%pow%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 18,
+      "text": "get square root of 16, write to %root%",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": "sqrt",
+      "actions": [
+        {
+          "module": "math",
+          "action": "sqrt",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 16,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "root"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "assert %root% equals 4",
+      "lineNumber": 23,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%root%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 20,
+      "text": "get floor of 3.7, write to %floored%",
+      "lineNumber": 25,
+      "indent": 0,
+      "comment": "floor",
+      "actions": [
+        {
+          "module": "math",
+          "action": "floor",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.7,
+              "type": "double"
+            }
+          ],
+          "return": [
+            {
+              "name": "floored"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 21,
+      "text": "assert %floored% equals 3",
+      "lineNumber": 26,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%floored%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 22,
+      "text": "get ceiling of 3.2, write to %ceiled%",
+      "lineNumber": 28,
+      "indent": 0,
+      "comment": "ceiling",
+      "actions": [
+        {
+          "module": "math",
+          "action": "ceiling",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": 3.2,
+              "type": "double"
+            }
+          ],
+          "return": [
+            {
+              "name": "ceiled"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 23,
+      "text": "assert %ceiled% equals 4",
+      "lineNumber": 29,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%ceiled%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 24,
+      "text": "get 10 modulo 3, write to %mod%",
+      "lineNumber": 31,
+      "indent": 0,
+      "comment": "modulo",
+      "actions": [
+        {
+          "module": "math",
+          "action": "modulo",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "mod"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 25,
+      "text": "assert %mod% equals 1",
+      "lineNumber": 32,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mod%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
     }
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "\\Math\\Math.test.goal",
-  "prPath": "\\Math\\.build\\math.test.pr",
-  "hash": "1f6faf5ea65993a8358ad2b10f42b3e3128c7ff25c83dbb399b04843cf354433",
+  "path": "/Math/Math.test.goal",
+  "prPath": "/Math/.build/math.test.pr",
+  "hash": "b961cb7cea5c08c1adca9237820fc62ae7dc55112faad3649b58bc6a4d7c30b1",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

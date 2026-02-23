@@ -1,0 +1,50 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder",
+  "timestamp": "2026-02-23T14:30:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1423, "passed": 1423, "failed": 0, "skipped": 0 },
+    "plang": { "total": 22, "passed": 20, "failed": 2, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": [],
+    "note": "No production code changed — this session only added/modified PLang .goal test files"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/ListOps/ListOps.test.goal",
+      "code_file": "Tests/Runtime2/ListOps/.build/listops.test.pr",
+      "issue": "Builder misaligned step indices — from step 15 onward, each step's action belongs to the NEXT step. Step 15 text is 'assert %partsCount% equals 3' but action is list.get. The shifted sequence happens to be functionally equivalent so tests pass, but assertions don't verify what the step text claims.",
+      "impact": "The assert for partsCount==3 never runs. If the list had wrong count, the test would still pass. Sort/reverse/unique assertions are also shifted — weaker coverage than intended.",
+      "suggestion": "Builder system prompt issue. The LLM returns off-by-one indices when appending new steps to an existing goal. On re-build, it approves the misaligned data without catching the text/action mismatch. Need to adjust builder prompt to verify step text matches action semantics during review."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "Tests/Runtime2/Condition/Condition.test.goal",
+      "code_file": "Tests/Runtime2/Condition/.build/condition.test.pr",
+      "issue": "Builder hardcodes condition parameter as literal true/false instead of the expression '%x% == 10'. Also, goalIfFalse parameter has type 'goal.call' with no value, which the runtime interprets as calling a goal with empty name — causing 'Goal not found' error.",
+      "impact": "Condition module has zero PLang test coverage. The if/else branch logic is not tested at all.",
+      "suggestion": "Builder system prompt issue. The condition.if action expects a bool expression that evaluates at runtime, not a pre-evaluated literal. The LLM needs guidance that %variable% comparisons should remain as expressions. Also, optional goal.call params should be omitted entirely (not included with empty value)."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "Tests/Runtime2/ErrorHandling/ErrorHandling.test.goal",
+      "code_file": "Tests/Runtime2/ErrorHandling/.build/errorhandling.test.pr",
+      "issue": "Pre-existing test failure — 'something went wrong' error. Not related to this session's changes.",
+      "impact": "ErrorHandling module test coverage is broken. Known issue from v1.",
+      "suggestion": "Investigate separately — this predates the current work."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Created 4 new PLang test suites (File, Output, Assert, Condition) and extended 3 existing (ListOps, Math, Mock). 20/22 PLang tests pass, 1423/1423 C# tests pass. Two builder issues block full coverage: (1) condition.if gets hardcoded literals instead of runtime expressions, (2) ListOps new steps have off-by-one action alignment causing false green. Both are builder system prompt issues, not test logic errors. File, Output, Assert, Math extensions, and Mock extensions all work correctly."
+}

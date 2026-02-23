@@ -1,0 +1,205 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 10",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": 10,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% equals 10, call SetTrue",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "condition",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "goalIfTrue",
+              "value": {
+                "goalName": "SetTrue"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "goalIfFalse",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %wasTrue% is true, \u0022if-true branch should execute\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%wasTrue%",
+              "type": "object"
+            },
+            {
+              "name": "message",
+              "value": "if-true branch should execute",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %y% = 5",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%y%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": 5,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %y% equals 99, call SetWrong, else call SetFalse",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "condition",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "goalIfTrue",
+              "value": {
+                "goalName": "SetWrong"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "goalIfFalse",
+              "value": {
+                "goalName": "SetFalse"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %wasFalse% is true, \u0022else branch should execute\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%wasFalse%",
+              "type": "object"
+            },
+            {
+              "name": "message",
+              "value": "else branch should execute",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/Condition/Condition.test.goal",
+  "prPath": "/Condition/.build/condition.test.pr",
+  "hash": "79d551cabb69b799200487e1dd8eeca58ae78a3324cd0d66de71d480bb7da256",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

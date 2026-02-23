@@ -15,3 +15,18 @@ Start
 - assert %minimum% equals 3
 - get max of 5 and 3, write to %maximum%
 - assert %maximum% equals 5
+/ power
+- raise 2 to the power of 3, write to %pow%
+- assert %pow% equals 8
+/ sqrt
+- get square root of 16, write to %root%
+- assert %root% equals 4
+/ floor
+- get floor of 3.7, write to %floored%
+- assert %floored% equals 3
+/ ceiling
+- get ceiling of 3.2, write to %ceiled%
+- assert %ceiled% equals 4
+/ modulo
+- get 10 modulo 3, write to %mod%
+- assert %mod% equals 1

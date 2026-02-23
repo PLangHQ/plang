@@ -1,0 +1,45 @@
+{
+  "name": "SetWrong",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %wasWrong% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%wasWrong%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/Condition/SetWrong.goal",
+  "prPath": "/Condition/.build/setwrong.pr",
+  "hash": "3235da80ce0ade81fe3d32c1e6355171f60ef8d8f86f7a1f1d89f3ace8e2cbea",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "SetWrong"
+}

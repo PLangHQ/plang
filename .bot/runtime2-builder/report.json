@@ -26,6 +26,79 @@
         "health": "green — 1423/1423 C# tests pass, builder starts successfully",
         "notes": "Fixed at root cause in PrParser rather than patching in Build2. 8 pre-existing PLang test failures unrelated to this change."
       }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "bot": "tester",
+      "timestamp_start": "2026-02-23T14:00:00Z",
+      "timestamp_end": null,
+      "intent": "Create missing PLang .goal tests for Runtime2 action modules — Condition, File, Output, Assert; extend ListOps, Math, Mock",
+      "before": {
+        "assumptions": "Existing PLang tests cover Variables, Cache, CallStack, Convert, Events, Loop, Math (partial), ListOps (partial), Mock (partial). Several action modules have zero PLang coverage.",
+        "risk": "Low — adding new test files and extending existing ones. No production code changes."
+      },
+      "plan": "Create missing PLang .goal tests for 4 new modules (Condition, File, Output, Assert) and extend 3 existing tests (ListOps, Math, Mock). Build all, verify .pr mapping, run full test suite.",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Runtime2/Condition/Condition.test.goal",
+            "Tests/Runtime2/Condition/SetTrue.goal",
+            "Tests/Runtime2/Condition/SetFalse.goal",
+            "Tests/Runtime2/Condition/SetWrong.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New condition.if test with if-true and if-else branches. Builder hardcodes condition value — test fails."
+        },
+        {
+          "paths": ["Tests/Runtime2/File/File.test.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New file module test: save, read, exists, copy, move, list, delete. All pass."
+        },
+        {
+          "paths": ["Tests/Runtime2/Output/Output.test.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New output.write smoke test. Passes."
+        },
+        {
+          "paths": ["Tests/Runtime2/Assert/Assert.test.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New assert tests: notEquals, isFalse, isNull, greaterThan, lessThan. All pass."
+        },
+        {
+          "paths": ["Tests/Runtime2/Math/Math.test.goal"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Extended with power, sqrt, floor, ceiling, modulo. All pass."
+        },
+        {
+          "paths": ["Tests/Runtime2/Mock/Mock.test.goal"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Extended with mock exercise, verify, reset. All pass."
+        },
+        {
+          "paths": ["Tests/Runtime2/ListOps/ListOps.test.goal"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "low",
+          "context": "Extended with get, remove, indexOf, sort, reverse, unique. Builder misaligned new step actions (off-by-one). Tests pass but as false green."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "yellow — 1423/1423 C# pass, 20/22 PLang pass. 2 builder issues block Condition test and cause ListOps false green.",
+        "notes": "Builder system prompt needs fixes: (1) condition.if hardcodes literal instead of expression, (2) off-by-one step index when appending to existing goals."
+      }
     }
   ]
 }

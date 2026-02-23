@@ -1,0 +1,2 @@
+SetFalse
+- set %wasFalse% = true

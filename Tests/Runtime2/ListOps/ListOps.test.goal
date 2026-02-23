@@ -15,3 +15,27 @@ Start
 - split "a-b-c" by "-", write to %parts%
 - get count of %parts%, write to %partsCount%
 - assert %partsCount% equals 3
+/ get by index
+- get item at index 1 from %myList%, write to %second%
+- assert %second% equals 20
+/ remove
+- remove 20 from %myList%
+- check if %myList% contains 20, write to %still20%
+- assert %still20% is false
+/ indexOf
+- get index of 30 in %myList%, write to %idx%
+- assert %idx% is greater than -1, "indexOf should find the item"
+/ sort
+- set %unsorted% = [3, 1, 2]
+- sort %unsorted%
+- get first item from %unsorted%, write to %sortFirst%
+- assert %sortFirst% equals 1
+/ reverse
+- reverse %unsorted%
+- get first item from %unsorted%, write to %revFirst%
+- assert %revFirst% equals 3
+/ unique
+- set %dupes% = [1, 2, 2, 3, 3, 3]
+- get unique items from %dupes%, write to %uniq%
+- get count of %uniq%, write to %uniqCount%
+- assert %uniqCount% equals 3

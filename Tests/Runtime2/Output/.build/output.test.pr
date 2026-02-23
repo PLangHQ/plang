@@ -1,0 +1,108 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022test output message\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "content",
+              "value": "test output message",
+              "type": "string"
+            },
+            {
+              "name": "actor",
+              "value": "user",
+              "type": "actor"
+            },
+            {
+              "name": "channel",
+              "value": "default",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %afterWrite% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%afterWrite%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %afterWrite% is true, \u0022write should complete without error\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "%afterWrite%",
+              "type": "bool"
+            },
+            {
+              "name": "message",
+              "value": "write should complete without error",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/Output/Output.test.goal",
+  "prPath": "/Output/.build/output.test.pr",
+  "hash": "f06dacba39a098aa34ffac7183305af3b02f3ccfd62063109a502545182438fd",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}
