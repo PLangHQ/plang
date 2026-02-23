@@ -195,13 +195,13 @@ public class ErrorTests
     {
         var step = new Step { Index = 0, Text = "do something" };
         var error1 = new Error("Original error", step);
-        var error2 = new Error("Handler error", step, "HandlerError", 500);
+        var error2 = new Error("Action error", step, "ActionError", 500);
         error1.ErrorChain.Add(error2);
 
         var formatted = error1.Format();
 
         await Assert.That(formatted).Contains("Error during error handling [1]");
-        await Assert.That(formatted).Contains("HandlerError(500)");
+        await Assert.That(formatted).Contains("ActionError(500)");
     }
 
     [Test]
