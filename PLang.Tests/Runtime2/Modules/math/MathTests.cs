@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions.math;
+using PLang.Runtime2.modules.math;
 
 namespace PLang.Tests.Runtime2.actions.math;
 
@@ -225,7 +225,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new PLang.Runtime2.actions.math.Random { Context = context, Min = 1, Max = 10 };
+        var action = new PLang.Runtime2.modules.math.Random { Context = context, Min = 1, Max = 10 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

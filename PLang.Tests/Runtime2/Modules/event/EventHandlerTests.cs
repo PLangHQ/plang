@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions.@event;
-using EventResult = PLang.Runtime2.actions.@event.types.@event;
+using PLang.Runtime2.modules.@event;
+using EventResult = PLang.Runtime2.modules.@event.types.@event;
 
 namespace PLang.Tests.Runtime2.actions.EventTests;
 
@@ -184,7 +184,7 @@ public class EventHandlerTests
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
 
         // Now remove it
-        var removeHandler = new PLang.Runtime2.actions.@event.Remove
+        var removeHandler = new PLang.Runtime2.modules.@event.Remove
         {
             Context = context,
             EventId = ev!.id

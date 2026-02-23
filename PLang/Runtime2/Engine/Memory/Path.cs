@@ -107,7 +107,7 @@ public sealed class Path
 
     // --- Behavior methods (OBP: behavior belongs to the owner) ---
 
-    public Data Copy(actions.file.Copy action)
+    public Data Copy(modules.file.Copy action)
     {
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
@@ -122,7 +122,7 @@ public sealed class Path
             else
                 CopyDirectory(_absolutePath, dest.Absolute, action.Overwrite, action.IncludeSubfolders);
 
-            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+            return Data.Ok(new modules.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -130,7 +130,7 @@ public sealed class Path
         }
     }
 
-    public Data Move(actions.file.Move action)
+    public Data Move(modules.file.Move action)
     {
         if (!Exists)
             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
@@ -150,7 +150,7 @@ public sealed class Path
                 _fs.Directory.Move(_absolutePath, dest.Absolute);
             }
 
-            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+            return Data.Ok(new modules.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -158,7 +158,7 @@ public sealed class Path
         }
     }
 
-    public Data Delete(actions.file.Delete action)
+    public Data Delete(modules.file.Delete action)
     {
         try
         {
@@ -175,7 +175,7 @@ public sealed class Path
             else if (!action.IgnoreIfNotFound)
                 return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
 
-            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+            return Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -190,7 +190,7 @@ public sealed class Path
 
         try
         {
-            var file = new actions.file.types.@file(_absolutePath, _fs);
+            var file = new modules.file.types.@file(_absolutePath, _fs);
             _ = file.Value; // Eager-read so step cache captures content
             return Data.Ok(file);
         }
@@ -200,7 +200,7 @@ public sealed class Path
         }
     }
 
-    public Data List(actions.file.List action)
+    public Data List(modules.file.List action)
     {
         if (!_fs.Directory.Exists(_absolutePath))
             return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
@@ -209,7 +209,7 @@ public sealed class Path
         {
             var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
-                .Select(f => new actions.file.types.@file(f, _fs))
+                .Select(f => new modules.file.types.@file(f, _fs))
                 .ToArray();
             return Data.Ok(files);
         }
@@ -220,9 +220,9 @@ public sealed class Path
     }
 
     /// <summary>Wraps this path as a @file object — used by exists handler</summary>
-    public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+    public Data AsFile() => Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
 
-    public async Task<Data> Save(actions.file.Save action)
+    public async Task<Data> Save(modules.file.Save action)
     {
         try
         {
@@ -239,7 +239,7 @@ public sealed class Path
                     { Stream = stream, Data = action.Value, Extension = Extension });
             }
 
-            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+            return Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

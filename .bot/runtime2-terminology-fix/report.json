@@ -56,6 +56,43 @@
         "health": "Ready for coder. No scaffolding artifacts — coder works from architect plan directly.",
         "notes": "Flagged two risks for coder: GetCodeGenerated tuple rename (Handler → Action) is breaking at call sites, and HandlerError → ActionError affects test assertions."
       }
+    },
+    {
+      "id": "c0d3r-v1-2026-0223-terminology-rename",
+      "bot": "coder",
+      "timestamp_start": "2026-02-23T15:00:00Z",
+      "timestamp_end": null,
+      "intent": "Execute terminology rename: actions/ → modules/, IClass → IAction, Library internals handler → action",
+      "before": {
+        "assumptions": "Architect plan is verified against real codebase. Scaffolder confirmed no new types needed. ~130 files affected.",
+        "risk": "Medium — wide rename but mechanical. Source generator string literals and tuple field rename are the main risks."
+      },
+      "plan": "Follow architect's 9-step execution order. Delete stale IAction, git mv, namespace replace, IClass → IAction, Library internals, source generator, tests, build, run tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/",
+            "PLang/Runtime2/modules/IAction.cs",
+            "PLang/Runtime2/Engine/Libraries/Library/this.cs",
+            "PLang/Runtime2/Engine/Libraries/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang/Runtime2/Engine/Memory/Path.cs",
+            "PLang/Modules/PlangModule/Program.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mechanical rename: actions/ → modules/, IClass → IAction, handler → action in Library internals, HandlerError → ActionError. ~140 files total."
+        }
+      ],
+      "after": {
+        "status": "Complete. All renames done. 1423 tests pass.",
+        "health": "Green.",
+        "notes": "Zero remaining references to IClass, PLang.Runtime2.actions, or HandlerError in production/test/generator code."
+      }
     }
   ]
 }

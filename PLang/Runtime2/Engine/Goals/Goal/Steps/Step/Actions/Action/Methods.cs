@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
 
@@ -17,16 +17,16 @@ public sealed partial class @this
         Data result;
         if (beforeResult.Handled)
         {
-            // Before-event provided an override — skip action handler
+            // Before-event provided an override — skip action
             result = beforeResult;
         }
         else
         {
-            var (handler, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
+            var (action, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
             if (error != null)
                 return Data.FromError(error);
 
-            result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
+            result = await action!.CodeGeneratedExecuteAsync(Parameters, engine, context);
         }
 
         result.Context = context;

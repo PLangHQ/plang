@@ -1,5 +1,5 @@
 using PLang.SafeFileSystem;
-using PLang.Runtime2.actions.file;
+using PLang.Runtime2.modules.file;
 
 namespace PLang.Tests.Runtime2.Modules.Path;
 
@@ -296,7 +296,7 @@ public class PathTests : IDisposable
         var result = p.Read();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Value.Value).IsEqualTo("test content");
     }
@@ -325,7 +325,7 @@ public class PathTests : IDisposable
         var result = p.List(new List { Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
         var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
@@ -344,7 +344,7 @@ public class PathTests : IDisposable
         var result = p.List(new List { Path = p, Pattern = "*.txt" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
         await Assert.That(files!.Length).IsEqualTo(1);
     }
 
@@ -361,7 +361,7 @@ public class PathTests : IDisposable
         var result = p.List(new List { Path = p, Pattern = "*", Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
         await Assert.That(files!.Length).IsEqualTo(2);
     }
 
@@ -428,7 +428,7 @@ public class PathTests : IDisposable
         var result = p.AsFile();
 
         await Assert.That(result.Success).IsTrue();
-        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }

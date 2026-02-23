@@ -10,7 +10,6 @@ global using ErrorOrder = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder
 global using CacheSettings = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings;
 global using StepCache = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.StepCache;
 global using StepActions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
-global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
 global using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;

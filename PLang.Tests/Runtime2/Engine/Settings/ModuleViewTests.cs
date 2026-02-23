@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Settings;
-using ArchiveSettings = PLang.Runtime2.actions.archive.Settings;
+using ArchiveSettings = PLang.Runtime2.modules.archive.Settings;
 using EngineType = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;

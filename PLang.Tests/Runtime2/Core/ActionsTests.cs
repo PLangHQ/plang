@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -68,10 +68,10 @@ public class ActionsTests
         {
             Module = "variable",
             ActionName = "set",
-            ParameterSchema = typeof(PLang.Runtime2.actions.variable.Set)
+            ParameterSchema = typeof(PLang.Runtime2.modules.variable.Set)
         };
 
-        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.actions.variable.Set));
+        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.modules.variable.Set));
     }
 
     [Test]
@@ -112,7 +112,7 @@ public class ActionsTests
         var variableSet = actions.First(a => a.Module == "variable" && a.ActionName == "set");
 
         await Assert.That(variableSet.ParameterSchema).IsNotNull();
-        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.actions.variable.Set));
+        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.modules.variable.Set));
     }
 
     [Test]
@@ -408,7 +408,7 @@ public class ActionsTests
         {
             foreach (var actionName in libraries.GetActions(ns))
             {
-                // Check IClass-based handlers first
+                // Check IAction-based handlers first
                 var handler = libraries.Get(ns, actionName);
                 if (handler != null)
                 {

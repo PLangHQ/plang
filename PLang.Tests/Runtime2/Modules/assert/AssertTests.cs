@@ -2,15 +2,15 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using AssertEquals = PLang.Runtime2.actions.assert.Equals;
-using AssertNotEquals = PLang.Runtime2.actions.assert.NotEquals;
-using AssertIsTrue = PLang.Runtime2.actions.assert.IsTrue;
-using AssertIsFalse = PLang.Runtime2.actions.assert.IsFalse;
-using AssertIsNull = PLang.Runtime2.actions.assert.IsNull;
-using AssertIsNotNull = PLang.Runtime2.actions.assert.IsNotNull;
-using AssertContains = PLang.Runtime2.actions.assert.Contains;
-using AssertGreaterThan = PLang.Runtime2.actions.assert.GreaterThan;
-using AssertLessThan = PLang.Runtime2.actions.assert.LessThan;
+using AssertEquals = PLang.Runtime2.modules.assert.Equals;
+using AssertNotEquals = PLang.Runtime2.modules.assert.NotEquals;
+using AssertIsTrue = PLang.Runtime2.modules.assert.IsTrue;
+using AssertIsFalse = PLang.Runtime2.modules.assert.IsFalse;
+using AssertIsNull = PLang.Runtime2.modules.assert.IsNull;
+using AssertIsNotNull = PLang.Runtime2.modules.assert.IsNotNull;
+using AssertContains = PLang.Runtime2.modules.assert.Contains;
+using AssertGreaterThan = PLang.Runtime2.modules.assert.GreaterThan;
+using AssertLessThan = PLang.Runtime2.modules.assert.LessThan;
 
 namespace PLang.Tests.Runtime2.actions.assert;
 
