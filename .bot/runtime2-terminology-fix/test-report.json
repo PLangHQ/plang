@@ -1,0 +1,29 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-terminology-fix",
+  "timestamp": "2026-02-23T17:30:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 1423, "passed": 1423, "failed": 0, "skipped": 0 },
+    "plang": { "total": 18, "passed": 17, "failed": 1, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 8,
+    "changed_files_total": 8,
+    "uncovered_files": []
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal",
+      "code_file": null,
+      "issue": "PLang test fails with 'Built .pr file not found' — needs a build, not a code issue",
+      "impact": "Test cannot run without building first. Unrelated to the terminology rename.",
+      "suggestion": "Run 'plang p build' from Tests/Runtime2/ to generate the missing .pr file"
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Terminology rename is clean and complete. All 6 rename surfaces verified independently: namespace (PLang.Runtime2.modules), interface (IAction), library field (_actions), tuple field (Action), error key (ActionError), source generator literals. Zero stale references remain. 1423/1423 C# tests pass. 17/18 PLang tests pass (1 failure is a missing .pr file unrelated to the rename). No false greens detected — test assertions correctly check the new error key 'ActionError' at all production sites."
+}
