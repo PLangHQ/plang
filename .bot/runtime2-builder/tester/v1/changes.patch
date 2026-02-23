@@ -1,0 +1,13 @@
+diff --git a/PLang/Building/Parsers/PrParser.cs b/PLang/Building/Parsers/PrParser.cs
+index 261ad495..e14ee60e 100644
+--- a/PLang/Building/Parsers/PrParser.cs
++++ b/PLang/Building/Parsers/PrParser.cs
+@@ -93,7 +93,7 @@ namespace PLang.Building.Parsers
+ 				return null;
+ 			}
+ 			var appAbsoluteStartupPath = fileSystem.RootDirectory;
+-			if (!absolutePrFilePath.StartsWith(fileSystem.RootDirectory))
++			if (absolutePrFilePath.StartsWith(fileSystem.SystemDirectory) || !absolutePrFilePath.StartsWith(fileSystem.RootDirectory))
+ 			{
+ 				appAbsoluteStartupPath = absolutePrFilePath.Substring(0, absolutePrFilePath.IndexOf(".build"));
+ 			}
