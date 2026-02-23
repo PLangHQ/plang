@@ -223,7 +223,8 @@ public class MethodHelper
 				}
 
 				// lets load the type from the build, if it fails, something is not correct from LLM
-				Type? builderType = TypeHelper.GetType(builderParameter.Type);
+				var resolvedTypeName = TypeAliases.TryGetValue(builderParameter.Type, out var alias) ? alias : builderParameter.Type;
+				Type? builderType = TypeHelper.GetType(resolvedTypeName);
 				if (builderType == null)
 				{
 					buildErrors.Add(new InvalidParameterError(methodInfo.Name,
@@ -302,10 +303,31 @@ public class MethodHelper
 		return objectProperties;
 	}
 
+	// Temporary alias map: old PLang.Runtime2.Core.* names (in pre-built .pr files)
+	// → actual CLR type names after OBP refactoring. Remove when builder is v0.2.
+	private static readonly Dictionary<string, string> TypeAliases = new(StringComparer.OrdinalIgnoreCase)
+	{
+		["PLang.Runtime2.Core.Actions"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.this",
+		["PLang.Runtime2.Core.Step"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.Step.this",
+		["PLang.Runtime2.Core.Steps"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.this",
+		["PLang.Runtime2.Core.Goal"] = "PLang.Runtime2.Engine.Goals.Goal.this",
+		["PLang.Runtime2.Core.GoalCall"] = "PLang.Runtime2.Engine.Goals.Goal.GoalCall",
+		["PLang.Runtime2.Core.Info"] = "PLang.Runtime2.Engine.Info",
+		["PLang.Runtime2.Core.CacheSettings"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings",
+		["PLang.Runtime2.Core.ErrorHandler"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorHandler",
+		["PLang.Runtime2.Core.ErrorOrder"] = "PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder",
+		["PLang.Runtime2.Core.Visibility"] = "PLang.Runtime2.Engine.Goals.Goal.Visibility",
+		["PLang.Runtime2.Utility.AppData"] = "PLang.Runtime2.Engine.Utility.AppData",
+	};
+
 	private bool IsTypeMatching(string methodParameterType, string buildParamType)
 	{
-		bool isSame = methodParameterType.Equals(buildParamType, StringComparison.OrdinalIgnoreCase);
-		if (isSame) return true;
+		if (methodParameterType.Equals(buildParamType, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		// Resolve old .pr type aliases to current CLR names
+		if (TypeAliases.TryGetValue(buildParamType, out var resolved))
+			return methodParameterType.Equals(resolved, StringComparison.OrdinalIgnoreCase);
 
 		return false;
 	}
