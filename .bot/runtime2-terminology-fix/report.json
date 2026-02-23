@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-terminology-fix",
+  "sessions": [
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "bot": "architect",
+      "timestamp_start": "2026-02-23T00:00:00Z",
+      "timestamp_end": "2026-02-23T00:20:00Z",
+      "intent": "Create coder handoff spec for terminology consistency fix: actions/ → modules/, IClass → IAction",
+      "before": {
+        "assumptions": "Web Claude doc has the right intent but may have stale interface signatures. Need to verify actual codebase state.",
+        "risk": "Medium — wide rename across ~130 files, but purely mechanical. Namespace collision with existing IAction entity interface needs handling."
+      },
+      "plan": "Delete stale entity IAction, git mv actions/ → modules/, rename IClass → IAction, update Library internals (handler → action), update source generator namespace strings, update 25 test files",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-terminology-fix/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verified actual codebase state vs Web Claude doc. Found IAction naming collision — entity IAction is dead code, safe to delete first. Action entity already has correct Module/ActionName properties. No BaseClass exists. Handoff spec reflects real code."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Branch created, plan written. Ready for coder handoff.",
+        "notes": "Mechanical rename task. ~130 files affected but pattern is simple find-and-replace. Main risk is the source generator namespace strings — those are string literals that must match exactly."
+      }
+    }
+  ]
+}
