@@ -260,3 +260,11 @@ Target audiences:
 **Date:** 2026-02-21
 **Context:** Tester v7 Finding #3.
 **Completed:** Coder catches `InvalidOperationException` separately with key `"JsonDepthExceeded"`. Test `FromJson_DeeplyNested_Fails` and `FromJson_DecimalNumber_PreservesPrecision` added.
+
+---
+
+## ErrorInfoTests still uses "HandlerError" test data
+**Date:** 2026-02-23
+**Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.
+
+**Fix:** Change `"HandlerError"` → `"ActionError"` and `"Handler error"` → `"Action error"` in the test, update assertion to `"ActionError(500)"`.

@@ -93,6 +93,32 @@
         "health": "Green.",
         "notes": "Zero remaining references to IClass, PLang.Runtime2.actions, or HandlerError in production/test/generator code."
       }
+    },
+    {
+      "id": "analyzer-v1-2026-0223-terminology-review",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-23T16:00:00Z",
+      "timestamp_end": "2026-02-23T16:30:00Z",
+      "intent": "Higher-level cross-concern analysis of terminology rename completeness",
+      "before": {
+        "assumptions": "Coder claims zero remaining stale references. Need independent verification across all rename surfaces.",
+        "risk": "Low — rename is mechanical, but string literals and test data are easy to miss"
+      },
+      "plan": "Verify all 6 rename surfaces independently: namespace, interface, field, tuple, error key, source generator. Apply cross-branch learnings.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-terminology-fix/codeanalyzer/v1/analysis.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Independent verification of rename completeness. Found 1 stale test reference the coder missed."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Green with 1 minor finding.",
+        "notes": "Finding #1: ErrorInfoTests.cs:198,204 still uses 'HandlerError' as test data. Minor — test passes, but stale terminology. Finding #2: .bot/ scaffolder skeletons from runtime2-settings have stale namespace — non-blocking, will be stale after rebase."
+      }
     }
   ]
 }
