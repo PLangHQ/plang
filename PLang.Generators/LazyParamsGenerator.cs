@@ -151,6 +151,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __parameters;");
         sb.AppendLine("    private PLang.Runtime2.Engine.Memory.MemoryStack? __memoryStack;");
         sb.AppendLine("    private PLang.Runtime2.Engine.@this? __engine;");
+        sb.AppendLine("    private PLang.Runtime2.Engine.Memory.Data? __resolutionError;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -228,6 +229,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        __parameters = parameters;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
+        sb.AppendLine("        __resolutionError = null;");
         sb.AppendLine("        var __step = context.Step;");
         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallStack.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallStack.CallFrame>();");
 
@@ -258,6 +260,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
         }
 
+        sb.AppendLine("        if (__resolutionError != null) return __resolutionError;");
+        sb.AppendLine();
         sb.AppendLine("        try");
         sb.AppendLine("        {");
         sb.AppendLine("            return await Run();");
@@ -279,10 +283,27 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        {");
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
         sb.AppendLine("            if (fullMatch.Success)");
-        sb.AppendLine("                return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(");
-        sb.AppendLine("                    __memoryStack!.GetValue(fullMatch.Groups[1].Value), typeof(T));");
-        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\",");
-        sb.AppendLine("                m => __FormatValue(__memoryStack!.GetValue(m.Groups[1].Value)));");
+        sb.AppendLine("            {");
+        sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
+        sb.AppendLine("                {");
+        sb.AppendLine("                    __resolutionError = __resolved;");
+        sb.AppendLine("                    return default;");
+        sb.AppendLine("                }");
+        sb.AppendLine("                return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(__resolved?.Value, typeof(T));");
+        sb.AppendLine("            }");
+        sb.AppendLine("            var __interpolationError = false;");
+        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
+        sb.AppendLine("                var __r = __memoryStack!.Get(m.Groups[1].Value);");
+        sb.AppendLine("                if (__r != null && !__r.Success)");
+        sb.AppendLine("                {");
+        sb.AppendLine("                    __resolutionError = __r;");
+        sb.AppendLine("                    __interpolationError = true;");
+        sb.AppendLine("                    return \"\";");
+        sb.AppendLine("                }");
+        sb.AppendLine("                return __FormatValue(__r?.Value);");
+        sb.AppendLine("            });");
+        sb.AppendLine("            if (__interpolationError) return default;");
         sb.AppendLine("            return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
         sb.AppendLine("        }");
         sb.AppendLine("        return data != null");

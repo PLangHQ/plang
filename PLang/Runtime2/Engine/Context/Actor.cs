@@ -1,4 +1,6 @@
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.DataSource;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine.Context;
 
@@ -7,6 +9,8 @@ namespace PLang.Runtime2.Engine.Context;
 /// </summary>
 public sealed class Actor : IAsyncDisposable
 {
+    private IDataSource? _dataSource;
+
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
     /// </summary>
@@ -26,6 +30,12 @@ public sealed class Actor : IAsyncDisposable
     /// Back-reference to the engine.
     /// </summary>
     public Engine.@this Engine { get; }
+
+    /// <summary>
+    /// Persistent key-value storage for this actor.
+    /// Created lazily on first access. Database stored at .db/{actorname}.sqlite.
+    /// </summary>
+    public IDataSource DataSource => _dataSource ??= CreateDataSource();
 
     /// <summary>
     /// Resolves an actor by name using the engine.
@@ -49,10 +59,24 @@ public sealed class Actor : IAsyncDisposable
         };
         Context.Actor = this;
         Channels = new EngineChannels(engine);
+
+        // Register Settings on the System actor's MemoryStack
+        if (string.Equals(name, "System", StringComparison.OrdinalIgnoreCase))
+        {
+            Context.MemoryStack.Put(new SettingsData(engine));
+        }
+    }
+
+    private IDataSource CreateDataSource()
+    {
+        var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
+        var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
+        return new SqliteDataSource(dbPath, Engine.FileSystem);
     }
 
     public async ValueTask DisposeAsync()
     {
+        _dataSource?.Dispose();
         Context.Dispose();
         await Channels.DisposeAsync();
     }

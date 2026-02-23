@@ -22,6 +22,95 @@
         }
       ],
       "after": null
+    },
+    {
+      "id": "c0d3r001-2026-0223-impl-datasource00001",
+      "bot": "coder",
+      "timestamp_start": "2026-02-23T20:00:00Z",
+      "timestamp_end": "2026-02-23T21:00:00Z",
+      "intent": "Implement DataSource persistence layer, SettingsData bridge, AskError, and LazyParamsGenerator error propagation",
+      "before": {
+        "assumptions": "Architect plan v1 is approved. Microsoft.Data.Sqlite already in PLang.csproj. No existing DataSource directory. GetChild on Data is not virtual yet. LazyParamsGenerator does not propagate resolution errors.",
+        "risk": "SQLite sync-over-async bridge in SettingsData.GetChild. GetChild becoming virtual may affect existing Data subclasses (DynamicData, Data<T>). LazyParamsGenerator change affects all action handlers."
+      },
+      "plan": "Create IDataSource interface + SqliteDataSource implementation, DataSourceError/AskError types, SettingsData with virtual GetChild override for per-key lazy loading. Modify Actor.cs (lazy DataSource property, SettingsData registration on System actor). Modify LazyParamsGenerator for error propagation via __resolutionError. Create settings action handlers (get/set/remove). Write C# tests for DataSource and SettingsData.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "DataSource interface and SQLite implementation. SettingsData extends Data with virtual GetChild for per-key lazy loading from SQLite."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Error types for DataSource operations and missing required values."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/actions/settings/types.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Settings action handlers following existing handler pattern (partial class, [Action] attribute, IContext, Run())."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Made GetChild virtual so SettingsData can override it."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Context/Actor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added lazy DataSource property (.db/{actorname}.sqlite), registered SettingsData on System actor's MemoryStack, dispose DataSource."
+        },
+        {
+          "paths": [
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added __resolutionError field. Modified __Resolve<T> to use MemoryStack.Get() for full-match variables and check for errors. Added error check before Run()."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "23 C# tests (13 DataSource + 10 Settings). All 1446 total tests pass."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1446 C# tests pass. All 15 passing PLang tests still pass. 8 pre-existing PLang failures unrelated to this change.",
+        "notes": "Data.GetChild is now virtual - this is a small API surface change that could affect any code overriding or mocking Data. No existing subclasses were affected. LazyParamsGenerator change affects all generated action handlers but is backward-compatible (new field defaults to null, existing behavior unchanged when no errors)."
+      }
     }
   ]
 }

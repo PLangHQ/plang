@@ -14,7 +14,7 @@ public partial class Data
     /// <summary>
     /// Gets a child value by path (dot notation or index).
     /// </summary>
-    public Data? GetChild(string path, int depth = 0)
+    public virtual Data? GetChild(string path, int depth = 0)
     {
         if (string.IsNullOrEmpty(path))
             return this;
