@@ -93,7 +93,7 @@ namespace PLang.Building.Parsers
 				return null;
 			}
 			var appAbsoluteStartupPath = fileSystem.RootDirectory;
-			if (!absolutePrFilePath.StartsWith(fileSystem.RootDirectory))
+			if (absolutePrFilePath.StartsWith(fileSystem.SystemDirectory) || !absolutePrFilePath.StartsWith(fileSystem.RootDirectory))
 			{
 				appAbsoluteStartupPath = absolutePrFilePath.Substring(0, absolutePrFilePath.IndexOf(".build"));
 			}

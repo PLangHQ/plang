@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-builder",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "bot": "tester",
+      "timestamp_start": "2026-02-23T12:00:00Z",
+      "timestamp_end": "2026-02-23T12:15:00Z",
+      "intent": "Fix plang p build --llmservice=openai path resolution bug in PrParser",
+      "before": {
+        "assumptions": "The InstructionFileNotLoaded error is caused by PrParser resolving system goal paths relative to RootDirectory instead of SystemDirectory",
+        "risk": "Low — single condition change in path detection logic, well-covered by existing tests"
+      },
+      "plan": "Fix PrParser.ParsePrFile() to check SystemDirectory before RootDirectory when determining the base path for .pr file resolution. This is a root-cause fix rather than the post-parse path override originally planned for Build2().",
+      "actions": [
+        {
+          "paths": ["PLang/Building/Parsers/PrParser.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added SystemDirectory check to path detection condition at line 96. System directory paths now use the 'extract before .build' logic instead of incorrectly defaulting to RootDirectory."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — 1423/1423 C# tests pass, builder starts successfully",
+        "notes": "Fixed at root cause in PrParser rather than patching in Build2. 8 pre-existing PLang test failures unrelated to this change."
+      }
+    }
+  ]
+}
