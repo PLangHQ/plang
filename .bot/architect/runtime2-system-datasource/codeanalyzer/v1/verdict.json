@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Core error propagation pipeline (LazyParamsGenerator → SettingsData) is untested; SanitizeTableName security code untested; bare catch in DeserializeValue masks non-JSON exceptions; MemoryStack.Clone() silently loses SettingsData type"
+}
