@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-system-datasource",
+  "timestamp": "2026-02-24T17:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "The DataSource + Settings Bridge is well-structured and follows OBP patterns correctly. All 5 OBP rules are satisfied: behavior lives on the owning object (SqliteDataSource owns CRUD, SettingsData owns navigation), handlers navigate the object graph (Context.Engine.System.DataSource), object references are preserved (Actor stores Engine, SettingsData stores _engine), per-request state is passed through parameters, and no collection iteration violations exist. Error handling is comprehensive at the SqliteDataSource level (SqliteException + IOException + JsonException). The LazyParamsGenerator's resolution error propagation is correctly implemented — errors short-circuit before Run(). Two minor gaps exist in exception filter completeness (DeserializeValue and EnsureTable performance), plus two nits. No critical or major findings. Tests are thorough: 22 DataSource tests, 18 SettingsData tests including corrupt-DB error path, 4 new MemoryStack navigation tests. All 1465 C# tests pass.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "line": 266,
+      "issue": "DeserializeValue catches only JsonException but calls Data.UnwrapJsonElement which throws InvalidOperationException at depth > 128. The outer Get() catch filter (SqliteException | IOException) does not cover InvalidOperationException either, so it propagates uncaught through SettingsData.GetChild to the caller.",
+      "impact": "If a user stores externally-sourced deeply nested JSON (>128 levels after unwrapping) as a settings value, the unhandled exception propagates to the step runner. Realistic exploitation requires unusual conditions — JsonDocument.Parse default MaxDepth=64 catches most cases first. The gap is narrow but violates the 'behavior methods never throw' contract on IDataSource.",
+      "suggestion": "Add catch (InvalidOperationException) alongside catch (JsonException) in DeserializeValue, returning the raw JSON string as fallback (same as the JsonException path). This is a one-line addition."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "line": 239,
+      "issue": "EnsureTable opens a new connection and runs CREATE TABLE IF NOT EXISTS on every CRUD call (Get, Set, Remove, Exists, GetAll). For hot paths like %Settings.X% resolved on every step in a loop, this is redundant I/O — the table was already created on the first access.",
+      "impact": "Performance degradation under high-frequency settings access. SQLite connection pooling mitigates connection overhead but the DDL statement still executes and acquires a schema lock each time. Not a correctness issue.",
+      "suggestion": "Cache known table names in a HashSet<string> field. After EnsureTable succeeds for a table, add it to the set and skip subsequent calls. Clear on Dispose."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "line": 283,
+      "issue": "The _disposed field is set in Dispose() but never checked in public methods (Get/Set/Remove/Exists/GetAll/Tables). Operations after disposal produce confusing SqliteException rather than clear ObjectDisposedException.",
+      "impact": "Misleading error classification during shutdown races. The SqliteException IS caught by existing catch blocks, so no crash — just wrong error key. Low priority since disposal only happens at engine shutdown.",
+      "suggestion": "Add a ThrowIfDisposed() guard at the top of each public method, or accept as known limitation and document it."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+      "line": 66,
+      "issue": "SettingsData.GetChild creates a new Data with `child.Context = Context` (line 66), but Context on SettingsData may be null if it hasn't been propagated yet. This is safe — Data.Context setter handles null — but the explicit assignment is redundant when Context is null.",
+      "impact": "None. Cosmetic only — the null propagation is handled correctly by the Data.Context setter.",
+      "suggestion": "No change needed. The explicit assignment is defensive and harmless."
+    }
+  ]
+}
