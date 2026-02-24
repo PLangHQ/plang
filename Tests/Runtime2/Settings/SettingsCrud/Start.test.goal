@@ -1,0 +1,8 @@
+Start
+- set settings 'TestApiKey' = 'sk-test-12345'
+- get settings 'TestApiKey', write to %apiKey%
+- assert %apiKey% equals "sk-test-12345"
+- set settings 'TestApiKey' = 'sk-updated-99999'
+- get settings 'TestApiKey', write to %updatedKey%
+- assert %updatedKey% equals "sk-updated-99999"
+- remove settings 'TestApiKey'

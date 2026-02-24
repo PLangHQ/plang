@@ -268,4 +268,26 @@ public class SettingsDataTests
         await Assert.That(resolved!.Success).IsTrue();
         await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-real-key");
     }
+
+    // --- SettingsData DataSource error path (F4) ---
+
+    [Test]
+    public async Task SettingsData_GetChild_CorruptDatabase_ReturnsDataSourceError()
+    {
+        // Trigger DataSource creation so the DB file exists
+        _ = _engine.System.DataSource;
+
+        // Corrupt the database file — overwrite with garbage
+        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
+        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
+
+        // SettingsData.GetChild should return the DataSource error (line 54-55),
+        // not throw and not return AskError
+        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+        var child = settingsData!.GetChild("AnyKey");
+
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Success).IsFalse();
+        await Assert.That(child.Error is DataSourceError).IsTrue();
+    }
 }

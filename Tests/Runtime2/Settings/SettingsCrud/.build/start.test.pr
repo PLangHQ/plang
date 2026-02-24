@@ -1,0 +1,214 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-test-12345\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "sk-test-12345",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "get settings \u0027TestApiKey\u0027, write to %apiKey%",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "apiKey"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %apiKey% equals \u0022sk-test-12345\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "sk-test-12345",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%apiKey%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-updated-99999\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "sk-updated-99999",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "get settings \u0027TestApiKey\u0027, write to %updatedKey%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "updatedKey"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %updatedKey% equals \u0022sk-updated-99999\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "sk-updated-99999",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%updatedKey%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "remove settings \u0027TestApiKey\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "TestApiKey",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/Start.test.goal",
+  "prPath": "/.build/start.test.pr",
+  "hash": "28fa495cc178a52c877e5583768acfb2cd7761fcd1b9571621aabaeca1c3e5ee",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}
