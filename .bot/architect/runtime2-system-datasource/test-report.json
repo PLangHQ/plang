@@ -8,15 +8,23 @@
     "plang": { "total": 22, "passed": 22, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 7,
+    "tool": "TUnit --coverage (cobertura)",
+    "changed_files_covered": 8,
     "changed_files_total": 11,
+    "highlights": {
+      "Actor.cs": "100% line, 100% branch",
+      "Data.Navigation.cs": "97.9% line, 95.8% branch",
+      "MemoryStack.cs": "98.6% line, 94.7% branch",
+      "SettingsData.cs": "96.9% line — line 55 (error path) uncovered",
+      "SqliteDataSource.cs": "67.5% line — error catch blocks untested",
+      "DataSourceError.cs": "77.1% line — FormatExtra + context constructor uncovered",
+      "settings handlers (generated)": "0% CodeGeneratedExecuteAsync — no engine pipeline test"
+    },
     "uncovered_files": [
-      "PLang/Runtime2/actions/settings/get.cs (no PLang test)",
-      "PLang/Runtime2/actions/settings/set.cs (no PLang test)",
-      "PLang/Runtime2/actions/settings/remove.cs (no PLang test)",
-      "PLang/Runtime2/actions/settings/types.cs (no PLang test)"
-    ],
-    "note": "dotnet-coverage profiler failed to initialize in this environment; coverage is manual analysis only"
+      "PLang/Runtime2/actions/settings/get.cs (generated code: 0% coverage)",
+      "PLang/Runtime2/actions/settings/set.cs (generated code: 0% coverage)",
+      "PLang/Runtime2/actions/settings/remove.cs (generated code: 0% coverage)"
+    ]
   },
   "findings": [
     {

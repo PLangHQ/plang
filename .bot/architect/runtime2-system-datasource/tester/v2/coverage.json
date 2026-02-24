@@ -1,19 +1,70 @@
 {
-  "note": "dotnet-coverage profiler failed to initialize (glibc/container environment issue). Coverage is manual analysis only.",
-  "manual_analysis": {
-    "changed_files": [
-      { "file": "PLang/Runtime2/Engine/DataSource/IDataSource.cs", "covered": true, "notes": "Interface + static method tested via DataSourceTests.ResolveTableName" },
-      { "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs", "covered": true, "notes": "All public methods tested. SanitizeTableName tested indirectly. ClassifyException tested. DeserializeValue depth overflow path untested." },
-      { "file": "PLang/Runtime2/Engine/DataSource/SettingsData.cs", "covered": "partial", "notes": "GetChild tested for success and AskError paths. DataSource error path (lines 54-55) untested." },
-      { "file": "PLang/Runtime2/Engine/Errors/AskError.cs", "covered": true, "notes": "Created and verified in SettingsData tests." },
-      { "file": "PLang/Runtime2/Engine/Errors/DataSourceError.cs", "covered": true, "notes": "FromException and all ClassifyException branches tested." },
-      { "file": "PLang/Runtime2/Engine/Context/Actor.cs", "covered": true, "notes": "Lazy DataSource creation and SettingsData registration tested." },
-      { "file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs", "covered": true, "notes": "Clone with SettingsData preservation tested. Context mutation via shared reference not tested." },
-      { "file": "PLang/Runtime2/Engine/Memory/Data.Navigation.cs", "covered": true, "notes": "Virtual GetChild tested via SettingsData override." },
-      { "file": "PLang/Runtime2/actions/settings/get.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
-      { "file": "PLang/Runtime2/actions/settings/set.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
-      { "file": "PLang/Runtime2/actions/settings/remove.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
-      { "file": "PLang.Generators/LazyParamsGenerator.cs", "covered": true, "notes": "Error propagation path tested via MemoryStack integration tests." }
-    ]
+  "tool": "TUnit built-in --coverage (Microsoft.Testing.Extensions.CodeCoverage)",
+  "format": "cobertura",
+  "raw_file": "coverage.cobertura.xml",
+  "changed_files": {
+    "PLang/Runtime2/Engine/Context/Actor.cs": {
+      "line_rate": 100.0,
+      "branch_rate": 100.0,
+      "uncovered_lines": [],
+      "notes": "Fully covered. Lazy DataSource, SettingsData registration, dispose all exercised."
+    },
+    "PLang/Runtime2/Engine/Memory/Data.Navigation.cs": {
+      "line_rate": 97.9,
+      "branch_rate": 95.8,
+      "uncovered_lines": [50],
+      "notes": "Line 50: close bracket not found edge case in GetChild."
+    },
+    "PLang/Runtime2/Engine/Memory/MemoryStack.cs": {
+      "line_rate": 98.6,
+      "branch_rate": 94.7,
+      "uncovered_lines": [253, 266],
+      "notes": "Lines 253/266: ResolveVariablesInPath edge cases. Clone preservation well covered."
+    },
+    "PLang/Runtime2/Engine/DataSource/SettingsData.cs": {
+      "line_rate": 96.9,
+      "branch_rate": 90.0,
+      "uncovered_lines": [55],
+      "notes": "Line 55: DataSource error path (!result.Success return). Only AskError and success paths tested."
+    },
+    "PLang/Runtime2/Engine/Errors/AskError.cs": {
+      "line_rate": 88.9,
+      "branch_rate": 100.0,
+      "uncovered_lines": [10],
+      "notes": "Line 10: ErrorCategory getter (computed property, trivial)."
+    },
+    "PLang/Runtime2/Engine/DataSource/IDataSource.cs": {
+      "line_rate": 85.7,
+      "branch_rate": 50.0,
+      "uncovered_lines": [56],
+      "notes": "Line 56: null/empty namespace fallback in ResolveTableName."
+    },
+    "PLang/Runtime2/Engine/Errors/DataSourceError.cs": {
+      "line_rate": 77.1,
+      "branch_rate": 75.0,
+      "uncovered_lines": [12, 14, 15, 21, 57, 58, 59, 60, 61, 62],
+      "notes": "Uncovered: context-based constructor (line 21), FormatExtra (lines 57-62). ClassifyException fully covered."
+    },
+    "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs": {
+      "line_rate": 67.5,
+      "branch_rate": 83.3,
+      "uncovered_lines": "126 lines — mostly error catch blocks (SqliteException, IOException) which require real DB failures to trigger",
+      "notes": "Happy paths well covered. Error handling blocks untested (expected for unit tests — would need integration tests with corrupted/locked DBs)."
+    },
+    "PLang/Runtime2/actions/settings/get.cs": {
+      "line_rate": "Run() covered via C# tests",
+      "generated_code_coverage": "0% — CodeGeneratedExecuteAsync never called through engine",
+      "notes": "No PLang integration test. Generated pipeline code completely untested."
+    },
+    "PLang/Runtime2/actions/settings/set.cs": {
+      "line_rate": "Run() covered via C# tests",
+      "generated_code_coverage": "0% — CodeGeneratedExecuteAsync never called through engine",
+      "notes": "No PLang integration test. Generated pipeline code completely untested."
+    },
+    "PLang/Runtime2/actions/settings/remove.cs": {
+      "line_rate": "Run() covered via C# tests",
+      "generated_code_coverage": "0% — CodeGeneratedExecuteAsync never called through engine",
+      "notes": "No PLang integration test. Generated pipeline code completely untested."
+    }
   }
 }
