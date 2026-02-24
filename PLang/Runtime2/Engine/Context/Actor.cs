@@ -9,7 +9,7 @@ namespace PLang.Runtime2.Engine.Context;
 /// </summary>
 public sealed class Actor : IAsyncDisposable
 {
-    private IDataSource? _dataSource;
+    private readonly Lazy<IDataSource> _dataSource;
 
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
@@ -35,7 +35,7 @@ public sealed class Actor : IAsyncDisposable
     /// Persistent key-value storage for this actor.
     /// Created lazily on first access. Database stored at .db/{actorname}.sqlite.
     /// </summary>
-    public IDataSource DataSource => _dataSource ??= CreateDataSource();
+    public IDataSource DataSource => _dataSource.Value;
 
     /// <summary>
     /// Resolves an actor by name using the engine.
@@ -53,6 +53,7 @@ public sealed class Actor : IAsyncDisposable
     {
         Name = name;
         Engine = engine;
+        _dataSource = new Lazy<IDataSource>(CreateDataSource);
         Context = new PLangContext(engine)
         {
             CallStack = new CallStack.@this()
@@ -76,7 +77,8 @@ public sealed class Actor : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _dataSource?.Dispose();
+        if (_dataSource.IsValueCreated)
+            _dataSource.Value.Dispose();
         Context.Dispose();
         await Channels.DisposeAsync();
     }

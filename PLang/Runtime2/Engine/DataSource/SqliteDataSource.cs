@@ -48,7 +48,7 @@ public sealed class SqliteDataSource : IDataSource
             cmd.CommandText = "PRAGMA journal_mode=WAL;";
             cmd.ExecuteNonQuery();
         }
-        catch
+        catch (SqliteException)
         {
             // Non-fatal — WAL is a performance optimization, not required
         }
@@ -263,7 +263,7 @@ public sealed class SqliteDataSource : IDataSource
             using var doc = JsonDocument.Parse(json);
             return Data.UnwrapJsonElement(doc.RootElement);
         }
-        catch
+        catch (JsonException)
         {
             // If it's not valid JSON, return as raw string
             return json;

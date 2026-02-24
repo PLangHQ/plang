@@ -178,4 +178,97 @@ public class DataSourceTests
         var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.actions.settings.Set));
         await Assert.That(result).IsEqualTo("settings");
     }
+
+    // --- SanitizeTableName tests (indirect via public API) ---
+
+    [Test]
+    public async Task Set_TableNameWithSpecialChars_StripsNonAlphanumeric()
+    {
+        using var ds = CreateDataSource();
+        // Special chars should be stripped, leaving "settingsDROPTABLEsettings"
+        var result = await ds.Set("settings; DROP TABLE settings", "Key", "Value");
+        await Assert.That(result.Success).IsTrue();
+
+        // Should be retrievable using the same dirty name (sanitized identically)
+        var getResult = await ds.Get("settings; DROP TABLE settings", "Key");
+        await Assert.That(getResult.Success).IsTrue();
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+    }
+
+    [Test]
+    public async Task Set_TableNameWithUnderscores_PreservesUnderscores()
+    {
+        using var ds = CreateDataSource();
+        var result = await ds.Set("my_table", "Key", "Value");
+        await Assert.That(result.Success).IsTrue();
+
+        var getResult = await ds.Get("my_table", "Key");
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+    }
+
+    [Test]
+    public async Task Set_EmptyTableName_FallsBackToDefault()
+    {
+        using var ds = CreateDataSource();
+        // All chars stripped → empty → "default_table"
+        var result = await ds.Set("!!!", "Key", "Value");
+        await Assert.That(result.Success).IsTrue();
+
+        var getResult = await ds.Get("!!!", "Key");
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+    }
+
+    [Test]
+    public async Task Set_MixedCaseTableName_NormalizesToLowercase()
+    {
+        using var ds = CreateDataSource();
+        await ds.Set("Settings", "Key", "Value1");
+
+        // Same name in different case should hit the same table
+        var getResult = await ds.Get("settings", "Key");
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value1");
+    }
+
+    // --- ClassifyException tests ---
+
+    [Test]
+    public async Task DataSourceError_ClassifiesLockedDatabase()
+    {
+        var ex = new Exception("database is locked");
+        var error = DataSourceError.FromException(ex, "settings", "key");
+        await Assert.That(error.Key).IsEqualTo("DatabaseLocked");
+    }
+
+    [Test]
+    public async Task DataSourceError_ClassifiesDiskError()
+    {
+        var ex = new Exception("disk I/O error");
+        var error = DataSourceError.FromException(ex, "settings");
+        await Assert.That(error.Key).IsEqualTo("DiskError");
+    }
+
+    [Test]
+    public async Task DataSourceError_ClassifiesCorrupt()
+    {
+        var ex = new Exception("database disk image is corrupt");
+        var error = DataSourceError.FromException(ex);
+        await Assert.That(error.Key).IsEqualTo("DatabaseCorrupt");
+    }
+
+    [Test]
+    public async Task DataSourceError_ClassifiesPermissionDenied()
+    {
+        var ex = new Exception("permission denied");
+        var error = DataSourceError.FromException(ex);
+        await Assert.That(error.Key).IsEqualTo("PermissionDenied");
+    }
+
+    [Test]
+    public async Task DataSourceError_ClassifiesUnknownAsDefault()
+    {
+        var ex = new Exception("something unexpected");
+        var error = DataSourceError.FromException(ex);
+        await Assert.That(error.Key).IsEqualTo("DataSourceError");
+        await Assert.That(error.StatusCode).IsEqualTo(500);
+    }
 }

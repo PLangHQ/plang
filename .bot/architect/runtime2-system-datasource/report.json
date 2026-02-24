@@ -165,6 +165,62 @@
         "health": "Analysis complete. Verdict: FAIL. Key issues: untested error propagation pipeline, untested SQL injection defense, MemoryStack.Clone type-loss concern, bare catch in DeserializeValue.",
         "notes": "OBP compliance is good across all files. The implementation is well-structured but has test coverage gaps on critical paths."
       }
+    },
+    {
+      "id": "c0d3r002-2026-0224-fix-analyzerfindings",
+      "bot": "coder",
+      "timestamp_start": "2026-02-24T10:00:00Z",
+      "timestamp_end": "2026-02-24T10:30:00Z",
+      "intent": "Fix all code analyzer findings from v1 review",
+      "before": {
+        "assumptions": "Code analyzer v1 verdict was FAIL. 8 findings ranging from high (untested security code, untested error propagation) to low (thread safety, untested branches). All 1446 existing tests pass.",
+        "risk": "MemoryStack.Clone change (sharing by reference) could cause unexpected mutation if a subclass has mutable state. SettingsData is stateless (loads from DB), DynamicData is factory-based — both safe."
+      },
+      "plan": "Fix 3 code issues (bare catches, Clone type-loss, Lazy<T> thread safety). Add 14 tests covering SanitizeTableName, ClassifyException, nested paths, Clone preservation, error propagation integration.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Narrowed bare catches: catch → catch (JsonException) in DeserializeValue, catch → catch (SqliteException) in EnableWalMode."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clone() now preserves Data subclasses (SettingsData, DynamicData) by reference instead of creating plain Data objects."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Context/Actor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Replaced ??= with Lazy<IDataSource> for thread-safe lazy initialization. DisposeAsync checks IsValueCreated."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 14 tests: SanitizeTableName (4), ClassifyException (5), nested settings paths (1), Clone preservation (2), error propagation integration (2)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1460 C# tests pass (14 new, 0 failures).",
+        "notes": "Did not change __resolutionError single-check pattern — it's a design limitation of LazyParamsGenerator, not a bug in this feature. Works correctly for Settings use case."
+      }
     }
   ]
 }

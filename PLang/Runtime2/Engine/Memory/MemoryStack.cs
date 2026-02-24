@@ -178,8 +178,18 @@ public class MemoryStack
                 !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase) &&
                 !kvp.Key.StartsWith("!"))
             {
-                var clonedValue = kvp.Value.Value.DeepClone();
-                clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
+                // Preserve specialized Data subclasses by reference — they are
+                // stateless (SettingsData loads from DB each time) or factory-based
+                // (DynamicData). Deep-cloning would lose the virtual GetChild override.
+                if (kvp.Value is DynamicData || kvp.Value.GetType() != typeof(Data))
+                {
+                    clone._variables[kvp.Key] = kvp.Value;
+                }
+                else
+                {
+                    var clonedValue = kvp.Value.Value.DeepClone();
+                    clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
+                }
             }
         }
         clone.Context = Context;

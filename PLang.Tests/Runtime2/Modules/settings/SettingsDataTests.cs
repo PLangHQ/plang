@@ -180,4 +180,92 @@ public class SettingsDataTests
         var dbDir = _engine.FileSystem.Path.Combine(_tempDir, ".db");
         await Assert.That(_engine.FileSystem.Directory.Exists(dbDir)).IsTrue();
     }
+
+    // --- Nested settings path test ---
+
+    [Test]
+    public async Task SettingsData_NestedPath_NavigatesJsonObject()
+    {
+        // Store a JSON object as a setting
+        var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
+        await _engine.System.DataSource.Set("settings", "Config", config);
+
+        // Resolve %Settings.Config.SubKey%
+        var result = _engine.System.Context.MemoryStack.Get("Settings.Config.SubKey");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
+    }
+
+    // --- MemoryStack.Clone preserves SettingsData ---
+
+    [Test]
+    public async Task MemoryStack_Clone_PreservesSettingsData()
+    {
+        // Store a setting
+        await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
+
+        // Clone the MemoryStack
+        var cloned = _engine.System.Context.MemoryStack.Clone();
+
+        // Settings should still work in the cloned stack
+        var result = cloned.Get("Settings.CloneKey");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("clone-value");
+    }
+
+    [Test]
+    public async Task MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError()
+    {
+        // Clone the MemoryStack
+        var cloned = _engine.System.Context.MemoryStack.Clone();
+
+        // Missing key in cloned stack should still return AskError
+        var result = cloned.Get("Settings.MissingInClone");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsFalse();
+        await Assert.That(result.Error is AskError).IsTrue();
+    }
+
+    // --- Error propagation integration test ---
+
+    [Test]
+    public async Task ErrorPropagation_MemoryStackGet_SettingsMissing_ReturnsAskError()
+    {
+        // This simulates what LazyParamsGenerator's __Resolve<T> does:
+        // 1. Gets a parameter with value "%Settings.MissingKey%"
+        // 2. Regex matches the full variable: Settings.MissingKey
+        // 3. Calls __memoryStack.Get("Settings.MissingKey")
+        // 4. Checks if result is non-null and !Success → sets __resolutionError
+        var memoryStack = _engine.System.Context.MemoryStack;
+
+        // This is the exact call the generated code makes
+        var resolved = memoryStack.Get("Settings.MissingKey");
+
+        // The generated code checks: if (__resolved != null && !__resolved.Success)
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Success).IsFalse();
+
+        // Verify the error is AskError (so runtime can prompt user)
+        await Assert.That(resolved.Error).IsNotNull();
+        await Assert.That(resolved.Error is AskError).IsTrue();
+        var askError = (AskError)resolved.Error!;
+        await Assert.That(askError.DataKey).IsEqualTo("MissingKey");
+    }
+
+    [Test]
+    public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
+    {
+        await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
+        var memoryStack = _engine.System.Context.MemoryStack;
+
+        // Same call path as generated code
+        var resolved = memoryStack.Get("Settings.ApiKey");
+
+        // Generated code checks: if (__resolved != null && !__resolved.Success) — should NOT trigger
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Success).IsTrue();
+        await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-real-key");
+    }
 }
