@@ -1,0 +1,19 @@
+{
+  "note": "dotnet-coverage profiler failed to initialize (glibc/container environment issue). Coverage is manual analysis only.",
+  "manual_analysis": {
+    "changed_files": [
+      { "file": "PLang/Runtime2/Engine/DataSource/IDataSource.cs", "covered": true, "notes": "Interface + static method tested via DataSourceTests.ResolveTableName" },
+      { "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs", "covered": true, "notes": "All public methods tested. SanitizeTableName tested indirectly. ClassifyException tested. DeserializeValue depth overflow path untested." },
+      { "file": "PLang/Runtime2/Engine/DataSource/SettingsData.cs", "covered": "partial", "notes": "GetChild tested for success and AskError paths. DataSource error path (lines 54-55) untested." },
+      { "file": "PLang/Runtime2/Engine/Errors/AskError.cs", "covered": true, "notes": "Created and verified in SettingsData tests." },
+      { "file": "PLang/Runtime2/Engine/Errors/DataSourceError.cs", "covered": true, "notes": "FromException and all ClassifyException branches tested." },
+      { "file": "PLang/Runtime2/Engine/Context/Actor.cs", "covered": true, "notes": "Lazy DataSource creation and SettingsData registration tested." },
+      { "file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs", "covered": true, "notes": "Clone with SettingsData preservation tested. Context mutation via shared reference not tested." },
+      { "file": "PLang/Runtime2/Engine/Memory/Data.Navigation.cs", "covered": true, "notes": "Virtual GetChild tested via SettingsData override." },
+      { "file": "PLang/Runtime2/actions/settings/get.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
+      { "file": "PLang/Runtime2/actions/settings/set.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
+      { "file": "PLang/Runtime2/actions/settings/remove.cs", "covered": "csharp-only", "notes": "C# unit test exists. No PLang integration test." },
+      { "file": "PLang.Generators/LazyParamsGenerator.cs", "covered": true, "notes": "Error propagation path tested via MemoryStack integration tests." }
+    ]
+  }
+}

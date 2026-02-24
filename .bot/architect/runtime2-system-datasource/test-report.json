@@ -1,0 +1,105 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-system-datasource",
+  "timestamp": "2026-02-24T15:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1460, "passed": 1460, "failed": 0, "skipped": 0 },
+    "plang": { "total": 22, "passed": 22, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 7,
+    "changed_files_total": 11,
+    "uncovered_files": [
+      "PLang/Runtime2/actions/settings/get.cs (no PLang test)",
+      "PLang/Runtime2/actions/settings/set.cs (no PLang test)",
+      "PLang/Runtime2/actions/settings/remove.cs (no PLang test)",
+      "PLang/Runtime2/actions/settings/types.cs (no PLang test)"
+    ],
+    "note": "dotnet-coverage profiler failed to initialize in this environment; coverage is manual analysis only"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "PLang/Runtime2/Engine/Test/this.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+      "issue": "Test runner cannot detect assertion failures. Step.RunAsync returns immediately on error (line 74), skipping AfterStep event. TrackAssertionFailures is registered on AfterStep but never fires for failed steps. Line 146 of test runner explicitly excludes AssertionError from fallback detection.",
+      "impact": "ALL assertion failures in PLang tests are silently reported as PASS. Every PLang test with assertions is potentially a false green. Confirmed: Settings test assertion fails (Expected: 20971520, Actual: null) but test runner reports PASS.",
+      "suggestion": "Two-part fix: (1) In Step.RunAsync, fire AfterStep event even on failure (move line 78 above line 74), OR store step result in __stepResult before returning. (2) In test runner line 146, add: if AssertionError AND result.Failures is empty, add the failure from runResult.Error."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal",
+      "code_file": "Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr",
+      "issue": "PLang test maps to variable.set/variable.get, NOT settings.set/settings.get. Step 0 sets variable 'max gzip size' but Step 1 gets 'archive.max' — different variable names. Manual execution confirms assertion fails: Expected 20971520, Actual (null). Test runner reports PASS due to finding #1.",
+      "impact": "Zero PLang pipeline coverage for the settings module. The Settings test directory gives false confidence that settings are tested end-to-end.",
+      "suggestion": "Rewrite the test to use explicit settings syntax (e.g., 'set settings ApiKey = sk-123' / 'get settings ApiKey, write to %result%' / 'assert %result% equals sk-123'). Rebuild .pr and verify actions map to settings.set/settings.get."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/actions/settings/get.cs",
+      "issue": "No PLang integration test for settings.set, settings.get, or settings.remove action handlers. C# unit tests exist but bypass the full pipeline (builder -> .pr -> GoalMapper -> runtime).",
+      "impact": "Builder prompt may not correctly map PLang natural language to settings actions. GoalMapper mapping untested. The only existing Settings PLang test maps to variable module instead.",
+      "suggestion": "Create Tests/Runtime2/Settings/ tests: (1) Set then Get, (2) Get missing key returns AskError, (3) Remove then verify gone. Each test validates the full pipeline."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+      "issue": "SettingsData.GetChild lines 54-55 (DataSource error path: 'if (!result.Success) return result') has no test coverage. Only the null-value -> AskError path is tested.",
+      "impact": "A SQLite error during settings resolution (database locked, disk error) would follow this code path. If the error propagation is broken, it would return incorrect data instead of an error.",
+      "suggestion": "Add a test that injects a failing IDataSource (mock or corrupted DB) and verifies that SettingsData.GetChild propagates the DataSourceError correctly."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+      "issue": "MemoryStack.Clone shares SettingsData by reference (line 184-186). When clone.Context is set (line 195), it mutates the original's SettingsData.Context because they point to the same object.",
+      "impact": "In concurrent scenarios with multiple cloned MemoryStacks, the last one to set Context wins on the shared SettingsData. Could cause child Data objects to receive the wrong PLangContext.",
+      "suggestion": "Either accept this as a known limitation (document it) or create SettingsData per clone. Low urgency — SettingsData doesn't use Context for core behavior."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "issue": "DeserializeValue (line 266) catches only JsonException. Data.UnwrapJsonElement throws InvalidOperationException on JSON nesting depth > 128 (Data.cs line 213). This exception would propagate through Get() uncaught, violating the 'never throw' contract.",
+      "impact": "Low — requires malicious data already stored in SQLite. But contract violation means callers expecting Data get an exception instead.",
+      "suggestion": "Add catch (InvalidOperationException) in DeserializeValue, or add a general catch (Exception) fallback in Get() that wraps as DataSourceError."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "issue": "GetAll on empty table not tested. All GetAll tests add data first.",
+      "impact": "Minimal — empty table returns empty list, straightforward path.",
+      "suggestion": "Add one test: GetAll on a table with no rows returns empty List<Data>."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "code_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "issue": "DataSourceTests.Cleanup (line 31) uses bare catch. If temp directory cleanup fails silently, leaked state could affect subsequent tests on shared file systems.",
+      "impact": "Low — test infrastructure concern, not functional.",
+      "suggestion": "Log cleanup failures rather than silently swallowing."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Two critical false-green findings: (1) The PLang test runner fundamentally cannot detect assertion failures — Step.RunAsync skips AfterStep events on failure, and the test runner explicitly ignores AssertionErrors in its fallback path. Confirmed by running the Settings test manually, which fails (Expected: 20971520, Actual: null) but the test runner reports PASS. (2) The only Settings PLang test maps to variable module operations, not settings operations, providing zero pipeline coverage for the new settings feature. Additionally, no PLang integration tests exist for settings.set/get/remove, and the SettingsData DataSource error path (lines 54-55) has no test coverage."
+}

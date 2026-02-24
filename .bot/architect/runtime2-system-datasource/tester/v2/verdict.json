@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "PLang test runner cannot detect assertion failures (pre-existing bug exposed here). Settings PLang test is false green — maps to variable module, not settings. No PLang integration tests for settings.set/get/remove." }
