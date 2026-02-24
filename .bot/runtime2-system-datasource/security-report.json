@@ -1,0 +1,188 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-system-datasource",
+  "timestamp": "2026-02-24T16:30:00Z",
+  "phase": "both",
+  "threat_model": "PLang is user-sovereign. .pr files run in a trusted environment. The trust boundary is cryptographic signatures on Data. Security focuses on: (1) robustness against malformed external data that flows through DataSource (API responses stored as settings, then retrieved), (2) error handling completeness at serialization boundaries, (3) SQL injection prevention in the SQLite layer.",
+  "attack_surface": [
+    {
+      "area": "sqlite-datasource-sql",
+      "exposure": "SqliteDataSource accepts table names and key values for SQL operations. Table names are interpolated into SQL strings (bracket-quoted). Key values are parameterized.",
+      "trust_boundary": "Table names and keys originate from .pr file actions (trusted) or IDataSource.ResolveTableName (compile-time namespace, trusted). No external untrusted input enters table/key names directly.",
+      "mitigations": [
+        "SanitizeTableName strips all non-alphanumeric/underscore characters",
+        "SanitizeTableName lowercases output and falls back to 'default_table' for empty results",
+        "Key values always parameterized (@key) — no SQL injection possible via keys",
+        "Bracket quoting [{sanitized}] protects against reserved words",
+        "Test coverage: SQL injection test with 'settings; DROP TABLE settings' passes"
+      ],
+      "gaps": [
+        "No length limit on sanitized table names (SQLite handles practically, but unbounded schema growth possible)"
+      ]
+    },
+    {
+      "area": "sqlite-datasource-deserialization",
+      "exposure": "DeserializeValue (SqliteDataSource.cs:256) parses JSON from stored TEXT column via JsonDocument.Parse → Data.UnwrapJsonElement. Called on every Get() and GetAll().",
+      "trust_boundary": "Stored data originates from SerializeValue, which serializes objects from .pr actions. If user stores external API responses, untrusted data enters this path.",
+      "mitigations": [
+        "JsonDocument.Parse has default MaxDepth=64",
+        "Data.UnwrapJsonElement has depth limit of 128",
+        "DeserializeValue catches JsonException and returns raw string as fallback"
+      ],
+      "gaps": [
+        "Data.UnwrapJsonElement throws InvalidOperationException on depth > 128 — DeserializeValue only catches JsonException, not InvalidOperationException",
+        "Get() catches SqliteException and IOException but not InvalidOperationException — exception propagates uncaught",
+        "SettingsData.GetChild has no try/catch — InvalidOperationException propagates to caller"
+      ]
+    },
+    {
+      "area": "settings-data-bridge",
+      "exposure": "SettingsData.GetChild (SettingsData.cs:27) intercepts %Settings.X% resolution. Uses sync-over-async (.GetAwaiter().GetResult()) to call DataSource.Get(). Parses dot-notation paths.",
+      "trust_boundary": "Path comes from .pr file variable references (trusted). The loaded VALUE may contain untrusted data if user stored external input.",
+      "mitigations": [
+        "Delegates to Data.GetChild for sub-path navigation (inherits MaxNavigationDepth=100)",
+        "Sync-over-async is safe for SQLite (no real async I/O)",
+        "Missing keys return AskError (not null/exception)"
+      ],
+      "gaps": [
+        "No try/catch around DataSource.Get() call — exceptions from UnwrapJsonElement propagate",
+        "If IDataSource is swapped for a real async implementation, .GetAwaiter().GetResult() would deadlock on SynchronizationContext-bound threads"
+      ]
+    },
+    {
+      "area": "actor-datasource-lifecycle",
+      "exposure": "Actor.CreateDataSource (Actor.cs:71) constructs DB path from actor name. Actor.DataSource is lazy-initialized.",
+      "trust_boundary": "Actor names are restricted to 'system'/'service'/'user' by Engine.GetActor() switch statement. No external input.",
+      "mitigations": [
+        "Actor names hardcoded in switch — no path traversal possible",
+        "DB directory created via IPLangFileSystem abstraction",
+        "Lazy<IDataSource> ensures single initialization"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "lazy-params-error-propagation",
+      "exposure": "LazyParamsGenerator now produces __resolutionError field. When MemoryStack.Get() returns non-Success Data (e.g., AskError for missing settings), the error short-circuits before Run().",
+      "trust_boundary": "Error data comes from DataSource/SettingsData (internal). The error message contains the key name from the .pr file.",
+      "mitigations": [
+        "__resolutionError checked before Run() — handler never executes with unresolved parameters",
+        "Both full-match and interpolation paths handle resolution errors",
+        "Error propagation preserves the original error type (AskError, DataSourceError)"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "settings-repository-migration",
+      "exposure": "SqliteSettingsRepository renames 'Settings' table to 'SettingsV1' on startup. No locking.",
+      "trust_boundary": "Local database file. Only the PLang process accesses it.",
+      "mitigations": [
+        "Migration checks for table existence before rename",
+        "SQLite handles concurrent access with WAL mode"
+      ],
+      "gaps": [
+        "TOCTOU race: two processes starting simultaneously could both find 'Settings', one rename fails"
+      ]
+    },
+    {
+      "area": "memorystack-clone",
+      "exposure": "MemoryStack.Clone preserves SettingsData by reference (not deep-cloned). Context setter mutates shared instance.",
+      "trust_boundary": "Internal cloning during goal calls. No external data path.",
+      "mitigations": [
+        "SettingsData is stateless — loads from DB each time, doesn't cache",
+        "Context field on SettingsData is not used for core behavior"
+      ],
+      "gaps": [
+        "Shared SettingsData reference means Context mutation in one clone affects all — informational only"
+      ]
+    },
+    {
+      "area": "resource-exhaustion",
+      "exposure": "SqliteDataSource has no limits on: number of tables created, number of keys per table, size of stored values.",
+      "trust_boundary": "All writes come from .pr file actions (user-sovereign).",
+      "mitigations": [
+        "SQLite has practical limits (SQLITE_MAX_LENGTH default 1 billion bytes)",
+        "EnsureTable uses CREATE TABLE IF NOT EXISTS — idempotent",
+        "User controls their own .pr files"
+      ],
+      "gaps": [
+        "No application-level size/count limits — relies on SQLite's own limits"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "DeserializeValue (SqliteDataSource.cs:256) calls Data.UnwrapJsonElement which throws InvalidOperationException on depth > 128. DeserializeValue only catches JsonException. Get() only catches SqliteException and IOException. The InvalidOperationException propagates uncaught through SettingsData.GetChild (no try/catch) to the caller.",
+      "preconditions": "User stores deeply nested JSON from external source (API response, file read) as a settings value. On retrieval, if nesting exceeds 128 levels, UnwrapJsonElement throws. Note: JsonDocument.Parse default MaxDepth=64 would fire first in most cases, throwing JsonException (which IS caught). The gap only manifests if System.Text.Json MaxDepth is raised or if the nesting is between 64-128 and unwrapping amplifies depth.",
+      "impact": "Unhandled exception propagates up the call stack. Depending on the caller's error handling, this could crash the step or the goal. Not a process crash (StackOverflowException) — the depth guard works, but the exception type is wrong for the catch filter.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+        "PLang/Runtime2/Engine/DataSource/SettingsData.cs"
+      ],
+      "exploit_sketch": "1. User .pr stores API response with 65+ nested objects in settings\n2. System.Text.Json parses at MaxDepth=64 → JsonException caught, returns raw string\n3. But if MaxDepth is configured higher, or value is already a deserialized object stored with >128 nesting, UnwrapJsonElement throws InvalidOperationException\n4. The most realistic path: value stored as object (not string), serialized to JSON with 128+ nesting, then re-deserialized on Get()",
+      "proposed_fix": "Add catch (InvalidOperationException) alongside catch (JsonException) in DeserializeValue. Or broaden the catch in Get() to include InvalidOperationException. Return Data.FromError with a descriptive DataSourceError.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "SqliteDataSource has no use-after-dispose guard. The _disposed field is set in Dispose() but never checked in Get/Set/Remove/Exists/GetAll/Tables. Operations after disposal may produce confusing SqliteException errors.",
+      "preconditions": "Actor disposed (engine shutdown) while a concurrent task still accesses DataSource. Race condition during shutdown.",
+      "impact": "Confusing error messages rather than clear ObjectDisposedException. SqliteException would be caught by existing catch blocks, so no crash — just misleading error classification.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "exploit_sketch": "N/A — shutdown race. Not externally triggerable.",
+      "proposed_fix": "Add ThrowIfDisposed() check at the top of each public method: if (_disposed) throw new ObjectDisposedException(nameof(SqliteDataSource)). Then catch ObjectDisposedException in the caller or add it to the catch filter.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "EnsureTable is called on every CRUD operation (Get, Set, Remove, Exists, GetAll). Each call opens a new connection and runs CREATE TABLE IF NOT EXISTS. For hot paths like %Settings.X% resolved on every step, this is redundant I/O.",
+      "preconditions": "High-frequency settings access in a loop.",
+      "impact": "Performance degradation. Not a security vulnerability but amplifies any DoS scenario. SQLite connection pooling mitigates the connection overhead, but the DDL statement still executes.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "exploit_sketch": "N/A — performance concern.",
+      "proposed_fix": "Cache known tables in a HashSet<string>. After EnsureTable succeeds once for a table name, skip subsequent calls. Clear cache on Dispose.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "SqliteSettingsRepository table rename migration (Settings → SettingsV1) has a TOCTOU race. Two concurrent processes could both detect the 'Settings' table exists, then one rename succeeds and the other throws SqliteException because the table was already renamed.",
+      "preconditions": "Two PLang processes starting simultaneously against the same database file.",
+      "impact": "One process fails to start. Restart resolves it (renamed table already exists, CREATE TABLE IF NOT EXISTS for SettingsV1 succeeds).",
+      "affected_files": ["PLang/Services/SettingsService/SqliteSettingsRepository.cs"],
+      "exploit_sketch": "N/A — startup race in legacy v1 code. Single-process typical usage.",
+      "proposed_fix": "Wrap the check-and-rename in a transaction, or catch SqliteException during rename and retry the CREATE TABLE IF NOT EXISTS.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "hardening",
+      "vector": "SettingsData.GetChild uses sync-over-async (.GetAwaiter().GetResult()). Safe for SQLite (no real async I/O) but would deadlock if IDataSource is ever swapped for a network-backed implementation on a SynchronizationContext-bound thread.",
+      "preconditions": "IDataSource swapped for a real async implementation (e.g., PostgreSQL, Redis). Currently only SqliteDataSource exists.",
+      "impact": "Deadlock on UI/web threads with SynchronizationContext. Not exploitable with current SQLite-only implementation.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SettingsData.cs"],
+      "exploit_sketch": "N/A — design concern for future extensibility.",
+      "proposed_fix": "Document the sync-over-async constraint on IDataSource. Or make GetChild async (requires making Data.GetChild virtual async, which is a larger change). Low priority — current implementation is safe.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 6,
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "No application-level limits on number of tables, keys per table, or value sizes in SqliteDataSource. A user's .pr file could create unbounded storage.",
+      "preconditions": "User writes a PLang goal that stores many keys or large values in a loop.",
+      "impact": "Disk exhaustion. User-sovereign — the user controls their .pr files.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "status": "by-design"
+    }
+  ],
+  "summary": "The DataSource + Settings Bridge introduces a well-structured persistence layer with good SQL injection prevention (parameterized keys, sanitized table names). The primary finding is a medium-severity gap in exception handling: DeserializeValue catches JsonException but not InvalidOperationException from UnwrapJsonElement's depth guard, allowing an uncaught exception to propagate when deeply nested JSON is stored and retrieved. Three low-severity findings relate to lifecycle (use-after-dispose guard missing), performance (EnsureTable on every op), and a TOCTOU race in the legacy table rename migration. The sync-over-async pattern in SettingsData is safe for SQLite but constrains future IDataSource implementations. No critical or high severity findings — the SQL injection surface is properly mitigated and the actor name restriction prevents path traversal."
+}

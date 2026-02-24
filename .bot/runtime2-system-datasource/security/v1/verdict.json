@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "No critical or high severity findings. One medium finding: DeserializeValue catches JsonException but not InvalidOperationException from UnwrapJsonElement depth guard. Three low findings: missing use-after-dispose guard, EnsureTable called on every op, TOCTOU race in v1 table rename. SQL injection properly mitigated. Actor names hardcoded — no path traversal."
+}

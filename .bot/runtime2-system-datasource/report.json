@@ -120,6 +120,60 @@
         "health": "C# tests: 1465/1465, PLang tests: 23/23 (both Settings tests pass)",
         "notes": "All v2 findings resolved. Remaining minor: test runner 2.8% coverage, SqliteDataSource error paths untested."
       }
+    },
+    {
+      "id": "a9b8c7d6-e5f4-3210-fedc-ba9876543210",
+      "bot": "security",
+      "timestamp_start": "2026-02-24T16:15:00Z",
+      "timestamp_end": "2026-02-24T16:45:00Z",
+      "intent": "Security audit of DataSource + Settings Bridge feature",
+      "before": {
+        "assumptions": "New SQLite persistence layer introduces SQL injection surface, JSON deserialization paths, and file I/O. Previous security audits (data-envelope-architecture, runtime2-settings) established the threat model and fixed all HIGH severity findings.",
+        "risk": "Medium — new persistence layer with SQL and deserialization. SQLite is well-understood but the integration points need verification."
+      },
+      "plan": "Phase 1 (Blue Team): Map 8 attack surfaces — SQL injection, JSON deserialization, sync-over-async, actor→path mapping, error propagation, migration races, resource exhaustion, clone semantics. Phase 2 (Red Team): Attempt exploit construction for each surface.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang.Generators/LazyParamsGenerator.cs",
+            "PLang/Services/SettingsService/SqliteSettingsRepository.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security review of all new and modified files in the DataSource feature"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-system-datasource/security-report.json",
+            ".bot/runtime2-system-datasource/security/v1/verdict.json",
+            ".bot/runtime2-system-datasource/security/v1/summary.md",
+            ".bot/runtime2-system-datasource/security/v1/plan.md",
+            ".bot/runtime2-system-datasource/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security audit artifacts"
+        }
+      ],
+      "after": {
+        "status": "Verdict: PASS. No critical or high severity findings.",
+        "health": "1 medium finding (uncaught InvalidOperationException in DeserializeValue), 3 low findings (use-after-dispose, EnsureTable perf, migration race), 1 accepted-risk, 1 by-design.",
+        "notes": "SQL injection properly mitigated. Path traversal impossible (actor names hardcoded). Error propagation in generated code correct. Medium finding requires specific conditions (externally-sourced deeply nested JSON stored in settings)."
+      }
     }
   ]
 }
