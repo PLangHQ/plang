@@ -1,0 +1,97 @@
+{
+  "Text": "convert %obj% to json, write to %json%",
+  "ModuleType": "PLang.Modules.SerializerModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to convert an object (%obj%) to its JSON string representation and store the result in %json%. The Serialize method with the 'json' serializer is appropriate for this conversion. The output should be captured in %json%.",
+    "Name": "Serialize",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "data",
+        "Value": "%obj%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "serializer",
+        "Value": "json"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Byte[]",
+        "VariableName": "%json%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "data": {
+        "Name": "data",
+        "FullTypeName": "System.Object"
+      },
+      "serializer": {
+        "Name": "serializer",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {
+      "%json%": {
+        "Name": "%json%",
+        "FullTypeName": "System.Byte[]"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert an object variable into its JSON string representation and store the result in another variable\n## functions available starts ##\n{\"Methods\":[{\"MethodName\":\"AddSerializer\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Int32>\"}},{\"MethodName\":\"ConvertToType\",\"Parameters\":[{\"Type\":\"PLang.Models.ObjectValue`1[System.Collections.Generic.List`1[System.String]]\",\"Name\":\"variables\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"serializer(message_pack|json). User can also define his own\",\"MethodName\":\"Serialize\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"serializer\",\"DefaultValue\":\"json\",\"IsRequired\":false},{\"Type\":\"System.IO.Stream\",\"Name\":\"stream\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Byte[]\"}},{\"MethodName\":\"Deserialize\",\"Parameters\":[{\"Type\":\"System.IO.Stream\",\"Name\":\"stream\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"serializer\",\"DefaultValue\":\"json\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Deserialize\",\"Parameters\":[{\"Type\":\"System.Byte[]\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"serializer\",\"DefaultValue\":\"json\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.ObjectValue`1[System.Collections.Generic.List`1[System.String]]\",\"Name\":\"variables\",\"TypeProperties\":[{\"Type\":\"System.Boolean\",\"Name\":\"IsSystemVariable\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Value\",\"IsRequired\":false},{\"Type\":\"System.Type\",\"Name\":\"Type\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"Initiated\",\"IsRequired\":true},{\"Type\":\"PLang.Models.Properties\",\"Name\":\"Properties\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Updated\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"Data\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"System.IO.Stream\",\"Name\":\"stream\",\"TypeProperties\":[{\"Type\":\"System.Int64\",\"Name\":\"Position\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"ReadTimeout\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"WriteTimeout\",\"IsRequired\":true}],\"IsRequired\":false}]}\n## functions available ends ##\n## defined variables ##\nobj (type:object), json (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "convert %obj% to json, write to %json%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to convert an object (%obj%) to its JSON string representation and store the result in %json%. The Serialize method with the 'json' serializer is appropriate for this conversion. The output should be captured in %json%.\",\n  \"Name\": \"Serialize\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"data\",\n      \"Value\": \"%obj%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"serializer\",\n      \"Value\": \"json\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Byte[]\",\n      \"VariableName\": \"%json%\"\n    }\n  ]\n}",
+      "Tools": null
+    }
+  ]
+}

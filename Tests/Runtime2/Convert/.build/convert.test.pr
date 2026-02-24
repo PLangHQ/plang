@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal performs a series of conversions and assertions to validate data types and structures. It converts various literals to their respective types, checks their values, and manipulates an object to ensure correct JSON serialization and deserialization.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "ef8c8ab07e5287f399fc332f06a79e716b498c5896e33b8849c3fce245224f61",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -55,6 +57,7 @@
           "warnings": []
         }
       ],
+      "hash": "457713dc47bb509fe6852c5ae906212cdebf1484d3ac4e53a88688c90e242ca7",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -84,6 +87,7 @@
           "warnings": []
         }
       ],
+      "hash": "d6ec0eda7826c3992f2203e097d6bf1e0f1730b44981374058340059044ab103",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -113,6 +117,7 @@
           "warnings": []
         }
       ],
+      "hash": "00f455bf442f33b056a7820b853efc8697bf77cacd03ccfd07bc949bec3a4e70",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -142,6 +147,7 @@
           "warnings": []
         }
       ],
+      "hash": "eefe210376eba9f218fa2aa1ffa38ceb444fa42117111d348aca8ed8edefb922",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -166,6 +172,7 @@
           "warnings": []
         }
       ],
+      "hash": "6dbb52175bcfe8d01a4ac2205ed509a642072a5ddde4359cec699ca5f0cbda3f",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -195,6 +202,7 @@
           "warnings": []
         }
       ],
+      "hash": "fdcc1c43e157195c9fcdf22db25e720fba4ec38e36a889d6778510d82f8c1419",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -219,6 +227,7 @@
           "warnings": []
         }
       ],
+      "hash": "4d0884e7d1ccb9a83804adc1374fca80fd0e3ecf370cfb4d6d5c6b9334d973aa",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -248,6 +257,7 @@
           "warnings": []
         }
       ],
+      "hash": "4caed25e475b3eab05a235e55acce76a6e36192d42b9b50699abb942ba8787df",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -277,6 +287,7 @@
           "warnings": []
         }
       ],
+      "hash": "3556638aaa30cc26002893e652dd60b8d89788b7db8d65f42d35c41b0b615b10",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -309,6 +320,7 @@
           "warnings": []
         }
       ],
+      "hash": "8f2219deeb96427baff23418df22638ce4b8c3e21a82253b9790d797eac5d4f1",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -338,6 +350,7 @@
           "warnings": []
         }
       ],
+      "hash": "acb83bbde4084261229e82561a9889acd5e138ae40063c81a5658b46d7181a24",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -367,6 +380,7 @@
           "warnings": []
         }
       ],
+      "hash": "74122c0de753b49e02e6c6d81fb151c40df18c1d005dee9e5cc8a870155dded0",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -396,6 +410,7 @@
           "warnings": []
         }
       ],
+      "hash": "7bc258480455a1864ccbdcbf3bdd9c9a3462bd97373561107ddd7eb2141c82c0",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -425,6 +440,7 @@
           "warnings": []
         }
       ],
+      "hash": "4936c65243b44d9550a9ad0ca3fbd6c3dff8ba5cdd2af9719c2b92df35bc9ace",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -438,6 +454,16 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "%intVal%": "An integer value resulting from converting the string \u002742\u0027.",
+    "%strVal%": "A string value resulting from converting the float 3.14.",
+    "%boolVal%": "A boolean value resulting from converting the string \u0027true\u0027.",
+    "%b64%": "A base64 encoded string resulting from converting \u0027Hello World\u0027.",
+    "%decoded%": "The decoded string from the base64 value.",
+    "%obj%": "An object containing a name and age, specifically {name: \u0027Alice\u0027, age: 30}.",
+    "%json%": "A JSON string representation of the object %obj%.",
+    "%parsed%": "The parsed object from the JSON string %json%."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

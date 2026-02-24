@@ -60,6 +60,9 @@
           "warnings": []
         }
       ],
+      "onError": {
+        "ignoreError": true
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true

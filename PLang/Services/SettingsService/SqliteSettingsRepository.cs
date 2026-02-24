@@ -159,8 +159,15 @@ namespace PLang.Services.SettingsService
 
 			using (IDbConnection connection = new SqliteConnection(datasource))
 			{
+				// Migrate existing databases: rename old "Settings" table to "SettingsV1"
+				var oldTable = connection.Query<dynamic>("SELECT name FROM sqlite_master WHERE type='table' AND name='Settings'");
+				if (oldTable.Any())
+				{
+					connection.Execute("ALTER TABLE Settings RENAME TO SettingsV1");
+				}
+
 				string sql = $@"
-CREATE TABLE IF NOT EXISTS Settings (
+CREATE TABLE IF NOT EXISTS SettingsV1 (
     [ClassOwnerFullName] TEXT NOT NULL,
     [ValueType] TEXT NOT NULL,
     [Key] TEXT NOT NULL,
@@ -191,7 +198,7 @@ CREATE TABLE IF NOT EXISTS Settings (
 			CreateSettingsTable(dataSource);
 			using (IDbConnection connection = new SqliteConnection(dataSource))
 			{
-				var settingsExists = connection.Query<dynamic>("PRAGMA table_info(Settings)");
+				var settingsExists = connection.Query<dynamic>("PRAGMA table_info(SettingsV1)");
 				if (settingsExists.Count() == 0)
 				{
 					CreateSettingsTable(dataSource);
@@ -219,7 +226,7 @@ CREATE TABLE IF NOT EXISTS Settings (
 					var columnName = property.Name;
 					var columnType = ConvertToSQLiteType(property.PropertyType);
 
-					var alterTableCommand = $"ALTER TABLE Settings ADD COLUMN {columnName} {columnType};";
+					var alterTableCommand = $"ALTER TABLE SettingsV1 ADD COLUMN {columnName} {columnType};";
 					connection.Execute(alterTableCommand);
 				}
 			}
@@ -257,7 +264,7 @@ CREATE TABLE IF NOT EXISTS Settings (
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
-				return connection.Query<Setting>("SELECT * FROM Settings");			
+				return connection.Query<Setting>("SELECT * FROM SettingsV1");			
 			}
 		}
 
@@ -267,7 +274,7 @@ CREATE TABLE IF NOT EXISTS Settings (
 
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
-				connection.Execute("DELETE FROM Settings WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+				connection.Execute("DELETE FROM SettingsV1 WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
 					new { setting.ClassOwnerFullName, setting.Key });
 				return;
 			}
@@ -278,16 +285,16 @@ CREATE TABLE IF NOT EXISTS Settings (
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{				
-				var result = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM Settings WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+				var result = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM SettingsV1 WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
 					new { setting.ClassOwnerFullName, setting.Key });
 				if (result == null)
 				{
-					connection.Execute(@"INSERT INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
+					connection.Execute(@"INSERT INTO SettingsV1 (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created)
 						VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)",
 						new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
 				} else
 				{
-					connection.Execute(@"UPDATE Settings SET Value=@Value, SignatureData=@SignatureData WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+					connection.Execute(@"UPDATE SettingsV1 SET Value=@Value, SignatureData=@SignatureData WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
 						new { setting.ClassOwnerFullName, setting.Key, setting.Value, setting.SignatureData });
 				}				
 			}

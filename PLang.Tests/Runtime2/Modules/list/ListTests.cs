@@ -274,8 +274,12 @@ public class ListTests
         var action = new Unique { Context = context, ListName = "myList" };
         var result = await action.Run();
 
-        var listResult = result.Value as ListResult;
-        await Assert.That(listResult!.count).IsEqualTo(3);
+        var list = result.Value as List<object?>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(3);
+        await Assert.That(list).Contains("a");
+        await Assert.That(list).Contains("b");
+        await Assert.That(list).Contains("c");
     }
 
     // --- Range ---

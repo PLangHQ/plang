@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal is designed to output the name of the engine. It retrieves the engine\u0027s name and writes it out as a string.",
   "steps": [
     {
       "index": 0,
@@ -31,6 +32,7 @@
           "warnings": []
         }
       ],
+      "hash": "f78b95bb2fa247f88494bf6a314e57eed2624f85810647860570e8a4f05434e5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -44,6 +46,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "!engine.Name": "The name of the engine that needs to be outputted."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

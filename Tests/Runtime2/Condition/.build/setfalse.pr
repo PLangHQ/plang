@@ -1,5 +1,6 @@
 {
   "name": "SetFalse",
+  "description": "The SetFalse goal is designed to set a specific variable, \\%wasFalse\\%, to true. This goal consists of a single step that initializes the variable to indicate a false state has been set.",
   "steps": [
     {
       "index": 0,
@@ -12,12 +13,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%wasFalse%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": true,
               "type": "bool"
             }
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "d98fd92de7500eab3dce4c61030672e2e94fc20bd57448443bebe4b7e2a0e72a",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -39,6 +41,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "wasFalse": "A boolean variable that indicates whether the false state has been set."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "SetFalse"

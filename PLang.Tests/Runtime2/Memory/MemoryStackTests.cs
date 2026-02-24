@@ -196,6 +196,73 @@ public class MemoryStackTests
     }
 
     [Test]
+    public async Task Get_ArrayIndexWithProperty_NavigatesCorrectly()
+    {
+        var stack = new MemoryStack();
+        var arr = new List<object>
+        {
+            new Dictionary<string, object?> { { "id", 42 }, { "name", "first" } },
+            new Dictionary<string, object?> { { "id", 99 }, { "name", "second" } }
+        };
+        stack.Set("arr", arr);
+
+        var result = stack.Get("arr[0].id");
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo(42);
+    }
+
+    [Test]
+    public async Task Get_NestedArrayNavigation_NavigatesCorrectly()
+    {
+        var stack = new MemoryStack();
+        var list = new List<object>
+        {
+            new Dictionary<string, object?>
+            {
+                { "items", new List<object>
+                    {
+                        new Dictionary<string, object?> { { "val", "deep" } }
+                    }
+                }
+            }
+        };
+        stack.Set("list", list);
+
+        var result = stack.Get("list[0].items[0].val");
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo("deep");
+    }
+
+    [Test]
+    public async Task Get_VariableIndex_ResolvesAndNavigates()
+    {
+        var stack = new MemoryStack();
+        var items = new List<object> { "zero", "one", "two" };
+        stack.Set("items", items);
+        stack.Set("idx", 1);
+
+        var result = stack.Get("items[idx]");
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo("one");
+    }
+
+    [Test]
+    public async Task Get_DirectArrayIndex_NavigatesCorrectly()
+    {
+        var stack = new MemoryStack();
+        var items = new List<object> { "first", "second", "third" };
+        stack.Set("items", items);
+
+        var result = stack.Get("items[1]");
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo("second");
+    }
+
+    [Test]
     public async Task Get_MixedNotation_NavigatesComplexPath()
     {
         var stack = new MemoryStack();

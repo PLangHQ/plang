@@ -1,6 +1,6 @@
 {
   "name": "Inner",
-  "description": "The Inner goal is designed to output the current depth of the call stack. It retrieves the depth using the call stack\u0027s Depth property and prints it in the format \u0027Inner depth: [depth_value]\u0027.",
+  "description": "The Inner goal outputs the current depth of the call stack and the call stack itself. It provides insight into the current execution context by displaying the depth and the contents of the call stack.",
   "steps": [
     {
       "index": 0,
@@ -32,7 +32,7 @@
           "warnings": []
         }
       ],
-      "hash": "c93a408523d196b077d5104a57a5fd8d4ce11f84e3fe491b8c924590dc007625",
+      "hash": "f3720482ef8827096c49a0da2dc933daec40d2aa24339838d10263edb48932df",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -67,6 +67,7 @@
           "warnings": []
         }
       ],
+      "hash": "96883950435550e4bc54d4e430d8383f68b68195e91b85de2c0359b822f7cab5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -80,7 +81,10 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {},
+  "inputParameters": {
+    "!callStack.Depth": "The current depth of the call stack, which indicates how many function calls are currently active.",
+    "!callStack": "The current state of the call stack, which contains the list of active function calls."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Inner"

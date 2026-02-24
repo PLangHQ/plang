@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal initializes a flag and evaluates its state to determine which subsequent actions to take. It sets a variable %flag% to true and checks its value to potentially call the SetTrue function. It also sets a %noFlag% variable to false and uses its value to decide between calling SetWrong or SetFalse. Assertions are made to ensure that the correct branches of logic are executed based on the values of these flags.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "80d31c20d005114dad95711566e50eb17b3bd54bc306457d77b68dd0096c736c",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -55,6 +57,7 @@
           "warnings": []
         }
       ],
+      "hash": "d1dc91f0d602b7e0fdca2cbd16e51216357970e2a82c10e645ea5c99415f241c",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -84,6 +87,7 @@
           "warnings": []
         }
       ],
+      "hash": "8798ea61f18740ed82c64603781afe0ab85ab53b29b5e5fc92f81d83c3333a3a",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -113,6 +117,7 @@
           "warnings": []
         }
       ],
+      "hash": "97783790bf4c21009446af5ad7c28567685f6c025688c828761ab921f8e04fa7",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -147,6 +152,7 @@
           "warnings": []
         }
       ],
+      "hash": "8eb4b4f03504b67056c366f84bfc85f0e71c5093b516dc68188f47c30a46e3aa",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -176,6 +182,7 @@
           "warnings": []
         }
       ],
+      "hash": "a28494a4fdb20d09facfbecdb0f3a730df7c99e81228914c46d86e1e892f872b",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -189,6 +196,10 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "%wasTrue%": "A boolean variable that indicates whether the SetTrue function was called successfully.",
+    "%wasFalse%": "A boolean variable that indicates whether the SetFalse function was called successfully."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

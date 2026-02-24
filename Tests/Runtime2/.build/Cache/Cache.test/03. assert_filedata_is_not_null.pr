@@ -1,0 +1,87 @@
+{
+  "Text": "assert %fileData% is not null, \"cached read should return value\"",
+  "ModuleType": "PLang.Modules.AssertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to assert that the variable %fileData% is not null to ensure that the cached read operation returned a value. The 'IsEqual' function can be used to check that %fileData% is not equal to null.",
+    "Name": "IsEqual",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "expectedValue",
+        "Value": null
+      },
+      {
+        "Type": "System.Object",
+        "Name": "actualValue",
+        "Value": "%fileData%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "expectedValue": {
+        "Name": "expectedValue",
+        "FullTypeName": "System.Object"
+      },
+      "actualValue": {
+        "Name": "actualValue",
+        "FullTypeName": "System.Object"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nEnsure that the variable %fileData% contains a value and is not null, validating that the cached read operation was successful\n## functions available starts ##\n{\"Description\":\"Assert object/variable/text or other entity to be what is epxected. For unit testing\",\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"Contains\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true}]},{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\n## functions available ends ##\n## defined variables ##\nfileData (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "assert %fileData% is not null, \"cached read should return value\""
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %fileData% is not null to ensure that the cached read operation returned a value. The 'IsEqual' function can be used to check that %fileData% is not equal to null.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%fileData%\"\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
+    }
+  ]
+}

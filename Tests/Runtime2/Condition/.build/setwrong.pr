@@ -1,5 +1,6 @@
 {
   "name": "SetWrong",
+  "description": "The SetWrong goal is designed to set a variable indicating whether something was wrong. It accomplishes this by setting the variable \\%wasWrong\\% to true.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "a3a4d8433d8b8a072c36f2821ae1969bc85f4f5221b1b9c16b6fe173033c73e5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -39,6 +41,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "\\%wasWrong\\%": "A boolean variable that indicates if something was wrong, which will be set to true by this goal."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "SetWrong"

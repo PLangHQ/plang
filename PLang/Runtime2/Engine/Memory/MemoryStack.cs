@@ -79,7 +79,17 @@ public class MemoryStack
 
         // Handle paths like "user.name" or "items[0].value"
         var rootName = GetRootName(name);
-        var remaining = name.Length > rootName.Length ? name[(rootName.Length + 1)..] : null;
+        string? remaining;
+        if (name.Length > rootName.Length)
+        {
+            remaining = name[rootName.Length] == '.'
+                ? name[(rootName.Length + 1)..]
+                : name[rootName.Length..];
+        }
+        else
+        {
+            remaining = null;
+        }
 
         if (!_variables.TryGetValue(rootName, out var root))
             return null;

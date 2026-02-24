@@ -23,7 +23,7 @@
                 20,
                 30
               ],
-              "type": "list"
+              "type": "array"
             }
           ],
           "errors": [],
@@ -52,11 +52,6 @@
             {
               "name": "value",
               "value": 40,
-              "type": "int"
-            },
-            {
-              "name": "atIndex",
-              "value": -1,
               "type": "int"
             }
           ],
@@ -108,17 +103,17 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 4,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%count%",
               "type": "string"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "list should have 4 items after add",
               "type": "string"
             }
@@ -171,12 +166,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 10,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%first%",
               "type": "string"
             }
@@ -229,12 +224,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 40,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%last%",
               "type": "string"
             }
@@ -292,12 +287,12 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%has20%",
               "type": "string"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "list should contain 20",
               "type": "string"
             }
@@ -355,12 +350,12 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%joined%",
               "type": "string"
             },
             {
-              "name": "container",
+              "name": "Container",
               "value": "10",
               "type": "string"
             }
@@ -384,12 +379,12 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%joined%",
               "type": "string"
             },
             {
-              "name": "container",
+              "name": "Container",
               "value": "40",
               "type": "string"
             }
@@ -472,6 +467,36 @@
       "indent": 0,
       "actions": [
         {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%partsCount%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "get item at index 1 from %myList%, write to %second%",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": "get by index",
+      "actions": [
+        {
           "module": "list",
           "action": "get",
           "parameters": [
@@ -500,59 +525,24 @@
       "waitForExecution": true
     },
     {
-      "index": 16,
-      "text": "get item at index 1 from %myList%, write to %second%",
-      "lineNumber": 19,
-      "indent": 0,
-      "comment": "get by index",
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "expected",
-              "value": 20,
-              "type": "int"
-            },
-            {
-              "name": "actual",
-              "value": "%second%",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
       "index": 17,
       "text": "assert %second% equals 20",
       "lineNumber": 20,
       "indent": 0,
       "actions": [
         {
-          "module": "list",
-          "action": "remove",
+          "module": "assert",
+          "action": "equals",
           "parameters": [
             {
-              "name": "listName",
-              "value": "%myList%",
-              "type": "string"
-            },
-            {
-              "name": "value",
+              "name": "Expected",
               "value": 20,
               "type": "int"
             },
             {
-              "name": "atIndex",
-              "value": -1,
-              "type": "int"
+              "name": "Actual",
+              "value": "%second%",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -569,6 +559,35 @@
       "lineNumber": 22,
       "indent": 0,
       "comment": "remove",
+      "actions": [
+        {
+          "module": "list",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "listName",
+              "value": "%myList%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": 20,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "check if %myList% contains 20, write to %still20%",
+      "lineNumber": 23,
+      "indent": 0,
       "actions": [
         {
           "module": "list",
@@ -599,9 +618,9 @@
       "waitForExecution": true
     },
     {
-      "index": 19,
-      "text": "check if %myList% contains 20, write to %still20%",
-      "lineNumber": 23,
+      "index": 20,
+      "text": "assert %still20% is false",
+      "lineNumber": 24,
       "indent": 0,
       "actions": [
         {
@@ -609,7 +628,7 @@
           "action": "isFalse",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%still20%",
               "type": "string"
             }
@@ -623,10 +642,11 @@
       "waitForExecution": true
     },
     {
-      "index": 20,
-      "text": "assert %still20% is false",
-      "lineNumber": 24,
+      "index": 21,
+      "text": "get index of 30 in %myList%, write to %idx%",
+      "lineNumber": 26,
       "indent": 0,
+      "comment": "indexOf",
       "actions": [
         {
           "module": "list",
@@ -657,63 +677,29 @@
       "waitForExecution": true
     },
     {
-      "index": 21,
-      "text": "get index of 30 in %myList%, write to %idx%",
-      "lineNumber": 26,
-      "indent": 0,
-      "comment": "indexOf",
-      "actions": [
-        {
-          "module": "assert",
-          "action": "greaterThan",
-          "parameters": [
-            {
-              "name": "a",
-              "value": "%idx%",
-              "type": "string"
-            },
-            {
-              "name": "b",
-              "value": -1,
-              "type": "int"
-            },
-            {
-              "name": "message",
-              "value": "indexOf should find the item",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
       "index": 22,
       "text": "assert %idx% is greater than -1, \u0022indexOf should find the item\u0022",
       "lineNumber": 27,
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "assert",
+          "action": "greaterThan",
           "parameters": [
             {
-              "name": "name",
-              "value": "%unsorted%",
+              "name": "A",
+              "value": "%idx%",
               "type": "string"
             },
             {
-              "name": "value",
-              "value": [
-                3,
-                1,
-                2
-              ],
-              "type": "list"
+              "name": "B",
+              "value": -1,
+              "type": "int"
+            },
+            {
+              "name": "Message",
+              "value": "indexOf should find the item",
+              "type": "string"
             }
           ],
           "errors": [],
@@ -732,18 +718,22 @@
       "comment": "sort",
       "actions": [
         {
-          "module": "list",
-          "action": "sort",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "listName",
+              "name": "name",
               "value": "%unsorted%",
               "type": "string"
             },
             {
-              "name": "descending",
-              "value": false,
-              "type": "bool"
+              "name": "value",
+              "value": [
+                3,
+                1,
+                2
+              ],
+              "type": "array"
             }
           ],
           "errors": [],
@@ -758,6 +748,30 @@
       "index": 24,
       "text": "sort %unsorted%",
       "lineNumber": 30,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "list",
+          "action": "sort",
+          "parameters": [
+            {
+              "name": "listName",
+              "value": "%unsorted%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 25,
+      "text": "get first item from %unsorted%, write to %sortFirst%",
+      "lineNumber": 31,
       "indent": 0,
       "actions": [
         {
@@ -784,9 +798,9 @@
       "waitForExecution": true
     },
     {
-      "index": 25,
-      "text": "get first item from %unsorted%, write to %sortFirst%",
-      "lineNumber": 31,
+      "index": 26,
+      "text": "assert %sortFirst% equals 1",
+      "lineNumber": 32,
       "indent": 0,
       "actions": [
         {
@@ -794,12 +808,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 1,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%sortFirst%",
               "type": "string"
             }
@@ -813,10 +827,11 @@
       "waitForExecution": true
     },
     {
-      "index": 26,
-      "text": "assert %sortFirst% equals 1",
-      "lineNumber": 32,
+      "index": 27,
+      "text": "reverse %unsorted%",
+      "lineNumber": 34,
       "indent": 0,
+      "comment": "reverse",
       "actions": [
         {
           "module": "list",
@@ -837,11 +852,10 @@
       "waitForExecution": true
     },
     {
-      "index": 27,
-      "text": "reverse %unsorted%",
-      "lineNumber": 34,
+      "index": 28,
+      "text": "get first item from %unsorted%, write to %revFirst%",
+      "lineNumber": 35,
       "indent": 0,
-      "comment": "reverse",
       "actions": [
         {
           "module": "list",
@@ -867,9 +881,9 @@
       "waitForExecution": true
     },
     {
-      "index": 28,
-      "text": "get first item from %unsorted%, write to %revFirst%",
-      "lineNumber": 35,
+      "index": 29,
+      "text": "assert %revFirst% equals 3",
+      "lineNumber": 36,
       "indent": 0,
       "actions": [
         {
@@ -877,12 +891,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 3,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%revFirst%",
               "type": "string"
             }
@@ -896,10 +910,11 @@
       "waitForExecution": true
     },
     {
-      "index": 29,
-      "text": "assert %revFirst% equals 3",
-      "lineNumber": 36,
+      "index": 30,
+      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
+      "lineNumber": 38,
       "indent": 0,
+      "comment": "unique",
       "actions": [
         {
           "module": "variable",
@@ -920,7 +935,7 @@
                 3,
                 3
               ],
-              "type": "list"
+              "type": "array"
             }
           ],
           "errors": [],
@@ -932,11 +947,10 @@
       "waitForExecution": true
     },
     {
-      "index": 30,
-      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
-      "lineNumber": 38,
+      "index": 31,
+      "text": "get unique items from %dupes%, write to %uniq%",
+      "lineNumber": 39,
       "indent": 0,
-      "comment": "unique",
       "actions": [
         {
           "module": "list",
@@ -962,9 +976,9 @@
       "waitForExecution": true
     },
     {
-      "index": 31,
-      "text": "get unique items from %dupes%, write to %uniq%",
-      "lineNumber": 39,
+      "index": 32,
+      "text": "get count of %uniq%, write to %uniqCount%",
+      "lineNumber": 40,
       "indent": 0,
       "actions": [
         {
@@ -991,9 +1005,9 @@
       "waitForExecution": true
     },
     {
-      "index": 32,
-      "text": "get count of %uniq%, write to %uniqCount%",
-      "lineNumber": 40,
+      "index": 33,
+      "text": "assert %uniqCount% equals 3",
+      "lineNumber": 41,
       "indent": 0,
       "actions": [
         {
@@ -1001,34 +1015,16 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 3,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%uniqCount%",
               "type": "string"
             }
           ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
-    },
-    {
-      "index": 33,
-      "text": "assert %uniqCount% equals 3",
-      "lineNumber": 41,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "",
-          "action": "",
-          "parameters": [],
           "errors": [],
           "warnings": []
         }
