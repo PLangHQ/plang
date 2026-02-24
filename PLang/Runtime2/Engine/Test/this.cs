@@ -143,9 +143,20 @@ public sealed class @this
 
         var runResult = await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
 
-        if (!runResult.Success && runResult.Error is not AssertionError)
+        if (!runResult.Success)
         {
-            if (result.Failures.Count == 0)
+            if (runResult.Error is AssertionError assertError && result.Failures.Count == 0)
+            {
+                // Assertion failure bubbled up to goal level (not caught by AfterStep handler)
+                var step = testEngine.User.Context.Step;
+                result.Failures.Add(new AssertionFailure
+                {
+                    StepIndex = step?.Index ?? -1,
+                    StepText = step?.Text ?? "",
+                    Message = assertError.Message
+                });
+            }
+            else if (runResult.Error is not AssertionError && result.Failures.Count == 0)
             {
                 result.Errored = true;
                 result.ErrorMessage = runResult.Error?.Message ?? "Goal execution failed";

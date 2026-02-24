@@ -71,7 +71,8 @@ public sealed partial class @this
             }
         }
 
-        if (!result.Success) return result;
+        // Store step result so AfterStep handlers can inspect it (e.g., test runner assertion tracking)
+        context.MemoryStack.Put(new Data("__stepResult", result.Value, result.Type) { Error = result.Error });
 
         try
         {
