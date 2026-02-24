@@ -19,7 +19,7 @@
             },
             {
               "name": "Value",
-              "value": false,
+              "value": true,
               "type": "bool"
             }
           ],
