@@ -1,5 +1,6 @@
 {
   "name": "ReadWithKey",
+  "description": "The ReadWithKey goal reads data from a file named \u0027keytest.txt\u0027 and stores the content in the variable \\%keyData\\%. The data is cached for 5 minutes under the key \u0027myKeyTest\u0027. This goal is used to efficiently retrieve file data while managing cache to optimize performance.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "e7c797c839008382bbc62b2cf4d106662fc436cf44bc6bc8dfc53af2e3df28c5",
       "cache": {
         "durationSeconds": 300,
         "sliding": false,
@@ -44,6 +46,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "keyData": "This variable will hold the content read from the file \u0027keytest.txt\u0027."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "ReadWithKey"

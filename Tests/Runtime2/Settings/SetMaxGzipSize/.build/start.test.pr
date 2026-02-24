@@ -3,21 +3,21 @@
   "steps": [
     {
       "index": 0,
-      "text": "set max gzip size to 20mb",
+      "text": "set settings \u0027archive.max\u0027 = 20971520",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
+          "module": "settings",
           "action": "set",
           "parameters": [
             {
-              "name": "name",
-              "value": "%max gzip size%",
+              "name": "Key",
+              "value": "archive.max",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": 20971520,
               "type": "int"
             }
@@ -32,16 +32,16 @@
     },
     {
       "index": 1,
-      "text": "get archive.max, write to %maxSize%",
+      "text": "get settings \u0027archive.max\u0027, write to %maxSize%",
       "lineNumber": 3,
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
+          "module": "settings",
           "action": "get",
           "parameters": [
             {
-              "name": "name",
+              "name": "Key",
               "value": "archive.max",
               "type": "string"
             }
@@ -70,12 +70,12 @@
           "action": "equals",
           "parameters": [
             {
-              "name": "expected",
+              "name": "Expected",
               "value": 20971520,
               "type": "int"
             },
             {
-              "name": "actual",
+              "name": "Actual",
               "value": "%maxSize%",
               "type": "string"
             }
@@ -93,7 +93,7 @@
   "visibility": 1,
   "path": "/Settings/SetMaxGzipSize/Start.test.goal",
   "prPath": "/Settings/SetMaxGzipSize/.build/start.test.pr",
-  "hash": "dd339a6a5b660691119cc8bfd3a9acb9d3491a41182a9f680055fbcc4ccb68f4",
+  "hash": "05f4c36adab2ec01a2f7bce095b524fe4da09aff8be410d3c9f1750877b1a414",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

@@ -15,7 +15,7 @@ public partial class Unique : IContext
             return Task.FromResult(Data.FromError(
                 new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
-        var distinct = list.Distinct().ToList();
-        return Task.FromResult(Data.Ok(new types.list { count = distinct.Count, value = distinct }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
+        var distinct = list.Distinct().Cast<object?>().ToList();
+        return Task.FromResult(Data.Ok(distinct, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

@@ -1,0 +1,88 @@
+{
+  "Text": "convert \"42\" to int, write to %intVal%",
+  "ModuleType": "PLang.Modules.MathModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to convert the string \"42\" to an integer and store it in the variable %intVal%. The best approach is to use the SolveExpression function to evaluate the string as a numeric expression, which will return the integer value 42.",
+    "Name": "SolveExpression",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "expression",
+        "Value": "42"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%intVal%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "expression": {
+        "Name": "expression",
+        "FullTypeName": "System.String"
+      }
+    },
+    "ReturnValues": {
+      "%intVal%": {
+        "Name": "%intVal%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null.\nGiven a math instruction that is not in a string format, turn it into a string formatted math instruction from the NCalc C# library and passed into the solveExpression function.\n\t\t\t\tIf a trig function wants to be solved by the user and they ask to find the answer in degrees, convert the output to degrees from radians. If they want to find\n\t\t\t\tthe value of the trig function with a parameter in degrees, convert it to radians using 3.14 before passing it in. Also convert pi into 3.14 multiplied by whatever number is next to it if applicable.\n\t\t\t\tExamples:\n\t\t\t\tfind 3 plus 4 should turn into 3 + 4. Do this with any operator like *, -, +, /\n\t\t\t\tsolve for square root of 9 should turn into Sqrt(9)\n\t\t\t\twhat is 2 raised to the power of 4 should turn into Pow(2, 4)"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert a string representation of a number to an integer and store it in a variable\n## functions available starts ##\n{\"Description\":\"Solves math expressions\",\"Methods\":[{\"Description\":\"Solve a complex math expression given as a string. Please capitalize any functions called like sqrt() into Sqrt()\",\"MethodName\":\"SolveExpression\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"expression\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"decimalRound\",\"DefaultValue\":2,\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.MidpointRounding]\",\"Name\":\"midpointRounding\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Find the fibonacci number of a given variable or number.\",\"MethodName\":\"Fibonacci\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"variable\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Int32>\"}},{\"Description\":\"Find the first n prime numbers where n is a given number.\",\"MethodName\":\"PrimeNumbers\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"number\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"List<Int32>\"}}],\"SupportingObjects\":[]}\n## functions available ends ##\n## defined variables ##\nintVal (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "convert \"42\" to int, write to %intVal%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.MathModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to convert the string \\\"42\\\" to an integer and store it in the variable %intVal%. The best approach is to use the SolveExpression function to evaluate the string as a numeric expression, which will return the integer value 42.\",\n  \"Name\": \"SolveExpression\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"expression\",\n      \"Value\": \"42\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%intVal%\"\n    }\n  ]\n}",
+      "Tools": null
+    }
+  ]
+}

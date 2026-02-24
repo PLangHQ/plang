@@ -1,0 +1,88 @@
+{
+  "Text": "convert %json% from json, write to %parsed%",
+  "ModuleType": "PLang.Modules.ConvertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to convert a JSON formatted string (%json%) into a parsed object and store the result in %parsed%. The available functions do not explicitly mention JSON parsing, so the best match is to treat the input as an object and convert it accordingly. Since no direct JSON parsing function is available, the intent is to convert the JSON string to an object representation, which aligns with the input type being object and output being object. The function ConvertToKeyValueList could convert an object to a key-value list, but that is not the same as parsing JSON. Given the lack of a direct JSON parse function, the best fit is to use ConvertToKeyValueList to convert the JSON object to a key-value list, which is a form of parsing the JSON structure. The result is stored in %parsed%.",
+    "Name": "ConvertToKeyValueList",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "variable",
+        "Value": "%json%"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%parsed%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "variable": {
+        "Name": "variable",
+        "FullTypeName": "System.Object"
+      }
+    },
+    "ReturnValues": {
+      "%parsed%": {
+        "Name": "%parsed%",
+        "FullTypeName": "System.Object"
+      }
+    }
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert a JSON formatted string stored in the variable %json% into a parsed object or data structure and store the result in the variable %parsed%\n## functions available starts ##\n{\"Description\":\"Convert object from one to another. html => md, md => html, string => keyvalue list\",\"Methods\":[{\"Description\":\"converts html to pdf, returns byte array of file if no path is defined\",\"MethodName\":\"ConvertHtmlToPdf\",\"Parameters\":[{\"Type\":\"PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction\",\"Name\":\"options\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}]},{\"MethodName\":\"ConvertMdToHtml\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"useAdvancedExtension\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"markdownPipelineExtensions\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"unknownTags=(Bypass|Drop|PassThrough|Raise\",\"MethodName\":\"ConvertToMd\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"unknownTags\",\"DefaultValue\":\"Bypass\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"githubFlavored\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"removeComments\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"smartHrefHandling\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"cleanupUnnecessarySpaces\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"suppressDivNewlines\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"ConvertToKeyValueList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"variable\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"newLineSeperator\",\"DefaultValue\":\"\\r\\n\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"columnSeperator\",\"DefaultValue\":\"\\t\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"trimColumns\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.String]\",\"Name\":\"headers\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"Microsoft.Playwright.Margin\",\"Name\":\"Margin\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Top\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Right\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Bottom\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Left\",\"IsRequired\":false}],\"IsRequired\":false},{\"Type\":\"Microsoft.Playwright.PagePdfOptions\",\"Name\":\"Options\",\"TypeProperties\":[{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"DisplayHeaderFooter\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"FooterTemplate\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Format\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"HeaderTemplate\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Height\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Landscape\",\"IsRequired\":false},{\"Type\":\"Microsoft.Playwright.Margin\",\"Name\":\"Margin\",\"Description\":\"(see Microsoft.Playwright.Margin type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Outline\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"PageRanges\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"PreferCSSPageSize\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"PrintBackground\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Single]\",\"Name\":\"Scale\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"Tagged\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"Width\",\"IsRequired\":false}],\"IsRequired\":true},{\"Type\":\"PLang.Modules.ConvertModule.Program+ConvertHtmlToPdfInstruction\",\"Name\":\"options\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Html\",\"IsRequired\":true},{\"Type\":\"Microsoft.Playwright.PagePdfOptions\",\"Name\":\"Options\",\"Description\":\"(see Microsoft.Playwright.PagePdfOptions type information in SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":false}]}\n## functions available ends ##\n## defined variables ##\njson (type:object), parsed (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "convert %json% from json, write to %parsed%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to convert a JSON formatted string (%json%) into a parsed object and store the result in %parsed%. The available functions do not explicitly mention JSON parsing, so the best match is to treat the input as an object and convert it accordingly. Since no direct JSON parsing function is available, the intent is to convert the JSON string to an object representation, which aligns with the input type being object and output being object. The function ConvertToKeyValueList could convert an object to a key-value list, but that is not the same as parsing JSON. Given the lack of a direct JSON parse function, the best fit is to use ConvertToKeyValueList to convert the JSON object to a key-value list, which is a form of parsing the JSON structure. The result is stored in %parsed%.\",\n  \"Name\": \"ConvertToKeyValueList\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"variable\",\n      \"Value\": \"%json%\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%parsed%\"\n    }\n  ]\n}",
+      "Tools": null
+    }
+  ]
+}

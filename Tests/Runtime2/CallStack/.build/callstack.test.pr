@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal initializes by capturing the current depth of the call stack into the variable \\%depthBefore\\%. It then verifies that this depth is not null, ensuring that the call stack depth is available. The goal proceeds to call another goal named InnerTest. After the call, it captures the depth of the call stack again into the variable \\%depthAfter\\%. Finally, it asserts that \\%depthAfter\\% is equal to \\%depthBefore\\%, confirming that the call stack depth has returned to its original level after the InnerTest call.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "99e2a2b6e55d4015e197a99ac6d854f4b7e203de81e2adc4cb28ccd6b1f14c65",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -55,6 +57,7 @@
           "warnings": []
         }
       ],
+      "hash": "c23d799a0275cce05dc0d3ae870fa051422beabbf495c32846796c9d487cc9fd",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -79,6 +82,7 @@
           "warnings": []
         }
       ],
+      "hash": "02b916413b3ae62be83636cbeb7ff9a48cf24b410cea8722b69ede490cf9edbc",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -108,6 +112,7 @@
           "warnings": []
         }
       ],
+      "hash": "ee3919930ff396e4065448e6576fc8af494b5519f9ae50c52f706e933120bc07",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -142,6 +147,7 @@
           "warnings": []
         }
       ],
+      "hash": "a62a4fcd2526e67e7bf51df82e7b327b830356bac477ce6c88cd29ebdd051e55",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -155,6 +161,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "\\%callStack.Depth\\%": "The current depth of the call stack, which is used to check the depth before and after the InnerTest goal is called."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

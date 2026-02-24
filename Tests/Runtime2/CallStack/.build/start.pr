@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "The Start goal writes the current depth of the call stack before and after calling the Inner goal. It outputs the depth before the call and then again after the Inner goal has been executed.",
+  "description": "The Start goal is designed to output the current depth of the call stack before and after invoking the Inner goal twice. It provides a way to monitor the depth of recursive or nested calls in the program\u0027s execution flow.",
   "steps": [
     {
       "index": 0,
@@ -32,6 +32,7 @@
           "warnings": []
         }
       ],
+      "hash": "7058c78cf0b17950e3e2a175d61d05bcd118051bfcf4ef5b77d64c8a0927f044",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -56,6 +57,7 @@
           "warnings": []
         }
       ],
+      "hash": "e2d01416cfdef1cb0fa9b25a37fe48c269071cc26adf179c33cb918379b14b7a",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -90,6 +92,7 @@
           "warnings": []
         }
       ],
+      "hash": "af1812af2f0c3e4bc4a4e784b9442551bd2b56f21b3260ed2b7931dffacabe79",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -114,6 +117,7 @@
           "warnings": []
         }
       ],
+      "hash": "8fe3acb0e13a92d0745d7c3376a2d84b79a1a0bee0764e13440385ad5747f0d3",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -127,9 +131,7 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "!callStack.Depth": "This variable holds the current depth of the call stack and is required to output the depth before and after the Inner goal is called."
-  },
+  "inputParameters": {},
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

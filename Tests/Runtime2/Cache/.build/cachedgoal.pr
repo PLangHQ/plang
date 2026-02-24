@@ -1,5 +1,6 @@
 {
   "name": "CachedGoal",
+  "description": "The CachedGoal is designed to read data from a file named \u0027testdata.txt\u0027 and store the content in a cache variable called \\%cachedMsg\\%. The first call to this goal will read the file and cache its content for 5 minutes. Any subsequent call within this time frame will retrieve the cached content instead of reading the file again. Finally, it outputs the cached message.",
   "steps": [
     {
       "index": 0,
@@ -27,6 +28,7 @@
           "warnings": []
         }
       ],
+      "hash": "66d538520124bbe32d82472f59b3a5005d349b66f27f7651f1ce796ed5b47cf5",
       "cache": {
         "durationSeconds": 300,
         "sliding": false
@@ -65,6 +67,7 @@
           "warnings": []
         }
       ],
+      "hash": "724999fdd97dda00790432c514e2f6b71995f2e497535e4aff4233f634a3c69b",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -78,6 +81,9 @@
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "%cachedMsg%": "This variable will store the content read from \u0027testdata.txt\u0027 and is required for outputting the cached message."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "CachedGoal"

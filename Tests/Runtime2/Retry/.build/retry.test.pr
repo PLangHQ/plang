@@ -13,12 +13,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%beforeRetry%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": true,
               "type": "bool"
             }
@@ -42,9 +42,9 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%beforeRetry%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "errors": [],
@@ -66,7 +66,7 @@
           "action": "throw",
           "parameters": [
             {
-              "name": "message",
+              "name": "Message",
               "value": "temporary failure",
               "type": "string"
             }
@@ -94,12 +94,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%afterRetryIgnore%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": true,
               "type": "bool"
             }
@@ -123,12 +123,12 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%afterRetryIgnore%",
-              "type": "object"
+              "type": "bool"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "execution should continue after retry exhaustion \u002B ignore",
               "type": "string"
             }
@@ -153,7 +153,7 @@
           "action": "throw",
           "parameters": [
             {
-              "name": "message",
+              "name": "Message",
               "value": "retry then goal",
               "type": "string"
             }
@@ -185,12 +185,12 @@
           "action": "isTrue",
           "parameters": [
             {
-              "name": "value",
+              "name": "Value",
               "value": "%retryErrorHandled%",
-              "type": "object"
+              "type": "bool"
             },
             {
-              "name": "message",
+              "name": "Message",
               "value": "error goal should have been called after retry exhausted",
               "type": "string"
             }

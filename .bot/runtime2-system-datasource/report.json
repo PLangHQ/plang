@@ -1,0 +1,66 @@
+{
+  "branch": "runtime2-system-datasource",
+  "sessions": [
+    {
+      "id": "c1a2b3d4-5678-9abc-def0-123456789abc",
+      "bot": "coder",
+      "timestamp_start": "2026-02-24T00:00:00Z",
+      "timestamp_end": "2026-02-24T01:00:00Z",
+      "intent": "Fix 6 failing PLang tests: 3 runtime bugs in MemoryStack.Get() and 3 incorrect .pr files",
+      "before": {
+        "assumptions": "The MemoryStack.Get() bug is on line 82 where +1 skip assumes dot separator. The 3 .pr file issues require builder rebuild.",
+        "risk": "Low — single line runtime fix, well-tested. Builder rebuilds depend on LLM availability."
+      },
+      "plan": "Part 1: Fix MemoryStack.Get() array index navigation — change line 82 to check for dot before skipping. Add 4 C# tests. Part 2: Rebuild .pr files for Retry (missing onError), ListOps (off-by-one actions), SetMaxGzipSize (rewrite goal to settings syntax then rebuild).",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Memory/MemoryStack.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fix line 82: check if char after rootName is dot before +1 skip. Array brackets should not be skipped."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Memory/MemoryStackTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Add 4 tests: arr[0].id, list[0].items[0].val, items[idx], items[1]"
+        },
+        {
+          "paths": ["PLang/Runtime2/actions/list/unique.cs", "PLang.Tests/Runtime2/Modules/list/ListTests.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "list.unique returned types.list wrapper (not IList), causing list.count to return 0. Changed to return raw List<object?> like list.split does."
+        },
+        {
+          "paths": ["Tests/Runtime2/Retry/.build/retry.test.pr", "Tests/Runtime2/Retry/.build/handleretryerror.pr"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt Retry .pr files — now includes onError fields on throw steps"
+        },
+        {
+          "paths": ["Tests/Runtime2/ListOps/.build/listops.test.pr"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt ListOps .pr — fixed off-by-one action alignment"
+        },
+        {
+          "paths": ["Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal", "Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rewrote goal to use settings syntax, rebuilt .pr"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PLang tests: 22/23 (up from 17/23), C# tests: 1465/1465",
+        "notes": "Remaining Condition test failure is pre-existing. list.range and list.flatten have same types.list wrapper issue but aren't tested yet."
+      }
+    }
+  ]
+}

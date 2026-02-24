@@ -1,0 +1,100 @@
+{
+  "Text": "assert %innerDepth% is not null, \"inner depth should be set\"",
+  "ModuleType": "PLang.Modules.AssertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to assert that the variable %innerDepth% is not null, which is a validation to ensure the variable has been set. The available assertion functions include IsEqual and Contains, but neither directly checks for null. Since there is no direct 'is not null' assertion, the best approach is to assert that %innerDepth% is equal to itself, which implies it is not null. The message 'inner depth should be set' cannot be directly passed to the function, so it is ignored.",
+    "Name": "IsEqual",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "expectedValue",
+        "Value": "%innerDepth%"
+      },
+      {
+        "Type": "System.Object",
+        "Name": "actualValue",
+        "Value": "%innerDepth%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "expectedValue": {
+        "Name": "expectedValue",
+        "FullTypeName": "System.Object"
+      },
+      "actualValue": {
+        "Name": "actualValue",
+        "FullTypeName": "System.Object"
+      }
+    },
+    "ReturnValues": {}
+  },
+  "BuilderVersion": "0.1.18.1",
+  "Hash": null,
+  "SignedMessage": null,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}\n\nAdditional information about objects:\nPLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object}\nPLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\n\nYour job is: \n1. Parse and understand user intent\n2. Map the intent to one of C# function provided to you\n3. Return a valid JSON\n\n## Rules\n%variable% in plang is defined with starting and ending percentage sign (%)\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\nleave %variable% as is and do not change text to a variable\nnull is used to represent no value, e.g. { \"name\": null }\nVariables MUST not be changed, they can include dot(.) and parentheses()\nKeep \\n, \\r, \\t that are submitted to you for string variables\nParameters that is type System.String MUST be without escaping quotes. See <Example>\nError handling is process by another step, if you see 'on error...' you can ignore it\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \n- NameOfApiKey should named in relation to what is happening if change is needed\nDictionary<T1, T2> value is {key: value, ... } => a dictionary parameter defined as %variable% without key should have the same key and value as %variable%, e.g. %userId% => { key: \"userId\", value:\"%userId%\"}\nVariable with ToString with date/time formatting, assume it is System.DateTime, e.g. %updated.ToString(\"yyyy-MM-dd\")% then type of %updated% is System.DateTime \nList, ReadOnlyList are array of the object => e.g. user defines single property for List, return it as array\nWhen you see t%variable% or t\"this is text\", set the Type to Plang.TString. This is for translation\n<Example>\nget url \"http://example.org\" => Value: \"http://example.org\"\nwrite out 'Hello world' => Value: \"Hello world\"\n<Example>\n\n## JSON scheme information\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\nParameters: List of parameters that are needed according to the user intent.\n- Type: the object type in c#\n- Name: name of the variable\n- Value: \"%variable%\", hardcode string that should be used, null, or json array/object\nReturnValue rules\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nEnsure that the variable %innerDepth% has a value and is not null, otherwise raise an assertion error with a specific message\n## functions available starts ##\n{\"Description\":\"Assert object/variable/text or other entity to be what is epxected. For unit testing\",\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"Contains\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true}]},{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\n## functions available ends ##\n## defined variables ##\ninnerDepth (type:object), \n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "assert %innerDepth% is not null, \"inner depth should be set\""
+            }
+          ]
+        },
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "\n### error in your response ###\nI could not deserialize your response. This is the error. Please try to fix it.\nPLang.Exceptions.ParsingException: Error parsing content to json. Content:\n\n{\n  \"Reasoning\": \"The user wants to assert that the variable %innerDepth% is not null, which is a validation to ensure the variable has been set. The available assertion functions include IsEqual and Contains, but neither directly checks for null. However, we can use IsEqual to assert that %innerDepth% is not equal to null by checking that %innerDepth% is equal to a non-null value or by negating null. Since the function IsEqual checks equality, it cannot directly check 'is not null'. The user wants an assertion that %innerDepth% is not null, so the best fit is to assert that %innerDepth% is equal to itself or to use IsEqual with expectedValue as %innerDepth% and actualValue as null and expect false, but this is not straightforward. Given the functions, the best approach is to use IsEqual to assert that %innerDepth% is not equal to null by asserting that %innerDepth% is equal to itself (which is always true if not null). Since the function does not support direct 'is not null' assertion, we can only assert that %innerDepth% is equal to itself, which implies it is not null. The message \"inner depth should be set\" is not directly supported by the function parameters, so it is ignored. Therefore, the function IsEqual is chosen with expectedValue and actualValue both as %innerDepth%.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": \"%innerDepth%\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%innerDepth%\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n ---> PLang.Exceptions.ParsingException: Error parsing content to json. Content:\n\n{\n  \"Reasoning\": \"The user wants to assert that the variable %innerDepth% is not null, which is a validation to ensure the variable has been set. The available assertion functions include IsEqual and Contains, but neither directly checks for null. However, we can use IsEqual to assert that %innerDepth% is not equal to null by checking that %innerDepth% is equal to a non-null value or by negating null. Since the function IsEqual checks equality, it cannot directly check 'is not null'. The user wants an assertion that %innerDepth% is not null, so the best fit is to assert that %innerDepth% is equal to itself or to use IsEqual with expectedValue as %innerDepth% and actualValue as null and expect false, but this is not straightforward. Given the functions, the best approach is to use IsEqual to assert that %innerDepth% is not equal to null by asserting that %innerDepth% is equal to itself (which is always true if not null). Since the function does not support direct 'is not null' assertion, we can only assert that %innerDepth% is equal to itself, which implies it is not null. The message \"inner depth should be set\" is not directly supported by the function parameters, so it is ignored. Therefore, the function IsEqual is chosen with expectedValue and actualValue both as %innerDepth%.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": \"%innerDepth%\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%innerDepth%\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n ---> Newtonsoft.Json.JsonReaderException: After parsing a value an unexpected character was encountered: i. Path 'Reasoning', line 2, position 1100.\n   at Newtonsoft.Json.JsonTextReader.ParsePostValue(Boolean ignoreComments)\n   at Newtonsoft.Json.JsonTextReader.Read()\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.ResolvePropertyAndCreatorValues(JsonObjectContract contract, JsonProperty containerProperty, JsonReader reader, Type objectType)\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObjectUsingCreatorWithParameters(JsonReader reader, JsonObjectContract contract, JsonProperty containerProperty, ObjectConstructor`1 creator, String id)\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.CreateObject(JsonReader reader, Type objectType, JsonContract contract, JsonProperty member, JsonContainerContract containerContract, JsonProperty containerMember, Object existingValue)\n   at Newtonsoft.Json.Serialization.JsonSerializerInternalReader.Deserialize(JsonReader reader, Type objectType, Boolean checkAdditionalContent)\n   at Newtonsoft.Json.JsonConvert.DeserializeObject(String value, Type type)\n   at PLang.Utils.Extractors.JsonExtractor.Extract(String content, Type responseType, Tools tools) in /workspace/plang/PLang/Utils/Extractors/JsonExtractor.cs:line 109\n   --- End of inner exception stack trace ---\n   at PLang.Utils.Extractors.JsonExtractor.Extract(String content, Type responseType, Tools tools) in /workspace/plang/PLang/Utils/Extractors/JsonExtractor.cs:line 113\n   --- End of inner exception stack trace ---\n   at PLang.Utils.Extractors.JsonExtractor.Extract(String content, Type responseType, Tools tools) in /workspace/plang/PLang/Utils/Extractors/JsonExtractor.cs:line 123\n   at PLang.Services.OpenAi.OpenAiService.Query(LlmRequest question, Type responseType, Int32 errorCount) in /workspace/plang/PLang/Services/LlmService/OpenAiService.cs:line 124\n### error in your response ###\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\"Reasoning\" : System.String, \"Name\" : System.String, \"Parameters\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter] = null, \"ReturnValues\" : System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue] = null}  Additional information about objects: PLang.Modules.BaseBuilder+Parameter : {\"Type\" : System.String, \"Name\" : System.String, \"Value\" : System.Object} PLang.Modules.BaseBuilder+ReturnValue : {\"Type\" : System.String, \"VariableName\" : System.String}"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %innerDepth% is not null, which is a validation to ensure the variable has been set. The available assertion functions include IsEqual and Contains, but neither directly checks for null. However, we can use IsEqual to assert that %innerDepth% is not equal to null by checking that %innerDepth% is equal to a non-null value or by negating null. Since the function IsEqual checks equality, it cannot directly check 'is not null'. The user wants an assertion that %innerDepth% is not null, so the best fit is to assert that %innerDepth% is equal to itself or to use IsEqual with expectedValue as %innerDepth% and actualValue as null and expect false, but this is not straightforward. Given the functions, the best approach is to use IsEqual to assert that %innerDepth% is not equal to null by asserting that %innerDepth% is equal to itself (which is always true if not null). Since the function does not support direct 'is not null' assertion, we can only assert that %innerDepth% is equal to itself, which implies it is not null. The message \"inner depth should be set\" is not directly supported by the function parameters, so it is ignored. Therefore, the function IsEqual is chosen with expectedValue and actualValue both as %innerDepth%.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": \"%innerDepth%\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%innerDepth%\"\n    }\n  ],\n  \"ReturnValues\": null\n}",
+      "Tools": null
+    }
+  ]
+}
