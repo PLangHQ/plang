@@ -1,0 +1,73 @@
+{
+  "tool": "TUnit --coverage (cobertura)",
+  "total_tests": 1461,
+  "passed": 1461,
+  "failed": 0,
+  "changed_files": {
+    "SettingsData.cs": {
+      "lines_covered": 32,
+      "lines_total": 32,
+      "line_rate": "100.0%",
+      "uncovered_lines": [],
+      "notes": "Full coverage including error path (F4 fix)"
+    },
+    "Actor.cs": {
+      "lines_covered": 34,
+      "lines_total": 34,
+      "line_rate": "100.0%",
+      "uncovered_lines": []
+    },
+    "MemoryStack.cs": {
+      "lines_covered": 154,
+      "lines_total": 156,
+      "line_rate": "98.7%",
+      "uncovered_lines": [253, 266],
+      "notes": "Uncovered: CleanName edge case, GetRootName bracket-only path"
+    },
+    "Data.Navigation.cs": {
+      "lines_covered": 46,
+      "lines_total": 47,
+      "line_rate": "97.9%",
+      "uncovered_lines": [50]
+    },
+    "AskError.cs": {
+      "lines_covered": 8,
+      "lines_total": 9,
+      "line_rate": "88.9%",
+      "uncovered_lines": [10]
+    },
+    "DataSourceError.cs": {
+      "lines_covered": 27,
+      "lines_total": 35,
+      "line_rate": "77.1%",
+      "uncovered_lines": [12, 21, 57, 58, 59, 60, 61, 62],
+      "notes": "Uncovered: PLangContext constructor, FormatExtra method"
+    },
+    "SqliteDataSource.cs": {
+      "lines_covered": 135,
+      "lines_total": 194,
+      "line_rate": "69.6%",
+      "uncovered_lines": "51-54, 80-83, 108-116, 137-155, 173-181, 199-207, 227-235, 266-269",
+      "notes": "Uncovered: error catch blocks in all CRUD methods (SqliteException/IOException paths)"
+    },
+    "Step_Methods.cs": {
+      "lines_covered": 100,
+      "lines_total": 133,
+      "line_rate": "75.2%",
+      "uncovered_lines": "35-39, 63-71, 82-86, 122-124, 146, 155, 162-165, 185-192",
+      "notes": "Uncovered: BeforeStep exception catch, OnError handling, AfterStep exception catch, RetryAsync, CallErrorGoalAsync"
+    },
+    "Test_this.cs": {
+      "lines_covered": 4,
+      "lines_total": 143,
+      "line_rate": "2.8%",
+      "uncovered_lines": "Most lines",
+      "notes": "Test runner itself is almost entirely untested by C# tests"
+    }
+  },
+  "settings_handlers": {
+    "get.cs": "0% (CodeGeneratedExecuteAsync only, requires engine pipeline test)",
+    "set.cs": "0% (CodeGeneratedExecuteAsync only, requires engine pipeline test)",
+    "remove.cs": "0% (CodeGeneratedExecuteAsync only, requires engine pipeline test)"
+  }
+}

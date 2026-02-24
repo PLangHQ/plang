@@ -1,0 +1,1736 @@
+diff --git a/PLang.Generators/LazyParamsGenerator.cs b/PLang.Generators/LazyParamsGenerator.cs
+index deac5191..dd826e91 100644
+--- a/PLang.Generators/LazyParamsGenerator.cs
++++ b/PLang.Generators/LazyParamsGenerator.cs
+@@ -151,6 +151,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
+         sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __parameters;");
+         sb.AppendLine("    private PLang.Runtime2.Engine.Memory.MemoryStack? __memoryStack;");
+         sb.AppendLine("    private PLang.Runtime2.Engine.@this? __engine;");
++        sb.AppendLine("    private PLang.Runtime2.Engine.Memory.Data? __resolutionError;");
+         sb.AppendLine();
+ 
+         // Partial property implementations
+@@ -228,6 +229,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
+         sb.AppendLine("        __parameters = parameters;");
+         sb.AppendLine("        __memoryStack = context.MemoryStack;");
+         sb.AppendLine("        __engine = engine;");
++        sb.AppendLine("        __resolutionError = null;");
+         sb.AppendLine("        var __step = context.Step;");
+         sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<PLang.Runtime2.Engine.CallStack.CallFrame>)System.Array.Empty<PLang.Runtime2.Engine.CallStack.CallFrame>();");
+ 
+@@ -258,6 +260,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
+             }
+         }
+ 
++        sb.AppendLine("        if (__resolutionError != null) return __resolutionError;");
++        sb.AppendLine();
+         sb.AppendLine("        try");
+         sb.AppendLine("        {");
+         sb.AppendLine("            return await Run();");
+@@ -279,10 +283,27 @@ public class LazyParamsGenerator : IIncrementalGenerator
+         sb.AppendLine("        {");
+         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
+         sb.AppendLine("            if (fullMatch.Success)");
+-        sb.AppendLine("                return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(");
+-        sb.AppendLine("                    __memoryStack!.GetValue(fullMatch.Groups[1].Value), typeof(T));");
+-        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\",");
+-        sb.AppendLine("                m => __FormatValue(__memoryStack!.GetValue(m.Groups[1].Value)));");
++        sb.AppendLine("            {");
++        sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
++        sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
++        sb.AppendLine("                {");
++        sb.AppendLine("                    __resolutionError = __resolved;");
++        sb.AppendLine("                    return default;");
++        sb.AppendLine("                }");
++        sb.AppendLine("                return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(__resolved?.Value, typeof(T));");
++        sb.AppendLine("            }");
++        sb.AppendLine("            var __interpolationError = false;");
++        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
++        sb.AppendLine("                var __r = __memoryStack!.Get(m.Groups[1].Value);");
++        sb.AppendLine("                if (__r != null && !__r.Success)");
++        sb.AppendLine("                {");
++        sb.AppendLine("                    __resolutionError = __r;");
++        sb.AppendLine("                    __interpolationError = true;");
++        sb.AppendLine("                    return \"\";");
++        sb.AppendLine("                }");
++        sb.AppendLine("                return __FormatValue(__r?.Value);");
++        sb.AppendLine("            });");
++        sb.AppendLine("            if (__interpolationError) return default;");
+         sb.AppendLine("            return (T?)PLang.Runtime2.Engine.Utility.TypeMapping.ConvertTo(interpolated, typeof(T));");
+         sb.AppendLine("        }");
+         sb.AppendLine("        return data != null");
+diff --git a/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs b/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
+new file mode 100644
+index 00000000..d5ff47f0
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
+@@ -0,0 +1,274 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.DataSource;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.datasource;
++
++public class DataSourceTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ds_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private SqliteDataSource CreateDataSource()
++    {
++        var dbPath = _engine.FileSystem.Path.Combine(_tempDir, ".db", "test.sqlite");
++        return new SqliteDataSource(dbPath, _engine.FileSystem);
++    }
++
++    [Test]
++    public async Task Set_ThenGet_ReturnsValue()
++    {
++        using var ds = CreateDataSource();
++        var setResult = await ds.Set("settings", "ApiKey", "sk-123");
++        await Assert.That(setResult.Success).IsTrue();
++
++        var getResult = await ds.Get("settings", "ApiKey");
++        await Assert.That(getResult.Success).IsTrue();
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("sk-123");
++    }
++
++    [Test]
++    public async Task Get_NonExistentKey_ReturnsNullValue()
++    {
++        using var ds = CreateDataSource();
++        var result = await ds.Get("settings", "NonExistent");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsNull();
++    }
++
++    [Test]
++    public async Task Set_OverwritesExistingValue()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "ApiKey", "old-value");
++        await ds.Set("settings", "ApiKey", "new-value");
++
++        var result = await ds.Get("settings", "ApiKey");
++        await Assert.That(result.Value?.ToString()).IsEqualTo("new-value");
++    }
++
++    [Test]
++    public async Task Remove_DeletesKey()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "ApiKey", "sk-123");
++        var removeResult = await ds.Remove("settings", "ApiKey");
++        await Assert.That(removeResult.Success).IsTrue();
++
++        var result = await ds.Get("settings", "ApiKey");
++        await Assert.That(result.Value).IsNull();
++    }
++
++    [Test]
++    public async Task Remove_NonExistentKey_Succeeds()
++    {
++        using var ds = CreateDataSource();
++        var result = await ds.Remove("settings", "NonExistent");
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    [Test]
++    public async Task Exists_ReturnsTrueWhenKeyExists()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "ApiKey", "sk-123");
++        var result = await ds.Exists("settings", "ApiKey");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsTrue();
++    }
++
++    [Test]
++    public async Task Exists_ReturnsFalseWhenKeyDoesNotExist()
++    {
++        using var ds = CreateDataSource();
++        var result = await ds.Exists("settings", "NonExistent");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsFalse();
++    }
++
++    [Test]
++    public async Task GetAll_ReturnsAllKeyValuePairs()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "Key1", "Value1");
++        await ds.Set("settings", "Key2", "Value2");
++
++        var result = await ds.GetAll("settings");
++        await Assert.That(result.Success).IsTrue();
++        var items = result.Value as List<Data>;
++        await Assert.That(items).IsNotNull();
++        await Assert.That(items!.Count).IsEqualTo(2);
++    }
++
++    [Test]
++    public async Task Tables_ReturnsTableNames()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "Key1", "Value1");
++        await ds.Set("encryption", "Key2", "Value2");
++
++        var result = await ds.Tables();
++        await Assert.That(result.Success).IsTrue();
++        var tables = result.Value as List<string>;
++        await Assert.That(tables).IsNotNull();
++        await Assert.That(tables!.Count).IsGreaterThanOrEqualTo(2);
++    }
++
++    [Test]
++    public async Task Set_NullValue_StoresAndRetrieves()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "NullKey", null);
++        var result = await ds.Get("settings", "NullKey");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsNull();
++    }
++
++    [Test]
++    public async Task Set_IntegerValue_PreservesType()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "Count", 42);
++        var result = await ds.Get("settings", "Count");
++        await Assert.That(result.Success).IsTrue();
++        // JSON deserialization may box as long
++        var value = Convert.ToInt64(result.Value);
++        await Assert.That(value).IsEqualTo(42L);
++    }
++
++    [Test]
++    public async Task MultipleTables_AreIsolated()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("settings", "Key", "SettingsValue");
++        await ds.Set("encryption", "Key", "EncryptionValue");
++
++        var settingsResult = await ds.Get("settings", "Key");
++        var encryptionResult = await ds.Get("encryption", "Key");
++
++        await Assert.That(settingsResult.Value?.ToString()).IsEqualTo("SettingsValue");
++        await Assert.That(encryptionResult.Value?.ToString()).IsEqualTo("EncryptionValue");
++    }
++
++    [Test]
++    public async Task ResolveTableName_ReturnsLastNamespaceSegment()
++    {
++        var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.actions.settings.Set));
++        await Assert.That(result).IsEqualTo("settings");
++    }
++
++    // --- SanitizeTableName tests (indirect via public API) ---
++
++    [Test]
++    public async Task Set_TableNameWithSpecialChars_StripsNonAlphanumeric()
++    {
++        using var ds = CreateDataSource();
++        // Special chars should be stripped, leaving "settingsDROPTABLEsettings"
++        var result = await ds.Set("settings; DROP TABLE settings", "Key", "Value");
++        await Assert.That(result.Success).IsTrue();
++
++        // Should be retrievable using the same dirty name (sanitized identically)
++        var getResult = await ds.Get("settings; DROP TABLE settings", "Key");
++        await Assert.That(getResult.Success).IsTrue();
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
++    }
++
++    [Test]
++    public async Task Set_TableNameWithUnderscores_PreservesUnderscores()
++    {
++        using var ds = CreateDataSource();
++        var result = await ds.Set("my_table", "Key", "Value");
++        await Assert.That(result.Success).IsTrue();
++
++        var getResult = await ds.Get("my_table", "Key");
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
++    }
++
++    [Test]
++    public async Task Set_EmptyTableName_FallsBackToDefault()
++    {
++        using var ds = CreateDataSource();
++        // All chars stripped → empty → "default_table"
++        var result = await ds.Set("!!!", "Key", "Value");
++        await Assert.That(result.Success).IsTrue();
++
++        var getResult = await ds.Get("!!!", "Key");
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
++    }
++
++    [Test]
++    public async Task Set_MixedCaseTableName_NormalizesToLowercase()
++    {
++        using var ds = CreateDataSource();
++        await ds.Set("Settings", "Key", "Value1");
++
++        // Same name in different case should hit the same table
++        var getResult = await ds.Get("settings", "Key");
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value1");
++    }
++
++    // --- ClassifyException tests ---
++
++    [Test]
++    public async Task DataSourceError_ClassifiesLockedDatabase()
++    {
++        var ex = new Exception("database is locked");
++        var error = DataSourceError.FromException(ex, "settings", "key");
++        await Assert.That(error.Key).IsEqualTo("DatabaseLocked");
++    }
++
++    [Test]
++    public async Task DataSourceError_ClassifiesDiskError()
++    {
++        var ex = new Exception("disk I/O error");
++        var error = DataSourceError.FromException(ex, "settings");
++        await Assert.That(error.Key).IsEqualTo("DiskError");
++    }
++
++    [Test]
++    public async Task DataSourceError_ClassifiesCorrupt()
++    {
++        var ex = new Exception("database disk image is corrupt");
++        var error = DataSourceError.FromException(ex);
++        await Assert.That(error.Key).IsEqualTo("DatabaseCorrupt");
++    }
++
++    [Test]
++    public async Task DataSourceError_ClassifiesPermissionDenied()
++    {
++        var ex = new Exception("permission denied");
++        var error = DataSourceError.FromException(ex);
++        await Assert.That(error.Key).IsEqualTo("PermissionDenied");
++    }
++
++    [Test]
++    public async Task DataSourceError_ClassifiesUnknownAsDefault()
++    {
++        var ex = new Exception("something unexpected");
++        var error = DataSourceError.FromException(ex);
++        await Assert.That(error.Key).IsEqualTo("DataSourceError");
++        await Assert.That(error.StatusCode).IsEqualTo(500);
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+new file mode 100644
+index 00000000..e98841da
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+@@ -0,0 +1,293 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.DataSource;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.settings;
++
++public class SettingsDataTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_settings_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task SettingsData_GetChild_ReturnsStoredValue()
++    {
++        // Store a setting via the System actor's DataSource
++        await _engine.System.DataSource.Set("settings", "ApiKey", "sk-test-123");
++
++        // SettingsData is auto-registered on System actor MemoryStack
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        await Assert.That(settingsData).IsNotNull();
++
++        var child = settingsData!.GetChild("ApiKey");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Success).IsTrue();
++        await Assert.That(child.Value?.ToString()).IsEqualTo("sk-test-123");
++    }
++
++    [Test]
++    public async Task SettingsData_GetChild_MissingKey_ReturnsAskError()
++    {
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        await Assert.That(settingsData).IsNotNull();
++
++        var child = settingsData!.GetChild("NonExistentKey");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Success).IsFalse();
++        await Assert.That(child.Error is AskError).IsTrue();
++
++        var askError = (AskError)child.Error!;
++        await Assert.That(askError.Table).IsEqualTo("settings");
++        await Assert.That(askError.DataKey).IsEqualTo("NonExistentKey");
++    }
++
++    [Test]
++    public async Task SettingsData_ViaMemoryStack_DotNotation()
++    {
++        // Store via DataSource
++        await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
++
++        // Resolve via MemoryStack dot notation (simulates %Settings.TestKey%)
++        var result = _engine.System.Context.MemoryStack.Get("Settings.TestKey");
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
++    }
++
++    [Test]
++    public async Task SettingsData_EmptyPath_ReturnsSelf()
++    {
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        await Assert.That(settingsData).IsNotNull();
++
++        var child = settingsData!.GetChild("");
++        await Assert.That(child).IsNotNull();
++        // Should return itself
++        await Assert.That(child).IsEqualTo(settingsData);
++    }
++
++    [Test]
++    public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
++    {
++        await _engine.System.DataSource.Set("settings", "ApiKey", "old-value");
++        var first = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
++        await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
++
++        await _engine.System.DataSource.Set("settings", "ApiKey", "new-value");
++        var second = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
++        await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
++    }
++
++    [Test]
++    public async Task SettingsHandler_Set_ThenGetViaSettingsData()
++    {
++        // Use the settings.set action handler
++        var context = _engine.System.Context;
++        var handler = new PLang.Runtime2.actions.settings.Set
++        {
++            Context = context,
++            Key = "HandlerKey",
++            Value = "HandlerValue"
++        };
++
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        // Verify via SettingsData
++        var setting = _engine.System.Context.MemoryStack.Get("Settings.HandlerKey");
++        await Assert.That(setting).IsNotNull();
++        await Assert.That(setting!.Value?.ToString()).IsEqualTo("HandlerValue");
++    }
++
++    [Test]
++    public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
++    {
++        await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
++
++        var handler = new PLang.Runtime2.actions.settings.Get
++        {
++            Context = _engine.System.Context,
++            Key = "TestKey"
++        };
++
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
++    }
++
++    [Test]
++    public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
++    {
++        var handler = new PLang.Runtime2.actions.settings.Get
++        {
++            Context = _engine.System.Context,
++            Key = "MissingKey"
++        };
++
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error is AskError).IsTrue();
++    }
++
++    [Test]
++    public async Task SettingsHandler_Remove_DeletesKey()
++    {
++        await _engine.System.DataSource.Set("settings", "ToRemove", "value");
++
++        var handler = new PLang.Runtime2.actions.settings.Remove
++        {
++            Context = _engine.System.Context,
++            Key = "ToRemove"
++        };
++
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        // Verify removed
++        var getResult = await _engine.System.DataSource.Get("settings", "ToRemove");
++        await Assert.That(getResult.Value).IsNull();
++    }
++
++    [Test]
++    public async Task ActorDataSource_IsCreatedLazily()
++    {
++        // Accessing DataSource should create the .db directory
++        var ds = _engine.System.DataSource;
++        await Assert.That(ds).IsNotNull();
++
++        var dbDir = _engine.FileSystem.Path.Combine(_tempDir, ".db");
++        await Assert.That(_engine.FileSystem.Directory.Exists(dbDir)).IsTrue();
++    }
++
++    // --- Nested settings path test ---
++
++    [Test]
++    public async Task SettingsData_NestedPath_NavigatesJsonObject()
++    {
++        // Store a JSON object as a setting
++        var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
++        await _engine.System.DataSource.Set("settings", "Config", config);
++
++        // Resolve %Settings.Config.SubKey%
++        var result = _engine.System.Context.MemoryStack.Get("Settings.Config.SubKey");
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
++    }
++
++    // --- MemoryStack.Clone preserves SettingsData ---
++
++    [Test]
++    public async Task MemoryStack_Clone_PreservesSettingsData()
++    {
++        // Store a setting
++        await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
++
++        // Clone the MemoryStack
++        var cloned = _engine.System.Context.MemoryStack.Clone();
++
++        // Settings should still work in the cloned stack
++        var result = cloned.Get("Settings.CloneKey");
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("clone-value");
++    }
++
++    [Test]
++    public async Task MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError()
++    {
++        // Clone the MemoryStack
++        var cloned = _engine.System.Context.MemoryStack.Clone();
++
++        // Missing key in cloned stack should still return AskError
++        var result = cloned.Get("Settings.MissingInClone");
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsFalse();
++        await Assert.That(result.Error is AskError).IsTrue();
++    }
++
++    // --- Error propagation integration test ---
++
++    [Test]
++    public async Task ErrorPropagation_MemoryStackGet_SettingsMissing_ReturnsAskError()
++    {
++        // This simulates what LazyParamsGenerator's __Resolve<T> does:
++        // 1. Gets a parameter with value "%Settings.MissingKey%"
++        // 2. Regex matches the full variable: Settings.MissingKey
++        // 3. Calls __memoryStack.Get("Settings.MissingKey")
++        // 4. Checks if result is non-null and !Success → sets __resolutionError
++        var memoryStack = _engine.System.Context.MemoryStack;
++
++        // This is the exact call the generated code makes
++        var resolved = memoryStack.Get("Settings.MissingKey");
++
++        // The generated code checks: if (__resolved != null && !__resolved.Success)
++        await Assert.That(resolved).IsNotNull();
++        await Assert.That(resolved!.Success).IsFalse();
++
++        // Verify the error is AskError (so runtime can prompt user)
++        await Assert.That(resolved.Error).IsNotNull();
++        await Assert.That(resolved.Error is AskError).IsTrue();
++        var askError = (AskError)resolved.Error!;
++        await Assert.That(askError.DataKey).IsEqualTo("MissingKey");
++    }
++
++    [Test]
++    public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
++    {
++        await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
++        var memoryStack = _engine.System.Context.MemoryStack;
++
++        // Same call path as generated code
++        var resolved = memoryStack.Get("Settings.ApiKey");
++
++        // Generated code checks: if (__resolved != null && !__resolved.Success) — should NOT trigger
++        await Assert.That(resolved).IsNotNull();
++        await Assert.That(resolved!.Success).IsTrue();
++        await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-real-key");
++    }
++
++    // --- SettingsData DataSource error path (F4) ---
++
++    [Test]
++    public async Task SettingsData_GetChild_CorruptDatabase_ReturnsDataSourceError()
++    {
++        // Trigger DataSource creation so the DB file exists
++        _ = _engine.System.DataSource;
++
++        // Corrupt the database file — overwrite with garbage
++        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
++        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
++
++        // SettingsData.GetChild should return the DataSource error (line 54-55),
++        // not throw and not return AskError
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        var child = settingsData!.GetChild("AnyKey");
++
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Success).IsFalse();
++        await Assert.That(child.Error is DataSourceError).IsTrue();
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Context/Actor.cs b/PLang/Runtime2/Engine/Context/Actor.cs
+index 8d88fcb1..b056d242 100644
+--- a/PLang/Runtime2/Engine/Context/Actor.cs
++++ b/PLang/Runtime2/Engine/Context/Actor.cs
+@@ -1,4 +1,6 @@
+ using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.DataSource;
++using PLang.Runtime2.Engine.Memory;
+ 
+ namespace PLang.Runtime2.Engine.Context;
+ 
+@@ -7,6 +9,8 @@ namespace PLang.Runtime2.Engine.Context;
+ /// </summary>
+ public sealed class Actor : IAsyncDisposable
+ {
++    private readonly Lazy<IDataSource> _dataSource;
++
+     /// <summary>
+     /// Name of the actor ("System", "Service", or "User").
+     /// </summary>
+@@ -27,6 +31,12 @@ public sealed class Actor : IAsyncDisposable
+     /// </summary>
+     public Engine.@this Engine { get; }
+ 
++    /// <summary>
++    /// Persistent key-value storage for this actor.
++    /// Created lazily on first access. Database stored at .db/{actorname}.sqlite.
++    /// </summary>
++    public IDataSource DataSource => _dataSource.Value;
++
+     /// <summary>
+     /// Resolves an actor by name using the engine.
+     /// Convention: types with this signature are auto-resolved by the source generator.
+@@ -43,16 +53,32 @@ public sealed class Actor : IAsyncDisposable
+     {
+         Name = name;
+         Engine = engine;
++        _dataSource = new Lazy<IDataSource>(CreateDataSource);
+         Context = new PLangContext(engine)
+         {
+             CallStack = new CallStack.@this()
+         };
+         Context.Actor = this;
+         Channels = new EngineChannels(engine);
++
++        // Register Settings on the System actor's MemoryStack
++        if (string.Equals(name, "System", StringComparison.OrdinalIgnoreCase))
++        {
++            Context.MemoryStack.Put(new SettingsData(engine));
++        }
++    }
++
++    private IDataSource CreateDataSource()
++    {
++        var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
++        var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
++        return new SqliteDataSource(dbPath, Engine.FileSystem);
+     }
+ 
+     public async ValueTask DisposeAsync()
+     {
++        if (_dataSource.IsValueCreated)
++            _dataSource.Value.Dispose();
+         Context.Dispose();
+         await Channels.DisposeAsync();
+     }
+diff --git a/PLang/Runtime2/Engine/DataSource/IDataSource.cs b/PLang/Runtime2/Engine/DataSource/IDataSource.cs
+new file mode 100644
+index 00000000..c5d0f67b
+--- /dev/null
++++ b/PLang/Runtime2/Engine/DataSource/IDataSource.cs
+@@ -0,0 +1,61 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.Engine.DataSource;
++
++/// <summary>
++/// Interface for persistent key-value storage.
++/// Each actor owns a DataSource. Modules own their tables (encryption → "encryption", settings → "settings").
++/// All methods return Data, never throw.
++/// </summary>
++public interface IDataSource : IDisposable
++{
++    /// <summary>
++    /// Gets a single value by table and key.
++    /// Returns Data with the value, or Data with null value if not found.
++    /// </summary>
++    Task<Data> Get(string table, string key);
++
++    /// <summary>
++    /// Gets all key-value pairs in a table.
++    /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=stored value).
++    /// </summary>
++    Task<Data> GetAll(string table);
++
++    /// <summary>
++    /// Sets a value by table and key. Creates the table if it doesn't exist.
++    /// </summary>
++    Task<Data> Set(string table, string key, object? value);
++
++    /// <summary>
++    /// Removes a value by table and key.
++    /// Returns success even if the key didn't exist.
++    /// </summary>
++    Task<Data> Remove(string table, string key);
++
++    /// <summary>
++    /// Checks if a key exists in a table.
++    /// Returns Data with bool value.
++    /// </summary>
++    Task<Data> Exists(string table, string key);
++
++    /// <summary>
++    /// Lists all tables in this DataSource.
++    /// Returns Data with List&lt;string&gt; value.
++    /// </summary>
++    Task<Data> Tables();
++
++    /// <summary>
++    /// Resolves the table name from a System.Type.
++    /// Convention: last namespace segment, lowercased.
++    /// e.g., PLang.Runtime2.actions.encryption → "encryption"
++    /// </summary>
++    static string ResolveTableName(System.Type type)
++    {
++        var ns = type.Namespace;
++        if (string.IsNullOrEmpty(ns))
++            return type.Name.ToLowerInvariant();
++
++        var lastDot = ns.LastIndexOf('.');
++        return lastDot >= 0 ? ns[(lastDot + 1)..].ToLowerInvariant() : ns.ToLowerInvariant();
++    }
++}
+diff --git a/PLang/Runtime2/Engine/DataSource/SettingsData.cs b/PLang/Runtime2/Engine/DataSource/SettingsData.cs
+new file mode 100644
+index 00000000..4ad67502
+--- /dev/null
++++ b/PLang/Runtime2/Engine/DataSource/SettingsData.cs
+@@ -0,0 +1,74 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.Engine.DataSource;
++
++/// <summary>
++/// Specialized Data that lazily loads settings from the System actor's DataSource.
++/// Registered on MemoryStack as "Settings" so that %Settings.ApiKey% resolves to a per-key database read.
++/// Overrides GetChild to intercept navigation and load from DataSource instead of navigating Value.
++/// </summary>
++public class SettingsData : Data
++{
++    private const string SettingsTable = "settings";
++    private readonly Engine.@this _engine;
++
++    public SettingsData(Engine.@this engine)
++        : base("Settings", null)
++    {
++        _engine = engine;
++    }
++
++    /// <summary>
++    /// Intercepts dot-notation navigation. When PLang resolves %Settings.ApiKey%,
++    /// MemoryStack.Get("Settings") returns this object, then calls GetChild("ApiKey").
++    /// We load the value from DataSource instead of navigating an in-memory Value.
++    /// </summary>
++    public override Data? GetChild(string path, int depth = 0)
++    {
++        if (string.IsNullOrEmpty(path))
++            return this;
++
++        // Split path: "ApiKey.SubProp" → key="ApiKey", remaining="SubProp"
++        var dotIndex = path.IndexOf('.');
++        string key;
++        string? remaining;
++
++        if (dotIndex >= 0)
++        {
++            key = path[..dotIndex];
++            remaining = path[(dotIndex + 1)..];
++        }
++        else
++        {
++            key = path;
++            remaining = null;
++        }
++
++        // Load the value from the System actor's DataSource
++        // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
++        // is synchronous under the hood — SQLite has no async I/O.
++        var dataSource = _engine.System.DataSource;
++        var result = dataSource.Get(SettingsTable, key).GetAwaiter().GetResult();
++
++        if (!result.Success)
++            return result;
++
++        if (result.Value == null)
++        {
++            // Key not found — return AskError so runtime can prompt the user
++            return FromError(new AskError(
++                $"Settings value '{key}' is not set. Please provide a value.",
++                SettingsTable, key));
++        }
++
++        var child = new Data(key, result.Value, parent: this);
++        child.Context = Context;
++
++        if (string.IsNullOrEmpty(remaining))
++            return child;
++
++        // Navigate further into the loaded value (e.g., Settings.Config.SubKey)
++        return child.GetChild(remaining, depth + 1);
++    }
++}
+diff --git a/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs b/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
+new file mode 100644
+index 00000000..ad033b25
+--- /dev/null
++++ b/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
+@@ -0,0 +1,291 @@
++using System.Text.Json;
++using Microsoft.Data.Sqlite;
++using PLang.Interfaces;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.Engine.DataSource;
++
++/// <summary>
++/// SQLite-backed persistent key-value storage.
++/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (JSON-serialized value).
++/// WAL mode for concurrent reads. Tables auto-created on first write.
++/// Connection per operation (SQLite pools internally via connection string).
++/// </summary>
++public sealed class SqliteDataSource : IDataSource
++{
++    private readonly string _connectionString;
++    private bool _disposed;
++
++    /// <summary>
++    /// Creates a SqliteDataSource at the specified database path.
++    /// Ensures the parent directory exists using the file system abstraction.
++    /// </summary>
++    public SqliteDataSource(string dbPath, IPLangFileSystem fileSystem)
++    {
++        var dir = fileSystem.Path.GetDirectoryName(dbPath);
++        if (!string.IsNullOrEmpty(dir) && !fileSystem.Directory.Exists(dir))
++            fileSystem.Directory.CreateDirectory(dir);
++
++        _connectionString = new SqliteConnectionStringBuilder
++        {
++            DataSource = dbPath,
++            Mode = SqliteOpenMode.ReadWriteCreate,
++            Cache = SqliteCacheMode.Shared
++        }.ToString();
++
++        // Enable WAL mode on first connection
++        EnableWalMode();
++    }
++
++    private void EnableWalMode()
++    {
++        try
++        {
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = "PRAGMA journal_mode=WAL;";
++            cmd.ExecuteNonQuery();
++        }
++        catch (SqliteException)
++        {
++            // Non-fatal — WAL is a performance optimization, not required
++        }
++    }
++
++    public Task<Data> Get(string table, string key)
++    {
++        try
++        {
++            EnsureTable(table);
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = $"SELECT data FROM [{SanitizeTableName(table)}] WHERE key = @key;";
++            cmd.Parameters.AddWithValue("@key", key);
++
++            var result = cmd.ExecuteScalar();
++            if (result == null || result == DBNull.Value)
++                return Task.FromResult(Data.Ok(null));
++
++            var value = DeserializeValue(result.ToString()!);
++            return Task.FromResult(Data.Ok(value));
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++    }
++
++    public Task<Data> GetAll(string table)
++    {
++        try
++        {
++            EnsureTable(table);
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
++
++            var items = new List<Data>();
++            using var reader = cmd.ExecuteReader();
++            while (reader.Read())
++            {
++                var k = reader.GetString(0);
++                var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
++                var value = raw != null ? DeserializeValue(raw) : null;
++                items.Add(new Data(k, value));
++            }
++            return Task.FromResult(Data.Ok((object)items));
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table)));
++        }
++    }
++
++    public Task<Data> Set(string table, string key, object? value)
++    {
++        try
++        {
++            EnsureTable(table);
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            var sanitized = SanitizeTableName(table);
++            cmd.CommandText = $@"INSERT INTO [{sanitized}] (key, data) VALUES (@key, @data)
++                                 ON CONFLICT(key) DO UPDATE SET data = @data;";
++            cmd.Parameters.AddWithValue("@key", key);
++            cmd.Parameters.AddWithValue("@data", SerializeValue(value));
++            cmd.ExecuteNonQuery();
++
++            return Task.FromResult(Data.Ok());
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++        catch (JsonException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                new DataSourceError(ex.Message, "SerializationError", 500)
++                {
++                    Exception = ex,
++                    TableName = table,
++                    KeyName = key
++                }));
++        }
++    }
++
++    public Task<Data> Remove(string table, string key)
++    {
++        try
++        {
++            EnsureTable(table);
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = $"DELETE FROM [{SanitizeTableName(table)}] WHERE key = @key;";
++            cmd.Parameters.AddWithValue("@key", key);
++            cmd.ExecuteNonQuery();
++
++            return Task.FromResult(Data.Ok());
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++    }
++
++    public Task<Data> Exists(string table, string key)
++    {
++        try
++        {
++            EnsureTable(table);
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = $"SELECT COUNT(*) FROM [{SanitizeTableName(table)}] WHERE key = @key;";
++            cmd.Parameters.AddWithValue("@key", key);
++
++            var count = Convert.ToInt64(cmd.ExecuteScalar());
++            return Task.FromResult(Data.Ok((object)(count > 0)));
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex, table, key)));
++        }
++    }
++
++    public Task<Data> Tables()
++    {
++        try
++        {
++            using var connection = new SqliteConnection(_connectionString);
++            connection.Open();
++            using var cmd = connection.CreateCommand();
++            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
++
++            var tables = new List<string>();
++            using var reader = cmd.ExecuteReader();
++            while (reader.Read())
++                tables.Add(reader.GetString(0));
++
++            return Task.FromResult(Data.Ok((object)tables));
++        }
++        catch (SqliteException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex)));
++        }
++        catch (IOException ex)
++        {
++            return Task.FromResult(Data.FromError(
++                DataSourceError.FromException(ex)));
++        }
++    }
++
++    private void EnsureTable(string table)
++    {
++        var sanitized = SanitizeTableName(table);
++        using var connection = new SqliteConnection(_connectionString);
++        connection.Open();
++        using var cmd = connection.CreateCommand();
++        cmd.CommandText = $"CREATE TABLE IF NOT EXISTS [{sanitized}] (key TEXT PRIMARY KEY, data TEXT);";
++        cmd.ExecuteNonQuery();
++    }
++
++    private static string SerializeValue(object? value)
++    {
++        if (value == null) return "null";
++        if (value is string s) return JsonSerializer.Serialize(s);
++        return JsonSerializer.Serialize(value);
++    }
++
++    private static object? DeserializeValue(string json)
++    {
++        if (string.IsNullOrEmpty(json) || json == "null")
++            return null;
++
++        try
++        {
++            using var doc = JsonDocument.Parse(json);
++            return Data.UnwrapJsonElement(doc.RootElement);
++        }
++        catch (JsonException)
++        {
++            // If it's not valid JSON, return as raw string
++            return json;
++        }
++    }
++
++    /// <summary>
++    /// Sanitizes a table name for SQLite.
++    /// Allows only alphanumeric and underscores — prevents SQL injection in table names.
++    /// </summary>
++    private static string SanitizeTableName(string table)
++    {
++        var sanitized = new string(table.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
++        return string.IsNullOrEmpty(sanitized) ? "default_table" : sanitized.ToLowerInvariant();
++    }
++
++    public void Dispose()
++    {
++        if (_disposed) return;
++        _disposed = true;
++        // SQLite connections are pooled and manage their own cleanup.
++        // Clear the connection pool for this data source.
++        SqliteConnection.ClearPool(new SqliteConnection(_connectionString));
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Errors/AskError.cs b/PLang/Runtime2/Engine/Errors/AskError.cs
+new file mode 100644
+index 00000000..029902c0
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Errors/AskError.cs
+@@ -0,0 +1,29 @@
++namespace PLang.Runtime2.Engine.Errors;
++
++/// <summary>
++/// Error indicating a required value is missing and needs to be provided by the user.
++/// Carries the table and data key where the value should be stored once provided.
++/// Runtime handling (prompt-store-retry) is out of scope — comes in a separate branch.
++/// </summary>
++public class AskError : Error
++{
++    public override ErrorCategory Category => ErrorCategory.Application;
++
++    /// <summary>
++    /// The DataSource table where the value belongs (e.g., "settings").
++    /// </summary>
++    public string Table { get; }
++
++    /// <summary>
++    /// The key within the table (e.g., "ApiKey").
++    /// </summary>
++    public string DataKey { get; }
++
++    public AskError(string message, string table, string dataKey)
++        : base(message, "AskUser", 400)
++    {
++        Table = table;
++        DataKey = dataKey;
++        FixSuggestion = $"Set the value: set settings '{dataKey}' = '<value>'";
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Errors/DataSourceError.cs b/PLang/Runtime2/Engine/Errors/DataSourceError.cs
+new file mode 100644
+index 00000000..b0267154
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Errors/DataSourceError.cs
+@@ -0,0 +1,63 @@
++using System.Text;
++using PLang.Runtime2.Engine.Context;
++
++namespace PLang.Runtime2.Engine.Errors;
++
++/// <summary>
++/// Error that occurred during a DataSource operation (SQLite read/write/delete).
++/// Captures table and key for diagnostics.
++/// </summary>
++public class DataSourceError : Error
++{
++    public override ErrorCategory Category => ErrorCategory.Runtime;
++
++    public string? TableName { get; init; }
++    public string? KeyName { get; init; }
++
++    public DataSourceError(string message, string key = "DataSourceError", int statusCode = 500)
++        : base(message, key, statusCode) { }
++
++    public DataSourceError(string message, PLangContext context, string key = "DataSourceError", int statusCode = 500)
++        : base(message, context, key, statusCode) { }
++
++    public static DataSourceError FromException(Exception ex, string? tableName = null, string? keyName = null)
++    {
++        var (suggestion, errorKey) = ClassifyException(ex);
++        return new DataSourceError(ex.Message, errorKey, 500)
++        {
++            Exception = ex,
++            TableName = tableName,
++            KeyName = keyName,
++            FixSuggestion = suggestion
++        };
++    }
++
++    private static (string? Suggestion, string Key) ClassifyException(Exception ex)
++    {
++        var msg = ex.Message;
++
++        if (msg.Contains("database is locked", StringComparison.OrdinalIgnoreCase))
++            return ("Another process may be holding a lock on the database file. Close other connections and retry.", "DatabaseLocked");
++
++        if (msg.Contains("disk I/O error", StringComparison.OrdinalIgnoreCase) ||
++            msg.Contains("disk full", StringComparison.OrdinalIgnoreCase))
++            return ("The disk may be full or the database file may be on a read-only filesystem.", "DiskError");
++
++        if (msg.Contains("corrupt", StringComparison.OrdinalIgnoreCase))
++            return ("The database file may be corrupt. Delete the .db file and let it be recreated.", "DatabaseCorrupt");
++
++        if (msg.Contains("permission", StringComparison.OrdinalIgnoreCase) ||
++            msg.Contains("access", StringComparison.OrdinalIgnoreCase))
++            return ("Check file system permissions on the .db directory.", "PermissionDenied");
++
++        return (null, "DataSourceError");
++    }
++
++    protected override void FormatExtra(StringBuilder sb, string indent)
++    {
++        if (TableName != null)
++            sb.AppendLine($"{indent}    Table: {TableName}");
++        if (KeyName != null)
++            sb.AppendLine($"{indent}    Key: {KeyName}");
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+index fe41126f..aa2c8b94 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+@@ -71,7 +71,8 @@ public sealed partial class @this
+             }
+         }
+ 
+-        if (!result.Success) return result;
++        // Store step result so AfterStep handlers can inspect it (e.g., test runner assertion tracking)
++        context.MemoryStack.Put(new Data("__stepResult", result.Value, result.Type) { Error = result.Error });
+ 
+         try
+         {
+diff --git a/PLang/Runtime2/Engine/Memory/Data.Navigation.cs b/PLang/Runtime2/Engine/Memory/Data.Navigation.cs
+index 2a8e46e7..ee53967d 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.Navigation.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.Navigation.cs
+@@ -14,7 +14,7 @@ public partial class Data
+     /// <summary>
+     /// Gets a child value by path (dot notation or index).
+     /// </summary>
+-    public Data? GetChild(string path, int depth = 0)
++    public virtual Data? GetChild(string path, int depth = 0)
+     {
+         if (string.IsNullOrEmpty(path))
+             return this;
+diff --git a/PLang/Runtime2/Engine/Memory/MemoryStack.cs b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+index 783d33af..f6153da3 100644
+--- a/PLang/Runtime2/Engine/Memory/MemoryStack.cs
++++ b/PLang/Runtime2/Engine/Memory/MemoryStack.cs
+@@ -178,8 +178,18 @@ public class MemoryStack
+                 !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase) &&
+                 !kvp.Key.StartsWith("!"))
+             {
+-                var clonedValue = kvp.Value.Value.DeepClone();
+-                clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
++                // Preserve specialized Data subclasses by reference — they are
++                // stateless (SettingsData loads from DB each time) or factory-based
++                // (DynamicData). Deep-cloning would lose the virtual GetChild override.
++                if (kvp.Value is DynamicData || kvp.Value.GetType() != typeof(Data))
++                {
++                    clone._variables[kvp.Key] = kvp.Value;
++                }
++                else
++                {
++                    var clonedValue = kvp.Value.Value.DeepClone();
++                    clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
++                }
+             }
+         }
+         clone.Context = Context;
+diff --git a/PLang/Runtime2/Engine/Test/this.cs b/PLang/Runtime2/Engine/Test/this.cs
+index 30654b46..34b764eb 100644
+--- a/PLang/Runtime2/Engine/Test/this.cs
++++ b/PLang/Runtime2/Engine/Test/this.cs
+@@ -143,9 +143,20 @@ public sealed class @this
+ 
+         var runResult = await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
+ 
+-        if (!runResult.Success && runResult.Error is not AssertionError)
++        if (!runResult.Success)
+         {
+-            if (result.Failures.Count == 0)
++            if (runResult.Error is AssertionError assertError && result.Failures.Count == 0)
++            {
++                // Assertion failure bubbled up to goal level (not caught by AfterStep handler)
++                var step = testEngine.User.Context.Step;
++                result.Failures.Add(new AssertionFailure
++                {
++                    StepIndex = step?.Index ?? -1,
++                    StepText = step?.Text ?? "",
++                    Message = assertError.Message
++                });
++            }
++            else if (runResult.Error is not AssertionError && result.Failures.Count == 0)
+             {
+                 result.Errored = true;
+                 result.ErrorMessage = runResult.Error?.Message ?? "Goal execution failed";
+diff --git a/PLang/Runtime2/actions/settings/get.cs b/PLang/Runtime2/actions/settings/get.cs
+new file mode 100644
+index 00000000..ecefbfb7
+--- /dev/null
++++ b/PLang/Runtime2/actions/settings/get.cs
+@@ -0,0 +1,32 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.actions.settings;
++
++/// <summary>
++/// Gets a settings value by key from the System actor's DataSource.
++/// PLang: get settings 'ApiKey', write to %apiKey%
++/// </summary>
++[Action("get")]
++public partial class Get : IContext
++{
++    public partial string Key { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var dataSource = Context.Engine.System.DataSource;
++        var result = await dataSource.Get("settings", Key);
++
++        if (!result.Success)
++            return result;
++
++        if (result.Value == null)
++        {
++            return Data.FromError(new AskError(
++                $"Settings value '{Key}' is not set. Please provide a value.",
++                "settings", Key));
++        }
++
++        return Data.Ok(result.Value);
++    }
++}
+diff --git a/PLang/Runtime2/actions/settings/remove.cs b/PLang/Runtime2/actions/settings/remove.cs
+new file mode 100644
+index 00000000..f2dfa776
+--- /dev/null
++++ b/PLang/Runtime2/actions/settings/remove.cs
+@@ -0,0 +1,24 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.actions.settings;
++
++/// <summary>
++/// Removes a settings value by key from the System actor's DataSource.
++/// PLang: remove settings 'ApiKey'
++/// </summary>
++[Action("remove", Cacheable = false)]
++public partial class Remove : IContext
++{
++    public partial string Key { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var dataSource = Context.Engine.System.DataSource;
++        var result = await dataSource.Remove("settings", Key);
++
++        if (!result.Success)
++            return result;
++
++        return Data.Ok(new types.setting { key = Key });
++    }
++}
+diff --git a/PLang/Runtime2/actions/settings/set.cs b/PLang/Runtime2/actions/settings/set.cs
+new file mode 100644
+index 00000000..93bae0b6
+--- /dev/null
++++ b/PLang/Runtime2/actions/settings/set.cs
+@@ -0,0 +1,25 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.actions.settings;
++
++/// <summary>
++/// Sets a settings value by key in the System actor's DataSource.
++/// PLang: set settings 'ApiKey' = 'sk-123...'
++/// </summary>
++[Action("set", Cacheable = false)]
++public partial class Set : IContext
++{
++    public partial string Key { get; init; }
++    public partial object? Value { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var dataSource = Context.Engine.System.DataSource;
++        var result = await dataSource.Set("settings", Key, Value);
++
++        if (!result.Success)
++            return result;
++
++        return Data.Ok(new types.setting { key = Key, value = Value });
++    }
++}
+diff --git a/PLang/Runtime2/actions/settings/types.cs b/PLang/Runtime2/actions/settings/types.cs
+new file mode 100644
+index 00000000..bce1db5d
+--- /dev/null
++++ b/PLang/Runtime2/actions/settings/types.cs
+@@ -0,0 +1,10 @@
++namespace PLang.Runtime2.actions.settings;
++
++public static class types
++{
++    public record setting
++    {
++        public string? key { get; init; }
++        public object? value { get; init; }
++    }
++}
+diff --git a/Tests/Runtime2/Settings/SettingsCrud/.build/app.pr b/Tests/Runtime2/Settings/SettingsCrud/.build/app.pr
+new file mode 100644
+index 00000000..6d8d7ec6
+--- /dev/null
++++ b/Tests/Runtime2/Settings/SettingsCrud/.build/app.pr
+@@ -0,0 +1,7 @@
++{
++  "id": "6e7265c0-c259-44d6-9bc6-5cbdb662c239",
++  "created": "2026-02-24T11:08:52.5118501Z",
++  "updated": "2026-02-24T11:09:04.0395633Z",
++  "name": "SettingsCrud",
++  "version": "0.2"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Settings/SettingsCrud/.build/start.test.pr b/Tests/Runtime2/Settings/SettingsCrud/.build/start.test.pr
+new file mode 100644
+index 00000000..e6c82b97
+--- /dev/null
++++ b/Tests/Runtime2/Settings/SettingsCrud/.build/start.test.pr
+@@ -0,0 +1,214 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-test-12345\u0027",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "settings",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Key",
++              "value": "TestApiKey",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": "sk-test-12345",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "get settings \u0027TestApiKey\u0027, write to %apiKey%",
++      "lineNumber": 3,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "settings",
++          "action": "get",
++          "parameters": [
++            {
++              "name": "Key",
++              "value": "TestApiKey",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "apiKey"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %apiKey% equals \u0022sk-test-12345\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": "sk-test-12345",
++              "type": "string"
++            },
++            {
++              "name": "Actual",
++              "value": "%apiKey%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set settings \u0027TestApiKey\u0027 = \u0027sk-updated-99999\u0027",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "settings",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Key",
++              "value": "TestApiKey",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": "sk-updated-99999",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "get settings \u0027TestApiKey\u0027, write to %updatedKey%",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "settings",
++          "action": "get",
++          "parameters": [
++            {
++              "name": "Key",
++              "value": "TestApiKey",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "updatedKey"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %updatedKey% equals \u0022sk-updated-99999\u0022",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": "sk-updated-99999",
++              "type": "string"
++            },
++            {
++              "name": "Actual",
++              "value": "%updatedKey%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "remove settings \u0027TestApiKey\u0027",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "settings",
++          "action": "remove",
++          "parameters": [
++            {
++              "name": "Key",
++              "value": "TestApiKey",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Start.test.goal",
++  "prPath": "/.build/start.test.pr",
++  "hash": "28fa495cc178a52c877e5583768acfb2cd7761fcd1b9571621aabaeca1c3e5ee",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Settings/SettingsCrud/Start.test.goal b/Tests/Runtime2/Settings/SettingsCrud/Start.test.goal
+new file mode 100644
+index 00000000..9da7c1d3
+--- /dev/null
++++ b/Tests/Runtime2/Settings/SettingsCrud/Start.test.goal
+@@ -0,0 +1,8 @@
++Start
++- set settings 'TestApiKey' = 'sk-test-12345'
++- get settings 'TestApiKey', write to %apiKey%
++- assert %apiKey% equals "sk-test-12345"
++- set settings 'TestApiKey' = 'sk-updated-99999'
++- get settings 'TestApiKey', write to %updatedKey%
++- assert %updatedKey% equals "sk-updated-99999"
++- remove settings 'TestApiKey'
+diff --git a/learnings/architect/runtime2-system-datasource/codeanalyzer/v1/learnings.md b/learnings/architect/runtime2-system-datasource/codeanalyzer/v1/learnings.md
+new file mode 100644
+index 00000000..6fdf344e
+--- /dev/null
++++ b/learnings/architect/runtime2-system-datasource/codeanalyzer/v1/learnings.md
+@@ -0,0 +1,33 @@
++# Learnings — Code Analysis v1
++
++## MemoryStack.Clone() creates plain Data objects — subtype information is lost
++
++When `MemoryStack.Clone()` is called, it iterates `_variables` and creates `new Data(name, clonedValue, type)` for each entry. This means any `Data` subclass (like `SettingsData`, `DynamicData`) loses its runtime type and becomes plain `Data`. Any behavior depending on virtual method overrides (like `SettingsData.GetChild`) is silently lost in cloned stacks.
++
++**Pattern to watch for**: Any time a new `Data` subclass with behavioral overrides is registered on a `MemoryStack`, verify that `Clone()` either preserves the subclass or the variable is treated as a system variable (skipped during clone).
++
++## Source generators produce code that needs its own test coverage
++
++The `LazyParamsGenerator` changes (error propagation via `__resolutionError`) are tested indirectly through SettingsData tests, but the actual generated code path is never exercised. The tests call `SettingsData.GetChild()` directly and test handlers with manually-set properties, bypassing the generated `CodeGeneratedExecuteAsync → __Resolve<T> → MemoryStack.Get()` path.
++
++**Pattern**: When modifying generated code, always write a test that exercises the generated path end-to-end, not just the underlying components.
++
++## Security-critical code needs dedicated tests even when the happy path works
++
++`SanitizeTableName` is the SQL injection defense for dynamic table names. All tests use clean names like "settings" and "encryption". A test with `"; DROP TABLE settings; --"` would verify the defense actually works.
++
++**Pattern**: For any security boundary (sanitization, validation, access control), write at least one test with adversarial input.
++
++## Bare catches hide the unexpected
++
++`catch { return json; }` in `DeserializeValue` is meant to handle invalid JSON, but it also catches `OutOfMemoryException`, `StackOverflowException`, etc. Always catch the specific exception type you expect (`JsonException` in this case).
++
++**Pattern**: In PLang Runtime2, the convention is to catch specific exceptions at boundaries: `IOException | UnauthorizedAccessException` at filesystem boundaries, `JsonException | NotSupportedException` at serialization boundaries.
++
++## The `??=` lazy initialization pattern is not thread-safe
++
++`Actor.DataSource => _dataSource ??= CreateDataSource()` can create two instances under concurrent access. For reference types, this is usually tolerable (one instance is GC'd), but for types with external resources (like SQLite connections), it can leak. Consider `Lazy<T>` for resource-holding types.
++
++## Virtual methods on Data are a powerful extension point but fragile
++
++Making `Data.GetChild` virtual enables `SettingsData` to intercept navigation. But the base implementation has non-trivial semantics (dot/bracket parsing, depth tracking). Override authors must understand the full contract. The depth parameter and path-splitting logic create a subtle API surface.

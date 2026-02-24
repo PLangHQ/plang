@@ -1,0 +1,105 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-system-datasource",
+  "timestamp": "2026-02-24T16:00:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 1461, "passed": 1461, "failed": 0, "skipped": 0 },
+    "plang": { "total": 23, "passed": 22, "failed": 1, "skipped": 0 }
+  },
+  "coverage": {
+    "tool": "TUnit --coverage (cobertura)",
+    "changed_files_covered": 8,
+    "changed_files_total": 11,
+    "highlights": {
+      "SettingsData.cs": "100% — fully covered including error path (F4 addressed)",
+      "Actor.cs": "100%",
+      "MemoryStack.cs": "98.7%",
+      "Data.Navigation.cs": "97.9%",
+      "SqliteDataSource.cs": "69.6% — error catch blocks untested",
+      "DataSourceError.cs": "77.1% — FormatExtra + context constructor uncovered",
+      "Step/Methods.cs": "75.2% — OnError/retry paths uncovered",
+      "Test/this.cs": "2.8% — test runner itself essentially untested",
+      "settings handlers (generated)": "0% CodeGeneratedExecuteAsync — no engine pipeline test"
+    },
+    "uncovered_files": [
+      "PLang/Runtime2/actions/settings/get.cs (generated code: 0%)",
+      "PLang/Runtime2/actions/settings/set.cs (generated code: 0%)",
+      "PLang/Runtime2/actions/settings/remove.cs (generated code: 0%)"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/Settings/SetMaxGzipSize/Start.test.goal",
+      "code_file": "Tests/Runtime2/Settings/SetMaxGzipSize/.build/start.test.pr",
+      "issue": "SetMaxGzipSize STILL shows PASS despite mapping to variable.set/variable.get (not settings module) with mismatched variable names ('max gzip size' vs 'archive.max'). Static analysis of the full execution path (variable.get → Data.Ok(null) → return mapping skipped → assert resolves %maxSize% to null → AreEqual(20971520, null) → false → AssertionError) shows the assertion SHOULD fail. But test runner reports PASS. The test runner fix (AfterStep + __stepResult + goal-level fallback) appears insufficient for this case — needs runtime debugging to identify why the error is not detected.",
+      "impact": "A known false green from v2 persists. Gives false confidence that variable/settings tests pass. The test runner's assertion failure detection cannot be trusted until this is debugged.",
+      "suggestion": "Add runtime tracing (Console.WriteLine) to TrackAssertionFailures and the goal-level fallback in Test/this.cs to identify exactly why the assertion failure is not caught. Consider: (1) Is the lifecycle cache preventing AfterStep from firing? (2) Is the goal result actually Success despite the assertion error? (3) Delete SetMaxGzipSize entirely — it tests variable module, not settings, and uses wrong variable names."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/Settings/SettingsCrud/Start.test.goal",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "issue": "SettingsCrud PLang test FAILS with 'SQLite Error 1: table settings has no column named data'. The v1 SqliteSettingsRepository creates a 'Settings' table with different columns (key/value vs key/data). SQLite table names are case-insensitive, so v2's 'settings' table collides with v1's 'Settings' table. The coder documented this as a known blocker.",
+      "impact": "The only PLang integration test for the settings module cannot run. Builder → .pr → GoalMapper → runtime pipeline is completely untested for settings actions.",
+      "suggestion": "Fix: Either (1) rename the v2 table to 'settings_v2' or 'system_settings', (2) add a migration that drops the v1 table if it has the wrong schema, or (3) rename the v1 table to 'settings_v1' (already done for C# tests via commit 20717d63 but not for the runtime)."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/Engine/Test/this.cs",
+      "issue": "The test runner itself has only 2.8% code coverage (4/143 lines). TrackAssertionFailures, RunSingleTest, PrintSummary — none are covered by C# tests. The test runner is the gatekeeper for all PLang tests and has NO unit tests.",
+      "impact": "Bugs in the test runner (like the persistent SetMaxGzipSize false green) cannot be caught proactively. We're relying on manual observation to detect test runner bugs.",
+      "suggestion": "Add C# unit tests for the test runner: (1) Test TrackAssertionFailures with a mock step result containing AssertionError (2) Test the goal-level fallback path (3) Test the lifecycle caching interaction with event registration timing."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+      "issue": "F4 from v2 was addressed: SettingsData_GetChild_CorruptDatabase_ReturnsDataSourceError test covers the error path at lines 54-55. However, the test corrupts the DB file after DataSource creation, which may trigger a different code path (connection pool may have cached data). A more reliable test would use a mock IDataSource that returns DataSourceError directly.",
+      "impact": "Low — the test does cover the code path, just through a less controlled mechanism. The assertion checks `child.Error is DataSourceError` which is correct.",
+      "suggestion": "Consider adding a mock-based test for deterministic error path coverage: inject IDataSource that returns Data.FromError(new DataSourceError(...)) from Get()."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "issue": "SqliteDataSource error catch blocks have 0% coverage (lines 80-83, 108-116, 137-155, 173-181, 199-207, 227-235). All CRUD methods catch SqliteException and IOException but no test triggers these paths.",
+      "impact": "If error wrapping in DataSourceError.FromException is broken (wrong key, wrong table/key propagation), it won't be caught. ClassifyException IS tested via DataSourceError unit tests, but the actual catch-and-wrap integration in SqliteDataSource is not.",
+      "suggestion": "Use chmod to make the .db file read-only, then attempt a write → triggers IOException in Set(). Or corrupt the file between operations."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+      "code_file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "issue": "DeserializeValue catches only JsonException (line 266). Data.UnwrapJsonElement throws InvalidOperationException on nesting depth > 128. This exception would propagate through Get() uncaught, violating the 'behavior methods never throw' contract. Carried forward from v2 F6.",
+      "impact": "Low — requires maliciously deep JSON already stored in SQLite.",
+      "suggestion": "Add catch (InvalidOperationException) in DeserializeValue or a general catch in Get()."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+      "issue": "MemoryStack.Clone shares SettingsData by reference (lines 184-186). Context setter (line 195) mutates the shared SettingsData.Context. Carried forward from v2 F5.",
+      "impact": "Low — SettingsData doesn't use Context for core behavior (loads from DataSource each time).",
+      "suggestion": "Document as known limitation or create SettingsData per clone."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "C# test quality is good: 1461 tests pass, SettingsData has 100% coverage (F4 fix confirmed), error classification and handler tests are solid. Two critical issues remain: (1) SetMaxGzipSize is still a false green — static analysis shows the assertion should fail but the test runner reports PASS, indicating the AfterStep/__stepResult fix doesn't work for all cases and needs runtime debugging. (2) SettingsCrud PLang test fails due to v1/v2 schema collision — the only settings pipeline test is blocked. The test runner itself has 2.8% coverage, making test runner bugs hard to detect proactively."
+}

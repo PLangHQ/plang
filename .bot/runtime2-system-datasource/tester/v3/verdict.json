@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "SetMaxGzipSize still false green (test runner fix doesn't catch it — needs runtime debugging). SettingsCrud blocked by v1/v2 schema collision. Test runner itself has 2.8% coverage." }
