@@ -1,0 +1,56 @@
+{
+  "branch": "runtime2-inmemory-datasource",
+  "sessions": [
+    {
+      "id": "a7c3e1f2-9b4d-4a8e-b5c6-d7e8f9a0b1c2",
+      "bot": "architect",
+      "timestamp_start": "2026-02-27T00:00:00Z",
+      "timestamp_end": "2026-02-27T00:30:00Z",
+      "intent": "Design in-memory SQLite datasource support for tests, builder, and PLang tests",
+      "before": {
+        "assumptions": "SqliteDataSource is the only IDataSource implementation. Actor creates it lazily with file path. No in-memory support exists in runtime2. Runtime1 had AppContext.SetSwitch pattern which is not OBP.",
+        "risk": "Low — additive change. SqliteDataSource gains a new construction path, existing file-backed path unchanged."
+      },
+      "plan": "SqliteDataSource gains InMemory(name) static factory with sentinel connection. New Engine.Building object (like Testing) with IsEnabled. Actor.CreateDataSource() navigates to Engine.Testing.IsEnabled and Engine.Building.IsEnabled to decide. See .bot/runtime2-inmemory-datasource/architect/v1/plan.md for full spec.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Test/this.cs",
+            "PLang/Runtime2/Engine/Debug/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read all relevant files to understand current DataSource system, Actor creation, Engine properties, and Testing/Debug patterns"
+        },
+        {
+          "paths": [
+            "PLang/Services/SettingsService/SqliteSettingsRepository.cs",
+            "PLang/Modules/DbModule/ModuleSettings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Studied runtime1 in-memory patterns — AppContext.SetSwitch, InMemoryDbCache sentinel, ConvertToMemoryDb() — to understand what worked and what to avoid"
+        },
+        {
+          "paths": [".bot/runtime2-inmemory-datasource/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote coder handoff plan after iterative design discussion with Ingi. Key decisions: SQLite in-memory (not dictionary), sentinel on DataSource, Actor navigates Testing/Building context, new Building object on Engine."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Design approved through conversation. Plan written and ready for coder handoff."
+      }
+    }
+  ]
+}
