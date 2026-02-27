@@ -54,20 +54,8 @@ public sealed partial class @this
 
         try
         {
-            for (var i = 0; i < Steps.Count; i++)
-            {
-                var step = Steps[i];
-
-                var stepResult = await step.RunAsync(engine, context, cancellationToken);
-                if (!stepResult)
-                {
-                    if (!(step.OnError?.IgnoreError ?? false))
-                        return stepResult;
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                    return Data.FromError(GoalError.Cancelled(context));
-            }
+            var stepsResult = await Steps.RunAsync(engine, context, cancellationToken);
+            if (!stepsResult) return stepsResult;
 
             try
             {

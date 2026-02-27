@@ -363,6 +363,14 @@ namespace PLang
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 
+			// Run setup goals before the main goal
+			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
+			if (!setupResult.Success) return setupResult;
+
+			// When goalName is "setup", only run setup — no main goal after
+			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				return setupResult;
+
 			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);
 		}
 

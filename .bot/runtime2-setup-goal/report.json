@@ -1,0 +1,78 @@
+{
+  "branch": "runtime2-setup-goal",
+  "sessions": [
+    {
+      "id": "058e3aa3-a14c-44a4-9fa1-89d5ad33e053",
+      "bot": "architect",
+      "timestamp_start": "2026-02-27T06:00:00Z",
+      "timestamp_end": "2026-02-27T06:17:04Z",
+      "intent": "Design Setup.goal run-once execution system for Runtime2",
+      "before": {
+        "assumptions": "Runtime1 had RunSetup/HasExecuted system. Runtime2 needs equivalent with OBP-compliant design.",
+        "risk": "Low — design-only session"
+      },
+      "plan": "Trace runtime1 setup system, design OBP-compliant Setup object with Executions smart collection, write handoff spec for coder.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2/architect/v1/plan.md", ".bot/runtime2/architect/v1/summary.md", ".bot/runtime2/architect/summary.md", ".bot/runtime2/report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect handoff spec for Setup.goal system"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design spec ready for coder implementation",
+        "notes": "Key decisions: Setup is an object not a filter, Executions wraps sqlite table, context.Setup propagates through goal.call, Steps.RunAsync owns iteration."
+      }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-234567890abc",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T07:00:00Z",
+      "timestamp_end": "2026-02-27T11:20:00Z",
+      "intent": "Implement Setup.goal run-once execution system per architect handoff",
+      "before": {
+        "assumptions": "Architect spec is sound. EngineGoals.Setup is currently IEnumerable<Goal>, needs to become Setup object. Steps needs RunAsync. PLangContext needs Setup property.",
+        "risk": "Low — well-defined spec, familiar patterns (SqliteDataSource). Medium risk on excluding setup goals from regular lookup (may break callers)."
+      },
+      "plan": "Create Setup/this.cs (uses engine.System.DataSource, no separate Executions class), add PLangContext.Setup, modify EngineGoals.Setup property, add Steps.RunAsync with setup check, refactor Goal.RunAsync to delegate, wire up in Executor.Run2, write C# tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Setup object with Goals, RunAsync, IsExecuted, Record — uses engine.System.DataSource instead of separate Executions class"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Context/PLangContext.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs", "PLang/Runtime2/Engine/Goals/Goal/Methods.cs", "PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "EngineGoals.Setup becomes object, PLangContext.Setup added, Steps.RunAsync with run-once check, Goal.RunAsync delegates to Steps (OBP rule 5), Executor.Run2 calls Setup before main goal"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "9 tests: goal ordering, exclusion from lookup, IsExecuted/Record, skip already-executed, hash change re-run, context propagation, Clone"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/GoalsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated existing Setup test to use goals.Setup.Goals.ToList() instead of goals.Setup.ToList()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1474/1474, PLang tests: 23/23",
+        "notes": "Simplified from architect's design: no Executions class, uses engine.System.DataSource directly. Discussed with Ingi — table name is 'setup', using existing DataSource was always the intent."
+      }
+    }
+  ]
+}

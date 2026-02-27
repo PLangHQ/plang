@@ -258,7 +258,7 @@ public class GoalsTests
         goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
         goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
 
-        var setupGoals = goals.Setup.ToList();
+        var setupGoals = goals.Setup.Goals.ToList();
 
         await Assert.That(setupGoals.Count).IsEqualTo(1);
         await Assert.That(setupGoals[0].Name).IsEqualTo("SetupGoal");

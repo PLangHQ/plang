@@ -17,6 +17,17 @@ public sealed class @this
     internal Engine.@this Engine { get; set; } = null!;
 
     /// <summary>
+    /// Run-once setup execution system.
+    /// Replaces the old IEnumerable&lt;Goal&gt; filter with a proper object.
+    /// </summary>
+    public Setup.@this Setup { get; }
+
+    public @this()
+    {
+        Setup = new Setup.@this(this);
+    }
+
+    /// <summary>
     /// Adds a goal to the collection.
     /// </summary>
     public void Add(Goal.@this goal)
@@ -29,6 +40,7 @@ public sealed class @this
 
     /// <summary>
     /// Gets a goal by name from cache only.
+    /// Setup goals are excluded — they are only reachable through Setup.RunAsync().
     /// </summary>
     public Goal.@this? Get(string name)
     {
@@ -40,11 +52,11 @@ public sealed class @this
             name = name[..^5];
 
         // Try exact match first
-        if (_goals.TryGetValue(name, out var goal))
+        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
         // Try by path
-        if (_byPath.TryGetValue(name, out goal))
+        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
             return goal;
 
         // Try with different extensions/variations
@@ -59,9 +71,9 @@ public sealed class @this
 
         foreach (var variation in variations)
         {
-            if (_goals.TryGetValue(variation, out goal))
+            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
-            if (_byPath.TryGetValue(variation, out goal))
+            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
         }
 
@@ -179,11 +191,6 @@ public sealed class @this
     /// Gets public goals only.
     /// </summary>
     public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
-
-    /// <summary>
-    /// Gets setup goals only.
-    /// </summary>
-    public IEnumerable<Goal.@this> Setup => _goals.Values.Where(g => g.IsSetup);
 
     /// <summary>
     /// Gets event goals only.
