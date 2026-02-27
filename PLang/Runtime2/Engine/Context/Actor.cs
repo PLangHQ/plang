@@ -61,11 +61,9 @@ public sealed class Actor : IAsyncDisposable
         Context.Actor = this;
         Channels = new EngineChannels(engine);
 
-        // Register Settings on the System actor's MemoryStack
-        if (string.Equals(name, "System", StringComparison.OrdinalIgnoreCase))
-        {
-            Context.MemoryStack.Put(new SettingsData(engine));
-        }
+        // Register shared SettingsData — same object for all actors.
+        // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
+        Context.MemoryStack.Put(engine.SettingsVariable);
     }
 
     private IDataSource CreateDataSource()

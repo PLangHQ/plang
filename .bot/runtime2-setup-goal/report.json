@@ -232,6 +232,46 @@
         "health": "FAIL — SettingsData bridge unreachable from PLang execution",
         "notes": "Finding 1 (High): %Settings.ApiKey% silently resolves to null because SettingsData lives on System.Context.MemoryStack but execution uses User.Context.MemoryStack. Settings action handlers work because they bypass MemoryStack and access Engine.System.DataSource directly."
       }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T17:00:00Z",
+      "timestamp_end": "2026-02-27T17:30:00Z",
+      "intent": "Share SettingsData across all actors — fix %Settings.X% unreachable from PLang code",
+      "before": {
+        "assumptions": "Code analyzer found SettingsData only on System actor. Ingi confirmed: settings are runtime-wide, all actors should share the same object.",
+        "risk": "Low — straightforward wiring change"
+      },
+      "plan": "Engine owns single SettingsData instance. Actor always registers it (remove System-only check). Fix all tests to use User context. Add shared-object reference equality test.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added internal SettingsVariable property, created in constructor"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/Actor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed System-only if block, always registers engine.SettingsVariable on MemoryStack"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All tests now use _engine.Context.MemoryStack (User context). Added SameObjectAcrossAllActors and SetViaSystem_ReadableFromUserContext tests."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1478/1478",
+        "notes": "All actors share same SettingsData reference. %Settings.X% now works in PLang code."
+      }
     }
   ]
 }
