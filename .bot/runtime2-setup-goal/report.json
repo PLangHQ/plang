@@ -73,6 +73,49 @@
         "health": "C# tests: 1474/1474, PLang tests: 23/23",
         "notes": "Simplified from architect's design: no Executions class, uses engine.System.DataSource directly. Discussed with Ingi — table name is 'setup', using existing DataSource was always the intent."
       }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-345678901bcd",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-27T12:00:00Z",
+      "timestamp_end": "2026-02-27T12:30:00Z",
+      "intent": "Analyze Setup.goal run-once system and DataSource/Settings bridge code",
+      "before": {
+        "assumptions": "Coder implemented architect spec. Tests passing. Need to check OBP compliance, behavioral correctness, and test coverage gaps.",
+        "risk": "Low — analysis only, no code changes"
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning (focus on record-on-failure semantics), deletion tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Executor.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs",
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/actions/settings/types.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis. Found 2 behavioral issues in setup record-on-failure path, 1 consistency issue in EngineGoals."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — two behavioral issues need fixing",
+        "notes": "Finding 1 (High): failed setup steps permanently recorded as executed. Finding 2 (Medium): Record silently swallows errors. Finding 3 (Low): Count/All vs Get inconsistency."
+      }
     }
   ]
 }
