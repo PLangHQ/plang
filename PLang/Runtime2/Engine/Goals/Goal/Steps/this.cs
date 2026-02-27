@@ -38,9 +38,14 @@ public sealed class @this : List<Step.@this>
 
             var stepResult = await step.RunAsync(engine, context, cancellationToken);
 
-            // Record execution in setup table (even on tolerated errors)
+            // Record in setup table only on success or tolerated errors.
+            // Failed steps that abort setup must NOT be recorded — they need to re-run on next startup.
             if (context.Setup != null)
-                await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
+            {
+                var tolerated = stepResult.Success || (step.OnError?.IgnoreError ?? false);
+                if (tolerated)
+                    await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
+            }
 
             if (!stepResult)
             {

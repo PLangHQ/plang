@@ -116,6 +116,53 @@
         "health": "FAIL — two behavioral issues need fixing",
         "notes": "Finding 1 (High): failed setup steps permanently recorded as executed. Finding 2 (Medium): Record silently swallows errors. Finding 3 (Low): Count/All vs Get inconsistency."
       }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-def0-456789012cde",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T13:00:00Z",
+      "timestamp_end": "2026-02-27T14:00:00Z",
+      "intent": "Fix 3 code analyzer findings in Setup.goal system",
+      "before": {
+        "assumptions": "Code analyzer found 3 issues: record-on-failure, swallowed errors, API inconsistency. All are behavioral fixes, not architectural.",
+        "risk": "Low — targeted fixes to existing code, well-covered by tests"
+      },
+      "plan": "Fix Finding 1: move record call after step execution, only record on success/tolerated. Fix Finding 2: change Record return to Task<Data>. Fix Finding 3: add AllIncludingSetup, filter All/Count/Value. Add 2 tests for record-on-failure semantics.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Record only on success or tolerated errors (step.OnError?.IgnoreError). Failed steps must re-run on next startup."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Record returns Task<Data> instead of Task, surfacing DataSource errors."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "AllIncludingSetup internal property for Setup.Goals. All/Count/Value exclude setup goals."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added RunAsync_FailedStepNotRecorded and RunAsync_ToleratedErrorStepIsRecorded tests."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1476/1476, PLang tests: 23/23",
+        "notes": "All 3 code analyzer findings addressed. Record-on-failure semantics verified with 2 new tests."
+      }
     }
   ]
 }

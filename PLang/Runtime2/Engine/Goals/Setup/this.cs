@@ -23,7 +23,7 @@ public sealed class @this
     /// <summary>
     /// Setup goals, ordered: goal named "Setup" first, then alphabetical.
     /// </summary>
-    public IEnumerable<Goal.@this> Goals => _goals.All
+    public IEnumerable<Goal.@this> Goals => _goals.AllIncludingSetup
         .Where(g => g.IsSetup)
         .OrderBy(g => g.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
         .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
@@ -67,11 +67,11 @@ public sealed class @this
 
     /// <summary>
     /// Records a step execution in the system DataSource.
-    /// Called after a step runs (even on tolerated errors).
+    /// Returns Data so the caller can detect recording failures.
     /// </summary>
-    public async Task Record(Step step, Engine.@this engine, IError? error = null)
+    public async Task<Data> Record(Step step, Engine.@this engine, IError? error = null)
     {
-        if (string.IsNullOrEmpty(step.Hash)) return;
+        if (string.IsNullOrEmpty(step.Hash)) return Data.Ok();
 
         var metadata = new Dictionary<string, object?>
         {
@@ -82,6 +82,6 @@ public sealed class @this
             ["error"] = error?.Message
         };
 
-        await engine.System.DataSource.Set(Table, step.Hash, metadata);
+        return await engine.System.DataSource.Set(Table, step.Hash, metadata);
     }
 }

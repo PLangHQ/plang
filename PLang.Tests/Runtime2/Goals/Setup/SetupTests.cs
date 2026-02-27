@@ -175,6 +175,57 @@ public class SetupTests
         await Assert.That(clone.Setup).IsEqualTo(context.Setup);
     }
 
+    [Test]
+    public async Task RunAsync_FailedStepNotRecorded()
+    {
+        // A step that fails (unknown module) and does NOT have IgnoreError
+        var step = new Step
+        {
+            Index = 0, Text = "failing step", Hash = "fail_hash",
+            Actions = CreateFailingActions()
+        };
+        var goal = new Goal
+        {
+            Name = "Setup", IsSetup = true,
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+        };
+        step.Goal = goal;
+        _engine.Goals.Add(goal);
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+
+        // Setup should fail
+        await Assert.That(result.Success).IsFalse();
+        // Step should NOT be recorded — it needs to re-run on next startup
+        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsFalse();
+    }
+
+    [Test]
+    public async Task RunAsync_ToleratedErrorStepIsRecorded()
+    {
+        // A step that fails but has IgnoreError = true
+        var step = new Step
+        {
+            Index = 0, Text = "tolerated failure", Hash = "tolerated_hash",
+            OnError = new ErrorHandler { IgnoreError = true },
+            Actions = CreateFailingActions()
+        };
+        var goal = new Goal
+        {
+            Name = "Setup", IsSetup = true,
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+        };
+        step.Goal = goal;
+        _engine.Goals.Add(goal);
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+
+        // Setup should succeed (error tolerated)
+        await Assert.That(result.Success).IsTrue();
+        // Step SHOULD be recorded — error was tolerated
+        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
+    }
+
     /// <summary>
     /// Creates a minimal no-op Actions collection that won't fail during step execution.
     /// Steps with empty actions succeed immediately.
@@ -182,5 +233,21 @@ public class SetupTests
     private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
     {
         return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this();
+    }
+
+    /// <summary>
+    /// Creates an Actions collection with an unknown module that will fail at runtime.
+    /// </summary>
+    private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
+    {
+        return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+        {
+            new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+            {
+                Module = "nonexistent",
+                ActionName = "doesnotexist",
+                Parameters = new List<Data>()
+            }
+        };
     }
 }

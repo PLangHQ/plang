@@ -173,19 +173,24 @@ public sealed class @this
     public IEnumerable<string> Names => _goals.Keys;
 
     /// <summary>
-    /// Gets all goals as a list.
+    /// All goals including setup and event goals. Used internally by Setup.Goals.
     /// </summary>
-    public IReadOnlyList<Goal.@this> Value => _goals.Values.ToList();
+    internal IEnumerable<Goal.@this> AllIncludingSetup => _goals.Values;
 
     /// <summary>
-    /// Gets all goals.
+    /// Gets all non-setup goals as a list.
     /// </summary>
-    public IEnumerable<Goal.@this> All => _goals.Values;
+    public IReadOnlyList<Goal.@this> Value => _goals.Values.Where(g => !g.IsSetup).ToList();
 
     /// <summary>
-    /// Gets the count of goals.
+    /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
     /// </summary>
-    public int Count => _goals.Count;
+    public IEnumerable<Goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
+
+    /// <summary>
+    /// Gets the count of non-setup goals. Consistent with Get()/All.
+    /// </summary>
+    public int Count => _goals.Values.Count(g => !g.IsSetup);
 
     /// <summary>
     /// Gets public goals only.
