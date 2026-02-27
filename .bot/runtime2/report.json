@@ -1,0 +1,45 @@
+{
+  "branch": "runtime2",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-setup-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-02-25T00:00:00Z",
+      "timestamp_end": "2026-02-25T00:00:00Z",
+      "intent": "Design Setup.goal execution system for runtime2",
+      "before": {
+        "assumptions": "runtime2 has Goal.IsSetup flag and EngineGoals.Setup filter but no automatic setup execution, no run-once tracking, no Executions persistence",
+        "risk": "Low — design only, no code changes"
+      },
+      "plan": "Design the Setup.goal system: Setup object on EngineGoals with Executions smart collection, context.Setup propagation through goal.call, one-row-per-step persistence in system.sqlite, Steps.RunAsync ownership of iteration with run-once check",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime/Engine.cs", "PLang/Utils/GoalHelper.cs", "PLang/Building/Model/GoalStep.cs", "PLang/Services/SettingsService/SqliteSettingsRepository.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced runtime1 RunSetup, HasExecuted, setup goal detection, and settings persistence to understand existing behavior"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs", "PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Goals/Goal/this.cs", "PLang/Runtime2/Engine/Goals/Goal/Methods.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs", "PLang/Runtime2/Engine/Context/PLangContext.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Analyzed runtime2 current state: Step.Hash already exists, Steps lacks RunAsync, Goal iterates steps directly (OBP violation), EngineGoals.Setup is IEnumerable not an object"
+        },
+        {
+          "paths": [".bot/runtime2/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote handoff spec for coder — Setup object model, Executions collection, context propagation, persistence, file-level change list"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design approved through iterative discussion. Key insights: Setup is an object not a filter, Executions is a smart collection not a dictionary, context.Setup propagates through goal.call, Steps needs RunAsync for OBP compliance",
+        "notes": "Step.Hash already exists on the model. Builder may need hash composition change (goalPath + compiledAction, no index). Error tolerance policy deferred to future work."
+      }
+    }
+  ]
+}
