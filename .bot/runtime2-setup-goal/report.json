@@ -194,6 +194,44 @@
         "health": "PASS — all findings addressed",
         "notes": "Clean. Ready for merge."
       }
+    },
+    {
+      "id": "f6a7b8c9-d0e1-2345-f012-678901234ef0",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-27T16:00:00Z",
+      "timestamp_end": "2026-02-27T16:45:00Z",
+      "intent": "Deep re-analysis of entire branch — cross-concern behavioral review",
+      "before": {
+        "assumptions": "v1/v2 focused on Setup system. Full branch includes DataSource, SettingsData bridge, LazyParamsGenerator changes, MemoryStack changes. Need to trace cross-system interactions.",
+        "risk": "Low — analysis only"
+      },
+      "plan": "Trace full execution path from Executor.Run2 through RunGoalAsync, Goal.RunAsync, Steps.RunAsync, LazyParamsGenerator __Resolve to verify which MemoryStack %Settings.X% resolves against. Check actor context wiring.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Executor.cs",
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced execution path end-to-end. SettingsData registered only on System actor, but engine.Context = User.Context. %Settings.X% unreachable from PLang code. All 15 test references use System.Context.MemoryStack, masking the gap."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — SettingsData bridge unreachable from PLang execution",
+        "notes": "Finding 1 (High): %Settings.ApiKey% silently resolves to null because SettingsData lives on System.Context.MemoryStack but execution uses User.Context.MemoryStack. Settings action handlers work because they bypass MemoryStack and access Engine.System.DataSource directly."
+      }
     }
   ]
 }
