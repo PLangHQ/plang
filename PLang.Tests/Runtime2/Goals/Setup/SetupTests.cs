@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
 
@@ -89,9 +90,9 @@ public class SetupTests
     public async Task RunAsync_SkipsAlreadyExecutedSteps()
     {
         // Create a setup goal with two steps
-        var step1 = new Step { Index = 0, Text = "step one", Hash = "hash1",
+        var step1 = new Step { Index = 0, Text = "step one", Hash = "skip_hash1",
             Actions = CreateNoOpActions() };
-        var step2 = new Step { Index = 1, Text = "step two", Hash = "hash2",
+        var step2 = new Step { Index = 1, Text = "step two", Hash = "skip_hash2",
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
@@ -103,19 +104,24 @@ public class SetupTests
 
         _engine.Goals.Add(goal);
 
-        var context = _engine.Context;
-
-        // Pre-record step1 as already executed
-        await _engine.Goals.Setup.Record(step1, _engine);
+        // Pre-record step1 with a distinctive marker value via raw DataSource.
+        // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
+        // If step1 is skipped, the marker survives.
+        await _engine.System.DataSource.Set("setup", "skip_hash1", "MARKER_NOT_RE_EXECUTED");
 
         // Run setup — step1 should be skipped, step2 should run
-        var result = await _engine.Goals.Setup.RunAsync(_engine, context);
-
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
         await Assert.That(result.Success).IsTrue();
 
-        // Both should now be recorded
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step1, _engine)).IsTrue();
-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step2, _engine)).IsTrue();
+        // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
+        var step1Data = await _engine.System.DataSource.Get("setup", "skip_hash1");
+        await Assert.That(step1Data.Success).IsTrue();
+        await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
+
+        // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
+        var step2Data = await _engine.System.DataSource.Get("setup", "skip_hash2");
+        await Assert.That(step2Data.Success).IsTrue();
+        await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
     }
 
     [Test]
@@ -224,6 +230,96 @@ public class SetupTests
         await Assert.That(result.Success).IsTrue();
         // Step SHOULD be recorded — error was tolerated
         await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
+    }
+
+    [Test]
+    public async Task RunAsync_AbortsSetup_WhenRecordFails()
+    {
+        var step = new Step { Index = 0, Text = "good step", Hash = "record_fail_hash",
+            Actions = CreateNoOpActions() };
+        var goal = new Goal
+        {
+            Name = "Setup", IsSetup = true,
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+        };
+        step.Goal = goal;
+        _engine.Goals.Add(goal);
+
+        // Force DataSource creation so the DB file exists
+        _ = _engine.System.DataSource;
+
+        // Corrupt the database file — Record() will fail trying to write
+        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
+        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+
+        // Setup should abort because Record couldn't write to the corrupted DB
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    [Test]
+    public async Task RunAsync_CancellationAborts()
+    {
+        var step1 = new Step { Index = 0, Text = "step one", Hash = "cancel_hash1",
+            Actions = CreateNoOpActions() };
+        var step2 = new Step { Index = 1, Text = "step two", Hash = "cancel_hash2",
+            Actions = CreateNoOpActions() };
+        var goal = new Goal
+        {
+            Name = "Setup", IsSetup = true,
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
+        };
+        step1.Goal = goal;
+        step2.Goal = goal;
+        _engine.Goals.Add(goal);
+
+        // Cancel after the first step completes
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context, cts.Token);
+
+        // Setup should abort with cancellation error
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
+    }
+
+    // --- IsTolerableError tests ---
+
+    [Test]
+    public async Task IsTolerableError_RecognizesTableAlreadyExists()
+    {
+        var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"));
+        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsTolerableError_RecognizesIndexAlreadyExists()
+    {
+        var error = Data.FromError(new Error("index idx_users_email already exists"));
+        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsTolerableError_RecognizesDuplicateColumnName()
+    {
+        var error = Data.FromError(new Error("duplicate column name: email"));
+        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+    }
+
+    [Test]
+    public async Task IsTolerableError_RejectsUnrelatedError()
+    {
+        var error = Data.FromError(new Error("connection refused"));
+        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsFalse();
+    }
+
+    [Test]
+    public async Task IsTolerableError_ReturnsFalseForSuccess()
+    {
+        await Assert.That(_engine.Goals.Setup.IsTolerableError(Data.Ok())).IsFalse();
     }
 
     /// <summary>

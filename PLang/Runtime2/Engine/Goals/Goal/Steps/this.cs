@@ -38,20 +38,26 @@ public sealed class @this : List<Step.@this>
 
             var stepResult = await step.RunAsync(engine, context, cancellationToken);
 
+            // Determine if the step error is tolerated:
+            // - Success (no error)
+            // - Explicit IgnoreError on the step
+            // - Setup-tolerable errors (e.g. "already exists", "duplicate column name")
+            var errorTolerated = stepResult.Success
+                || (step.OnError?.IgnoreError ?? false)
+                || (context.Setup != null && context.Setup.IsTolerableError(stepResult));
+
             // Record in setup table only on success or tolerated errors.
             // Failed steps that abort setup must NOT be recorded — they need to re-run on next startup.
-            if (context.Setup != null)
+            // Recording failure aborts setup — if we can't track execution, re-running is safer than skipping.
+            if (context.Setup != null && errorTolerated)
             {
-                var tolerated = stepResult.Success || (step.OnError?.IgnoreError ?? false);
-                if (tolerated)
-                    await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
+                var recordResult = await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
+                if (!recordResult.Success)
+                    return recordResult;
             }
 
-            if (!stepResult)
-            {
-                if (!(step.OnError?.IgnoreError ?? false))
-                    return stepResult;
-            }
+            if (!stepResult && !errorTolerated)
+                return stepResult;
 
             if (cancellationToken.IsCancellationRequested)
                 return Data.FromError(GoalError.Cancelled(context));

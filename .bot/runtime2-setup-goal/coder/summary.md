@@ -8,3 +8,6 @@ Fixed 3 findings: (1) failed setup steps no longer permanently recorded — only
 
 ## v3 — Share SettingsData across all actors
 Fixed `%Settings.ApiKey%` silently returning null. SettingsData was only on System actor — now Engine owns a single instance shared across all actors. Tests updated to use User context (what PLang code actually uses). C# tests: 1478/1478. See [v3/summary.md](v3/summary.md).
+
+## v4 — Tester v3 Findings
+Record failure aborts setup. Added `IsTolerableError` for runtime1-compatible "already exists"/"duplicate column name" tolerance. Skip test now proves skip via data marker. Cancellation test added. C# tests: 1485/1485. See [v4/summary.md](v4/summary.md).

@@ -66,6 +66,20 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Checks if a step error is automatically tolerable during setup.
+    /// Matches runtime1 behavior: "already exists" (table/index) and "duplicate column name"
+    /// are expected in idempotent setup re-runs and should not abort.
+    /// </summary>
+    public bool IsTolerableError(Data result)
+    {
+        if (result.Success) return false;
+        var message = result.Error?.Message;
+        if (string.IsNullOrEmpty(message)) return false;
+        return message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Records a step execution in the system DataSource.
     /// Returns Data so the caller can detect recording failures.
     /// </summary>
