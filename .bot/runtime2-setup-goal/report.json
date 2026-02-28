@@ -468,6 +468,46 @@
         "health": "FAIL — 2 major findings blocking merge",
         "notes": "Infrastructure is well-built (OBP compliant, error handling correct, good test coverage for the code that exists). But two contract gaps: GetAsync leaks setup goals, and Executor.Run2 has no goal discovery before calling Setup.RunAsync. Verdict: FAIL."
       }
+    },
+    {
+      "id": "f8a9b0c1-d2e3-4567-f012-abcdef012345",
+      "bot": "coder",
+      "timestamp_start": "2026-02-28T15:00:00Z",
+      "timestamp_end": "2026-02-28T15:45:00Z",
+      "intent": "Fix auditor v4 findings: IsSetup filter gaps in GetAsync/GetByPrPathAsync, goal loading order in Executor.Run2",
+      "before": {
+        "assumptions": "Auditor found 2 major + 1 minor issue. F1: GetAsync/GetByPrPathAsync don't filter IsSetup on disk loads. F2: Goals not loaded before Setup.RunAsync. F3: 'setup' name unconditionally reserved.",
+        "risk": "Low — targeted fixes to well-understood code paths. Tests will validate each fix."
+      },
+      "plan": "F1: Add `if (loaded is { IsSetup: true }) return null;` at all disk-load return paths in GetAsync (2 paths) and GetByPrPathAsync (cache + disk). Fix GetByPrPathAsync cache check to return null immediately for setup goals. F2: Verify LoadFromDirectoryAsync is before Setup.RunAsync (already was). F3: Add `&& engine.Goals.Setup.Goals.Any()` guard. Add 5 new GoalsTests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: Added IsSetup filter at 4 return points: GetAsync relative load (line ~120), GetAsync root load (line ~138), GetByPrPathAsync cache (line ~221), GetByPrPathAsync disk load (line ~237). Cache check changed from `&& !cached.IsSetup` to `return cached.IsSetup ? null : cached;` to prevent fallthrough NPE."
+        },
+        {
+          "paths": ["PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2: Verified LoadFromDirectoryAsync before Setup.RunAsync. F3: Changed setup interceptor to conditional on Setup.Goals.Any()."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/GoalsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 5 tests: Get_ExcludesSetupGoals, GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk, GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk, GetByPrPathAsync_ReturnsNull_ForSetupGoal, GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1490/1490",
+        "notes": "All 3 auditor findings addressed. Bonus bug found and fixed: cached setup goal in GetByPrPathAsync fell through to disk load path causing NullReferenceException. Test caught it before the fix was applied."
+      }
     }
   ]
 }

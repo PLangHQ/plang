@@ -117,6 +117,7 @@ public sealed class @this
                 if (relResult.Success)
                 {
                     var loaded = relResult.Value as Goal.@this;
+                    if (loaded is { IsSetup: true }) return null;
                     if (loaded != null && !string.IsNullOrEmpty(name))
                         _byPath[name] = loaded;
                     return loaded;
@@ -134,6 +135,7 @@ public sealed class @this
             return null;
 
         var result = loadResult.Value as Goal.@this;
+        if (result is { IsSetup: true }) return null;
         if (result != null && !string.IsNullOrEmpty(name))
             _byPath[name] = result;
         return result;
@@ -215,9 +217,9 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Check cache first
+        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
         if (_byPath.TryGetValue(prPath, out var cached))
-            return cached;
+            return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory
         var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
@@ -232,6 +234,7 @@ public sealed class @this
             return null;
 
         var loaded = loadResult.Value as Goal.@this;
+        if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
             _byPath[prPath] = loaded;
         return loaded;

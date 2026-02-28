@@ -363,12 +363,16 @@ namespace PLang
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 
+			// Load all built goals so setup goals are discoverable.
+			// Goals are .pr files in .build/ subdirectories throughout the project tree.
+			await engine.Goals.LoadFromDirectoryAsync(engine, engine.AbsolutePath, "*.pr", cancellationToken: cancellationToken);
+
 			// Run setup goals before the main goal
 			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
 			if (!setupResult.Success) return setupResult;
 
 			// When goalName is "setup", only run setup — no main goal after
-			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
 				return setupResult;
 
 			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);

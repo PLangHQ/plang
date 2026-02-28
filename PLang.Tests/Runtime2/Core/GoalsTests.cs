@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Goals.Goal;
+using PLang.SafeFileSystem;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -300,5 +301,114 @@ public class GoalsTests
         goals.Add(new Goal { Name = "Goal3" });
 
         await Assert.That(goals.Count).IsEqualTo(3);
+    }
+
+    [Test]
+    public async Task Get_ExcludesSetupGoals()
+    {
+        var goals = new EngineGoals();
+        goals.Add(new Goal { Name = "SetupDb", IsSetup = true });
+        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+
+        await Assert.That(goals.Get("SetupDb")).IsNull();
+        await Assert.That(goals.Get("NormalGoal")).IsNotNull();
+    }
+
+    [Test]
+    public async Task GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk()
+    {
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var fs = new PLangFileSystem(tempDir, "");
+            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+
+            // Create a .pr.json file on disk with IsSetup = true
+            // GetAsync resolves: root / nameDir / .build / filename.pr
+            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+            System.IO.Directory.CreateDirectory(buildDir);
+            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
+            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+            System.IO.File.WriteAllText(prPath, json);
+
+            // GetAsync should load from disk but return null because IsSetup = true
+            var result = await engine.Goals.GetAsync("SetupDb");
+
+            await Assert.That(result).IsNull();
+        }
+        finally
+        {
+            System.IO.Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Test]
+    public async Task GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk()
+    {
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var fs = new PLangFileSystem(tempDir, "");
+            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+
+            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+            System.IO.Directory.CreateDirectory(buildDir);
+            var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
+            var json = """{"name":"NormalGoal","isSetup":false,"steps":[]}""";
+            System.IO.File.WriteAllText(prPath, json);
+
+            var result = await engine.Goals.GetAsync("NormalGoal");
+
+            await Assert.That(result).IsNotNull();
+            await Assert.That(result!.Name).IsEqualTo("NormalGoal");
+        }
+        finally
+        {
+            System.IO.Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Test]
+    public async Task GetByPrPathAsync_ReturnsNull_ForSetupGoal()
+    {
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var fs = new PLangFileSystem(tempDir, "");
+            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+
+            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+            System.IO.Directory.CreateDirectory(buildDir);
+            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
+            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+            System.IO.File.WriteAllText(prPath, json);
+
+            var result = await engine.Goals.GetByPrPathAsync(prPath);
+
+            await Assert.That(result).IsNull();
+        }
+        finally
+        {
+            System.IO.Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Test]
+    public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
+    {
+        var goals = new EngineGoals();
+        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "test/.build/setupdb.pr" };
+        goals.Add(setupGoal);
+
+        // Even if the goal is cached by path, GetByPrPathAsync should exclude it
+        var result = await goals.GetByPrPathAsync("test/.build/setupdb.pr");
+
+        await Assert.That(result).IsNull();
     }
 }

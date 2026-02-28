@@ -11,3 +11,6 @@ Fixed `%Settings.ApiKey%` silently returning null. SettingsData was only on Syst
 
 ## v4 — Tester v3 Findings
 Record failure aborts setup. Added `IsTolerableError` for runtime1-compatible "already exists"/"duplicate column name" tolerance. Skip test now proves skip via data marker. Cancellation test added. C# tests: 1485/1485. See [v4/summary.md](v4/summary.md).
+
+## v5 — Auditor v4 Findings (IsSetup filter gaps)
+Fixed 3 auditor findings: (1) GetAsync/GetByPrPathAsync now filter IsSetup at all disk-load paths, (2) goals loaded before Setup.RunAsync in Executor.Run2, (3) 'setup' goal name only reserved when setup goals exist. Found bonus bug: cached setup goal in GetByPrPathAsync fell through to disk load causing NPE. C# tests: 1490/1490. See [v5/summary.md](v5/summary.md).
