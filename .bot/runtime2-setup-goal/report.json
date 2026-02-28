@@ -430,6 +430,64 @@
         "health": "C# tests: 1485/1485, PLang tests: 23/23. Verdict: PASS.",
         "notes": "All findings addressed. No new issues."
       }
+    },
+    {
+      "id": "a8b9c0d1-e2f3-4567-8901-abcdef234567",
+      "bot": "security",
+      "timestamp_start": "2026-02-28T05:00:00Z",
+      "timestamp_end": "2026-02-28T05:30:00Z",
+      "intent": "Security audit of Setup.goal run-once system + DataSource carry-forward",
+      "before": {
+        "assumptions": "Setup system builds on DataSource from parent branch. Prior security audit (runtime2-system-datasource) found medium DeserializeValue gap. Setup adds new attack surfaces: hash tracking, error tolerance, context propagation.",
+        "risk": "Low-medium — new persistence-backed run-once system with string-based error tolerance."
+      },
+      "plan": "Phase 1 (Blue Team): Map 8 attack surfaces — hash tracking, IsTolerableError matching, context propagation, record metadata, CallStack depth, DeserializeValue exceptions, executor integration, settings bridge. Phase 2 (Red Team): Attempt exploit construction for each surface.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Executor.cs",
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/CallStack/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security review of Setup system and DataSource integration. Traced execution paths through Setup.RunAsync → Goal.RunAsync → Steps.RunAsync → Step.RunAsync → Actions, verifying CallStack depth enforcement, context propagation, record-on-failure semantics."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-setup-goal/security-report.json",
+            ".bot/runtime2-setup-goal/security/v1/verdict.json",
+            ".bot/runtime2-setup-goal/security/v1/summary.md",
+            ".bot/runtime2-setup-goal/security/v1/plan.md",
+            ".bot/runtime2-setup-goal/security/summary.md",
+            "learnings/runtime2-setup-goal/security/v1/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security audit artifacts"
+        }
+      ],
+      "after": {
+        "status": "Verdict: PASS. No critical or high severity findings.",
+        "health": "1 medium carry-forward (DeserializeValue InvalidOperationException), 2 low new findings (IsTolerableError false-positive, error message persistence), 2 low carry-forwards, 2 by-design.",
+        "notes": "Setup system is well-designed. Record-on-failure semantics correct. Context propagation safe. CallStack depth enforced. Main concern is the IsTolerableError substring matching creating irreversible step-skip on false positive."
+      }
     }
   ]
 }

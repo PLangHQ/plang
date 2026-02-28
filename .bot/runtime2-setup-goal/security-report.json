@@ -1,0 +1,198 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-setup-goal",
+  "timestamp": "2026-02-28T05:00:00Z",
+  "phase": "both",
+  "threat_model": "PLang is user-sovereign. .pr files run in a trusted environment. The trust boundary is cryptographic signatures on Data. Security focuses on: (1) robustness against malformed external data flowing through DataSource, (2) error handling completeness, (3) setup system correctness — can external data cause setup to skip or replay steps incorrectly?",
+  "attack_surface": [
+    {
+      "area": "setup-hash-tracking",
+      "exposure": "Setup tracks step execution by step.Hash in the 'setup' table of engine.System.DataSource (system.sqlite). Steps with matching hash are skipped. Steps with null/empty hash always re-run.",
+      "trust_boundary": "step.Hash originates from the .pr file (builder-generated, trusted). The DataSource is local filesystem (system.sqlite).",
+      "mitigations": [
+        "Hash comes from .pr file — not user-editable at runtime",
+        "DataSource key is parameterized (@key) — no SQL injection",
+        "Null/empty hash returns false from IsExecuted — always re-runs",
+        "Steps only recorded on success or tolerated errors — failed steps re-run on next startup"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "setup-tolerable-error-matching",
+      "exposure": "IsTolerableError uses string Contains() to match error messages against 'already exists' and 'duplicate column name'. Tolerated steps are recorded as executed and won't re-run.",
+      "trust_boundary": "Error messages come from action handlers (internal code) or external systems (SQLite, HTTP, etc.).",
+      "mitigations": [
+        "Case-insensitive matching covers all variants",
+        "Matches runtime1 behavior — proven patterns for idempotent DDL",
+        "Step IS still recorded even when error is tolerated — tracks execution"
+      ],
+      "gaps": [
+        "Substring matching could false-positive on unrelated error messages containing 'already exists' (e.g., server name, path component). A false positive tolerates a real error AND records the step, preventing re-run on next startup."
+      ]
+    },
+    {
+      "area": "setup-context-propagation",
+      "exposure": "context.Setup is set for the duration of Setup.RunAsync() and cleared in finally. Goals called during setup inherit the context, getting run-once semantics.",
+      "trust_boundary": "Context propagation is internal. No external data enters this path.",
+      "mitigations": [
+        "context.Setup cleared in finally block — no leak after setup completes",
+        "Clone() preserves Setup — correct for sub-goal execution during setup",
+        "Steps.RunAsync checks context.Setup != null before applying run-once logic",
+        "During normal execution (context.Setup == null), no run-once semantics apply"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "setup-record-metadata",
+      "exposure": "Record() stores goalPath, stepIndex, stepText, executedAt, and error message in the 'setup' table.",
+      "trust_boundary": "All values are internal (.pr file content, timestamps). Error messages may originate from external systems.",
+      "mitigations": [
+        "Values serialized to JSON via DataSource.Set — no SQL injection",
+        "system.sqlite is local, user-owned"
+      ],
+      "gaps": [
+        "Error messages from external systems (HTTP errors, database errors) may contain sensitive data (connection strings, credentials) — persisted in system.sqlite"
+      ]
+    },
+    {
+      "area": "setup-callstack-depth",
+      "exposure": "Setup goals can call sub-goals recursively. CallStack.Push() throws CallStackOverflowException at depth 1000.",
+      "trust_boundary": "Goal call chains are defined by .pr files (trusted).",
+      "mitigations": [
+        "CallStack.MaxDepth = 1000 prevents infinite recursion",
+        "CallStackOverflowException caught by Step.Methods.cs:49 try/catch(Exception) — returned as Data.FromError",
+        "Setup treats this as a non-tolerable error — step not recorded, setup aborts"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "sqlite-datasource-deserialization",
+      "exposure": "DeserializeValue (SqliteDataSource.cs:256) parses JSON from stored TEXT column via JsonDocument.Parse -> Data.UnwrapJsonElement. Called on every Get() and GetAll(), including setup IsExecuted and Record reads.",
+      "trust_boundary": "Stored data originates from SerializeValue, which serializes objects from .pr actions. If user stores external API responses, untrusted data enters this path.",
+      "mitigations": [
+        "JsonDocument.Parse has default MaxDepth=64",
+        "Data.UnwrapJsonElement has depth limit of 128",
+        "DeserializeValue catches JsonException and returns raw string as fallback"
+      ],
+      "gaps": [
+        "Data.UnwrapJsonElement throws InvalidOperationException on depth > 128 — DeserializeValue only catches JsonException",
+        "Get() catches SqliteException and IOException but not InvalidOperationException",
+        "SettingsData.GetChild has no try/catch — InvalidOperationException propagates to caller"
+      ]
+    },
+    {
+      "area": "executor-setup-integration",
+      "exposure": "Executor.Run2 calls Setup.RunAsync before the main goal. If setup fails, the app doesn't start.",
+      "trust_boundary": "Setup goals come from .pr files (trusted). Executor.Run2 is the entry point.",
+      "mitigations": [
+        "Setup failure returns Data with error — clean abort",
+        "CancellationToken propagated — setup can be cancelled",
+        "Special case: goalName 'setup' runs only setup, no main goal"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "settings-datasource-bridge",
+      "exposure": "Carried from parent branch. SettingsData bridges %Settings.X% to DataSource reads. Shared singleton across all actors.",
+      "trust_boundary": "Path comes from .pr file variable references (trusted). Loaded value may contain untrusted data.",
+      "mitigations": [
+        "Delegates to Data.GetChild for sub-path navigation (MaxNavigationDepth=100)",
+        "Sync-over-async safe for SQLite",
+        "Missing keys return AskError"
+      ],
+      "gaps": [
+        "No try/catch around DataSource.Get() call — InvalidOperationException from UnwrapJsonElement propagates"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "DeserializeValue (SqliteDataSource.cs:256) calls Data.UnwrapJsonElement which throws InvalidOperationException on depth > 128. DeserializeValue only catches JsonException. The exception propagates uncaught through SettingsData.GetChild and through setup's DataSource.Get/Exists paths.",
+      "preconditions": "User stores deeply nested JSON from external source (API response, file read) as a settings value or in the setup table. On retrieval, if nesting exceeds 128 levels after unwrapping, UnwrapJsonElement throws. Note: JsonDocument.Parse default MaxDepth=64 catches most cases first.",
+      "impact": "Unhandled exception propagates up the call stack. In the setup path, this would cause setup to abort (correct behavior but confusing error). In the settings path, step execution fails with an unhandled exception rather than a clean error.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+        "PLang/Runtime2/Engine/DataSource/SettingsData.cs"
+      ],
+      "exploit_sketch": "1. Store API response with 65+ nested objects in settings\n2. JsonDocument.Parse at MaxDepth=64 catches most cases (returns JsonException, caught)\n3. If value already deserialized and re-serialized with >128 nesting, UnwrapJsonElement throws InvalidOperationException\n4. Exception escapes DeserializeValue, Get(), and SettingsData.GetChild uncaught",
+      "proposed_fix": "Add catch (InvalidOperationException) alongside catch (JsonException) in DeserializeValue. Return raw JSON string as fallback.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "logic",
+      "vector": "IsTolerableError (Setup/this.cs:78) uses substring matching: message.Contains('already exists') || message.Contains('duplicate column name'). A false positive would tolerate a real error AND record the step as executed, preventing re-run on next startup.",
+      "preconditions": "A setup step fails with an error message that coincidentally contains 'already exists' or 'duplicate column name' as a substring in an unrelated context (e.g., server name, file path, domain name).",
+      "impact": "Step's genuine failure is silently tolerated. Step recorded as executed. On next startup, the step is skipped — the operation never succeeds. User must manually delete the record from system.sqlite to force re-run.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/Goals/Setup/this.cs"
+      ],
+      "exploit_sketch": "N/A — unlikely coincidence. Example: a setup step that calls an HTTP API at 'already-exists-check.example.com', and the DNS resolution fails with 'server already-exists-check.example.com not found'. The substring 'already exists' matches. Error is tolerated, step is recorded, never re-runs.",
+      "proposed_fix": "Consider more specific patterns: match 'table.*already exists' or 'index.*already exists' instead of bare substring. Or match the SQLite error code (SQLITE_ERROR with specific substrings).",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Setup.Record() stores error?.Message in the metadata dictionary, which is persisted to system.sqlite. If the error message contains sensitive data (connection strings, API keys, credentials), it's stored on disk.",
+      "preconditions": "A setup step fails with an error message containing sensitive data. This error is tolerated (e.g., IgnoreError=true or matches IsTolerableError), so Record() stores it.",
+      "impact": "Sensitive data persisted in system.sqlite. Local file, user-owned. Same risk level as log files.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/Goals/Setup/this.cs"
+      ],
+      "exploit_sketch": "N/A — informational. An attacker with filesystem access could read system.sqlite to find leaked credentials from error messages. But filesystem access already gives full control.",
+      "proposed_fix": "Low priority. Consider not storing error messages, or truncating/sanitizing them before storage.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "SqliteDataSource has no use-after-dispose guard. The _disposed field is set but never checked in CRUD methods. Operations after disposal produce confusing SqliteException.",
+      "preconditions": "Actor disposed during shutdown while concurrent task still accesses DataSource.",
+      "impact": "Confusing error messages. SqliteException caught by existing catch blocks — no crash.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "exploit_sketch": "N/A — shutdown race.",
+      "proposed_fix": "Add ThrowIfDisposed() guard at top of each public method.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "EnsureTable called on every CRUD operation. Each call opens a connection and runs CREATE TABLE IF NOT EXISTS.",
+      "preconditions": "High-frequency settings or setup table access.",
+      "impact": "Performance degradation. Redundant DDL execution.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "exploit_sketch": "N/A — performance concern.",
+      "proposed_fix": "Cache known tables in HashSet<string>.",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "No application-level limits on setup table entries, settings count, or value sizes.",
+      "preconditions": "User writes setup goals that grow storage unboundedly.",
+      "impact": "Disk exhaustion. User-sovereign.",
+      "affected_files": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+      "status": "by-design"
+    },
+    {
+      "id": 7,
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "Steps with null/empty Hash always re-run during setup (IsExecuted returns false, Record is a no-op). If a .pr file has steps without hashes, they execute on every startup.",
+      "preconditions": ".pr file contains steps with null/empty Hash field.",
+      "impact": "Steps re-execute on every startup. By-design — Hash tracking is opt-in per step.",
+      "affected_files": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+      "status": "by-design"
+    }
+  ],
+  "summary": "The Setup.goal run-once system is well-designed with correct record-on-failure semantics, proper context propagation, and CallStack depth protection. The primary finding is the carry-forward medium-severity gap in DeserializeValue exception handling (InvalidOperationException not caught). Two new low-severity findings: IsTolerableError substring matching could false-positive on unrelated error messages (preventing step re-run), and error messages containing sensitive data are persisted in system.sqlite. No critical or high severity findings. The setup-specific attack surfaces (hash tracking, context propagation, executor integration) are all properly mitigated."
+}

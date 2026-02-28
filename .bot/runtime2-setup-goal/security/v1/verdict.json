@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "No critical or high severity findings. One medium carry-forward (DeserializeValue InvalidOperationException gap). Two low findings specific to setup: IsTolerableError false-positive risk, error messages persisted in system.sqlite. Setup system correctly handles record-on-failure, context propagation, and CallStack depth protection."
+}
