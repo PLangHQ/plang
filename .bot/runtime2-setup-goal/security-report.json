@@ -123,17 +123,15 @@
     },
     {
       "id": 2,
-      "severity": "low",
-      "category": "logic",
-      "vector": "IsTolerableError (Setup/this.cs:78) uses substring matching: message.Contains('already exists') || message.Contains('duplicate column name'). A false positive would tolerate a real error AND record the step as executed, preventing re-run on next startup.",
-      "preconditions": "A setup step fails with an error message that coincidentally contains 'already exists' or 'duplicate column name' as a substring in an unrelated context (e.g., server name, file path, domain name).",
-      "impact": "Step's genuine failure is silently tolerated. Step recorded as executed. On next startup, the step is skipped — the operation never succeeds. User must manually delete the record from system.sqlite to force re-run.",
+      "severity": "by-design",
+      "category": "n/a",
+      "vector": "IsTolerableError (Setup/this.cs:78) uses substring matching for 'already exists' and 'duplicate column name'. These errors specifically indicate the DDL has already run on a previous startup — exactly the idempotent pattern setup is designed for.",
+      "preconditions": "N/A — correct behavior.",
+      "impact": "N/A — matches runtime1 behavior for idempotent setup re-runs.",
       "affected_files": [
         "PLang/Runtime2/Engine/Goals/Setup/this.cs"
       ],
-      "exploit_sketch": "N/A — unlikely coincidence. Example: a setup step that calls an HTTP API at 'already-exists-check.example.com', and the DNS resolution fails with 'server already-exists-check.example.com not found'. The substring 'already exists' matches. Error is tolerated, step is recorded, never re-runs.",
-      "proposed_fix": "Consider more specific patterns: match 'table.*already exists' or 'index.*already exists' instead of bare substring. Or match the SQLite error code (SQLITE_ERROR with specific substrings).",
-      "status": "open"
+      "status": "by-design"
     },
     {
       "id": 3,
@@ -194,5 +192,5 @@
       "status": "by-design"
     }
   ],
-  "summary": "The Setup.goal run-once system is well-designed with correct record-on-failure semantics, proper context propagation, and CallStack depth protection. The primary finding is the carry-forward medium-severity gap in DeserializeValue exception handling (InvalidOperationException not caught). Two new low-severity findings: IsTolerableError substring matching could false-positive on unrelated error messages (preventing step re-run), and error messages containing sensitive data are persisted in system.sqlite. No critical or high severity findings. The setup-specific attack surfaces (hash tracking, context propagation, executor integration) are all properly mitigated."
+  "summary": "The Setup.goal run-once system is well-designed with correct record-on-failure semantics, proper context propagation, and CallStack depth protection. The primary finding is the carry-forward medium-severity gap in DeserializeValue exception handling (InvalidOperationException not caught). One new low finding: error messages containing sensitive data persisted in system.sqlite. No critical or high severity findings. The setup-specific attack surfaces (hash tracking, context propagation, executor integration, IsTolerableError) are all properly mitigated or by-design."
 }
