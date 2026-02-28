@@ -430,6 +430,44 @@
         "health": "C# tests: 1485/1485, PLang tests: 23/23. Verdict: PASS.",
         "notes": "All findings addressed. No new issues."
       }
+    },
+    {
+      "id": "a7b8c9d0-e1f2-3456-ab01-890123456789",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-28T14:00:00Z",
+      "timestamp_end": "2026-02-28T14:45:00Z",
+      "intent": "First auditor review of Setup.goal run-once execution system + SettingsData sharing",
+      "before": {
+        "assumptions": "Coder v4 and Tester v4 both PASS. 1485 C# tests, 23 PLang tests all green. Code analyzer v4 approved SettingsData fix. No previous auditor review exists.",
+        "risk": "Medium — first full code review of a new subsystem. Setup touches Executor, Goals, Steps, Context — cross-cutting concerns."
+      },
+      "plan": "Review all changed files against OBP rules. Verify contract consistency across Get/GetAsync/GetByPrPathAsync. Trace Executor.Run2 setup execution path. Check error handling convention compliance. Verify test assertions catch real bugs. Run tests independently.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Executor.cs",
+            "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full auditor review. Found 2 major contract gaps: GetAsync doesn't filter IsSetup (disk-loaded setup goals bypass filter), Executor.Run2 calls Setup.RunAsync before any goals loaded (setup silently does nothing). 1 minor: 'setup' goal name reserved without documentation."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 2 major findings blocking merge",
+        "notes": "Infrastructure is well-built (OBP compliant, error handling correct, good test coverage for the code that exists). But two contract gaps: GetAsync leaks setup goals, and Executor.Run2 has no goal discovery before calling Setup.RunAsync. Verdict: FAIL."
+      }
     }
   ]
 }

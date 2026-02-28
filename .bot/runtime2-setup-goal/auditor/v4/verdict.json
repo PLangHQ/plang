@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Two major findings: (1) GetAsync/GetByPrPathAsync don't filter IsSetup — setup goals callable as regular goals when loaded from disk; (2) Setup goals never loaded before Setup.RunAsync in Executor.Run2 — setup silently does nothing in production." }

@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-setup-goal",
+  "timestamp": "2026-02-28T14:30:00Z",
+  "reviewed_version": "v4",
+  "summary": "Setup.goal run-once system is well-architected and follows OBP correctly. The Steps.RunAsync refactor cleanly separates concerns. SettingsData sharing fix is solid. Three findings: (1) GetAsync and GetByPrPathAsync don't filter IsSetup, creating a contract gap where setup goals can be called as regular goals when loaded from disk; (2) Setup goals are never loaded into the goals collection before Setup.RunAsync runs in Executor.Run2, meaning setup will silently do nothing in production; (3) Executor.Run2 intercepts goalName 'setup' without distinguishing between setup execution and a user goal named 'setup'.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Goals/this.cs",
+      "line": 119,
+      "issue": "GetAsync returns setup goals when loaded from disk. Get() filters IsSetup at lines 55-60, but GetAsync's disk-load paths at lines 119-122 and 136-139 return the loaded goal without checking IsSetup. Same gap in GetByPrPathAsync at lines 234-237.",
+      "impact": "A PLang step like `- call SetupDatabase` could accidentally invoke a setup goal as a regular goal if the goal wasn't previously cached. This bypasses the design intent that setup goals are only reachable through Setup.RunAsync. The gap is between cache hits (filtered) and cache misses (unfiltered).",
+      "suggestion": "Add IsSetup filter after disk load in both methods. In GetAsync, after `var loaded = relResult.Value as Goal.@this;` add `if (loaded?.IsSetup == true) return null;`. Same pattern for the fallback path and GetByPrPathAsync."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Executor.cs",
+      "line": 367,
+      "issue": "Setup.RunAsync is called before any goals are loaded into the goals collection. Run2 creates a fresh Engine (line 345), then immediately calls Setup.RunAsync (line 367). No goals have been loaded yet — AllIncludingSetup returns an empty collection. Setup.Goals iterates nothing. Setup silently succeeds without running any setup goals.",
+      "impact": "The setup system infrastructure is complete and correct, but it has no goal discovery mechanism. In production, `plang p Start` will never run setup goals because they're not in the collection when Setup.RunAsync fires. Tests pass because they manually Add() goals before calling RunAsync. This makes the feature incomplete for production use.",
+      "suggestion": "Setup.RunAsync needs a discovery phase. Either: (a) Add `await engine.Goals.LoadFromDirectoryAsync(engine, buildDir)` in Run2 before Setup.RunAsync, loading all goals first. Or (b) Setup.RunAsync should scan for setup .pr files itself (e.g., looking for files named setup*.pr or checking IsSetup after loading). Option (a) is simpler and consistent with how the regular goal system works (lazy load by name). The tradeoff: (a) front-loads all goal parsing at startup."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Executor.cs",
+      "line": 371,
+      "issue": "goalName 'setup' is intercepted unconditionally. If a user creates a non-setup goal named 'Setup', `plang p setup` will run setup goals (correct) but then return without running the user's goal (unexpected). The name 'setup' is effectively reserved but not documented.",
+      "impact": "Low probability collision — naming a regular goal 'Setup' while also having setup goals is unlikely. But the behavior is surprising: the user's goal is silently skipped.",
+      "suggestion": "Document that 'setup' is a reserved goal name, or change the check to only short-circuit when setup goals actually exist: `if (goalName.Equals(\"setup\", ...) && engine.Goals.Setup.Goals.Any()) return setupResult;`"
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+      "line": 90,
+      "issue": "Record() constructs a Dictionary<string, object?> with string values for goalPath, stepText, executedAt, and error. The stepIndex is stored as an int. If the metadata is later deserialized, the int may come back boxed differently (JSON numeric boxing pattern documented in CLAUDE.md).",
+      "impact": "Minimal — the metadata dictionary is written to SQLite and only read for debugging. No code path deserializes and casts stepIndex to a specific numeric type. But flagging for awareness per the recurring bug pattern.",
+      "suggestion": "No change needed now. If metadata is ever used programmatically, use string values for all fields or explicitly handle numeric boxing."
+    }
+  ]
+}
