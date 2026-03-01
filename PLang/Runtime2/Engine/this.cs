@@ -123,6 +123,11 @@ public sealed class @this : IAsyncDisposable
     public Testing Testing { get; }
 
     /// <summary>
+    /// Builder mode controller. When enabled, actors use in-memory datasources.
+    /// </summary>
+    public Build.@this Building { get; }
+
+    /// <summary>
     /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
     /// </summary>
     public Types.@this Types { get; }
@@ -192,6 +197,7 @@ public sealed class @this : IAsyncDisposable
         Events = new EngineEvents();
         Debug = new Debugging(this);
         Testing = new Testing(this);
+        Building = new Build.@this(this);
         Types = new Types.@this();
         Property = new Property(this);
         Settings = new Settings.@this();

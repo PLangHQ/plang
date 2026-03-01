@@ -70,6 +70,9 @@ public sealed class Actor : IAsyncDisposable
 
     private IDataSource CreateDataSource()
     {
+        if (Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
+            return SqliteDataSource.InMemory(Name.ToLowerInvariant());
+
         var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
         var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
         return new SqliteDataSource(dbPath, Engine.FileSystem);

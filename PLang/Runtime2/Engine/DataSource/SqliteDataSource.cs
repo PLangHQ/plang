@@ -15,6 +15,7 @@ namespace PLang.Runtime2.Engine.DataSource;
 public sealed class SqliteDataSource : IDataSource
 {
     private readonly string _connectionString;
+    private readonly SqliteConnection? _sentinel;
     private bool _disposed;
 
     /// <summary>
@@ -37,6 +38,31 @@ public sealed class SqliteDataSource : IDataSource
         // Enable WAL mode on first connection
         EnableWalMode();
     }
+
+    /// <summary>
+    /// Creates an in-memory SqliteDataSource with a sentinel connection that keeps
+    /// the database alive for the lifetime of this instance.
+    /// </summary>
+    private SqliteDataSource(string name, bool inMemory)
+    {
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = name,
+            Mode = SqliteOpenMode.Memory,
+            Cache = SqliteCacheMode.Shared
+        }.ToString();
+
+        // Sentinel keeps the in-memory DB alive across connection-per-operation usage
+        _sentinel = new SqliteConnection(_connectionString);
+        _sentinel.Open();
+    }
+
+    /// <summary>
+    /// Creates an in-memory SQLite datasource. The database lives as long as this instance.
+    /// Different names produce isolated databases.
+    /// </summary>
+    public static SqliteDataSource InMemory(string name)
+        => new SqliteDataSource(name, inMemory: true);
 
     private void EnableWalMode()
     {
@@ -284,8 +310,15 @@ public sealed class SqliteDataSource : IDataSource
     {
         if (_disposed) return;
         _disposed = true;
-        // SQLite connections are pooled and manage their own cleanup.
-        // Clear the connection pool for this data source.
+
+        // Close sentinel first — releases the in-memory DB so it can be garbage collected
+        if (_sentinel != null)
+        {
+            _sentinel.Close();
+            _sentinel.Dispose();
+        }
+
+        // Clear the connection pool for this data source
         SqliteConnection.ClearPool(new SqliteConnection(_connectionString));
     }
 }

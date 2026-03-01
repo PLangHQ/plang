@@ -51,6 +51,67 @@
         "health": "green",
         "notes": "Design approved through conversation. Plan written and ready for coder handoff."
       }
+    },
+    {
+      "id": "b2d4f6a8-1c3e-5b7d-9f0a-e2c4d6f8a0b2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-01T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement in-memory SQLite datasource with sentinel connection, Building object, and tests",
+      "before": {
+        "assumptions": "Architect plan is complete and approved. SqliteDataSource, Actor, Engine, GlobalUsings all reviewed. Test/Debug pattern understood for Building object.",
+        "risk": "Low — additive change. All existing tests remain file-backed. New in-memory path is isolated."
+      },
+      "plan": "TDD approach: 1) Write 7 failing tests (InMemory CRUD, schema persistence, isolation, dispose, Actor integration with Testing/Building flags). 2) Implement SqliteDataSource.InMemory() with sentinel. 3) Create Engine/Build/this.cs. 4) Wire Building into Engine. 5) Add global alias. 6) Update Actor.CreateDataSource(). 7) Verify all tests pass.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "TDD: wrote 7 new tests first (InMemory CRUD, schema persistence, isolation, dispose, Actor integration). Verified compile failure (7 errors: InMemory not found, Building not found)."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added InMemory(name) static factory, private in-memory constructor with sentinel SqliteConnection, updated Dispose() to close sentinel before clearing pool."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Build/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New Building object following Debug/Test pattern. IsEnabled property, engine back-reference."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Building property (Build.@this type) and constructor init."
+        },
+        {
+          "paths": ["PLang/Runtime2/GlobalUsings.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added comment documenting Building can't be global alias (PLang.Building v1 conflict). Same pattern as Engine/CallStack."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/Actor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Updated CreateDataSource() to check Engine.Testing.IsEnabled || Engine.Building.IsEnabled and use SqliteDataSource.InMemory() when true."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 1472 tests pass (1465 existing + 7 new). Building global alias couldn't be used due to PLang.Building namespace conflict — documented in GlobalUsings.cs."
+      }
     }
   ]
 }

@@ -271,4 +271,141 @@ public class DataSourceTests
         await Assert.That(error.Key).IsEqualTo("DataSourceError");
         await Assert.That(error.StatusCode).IsEqualTo(500);
     }
+
+    // --- In-memory datasource tests ---
+
+    [Test]
+    public async Task InMemory_CrudOperations()
+    {
+        using var ds = SqliteDataSource.InMemory("test_crud");
+
+        // Set
+        var setResult = await ds.Set("items", "key1", "value1");
+        await Assert.That(setResult.Success).IsTrue();
+
+        // Get
+        var getResult = await ds.Get("items", "key1");
+        await Assert.That(getResult.Success).IsTrue();
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("value1");
+
+        // Exists
+        var existsResult = await ds.Exists("items", "key1");
+        await Assert.That((bool)existsResult.Value!).IsTrue();
+
+        // GetAll
+        await ds.Set("items", "key2", "value2");
+        var allResult = await ds.GetAll("items");
+        var items = allResult.Value as List<Data>;
+        await Assert.That(items).IsNotNull();
+        await Assert.That(items!.Count).IsEqualTo(2);
+
+        // Remove
+        var removeResult = await ds.Remove("items", "key1");
+        await Assert.That(removeResult.Success).IsTrue();
+        var afterRemove = await ds.Exists("items", "key1");
+        await Assert.That((bool)afterRemove.Value!).IsFalse();
+    }
+
+    [Test]
+    public async Task InMemory_SchemaPersistsAcrossOperations()
+    {
+        using var ds = SqliteDataSource.InMemory("test_schema");
+
+        // First operation creates the table
+        await ds.Set("persistent", "key1", "value1");
+
+        // Second operation should see the same table (no re-creation needed)
+        var result = await ds.Get("persistent", "key1");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("value1");
+
+        // Tables() should list it
+        var tablesResult = await ds.Tables();
+        var tables = tablesResult.Value as List<string>;
+        await Assert.That(tables).IsNotNull();
+        await Assert.That(tables!).Contains("persistent");
+    }
+
+    [Test]
+    public async Task InMemory_TwoNamesAreIsolated()
+    {
+        using var ds1 = SqliteDataSource.InMemory("db_alpha");
+        using var ds2 = SqliteDataSource.InMemory("db_beta");
+
+        await ds1.Set("shared", "key", "alpha_value");
+        await ds2.Set("shared", "key", "beta_value");
+
+        var result1 = await ds1.Get("shared", "key");
+        var result2 = await ds2.Get("shared", "key");
+
+        await Assert.That(result1.Value?.ToString()).IsEqualTo("alpha_value");
+        await Assert.That(result2.Value?.ToString()).IsEqualTo("beta_value");
+    }
+
+    [Test]
+    public async Task InMemory_DisposeClosesDb()
+    {
+        // Create, populate, dispose
+        var ds1 = SqliteDataSource.InMemory("disposable_db");
+        await ds1.Set("data", "key", "value");
+        ds1.Dispose();
+
+        // New datasource with same name should start empty (sentinel closed → DB vanished)
+        using var ds2 = SqliteDataSource.InMemory("disposable_db");
+        var result = await ds2.Get("data", "key");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
+
+    [Test]
+    public async Task Actor_UsesInMemory_WhenTestingEnabled()
+    {
+        await using var engine = new PLangEngine(_tempDir);
+        engine.Testing.IsEnabled = true;
+
+        // Access DataSource — should be in-memory (no .db directory created)
+        var ds = engine.User.DataSource;
+        var setResult = await ds.Set("test_table", "k", "v");
+        await Assert.That(setResult.Success).IsTrue();
+
+        var getResult = await ds.Get("test_table", "k");
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
+
+        // Verify no .db directory was created on disk
+        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
+    }
+
+    [Test]
+    public async Task Actor_UsesInMemory_WhenBuildingEnabled()
+    {
+        await using var engine = new PLangEngine(_tempDir);
+        engine.Building.IsEnabled = true;
+
+        var ds = engine.User.DataSource;
+        var setResult = await ds.Set("build_table", "k", "v");
+        await Assert.That(setResult.Success).IsTrue();
+
+        var getResult = await ds.Get("build_table", "k");
+        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
+
+        // Verify no .db directory was created on disk
+        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
+    }
+
+    [Test]
+    public async Task Actor_UsesFileBacked_ByDefault()
+    {
+        await using var engine = new PLangEngine(_tempDir);
+        // Neither Testing nor Building enabled
+
+        var ds = engine.User.DataSource;
+        var setResult = await ds.Set("file_table", "k", "v");
+        await Assert.That(setResult.Success).IsTrue();
+
+        // Verify .db directory WAS created on disk
+        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
+    }
 }
