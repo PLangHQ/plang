@@ -105,7 +105,7 @@ public class SettingsDataTests
     {
         // Use the settings.set action handler
         var context = _engine.System.Context;
-        var handler = new PLang.Runtime2.actions.settings.Set
+        var handler = new PLang.Runtime2.modules.settings.Set
         {
             Context = context,
             Key = "HandlerKey",
@@ -126,7 +126,7 @@ public class SettingsDataTests
     {
         await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
 
-        var handler = new PLang.Runtime2.actions.settings.Get
+        var handler = new PLang.Runtime2.modules.settings.Get
         {
             Context = _engine.System.Context,
             Key = "TestKey"
@@ -140,7 +140,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
     {
-        var handler = new PLang.Runtime2.actions.settings.Get
+        var handler = new PLang.Runtime2.modules.settings.Get
         {
             Context = _engine.System.Context,
             Key = "MissingKey"
@@ -156,7 +156,7 @@ public class SettingsDataTests
     {
         await _engine.System.DataSource.Set("settings", "ToRemove", "value");
 
-        var handler = new PLang.Runtime2.actions.settings.Remove
+        var handler = new PLang.Runtime2.modules.settings.Remove
         {
             Context = _engine.System.Context,
             Key = "ToRemove"

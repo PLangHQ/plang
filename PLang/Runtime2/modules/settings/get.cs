@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.actions.settings;
+namespace PLang.Runtime2.modules.settings;
 
 /// <summary>
 /// Gets a settings value by key from the System actor's DataSource.

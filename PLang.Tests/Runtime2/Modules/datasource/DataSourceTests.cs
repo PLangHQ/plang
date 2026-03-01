@@ -175,7 +175,7 @@ public class DataSourceTests
     [Test]
     public async Task ResolveTableName_ReturnsLastNamespaceSegment()
     {
-        var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.actions.settings.Set));
+        var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.modules.settings.Set));
         await Assert.That(result).IsEqualTo("settings");
     }
 

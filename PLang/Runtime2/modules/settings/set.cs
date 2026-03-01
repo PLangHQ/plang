@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.actions.settings;
+namespace PLang.Runtime2.modules.settings;
 
 /// <summary>
 /// Sets a settings value by key in the System actor's DataSource.

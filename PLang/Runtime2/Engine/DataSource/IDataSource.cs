@@ -47,7 +47,7 @@ public interface IDataSource : IDisposable
     /// <summary>
     /// Resolves the table name from a System.Type.
     /// Convention: last namespace segment, lowercased.
-    /// e.g., PLang.Runtime2.actions.encryption → "encryption"
+    /// e.g., PLang.Runtime2.modules.encryption → "encryption"
     /// </summary>
     static string ResolveTableName(System.Type type)
     {

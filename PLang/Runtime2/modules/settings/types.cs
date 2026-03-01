@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.actions.settings;
+namespace PLang.Runtime2.modules.settings;
 
 public static class types
 {
