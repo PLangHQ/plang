@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "SettingsData now shared across all actors via Engine.SettingsVariable. Tests use User context. Clean." }

@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
+using Setup = PLang.Runtime2.Engine.Goals.Setup.@this;
 namespace PLang.Runtime2.Engine.Context;
 
 /// <summary>
@@ -86,6 +87,13 @@ public sealed class PLangContext : IDisposable
     /// Cleared by EventBinding.Run after reading.
     /// </summary>
     public Data? EventOverride { get; set; }
+
+    /// <summary>
+    /// Set during setup execution, null otherwise.
+    /// Steps check this to implement run-once semantics.
+    /// Propagates through goal.call since Goal.RunAsync uses the same context object.
+    /// </summary>
+    public Setup? Setup { get; set; }
 
     /// <summary>
     /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
@@ -194,6 +202,7 @@ public sealed class PLangContext : IDisposable
         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
         {
             IsAsync = IsAsync,
+            Setup = Setup,
             SettingsScope = SettingsScope?.Clone()
         };
 

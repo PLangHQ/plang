@@ -17,6 +17,17 @@ public sealed class @this
     internal Engine.@this Engine { get; set; } = null!;
 
     /// <summary>
+    /// Run-once setup execution system.
+    /// Replaces the old IEnumerable&lt;Goal&gt; filter with a proper object.
+    /// </summary>
+    public Setup.@this Setup { get; }
+
+    public @this()
+    {
+        Setup = new Setup.@this(this);
+    }
+
+    /// <summary>
     /// Adds a goal to the collection.
     /// </summary>
     public void Add(Goal.@this goal)
@@ -29,6 +40,7 @@ public sealed class @this
 
     /// <summary>
     /// Gets a goal by name from cache only.
+    /// Setup goals are excluded — they are only reachable through Setup.RunAsync().
     /// </summary>
     public Goal.@this? Get(string name)
     {
@@ -40,11 +52,11 @@ public sealed class @this
             name = name[..^5];
 
         // Try exact match first
-        if (_goals.TryGetValue(name, out var goal))
+        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
         // Try by path
-        if (_byPath.TryGetValue(name, out goal))
+        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
             return goal;
 
         // Try with different extensions/variations
@@ -59,9 +71,9 @@ public sealed class @this
 
         foreach (var variation in variations)
         {
-            if (_goals.TryGetValue(variation, out goal))
+            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
-            if (_byPath.TryGetValue(variation, out goal))
+            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
         }
 
@@ -105,6 +117,7 @@ public sealed class @this
                 if (relResult.Success)
                 {
                     var loaded = relResult.Value as Goal.@this;
+                    if (loaded is { IsSetup: true }) return null;
                     if (loaded != null && !string.IsNullOrEmpty(name))
                         _byPath[name] = loaded;
                     return loaded;
@@ -122,6 +135,7 @@ public sealed class @this
             return null;
 
         var result = loadResult.Value as Goal.@this;
+        if (result is { IsSetup: true }) return null;
         if (result != null && !string.IsNullOrEmpty(name))
             _byPath[name] = result;
         return result;
@@ -161,29 +175,29 @@ public sealed class @this
     public IEnumerable<string> Names => _goals.Keys;
 
     /// <summary>
-    /// Gets all goals as a list.
+    /// All goals including setup and event goals. Used internally by Setup.Goals.
     /// </summary>
-    public IReadOnlyList<Goal.@this> Value => _goals.Values.ToList();
+    internal IEnumerable<Goal.@this> AllIncludingSetup => _goals.Values;
 
     /// <summary>
-    /// Gets all goals.
+    /// Gets all non-setup goals as a list.
     /// </summary>
-    public IEnumerable<Goal.@this> All => _goals.Values;
+    public IReadOnlyList<Goal.@this> Value => _goals.Values.Where(g => !g.IsSetup).ToList();
 
     /// <summary>
-    /// Gets the count of goals.
+    /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
     /// </summary>
-    public int Count => _goals.Count;
+    public IEnumerable<Goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
+
+    /// <summary>
+    /// Gets the count of non-setup goals. Consistent with Get()/All.
+    /// </summary>
+    public int Count => _goals.Values.Count(g => !g.IsSetup);
 
     /// <summary>
     /// Gets public goals only.
     /// </summary>
     public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
-
-    /// <summary>
-    /// Gets setup goals only.
-    /// </summary>
-    public IEnumerable<Goal.@this> Setup => _goals.Values.Where(g => g.IsSetup);
 
     /// <summary>
     /// Gets event goals only.
@@ -203,9 +217,9 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Check cache first
+        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
         if (_byPath.TryGetValue(prPath, out var cached))
-            return cached;
+            return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory
         var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
@@ -220,6 +234,7 @@ public sealed class @this
             return null;
 
         var loaded = loadResult.Value as Goal.@this;
+        if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
             _byPath[prPath] = loaded;
         return loaded;

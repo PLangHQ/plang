@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "SettingsData bridge registered only on System actor's MemoryStack but PLang execution uses User.Context — %Settings.X% silently resolves to null" }

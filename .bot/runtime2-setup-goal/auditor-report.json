@@ -1,0 +1,8 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-setup-goal",
+  "timestamp": "2026-03-01T12:30:00Z",
+  "reviewed_version": "v6",
+  "summary": "DiscoverAsync correctly replaces the eager LoadFromDirectoryAsync. Only setup goals are added to the collection — non-setup goals are parsed but discarded, preserving lazy-load. OBP rule 1 respected: Setup owns its discovery. 3 new tests verify the contract. No findings.",
+  "findings": []
+}

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All v1 findings addressed: record-on-failure fixed, Record returns Data, Count/All consistent with Get" }

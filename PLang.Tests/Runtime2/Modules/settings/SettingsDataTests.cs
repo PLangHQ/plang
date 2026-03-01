@@ -37,8 +37,8 @@ public class SettingsDataTests
         // Store a setting via the System actor's DataSource
         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-test-123");
 
-        // SettingsData is auto-registered on System actor MemoryStack
-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+        // SettingsData is registered on User actor MemoryStack (same as PLang code uses)
+        var settingsData = _engine.Context.MemoryStack.Get("Settings");
         await Assert.That(settingsData).IsNotNull();
 
         var child = settingsData!.GetChild("ApiKey");
@@ -50,7 +50,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsData_GetChild_MissingKey_ReturnsAskError()
     {
-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+        var settingsData = _engine.Context.MemoryStack.Get("Settings");
         await Assert.That(settingsData).IsNotNull();
 
         var child = settingsData!.GetChild("NonExistentKey");
@@ -69,8 +69,8 @@ public class SettingsDataTests
         // Store via DataSource
         await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
 
-        // Resolve via MemoryStack dot notation (simulates %Settings.TestKey%)
-        var result = _engine.System.Context.MemoryStack.Get("Settings.TestKey");
+        // Resolve via User MemoryStack dot notation (simulates %Settings.TestKey% in PLang code)
+        var result = _engine.Context.MemoryStack.Get("Settings.TestKey");
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Success).IsTrue();
         await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
@@ -79,7 +79,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsData_EmptyPath_ReturnsSelf()
     {
-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+        var settingsData = _engine.Context.MemoryStack.Get("Settings");
         await Assert.That(settingsData).IsNotNull();
 
         var child = settingsData!.GetChild("");
@@ -92,11 +92,11 @@ public class SettingsDataTests
     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
     {
         await _engine.System.DataSource.Set("settings", "ApiKey", "old-value");
-        var first = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
+        var first = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
 
         await _engine.System.DataSource.Set("settings", "ApiKey", "new-value");
-        var second = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
+        var second = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
     }
 
@@ -115,8 +115,8 @@ public class SettingsDataTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        // Verify via SettingsData
-        var setting = _engine.System.Context.MemoryStack.Get("Settings.HandlerKey");
+        // Verify via User MemoryStack (what PLang code uses)
+        var setting = _engine.Context.MemoryStack.Get("Settings.HandlerKey");
         await Assert.That(setting).IsNotNull();
         await Assert.That(setting!.Value?.ToString()).IsEqualTo("HandlerValue");
     }
@@ -190,8 +190,8 @@ public class SettingsDataTests
         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
         await _engine.System.DataSource.Set("settings", "Config", config);
 
-        // Resolve %Settings.Config.SubKey%
-        var result = _engine.System.Context.MemoryStack.Get("Settings.Config.SubKey");
+        // Resolve %Settings.Config.SubKey% via User MemoryStack
+        var result = _engine.Context.MemoryStack.Get("Settings.Config.SubKey");
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Success).IsTrue();
         await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
@@ -205,8 +205,8 @@ public class SettingsDataTests
         // Store a setting
         await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
 
-        // Clone the MemoryStack
-        var cloned = _engine.System.Context.MemoryStack.Clone();
+        // Clone the User MemoryStack
+        var cloned = _engine.Context.MemoryStack.Clone();
 
         // Settings should still work in the cloned stack
         var result = cloned.Get("Settings.CloneKey");
@@ -218,8 +218,8 @@ public class SettingsDataTests
     [Test]
     public async Task MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError()
     {
-        // Clone the MemoryStack
-        var cloned = _engine.System.Context.MemoryStack.Clone();
+        // Clone the User MemoryStack
+        var cloned = _engine.Context.MemoryStack.Clone();
 
         // Missing key in cloned stack should still return AskError
         var result = cloned.Get("Settings.MissingInClone");
@@ -238,7 +238,7 @@ public class SettingsDataTests
         // 2. Regex matches the full variable: Settings.MissingKey
         // 3. Calls __memoryStack.Get("Settings.MissingKey")
         // 4. Checks if result is non-null and !Success → sets __resolutionError
-        var memoryStack = _engine.System.Context.MemoryStack;
+        var memoryStack = _engine.Context.MemoryStack;
 
         // This is the exact call the generated code makes
         var resolved = memoryStack.Get("Settings.MissingKey");
@@ -258,7 +258,7 @@ public class SettingsDataTests
     public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
     {
         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
-        var memoryStack = _engine.System.Context.MemoryStack;
+        var memoryStack = _engine.Context.MemoryStack;
 
         // Same call path as generated code
         var resolved = memoryStack.Get("Settings.ApiKey");
@@ -283,11 +283,49 @@ public class SettingsDataTests
 
         // SettingsData.GetChild should return the DataSource error (line 54-55),
         // not throw and not return AskError
-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+        var settingsData = _engine.Context.MemoryStack.Get("Settings");
         var child = settingsData!.GetChild("AnyKey");
 
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Success).IsFalse();
         await Assert.That(child.Error is DataSourceError).IsTrue();
+    }
+
+    // --- Shared SettingsData across actors ---
+
+    [Test]
+    public async Task SettingsData_SameObjectAcrossAllActors()
+    {
+        // All actors should share the exact same SettingsData instance
+        var userSettings = _engine.User.Context.MemoryStack.Get("Settings");
+        var systemSettings = _engine.System.Context.MemoryStack.Get("Settings");
+        var serviceSettings = _engine.Service.Context.MemoryStack.Get("Settings");
+
+        await Assert.That(userSettings).IsNotNull();
+        await Assert.That(systemSettings).IsNotNull();
+        await Assert.That(serviceSettings).IsNotNull();
+
+        // Reference equality — same object
+        await Assert.That(ReferenceEquals(userSettings, systemSettings)).IsTrue();
+        await Assert.That(ReferenceEquals(userSettings, serviceSettings)).IsTrue();
+    }
+
+    [Test]
+    public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
+    {
+        // Store via System DataSource (the backing store)
+        await _engine.System.DataSource.Set("settings", "SharedKey", "shared-value");
+
+        // Read from User context (what PLang code actually uses)
+        var result = _engine.Context.MemoryStack.Get("Settings.SharedKey");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
+
+        // Read from Service context (should also work)
+        var serviceResult = _engine.Service.Context.MemoryStack.Get("Settings.SharedKey");
+        await Assert.That(serviceResult).IsNotNull();
+        await Assert.That(serviceResult!.Success).IsTrue();
+        await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");
     }
 }

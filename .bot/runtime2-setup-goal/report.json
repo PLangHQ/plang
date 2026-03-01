@@ -1,0 +1,583 @@
+{
+  "branch": "runtime2-setup-goal",
+  "sessions": [
+    {
+      "id": "058e3aa3-a14c-44a4-9fa1-89d5ad33e053",
+      "bot": "architect",
+      "timestamp_start": "2026-02-27T06:00:00Z",
+      "timestamp_end": "2026-02-27T06:17:04Z",
+      "intent": "Design Setup.goal run-once execution system for Runtime2",
+      "before": {
+        "assumptions": "Runtime1 had RunSetup/HasExecuted system. Runtime2 needs equivalent with OBP-compliant design.",
+        "risk": "Low — design-only session"
+      },
+      "plan": "Trace runtime1 setup system, design OBP-compliant Setup object with Executions smart collection, write handoff spec for coder.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2/architect/v1/plan.md", ".bot/runtime2/architect/v1/summary.md", ".bot/runtime2/architect/summary.md", ".bot/runtime2/report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect handoff spec for Setup.goal system"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design spec ready for coder implementation",
+        "notes": "Key decisions: Setup is an object not a filter, Executions wraps sqlite table, context.Setup propagates through goal.call, Steps.RunAsync owns iteration."
+      }
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-234567890abc",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T07:00:00Z",
+      "timestamp_end": "2026-02-27T11:20:00Z",
+      "intent": "Implement Setup.goal run-once execution system per architect handoff",
+      "before": {
+        "assumptions": "Architect spec is sound. EngineGoals.Setup is currently IEnumerable<Goal>, needs to become Setup object. Steps needs RunAsync. PLangContext needs Setup property.",
+        "risk": "Low — well-defined spec, familiar patterns (SqliteDataSource). Medium risk on excluding setup goals from regular lookup (may break callers)."
+      },
+      "plan": "Create Setup/this.cs (uses engine.System.DataSource, no separate Executions class), add PLangContext.Setup, modify EngineGoals.Setup property, add Steps.RunAsync with setup check, refactor Goal.RunAsync to delegate, wire up in Executor.Run2, write C# tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Setup object with Goals, RunAsync, IsExecuted, Record — uses engine.System.DataSource instead of separate Executions class"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Context/PLangContext.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs", "PLang/Runtime2/Engine/Goals/Goal/Methods.cs", "PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "EngineGoals.Setup becomes object, PLangContext.Setup added, Steps.RunAsync with run-once check, Goal.RunAsync delegates to Steps (OBP rule 5), Executor.Run2 calls Setup before main goal"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "9 tests: goal ordering, exclusion from lookup, IsExecuted/Record, skip already-executed, hash change re-run, context propagation, Clone"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/GoalsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated existing Setup test to use goals.Setup.Goals.ToList() instead of goals.Setup.ToList()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1474/1474, PLang tests: 23/23",
+        "notes": "Simplified from architect's design: no Executions class, uses engine.System.DataSource directly. Discussed with Ingi — table name is 'setup', using existing DataSource was always the intent."
+      }
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-345678901bcd",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-27T12:00:00Z",
+      "timestamp_end": "2026-02-27T12:30:00Z",
+      "intent": "Analyze Setup.goal run-once system and DataSource/Settings bridge code",
+      "before": {
+        "assumptions": "Coder implemented architect spec. Tests passing. Need to check OBP compliance, behavioral correctness, and test coverage gaps.",
+        "risk": "Low — analysis only, no code changes"
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning (focus on record-on-failure semantics), deletion tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Executor.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs",
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/actions/settings/types.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis. Found 2 behavioral issues in setup record-on-failure path, 1 consistency issue in EngineGoals."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — two behavioral issues need fixing",
+        "notes": "Finding 1 (High): failed setup steps permanently recorded as executed. Finding 2 (Medium): Record silently swallows errors. Finding 3 (Low): Count/All vs Get inconsistency."
+      }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-def0-456789012cde",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T13:00:00Z",
+      "timestamp_end": "2026-02-27T14:00:00Z",
+      "intent": "Fix 3 code analyzer findings in Setup.goal system",
+      "before": {
+        "assumptions": "Code analyzer found 3 issues: record-on-failure, swallowed errors, API inconsistency. All are behavioral fixes, not architectural.",
+        "risk": "Low — targeted fixes to existing code, well-covered by tests"
+      },
+      "plan": "Fix Finding 1: move record call after step execution, only record on success/tolerated. Fix Finding 2: change Record return to Task<Data>. Fix Finding 3: add AllIncludingSetup, filter All/Count/Value. Add 2 tests for record-on-failure semantics.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Record only on success or tolerated errors (step.OnError?.IgnoreError). Failed steps must re-run on next startup."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Record returns Task<Data> instead of Task, surfacing DataSource errors."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "AllIncludingSetup internal property for Setup.Goals. All/Count/Value exclude setup goals."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added RunAsync_FailedStepNotRecorded and RunAsync_ToleratedErrorStepIsRecorded tests."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1476/1476, PLang tests: 23/23",
+        "notes": "All 3 code analyzer findings addressed. Record-on-failure semantics verified with 2 new tests."
+      }
+    },
+    {
+      "id": "e5f6a7b8-c9d0-1234-ef01-567890123def",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-27T15:00:00Z",
+      "timestamp_end": "2026-02-27T15:15:00Z",
+      "intent": "Re-review coder v2 fixes for Setup.goal system",
+      "before": {
+        "assumptions": "Coder addressed all 3 v1 findings. Need to verify fixes are correct and no new issues introduced.",
+        "risk": "Low — review only"
+      },
+      "plan": "Verify each fix against v1 findings. Check for new OBP violations or behavioral issues in the fix code itself.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 3 findings addressed correctly. Record-on-failure logic correct, Record returns Data, AllIncludingSetup is internal. No new issues."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all findings addressed",
+        "notes": "Clean. Ready for merge."
+      }
+    },
+    {
+      "id": "f6a7b8c9-d0e1-2345-f012-678901234ef0",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-27T16:00:00Z",
+      "timestamp_end": "2026-02-27T16:45:00Z",
+      "intent": "Deep re-analysis of entire branch — cross-concern behavioral review",
+      "before": {
+        "assumptions": "v1/v2 focused on Setup system. Full branch includes DataSource, SettingsData bridge, LazyParamsGenerator changes, MemoryStack changes. Need to trace cross-system interactions.",
+        "risk": "Low — analysis only"
+      },
+      "plan": "Trace full execution path from Executor.Run2 through RunGoalAsync, Goal.RunAsync, Steps.RunAsync, LazyParamsGenerator __Resolve to verify which MemoryStack %Settings.X% resolves against. Check actor context wiring.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Executor.cs",
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced execution path end-to-end. SettingsData registered only on System actor, but engine.Context = User.Context. %Settings.X% unreachable from PLang code. All 15 test references use System.Context.MemoryStack, masking the gap."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — SettingsData bridge unreachable from PLang execution",
+        "notes": "Finding 1 (High): %Settings.ApiKey% silently resolves to null because SettingsData lives on System.Context.MemoryStack but execution uses User.Context.MemoryStack. Settings action handlers work because they bypass MemoryStack and access Engine.System.DataSource directly."
+      }
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0123456789",
+      "bot": "coder",
+      "timestamp_start": "2026-02-27T17:00:00Z",
+      "timestamp_end": "2026-02-27T17:30:00Z",
+      "intent": "Share SettingsData across all actors — fix %Settings.X% unreachable from PLang code",
+      "before": {
+        "assumptions": "Code analyzer found SettingsData only on System actor. Ingi confirmed: settings are runtime-wide, all actors should share the same object.",
+        "risk": "Low — straightforward wiring change"
+      },
+      "plan": "Engine owns single SettingsData instance. Actor always registers it (remove System-only check). Fix all tests to use User context. Add shared-object reference equality test.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added internal SettingsVariable property, created in constructor"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/Actor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed System-only if block, always registers engine.SettingsVariable on MemoryStack"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All tests now use _engine.Context.MemoryStack (User context). Added SameObjectAcrossAllActors and SetViaSystem_ReadableFromUserContext tests."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1478/1478",
+        "notes": "All actors share same SettingsData reference. %Settings.X% now works in PLang code."
+      }
+    },
+    {
+      "id": "b2c3d4e5-f0a1-5678-bcde-901234567890",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-02-28T08:00:00Z",
+      "timestamp_end": "2026-02-28T08:15:00Z",
+      "intent": "Re-review coder v3 fix for SettingsData sharing across actors",
+      "before": {
+        "assumptions": "Coder moved SettingsData ownership to Engine, all actors register same instance. Need to verify fix correctness and no new issues.",
+        "risk": "Low — review only"
+      },
+      "plan": "Verify Engine.SettingsVariable ownership, Actor registration, test coverage, constructor ordering safety.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fix correct. Engine owns single SettingsData, all actors share it, tests use User context, constructor ordering safe (lazy access). Two new tests prove cross-actor sharing."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — SettingsData sharing fix correct",
+        "notes": "Clean. All v3 findings addressed. Branch ready for merge."
+      }
+    },
+    {
+      "id": "c4d5e6f7-a8b9-0123-cdef-456789abcdef",
+      "bot": "tester",
+      "timestamp_start": "2026-02-28T09:30:00Z",
+      "timestamp_end": "2026-02-28T10:00:00Z",
+      "intent": "Test quality review of Setup.goal run-once system + SettingsData sharing fix",
+      "before": {
+        "assumptions": "Code analyzer v4 approved. Coder at v3. Setup has 11 C# tests. PLang tests should be 23/23.",
+        "risk": "Low — reviewing well-tested feature with code analyzer approval."
+      },
+      "plan": "Run C# tests (1478), run PLang tests (23 from Tests/Runtime2/), run coverage, analyze test quality for false greens and missing coverage, focus on Setup record-on-failure semantics and SettingsData cross-actor sharing.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Executor.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full code review of Setup system and SettingsData sharing. Found Record return value discarded at call site."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test quality analysis: 11 Setup tests solid, skip test weak, no PLang integration test for setup."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-setup-goal/test-report.json",
+            ".bot/runtime2-setup-goal/tester/v3/verdict.json",
+            ".bot/runtime2-setup-goal/tester/v3/summary.md",
+            ".bot/runtime2-setup-goal/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v3 artifacts: test report, verdict (pass), summary"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1478/1478, PLang tests: 23/23. Verdict: PASS.",
+        "notes": "One notable gap: Steps.RunAsync discards Record() return value. Minor: skip test weak, no PLang setup test, cancellation untested."
+      }
+    },
+    {
+      "id": "e6f7a8b9-c0d1-2345-ef01-678901234567",
+      "bot": "coder",
+      "timestamp_start": "2026-02-28T11:00:00Z",
+      "timestamp_end": "2026-02-28T11:45:00Z",
+      "intent": "Fix tester v3 findings: Record abort, skip proof, cancellation test, setup-tolerable errors",
+      "before": {
+        "assumptions": "Tester found 3 gaps: F1 (Record return discarded), F2 (skip test weak), F4 (cancellation untested). Runtime1 tolerates 'already exists' and 'duplicate column name' during setup.",
+        "risk": "Low — behavioral fixes with clear test requirements"
+      },
+      "plan": "F1: check Record() return, abort on failure. Add IsTolerableError matching runtime1 patterns. F2: use DataSource marker to prove step was skipped. F4: pre-cancelled token test.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added IsTolerableError: 'already exists', 'duplicate column name' match (runtime1 parity)"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Unified tolerance check (success/IgnoreError/IsTolerableError). Record return checked, abort on failure."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 new/rewritten tests: skip proof via marker, Record abort, cancellation, 5 IsTolerableError tests"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1485/1485",
+        "notes": "All 3 tester findings addressed. Runtime1 setup tolerance ported."
+      }
+    },
+    {
+      "id": "d5e6f7a8-b9c0-3456-def0-789012345678",
+      "bot": "tester",
+      "timestamp_start": "2026-02-28T12:00:00Z",
+      "timestamp_end": "2026-02-28T12:15:00Z",
+      "intent": "Verify coder v4 fixes for tester v3 findings (F1, F2, F4)",
+      "before": {
+        "assumptions": "Coder addressed all 3 findings. 1485 C# tests reported passing.",
+        "risk": "Low — verifying targeted fixes"
+      },
+      "plan": "Run C# tests, run PLang tests, verify each fix addresses the original finding, check for regressions.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 3 fixes verified: Record abort, marker-based skip proof, cancellation test. IsTolerableError bonus is clean."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1485/1485, PLang tests: 23/23. Verdict: PASS.",
+        "notes": "All findings addressed. No new issues."
+      }
+    },
+    {
+      "id": "a7b8c9d0-e1f2-3456-ab01-890123456789",
+      "bot": "auditor",
+      "timestamp_start": "2026-02-28T14:00:00Z",
+      "timestamp_end": "2026-02-28T14:45:00Z",
+      "intent": "First auditor review of Setup.goal run-once execution system + SettingsData sharing",
+      "before": {
+        "assumptions": "Coder v4 and Tester v4 both PASS. 1485 C# tests, 23 PLang tests all green. Code analyzer v4 approved SettingsData fix. No previous auditor review exists.",
+        "risk": "Medium — first full code review of a new subsystem. Setup touches Executor, Goals, Steps, Context — cross-cutting concerns."
+      },
+      "plan": "Review all changed files against OBP rules. Verify contract consistency across Get/GetAsync/GetByPrPathAsync. Trace Executor.Run2 setup execution path. Check error handling convention compliance. Verify test assertions catch real bugs. Run tests independently.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Runtime2/Engine/Context/PLangContext.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Executor.cs",
+            "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full auditor review. Found 2 major contract gaps: GetAsync doesn't filter IsSetup (disk-loaded setup goals bypass filter), Executor.Run2 calls Setup.RunAsync before any goals loaded (setup silently does nothing). 1 minor: 'setup' goal name reserved without documentation."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 2 major findings blocking merge",
+        "notes": "Infrastructure is well-built (OBP compliant, error handling correct, good test coverage for the code that exists). But two contract gaps: GetAsync leaks setup goals, and Executor.Run2 has no goal discovery before calling Setup.RunAsync. Verdict: FAIL."
+      }
+    },
+    {
+      "id": "f8a9b0c1-d2e3-4567-f012-abcdef012345",
+      "bot": "coder",
+      "timestamp_start": "2026-02-28T15:00:00Z",
+      "timestamp_end": "2026-02-28T15:45:00Z",
+      "intent": "Fix auditor v4 findings: IsSetup filter gaps in GetAsync/GetByPrPathAsync, goal loading order in Executor.Run2",
+      "before": {
+        "assumptions": "Auditor found 2 major + 1 minor issue. F1: GetAsync/GetByPrPathAsync don't filter IsSetup on disk loads. F2: Goals not loaded before Setup.RunAsync. F3: 'setup' name unconditionally reserved.",
+        "risk": "Low — targeted fixes to well-understood code paths. Tests will validate each fix."
+      },
+      "plan": "F1: Add `if (loaded is { IsSetup: true }) return null;` at all disk-load return paths in GetAsync (2 paths) and GetByPrPathAsync (cache + disk). Fix GetByPrPathAsync cache check to return null immediately for setup goals. F2: Verify LoadFromDirectoryAsync is before Setup.RunAsync (already was). F3: Add `&& engine.Goals.Setup.Goals.Any()` guard. Add 5 new GoalsTests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: Added IsSetup filter at 4 return points: GetAsync relative load (line ~120), GetAsync root load (line ~138), GetByPrPathAsync cache (line ~221), GetByPrPathAsync disk load (line ~237). Cache check changed from `&& !cached.IsSetup` to `return cached.IsSetup ? null : cached;` to prevent fallthrough NPE."
+        },
+        {
+          "paths": ["PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2: Verified LoadFromDirectoryAsync before Setup.RunAsync. F3: Changed setup interceptor to conditional on Setup.Goals.Any()."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/GoalsTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 5 tests: Get_ExcludesSetupGoals, GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk, GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk, GetByPrPathAsync_ReturnsNull_ForSetupGoal, GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1490/1490",
+        "notes": "All 3 auditor findings addressed. Bonus bug found and fixed: cached setup goal in GetByPrPathAsync fell through to disk load path causing NullReferenceException. Test caught it before the fix was applied."
+      }
+    },
+    {
+      "id": "b8c9d0e1-f2a3-4567-bc01-901234567890",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-01T09:45:00Z",
+      "timestamp_end": "2026-03-01T10:05:00Z",
+      "intent": "Re-review coder v5 fixes for auditor v4 findings (IsSetup filter, goal loading, setup interception)",
+      "before": {
+        "assumptions": "Coder v5 addressed all 3 findings from auditor v4. Need to verify fixes are correct, no regressions, and no new issues.",
+        "risk": "Low — targeted re-review of specific fixes"
+      },
+      "plan": "Read coder v5 summary, verify each fix at the code level (4 IsSetup filter points, LoadFromDirectoryAsync ordering, conditional setup check). Run tests. Check new tests catch the right things.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Executor.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 3 findings properly fixed. IsSetup filter at 4 return paths, LoadFromDirectoryAsync before Setup.RunAsync, conditional setup interception. Bonus bug fix in GetByPrPathAsync cache path. 5 new tests. 1490 total passing."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all findings addressed, no new issues",
+        "notes": "Clean review. Branch ready for merge."
+      }
+    },
+    {
+      "id": "a9b0c1d2-e3f4-5678-ab01-cdef01234567",
+      "bot": "coder",
+      "timestamp_start": "2026-03-01T12:00:00Z",
+      "timestamp_end": "2026-03-01T12:30:00Z",
+      "intent": "Replace eager LoadFromDirectoryAsync with scoped Setup.DiscoverAsync",
+      "before": {
+        "assumptions": "Auditor v6 found LoadFromDirectoryAsync loads ALL .pr files, violating lazy-load. Only setup goals need discovery before Setup.RunAsync.",
+        "risk": "Low — focused change to discovery mechanism, no behavioral change to setup execution"
+      },
+      "plan": "Add DiscoverAsync to Setup.@this that scans .pr files but only keeps IsSetup goals. Replace LoadFromDirectoryAsync call in Executor.Run2 with Setup.DiscoverAsync. Add 3 tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added DiscoverAsync: scans *.pr files, parses each, only adds IsSetup goals to collection. Non-setup goals discarded, remain lazy-loadable."
+        },
+        {
+          "paths": ["PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Replaced LoadFromDirectoryAsync(engine.AbsolutePath, \"*.pr\") with Setup.DiscoverAsync(engine, ct)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: OnlyLoadsSetupGoals, NonSetupGoalsRemainLazyLoadable, HandlesEmptyDirectory"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1493/1493",
+        "notes": "Scoped discovery preserves lazy-load convention. OBP rule 1: Setup owns its own discovery."
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-setup-goal",
+  "timestamp": "2026-02-28T12:15:00Z",
+  "tested_version": "v4",
+  "test_run": {
+    "csharp": { "total": 1485, "passed": 1485, "failed": 0, "skipped": 0 },
+    "plang": { "total": 23, "passed": 23, "failed": 0, "skipped": 0 }
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All tests green. All v3 findings (F1, F2, F4) fixed by coder v4. Record() return now checked (abort on failure), skip test uses marker proof, cancellation tested. IsTolerableError adds runtime1 parity for idempotent setup steps. 7 new tests bring Setup total to 18."
+}

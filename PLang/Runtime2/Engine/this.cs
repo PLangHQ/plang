@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.DataSource;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.actions;
@@ -113,6 +114,13 @@ public sealed class @this : IAsyncDisposable
     public Settings.@this Settings { get; }
 
     /// <summary>
+    /// Shared SettingsData instance registered on every actor's MemoryStack.
+    /// Provides %Settings.X% variable resolution from system DataSource.
+    /// Single instance — all actors share the same object.
+    /// </summary>
+    internal SettingsData SettingsVariable { get; }
+
+    /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
     /// </summary>
     public Debugging Debug { get; }
@@ -195,6 +203,7 @@ public sealed class @this : IAsyncDisposable
         Types = new Types.@this();
         Property = new Property(this);
         Settings = new Settings.@this();
+        SettingsVariable = new SettingsData(this);
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
