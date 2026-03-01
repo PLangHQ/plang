@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "No critical or high findings. One medium carry-forward (DeserializeValue InvalidOperationException) is currently unreachable. Three low findings are correctness constraints, not attack vectors."
+}

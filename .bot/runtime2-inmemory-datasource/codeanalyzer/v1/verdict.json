@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "In-memory datasource implementation is clean and OBP-compliant. Two minor findings: AfterStep behavior change is undocumented (medium), TOCTOU in v1 migration (low)." }

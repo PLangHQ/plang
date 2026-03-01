@@ -1,0 +1,319 @@
+{
+  "branch": "runtime2-inmemory-datasource",
+  "sessions": [
+    {
+      "id": "a7c3e1f2-9b4d-4a8e-b5c6-d7e8f9a0b1c2",
+      "bot": "architect",
+      "timestamp_start": "2026-02-27T00:00:00Z",
+      "timestamp_end": "2026-02-27T00:30:00Z",
+      "intent": "Design in-memory SQLite datasource support for tests, builder, and PLang tests",
+      "before": {
+        "assumptions": "SqliteDataSource is the only IDataSource implementation. Actor creates it lazily with file path. No in-memory support exists in runtime2. Runtime1 had AppContext.SetSwitch pattern which is not OBP.",
+        "risk": "Low — additive change. SqliteDataSource gains a new construction path, existing file-backed path unchanged."
+      },
+      "plan": "SqliteDataSource gains InMemory(name) static factory with sentinel connection. New Engine.Building object (like Testing) with IsEnabled. Actor.CreateDataSource() navigates to Engine.Testing.IsEnabled and Engine.Building.IsEnabled to decide. See .bot/runtime2-inmemory-datasource/architect/v1/plan.md for full spec.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Test/this.cs",
+            "PLang/Runtime2/Engine/Debug/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read all relevant files to understand current DataSource system, Actor creation, Engine properties, and Testing/Debug patterns"
+        },
+        {
+          "paths": [
+            "PLang/Services/SettingsService/SqliteSettingsRepository.cs",
+            "PLang/Modules/DbModule/ModuleSettings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Studied runtime1 in-memory patterns — AppContext.SetSwitch, InMemoryDbCache sentinel, ConvertToMemoryDb() — to understand what worked and what to avoid"
+        },
+        {
+          "paths": [".bot/runtime2-inmemory-datasource/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote coder handoff plan after iterative design discussion with Ingi. Key decisions: SQLite in-memory (not dictionary), sentinel on DataSource, Actor navigates Testing/Building context, new Building object on Engine."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "Design approved through conversation. Plan written and ready for coder handoff."
+      }
+    },
+    {
+      "id": "b2d4f6a8-1c3e-5b7d-9f0a-e2c4d6f8a0b2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-01T00:00:00Z",
+      "timestamp_end": "2026-03-01T01:00:00Z",
+      "intent": "Implement in-memory SQLite datasource with sentinel connection, Building object, and tests",
+      "before": {
+        "assumptions": "Architect plan is complete and approved. SqliteDataSource, Actor, Engine, GlobalUsings all reviewed. Test/Debug pattern understood for Building object.",
+        "risk": "Low — additive change. All existing tests remain file-backed. New in-memory path is isolated."
+      },
+      "plan": "TDD approach: 1) Write 7 failing tests (InMemory CRUD, schema persistence, isolation, dispose, Actor integration with Testing/Building flags). 2) Implement SqliteDataSource.InMemory() with sentinel. 3) Create Engine/Build/this.cs. 4) Wire Building into Engine. 5) Add global alias. 6) Update Actor.CreateDataSource(). 7) Verify all tests pass.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "TDD: wrote 7 new tests first (InMemory CRUD, schema persistence, isolation, dispose, Actor integration). Verified compile failure (7 errors: InMemory not found, Building not found)."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added InMemory(name) static factory, private in-memory constructor with sentinel SqliteConnection, updated Dispose() to close sentinel before clearing pool."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Build/this.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New Building object following Debug/Test pattern. IsEnabled property, engine back-reference."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added Building property (Build.@this type) and constructor init."
+        },
+        {
+          "paths": ["PLang/Runtime2/GlobalUsings.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added comment documenting Building can't be global alias (PLang.Building v1 conflict). Same pattern as Engine/CallStack."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Context/Actor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Updated CreateDataSource() to check Engine.Testing.IsEnabled || Engine.Building.IsEnabled and use SqliteDataSource.InMemory() when true."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "All 1472 tests pass (1465 existing + 7 new). Building global alias couldn't be used due to PLang.Building namespace conflict — documented in GlobalUsings.cs."
+      }
+    },
+    {
+      "id": "c3e5a7b9-2d4f-6c8e-0a1b-f3d5e7a9c1b3",
+      "bot": "tester",
+      "timestamp_start": "2026-03-01T12:00:00Z",
+      "timestamp_end": "2026-03-01T12:30:00Z",
+      "intent": "Review test quality for in-memory SQLite datasource implementation",
+      "before": {
+        "assumptions": "Coder v1 claims 1472 tests pass with 7 new. Need to verify test honesty — would they catch bugs?",
+        "risk": "Low — this is a review, no code changes."
+      },
+      "plan": "Run full test suite. Apply deletion test to every changed line. Analyze each new test for false-green patterns. Check Actor integration tests verify side effects not just return values. Write test-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/Build/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read all changed files and tests. Analyzed each test for intent verification vs implementation verification. Applied deletion test to every changed code block."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-inmemory-datasource/test-report.json",
+            ".bot/runtime2-inmemory-datasource/tester/v1/verdict.json",
+            ".bot/runtime2-inmemory-datasource/tester/v1/summary.md",
+            ".bot/runtime2-inmemory-datasource/tester/v1/plan.md",
+            ".bot/runtime2-inmemory-datasource/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote all tester outputs: test-report.json with 4 minor findings, PASS verdict, detailed summary with deletion test results."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — all 1472 tests green. 7 new tests verify intent correctly. Actor integration tests check disk side effects. 4 minor findings, none blocking."
+      }
+    },
+    {
+      "id": "d4f6a8c0-3e5b-7d9f-1a2b-c4d6e8f0a2b4",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-01T18:00:00Z",
+      "timestamp_end": "2026-03-01T18:45:00Z",
+      "intent": "5-pass code analysis of in-memory datasource and related bugfixes",
+      "before": {
+        "assumptions": "Architect, coder, and tester have all passed. Code is functional and tested. Looking for OBP violations, behavioral issues, and untested code paths.",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test. Focus on Step/Methods.cs behavioral change and in-memory DB isolation.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/Build/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+            "PLang/Runtime2/Engine/Test/this.cs",
+            "PLang/Runtime2/actions/list/unique.cs",
+            "PLang/Services/SettingsService/SqliteSettingsRepository.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis of all production code changes. Two findings: (1) AfterStep behavior change undocumented (medium), (2) TOCTOU in v1 migration (low)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-inmemory-datasource/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-inmemory-datasource/codeanalyzer/v1/result.md",
+            ".bot/runtime2-inmemory-datasource/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-inmemory-datasource/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-inmemory-datasource/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote analysis outputs: plan, detailed results, summary, verdict (PASS)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — code is clean and OBP-compliant. Two non-blocking findings documented."
+      }
+    },
+    {
+      "id": "e5a7b9c1-4f6d-8e0a-2b3c-d5e7f9a1b3c5",
+      "bot": "security",
+      "timestamp_start": "2026-03-01T20:00:00Z",
+      "timestamp_end": "2026-03-01T21:00:00Z",
+      "intent": "Security audit of in-memory SQLite datasource, Building object, and settings handlers",
+      "before": {
+        "assumptions": "Parent branch (runtime2-system-datasource) passed security with one medium carry-forward (DeserializeValue InvalidOperationException). This branch adds InMemory factory, Building object, settings action handlers. All other bots passed.",
+        "risk": "Low — additive feature. Main new attack surface is sentinel connection lifecycle and in-memory DB isolation. Carry-forward finding still open."
+      },
+      "plan": "Phase 1 (Blue): Audit 6 areas — in-memory DB isolation, sentinel lifecycle, DeserializeValue exception gap (carry-forward), SQL injection surface, SettingsData.GetChild trust boundary, Building.IsEnabled public setter. Phase 2 (Red): Exploit assessment for each. Phase 3: Write security-report.json, verdict.json, summary, learnings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/Build/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Test/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue+red team security audit of all new and changed files. Traced exception paths, verified depth guards, confirmed SQL injection mitigations, assessed trust boundaries against PLang threat model."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-inmemory-datasource/security-report.json",
+            ".bot/runtime2-inmemory-datasource/security/v1/verdict.json",
+            ".bot/runtime2-inmemory-datasource/security/v1/plan.md",
+            ".bot/runtime2-inmemory-datasource/security/v1/result.md",
+            ".bot/runtime2-inmemory-datasource/security/v1/summary.md",
+            ".bot/runtime2-inmemory-datasource/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote all security deliverables: structured report, verdict (PASS), detailed results, summaries."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — 1 medium carry-forward (DeserializeValue InvalidOperationException, currently unreachable), 3 low findings. No new attack surface from in-memory datasource."
+      }
+    },
+    {
+      "id": "f6b8c0d2-5a7e-9f1b-3c4d-e6f8a0b2c4d6",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-01T22:00:00Z",
+      "timestamp_end": "2026-03-01T22:45:00Z",
+      "intent": "Code integrity review of in-memory SQLite datasource implementation",
+      "before": {
+        "assumptions": "All other bots passed (architect, coder, tester, codeanalyzer, security). Code is functional with 1472 tests green. Need to verify OBP compliance, contract integrity, and merge readiness.",
+        "risk": "Medium — branch diverged from runtime2 before several merges. Need to separate coder's actual changes from merge gap noise to assess code quality accurately."
+      },
+      "plan": "1. Isolate coder's commit (62e50ae8) from merge gap. 2. Review each changed file for OBP, contract integrity, exception handling. 3. Check test assertion quality. 4. Run datasource tests. 5. Assess merge readiness. 6. Write auditor-report.json with findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/Build/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs",
+            "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full code review. Isolated coder's commit from merge gap noise. Verified sentinel pattern, OBP compliance, test assertion quality. Discovered merge gap: SettingsData sharing fix (af3b34a9) applied to runtime2 after branch diverged. Ran 29 datasource tests — all pass."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-inmemory-datasource/auditor-report.json",
+            ".bot/runtime2-inmemory-datasource/auditor/v1/verdict.json",
+            ".bot/runtime2-inmemory-datasource/auditor/v1/plan.md",
+            ".bot/runtime2-inmemory-datasource/auditor/v1/summary.md",
+            ".bot/runtime2-inmemory-datasource/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote all auditor deliverables: report with 3 findings (1 major merge-gap, 1 minor carry-forward, 1 nit), PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — coder's code is sound. One major advisory: merge to runtime2 requires preserving SettingsData sharing fix from af3b34a9."
+      }
+    }
+  ]
+}

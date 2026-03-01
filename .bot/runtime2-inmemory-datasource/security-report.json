@@ -1,0 +1,148 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-inmemory-datasource",
+  "timestamp": "2026-03-01T20:30:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "in-memory-sqlite-isolation",
+      "exposure": "SQLite shared-cache in-memory DBs are process-wide. InMemory('system') from two Engine instances connects to the SAME database.",
+      "trust_boundary": "Process boundary — only matters if multiple Engine instances exist in the same process",
+      "mitigations": [
+        "InMemory() is only used when Testing.IsEnabled or Building.IsEnabled",
+        "Test runner creates fresh Engine per test and disposes between tests",
+        "Builder runs sequentially"
+      ],
+      "gaps": [
+        "No Engine.Id prefix in InMemory name — concurrent engines would silently share state",
+        "Informational only: no current code path creates parallel engines with in-memory mode"
+      ]
+    },
+    {
+      "area": "sentinel-lifecycle",
+      "exposure": "Sentinel SqliteConnection keeps in-memory DB alive. CRUD methods do not check _disposed flag.",
+      "trust_boundary": "Internal API — caller must manage lifecycle",
+      "mitigations": [
+        "Dispose() sets _disposed flag and closes sentinel",
+        "Actor.DisposeAsync checks _dataSource.IsValueCreated before disposing",
+        "Engine.DisposeAsync disposes all actors"
+      ],
+      "gaps": [
+        "CRUD methods (Get, Set, Remove, Exists, GetAll, Tables) do not check _disposed — use-after-dispose causes SqliteException instead of clear ObjectDisposedException"
+      ]
+    },
+    {
+      "area": "deserialize-value-exception-handling",
+      "exposure": "DeserializeValue calls Data.UnwrapJsonElement which throws InvalidOperationException on depth > 128. Only JsonException is caught in DeserializeValue. Get/GetAll only catch SqliteException | IOException.",
+      "trust_boundary": "Data stored in DataSource — could originate from external APIs via settings set",
+      "mitigations": [
+        "JsonDocument.Parse default MaxDepth=64 catches JSON deeper than 64 levels as JsonException (caught)",
+        "UnwrapJsonElement's 128-depth guard is unreachable from this code path because JsonDocument.Parse fails first at 64"
+      ],
+      "gaps": [
+        "Violates 'behavior methods never throw' contract — if JsonDocument MaxDepth were ever raised, InvalidOperationException would escape",
+        "Defensive programming gap: the catch should anticipate all exceptions from the called method, not rely on an upstream limit"
+      ]
+    },
+    {
+      "area": "sql-injection",
+      "exposure": "Table names from IDataSource.ResolveTableName (namespace-derived) and user-provided keys",
+      "trust_boundary": "Table names from CLR type system (trusted), keys from PLang variables",
+      "mitigations": [
+        "SanitizeTableName strips all non-alphanumeric/underscore characters",
+        "Table names bracket-quoted in SQL",
+        "Keys parameterized via @key",
+        "Values JSON-serialized via System.Text.Json"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "settings-data-navigation",
+      "exposure": "SettingsData.GetChild intercepts dot-notation to load from DataSource on property access",
+      "trust_boundary": "PLang variable resolution — %Settings.ApiKey% triggers DB read",
+      "mitigations": [
+        "Depth parameter propagated to child.GetChild(remaining, depth + 1)",
+        "Data.GetChild has MaxNavigationDepth=100 guard",
+        "DataSource.Get returns Data (never throws) for normal operations"
+      ],
+      "gaps": [
+        "sync-over-async (.GetAwaiter().GetResult()) safe for SQLite but constrains future IDataSource implementations to synchronous backing stores"
+      ]
+    },
+    {
+      "area": "building-isenabled-setter",
+      "exposure": "Building.IsEnabled is public { get; set; } — settable from .pr code via %!engine.Building.IsEnabled%",
+      "trust_boundary": "User-sovereign: user owns .pr files and can set any engine property",
+      "mitigations": [
+        "Same pattern as Testing.IsEnabled (established convention)",
+        "Actor.CreateDataSource is lazy — setting IsEnabled after DataSource is created has no effect",
+        "PLang threat model: user actions are not attacks"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "deserialization",
+      "vector": "DeserializeValue catches JsonException but not InvalidOperationException from Data.UnwrapJsonElement depth guard. Get and GetAll only catch SqliteException | IOException.",
+      "preconditions": "Currently unreachable: JsonDocument.Parse default MaxDepth=64 rejects deep JSON before UnwrapJsonElement's 128 guard fires. Would become reachable if JsonDocumentOptions.MaxDepth were increased or if UnwrapJsonElement were called from a different path.",
+      "impact": "Unhandled InvalidOperationException propagates to caller, violating 'behavior methods never throw' contract. In SettingsData.GetChild path, exception would crash variable resolution.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"
+      ],
+      "exploit_sketch": "1. Store JSON with 65+ nesting levels via settings set (requires custom JsonDocumentOptions or future API change to parse). 2. Read via settings get or %Settings.key% → DeserializeValue → UnwrapJsonElement → InvalidOperationException escapes catch blocks.",
+      "proposed_fix": "Add catch (InvalidOperationException ex) in DeserializeValue, return json as raw string (same pattern as the JsonException catch). Defensive: protects against future changes to parsing options.",
+      "status": "open",
+      "notes": "Carry-forward from runtime2-system-datasource. Severity medium: currently unreachable but violates contract and is a latent bug."
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "CRUD methods (Get, Set, Remove, Exists, GetAll, Tables) do not check _disposed flag before operating. Use-after-dispose produces SqliteException (in-memory: DB gone after sentinel close) instead of clear ObjectDisposedException.",
+      "preconditions": "Caller must use DataSource after Actor/Engine disposal. No current code path does this.",
+      "impact": "Confusing error message (SqliteException vs ObjectDisposedException). No crash — exception is caught by SqliteException handlers in each method. No data corruption.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs"
+      ],
+      "exploit_sketch": "N/A — internal API misuse, not an attack vector.",
+      "proposed_fix": "Add ThrowIfDisposed() check at the top of each CRUD method: if (_disposed) throw new ObjectDisposedException(nameof(SqliteDataSource));",
+      "status": "open",
+      "notes": "Carry-forward from runtime2-system-datasource. Correctness issue, not security."
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "In-memory SQLite DBs with shared cache are process-wide. Two Engine instances calling InMemory('system') share state silently.",
+      "preconditions": "Two Engine instances in same process, both with Testing.IsEnabled or Building.IsEnabled, both creating actors with same name. No current code path does this.",
+      "impact": "Unexpected data sharing between engine instances. Could cause test pollution in hypothetical parallel test execution.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+        "PLang/Runtime2/Engine/Context/Actor.cs"
+      ],
+      "exploit_sketch": "N/A — requires parallel engine instantiation, which doesn't exist currently.",
+      "proposed_fix": "Use Engine.Id in the database name: InMemory($\"{Engine.Id}_{Name.ToLowerInvariant()}\"). Only needed if parallel engine execution is ever added.",
+      "status": "accepted-risk",
+      "notes": "By design for current usage (sequential test/build). Document the constraint."
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "injection",
+      "vector": "sync-over-async in SettingsData.GetChild via .GetAwaiter().GetResult(). Safe for SQLite (synchronous under the hood) but would deadlock with an async IDataSource implementation.",
+      "preconditions": "Future IDataSource implementation with truly async operations (e.g., network-backed store) used on a SynchronizationContext-bound thread.",
+      "impact": "Deadlock on UI thread or ASP.NET classic. No current impact.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/DataSource/SettingsData.cs"
+      ],
+      "exploit_sketch": "N/A — design constraint, not exploitable.",
+      "proposed_fix": "Document the constraint on IDataSource: implementations must be synchronous or use ConfigureAwait(false) internally. Or make GetChild async when the infrastructure supports it.",
+      "status": "accepted-risk",
+      "notes": "Documented in code comment. Correct for SQLite."
+    }
+  ],
+  "summary": "PASS. No critical or high severity findings. One medium carry-forward (DeserializeValue InvalidOperationException gap) is currently unreachable due to JsonDocument.Parse MaxDepth=64 catching deep JSON first, but violates the 'behavior methods never throw' contract. Three low findings are correctness/design constraints, not exploitable attack vectors. The in-memory datasource feature is well-integrated with existing security infrastructure: depth guards, parameterized queries, sanitized table names, and the user-sovereign threat model all hold."
+}
