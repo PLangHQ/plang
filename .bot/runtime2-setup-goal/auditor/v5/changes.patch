@@ -1,0 +1,1159 @@
+diff --git a/PLang.Tests/Runtime2/Core/GoalsTests.cs b/PLang.Tests/Runtime2/Core/GoalsTests.cs
+index bc4ebcd7..65699a10 100644
+--- a/PLang.Tests/Runtime2/Core/GoalsTests.cs
++++ b/PLang.Tests/Runtime2/Core/GoalsTests.cs
+@@ -1,5 +1,6 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.SafeFileSystem;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -258,7 +259,7 @@ public class GoalsTests
+         goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
+         goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+ 
+-        var setupGoals = goals.Setup.ToList();
++        var setupGoals = goals.Setup.Goals.ToList();
+ 
+         await Assert.That(setupGoals.Count).IsEqualTo(1);
+         await Assert.That(setupGoals[0].Name).IsEqualTo("SetupGoal");
+@@ -301,4 +302,113 @@ public class GoalsTests
+ 
+         await Assert.That(goals.Count).IsEqualTo(3);
+     }
++
++    [Test]
++    public async Task Get_ExcludesSetupGoals()
++    {
++        var goals = new EngineGoals();
++        goals.Add(new Goal { Name = "SetupDb", IsSetup = true });
++        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
++
++        await Assert.That(goals.Get("SetupDb")).IsNull();
++        await Assert.That(goals.Get("NormalGoal")).IsNotNull();
++    }
++
++    [Test]
++    public async Task GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk()
++    {
++        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(tempDir);
++        try
++        {
++            var fs = new PLangFileSystem(tempDir, "");
++            await using var engine = new PLang.Runtime2.Engine.@this(fs);
++
++            // Create a .pr.json file on disk with IsSetup = true
++            // GetAsync resolves: root / nameDir / .build / filename.pr
++            var buildDir = System.IO.Path.Combine(tempDir, ".build");
++            System.IO.Directory.CreateDirectory(buildDir);
++            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
++            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
++            System.IO.File.WriteAllText(prPath, json);
++
++            // GetAsync should load from disk but return null because IsSetup = true
++            var result = await engine.Goals.GetAsync("SetupDb");
++
++            await Assert.That(result).IsNull();
++        }
++        finally
++        {
++            System.IO.Directory.Delete(tempDir, true);
++        }
++    }
++
++    [Test]
++    public async Task GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk()
++    {
++        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(tempDir);
++        try
++        {
++            var fs = new PLangFileSystem(tempDir, "");
++            await using var engine = new PLang.Runtime2.Engine.@this(fs);
++
++            var buildDir = System.IO.Path.Combine(tempDir, ".build");
++            System.IO.Directory.CreateDirectory(buildDir);
++            var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
++            var json = """{"name":"NormalGoal","isSetup":false,"steps":[]}""";
++            System.IO.File.WriteAllText(prPath, json);
++
++            var result = await engine.Goals.GetAsync("NormalGoal");
++
++            await Assert.That(result).IsNotNull();
++            await Assert.That(result!.Name).IsEqualTo("NormalGoal");
++        }
++        finally
++        {
++            System.IO.Directory.Delete(tempDir, true);
++        }
++    }
++
++    [Test]
++    public async Task GetByPrPathAsync_ReturnsNull_ForSetupGoal()
++    {
++        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(tempDir);
++        try
++        {
++            var fs = new PLangFileSystem(tempDir, "");
++            await using var engine = new PLang.Runtime2.Engine.@this(fs);
++
++            var buildDir = System.IO.Path.Combine(tempDir, ".build");
++            System.IO.Directory.CreateDirectory(buildDir);
++            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
++            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
++            System.IO.File.WriteAllText(prPath, json);
++
++            var result = await engine.Goals.GetByPrPathAsync(prPath);
++
++            await Assert.That(result).IsNull();
++        }
++        finally
++        {
++            System.IO.Directory.Delete(tempDir, true);
++        }
++    }
++
++    [Test]
++    public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
++    {
++        var goals = new EngineGoals();
++        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "test/.build/setupdb.pr" };
++        goals.Add(setupGoal);
++
++        // Even if the goal is cached by path, GetByPrPathAsync should exclude it
++        var result = await goals.GetByPrPathAsync("test/.build/setupdb.pr");
++
++        await Assert.That(result).IsNull();
++    }
+ }
+diff --git a/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs b/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs
+new file mode 100644
+index 00000000..12d09e2d
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs
+@@ -0,0 +1,349 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Goals.Goal;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Tests.Runtime2.Goals.Setup;
++
++public class SetupTests
++{
++    private string _tempDir = null!;
++    private PLang.Runtime2.Engine.@this _engine = null!;
++
++    [Before(Test)]
++    public void SetUp()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        var fs = new PLang.SafeFileSystem.PLangFileSystem(_tempDir, "");
++        _engine = new PLang.Runtime2.Engine.@this(fs);
++    }
++
++    [After(Test)]
++    public void TearDown()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    [Test]
++    public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
++    {
++        _engine.Goals.Add(new Goal { Name = "Zebra", IsSetup = true });
++        _engine.Goals.Add(new Goal { Name = "Setup", IsSetup = true });
++        _engine.Goals.Add(new Goal { Name = "Alpha", IsSetup = true });
++        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
++
++        var setupGoals = _engine.Goals.Setup.Goals.ToList();
++
++        await Assert.That(setupGoals.Count).IsEqualTo(3);
++        await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
++        await Assert.That(setupGoals[1].Name).IsEqualTo("Alpha");
++        await Assert.That(setupGoals[2].Name).IsEqualTo("Zebra");
++    }
++
++    [Test]
++    public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
++    {
++        _engine.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
++        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
++
++        var found = _engine.Goals.Get("SetupGoal");
++        var normal = _engine.Goals.Get("NormalGoal");
++
++        await Assert.That(found).IsNull();
++        await Assert.That(normal).IsNotNull();
++    }
++
++    [Test]
++    public async Task IsExecuted_ReturnsFalse_ForNewStep()
++    {
++        var step = new Step { Hash = "abc123", Text = "do something" };
++        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
++
++        await Assert.That(result).IsFalse();
++    }
++
++    [Test]
++    public async Task Record_ThenIsExecuted_ReturnsTrue()
++    {
++        var step = new Step { Hash = "abc123", Text = "do something", Index = 0 };
++
++        await _engine.Goals.Setup.Record(step, _engine);
++        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
++
++        await Assert.That(result).IsTrue();
++    }
++
++    [Test]
++    public async Task IsExecuted_ReturnsFalse_ForNullHash()
++    {
++        var step = new Step { Hash = null, Text = "no hash" };
++        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
++
++        await Assert.That(result).IsFalse();
++    }
++
++    [Test]
++    public async Task RunAsync_SkipsAlreadyExecutedSteps()
++    {
++        // Create a setup goal with two steps
++        var step1 = new Step { Index = 0, Text = "step one", Hash = "skip_hash1",
++            Actions = CreateNoOpActions() };
++        var step2 = new Step { Index = 1, Text = "step two", Hash = "skip_hash2",
++            Actions = CreateNoOpActions() };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
++        };
++        step1.Goal = goal;
++        step2.Goal = goal;
++
++        _engine.Goals.Add(goal);
++
++        // Pre-record step1 with a distinctive marker value via raw DataSource.
++        // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
++        // If step1 is skipped, the marker survives.
++        await _engine.System.DataSource.Set("setup", "skip_hash1", "MARKER_NOT_RE_EXECUTED");
++
++        // Run setup — step1 should be skipped, step2 should run
++        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
++        await Assert.That(result.Success).IsTrue();
++
++        // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
++        var step1Data = await _engine.System.DataSource.Get("setup", "skip_hash1");
++        await Assert.That(step1Data.Success).IsTrue();
++        await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
++
++        // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
++        var step2Data = await _engine.System.DataSource.Get("setup", "skip_hash2");
++        await Assert.That(step2Data.Success).IsTrue();
++        await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
++    }
++
++    [Test]
++    public async Task RunAsync_RerunsStepWithChangedHash()
++    {
++        var step = new Step { Index = 0, Text = "create table", Hash = "original_hash",
++            Actions = CreateNoOpActions() };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
++        };
++        step.Goal = goal;
++        _engine.Goals.Add(goal);
++
++        // Record with original hash
++        await _engine.Goals.Setup.Record(step, _engine);
++        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
++
++        // Simulate changed step (different hash) — new step object with different hash
++        var changedStep = new Step { Index = 0, Text = "create table v2", Hash = "changed_hash",
++            Actions = CreateNoOpActions() };
++        changedStep.Goal = goal;
++
++        // The changed step should NOT be found as executed
++        await Assert.That(await _engine.Goals.Setup.IsExecuted(changedStep, _engine)).IsFalse();
++    }
++
++    [Test]
++    public async Task RunAsync_SetsAndClearsContextSetup()
++    {
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this()
++        };
++        _engine.Goals.Add(goal);
++
++        var context = _engine.Context;
++
++        await Assert.That(context.Setup).IsNull();
++
++        var result = await _engine.Goals.Setup.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
++    }
++
++    [Test]
++    public async Task Clone_PreservesSetup()
++    {
++        var context = _engine.Context;
++        context.Setup = _engine.Goals.Setup;
++
++        var clone = context.Clone();
++
++        await Assert.That(clone.Setup).IsEqualTo(context.Setup);
++    }
++
++    [Test]
++    public async Task RunAsync_FailedStepNotRecorded()
++    {
++        // A step that fails (unknown module) and does NOT have IgnoreError
++        var step = new Step
++        {
++            Index = 0, Text = "failing step", Hash = "fail_hash",
++            Actions = CreateFailingActions()
++        };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
++        };
++        step.Goal = goal;
++        _engine.Goals.Add(goal);
++
++        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
++
++        // Setup should fail
++        await Assert.That(result.Success).IsFalse();
++        // Step should NOT be recorded — it needs to re-run on next startup
++        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsFalse();
++    }
++
++    [Test]
++    public async Task RunAsync_ToleratedErrorStepIsRecorded()
++    {
++        // A step that fails but has IgnoreError = true
++        var step = new Step
++        {
++            Index = 0, Text = "tolerated failure", Hash = "tolerated_hash",
++            OnError = new ErrorHandler { IgnoreError = true },
++            Actions = CreateFailingActions()
++        };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
++        };
++        step.Goal = goal;
++        _engine.Goals.Add(goal);
++
++        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
++
++        // Setup should succeed (error tolerated)
++        await Assert.That(result.Success).IsTrue();
++        // Step SHOULD be recorded — error was tolerated
++        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
++    }
++
++    [Test]
++    public async Task RunAsync_AbortsSetup_WhenRecordFails()
++    {
++        var step = new Step { Index = 0, Text = "good step", Hash = "record_fail_hash",
++            Actions = CreateNoOpActions() };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
++        };
++        step.Goal = goal;
++        _engine.Goals.Add(goal);
++
++        // Force DataSource creation so the DB file exists
++        _ = _engine.System.DataSource;
++
++        // Corrupt the database file — Record() will fail trying to write
++        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
++        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
++
++        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
++
++        // Setup should abort because Record couldn't write to the corrupted DB
++        await Assert.That(result.Success).IsFalse();
++    }
++
++    [Test]
++    public async Task RunAsync_CancellationAborts()
++    {
++        var step1 = new Step { Index = 0, Text = "step one", Hash = "cancel_hash1",
++            Actions = CreateNoOpActions() };
++        var step2 = new Step { Index = 1, Text = "step two", Hash = "cancel_hash2",
++            Actions = CreateNoOpActions() };
++        var goal = new Goal
++        {
++            Name = "Setup", IsSetup = true,
++            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
++        };
++        step1.Goal = goal;
++        step2.Goal = goal;
++        _engine.Goals.Add(goal);
++
++        // Cancel after the first step completes
++        using var cts = new CancellationTokenSource();
++        cts.Cancel();
++
++        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context, cts.Token);
++
++        // Setup should abort with cancellation error
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
++    }
++
++    // --- IsTolerableError tests ---
++
++    [Test]
++    public async Task IsTolerableError_RecognizesTableAlreadyExists()
++    {
++        var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"));
++        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTolerableError_RecognizesIndexAlreadyExists()
++    {
++        var error = Data.FromError(new Error("index idx_users_email already exists"));
++        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTolerableError_RecognizesDuplicateColumnName()
++    {
++        var error = Data.FromError(new Error("duplicate column name: email"));
++        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTolerableError_RejectsUnrelatedError()
++    {
++        var error = Data.FromError(new Error("connection refused"));
++        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTolerableError_ReturnsFalseForSuccess()
++    {
++        await Assert.That(_engine.Goals.Setup.IsTolerableError(Data.Ok())).IsFalse();
++    }
++
++    /// <summary>
++    /// Creates a minimal no-op Actions collection that won't fail during step execution.
++    /// Steps with empty actions succeed immediately.
++    /// </summary>
++    private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
++    {
++        return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this();
++    }
++
++    /// <summary>
++    /// Creates an Actions collection with an unknown module that will fail at runtime.
++    /// </summary>
++    private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
++    {
++        return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
++        {
++            new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++            {
++                Module = "nonexistent",
++                ActionName = "doesnotexist",
++                Parameters = new List<Data>()
++            }
++        };
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+index e98841da..c1b88cc7 100644
+--- a/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
++++ b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+@@ -37,8 +37,8 @@ public class SettingsDataTests
+         // Store a setting via the System actor's DataSource
+         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-test-123");
+ 
+-        // SettingsData is auto-registered on System actor MemoryStack
+-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        // SettingsData is registered on User actor MemoryStack (same as PLang code uses)
++        var settingsData = _engine.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("ApiKey");
+@@ -50,7 +50,7 @@ public class SettingsDataTests
+     [Test]
+     public async Task SettingsData_GetChild_MissingKey_ReturnsAskError()
+     {
+-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("NonExistentKey");
+@@ -69,8 +69,8 @@ public class SettingsDataTests
+         // Store via DataSource
+         await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
+ 
+-        // Resolve via MemoryStack dot notation (simulates %Settings.TestKey%)
+-        var result = _engine.System.Context.MemoryStack.Get("Settings.TestKey");
++        // Resolve via User MemoryStack dot notation (simulates %Settings.TestKey% in PLang code)
++        var result = _engine.Context.MemoryStack.Get("Settings.TestKey");
+         await Assert.That(result).IsNotNull();
+         await Assert.That(result!.Success).IsTrue();
+         await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
+@@ -79,7 +79,7 @@ public class SettingsDataTests
+     [Test]
+     public async Task SettingsData_EmptyPath_ReturnsSelf()
+     {
+-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("");
+@@ -92,11 +92,11 @@ public class SettingsDataTests
+     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
+     {
+         await _engine.System.DataSource.Set("settings", "ApiKey", "old-value");
+-        var first = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
++        var first = _engine.Context.MemoryStack.Get("Settings.ApiKey");
+         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
+ 
+         await _engine.System.DataSource.Set("settings", "ApiKey", "new-value");
+-        var second = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
++        var second = _engine.Context.MemoryStack.Get("Settings.ApiKey");
+         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
+     }
+ 
+@@ -115,8 +115,8 @@ public class SettingsDataTests
+         var result = await handler.Run();
+         await Assert.That(result.Success).IsTrue();
+ 
+-        // Verify via SettingsData
+-        var setting = _engine.System.Context.MemoryStack.Get("Settings.HandlerKey");
++        // Verify via User MemoryStack (what PLang code uses)
++        var setting = _engine.Context.MemoryStack.Get("Settings.HandlerKey");
+         await Assert.That(setting).IsNotNull();
+         await Assert.That(setting!.Value?.ToString()).IsEqualTo("HandlerValue");
+     }
+@@ -190,8 +190,8 @@ public class SettingsDataTests
+         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
+         await _engine.System.DataSource.Set("settings", "Config", config);
+ 
+-        // Resolve %Settings.Config.SubKey%
+-        var result = _engine.System.Context.MemoryStack.Get("Settings.Config.SubKey");
++        // Resolve %Settings.Config.SubKey% via User MemoryStack
++        var result = _engine.Context.MemoryStack.Get("Settings.Config.SubKey");
+         await Assert.That(result).IsNotNull();
+         await Assert.That(result!.Success).IsTrue();
+         await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
+@@ -205,8 +205,8 @@ public class SettingsDataTests
+         // Store a setting
+         await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
+ 
+-        // Clone the MemoryStack
+-        var cloned = _engine.System.Context.MemoryStack.Clone();
++        // Clone the User MemoryStack
++        var cloned = _engine.Context.MemoryStack.Clone();
+ 
+         // Settings should still work in the cloned stack
+         var result = cloned.Get("Settings.CloneKey");
+@@ -218,8 +218,8 @@ public class SettingsDataTests
+     [Test]
+     public async Task MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError()
+     {
+-        // Clone the MemoryStack
+-        var cloned = _engine.System.Context.MemoryStack.Clone();
++        // Clone the User MemoryStack
++        var cloned = _engine.Context.MemoryStack.Clone();
+ 
+         // Missing key in cloned stack should still return AskError
+         var result = cloned.Get("Settings.MissingInClone");
+@@ -238,7 +238,7 @@ public class SettingsDataTests
+         // 2. Regex matches the full variable: Settings.MissingKey
+         // 3. Calls __memoryStack.Get("Settings.MissingKey")
+         // 4. Checks if result is non-null and !Success → sets __resolutionError
+-        var memoryStack = _engine.System.Context.MemoryStack;
++        var memoryStack = _engine.Context.MemoryStack;
+ 
+         // This is the exact call the generated code makes
+         var resolved = memoryStack.Get("Settings.MissingKey");
+@@ -258,7 +258,7 @@ public class SettingsDataTests
+     public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
+     {
+         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
+-        var memoryStack = _engine.System.Context.MemoryStack;
++        var memoryStack = _engine.Context.MemoryStack;
+ 
+         // Same call path as generated code
+         var resolved = memoryStack.Get("Settings.ApiKey");
+@@ -283,11 +283,49 @@ public class SettingsDataTests
+ 
+         // SettingsData.GetChild should return the DataSource error (line 54-55),
+         // not throw and not return AskError
+-        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.Context.MemoryStack.Get("Settings");
+         var child = settingsData!.GetChild("AnyKey");
+ 
+         await Assert.That(child).IsNotNull();
+         await Assert.That(child!.Success).IsFalse();
+         await Assert.That(child.Error is DataSourceError).IsTrue();
+     }
++
++    // --- Shared SettingsData across actors ---
++
++    [Test]
++    public async Task SettingsData_SameObjectAcrossAllActors()
++    {
++        // All actors should share the exact same SettingsData instance
++        var userSettings = _engine.User.Context.MemoryStack.Get("Settings");
++        var systemSettings = _engine.System.Context.MemoryStack.Get("Settings");
++        var serviceSettings = _engine.Service.Context.MemoryStack.Get("Settings");
++
++        await Assert.That(userSettings).IsNotNull();
++        await Assert.That(systemSettings).IsNotNull();
++        await Assert.That(serviceSettings).IsNotNull();
++
++        // Reference equality — same object
++        await Assert.That(ReferenceEquals(userSettings, systemSettings)).IsTrue();
++        await Assert.That(ReferenceEquals(userSettings, serviceSettings)).IsTrue();
++    }
++
++    [Test]
++    public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
++    {
++        // Store via System DataSource (the backing store)
++        await _engine.System.DataSource.Set("settings", "SharedKey", "shared-value");
++
++        // Read from User context (what PLang code actually uses)
++        var result = _engine.Context.MemoryStack.Get("Settings.SharedKey");
++        await Assert.That(result).IsNotNull();
++        await Assert.That(result!.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
++
++        // Read from Service context (should also work)
++        var serviceResult = _engine.Service.Context.MemoryStack.Get("Settings.SharedKey");
++        await Assert.That(serviceResult).IsNotNull();
++        await Assert.That(serviceResult!.Success).IsTrue();
++        await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");
++    }
+ }
+diff --git a/PLang/Executor.cs b/PLang/Executor.cs
+index 48ee07fe..24bfd18e 100644
+--- a/PLang/Executor.cs
++++ b/PLang/Executor.cs
+@@ -363,6 +363,18 @@ namespace PLang
+ 			foreach (var param in parameters)
+ 				engine.MemoryStack.Set(param.Key, param.Value);
+ 
++			// Load all built goals so setup goals are discoverable.
++			// Goals are .pr files in .build/ subdirectories throughout the project tree.
++			await engine.Goals.LoadFromDirectoryAsync(engine, engine.AbsolutePath, "*.pr", cancellationToken: cancellationToken);
++
++			// Run setup goals before the main goal
++			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
++			if (!setupResult.Success) return setupResult;
++
++			// When goalName is "setup", only run setup — no main goal after
++			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
++				return setupResult;
++
+ 			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);
+ 		}
+ 
+diff --git a/PLang/Runtime2/Engine/Context/Actor.cs b/PLang/Runtime2/Engine/Context/Actor.cs
+index b056d242..a7b6af32 100644
+--- a/PLang/Runtime2/Engine/Context/Actor.cs
++++ b/PLang/Runtime2/Engine/Context/Actor.cs
+@@ -61,11 +61,9 @@ public sealed class Actor : IAsyncDisposable
+         Context.Actor = this;
+         Channels = new EngineChannels(engine);
+ 
+-        // Register Settings on the System actor's MemoryStack
+-        if (string.Equals(name, "System", StringComparison.OrdinalIgnoreCase))
+-        {
+-            Context.MemoryStack.Put(new SettingsData(engine));
+-        }
++        // Register shared SettingsData — same object for all actors.
++        // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
++        Context.MemoryStack.Put(engine.SettingsVariable);
+     }
+ 
+     private IDataSource CreateDataSource()
+diff --git a/PLang/Runtime2/Engine/Context/PLangContext.cs b/PLang/Runtime2/Engine/Context/PLangContext.cs
+index 2af1c00a..54e24117 100644
+--- a/PLang/Runtime2/Engine/Context/PLangContext.cs
++++ b/PLang/Runtime2/Engine/Context/PLangContext.cs
+@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+ using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
++using Setup = PLang.Runtime2.Engine.Goals.Setup.@this;
+ namespace PLang.Runtime2.Engine.Context;
+ 
+ /// <summary>
+@@ -87,6 +88,13 @@ public sealed class PLangContext : IDisposable
+     /// </summary>
+     public Data? EventOverride { get; set; }
+ 
++    /// <summary>
++    /// Set during setup execution, null otherwise.
++    /// Steps check this to implement run-once semantics.
++    /// Propagates through goal.call since Goal.RunAsync uses the same context object.
++    /// </summary>
++    public Setup? Setup { get; set; }
++
+     /// <summary>
+     /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
+     /// to this context. Keys are "module.property" format (e.g., "archive.max").
+@@ -194,6 +202,7 @@ public sealed class PLangContext : IDisposable
+         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
+         {
+             IsAsync = IsAsync,
++            Setup = Setup,
+             SettingsScope = SettingsScope?.Clone()
+         };
+ 
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+index 4a3bb61b..f5744328 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+@@ -54,20 +54,8 @@ public sealed partial class @this
+ 
+         try
+         {
+-            for (var i = 0; i < Steps.Count; i++)
+-            {
+-                var step = Steps[i];
+-
+-                var stepResult = await step.RunAsync(engine, context, cancellationToken);
+-                if (!stepResult)
+-                {
+-                    if (!(step.OnError?.IgnoreError ?? false))
+-                        return stepResult;
+-                }
+-
+-                if (cancellationToken.IsCancellationRequested)
+-                    return Data.FromError(GoalError.Cancelled(context));
+-            }
++            var stepsResult = await Steps.RunAsync(engine, context, cancellationToken);
++            if (!stepsResult) return stepsResult;
+ 
+             try
+             {
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+index 9eaa4209..8f757e0b 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+@@ -1,4 +1,5 @@
+ using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+ namespace PLang.Runtime2.Engine.Goals.Goal.Steps;
+@@ -19,4 +20,49 @@ public sealed class @this : List<Step.@this>
+         }
+         return Data.Ok();
+     }
++
++    /// <summary>
++    /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
++    /// When context.Setup is set, implements run-once semantics:
++    /// skips already-executed steps and records new executions.
++    /// </summary>
++    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
++    {
++        for (var i = 0; i < Count; i++)
++        {
++            var step = this[i];
++
++            // Setup run-once check: skip steps that have already been executed
++            if (context.Setup != null && await context.Setup.IsExecuted(step, engine))
++                continue;
++
++            var stepResult = await step.RunAsync(engine, context, cancellationToken);
++
++            // Determine if the step error is tolerated:
++            // - Success (no error)
++            // - Explicit IgnoreError on the step
++            // - Setup-tolerable errors (e.g. "already exists", "duplicate column name")
++            var errorTolerated = stepResult.Success
++                || (step.OnError?.IgnoreError ?? false)
++                || (context.Setup != null && context.Setup.IsTolerableError(stepResult));
++
++            // Record in setup table only on success or tolerated errors.
++            // Failed steps that abort setup must NOT be recorded — they need to re-run on next startup.
++            // Recording failure aborts setup — if we can't track execution, re-running is safer than skipping.
++            if (context.Setup != null && errorTolerated)
++            {
++                var recordResult = await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
++                if (!recordResult.Success)
++                    return recordResult;
++            }
++
++            if (!stepResult && !errorTolerated)
++                return stepResult;
++
++            if (cancellationToken.IsCancellationRequested)
++                return Data.FromError(GoalError.Cancelled(context));
++        }
++
++        return Data.Ok();
++    }
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Setup/this.cs b/PLang/Runtime2/Engine/Goals/Setup/this.cs
+new file mode 100644
+index 00000000..1fa11b8d
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Goals/Setup/this.cs
+@@ -0,0 +1,101 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.Engine.Goals.Setup;
++
++/// <summary>
++/// Run-once setup execution system.
++/// Setup goals execute once-per-step at app startup. Steps are tracked
++/// persistently in the "setup" table of engine.System.DataSource (system.sqlite),
++/// keyed by step.Hash. New steps run on next startup. Changed steps (different hash) re-run.
++/// </summary>
++public sealed class @this
++{
++    private readonly EngineGoals _goals;
++    private const string Table = "setup";
++
++    public @this(EngineGoals goals)
++    {
++        _goals = goals;
++    }
++
++    /// <summary>
++    /// Setup goals, ordered: goal named "Setup" first, then alphabetical.
++    /// </summary>
++    public IEnumerable<Goal.@this> Goals => _goals.AllIncludingSetup
++        .Where(g => g.IsSetup)
++        .OrderBy(g => g.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
++        .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
++
++    /// <summary>
++    /// Runs all setup goals. Sets context.Setup for the duration so Steps.RunAsync
++    /// can check run-once semantics. Any goal called from within setup execution
++    /// inherits the setup context (context.Setup propagates through goal.call).
++    /// </summary>
++    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct = default)
++    {
++        context.Setup = this;
++        try
++        {
++            foreach (var goal in Goals)
++            {
++                var loadResult = await goal.Load(context);
++                if (!loadResult.Success) return loadResult;
++
++                var result = await goal.RunAsync(engine, context, ct);
++                if (!result.Success) return result;
++            }
++            return Data.Ok();
++        }
++        finally
++        {
++            context.Setup = null;
++        }
++    }
++
++    /// <summary>
++    /// Checks if a step has already been executed (by hash lookup in system DataSource).
++    /// </summary>
++    public async Task<bool> IsExecuted(Step step, Engine.@this engine)
++    {
++        if (string.IsNullOrEmpty(step.Hash)) return false;
++
++        var result = await engine.System.DataSource.Exists(Table, step.Hash);
++        return result.Success && result.Value is true;
++    }
++
++    /// <summary>
++    /// Checks if a step error is automatically tolerable during setup.
++    /// Matches runtime1 behavior: "already exists" (table/index) and "duplicate column name"
++    /// are expected in idempotent setup re-runs and should not abort.
++    /// </summary>
++    public bool IsTolerableError(Data result)
++    {
++        if (result.Success) return false;
++        var message = result.Error?.Message;
++        if (string.IsNullOrEmpty(message)) return false;
++        return message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
++            || message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase);
++    }
++
++    /// <summary>
++    /// Records a step execution in the system DataSource.
++    /// Returns Data so the caller can detect recording failures.
++    /// </summary>
++    public async Task<Data> Record(Step step, Engine.@this engine, IError? error = null)
++    {
++        if (string.IsNullOrEmpty(step.Hash)) return Data.Ok();
++
++        var metadata = new Dictionary<string, object?>
++        {
++            ["goalPath"] = step.Goal?.Path,
++            ["stepIndex"] = step.Index,
++            ["stepText"] = step.Text,
++            ["executedAt"] = DateTime.UtcNow.ToString("O"),
++            ["error"] = error?.Message
++        };
++
++        return await engine.System.DataSource.Set(Table, step.Hash, metadata);
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Goals/this.cs b/PLang/Runtime2/Engine/Goals/this.cs
+index 74051d5f..d2cec6a6 100644
+--- a/PLang/Runtime2/Engine/Goals/this.cs
++++ b/PLang/Runtime2/Engine/Goals/this.cs
+@@ -16,6 +16,17 @@ public sealed class @this
+     private readonly ConcurrentDictionary<string, Goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
+     internal Engine.@this Engine { get; set; } = null!;
+ 
++    /// <summary>
++    /// Run-once setup execution system.
++    /// Replaces the old IEnumerable&lt;Goal&gt; filter with a proper object.
++    /// </summary>
++    public Setup.@this Setup { get; }
++
++    public @this()
++    {
++        Setup = new Setup.@this(this);
++    }
++
+     /// <summary>
+     /// Adds a goal to the collection.
+     /// </summary>
+@@ -29,6 +40,7 @@ public sealed class @this
+ 
+     /// <summary>
+     /// Gets a goal by name from cache only.
++    /// Setup goals are excluded — they are only reachable through Setup.RunAsync().
+     /// </summary>
+     public Goal.@this? Get(string name)
+     {
+@@ -40,11 +52,11 @@ public sealed class @this
+             name = name[..^5];
+ 
+         // Try exact match first
+-        if (_goals.TryGetValue(name, out var goal))
++        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
+             return goal;
+ 
+         // Try by path
+-        if (_byPath.TryGetValue(name, out goal))
++        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
+             return goal;
+ 
+         // Try with different extensions/variations
+@@ -59,9 +71,9 @@ public sealed class @this
+ 
+         foreach (var variation in variations)
+         {
+-            if (_goals.TryGetValue(variation, out goal))
++            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
+                 return goal;
+-            if (_byPath.TryGetValue(variation, out goal))
++            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
+                 return goal;
+         }
+ 
+@@ -105,6 +117,7 @@ public sealed class @this
+                 if (relResult.Success)
+                 {
+                     var loaded = relResult.Value as Goal.@this;
++                    if (loaded is { IsSetup: true }) return null;
+                     if (loaded != null && !string.IsNullOrEmpty(name))
+                         _byPath[name] = loaded;
+                     return loaded;
+@@ -122,6 +135,7 @@ public sealed class @this
+             return null;
+ 
+         var result = loadResult.Value as Goal.@this;
++        if (result is { IsSetup: true }) return null;
+         if (result != null && !string.IsNullOrEmpty(name))
+             _byPath[name] = result;
+         return result;
+@@ -161,29 +175,29 @@ public sealed class @this
+     public IEnumerable<string> Names => _goals.Keys;
+ 
+     /// <summary>
+-    /// Gets all goals as a list.
++    /// All goals including setup and event goals. Used internally by Setup.Goals.
+     /// </summary>
+-    public IReadOnlyList<Goal.@this> Value => _goals.Values.ToList();
++    internal IEnumerable<Goal.@this> AllIncludingSetup => _goals.Values;
+ 
+     /// <summary>
+-    /// Gets all goals.
++    /// Gets all non-setup goals as a list.
+     /// </summary>
+-    public IEnumerable<Goal.@this> All => _goals.Values;
++    public IReadOnlyList<Goal.@this> Value => _goals.Values.Where(g => !g.IsSetup).ToList();
+ 
+     /// <summary>
+-    /// Gets the count of goals.
++    /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
+     /// </summary>
+-    public int Count => _goals.Count;
++    public IEnumerable<Goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
+ 
+     /// <summary>
+-    /// Gets public goals only.
++    /// Gets the count of non-setup goals. Consistent with Get()/All.
+     /// </summary>
+-    public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
++    public int Count => _goals.Values.Count(g => !g.IsSetup);
+ 
+     /// <summary>
+-    /// Gets setup goals only.
++    /// Gets public goals only.
+     /// </summary>
+-    public IEnumerable<Goal.@this> Setup => _goals.Values.Where(g => g.IsSetup);
++    public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
+ 
+     /// <summary>
+     /// Gets event goals only.
+@@ -203,9 +217,9 @@ public sealed class @this
+         if (string.IsNullOrEmpty(prPath))
+             return null;
+ 
+-        // Check cache first
++        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
+         if (_byPath.TryGetValue(prPath, out var cached))
+-            return cached;
++            return cached.IsSetup ? null : cached;
+ 
+         // Resolve relative path against root directory
+         var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
+@@ -220,6 +234,7 @@ public sealed class @this
+             return null;
+ 
+         var loaded = loadResult.Value as Goal.@this;
++        if (loaded is { IsSetup: true }) return null;
+         if (loaded != null)
+             _byPath[prPath] = loaded;
+         return loaded;
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 84fe811a..e1694bbe 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -1,4 +1,5 @@
+ using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.DataSource;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.actions;
+@@ -112,6 +113,13 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public Settings.@this Settings { get; }
+ 
++    /// <summary>
++    /// Shared SettingsData instance registered on every actor's MemoryStack.
++    /// Provides %Settings.X% variable resolution from system DataSource.
++    /// Single instance — all actors share the same object.
++    /// </summary>
++    internal SettingsData SettingsVariable { get; }
++
+     /// <summary>
+     /// Debug mode controller. Registers event handlers for step/goal debug output.
+     /// </summary>
+@@ -195,6 +203,7 @@ public sealed class @this : IAsyncDisposable
+         Types = new Types.@this();
+         Property = new Property(this);
+         Settings = new Settings.@this();
++        SettingsVariable = new SettingsData(this);
+         _libraries = libraries ?? new EngineLibraries();
+         _goals = new EngineGoals { Engine = this };
+         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
+diff --git a/Tests/Runtime2/.build/app.pr b/Tests/Runtime2/.build/app.pr
+index 18a93ad5..48bc6755 100644
+--- a/Tests/Runtime2/.build/app.pr
++++ b/Tests/Runtime2/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+   "id": "de4723f5-3fd4-4e50-abc4-3de53188df14",
+   "created": "2026-02-10T15:24:45.492905Z",
+-  "updated": "2026-02-24T14:10:57.1723573Z",
++  "updated": "2026-02-24T14:49:35.7875367Z",
+   "name": "Runtime2",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/.build/app.pr b/Tests/Runtime2/Condition/.build/app.pr
+new file mode 100644
+index 00000000..57fc2f53
+--- /dev/null
++++ b/Tests/Runtime2/Condition/.build/app.pr
+@@ -0,0 +1,7 @@
++{
++  "id": "dacfadb5-6ae2-4550-a4d5-ceaac5915126",
++  "created": "2026-02-24T14:48:59.6055167Z",
++  "updated": "2026-02-24T14:49:03.3279714Z",
++  "name": "Condition",
++  "version": "0.2"
++}
+\ No newline at end of file
+diff --git a/learnings/runtime2-setup-goal/auditor/v4/learnings.md b/learnings/runtime2-setup-goal/auditor/v4/learnings.md
+new file mode 100644
+index 00000000..0e4bf3d3
+--- /dev/null
++++ b/learnings/runtime2-setup-goal/auditor/v4/learnings.md
+@@ -0,0 +1,31 @@
++# Learnings — Auditor v4 (runtime2-setup-goal)
++
++## 1. Cache vs Disk asymmetry in filtered collections
++
++When a collection has two access paths (cache lookup and disk load), filters applied to the cache path must also be applied to the disk path. Found this in `EngineGoals`: `Get()` filters `IsSetup` but `GetAsync()` doesn't filter after loading from disk. The contract says "setup goals are only reachable through Setup.RunAsync" but the implementation only enforces this on cache hits.
++
++**Pattern to watch:** Any time a lookup method has a fast path (cache) and a slow path (disk/network), verify both paths apply the same invariants.
++
++## 2. Test harness masks production wiring gaps
++
++Tests that manually construct and `Add()` objects bypass the real discovery/loading path. All 18 setup tests passed because they manually added goals to the collection, but in production, no code loads setup goals before `Setup.RunAsync` runs. The test harness created a "works in tests, fails in production" scenario.
++
++**Pattern to watch:** When reviewing tests for a new system, ask: "Who calls the loading/discovery code in production? Is that path tested?" If tests only exercise the post-load behavior, the loading gap is invisible.
++
++## 3. Lazy-load vs pre-load design tension
++
++Runtime2 uses lazy loading for regular goals (`GetAsync` loads from `.pr` files on demand). But setup goals need pre-loading because they're discovered by type (`IsSetup` flag), not requested by name. This is a fundamental design tension: lazy loading works when you know the name, pre-loading is needed when you need to scan. The setup system correctly implements the iteration-over-loaded-goals pattern but nobody loads the goals first.
++
++## 4. OBP compliance was solid
++
++The Setup system is well-designed OBP-wise:
++- `Setup.@this` owns RunAsync, IsExecuted, Record, IsTolerableError — behavior on the owner
++- `Steps.RunAsync` owns iteration — smart collection (rule 5)
++- Navigate-don't-pass is respected: `Record(step, engine)` passes the step object, engine for navigation
++- `context.Setup` is per-request state passed as a parameter (rule 4)
++
++Good reference implementation of OBP for future reviews.
++
++## 5. Error tolerance patterns from runtime1
++
++`IsTolerableError` checks for "already exists" and "duplicate column name" in error messages. This is runtime1 parity for idempotent setup (CREATE TABLE, CREATE INDEX, ALTER TABLE ADD COLUMN). The pattern is string-matching on error messages — fragile but pragmatic for SQLite error messages which are stable across versions.

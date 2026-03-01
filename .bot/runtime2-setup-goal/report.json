@@ -508,6 +508,36 @@
         "health": "C# tests: 1490/1490",
         "notes": "All 3 auditor findings addressed. Bonus bug found and fixed: cached setup goal in GetByPrPathAsync fell through to disk load path causing NullReferenceException. Test caught it before the fix was applied."
       }
+    },
+    {
+      "id": "b8c9d0e1-f2a3-4567-bc01-901234567890",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-01T09:45:00Z",
+      "timestamp_end": "2026-03-01T10:05:00Z",
+      "intent": "Re-review coder v5 fixes for auditor v4 findings (IsSetup filter, goal loading, setup interception)",
+      "before": {
+        "assumptions": "Coder v5 addressed all 3 findings from auditor v4. Need to verify fixes are correct, no regressions, and no new issues.",
+        "risk": "Low — targeted re-review of specific fixes"
+      },
+      "plan": "Read coder v5 summary, verify each fix at the code level (4 IsSetup filter points, LoadFromDirectoryAsync ordering, conditional setup check). Run tests. Check new tests catch the right things.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Goals/this.cs",
+            "PLang/Executor.cs",
+            "PLang.Tests/Runtime2/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 3 findings properly fixed. IsSetup filter at 4 return paths, LoadFromDirectoryAsync before Setup.RunAsync, conditional setup interception. Bonus bug fix in GetByPrPathAsync cache path. 5 new tests. 1490 total passing."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all findings addressed, no new issues",
+        "notes": "Clean review. Branch ready for merge."
+      }
     }
   ]
 }
