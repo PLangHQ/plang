@@ -149,6 +149,36 @@
         "health": "green — 1423/1423 C# pass, rename verified complete",
         "notes": "Approved for auditor. One PLang test (Settings/SetMaxGzipSize) fails due to missing .pr file — needs a build, not related to rename."
       }
+    },
+    {
+      "id": "auditor-v1-2026-0301-terminology-review",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-01T00:00:00Z",
+      "timestamp_end": "2026-03-01T00:30:00Z",
+      "intent": "Code review of terminology rename: actions/ → modules/, IClass → IAction, handler → action",
+      "before": {
+        "assumptions": "Tester approved with 1423/1423 pass. Mechanical rename — main risk is stale references.",
+        "risk": "Low — purely mechanical, no behavior changes"
+      },
+      "plan": "Independent stale reference search across all 6 rename surfaces. Read substantive changed files (IAction.cs, Libraries, ActionError, Methods.cs). Run tests. Write verdict.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-terminology-fix/auditor/v1/verdict.json",
+            ".bot/runtime2-terminology-fix/auditor/v1/summary.md",
+            ".bot/runtime2-terminology-fix/auditor/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Zero stale references across all 6 surfaces. All substantive files read and verified. 1423 tests pass. PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — clean rename, no findings",
+        "notes": "No findings. .build/ file deletion in diff is a harmless rebase artifact."
+      }
     }
   ]
 }
