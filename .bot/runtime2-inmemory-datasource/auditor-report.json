@@ -1,0 +1,39 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-inmemory-datasource",
+  "timestamp": "2026-03-01T22:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "The coder's in-memory datasource implementation is clean, focused, and OBP-compliant. The sentinel pattern is correct, the Building object follows established Test/Debug conventions, and Actor.CreateDataSource navigates engine state properly. All 29 datasource tests pass including 7 new in-memory tests that verify intent through side-effect assertions (checking disk artifacts rather than just return values). However, the branch diverged from runtime2 before the SettingsData sharing fix (af3b34a9), meaning %Settings.X% is unreachable from User/Service context on this branch. This is a merge gap, not a coder regression, but it must be resolved during merge. One minor carry-forward finding from the security report (DeserializeValue exception gap) remains.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Context/Actor.cs",
+      "line": 64,
+      "issue": "Merge gap: SettingsData registered only on System actor's MemoryStack. runtime2 was fixed (af3b34a9) to share SettingsData across all actors so %Settings.X% resolves from any context. This branch diverged before that fix. User/Service actors cannot resolve %Settings.ApiKey% — MemoryStack.Get returns null.",
+      "impact": "Any PLang goal using %Settings.X% will fail because goals run in User context by default (Engine.Context => User.Context). This is the most common settings access pattern.",
+      "suggestion": "When merging to runtime2, preserve the shared SettingsData pattern from runtime2: keep engine.SettingsVariable on Engine, register it on ALL actors via Context.MemoryStack.Put(engine.SettingsVariable). Combine with the in-memory check in CreateDataSource()."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "line": 282,
+      "issue": "Carry-forward: DeserializeValue catches JsonException but not InvalidOperationException from Data.UnwrapJsonElement depth guard. Get/GetAll only catch SqliteException | IOException.",
+      "impact": "Currently unreachable (JsonDocument.Parse MaxDepth=64 catches first). Violates 'behavior methods never throw' contract. Would become reachable if JsonDocumentOptions.MaxDepth were ever increased.",
+      "suggestion": "Add catch (InvalidOperationException) in DeserializeValue, return json as raw string. Defensive fix that protects against future changes."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+      "line": 46,
+      "issue": "Private constructor parameter 'bool inMemory' is never read — exists only to disambiguate from the public constructor signature.",
+      "impact": "None. Works correctly. Minor readability concern — a reader might expect the parameter to control behavior.",
+      "suggestion": "Could use a private tag type (e.g., private enum Mode { InMemory }) for clearer intent. Not worth changing."
+    }
+  ]
+}
