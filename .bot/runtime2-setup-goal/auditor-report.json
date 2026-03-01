@@ -1,19 +1,8 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-setup-goal",
-  "timestamp": "2026-03-01T11:00:00Z",
-  "reviewed_version": "v5",
-  "summary": "Auditor v4 findings were correctly fixed, but the fix for F2 (goal loading) introduced a new problem: LoadFromDirectoryAsync loads ALL .pr files at startup, violating PLang's lazy-load design. Setup only needs setup goals loaded — not every goal in the project.",
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "category": "contract",
-      "file": "PLang/Executor.cs",
-      "line": 368,
-      "issue": "LoadFromDirectoryAsync(engine.AbsolutePath, \"*.pr\") eagerly loads every .pr file in the entire project tree at startup. PLang uses lazy loading — goals are loaded on demand via GetAsync. This call breaks that principle by front-loading all goal parsing and holding all goals in memory regardless of whether they're ever called.",
-      "impact": "Startup performance degrades proportionally to project size. Memory holds all parsed goals even if only one is executed. Violates the lazy-load convention that GetAsync was designed around.",
-      "suggestion": "Replace with scoped setup discovery that only loads setup .pr files. The Goal.IsSetup flag is set at build time, so only the .pr files that could contain setup goals need loading. All other goals should remain lazy-loaded via GetAsync."
-    }
-  ]
+  "timestamp": "2026-03-01T12:30:00Z",
+  "reviewed_version": "v6",
+  "summary": "DiscoverAsync correctly replaces the eager LoadFromDirectoryAsync. Only setup goals are added to the collection — non-setup goals are parsed but discarded, preserving lazy-load. OBP rule 1 respected: Setup owns its discovery. 3 new tests verify the contract. No findings.",
+  "findings": []
 }
