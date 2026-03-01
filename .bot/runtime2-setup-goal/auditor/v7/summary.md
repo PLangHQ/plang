@@ -18,4 +18,10 @@ Verified the fix addresses the finding:
 
 1493 C# tests pass. No findings.
 
+## PLang integration test recommendation
+
+The setup system is now ready for end-to-end PLang testing. `plang p build` produces v0.2 `.pr` files with `isSetup` set by the builder. `plang p Start` goes through `Run2` which calls `DiscoverAsync` then `Setup.RunAsync`.
+
+Suggested test: create a Setup.goal that inserts a row, a Start.goal that counts rows. Build with `plang p build`, run `plang p Start` twice, verify the setup step only executed once (count stays at 1).
+
 ## Verdict: PASS
