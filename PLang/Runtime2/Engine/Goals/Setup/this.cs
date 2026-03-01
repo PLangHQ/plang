@@ -29,6 +29,44 @@ public sealed class @this
         .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Discovers setup goals by scanning .pr files on disk.
+    /// Only setup goals (IsSetup == true) are added to the goals collection.
+    /// Non-setup goals remain lazy-loadable via GetAsync — preserving the lazy-load convention.
+    /// </summary>
+    public async Task<Data> DiscoverAsync(Engine.@this engine, CancellationToken ct = default)
+    {
+        try
+        {
+            var files = engine.FileSystem.Directory.GetFiles(
+                engine.AbsolutePath, "*.pr", SearchOption.AllDirectories);
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    var goal = await engine.Channels.ReadAsync<Goal.@this>(file, ct);
+                    if (goal == null || !goal.IsSetup) continue;
+
+                    foreach (var step in goal.Steps)
+                        step.Goal = goal;
+
+                    _goals.Add(goal);
+                }
+                catch
+                {
+                    // Skip unparseable files — they'll fail when lazy-loaded later
+                }
+            }
+
+            return Data.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Data.FromError(Error.FromException(ex));
+        }
+    }
+
+    /// <summary>
     /// Runs all setup goals. Sets context.Setup for the duration so Steps.RunAsync
     /// can check run-once semantics. Any goal called from within setup execution
     /// inherits the setup context (context.Setup propagates through goal.call).

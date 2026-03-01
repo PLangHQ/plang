@@ -286,6 +286,69 @@ public class SetupTests
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
     }
 
+    // --- DiscoverAsync tests ---
+
+    [Test]
+    public async Task DiscoverAsync_OnlyLoadsSetupGoals()
+    {
+        // Create .pr files on disk — one setup, one non-setup
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(buildDir, "setup.pr"),
+            """{"name":"Setup","isSetup":true,"steps":[]}""");
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(buildDir, "start.pr"),
+            """{"name":"Start","isSetup":false,"steps":[]}""");
+
+        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+
+        await Assert.That(result.Success).IsTrue();
+        // Only the setup goal should be in the collection
+        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+        await Assert.That(setupGoals.Count).IsEqualTo(1);
+        await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
+        // Non-setup goal should NOT be in the collection
+        await Assert.That(_engine.Goals.Get("Start")).IsNull();
+    }
+
+    [Test]
+    public async Task DiscoverAsync_NonSetupGoalsRemainLazyLoadable()
+    {
+        // Create .pr files on disk — one setup, one non-setup
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(buildDir, "setup.pr"),
+            """{"name":"Setup","isSetup":true,"steps":[]}""");
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(buildDir, "normalgoal.pr"),
+            """{"name":"NormalGoal","isSetup":false,"steps":[]}""");
+
+        // Discover — only setup goals loaded
+        await _engine.Goals.Setup.DiscoverAsync(_engine);
+
+        // Non-setup goal should not be in collection yet
+        await Assert.That(_engine.Goals.Get("NormalGoal")).IsNull();
+
+        // But it should be lazy-loadable via GetAsync
+        var lazyLoaded = await _engine.Goals.GetAsync("NormalGoal");
+        await Assert.That(lazyLoaded).IsNotNull();
+        await Assert.That(lazyLoaded!.Name).IsEqualTo("NormalGoal");
+    }
+
+    [Test]
+    public async Task DiscoverAsync_HandlesEmptyDirectory()
+    {
+        // No .pr files at all
+        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
+    }
+
     // --- IsTolerableError tests ---
 
     [Test]

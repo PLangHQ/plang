@@ -538,6 +538,46 @@
         "health": "PASS — all findings addressed, no new issues",
         "notes": "Clean review. Branch ready for merge."
       }
+    },
+    {
+      "id": "a9b0c1d2-e3f4-5678-ab01-cdef01234567",
+      "bot": "coder",
+      "timestamp_start": "2026-03-01T12:00:00Z",
+      "timestamp_end": "2026-03-01T12:30:00Z",
+      "intent": "Replace eager LoadFromDirectoryAsync with scoped Setup.DiscoverAsync",
+      "before": {
+        "assumptions": "Auditor v6 found LoadFromDirectoryAsync loads ALL .pr files, violating lazy-load. Only setup goals need discovery before Setup.RunAsync.",
+        "risk": "Low — focused change to discovery mechanism, no behavioral change to setup execution"
+      },
+      "plan": "Add DiscoverAsync to Setup.@this that scans .pr files but only keeps IsSetup goals. Replace LoadFromDirectoryAsync call in Executor.Run2 with Setup.DiscoverAsync. Add 3 tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added DiscoverAsync: scans *.pr files, parses each, only adds IsSetup goals to collection. Non-setup goals discarded, remain lazy-loadable."
+        },
+        {
+          "paths": ["PLang/Executor.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Replaced LoadFromDirectoryAsync(engine.AbsolutePath, \"*.pr\") with Setup.DiscoverAsync(engine, ct)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "3 new tests: OnlyLoadsSetupGoals, NonSetupGoalsRemainLazyLoadable, HandlesEmptyDirectory"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# tests: 1493/1493",
+        "notes": "Scoped discovery preserves lazy-load convention. OBP rule 1: Setup owns its own discovery."
+      }
     }
   ]
 }

@@ -14,3 +14,6 @@ Record failure aborts setup. Added `IsTolerableError` for runtime1-compatible "a
 
 ## v5 — Auditor v4 Findings (IsSetup filter gaps)
 Fixed 3 auditor findings: (1) GetAsync/GetByPrPathAsync now filter IsSetup at all disk-load paths, (2) goals loaded before Setup.RunAsync in Executor.Run2, (3) 'setup' goal name only reserved when setup goals exist. Found bonus bug: cached setup goal in GetByPrPathAsync fell through to disk load causing NPE. C# tests: 1490/1490. See [v5/summary.md](v5/summary.md).
+
+## v6 — Scoped Setup Discovery
+Replaced eager `LoadFromDirectoryAsync` (loads ALL .pr files) with `Setup.DiscoverAsync` (loads only setup goals). Non-setup goals remain lazy-loaded via `GetAsync`. OBP rule 1: Setup owns its own discovery. C# tests: 1493/1493. See [v6/summary.md](v6/summary.md).
