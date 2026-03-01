@@ -62,13 +62,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // Verify [Action] attribute via semantic model
         var hasActionAttr = classSymbol.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "ActionAttribute"
-            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.actions");
+            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
         if (!hasActionAttr) return null;
 
         // Check if it implements IContext
         var implementsIContext = classSymbol.AllInterfaces.Any(i =>
             i.Name == "IContext"
-            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.actions");
+            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
 
         // Find partial properties (declared by author, needing generated implementation)
         var properties = new List<ActionPropertyInfo>();
@@ -137,7 +137,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {info.Namespace};");
         sb.AppendLine();
-        sb.AppendLine($"partial class {info.ClassName} : PLang.Runtime2.actions.ICodeGenerated");
+        sb.AppendLine($"partial class {info.ClassName} : PLang.Runtime2.modules.ICodeGenerated");
         sb.AppendLine("{");
 
         // IContext auto-provision

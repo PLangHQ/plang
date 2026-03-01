@@ -66,7 +66,7 @@ public sealed class @this
     /// </summary>
     public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
     {
-        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.actions.archive" → "archive")
+        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.modules.archive" → "archive")
         var fullName = typeof(T).Namespace ?? "";
         var lastDot = fullName.LastIndexOf('.');
         var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;

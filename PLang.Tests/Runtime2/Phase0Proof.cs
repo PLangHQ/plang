@@ -147,7 +147,7 @@ public class Phase0Proof
     public async Task Phase04_ListType_IsPreserved()
     {
         // INPUT: Data.Ok with a list value and explicit list type
-        var listValue = new PLang.Runtime2.actions.list.types.list
+        var listValue = new PLang.Runtime2.modules.list.types.list
         {
             count = 3,
             value = new List<object?> { 1, 2, 3 }

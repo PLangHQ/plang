@@ -22,7 +22,7 @@ using R2GoalCall = PLang.Runtime2.Engine.Goals.Goal.GoalCall;
 using GoalMapper = PLang.Runtime2.Engine.Utility.GoalMapper;
 using TypeMapping = PLang.Runtime2.Engine.Utility.TypeMapping;
 using AppData = PLang.Runtime2.Engine.Utility.AppData;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections.Generic;
@@ -74,7 +74,7 @@ namespace PLang.Modules.PlangModule
 					var parameters = new List<Runtime2.Engine.Memory.Data>();
 					System.Type? parameterType = null;
 
-					// Try IClass-based handler first
+					// Try IAction-based handler first
 					var handler = libraries.Get(ns, className);
 					if (handler != null)
 					{
@@ -111,10 +111,10 @@ namespace PLang.Modules.PlangModule
 								typeName += $"({string.Join("|", validValues)})";
 
 							// @var marker
-							var hasVar = prop.GetCustomAttribute<Runtime2.actions.VariableNameAttribute>() != null;
+							var hasVar = prop.GetCustomAttribute<Runtime2.modules.VariableNameAttribute>() != null;
 
 							// Default value
-							var defaultAttr = prop.GetCustomAttribute<Runtime2.actions.DefaultAttribute>();
+							var defaultAttr = prop.GetCustomAttribute<Runtime2.modules.DefaultAttribute>();
 
 							// Build compact description: "@var string" or "actor(user|service|system) = \"user\""
 							var desc = hasVar ? $"@var {typeName}" : typeName;
@@ -130,7 +130,7 @@ namespace PLang.Modules.PlangModule
 				var actionType2 = libraries.GetActionType(ns, className);
 				if (actionType2 != null)
 				{
-					var actionAttr = actionType2.GetCustomAttribute<Runtime2.actions.ActionAttribute>();
+					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
 					if (actionAttr != null)
 						cacheable = actionAttr.Cacheable;
 				}

@@ -1,0 +1,22 @@
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
+
+namespace PLang.Runtime2.modules.error;
+
+[Action("throw", Cacheable = false)]
+public partial class Throw : IContext
+{
+    public partial string Message { get; init; }
+    [Default(500)]
+    public partial int StatusCode { get; init; }
+    public partial string? Key { get; init; }
+
+    public Task<Data> Run()
+    {
+        var code = StatusCode;
+        var key = Key ?? "UserError";
+
+        return Task.FromResult(Data.FromError(
+            new ServiceError(Message, key, code)));
+    }
+}

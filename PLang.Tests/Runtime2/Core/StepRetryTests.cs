@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -442,9 +442,9 @@ public class StepRetryTests
 
     /// <summary>
     /// A controllable test handler that fails a configurable number of times
-    /// before succeeding. Implements both IClass and ICodeGenerated.
+    /// before succeeding. Implements both IAction and ICodeGenerated.
     /// </summary>
-    private sealed class FlakyHandler : IClass, ICodeGenerated
+    private sealed class FlakyHandler : IAction, ICodeGenerated
     {
         public int FailCount { get; set; } = 0;
         public int CallCount { get; private set; } = 0;

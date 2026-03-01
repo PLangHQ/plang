@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
-using PLang.Runtime2.actions.library;
+using PLang.Runtime2.modules;
+using PLang.Runtime2.modules.library;
 
 namespace PLang.Tests.Runtime2.Modules.library;
 
@@ -50,7 +50,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.actions"
+                Namespace = "PLang.Runtime2.modules"
             };
 
             var libraryCountBefore = engine.Libraries.Value.Count;
@@ -71,7 +71,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.actions"
+                Namespace = "PLang.Runtime2.modules"
             };
 
             var result = await load.Run();
@@ -113,7 +113,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.actions"
+                Namespace = "PLang.Runtime2.modules"
             };
 
             var result = await load.Run();
@@ -154,7 +154,7 @@ public class LibraryLoadTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "PLang.Runtime2.actions"
+                Namespace = "PLang.Runtime2.modules"
             };
 
             var result = await load.Run();
@@ -162,8 +162,8 @@ public class LibraryLoadTests
 
             // First-match-wins means built-in [0] resolves first,
             // but no errors should occur with multiple libraries
-            var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
-            await Assert.That(handler).IsNotNull();
+            var (action, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
+            await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }
     }

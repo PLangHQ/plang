@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.actions;
 
@@ -226,46 +226,46 @@ public class LibrariesTests
     #region EngineLibraries.GetCodeGenerated
 
     [Test]
-    public async Task GetCodeGenerated_BuiltInAction_ReturnsHandler()
+    public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
         var libraries = new EngineLibraries();
         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
-        var (handler, error) = libraries.GetCodeGenerated("variable", "set", context);
+        var (action, error) = libraries.GetCodeGenerated("variable", "set", context);
 
-        await Assert.That(handler).IsNotNull();
+        await Assert.That(action).IsNotNull();
         await Assert.That(error).IsNull();
     }
 
     [Test]
-    public async Task GetCodeGenerated_ExplicitCodeGenHandler_ReturnsHandler()
+    public async Task GetCodeGenerated_ExplicitCodeGenAction_ReturnsAction()
     {
         var libraries = new EngineLibraries();
-        var handler = new MockCodeGenHandler();
-        libraries.Register("custom", "run", handler);
+        var action = new MockCodeGenHandler();
+        libraries.Register("custom", "run", action);
         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
 
-        await Assert.That(result).IsEqualTo(handler);
+        await Assert.That(result).IsEqualTo(action);
         await Assert.That(error).IsNull();
     }
 
     [Test]
-    public async Task GetCodeGenerated_NonICodeGeneratedHandler_ReturnsHandlerError()
+    public async Task GetCodeGenerated_NonICodeGeneratedAction_ReturnsActionError()
     {
         var libraries = new EngineLibraries();
         libraries.Register("legacy", "do", new MockHandler());
         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
-        var (handler, error) = libraries.GetCodeGenerated("legacy", "do", context);
+        var (action, error) = libraries.GetCodeGenerated("legacy", "do", context);
 
-        await Assert.That(handler).IsNull();
+        await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Key).IsEqualTo("HandlerError");
+        await Assert.That(error!.Key).IsEqualTo("ActionError");
     }
 
     [Test]
@@ -275,9 +275,9 @@ public class LibrariesTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
         using var context = engine.CreateContext();
 
-        var (handler, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
+        var (action, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
 
-        await Assert.That(handler).IsNull();
+        await Assert.That(action).IsNull();
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Key).IsEqualTo("ActionNotFound");
     }
@@ -331,13 +331,13 @@ public class LibrariesTests
         using var context = engine.CreateContext();
 
         // variable.set is type-registered (discovered via [Action] attribute)
-        var (handler1, _) = libraries.GetCodeGenerated("variable", "set", context);
-        var (handler2, _) = libraries.GetCodeGenerated("variable", "set", context);
+        var (action1, _) = libraries.GetCodeGenerated("variable", "set", context);
+        var (action2, _) = libraries.GetCodeGenerated("variable", "set", context);
 
         // Per-call instantiation — different instances each time
-        await Assert.That(handler1).IsNotNull();
-        await Assert.That(handler2).IsNotNull();
-        await Assert.That(ReferenceEquals(handler1, handler2)).IsFalse();
+        await Assert.That(action1).IsNotNull();
+        await Assert.That(action2).IsNotNull();
+        await Assert.That(ReferenceEquals(action1, action2)).IsFalse();
     }
 
     #endregion
@@ -430,7 +430,7 @@ public class LibrariesTests
     {
         var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
 
-        library.Discover("PLang.Runtime2.actions");
+        library.Discover("PLang.Runtime2.modules");
 
         await Assert.That(library.Contains("variable", "set")).IsTrue();
         await Assert.That(library.Contains("output", "write")).IsTrue();
@@ -672,10 +672,10 @@ public class LibrariesTests
     #region Mock handlers
 
     /// <summary>
-    /// IClass only — does NOT implement ICodeGenerated.
+    /// IAction only — does NOT implement ICodeGenerated.
     /// Used to test the "handler doesn't implement ICodeGenerated" error path.
     /// </summary>
-    private class MockHandler : IClass
+    private class MockHandler : IAction
     {
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -685,9 +685,9 @@ public class LibrariesTests
     }
 
     /// <summary>
-    /// IClass + ICodeGenerated — the correct handler interface.
+    /// IAction + ICodeGenerated — the correct handler interface.
     /// </summary>
-    private class MockCodeGenHandler : IClass, ICodeGenerated
+    private class MockCodeGenHandler : IAction, ICodeGenerated
     {
         public string Tag { get; set; } = "";
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;

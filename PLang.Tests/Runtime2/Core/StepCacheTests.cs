@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -526,7 +526,7 @@ public class StepCacheTests
     /// <summary>
     /// Handler that counts how many times it's called and returns a fixed value.
     /// </summary>
-    private class CountingHandler : IClass, ICodeGenerated
+    private class CountingHandler : IAction, ICodeGenerated
     {
         private readonly object _returnValue;
 
@@ -551,7 +551,7 @@ public class StepCacheTests
     /// <summary>
     /// Handler that fails on the first call and succeeds on subsequent calls.
     /// </summary>
-    private class FailOnFirstCallHandler : IClass, ICodeGenerated
+    private class FailOnFirstCallHandler : IAction, ICodeGenerated
     {
         public int CallCount { get; private set; }
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
@@ -574,7 +574,7 @@ public class StepCacheTests
     /// <summary>
     /// Handler that returns different values on successive calls.
     /// </summary>
-    private class SequenceHandler : IClass, ICodeGenerated
+    private class SequenceHandler : IAction, ICodeGenerated
     {
         private readonly string[] _values;
 

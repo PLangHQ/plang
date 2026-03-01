@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -477,7 +477,7 @@ public class EngineTests
         var result = await step.RunAsync(engine, context);
 
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("HandlerError");
+        await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
     }
 
     [Test]
@@ -597,7 +597,7 @@ public class EngineTests
     }
 
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
-    private class NonGeneratedHandler : IClass
+    private class NonGeneratedHandler : IAction
     {
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -607,7 +607,7 @@ public class EngineTests
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
-    private class DisposableHandler : IClass, ICodeGenerated, IDisposable
+    private class DisposableHandler : IAction, ICodeGenerated, IDisposable
     {
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -624,7 +624,7 @@ public class EngineTests
         public void Dispose() => IsDisposed = true;
     }
 
-    private class AsyncDisposableHandler : IClass, ICodeGenerated, IAsyncDisposable
+    private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
     {
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;
@@ -641,7 +641,7 @@ public class EngineTests
         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
     }
 
-    private class ThrowingHandler : IClass, ICodeGenerated
+    private class ThrowingHandler : IAction, ICodeGenerated
     {
         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
         public PLangContext Context { get; private set; } = null!;

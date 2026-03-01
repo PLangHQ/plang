@@ -1,10 +1,10 @@
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 namespace PLang.Runtime2.Engine.Libraries;
 
 /// <summary>
-/// Smart collection of libraries. Owns walk-the-list handler resolution.
+/// Smart collection of libraries. Owns walk-the-list action resolution.
 /// Built-in library is always [0]. External DLLs can be added as additional libraries.
 /// Replaces ActionRegistry entirely.
 /// </summary>
@@ -13,21 +13,21 @@ public sealed class @this
     private readonly List<Library.@this> _libraries = new();
 
     /// <summary>
-    /// The built-in library containing PLang's own action handlers. Always [0].
+    /// The built-in library containing PLang's own actions. Always [0].
     /// </summary>
     public Library.@this BuiltIn => _libraries[0];
 
     public @this()
     {
         var builtIn = new Library.@this("builtin", typeof(@this).Assembly);
-        builtIn.Discover("PLang.Runtime2.actions");
+        builtIn.Discover("PLang.Runtime2.modules");
         _libraries.Add(builtIn);
     }
 
     // === Convenience delegates to BuiltIn (backward compat) ===
 
-    public void Register(string module, string actionName, IClass handler) =>
-        BuiltIn.Register(module, actionName, handler);
+    public void Register(string module, string actionName, IAction action) =>
+        BuiltIn.Register(module, actionName, action);
 
     public void RegisterCodeGenerated(string module, string actionName, Type type) =>
         BuiltIn.RegisterCodeGenerated(module, actionName, type);
@@ -35,22 +35,22 @@ public sealed class @this
     // === Resolution: walks all libraries, first match wins ===
 
     /// <summary>
-    /// Resolves a handler across all libraries. First match wins.
-    /// Returns (handler, null) on success, (null, error) on failure.
+    /// Resolves an action across all libraries. First match wins.
+    /// Returns (action, null) on success, (null, error) on failure.
     /// </summary>
-    public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
+    public (ICodeGenerated? Action, IError? Error) GetCodeGenerated(
         string module, string actionName, PLangContext context)
     {
         foreach (var library in _libraries)
         {
             // Check explicit instances first (Register(instance) overrides discovered types)
-            var handler = library.Get(module, actionName);
-            if (handler != null)
+            var action = library.Get(module, actionName);
+            if (action != null)
             {
-                if (handler is not ICodeGenerated codeGenerated)
+                if (action is not ICodeGenerated codeGenerated)
                     return (null, new ActionError(
-                        $"Handler '{module}.{actionName}' does not implement ICodeGenerated",
-                        context, "HandlerError", 500) { ActionModule = module, ActionName = actionName });
+                        $"Action '{module}.{actionName}' does not implement ICodeGenerated",
+                        context, "ActionError", 500) { ActionModule = module, ActionName = actionName });
                 return (codeGenerated, null);
             }
 
@@ -82,9 +82,9 @@ public sealed class @this
 
     public int Count => _libraries.Sum(l => l.Count);
 
-    public IEnumerable<IClass> All => _libraries.SelectMany(l => l.All);
+    public IEnumerable<IAction> All => _libraries.SelectMany(l => l.All);
 
-    public IClass? Get(string module, string actionName) =>
+    public IAction? Get(string module, string actionName) =>
         _libraries.Select(l => l.Get(module, actionName)).FirstOrDefault(h => h != null);
 
     public void Clear()

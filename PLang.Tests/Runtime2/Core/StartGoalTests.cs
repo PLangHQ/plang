@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 using Path = System.IO.Path;
 
 namespace PLang.Tests.Runtime2.Core;
@@ -272,9 +272,9 @@ public class StartGoalTests
 
     /// <summary>
     /// A test handler that captures written content instead of writing to Console.
-    /// Implements IClass + ICodeGenerated manually since the source generator doesn't run on test projects.
+    /// Implements IAction + ICodeGenerated manually since the source generator doesn't run on test projects.
     /// </summary>
-    private class CapturingWriteHandler : IClass, ICodeGenerated
+    private class CapturingWriteHandler : IAction, ICodeGenerated
     {
         public List<string> Lines { get; } = new();
 

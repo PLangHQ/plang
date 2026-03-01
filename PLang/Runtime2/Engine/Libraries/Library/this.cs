@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using PLang.Runtime2.actions;
+using PLang.Runtime2.modules;
 
 namespace PLang.Runtime2.Engine.Libraries.Library;
 
 /// <summary>
-/// A single library — one assembly's worth of action handlers.
-/// Owns handler registration, discovery, and lookup scoped to this library.
+/// A single library — one assembly's worth of actions.
+/// Owns action registration, discovery, and lookup scoped to this library.
 /// </summary>
 public sealed class @this
 {
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IClass>> _handlers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IAction>> _actions = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Type>> _actionTypes = new(StringComparer.OrdinalIgnoreCase);
 
     public string Name { get; }
@@ -29,7 +29,7 @@ public sealed class @this
     {
         if (Assembly == null) return;
 
-        baseNamespace ??= "PLang.Runtime2.actions";
+        baseNamespace ??= "PLang.Runtime2.modules";
 
         var actionAttrTypes = Assembly.GetTypes()
             .Where(t => t.GetCustomAttribute<ActionAttribute>() != null
@@ -50,17 +50,17 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Registers a specific handler instance. Used by tests and custom modules.
+    /// Registers a specific action instance. Used by tests and custom modules.
     /// WARNING: Instance is shared — only use when you need to track state across calls (e.g., test counters).
     /// </summary>
-    public void Register(string module, string actionName, IClass handler)
+    public void Register(string module, string actionName, IAction action)
     {
-        var actions = _handlers.GetOrAdd(module, _ => new ConcurrentDictionary<string, IClass>(StringComparer.OrdinalIgnoreCase));
-        actions[actionName] = handler;
+        var actions = _actions.GetOrAdd(module, _ => new ConcurrentDictionary<string, IAction>(StringComparer.OrdinalIgnoreCase));
+        actions[actionName] = action;
     }
 
     /// <summary>
-    /// Registers a handler Type for per-call instantiation (thread-safe).
+    /// Registers an action Type for per-call instantiation (thread-safe).
     /// </summary>
     public void RegisterCodeGenerated(string module, string actionName, Type type)
     {
@@ -69,30 +69,30 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets an explicitly registered handler instance.
+    /// Gets an explicitly registered action instance.
     /// </summary>
-    public IClass? Get(string module, string actionName)
+    public IAction? Get(string module, string actionName)
     {
         if (string.IsNullOrEmpty(module) || string.IsNullOrEmpty(actionName))
             return null;
 
-        if (_handlers.TryGetValue(module, out var actions) &&
-            actions.TryGetValue(actionName, out var handler))
-            return handler;
+        if (_actions.TryGetValue(module, out var actions) &&
+            actions.TryGetValue(actionName, out var action))
+            return action;
 
         return null;
     }
 
     /// <summary>
-    /// Gets a handler for execution. Returns ICodeGenerated or null.
+    /// Gets an action for execution. Returns ICodeGenerated or null.
     /// Explicit instances checked first, then per-call type instantiation.
     /// </summary>
     public ICodeGenerated? GetCodeGenerated(string module, string actionName)
     {
         // Check explicit instances first
-        var handler = Get(module, actionName);
-        if (handler != null)
-            return handler as ICodeGenerated;
+        var action = Get(module, actionName);
+        if (action != null)
+            return action as ICodeGenerated;
 
         // Per-call instantiation from registered Types
         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
@@ -118,17 +118,17 @@ public sealed class @this
 
     public bool Contains(string module)
     {
-        return _handlers.ContainsKey(module) || _actionTypes.ContainsKey(module);
+        return _actions.ContainsKey(module) || _actionTypes.ContainsKey(module);
     }
 
     /// <summary>
-    /// Gets the CLR type for a handler, checking both explicit and type-registered handlers.
+    /// Gets the CLR type for an action, checking both explicit and type-registered actions.
     /// </summary>
     public Type? GetActionType(string module, string actionName)
     {
-        var handler = Get(module, actionName);
-        if (handler != null)
-            return handler.GetType();
+        var action = Get(module, actionName);
+        if (action != null)
+            return action.GetType();
 
         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
             actionTypes.TryGetValue(actionName, out var type))
@@ -139,7 +139,7 @@ public sealed class @this
 
     public IEnumerable<string> GetActions(string module)
     {
-        var classActions = _handlers.TryGetValue(module, out var actions)
+        var classActions = _actions.TryGetValue(module, out var actions)
             ? actions.Keys : Enumerable.Empty<string>();
         var actionTypeActions = _actionTypes.TryGetValue(module, out var actionTypes)
             ? actionTypes.Keys : Enumerable.Empty<string>();
@@ -147,28 +147,28 @@ public sealed class @this
     }
 
     public IEnumerable<string> Modules =>
-        _handlers.Keys.Concat(_actionTypes.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+        _actions.Keys.Concat(_actionTypes.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
 
     public int Count =>
-        _handlers.Values.Sum(c => c.Count) + _actionTypes.Values.Sum(c => c.Count);
+        _actions.Values.Sum(c => c.Count) + _actionTypes.Values.Sum(c => c.Count);
 
     /// <summary>
-    /// Yields all explicitly registered handler instances (for disposal on engine shutdown).
-    /// Type-registered handlers are per-call and need no disposal tracking.
+    /// Yields all explicitly registered action instances (for disposal on engine shutdown).
+    /// Type-registered actions are per-call and need no disposal tracking.
     /// </summary>
-    public IEnumerable<IClass> All
+    public IEnumerable<IAction> All
     {
         get
         {
-            foreach (var actions in _handlers.Values)
-                foreach (var handler in actions.Values)
-                    yield return handler;
+            foreach (var actions in _actions.Values)
+                foreach (var action in actions.Values)
+                    yield return action;
         }
     }
 
     public void Clear()
     {
-        _handlers.Clear();
+        _actions.Clear();
         _actionTypes.Clear();
     }
 }
