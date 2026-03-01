@@ -1,0 +1,4426 @@
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index 554e905b..5df58b78 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -260,11 +260,3 @@ Target audiences:
+ **Date:** 2026-02-21
+ **Context:** Tester v7 Finding #3.
+ **Completed:** Coder catches `InvalidOperationException` separately with key `"JsonDepthExceeded"`. Test `FromJson_DeeplyNested_Fails` and `FromJson_DecimalNumber_PreservesPrecision` added.
+-
+----
+-
+-## ~~ErrorInfoTests still uses "HandlerError" test data~~ ✅ DONE (2026-02-23)
+-**Date:** 2026-02-23
+-**Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.
+-
+-**Fix:** Change `"HandlerError"` → `"ActionError"` and `"Handler error"` → `"Action error"` in the test, update assertion to `"ActionError(500)"`.
+diff --git a/PLang.Generators/LazyParamsGenerator.cs b/PLang.Generators/LazyParamsGenerator.cs
+index f310c7b4..dd826e91 100644
+--- a/PLang.Generators/LazyParamsGenerator.cs
++++ b/PLang.Generators/LazyParamsGenerator.cs
+@@ -62,13 +62,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
+         // Verify [Action] attribute via semantic model
+         var hasActionAttr = classSymbol.GetAttributes().Any(a =>
+             a.AttributeClass?.Name == "ActionAttribute"
+-            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
++            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.actions");
+         if (!hasActionAttr) return null;
+ 
+         // Check if it implements IContext
+         var implementsIContext = classSymbol.AllInterfaces.Any(i =>
+             i.Name == "IContext"
+-            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.modules");
++            && i.ContainingNamespace.ToDisplayString() == "PLang.Runtime2.actions");
+ 
+         // Find partial properties (declared by author, needing generated implementation)
+         var properties = new List<ActionPropertyInfo>();
+@@ -137,7 +137,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
+         sb.AppendLine();
+         sb.AppendLine($"namespace {info.Namespace};");
+         sb.AppendLine();
+-        sb.AppendLine($"partial class {info.ClassName} : PLang.Runtime2.modules.ICodeGenerated");
++        sb.AppendLine($"partial class {info.ClassName} : PLang.Runtime2.actions.ICodeGenerated");
+         sb.AppendLine("{");
+ 
+         // IContext auto-provision
+diff --git a/PLang.Tests/GlobalUsings.cs b/PLang.Tests/GlobalUsings.cs
+index b9f7c9b3..42b9ccdf 100644
+--- a/PLang.Tests/GlobalUsings.cs
++++ b/PLang.Tests/GlobalUsings.cs
+@@ -10,6 +10,7 @@ global using ErrorOrder = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder
+ global using CacheSettings = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings;
+ global using StepCache = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.StepCache;
+ global using StepActions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
++global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+ 
+ // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
+ global using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+diff --git a/PLang.Tests/Runtime2/Core/ActionsTests.cs b/PLang.Tests/Runtime2/Core/ActionsTests.cs
+index b9517dba..85daad38 100644
+--- a/PLang.Tests/Runtime2/Core/ActionsTests.cs
++++ b/PLang.Tests/Runtime2/Core/ActionsTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -68,10 +68,10 @@ public class ActionsTests
+         {
+             Module = "variable",
+             ActionName = "set",
+-            ParameterSchema = typeof(PLang.Runtime2.modules.variable.Set)
++            ParameterSchema = typeof(PLang.Runtime2.actions.variable.Set)
+         };
+ 
+-        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.modules.variable.Set));
++        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.actions.variable.Set));
+     }
+ 
+     [Test]
+@@ -112,7 +112,7 @@ public class ActionsTests
+         var variableSet = actions.First(a => a.Module == "variable" && a.ActionName == "set");
+ 
+         await Assert.That(variableSet.ParameterSchema).IsNotNull();
+-        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.modules.variable.Set));
++        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(PLang.Runtime2.actions.variable.Set));
+     }
+ 
+     [Test]
+@@ -408,7 +408,7 @@ public class ActionsTests
+         {
+             foreach (var actionName in libraries.GetActions(ns))
+             {
+-                // Check IAction-based handlers first
++                // Check IClass-based handlers first
+                 var handler = libraries.Get(ns, actionName);
+                 if (handler != null)
+                 {
+diff --git a/PLang.Tests/Runtime2/Core/EngineTests.cs b/PLang.Tests/Runtime2/Core/EngineTests.cs
+index 170a9f18..d0bf3169 100644
+--- a/PLang.Tests/Runtime2/Core/EngineTests.cs
++++ b/PLang.Tests/Runtime2/Core/EngineTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -477,7 +477,7 @@ public class EngineTests
+         var result = await step.RunAsync(engine, context);
+ 
+         await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
++        await Assert.That(result.Error!.Key).IsEqualTo("HandlerError");
+     }
+ 
+     [Test]
+@@ -597,7 +597,7 @@ public class EngineTests
+     }
+ 
+     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
+-    private class NonGeneratedHandler : IAction
++    private class NonGeneratedHandler : IClass
+     {
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+@@ -607,7 +607,7 @@ public class EngineTests
+         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
+     }
+ 
+-    private class DisposableHandler : IAction, ICodeGenerated, IDisposable
++    private class DisposableHandler : IClass, ICodeGenerated, IDisposable
+     {
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+@@ -624,7 +624,7 @@ public class EngineTests
+         public void Dispose() => IsDisposed = true;
+     }
+ 
+-    private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
++    private class AsyncDisposableHandler : IClass, ICodeGenerated, IAsyncDisposable
+     {
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+@@ -641,7 +641,7 @@ public class EngineTests
+         public ValueTask DisposeAsync() { IsDisposed = true; return ValueTask.CompletedTask; }
+     }
+ 
+-    private class ThrowingHandler : IAction, ICodeGenerated
++    private class ThrowingHandler : IClass, ICodeGenerated
+     {
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+diff --git a/PLang.Tests/Runtime2/Core/GoalsTests.cs b/PLang.Tests/Runtime2/Core/GoalsTests.cs
+index 65699a10..bc4ebcd7 100644
+--- a/PLang.Tests/Runtime2/Core/GoalsTests.cs
++++ b/PLang.Tests/Runtime2/Core/GoalsTests.cs
+@@ -1,6 +1,5 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Goals.Goal;
+-using PLang.SafeFileSystem;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -259,7 +258,7 @@ public class GoalsTests
+         goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
+         goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+ 
+-        var setupGoals = goals.Setup.Goals.ToList();
++        var setupGoals = goals.Setup.ToList();
+ 
+         await Assert.That(setupGoals.Count).IsEqualTo(1);
+         await Assert.That(setupGoals[0].Name).IsEqualTo("SetupGoal");
+@@ -302,113 +301,4 @@ public class GoalsTests
+ 
+         await Assert.That(goals.Count).IsEqualTo(3);
+     }
+-
+-    [Test]
+-    public async Task Get_ExcludesSetupGoals()
+-    {
+-        var goals = new EngineGoals();
+-        goals.Add(new Goal { Name = "SetupDb", IsSetup = true });
+-        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+-
+-        await Assert.That(goals.Get("SetupDb")).IsNull();
+-        await Assert.That(goals.Get("NormalGoal")).IsNotNull();
+-    }
+-
+-    [Test]
+-    public async Task GetAsync_ReturnsNull_ForSetupGoalLoadedFromDisk()
+-    {
+-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+-        System.IO.Directory.CreateDirectory(tempDir);
+-        try
+-        {
+-            var fs = new PLangFileSystem(tempDir, "");
+-            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+-
+-            // Create a .pr.json file on disk with IsSetup = true
+-            // GetAsync resolves: root / nameDir / .build / filename.pr
+-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+-            System.IO.Directory.CreateDirectory(buildDir);
+-            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
+-            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+-            System.IO.File.WriteAllText(prPath, json);
+-
+-            // GetAsync should load from disk but return null because IsSetup = true
+-            var result = await engine.Goals.GetAsync("SetupDb");
+-
+-            await Assert.That(result).IsNull();
+-        }
+-        finally
+-        {
+-            System.IO.Directory.Delete(tempDir, true);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task GetAsync_ReturnsGoal_ForNonSetupGoalLoadedFromDisk()
+-    {
+-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+-        System.IO.Directory.CreateDirectory(tempDir);
+-        try
+-        {
+-            var fs = new PLangFileSystem(tempDir, "");
+-            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+-
+-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+-            System.IO.Directory.CreateDirectory(buildDir);
+-            var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
+-            var json = """{"name":"NormalGoal","isSetup":false,"steps":[]}""";
+-            System.IO.File.WriteAllText(prPath, json);
+-
+-            var result = await engine.Goals.GetAsync("NormalGoal");
+-
+-            await Assert.That(result).IsNotNull();
+-            await Assert.That(result!.Name).IsEqualTo("NormalGoal");
+-        }
+-        finally
+-        {
+-            System.IO.Directory.Delete(tempDir, true);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task GetByPrPathAsync_ReturnsNull_ForSetupGoal()
+-    {
+-        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+-            "plang-goals-test-" + Guid.NewGuid().ToString("N")[..8]);
+-        System.IO.Directory.CreateDirectory(tempDir);
+-        try
+-        {
+-            var fs = new PLangFileSystem(tempDir, "");
+-            await using var engine = new PLang.Runtime2.Engine.@this(fs);
+-
+-            var buildDir = System.IO.Path.Combine(tempDir, ".build");
+-            System.IO.Directory.CreateDirectory(buildDir);
+-            var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
+-            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+-            System.IO.File.WriteAllText(prPath, json);
+-
+-            var result = await engine.Goals.GetByPrPathAsync(prPath);
+-
+-            await Assert.That(result).IsNull();
+-        }
+-        finally
+-        {
+-            System.IO.Directory.Delete(tempDir, true);
+-        }
+-    }
+-
+-    [Test]
+-    public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
+-    {
+-        var goals = new EngineGoals();
+-        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "test/.build/setupdb.pr" };
+-        goals.Add(setupGoal);
+-
+-        // Even if the goal is cached by path, GetByPrPathAsync should exclude it
+-        var result = await goals.GetByPrPathAsync("test/.build/setupdb.pr");
+-
+-        await Assert.That(result).IsNull();
+-    }
+ }
+diff --git a/PLang.Tests/Runtime2/Core/StartGoalTests.cs b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+index 3c0c8c5f..6306bc50 100644
+--- a/PLang.Tests/Runtime2/Core/StartGoalTests.cs
++++ b/PLang.Tests/Runtime2/Core/StartGoalTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ using Path = System.IO.Path;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+@@ -272,9 +272,9 @@ public class StartGoalTests
+ 
+     /// <summary>
+     /// A test handler that captures written content instead of writing to Console.
+-    /// Implements IAction + ICodeGenerated manually since the source generator doesn't run on test projects.
++    /// Implements IClass + ICodeGenerated manually since the source generator doesn't run on test projects.
+     /// </summary>
+-    private class CapturingWriteHandler : IAction, ICodeGenerated
++    private class CapturingWriteHandler : IClass, ICodeGenerated
+     {
+         public List<string> Lines { get; } = new();
+ 
+diff --git a/PLang.Tests/Runtime2/Core/StepCacheTests.cs b/PLang.Tests/Runtime2/Core/StepCacheTests.cs
+index ba423fc4..e5eb2058 100644
+--- a/PLang.Tests/Runtime2/Core/StepCacheTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepCacheTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -526,7 +526,7 @@ public class StepCacheTests
+     /// <summary>
+     /// Handler that counts how many times it's called and returns a fixed value.
+     /// </summary>
+-    private class CountingHandler : IAction, ICodeGenerated
++    private class CountingHandler : IClass, ICodeGenerated
+     {
+         private readonly object _returnValue;
+ 
+@@ -551,7 +551,7 @@ public class StepCacheTests
+     /// <summary>
+     /// Handler that fails on the first call and succeeds on subsequent calls.
+     /// </summary>
+-    private class FailOnFirstCallHandler : IAction, ICodeGenerated
++    private class FailOnFirstCallHandler : IClass, ICodeGenerated
+     {
+         public int CallCount { get; private set; }
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+@@ -574,7 +574,7 @@ public class StepCacheTests
+     /// <summary>
+     /// Handler that returns different values on successive calls.
+     /// </summary>
+-    private class SequenceHandler : IAction, ICodeGenerated
++    private class SequenceHandler : IClass, ICodeGenerated
+     {
+         private readonly string[] _values;
+ 
+diff --git a/PLang.Tests/Runtime2/Core/StepRetryTests.cs b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+index bcbd2c9d..2e4def21 100644
+--- a/PLang.Tests/Runtime2/Core/StepRetryTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Tests.Runtime2.Core;
+ 
+@@ -442,9 +442,9 @@ public class StepRetryTests
+ 
+     /// <summary>
+     /// A controllable test handler that fails a configurable number of times
+-    /// before succeeding. Implements both IAction and ICodeGenerated.
++    /// before succeeding. Implements both IClass and ICodeGenerated.
+     /// </summary>
+-    private sealed class FlakyHandler : IAction, ICodeGenerated
++    private sealed class FlakyHandler : IClass, ICodeGenerated
+     {
+         public int FailCount { get; set; } = 0;
+         public int CallCount { get; private set; } = 0;
+diff --git a/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs b/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
+index 34e411c9..19b34357 100644
+--- a/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
++++ b/PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs
+@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Settings;
+-using ArchiveSettings = PLang.Runtime2.modules.archive.Settings;
++using ArchiveSettings = PLang.Runtime2.actions.archive.Settings;
+ using EngineType = PLang.Runtime2.Engine.@this;
+ 
+ namespace PLang.Tests.Runtime2.Engine.Settings;
+diff --git a/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs b/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
+index 3b2b4591..02c87ed4 100644
+--- a/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
++++ b/PLang.Tests/Runtime2/Errors/ErrorInfoTests.cs
+@@ -195,13 +195,13 @@ public class ErrorTests
+     {
+         var step = new Step { Index = 0, Text = "do something" };
+         var error1 = new Error("Original error", step);
+-        var error2 = new Error("Action error", step, "ActionError", 500);
++        var error2 = new Error("Handler error", step, "HandlerError", 500);
+         error1.ErrorChain.Add(error2);
+ 
+         var formatted = error1.Format();
+ 
+         await Assert.That(formatted).Contains("Error during error handling [1]");
+-        await Assert.That(formatted).Contains("ActionError(500)");
++        await Assert.That(formatted).Contains("HandlerError(500)");
+     }
+ 
+     [Test]
+diff --git a/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs b/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs
+deleted file mode 100644
+index 7b8875e2..00000000
+--- a/PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs
++++ /dev/null
+@@ -1,412 +0,0 @@
+-using PLang.Runtime2.Engine;
+-using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine.Errors;
+-using PLang.Runtime2.Engine.Goals.Goal;
+-using PLang.Runtime2.Engine.Memory;
+-
+-namespace PLang.Tests.Runtime2.Goals.Setup;
+-
+-public class SetupTests
+-{
+-    private string _tempDir = null!;
+-    private PLang.Runtime2.Engine.@this _engine = null!;
+-
+-    [Before(Test)]
+-    public void SetUp()
+-    {
+-        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
+-        System.IO.Directory.CreateDirectory(_tempDir);
+-        var fs = new PLang.SafeFileSystem.PLangFileSystem(_tempDir, "");
+-        _engine = new PLang.Runtime2.Engine.@this(fs);
+-    }
+-
+-    [After(Test)]
+-    public void TearDown()
+-    {
+-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+-        if (System.IO.Directory.Exists(_tempDir))
+-            System.IO.Directory.Delete(_tempDir, true);
+-    }
+-
+-    [Test]
+-    public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
+-    {
+-        _engine.Goals.Add(new Goal { Name = "Zebra", IsSetup = true });
+-        _engine.Goals.Add(new Goal { Name = "Setup", IsSetup = true });
+-        _engine.Goals.Add(new Goal { Name = "Alpha", IsSetup = true });
+-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+-
+-        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+-
+-        await Assert.That(setupGoals.Count).IsEqualTo(3);
+-        await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
+-        await Assert.That(setupGoals[1].Name).IsEqualTo("Alpha");
+-        await Assert.That(setupGoals[2].Name).IsEqualTo("Zebra");
+-    }
+-
+-    [Test]
+-    public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
+-    {
+-        _engine.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
+-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+-
+-        var found = _engine.Goals.Get("SetupGoal");
+-        var normal = _engine.Goals.Get("NormalGoal");
+-
+-        await Assert.That(found).IsNull();
+-        await Assert.That(normal).IsNotNull();
+-    }
+-
+-    [Test]
+-    public async Task IsExecuted_ReturnsFalse_ForNewStep()
+-    {
+-        var step = new Step { Hash = "abc123", Text = "do something" };
+-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+-
+-        await Assert.That(result).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task Record_ThenIsExecuted_ReturnsTrue()
+-    {
+-        var step = new Step { Hash = "abc123", Text = "do something", Index = 0 };
+-
+-        await _engine.Goals.Setup.Record(step, _engine);
+-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+-
+-        await Assert.That(result).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsExecuted_ReturnsFalse_ForNullHash()
+-    {
+-        var step = new Step { Hash = null, Text = "no hash" };
+-        var result = await _engine.Goals.Setup.IsExecuted(step, _engine);
+-
+-        await Assert.That(result).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_SkipsAlreadyExecutedSteps()
+-    {
+-        // Create a setup goal with two steps
+-        var step1 = new Step { Index = 0, Text = "step one", Hash = "skip_hash1",
+-            Actions = CreateNoOpActions() };
+-        var step2 = new Step { Index = 1, Text = "step two", Hash = "skip_hash2",
+-            Actions = CreateNoOpActions() };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
+-        };
+-        step1.Goal = goal;
+-        step2.Goal = goal;
+-
+-        _engine.Goals.Add(goal);
+-
+-        // Pre-record step1 with a distinctive marker value via raw DataSource.
+-        // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
+-        // If step1 is skipped, the marker survives.
+-        await _engine.System.DataSource.Set("setup", "skip_hash1", "MARKER_NOT_RE_EXECUTED");
+-
+-        // Run setup — step1 should be skipped, step2 should run
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+-        await Assert.That(result.Success).IsTrue();
+-
+-        // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
+-        var step1Data = await _engine.System.DataSource.Get("setup", "skip_hash1");
+-        await Assert.That(step1Data.Success).IsTrue();
+-        await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
+-
+-        // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
+-        var step2Data = await _engine.System.DataSource.Get("setup", "skip_hash2");
+-        await Assert.That(step2Data.Success).IsTrue();
+-        await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_RerunsStepWithChangedHash()
+-    {
+-        var step = new Step { Index = 0, Text = "create table", Hash = "original_hash",
+-            Actions = CreateNoOpActions() };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+-        };
+-        step.Goal = goal;
+-        _engine.Goals.Add(goal);
+-
+-        // Record with original hash
+-        await _engine.Goals.Setup.Record(step, _engine);
+-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
+-
+-        // Simulate changed step (different hash) — new step object with different hash
+-        var changedStep = new Step { Index = 0, Text = "create table v2", Hash = "changed_hash",
+-            Actions = CreateNoOpActions() };
+-        changedStep.Goal = goal;
+-
+-        // The changed step should NOT be found as executed
+-        await Assert.That(await _engine.Goals.Setup.IsExecuted(changedStep, _engine)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_SetsAndClearsContextSetup()
+-    {
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this()
+-        };
+-        _engine.Goals.Add(goal);
+-
+-        var context = _engine.Context;
+-
+-        await Assert.That(context.Setup).IsNull();
+-
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, context);
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
+-    }
+-
+-    [Test]
+-    public async Task Clone_PreservesSetup()
+-    {
+-        var context = _engine.Context;
+-        context.Setup = _engine.Goals.Setup;
+-
+-        var clone = context.Clone();
+-
+-        await Assert.That(clone.Setup).IsEqualTo(context.Setup);
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_FailedStepNotRecorded()
+-    {
+-        // A step that fails (unknown module) and does NOT have IgnoreError
+-        var step = new Step
+-        {
+-            Index = 0, Text = "failing step", Hash = "fail_hash",
+-            Actions = CreateFailingActions()
+-        };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+-        };
+-        step.Goal = goal;
+-        _engine.Goals.Add(goal);
+-
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+-
+-        // Setup should fail
+-        await Assert.That(result.Success).IsFalse();
+-        // Step should NOT be recorded — it needs to re-run on next startup
+-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_ToleratedErrorStepIsRecorded()
+-    {
+-        // A step that fails but has IgnoreError = true
+-        var step = new Step
+-        {
+-            Index = 0, Text = "tolerated failure", Hash = "tolerated_hash",
+-            OnError = new ErrorHandler { IgnoreError = true },
+-            Actions = CreateFailingActions()
+-        };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+-        };
+-        step.Goal = goal;
+-        _engine.Goals.Add(goal);
+-
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+-
+-        // Setup should succeed (error tolerated)
+-        await Assert.That(result.Success).IsTrue();
+-        // Step SHOULD be recorded — error was tolerated
+-        await Assert.That(await _engine.Goals.Setup.IsExecuted(step, _engine)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_AbortsSetup_WhenRecordFails()
+-    {
+-        var step = new Step { Index = 0, Text = "good step", Hash = "record_fail_hash",
+-            Actions = CreateNoOpActions() };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
+-        };
+-        step.Goal = goal;
+-        _engine.Goals.Add(goal);
+-
+-        // Force DataSource creation so the DB file exists
+-        _ = _engine.System.DataSource;
+-
+-        // Corrupt the database file — Record() will fail trying to write
+-        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
+-        System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
+-
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+-
+-        // Setup should abort because Record couldn't write to the corrupted DB
+-        await Assert.That(result.Success).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task RunAsync_CancellationAborts()
+-    {
+-        var step1 = new Step { Index = 0, Text = "step one", Hash = "cancel_hash1",
+-            Actions = CreateNoOpActions() };
+-        var step2 = new Step { Index = 1, Text = "step two", Hash = "cancel_hash2",
+-            Actions = CreateNoOpActions() };
+-        var goal = new Goal
+-        {
+-            Name = "Setup", IsSetup = true,
+-            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
+-        };
+-        step1.Goal = goal;
+-        step2.Goal = goal;
+-        _engine.Goals.Add(goal);
+-
+-        // Cancel after the first step completes
+-        using var cts = new CancellationTokenSource();
+-        cts.Cancel();
+-
+-        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context, cts.Token);
+-
+-        // Setup should abort with cancellation error
+-        await Assert.That(result.Success).IsFalse();
+-        await Assert.That(result.Error).IsNotNull();
+-        await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
+-    }
+-
+-    // --- DiscoverAsync tests ---
+-
+-    [Test]
+-    public async Task DiscoverAsync_OnlyLoadsSetupGoals()
+-    {
+-        // Create .pr files on disk — one setup, one non-setup
+-        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+-        System.IO.Directory.CreateDirectory(buildDir);
+-
+-        System.IO.File.WriteAllText(
+-            System.IO.Path.Combine(buildDir, "setup.pr"),
+-            """{"name":"Setup","isSetup":true,"steps":[]}""");
+-        System.IO.File.WriteAllText(
+-            System.IO.Path.Combine(buildDir, "start.pr"),
+-            """{"name":"Start","isSetup":false,"steps":[]}""");
+-
+-        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+-
+-        await Assert.That(result.Success).IsTrue();
+-        // Only the setup goal should be in the collection
+-        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+-        await Assert.That(setupGoals.Count).IsEqualTo(1);
+-        await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
+-        // Non-setup goal should NOT be in the collection
+-        await Assert.That(_engine.Goals.Get("Start")).IsNull();
+-    }
+-
+-    [Test]
+-    public async Task DiscoverAsync_NonSetupGoalsRemainLazyLoadable()
+-    {
+-        // Create .pr files on disk — one setup, one non-setup
+-        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+-        System.IO.Directory.CreateDirectory(buildDir);
+-
+-        System.IO.File.WriteAllText(
+-            System.IO.Path.Combine(buildDir, "setup.pr"),
+-            """{"name":"Setup","isSetup":true,"steps":[]}""");
+-        System.IO.File.WriteAllText(
+-            System.IO.Path.Combine(buildDir, "normalgoal.pr"),
+-            """{"name":"NormalGoal","isSetup":false,"steps":[]}""");
+-
+-        // Discover — only setup goals loaded
+-        await _engine.Goals.Setup.DiscoverAsync(_engine);
+-
+-        // Non-setup goal should not be in collection yet
+-        await Assert.That(_engine.Goals.Get("NormalGoal")).IsNull();
+-
+-        // But it should be lazy-loadable via GetAsync
+-        var lazyLoaded = await _engine.Goals.GetAsync("NormalGoal");
+-        await Assert.That(lazyLoaded).IsNotNull();
+-        await Assert.That(lazyLoaded!.Name).IsEqualTo("NormalGoal");
+-    }
+-
+-    [Test]
+-    public async Task DiscoverAsync_HandlesEmptyDirectory()
+-    {
+-        // No .pr files at all
+-        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+-
+-        await Assert.That(result.Success).IsTrue();
+-        await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
+-    }
+-
+-    // --- IsTolerableError tests ---
+-
+-    [Test]
+-    public async Task IsTolerableError_RecognizesTableAlreadyExists()
+-    {
+-        var error = Data.FromError(new Error("SQLite Error 1: 'table users already exists'"));
+-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsTolerableError_RecognizesIndexAlreadyExists()
+-    {
+-        var error = Data.FromError(new Error("index idx_users_email already exists"));
+-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsTolerableError_RecognizesDuplicateColumnName()
+-    {
+-        var error = Data.FromError(new Error("duplicate column name: email"));
+-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task IsTolerableError_RejectsUnrelatedError()
+-    {
+-        var error = Data.FromError(new Error("connection refused"));
+-        await Assert.That(_engine.Goals.Setup.IsTolerableError(error)).IsFalse();
+-    }
+-
+-    [Test]
+-    public async Task IsTolerableError_ReturnsFalseForSuccess()
+-    {
+-        await Assert.That(_engine.Goals.Setup.IsTolerableError(Data.Ok())).IsFalse();
+-    }
+-
+-    /// <summary>
+-    /// Creates a minimal no-op Actions collection that won't fail during step execution.
+-    /// Steps with empty actions succeed immediately.
+-    /// </summary>
+-    private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
+-    {
+-        return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this();
+-    }
+-
+-    /// <summary>
+-    /// Creates an Actions collection with an unknown module that will fail at runtime.
+-    /// </summary>
+-    private static PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
+-    {
+-        return new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+-        {
+-            new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+-            {
+-                Module = "nonexistent",
+-                ActionName = "doesnotexist",
+-                Parameters = new List<Data>()
+-            }
+-        };
+-    }
+-}
+diff --git a/PLang.Tests/Runtime2/Modules/LibrariesTests.cs b/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
+index 846f07a2..6a5e226c 100644
+--- a/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
++++ b/PLang.Tests/Runtime2/Modules/LibrariesTests.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Tests.Runtime2.actions;
+ 
+@@ -226,46 +226,46 @@ public class LibrariesTests
+     #region EngineLibraries.GetCodeGenerated
+ 
+     [Test]
+-    public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
++    public async Task GetCodeGenerated_BuiltInAction_ReturnsHandler()
+     {
+         var libraries = new EngineLibraries();
+         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+-        var (action, error) = libraries.GetCodeGenerated("variable", "set", context);
++        var (handler, error) = libraries.GetCodeGenerated("variable", "set", context);
+ 
+-        await Assert.That(action).IsNotNull();
++        await Assert.That(handler).IsNotNull();
+         await Assert.That(error).IsNull();
+     }
+ 
+     [Test]
+-    public async Task GetCodeGenerated_ExplicitCodeGenAction_ReturnsAction()
++    public async Task GetCodeGenerated_ExplicitCodeGenHandler_ReturnsHandler()
+     {
+         var libraries = new EngineLibraries();
+-        var action = new MockCodeGenHandler();
+-        libraries.Register("custom", "run", action);
++        var handler = new MockCodeGenHandler();
++        libraries.Register("custom", "run", handler);
+         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+         var (result, error) = libraries.GetCodeGenerated("custom", "run", context);
+ 
+-        await Assert.That(result).IsEqualTo(action);
++        await Assert.That(result).IsEqualTo(handler);
+         await Assert.That(error).IsNull();
+     }
+ 
+     [Test]
+-    public async Task GetCodeGenerated_NonICodeGeneratedAction_ReturnsActionError()
++    public async Task GetCodeGenerated_NonICodeGeneratedHandler_ReturnsHandlerError()
+     {
+         var libraries = new EngineLibraries();
+         libraries.Register("legacy", "do", new MockHandler());
+         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+-        var (action, error) = libraries.GetCodeGenerated("legacy", "do", context);
++        var (handler, error) = libraries.GetCodeGenerated("legacy", "do", context);
+ 
+-        await Assert.That(action).IsNull();
++        await Assert.That(handler).IsNull();
+         await Assert.That(error).IsNotNull();
+-        await Assert.That(error!.Key).IsEqualTo("ActionError");
++        await Assert.That(error!.Key).IsEqualTo("HandlerError");
+     }
+ 
+     [Test]
+@@ -275,9 +275,9 @@ public class LibrariesTests
+         await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+         using var context = engine.CreateContext();
+ 
+-        var (action, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
++        var (handler, error) = libraries.GetCodeGenerated("nonexistent_xyz", "nope", context);
+ 
+-        await Assert.That(action).IsNull();
++        await Assert.That(handler).IsNull();
+         await Assert.That(error).IsNotNull();
+         await Assert.That(error!.Key).IsEqualTo("ActionNotFound");
+     }
+@@ -331,13 +331,13 @@ public class LibrariesTests
+         using var context = engine.CreateContext();
+ 
+         // variable.set is type-registered (discovered via [Action] attribute)
+-        var (action1, _) = libraries.GetCodeGenerated("variable", "set", context);
+-        var (action2, _) = libraries.GetCodeGenerated("variable", "set", context);
++        var (handler1, _) = libraries.GetCodeGenerated("variable", "set", context);
++        var (handler2, _) = libraries.GetCodeGenerated("variable", "set", context);
+ 
+         // Per-call instantiation — different instances each time
+-        await Assert.That(action1).IsNotNull();
+-        await Assert.That(action2).IsNotNull();
+-        await Assert.That(ReferenceEquals(action1, action2)).IsFalse();
++        await Assert.That(handler1).IsNotNull();
++        await Assert.That(handler2).IsNotNull();
++        await Assert.That(ReferenceEquals(handler1, handler2)).IsFalse();
+     }
+ 
+     #endregion
+@@ -430,7 +430,7 @@ public class LibrariesTests
+     {
+         var library = new Library("test", typeof(PLang.Runtime2.Engine.@this).Assembly);
+ 
+-        library.Discover("PLang.Runtime2.modules");
++        library.Discover("PLang.Runtime2.actions");
+ 
+         await Assert.That(library.Contains("variable", "set")).IsTrue();
+         await Assert.That(library.Contains("output", "write")).IsTrue();
+@@ -672,10 +672,10 @@ public class LibrariesTests
+     #region Mock handlers
+ 
+     /// <summary>
+-    /// IAction only — does NOT implement ICodeGenerated.
++    /// IClass only — does NOT implement ICodeGenerated.
+     /// Used to test the "handler doesn't implement ICodeGenerated" error path.
+     /// </summary>
+-    private class MockHandler : IAction
++    private class MockHandler : IClass
+     {
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+         public PLangContext Context { get; private set; } = null!;
+@@ -685,9 +685,9 @@ public class LibrariesTests
+     }
+ 
+     /// <summary>
+-    /// IAction + ICodeGenerated — the correct handler interface.
++    /// IClass + ICodeGenerated — the correct handler interface.
+     /// </summary>
+-    private class MockCodeGenHandler : IAction, ICodeGenerated
++    private class MockCodeGenHandler : IClass, ICodeGenerated
+     {
+         public string Tag { get; set; } = "";
+         public PLang.Runtime2.Engine.@this Engine { get; private set; } = null!;
+diff --git a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+index 2c6adc69..813ded66 100644
+--- a/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
++++ b/PLang.Tests/Runtime2/Modules/Path/PathTests.cs
+@@ -1,5 +1,5 @@
+ using PLang.SafeFileSystem;
+-using PLang.Runtime2.modules.file;
++using PLang.Runtime2.actions.file;
+ 
+ namespace PLang.Tests.Runtime2.Modules.Path;
+ 
+@@ -296,7 +296,7 @@ public class PathTests : IDisposable
+         var result = p.Read();
+ 
+         await Assert.That(result.Success).IsTrue();
+-        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
++        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+         await Assert.That(f).IsNotNull();
+         await Assert.That(f!.Value.Value).IsEqualTo("test content");
+     }
+@@ -325,7 +325,7 @@ public class PathTests : IDisposable
+         var result = p.List(new List { Path = p, Pattern = "*" });
+ 
+         await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+         await Assert.That(files).IsNotNull();
+         await Assert.That(files!.Length).IsEqualTo(2);
+         var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
+@@ -344,7 +344,7 @@ public class PathTests : IDisposable
+         var result = p.List(new List { Path = p, Pattern = "*.txt" });
+ 
+         await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+         await Assert.That(files!.Length).IsEqualTo(1);
+     }
+ 
+@@ -361,7 +361,7 @@ public class PathTests : IDisposable
+         var result = p.List(new List { Path = p, Pattern = "*", Recursive = true });
+ 
+         await Assert.That(result.Success).IsTrue();
+-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
++        var files = result.Value as PLang.Runtime2.actions.file.types.@file[];
+         await Assert.That(files!.Length).IsEqualTo(2);
+     }
+ 
+@@ -428,7 +428,7 @@ public class PathTests : IDisposable
+         var result = p.AsFile();
+ 
+         await Assert.That(result.Success).IsTrue();
+-        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
++        var f = result.Value as PLang.Runtime2.actions.file.types.@file;
+         await Assert.That(f).IsNotNull();
+         await Assert.That(f!.Exists).IsTrue();
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs b/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
+index 1977ba89..c517ec14 100644
+--- a/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
++++ b/PLang.Tests/Runtime2/Modules/assert/AssertTests.cs
+@@ -2,15 +2,15 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+-using AssertEquals = PLang.Runtime2.modules.assert.Equals;
+-using AssertNotEquals = PLang.Runtime2.modules.assert.NotEquals;
+-using AssertIsTrue = PLang.Runtime2.modules.assert.IsTrue;
+-using AssertIsFalse = PLang.Runtime2.modules.assert.IsFalse;
+-using AssertIsNull = PLang.Runtime2.modules.assert.IsNull;
+-using AssertIsNotNull = PLang.Runtime2.modules.assert.IsNotNull;
+-using AssertContains = PLang.Runtime2.modules.assert.Contains;
+-using AssertGreaterThan = PLang.Runtime2.modules.assert.GreaterThan;
+-using AssertLessThan = PLang.Runtime2.modules.assert.LessThan;
++using AssertEquals = PLang.Runtime2.actions.assert.Equals;
++using AssertNotEquals = PLang.Runtime2.actions.assert.NotEquals;
++using AssertIsTrue = PLang.Runtime2.actions.assert.IsTrue;
++using AssertIsFalse = PLang.Runtime2.actions.assert.IsFalse;
++using AssertIsNull = PLang.Runtime2.actions.assert.IsNull;
++using AssertIsNotNull = PLang.Runtime2.actions.assert.IsNotNull;
++using AssertContains = PLang.Runtime2.actions.assert.Contains;
++using AssertGreaterThan = PLang.Runtime2.actions.assert.GreaterThan;
++using AssertLessThan = PLang.Runtime2.actions.assert.LessThan;
+ 
+ namespace PLang.Tests.Runtime2.actions.assert;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+index 584e6603..b278b5a6 100644
+--- a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+@@ -1,9 +1,9 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.condition;
++using PLang.Runtime2.actions.condition;
+ using PLang.SafeFileSystem;
+-using FileResult = PLang.Runtime2.modules.file.types.file;
++using FileResult = PLang.Runtime2.actions.file.types.file;
+ 
+ namespace PLang.Tests.Runtime2.actions.condition;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs b/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
+index af6bb053..6ae0b9a0 100644
+--- a/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
++++ b/PLang.Tests/Runtime2/Modules/convert/ConvertTests.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.convert;
++using PLang.Runtime2.actions.convert;
+ 
+ namespace PLang.Tests.Runtime2.actions.convert;
+ 
+@@ -86,7 +86,7 @@ public class ConvertTests
+     {
+         var (context, _) = CreateContext();
+ 
+-        var action = new PLang.Runtime2.modules.convert.ToString
++        var action = new PLang.Runtime2.actions.convert.ToString
+             { Context = context, Value = 42 };
+         var result = await action.Run();
+ 
+@@ -98,7 +98,7 @@ public class ConvertTests
+     {
+         var (context, _) = CreateContext();
+ 
+-        var action = new PLang.Runtime2.modules.convert.ToString
++        var action = new PLang.Runtime2.actions.convert.ToString
+             { Context = context, Value = 3.14159, Format = "F2" };
+         var result = await action.Run();
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs b/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
+index 4422cd4f..eebcc310 100644
+--- a/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
++++ b/PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs
+@@ -175,7 +175,7 @@ public class DataSourceTests
+     [Test]
+     public async Task ResolveTableName_ReturnsLastNamespaceSegment()
+     {
+-        var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.modules.settings.Set));
++        var result = IDataSource.ResolveTableName(typeof(PLang.Runtime2.actions.settings.Set));
+         await Assert.That(result).IsEqualTo("settings");
+     }
+ 
+@@ -271,4 +271,141 @@ public class DataSourceTests
+         await Assert.That(error.Key).IsEqualTo("DataSourceError");
+         await Assert.That(error.StatusCode).IsEqualTo(500);
+     }
++
++    // --- In-memory datasource tests ---
++
++    [Test]
++    public async Task InMemory_CrudOperations()
++    {
++        using var ds = SqliteDataSource.InMemory("test_crud");
++
++        // Set
++        var setResult = await ds.Set("items", "key1", "value1");
++        await Assert.That(setResult.Success).IsTrue();
++
++        // Get
++        var getResult = await ds.Get("items", "key1");
++        await Assert.That(getResult.Success).IsTrue();
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("value1");
++
++        // Exists
++        var existsResult = await ds.Exists("items", "key1");
++        await Assert.That((bool)existsResult.Value!).IsTrue();
++
++        // GetAll
++        await ds.Set("items", "key2", "value2");
++        var allResult = await ds.GetAll("items");
++        var items = allResult.Value as List<Data>;
++        await Assert.That(items).IsNotNull();
++        await Assert.That(items!.Count).IsEqualTo(2);
++
++        // Remove
++        var removeResult = await ds.Remove("items", "key1");
++        await Assert.That(removeResult.Success).IsTrue();
++        var afterRemove = await ds.Exists("items", "key1");
++        await Assert.That((bool)afterRemove.Value!).IsFalse();
++    }
++
++    [Test]
++    public async Task InMemory_SchemaPersistsAcrossOperations()
++    {
++        using var ds = SqliteDataSource.InMemory("test_schema");
++
++        // First operation creates the table
++        await ds.Set("persistent", "key1", "value1");
++
++        // Second operation should see the same table (no re-creation needed)
++        var result = await ds.Get("persistent", "key1");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value?.ToString()).IsEqualTo("value1");
++
++        // Tables() should list it
++        var tablesResult = await ds.Tables();
++        var tables = tablesResult.Value as List<string>;
++        await Assert.That(tables).IsNotNull();
++        await Assert.That(tables!).Contains("persistent");
++    }
++
++    [Test]
++    public async Task InMemory_TwoNamesAreIsolated()
++    {
++        using var ds1 = SqliteDataSource.InMemory("db_alpha");
++        using var ds2 = SqliteDataSource.InMemory("db_beta");
++
++        await ds1.Set("shared", "key", "alpha_value");
++        await ds2.Set("shared", "key", "beta_value");
++
++        var result1 = await ds1.Get("shared", "key");
++        var result2 = await ds2.Get("shared", "key");
++
++        await Assert.That(result1.Value?.ToString()).IsEqualTo("alpha_value");
++        await Assert.That(result2.Value?.ToString()).IsEqualTo("beta_value");
++    }
++
++    [Test]
++    public async Task InMemory_DisposeClosesDb()
++    {
++        // Create, populate, dispose
++        var ds1 = SqliteDataSource.InMemory("disposable_db");
++        await ds1.Set("data", "key", "value");
++        ds1.Dispose();
++
++        // New datasource with same name should start empty (sentinel closed → DB vanished)
++        using var ds2 = SqliteDataSource.InMemory("disposable_db");
++        var result = await ds2.Get("data", "key");
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsNull();
++    }
++
++    [Test]
++    public async Task Actor_UsesInMemory_WhenTestingEnabled()
++    {
++        await using var engine = new PLangEngine(_tempDir);
++        engine.Testing.IsEnabled = true;
++
++        // Access DataSource — should be in-memory (no .db directory created)
++        var ds = engine.User.DataSource;
++        var setResult = await ds.Set("test_table", "k", "v");
++        await Assert.That(setResult.Success).IsTrue();
++
++        var getResult = await ds.Get("test_table", "k");
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
++
++        // Verify no .db directory was created on disk
++        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
++        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
++    }
++
++    [Test]
++    public async Task Actor_UsesInMemory_WhenBuildingEnabled()
++    {
++        await using var engine = new PLangEngine(_tempDir);
++        engine.Building.IsEnabled = true;
++
++        var ds = engine.User.DataSource;
++        var setResult = await ds.Set("build_table", "k", "v");
++        await Assert.That(setResult.Success).IsTrue();
++
++        var getResult = await ds.Get("build_table", "k");
++        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
++
++        // Verify no .db directory was created on disk
++        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
++        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
++    }
++
++    [Test]
++    public async Task Actor_UsesFileBacked_ByDefault()
++    {
++        await using var engine = new PLangEngine(_tempDir);
++        // Neither Testing nor Building enabled
++
++        var ds = engine.User.DataSource;
++        var setResult = await ds.Set("file_table", "k", "v");
++        await Assert.That(setResult.Success).IsTrue();
++
++        // Verify .db directory WAS created on disk
++        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
++        await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
++    }
+ }
+diff --git a/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs b/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
+index e5186bc0..4f90ce7f 100644
+--- a/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
++++ b/PLang.Tests/Runtime2/Modules/error/ThrowTests.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.error;
++using PLang.Runtime2.actions.error;
+ 
+ namespace PLang.Tests.Runtime2.actions.error;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs b/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
+index 3ef6c6e9..28d87b7a 100644
+--- a/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/event/EventHandlerTests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.@event;
+-using EventResult = PLang.Runtime2.modules.@event.types.@event;
++using PLang.Runtime2.actions.@event;
++using EventResult = PLang.Runtime2.actions.@event.types.@event;
+ 
+ namespace PLang.Tests.Runtime2.actions.EventTests;
+ 
+@@ -184,7 +184,7 @@ public class EventHandlerTests
+         await Assert.That(context.User.Events.Count).IsEqualTo(1);
+ 
+         // Now remove it
+-        var removeHandler = new PLang.Runtime2.modules.@event.Remove
++        var removeHandler = new PLang.Runtime2.actions.@event.Remove
+         {
+             Context = context,
+             EventId = ev!.id
+diff --git a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+index 1ab2ef94..973beb55 100644
+--- a/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/file/FileHandlerTests.cs
+@@ -1,9 +1,9 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.file;
++using PLang.Runtime2.actions.file;
+ using PLang.SafeFileSystem;
+-using FileResult = PLang.Runtime2.modules.file.types.file;
++using FileResult = PLang.Runtime2.actions.file.types.file;
+ 
+ namespace PLang.Tests.Runtime2.actions.file;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs b/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
+index 1780ee46..f7076f27 100644
+--- a/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
++++ b/PLang.Tests/Runtime2/Modules/library/LibraryLoadTests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
+-using PLang.Runtime2.modules.library;
++using PLang.Runtime2.actions;
++using PLang.Runtime2.actions.library;
+ 
+ namespace PLang.Tests.Runtime2.Modules.library;
+ 
+@@ -50,7 +50,7 @@ public class LibraryLoadTests
+             {
+                 Context = context,
+                 Path = assemblyPath,
+-                Namespace = "PLang.Runtime2.modules"
++                Namespace = "PLang.Runtime2.actions"
+             };
+ 
+             var libraryCountBefore = engine.Libraries.Value.Count;
+@@ -71,7 +71,7 @@ public class LibraryLoadTests
+             {
+                 Context = context,
+                 Path = assemblyPath,
+-                Namespace = "PLang.Runtime2.modules"
++                Namespace = "PLang.Runtime2.actions"
+             };
+ 
+             var result = await load.Run();
+@@ -113,7 +113,7 @@ public class LibraryLoadTests
+             {
+                 Context = context,
+                 Path = assemblyPath,
+-                Namespace = "PLang.Runtime2.modules"
++                Namespace = "PLang.Runtime2.actions"
+             };
+ 
+             var result = await load.Run();
+@@ -154,7 +154,7 @@ public class LibraryLoadTests
+             {
+                 Context = context,
+                 Path = assemblyPath,
+-                Namespace = "PLang.Runtime2.modules"
++                Namespace = "PLang.Runtime2.actions"
+             };
+ 
+             var result = await load.Run();
+@@ -162,8 +162,8 @@ public class LibraryLoadTests
+ 
+             // First-match-wins means built-in [0] resolves first,
+             // but no errors should occur with multiple libraries
+-            var (action, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
+-            await Assert.That(action).IsNotNull();
++            var (handler, error) = engine.Libraries.GetCodeGenerated("variable", "set", context);
++            await Assert.That(handler).IsNotNull();
+             await Assert.That(error).IsNull();
+         }
+     }
+diff --git a/PLang.Tests/Runtime2/Modules/list/ListTests.cs b/PLang.Tests/Runtime2/Modules/list/ListTests.cs
+index c84f4fe9..03f562b7 100644
+--- a/PLang.Tests/Runtime2/Modules/list/ListTests.cs
++++ b/PLang.Tests/Runtime2/Modules/list/ListTests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.list;
+-using ListResult = PLang.Runtime2.modules.list.types.list;
++using PLang.Runtime2.actions.list;
++using ListResult = PLang.Runtime2.actions.list.types.list;
+ 
+ namespace PLang.Tests.Runtime2.actions.list;
+ 
+@@ -289,7 +289,7 @@ public class ListTests
+     {
+         var (context, _) = CreateContext();
+ 
+-        var action = new PLang.Runtime2.modules.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
++        var action = new PLang.Runtime2.actions.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
+         var result = await action.Run();
+ 
+         var listResult = result.Value as ListResult;
+diff --git a/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs b/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
+index 5eee7c2c..6eff82b9 100644
+--- a/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
++++ b/PLang.Tests/Runtime2/Modules/loop/ForeachTests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.loop;
+-using LoopResult = PLang.Runtime2.modules.loop.types.loop;
++using PLang.Runtime2.actions.loop;
++using LoopResult = PLang.Runtime2.actions.loop.types.loop;
+ 
+ namespace PLang.Tests.Runtime2.actions.loop;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/math/MathTests.cs b/PLang.Tests/Runtime2/Modules/math/MathTests.cs
+index 307b1fea..f1e03c0d 100644
+--- a/PLang.Tests/Runtime2/Modules/math/MathTests.cs
++++ b/PLang.Tests/Runtime2/Modules/math/MathTests.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.math;
++using PLang.Runtime2.actions.math;
+ 
+ namespace PLang.Tests.Runtime2.actions.math;
+ 
+@@ -225,7 +225,7 @@ public class MathTests
+     {
+         var (context, _) = CreateContext();
+ 
+-        var action = new PLang.Runtime2.modules.math.Random { Context = context, Min = 1, Max = 10 };
++        var action = new PLang.Runtime2.actions.math.Random { Context = context, Min = 1, Max = 10 };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+diff --git a/PLang.Tests/Runtime2/Modules/mock/MockTests.cs b/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
+index a6146edd..dc8299f4 100644
+--- a/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
++++ b/PLang.Tests/Runtime2/Modules/mock/MockTests.cs
+@@ -2,8 +2,8 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.mock;
+-using PLang.Runtime2.modules.mock.types;
++using PLang.Runtime2.actions.mock;
++using PLang.Runtime2.actions.mock.types;
+ 
+ namespace PLang.Tests.Runtime2.Modules.mock;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+index e0cc26df..e98841da 100644
+--- a/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
++++ b/PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs
+@@ -37,8 +37,8 @@ public class SettingsDataTests
+         // Store a setting via the System actor's DataSource
+         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-test-123");
+ 
+-        // SettingsData is registered on User actor MemoryStack (same as PLang code uses)
+-        var settingsData = _engine.Context.MemoryStack.Get("Settings");
++        // SettingsData is auto-registered on System actor MemoryStack
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("ApiKey");
+@@ -50,7 +50,7 @@ public class SettingsDataTests
+     [Test]
+     public async Task SettingsData_GetChild_MissingKey_ReturnsAskError()
+     {
+-        var settingsData = _engine.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("NonExistentKey");
+@@ -69,8 +69,8 @@ public class SettingsDataTests
+         // Store via DataSource
+         await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
+ 
+-        // Resolve via User MemoryStack dot notation (simulates %Settings.TestKey% in PLang code)
+-        var result = _engine.Context.MemoryStack.Get("Settings.TestKey");
++        // Resolve via MemoryStack dot notation (simulates %Settings.TestKey%)
++        var result = _engine.System.Context.MemoryStack.Get("Settings.TestKey");
+         await Assert.That(result).IsNotNull();
+         await Assert.That(result!.Success).IsTrue();
+         await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
+@@ -79,7 +79,7 @@ public class SettingsDataTests
+     [Test]
+     public async Task SettingsData_EmptyPath_ReturnsSelf()
+     {
+-        var settingsData = _engine.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+         await Assert.That(settingsData).IsNotNull();
+ 
+         var child = settingsData!.GetChild("");
+@@ -92,11 +92,11 @@ public class SettingsDataTests
+     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
+     {
+         await _engine.System.DataSource.Set("settings", "ApiKey", "old-value");
+-        var first = _engine.Context.MemoryStack.Get("Settings.ApiKey");
++        var first = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
+         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
+ 
+         await _engine.System.DataSource.Set("settings", "ApiKey", "new-value");
+-        var second = _engine.Context.MemoryStack.Get("Settings.ApiKey");
++        var second = _engine.System.Context.MemoryStack.Get("Settings.ApiKey");
+         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
+     }
+ 
+@@ -105,7 +105,7 @@ public class SettingsDataTests
+     {
+         // Use the settings.set action handler
+         var context = _engine.System.Context;
+-        var handler = new PLang.Runtime2.modules.settings.Set
++        var handler = new PLang.Runtime2.actions.settings.Set
+         {
+             Context = context,
+             Key = "HandlerKey",
+@@ -115,8 +115,8 @@ public class SettingsDataTests
+         var result = await handler.Run();
+         await Assert.That(result.Success).IsTrue();
+ 
+-        // Verify via User MemoryStack (what PLang code uses)
+-        var setting = _engine.Context.MemoryStack.Get("Settings.HandlerKey");
++        // Verify via SettingsData
++        var setting = _engine.System.Context.MemoryStack.Get("Settings.HandlerKey");
+         await Assert.That(setting).IsNotNull();
+         await Assert.That(setting!.Value?.ToString()).IsEqualTo("HandlerValue");
+     }
+@@ -126,7 +126,7 @@ public class SettingsDataTests
+     {
+         await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
+ 
+-        var handler = new PLang.Runtime2.modules.settings.Get
++        var handler = new PLang.Runtime2.actions.settings.Get
+         {
+             Context = _engine.System.Context,
+             Key = "TestKey"
+@@ -140,7 +140,7 @@ public class SettingsDataTests
+     [Test]
+     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
+     {
+-        var handler = new PLang.Runtime2.modules.settings.Get
++        var handler = new PLang.Runtime2.actions.settings.Get
+         {
+             Context = _engine.System.Context,
+             Key = "MissingKey"
+@@ -156,7 +156,7 @@ public class SettingsDataTests
+     {
+         await _engine.System.DataSource.Set("settings", "ToRemove", "value");
+ 
+-        var handler = new PLang.Runtime2.modules.settings.Remove
++        var handler = new PLang.Runtime2.actions.settings.Remove
+         {
+             Context = _engine.System.Context,
+             Key = "ToRemove"
+@@ -190,8 +190,8 @@ public class SettingsDataTests
+         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
+         await _engine.System.DataSource.Set("settings", "Config", config);
+ 
+-        // Resolve %Settings.Config.SubKey% via User MemoryStack
+-        var result = _engine.Context.MemoryStack.Get("Settings.Config.SubKey");
++        // Resolve %Settings.Config.SubKey%
++        var result = _engine.System.Context.MemoryStack.Get("Settings.Config.SubKey");
+         await Assert.That(result).IsNotNull();
+         await Assert.That(result!.Success).IsTrue();
+         await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
+@@ -205,8 +205,8 @@ public class SettingsDataTests
+         // Store a setting
+         await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
+ 
+-        // Clone the User MemoryStack
+-        var cloned = _engine.Context.MemoryStack.Clone();
++        // Clone the MemoryStack
++        var cloned = _engine.System.Context.MemoryStack.Clone();
+ 
+         // Settings should still work in the cloned stack
+         var result = cloned.Get("Settings.CloneKey");
+@@ -218,8 +218,8 @@ public class SettingsDataTests
+     [Test]
+     public async Task MemoryStack_Clone_SettingsData_MissingKey_ReturnsAskError()
+     {
+-        // Clone the User MemoryStack
+-        var cloned = _engine.Context.MemoryStack.Clone();
++        // Clone the MemoryStack
++        var cloned = _engine.System.Context.MemoryStack.Clone();
+ 
+         // Missing key in cloned stack should still return AskError
+         var result = cloned.Get("Settings.MissingInClone");
+@@ -238,7 +238,7 @@ public class SettingsDataTests
+         // 2. Regex matches the full variable: Settings.MissingKey
+         // 3. Calls __memoryStack.Get("Settings.MissingKey")
+         // 4. Checks if result is non-null and !Success → sets __resolutionError
+-        var memoryStack = _engine.Context.MemoryStack;
++        var memoryStack = _engine.System.Context.MemoryStack;
+ 
+         // This is the exact call the generated code makes
+         var resolved = memoryStack.Get("Settings.MissingKey");
+@@ -258,7 +258,7 @@ public class SettingsDataTests
+     public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
+     {
+         await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
+-        var memoryStack = _engine.Context.MemoryStack;
++        var memoryStack = _engine.System.Context.MemoryStack;
+ 
+         // Same call path as generated code
+         var resolved = memoryStack.Get("Settings.ApiKey");
+@@ -283,49 +283,11 @@ public class SettingsDataTests
+ 
+         // SettingsData.GetChild should return the DataSource error (line 54-55),
+         // not throw and not return AskError
+-        var settingsData = _engine.Context.MemoryStack.Get("Settings");
++        var settingsData = _engine.System.Context.MemoryStack.Get("Settings");
+         var child = settingsData!.GetChild("AnyKey");
+ 
+         await Assert.That(child).IsNotNull();
+         await Assert.That(child!.Success).IsFalse();
+         await Assert.That(child.Error is DataSourceError).IsTrue();
+     }
+-
+-    // --- Shared SettingsData across actors ---
+-
+-    [Test]
+-    public async Task SettingsData_SameObjectAcrossAllActors()
+-    {
+-        // All actors should share the exact same SettingsData instance
+-        var userSettings = _engine.User.Context.MemoryStack.Get("Settings");
+-        var systemSettings = _engine.System.Context.MemoryStack.Get("Settings");
+-        var serviceSettings = _engine.Service.Context.MemoryStack.Get("Settings");
+-
+-        await Assert.That(userSettings).IsNotNull();
+-        await Assert.That(systemSettings).IsNotNull();
+-        await Assert.That(serviceSettings).IsNotNull();
+-
+-        // Reference equality — same object
+-        await Assert.That(ReferenceEquals(userSettings, systemSettings)).IsTrue();
+-        await Assert.That(ReferenceEquals(userSettings, serviceSettings)).IsTrue();
+-    }
+-
+-    [Test]
+-    public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
+-    {
+-        // Store via System DataSource (the backing store)
+-        await _engine.System.DataSource.Set("settings", "SharedKey", "shared-value");
+-
+-        // Read from User context (what PLang code actually uses)
+-        var result = _engine.Context.MemoryStack.Get("Settings.SharedKey");
+-        await Assert.That(result).IsNotNull();
+-        await Assert.That(result!.Success).IsTrue();
+-        await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
+-
+-        // Read from Service context (should also work)
+-        var serviceResult = _engine.Service.Context.MemoryStack.Get("Settings.SharedKey");
+-        await Assert.That(serviceResult).IsNotNull();
+-        await Assert.That(serviceResult!.Success).IsTrue();
+-        await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");
+-    }
+ }
+diff --git a/PLang.Tests/Runtime2/Modules/variable/cleartests.cs b/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
+index d67c4a37..ecf074e7 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/cleartests.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.variable;
++using PLang.Runtime2.actions.variable;
+ 
+ namespace PLang.Tests.Runtime2.actions.variable;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/variable/existstests.cs b/PLang.Tests/Runtime2/Modules/variable/existstests.cs
+index cc05462b..a0cfa72c 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/existstests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/existstests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.variable;
+-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
++using PLang.Runtime2.actions.variable;
++using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+ 
+ namespace PLang.Tests.Runtime2.actions.variable;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/variable/gettests.cs b/PLang.Tests/Runtime2/Modules/variable/gettests.cs
+index b325bcd6..a854db14 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/gettests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/gettests.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.variable;
++using PLang.Runtime2.actions.variable;
+ 
+ namespace PLang.Tests.Runtime2.actions.variable;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/variable/removetests.cs b/PLang.Tests/Runtime2/Modules/variable/removetests.cs
+index a87a1c4c..2665bd3c 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/removetests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/removetests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.variable;
+-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
++using PLang.Runtime2.actions.variable;
++using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+ 
+ namespace PLang.Tests.Runtime2.actions.variable;
+ 
+diff --git a/PLang.Tests/Runtime2/Modules/variable/settests.cs b/PLang.Tests/Runtime2/Modules/variable/settests.cs
+index 751f1d49..a768d57f 100644
+--- a/PLang.Tests/Runtime2/Modules/variable/settests.cs
++++ b/PLang.Tests/Runtime2/Modules/variable/settests.cs
+@@ -1,8 +1,8 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules.variable;
+-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
++using PLang.Runtime2.actions.variable;
++using VariableResult = PLang.Runtime2.actions.variable.types.variable;
+ using Type = PLang.Runtime2.Engine.Memory.Type;
+ 
+ namespace PLang.Tests.Runtime2.actions.variable;
+diff --git a/PLang.Tests/Runtime2/Phase0Proof.cs b/PLang.Tests/Runtime2/Phase0Proof.cs
+index 9c7201bb..d66276a7 100644
+--- a/PLang.Tests/Runtime2/Phase0Proof.cs
++++ b/PLang.Tests/Runtime2/Phase0Proof.cs
+@@ -147,7 +147,7 @@ public class Phase0Proof
+     public async Task Phase04_ListType_IsPreserved()
+     {
+         // INPUT: Data.Ok with a list value and explicit list type
+-        var listValue = new PLang.Runtime2.modules.list.types.list
++        var listValue = new PLang.Runtime2.actions.list.types.list
+         {
+             count = 3,
+             value = new List<object?> { 1, 2, 3 }
+diff --git a/PLang/Executor.cs b/PLang/Executor.cs
+index 7e55afd0..48ee07fe 100644
+--- a/PLang/Executor.cs
++++ b/PLang/Executor.cs
+@@ -363,17 +363,6 @@ namespace PLang
+ 			foreach (var param in parameters)
+ 				engine.MemoryStack.Set(param.Key, param.Value);
+ 
+-			// Discover setup goals only — non-setup goals remain lazy-loaded via GetAsync.
+-			await engine.Goals.Setup.DiscoverAsync(engine, cancellationToken);
+-
+-			// Run setup goals before the main goal
+-			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
+-			if (!setupResult.Success) return setupResult;
+-
+-			// When goalName is "setup", only run setup — no main goal after
+-			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
+-				return setupResult;
+-
+ 			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);
+ 		}
+ 
+diff --git a/PLang/Modules/PlangModule/Program.cs b/PLang/Modules/PlangModule/Program.cs
+index c57b18bf..37ce480c 100644
+--- a/PLang/Modules/PlangModule/Program.cs
++++ b/PLang/Modules/PlangModule/Program.cs
+@@ -22,7 +22,7 @@ using R2GoalCall = PLang.Runtime2.Engine.Goals.Goal.GoalCall;
+ using GoalMapper = PLang.Runtime2.Engine.Utility.GoalMapper;
+ using TypeMapping = PLang.Runtime2.Engine.Utility.TypeMapping;
+ using AppData = PLang.Runtime2.Engine.Utility.AppData;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ using PLang.SafeFileSystem;
+ using PLang.Utils;
+ using System.Collections.Generic;
+@@ -74,7 +74,7 @@ namespace PLang.Modules.PlangModule
+ 					var parameters = new List<Runtime2.Engine.Memory.Data>();
+ 					System.Type? parameterType = null;
+ 
+-					// Try IAction-based handler first
++					// Try IClass-based handler first
+ 					var handler = libraries.Get(ns, className);
+ 					if (handler != null)
+ 					{
+@@ -111,10 +111,10 @@ namespace PLang.Modules.PlangModule
+ 								typeName += $"({string.Join("|", validValues)})";
+ 
+ 							// @var marker
+-							var hasVar = prop.GetCustomAttribute<Runtime2.modules.VariableNameAttribute>() != null;
++							var hasVar = prop.GetCustomAttribute<Runtime2.actions.VariableNameAttribute>() != null;
+ 
+ 							// Default value
+-							var defaultAttr = prop.GetCustomAttribute<Runtime2.modules.DefaultAttribute>();
++							var defaultAttr = prop.GetCustomAttribute<Runtime2.actions.DefaultAttribute>();
+ 
+ 							// Build compact description: "@var string" or "actor(user|service|system) = \"user\""
+ 							var desc = hasVar ? $"@var {typeName}" : typeName;
+@@ -130,7 +130,7 @@ namespace PLang.Modules.PlangModule
+ 				var actionType2 = libraries.GetActionType(ns, className);
+ 				if (actionType2 != null)
+ 				{
+-					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
++					var actionAttr = actionType2.GetCustomAttribute<Runtime2.actions.ActionAttribute>();
+ 					if (actionAttr != null)
+ 						cacheable = actionAttr.Cacheable;
+ 				}
+diff --git a/PLang/Runtime2/Engine/Build/this.cs b/PLang/Runtime2/Engine/Build/this.cs
+new file mode 100644
+index 00000000..7e4de36c
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Build/this.cs
+@@ -0,0 +1,21 @@
++namespace PLang.Runtime2.Engine.Build;
++
++/// <summary>
++/// Builder mode controller. When enabled, actors use in-memory datasources
++/// so the builder can validate SQL against real schema without creating files.
++/// Activated by: plang p build
++/// </summary>
++public sealed class @this
++{
++    private readonly Engine.@this _engine;
++
++    /// <summary>
++    /// Whether build mode is enabled.
++    /// </summary>
++    public bool IsEnabled { get; set; }
++
++    public @this(Engine.@this engine)
++    {
++        _engine = engine;
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Context/Actor.cs b/PLang/Runtime2/Engine/Context/Actor.cs
+index a7b6af32..68dd9952 100644
+--- a/PLang/Runtime2/Engine/Context/Actor.cs
++++ b/PLang/Runtime2/Engine/Context/Actor.cs
+@@ -61,13 +61,18 @@ public sealed class Actor : IAsyncDisposable
+         Context.Actor = this;
+         Channels = new EngineChannels(engine);
+ 
+-        // Register shared SettingsData — same object for all actors.
+-        // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
+-        Context.MemoryStack.Put(engine.SettingsVariable);
++        // Register Settings on the System actor's MemoryStack
++        if (string.Equals(name, "System", StringComparison.OrdinalIgnoreCase))
++        {
++            Context.MemoryStack.Put(new SettingsData(engine));
++        }
+     }
+ 
+     private IDataSource CreateDataSource()
+     {
++        if (Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
++            return SqliteDataSource.InMemory(Name.ToLowerInvariant());
++
+         var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
+         var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
+         return new SqliteDataSource(dbPath, Engine.FileSystem);
+diff --git a/PLang/Runtime2/Engine/Context/PLangContext.cs b/PLang/Runtime2/Engine/Context/PLangContext.cs
+index 54e24117..2af1c00a 100644
+--- a/PLang/Runtime2/Engine/Context/PLangContext.cs
++++ b/PLang/Runtime2/Engine/Context/PLangContext.cs
+@@ -4,7 +4,6 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+ using Action = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this;
+-using Setup = PLang.Runtime2.Engine.Goals.Setup.@this;
+ namespace PLang.Runtime2.Engine.Context;
+ 
+ /// <summary>
+@@ -88,13 +87,6 @@ public sealed class PLangContext : IDisposable
+     /// </summary>
+     public Data? EventOverride { get; set; }
+ 
+-    /// <summary>
+-    /// Set during setup execution, null otherwise.
+-    /// Steps check this to implement run-once semantics.
+-    /// Propagates through goal.call since Goal.RunAsync uses the same context object.
+-    /// </summary>
+-    public Setup? Setup { get; set; }
+-
+     /// <summary>
+     /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
+     /// to this context. Keys are "module.property" format (e.g., "archive.max").
+@@ -202,7 +194,6 @@ public sealed class PLangContext : IDisposable
+         var clone = new PLangContext(Engine, memoryStack ?? MemoryStack.Clone(), Parent)
+         {
+             IsAsync = IsAsync,
+-            Setup = Setup,
+             SettingsScope = SettingsScope?.Clone()
+         };
+ 
+diff --git a/PLang/Runtime2/Engine/DataSource/IDataSource.cs b/PLang/Runtime2/Engine/DataSource/IDataSource.cs
+index 36cd65cd..c5d0f67b 100644
+--- a/PLang/Runtime2/Engine/DataSource/IDataSource.cs
++++ b/PLang/Runtime2/Engine/DataSource/IDataSource.cs
+@@ -47,7 +47,7 @@ public interface IDataSource : IDisposable
+     /// <summary>
+     /// Resolves the table name from a System.Type.
+     /// Convention: last namespace segment, lowercased.
+-    /// e.g., PLang.Runtime2.modules.encryption → "encryption"
++    /// e.g., PLang.Runtime2.actions.encryption → "encryption"
+     /// </summary>
+     static string ResolveTableName(System.Type type)
+     {
+diff --git a/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs b/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
+index ad033b25..a0f18c53 100644
+--- a/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
++++ b/PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs
+@@ -15,6 +15,7 @@ namespace PLang.Runtime2.Engine.DataSource;
+ public sealed class SqliteDataSource : IDataSource
+ {
+     private readonly string _connectionString;
++    private readonly SqliteConnection? _sentinel;
+     private bool _disposed;
+ 
+     /// <summary>
+@@ -38,6 +39,31 @@ public sealed class SqliteDataSource : IDataSource
+         EnableWalMode();
+     }
+ 
++    /// <summary>
++    /// Creates an in-memory SqliteDataSource with a sentinel connection that keeps
++    /// the database alive for the lifetime of this instance.
++    /// </summary>
++    private SqliteDataSource(string name, bool inMemory)
++    {
++        _connectionString = new SqliteConnectionStringBuilder
++        {
++            DataSource = name,
++            Mode = SqliteOpenMode.Memory,
++            Cache = SqliteCacheMode.Shared
++        }.ToString();
++
++        // Sentinel keeps the in-memory DB alive across connection-per-operation usage
++        _sentinel = new SqliteConnection(_connectionString);
++        _sentinel.Open();
++    }
++
++    /// <summary>
++    /// Creates an in-memory SQLite datasource. The database lives as long as this instance.
++    /// Different names produce isolated databases.
++    /// </summary>
++    public static SqliteDataSource InMemory(string name)
++        => new SqliteDataSource(name, inMemory: true);
++
+     private void EnableWalMode()
+     {
+         try
+@@ -284,8 +310,15 @@ public sealed class SqliteDataSource : IDataSource
+     {
+         if (_disposed) return;
+         _disposed = true;
+-        // SQLite connections are pooled and manage their own cleanup.
+-        // Clear the connection pool for this data source.
++
++        // Close sentinel first — releases the in-memory DB so it can be garbage collected
++        if (_sentinel != null)
++        {
++            _sentinel.Close();
++            _sentinel.Dispose();
++        }
++
++        // Clear the connection pool for this data source
+         SqliteConnection.ClearPool(new SqliteConnection(_connectionString));
+     }
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+index f5744328..4a3bb61b 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Methods.cs
+@@ -54,8 +54,20 @@ public sealed partial class @this
+ 
+         try
+         {
+-            var stepsResult = await Steps.RunAsync(engine, context, cancellationToken);
+-            if (!stepsResult) return stepsResult;
++            for (var i = 0; i < Steps.Count; i++)
++            {
++                var step = Steps[i];
++
++                var stepResult = await step.RunAsync(engine, context, cancellationToken);
++                if (!stepResult)
++                {
++                    if (!(step.OnError?.IgnoreError ?? false))
++                        return stepResult;
++                }
++
++                if (cancellationToken.IsCancellationRequested)
++                    return Data.FromError(GoalError.Cancelled(context));
++            }
+ 
+             try
+             {
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/IAction.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/IAction.cs
+new file mode 100644
+index 00000000..688de138
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/IAction.cs
+@@ -0,0 +1,11 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
++
++public interface IAction
++{
++    string Class { get; }
++    string Method { get; }
++    List<Data> Parameters { get; }
++    List<Data>? Return { get; }
++}
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+index f5a29960..b303c1be 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action;
+ 
+@@ -17,16 +17,16 @@ public sealed partial class @this
+         Data result;
+         if (beforeResult.Handled)
+         {
+-            // Before-event provided an override — skip action
++            // Before-event provided an override — skip action handler
+             result = beforeResult;
+         }
+         else
+         {
+-            var (action, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
++            var (handler, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
+             if (error != null)
+                 return Data.FromError(error);
+ 
+-            result = await action!.CodeGeneratedExecuteAsync(Parameters, engine, context);
++            result = await handler!.CodeGeneratedExecuteAsync(Parameters, engine, context);
+         }
+ 
+         result.Context = context;
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+index 8f757e0b..9eaa4209 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+@@ -1,5 +1,4 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+ namespace PLang.Runtime2.Engine.Goals.Goal.Steps;
+@@ -20,49 +19,4 @@ public sealed class @this : List<Step.@this>
+         }
+         return Data.Ok();
+     }
+-
+-    /// <summary>
+-    /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
+-    /// When context.Setup is set, implements run-once semantics:
+-    /// skips already-executed steps and records new executions.
+-    /// </summary>
+-    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
+-    {
+-        for (var i = 0; i < Count; i++)
+-        {
+-            var step = this[i];
+-
+-            // Setup run-once check: skip steps that have already been executed
+-            if (context.Setup != null && await context.Setup.IsExecuted(step, engine))
+-                continue;
+-
+-            var stepResult = await step.RunAsync(engine, context, cancellationToken);
+-
+-            // Determine if the step error is tolerated:
+-            // - Success (no error)
+-            // - Explicit IgnoreError on the step
+-            // - Setup-tolerable errors (e.g. "already exists", "duplicate column name")
+-            var errorTolerated = stepResult.Success
+-                || (step.OnError?.IgnoreError ?? false)
+-                || (context.Setup != null && context.Setup.IsTolerableError(stepResult));
+-
+-            // Record in setup table only on success or tolerated errors.
+-            // Failed steps that abort setup must NOT be recorded — they need to re-run on next startup.
+-            // Recording failure aborts setup — if we can't track execution, re-running is safer than skipping.
+-            if (context.Setup != null && errorTolerated)
+-            {
+-                var recordResult = await context.Setup.Record(step, engine, stepResult.Success ? null : stepResult.Error);
+-                if (!recordResult.Success)
+-                    return recordResult;
+-            }
+-
+-            if (!stepResult && !errorTolerated)
+-                return stepResult;
+-
+-            if (cancellationToken.IsCancellationRequested)
+-                return Data.FromError(GoalError.Cancelled(context));
+-        }
+-
+-        return Data.Ok();
+-    }
+ }
+diff --git a/PLang/Runtime2/Engine/Goals/Setup/this.cs b/PLang/Runtime2/Engine/Goals/Setup/this.cs
+deleted file mode 100644
+index 59a1ace0..00000000
+--- a/PLang/Runtime2/Engine/Goals/Setup/this.cs
++++ /dev/null
+@@ -1,139 +0,0 @@
+-using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine.Errors;
+-using PLang.Runtime2.Engine.Memory;
+-
+-namespace PLang.Runtime2.Engine.Goals.Setup;
+-
+-/// <summary>
+-/// Run-once setup execution system.
+-/// Setup goals execute once-per-step at app startup. Steps are tracked
+-/// persistently in the "setup" table of engine.System.DataSource (system.sqlite),
+-/// keyed by step.Hash. New steps run on next startup. Changed steps (different hash) re-run.
+-/// </summary>
+-public sealed class @this
+-{
+-    private readonly EngineGoals _goals;
+-    private const string Table = "setup";
+-
+-    public @this(EngineGoals goals)
+-    {
+-        _goals = goals;
+-    }
+-
+-    /// <summary>
+-    /// Setup goals, ordered: goal named "Setup" first, then alphabetical.
+-    /// </summary>
+-    public IEnumerable<Goal.@this> Goals => _goals.AllIncludingSetup
+-        .Where(g => g.IsSetup)
+-        .OrderBy(g => g.Name.Equals("Setup", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+-        .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
+-
+-    /// <summary>
+-    /// Discovers setup goals by scanning .pr files on disk.
+-    /// Only setup goals (IsSetup == true) are added to the goals collection.
+-    /// Non-setup goals remain lazy-loadable via GetAsync — preserving the lazy-load convention.
+-    /// </summary>
+-    public async Task<Data> DiscoverAsync(Engine.@this engine, CancellationToken ct = default)
+-    {
+-        try
+-        {
+-            var files = engine.FileSystem.Directory.GetFiles(
+-                engine.AbsolutePath, "*.pr", SearchOption.AllDirectories);
+-
+-            foreach (var file in files)
+-            {
+-                try
+-                {
+-                    var goal = await engine.Channels.ReadAsync<Goal.@this>(file, ct);
+-                    if (goal == null || !goal.IsSetup) continue;
+-
+-                    foreach (var step in goal.Steps)
+-                        step.Goal = goal;
+-
+-                    _goals.Add(goal);
+-                }
+-                catch
+-                {
+-                    // Skip unparseable files — they'll fail when lazy-loaded later
+-                }
+-            }
+-
+-            return Data.Ok();
+-        }
+-        catch (Exception ex)
+-        {
+-            return Data.FromError(Error.FromException(ex));
+-        }
+-    }
+-
+-    /// <summary>
+-    /// Runs all setup goals. Sets context.Setup for the duration so Steps.RunAsync
+-    /// can check run-once semantics. Any goal called from within setup execution
+-    /// inherits the setup context (context.Setup propagates through goal.call).
+-    /// </summary>
+-    public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct = default)
+-    {
+-        context.Setup = this;
+-        try
+-        {
+-            foreach (var goal in Goals)
+-            {
+-                var loadResult = await goal.Load(context);
+-                if (!loadResult.Success) return loadResult;
+-
+-                var result = await goal.RunAsync(engine, context, ct);
+-                if (!result.Success) return result;
+-            }
+-            return Data.Ok();
+-        }
+-        finally
+-        {
+-            context.Setup = null;
+-        }
+-    }
+-
+-    /// <summary>
+-    /// Checks if a step has already been executed (by hash lookup in system DataSource).
+-    /// </summary>
+-    public async Task<bool> IsExecuted(Step step, Engine.@this engine)
+-    {
+-        if (string.IsNullOrEmpty(step.Hash)) return false;
+-
+-        var result = await engine.System.DataSource.Exists(Table, step.Hash);
+-        return result.Success && result.Value is true;
+-    }
+-
+-    /// <summary>
+-    /// Checks if a step error is automatically tolerable during setup.
+-    /// Matches runtime1 behavior: "already exists" (table/index) and "duplicate column name"
+-    /// are expected in idempotent setup re-runs and should not abort.
+-    /// </summary>
+-    public bool IsTolerableError(Data result)
+-    {
+-        if (result.Success) return false;
+-        var message = result.Error?.Message;
+-        if (string.IsNullOrEmpty(message)) return false;
+-        return message.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+-            || message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase);
+-    }
+-
+-    /// <summary>
+-    /// Records a step execution in the system DataSource.
+-    /// Returns Data so the caller can detect recording failures.
+-    /// </summary>
+-    public async Task<Data> Record(Step step, Engine.@this engine, IError? error = null)
+-    {
+-        if (string.IsNullOrEmpty(step.Hash)) return Data.Ok();
+-
+-        var metadata = new Dictionary<string, object?>
+-        {
+-            ["goalPath"] = step.Goal?.Path,
+-            ["stepIndex"] = step.Index,
+-            ["stepText"] = step.Text,
+-            ["executedAt"] = DateTime.UtcNow.ToString("O"),
+-            ["error"] = error?.Message
+-        };
+-
+-        return await engine.System.DataSource.Set(Table, step.Hash, metadata);
+-    }
+-}
+diff --git a/PLang/Runtime2/Engine/Goals/this.cs b/PLang/Runtime2/Engine/Goals/this.cs
+index d2cec6a6..74051d5f 100644
+--- a/PLang/Runtime2/Engine/Goals/this.cs
++++ b/PLang/Runtime2/Engine/Goals/this.cs
+@@ -16,17 +16,6 @@ public sealed class @this
+     private readonly ConcurrentDictionary<string, Goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
+     internal Engine.@this Engine { get; set; } = null!;
+ 
+-    /// <summary>
+-    /// Run-once setup execution system.
+-    /// Replaces the old IEnumerable&lt;Goal&gt; filter with a proper object.
+-    /// </summary>
+-    public Setup.@this Setup { get; }
+-
+-    public @this()
+-    {
+-        Setup = new Setup.@this(this);
+-    }
+-
+     /// <summary>
+     /// Adds a goal to the collection.
+     /// </summary>
+@@ -40,7 +29,6 @@ public sealed class @this
+ 
+     /// <summary>
+     /// Gets a goal by name from cache only.
+-    /// Setup goals are excluded — they are only reachable through Setup.RunAsync().
+     /// </summary>
+     public Goal.@this? Get(string name)
+     {
+@@ -52,11 +40,11 @@ public sealed class @this
+             name = name[..^5];
+ 
+         // Try exact match first
+-        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
++        if (_goals.TryGetValue(name, out var goal))
+             return goal;
+ 
+         // Try by path
+-        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
++        if (_byPath.TryGetValue(name, out goal))
+             return goal;
+ 
+         // Try with different extensions/variations
+@@ -71,9 +59,9 @@ public sealed class @this
+ 
+         foreach (var variation in variations)
+         {
+-            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
++            if (_goals.TryGetValue(variation, out goal))
+                 return goal;
+-            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
++            if (_byPath.TryGetValue(variation, out goal))
+                 return goal;
+         }
+ 
+@@ -117,7 +105,6 @@ public sealed class @this
+                 if (relResult.Success)
+                 {
+                     var loaded = relResult.Value as Goal.@this;
+-                    if (loaded is { IsSetup: true }) return null;
+                     if (loaded != null && !string.IsNullOrEmpty(name))
+                         _byPath[name] = loaded;
+                     return loaded;
+@@ -135,7 +122,6 @@ public sealed class @this
+             return null;
+ 
+         var result = loadResult.Value as Goal.@this;
+-        if (result is { IsSetup: true }) return null;
+         if (result != null && !string.IsNullOrEmpty(name))
+             _byPath[name] = result;
+         return result;
+@@ -175,29 +161,29 @@ public sealed class @this
+     public IEnumerable<string> Names => _goals.Keys;
+ 
+     /// <summary>
+-    /// All goals including setup and event goals. Used internally by Setup.Goals.
++    /// Gets all goals as a list.
+     /// </summary>
+-    internal IEnumerable<Goal.@this> AllIncludingSetup => _goals.Values;
++    public IReadOnlyList<Goal.@this> Value => _goals.Values.ToList();
+ 
+     /// <summary>
+-    /// Gets all non-setup goals as a list.
++    /// Gets all goals.
+     /// </summary>
+-    public IReadOnlyList<Goal.@this> Value => _goals.Values.Where(g => !g.IsSetup).ToList();
++    public IEnumerable<Goal.@this> All => _goals.Values;
+ 
+     /// <summary>
+-    /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
++    /// Gets the count of goals.
+     /// </summary>
+-    public IEnumerable<Goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
++    public int Count => _goals.Count;
+ 
+     /// <summary>
+-    /// Gets the count of non-setup goals. Consistent with Get()/All.
++    /// Gets public goals only.
+     /// </summary>
+-    public int Count => _goals.Values.Count(g => !g.IsSetup);
++    public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
+ 
+     /// <summary>
+-    /// Gets public goals only.
++    /// Gets setup goals only.
+     /// </summary>
+-    public IEnumerable<Goal.@this> Public => _goals.Values.Where(g => g.Visibility == Goal.Visibility.Public);
++    public IEnumerable<Goal.@this> Setup => _goals.Values.Where(g => g.IsSetup);
+ 
+     /// <summary>
+     /// Gets event goals only.
+@@ -217,9 +203,9 @@ public sealed class @this
+         if (string.IsNullOrEmpty(prPath))
+             return null;
+ 
+-        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
++        // Check cache first
+         if (_byPath.TryGetValue(prPath, out var cached))
+-            return cached.IsSetup ? null : cached;
++            return cached;
+ 
+         // Resolve relative path against root directory
+         var absolutePath = Engine.FileSystem.Path.IsPathRooted(prPath)
+@@ -234,7 +220,6 @@ public sealed class @this
+             return null;
+ 
+         var loaded = loadResult.Value as Goal.@this;
+-        if (loaded is { IsSetup: true }) return null;
+         if (loaded != null)
+             _byPath[prPath] = loaded;
+         return loaded;
+diff --git a/PLang/Runtime2/Engine/Libraries/Library/this.cs b/PLang/Runtime2/Engine/Libraries/Library/this.cs
+index 6c3f3230..4b0605fe 100644
+--- a/PLang/Runtime2/Engine/Libraries/Library/this.cs
++++ b/PLang/Runtime2/Engine/Libraries/Library/this.cs
+@@ -1,16 +1,16 @@
+ using System.Collections.Concurrent;
+ using System.Reflection;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ 
+ namespace PLang.Runtime2.Engine.Libraries.Library;
+ 
+ /// <summary>
+-/// A single library — one assembly's worth of actions.
+-/// Owns action registration, discovery, and lookup scoped to this library.
++/// A single library — one assembly's worth of action handlers.
++/// Owns handler registration, discovery, and lookup scoped to this library.
+ /// </summary>
+ public sealed class @this
+ {
+-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IAction>> _actions = new(StringComparer.OrdinalIgnoreCase);
++    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IClass>> _handlers = new(StringComparer.OrdinalIgnoreCase);
+     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Type>> _actionTypes = new(StringComparer.OrdinalIgnoreCase);
+ 
+     public string Name { get; }
+@@ -29,7 +29,7 @@ public sealed class @this
+     {
+         if (Assembly == null) return;
+ 
+-        baseNamespace ??= "PLang.Runtime2.modules";
++        baseNamespace ??= "PLang.Runtime2.actions";
+ 
+         var actionAttrTypes = Assembly.GetTypes()
+             .Where(t => t.GetCustomAttribute<ActionAttribute>() != null
+@@ -50,17 +50,17 @@ public sealed class @this
+     }
+ 
+     /// <summary>
+-    /// Registers a specific action instance. Used by tests and custom modules.
++    /// Registers a specific handler instance. Used by tests and custom modules.
+     /// WARNING: Instance is shared — only use when you need to track state across calls (e.g., test counters).
+     /// </summary>
+-    public void Register(string module, string actionName, IAction action)
++    public void Register(string module, string actionName, IClass handler)
+     {
+-        var actions = _actions.GetOrAdd(module, _ => new ConcurrentDictionary<string, IAction>(StringComparer.OrdinalIgnoreCase));
+-        actions[actionName] = action;
++        var actions = _handlers.GetOrAdd(module, _ => new ConcurrentDictionary<string, IClass>(StringComparer.OrdinalIgnoreCase));
++        actions[actionName] = handler;
+     }
+ 
+     /// <summary>
+-    /// Registers an action Type for per-call instantiation (thread-safe).
++    /// Registers a handler Type for per-call instantiation (thread-safe).
+     /// </summary>
+     public void RegisterCodeGenerated(string module, string actionName, Type type)
+     {
+@@ -69,30 +69,30 @@ public sealed class @this
+     }
+ 
+     /// <summary>
+-    /// Gets an explicitly registered action instance.
++    /// Gets an explicitly registered handler instance.
+     /// </summary>
+-    public IAction? Get(string module, string actionName)
++    public IClass? Get(string module, string actionName)
+     {
+         if (string.IsNullOrEmpty(module) || string.IsNullOrEmpty(actionName))
+             return null;
+ 
+-        if (_actions.TryGetValue(module, out var actions) &&
+-            actions.TryGetValue(actionName, out var action))
+-            return action;
++        if (_handlers.TryGetValue(module, out var actions) &&
++            actions.TryGetValue(actionName, out var handler))
++            return handler;
+ 
+         return null;
+     }
+ 
+     /// <summary>
+-    /// Gets an action for execution. Returns ICodeGenerated or null.
++    /// Gets a handler for execution. Returns ICodeGenerated or null.
+     /// Explicit instances checked first, then per-call type instantiation.
+     /// </summary>
+     public ICodeGenerated? GetCodeGenerated(string module, string actionName)
+     {
+         // Check explicit instances first
+-        var action = Get(module, actionName);
+-        if (action != null)
+-            return action as ICodeGenerated;
++        var handler = Get(module, actionName);
++        if (handler != null)
++            return handler as ICodeGenerated;
+ 
+         // Per-call instantiation from registered Types
+         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
+@@ -118,17 +118,17 @@ public sealed class @this
+ 
+     public bool Contains(string module)
+     {
+-        return _actions.ContainsKey(module) || _actionTypes.ContainsKey(module);
++        return _handlers.ContainsKey(module) || _actionTypes.ContainsKey(module);
+     }
+ 
+     /// <summary>
+-    /// Gets the CLR type for an action, checking both explicit and type-registered actions.
++    /// Gets the CLR type for a handler, checking both explicit and type-registered handlers.
+     /// </summary>
+     public Type? GetActionType(string module, string actionName)
+     {
+-        var action = Get(module, actionName);
+-        if (action != null)
+-            return action.GetType();
++        var handler = Get(module, actionName);
++        if (handler != null)
++            return handler.GetType();
+ 
+         if (_actionTypes.TryGetValue(module, out var actionTypes) &&
+             actionTypes.TryGetValue(actionName, out var type))
+@@ -139,7 +139,7 @@ public sealed class @this
+ 
+     public IEnumerable<string> GetActions(string module)
+     {
+-        var classActions = _actions.TryGetValue(module, out var actions)
++        var classActions = _handlers.TryGetValue(module, out var actions)
+             ? actions.Keys : Enumerable.Empty<string>();
+         var actionTypeActions = _actionTypes.TryGetValue(module, out var actionTypes)
+             ? actionTypes.Keys : Enumerable.Empty<string>();
+@@ -147,28 +147,28 @@ public sealed class @this
+     }
+ 
+     public IEnumerable<string> Modules =>
+-        _actions.Keys.Concat(_actionTypes.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
++        _handlers.Keys.Concat(_actionTypes.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+ 
+     public int Count =>
+-        _actions.Values.Sum(c => c.Count) + _actionTypes.Values.Sum(c => c.Count);
++        _handlers.Values.Sum(c => c.Count) + _actionTypes.Values.Sum(c => c.Count);
+ 
+     /// <summary>
+-    /// Yields all explicitly registered action instances (for disposal on engine shutdown).
+-    /// Type-registered actions are per-call and need no disposal tracking.
++    /// Yields all explicitly registered handler instances (for disposal on engine shutdown).
++    /// Type-registered handlers are per-call and need no disposal tracking.
+     /// </summary>
+-    public IEnumerable<IAction> All
++    public IEnumerable<IClass> All
+     {
+         get
+         {
+-            foreach (var actions in _actions.Values)
+-                foreach (var action in actions.Values)
+-                    yield return action;
++            foreach (var actions in _handlers.Values)
++                foreach (var handler in actions.Values)
++                    yield return handler;
+         }
+     }
+ 
+     public void Clear()
+     {
+-        _actions.Clear();
++        _handlers.Clear();
+         _actionTypes.Clear();
+     }
+ }
+diff --git a/PLang/Runtime2/Engine/Libraries/this.cs b/PLang/Runtime2/Engine/Libraries/this.cs
+index d2506f55..44fe667a 100644
+--- a/PLang/Runtime2/Engine/Libraries/this.cs
++++ b/PLang/Runtime2/Engine/Libraries/this.cs
+@@ -1,10 +1,10 @@
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Errors;
+ namespace PLang.Runtime2.Engine.Libraries;
+ 
+ /// <summary>
+-/// Smart collection of libraries. Owns walk-the-list action resolution.
++/// Smart collection of libraries. Owns walk-the-list handler resolution.
+ /// Built-in library is always [0]. External DLLs can be added as additional libraries.
+ /// Replaces ActionRegistry entirely.
+ /// </summary>
+@@ -13,21 +13,21 @@ public sealed class @this
+     private readonly List<Library.@this> _libraries = new();
+ 
+     /// <summary>
+-    /// The built-in library containing PLang's own actions. Always [0].
++    /// The built-in library containing PLang's own action handlers. Always [0].
+     /// </summary>
+     public Library.@this BuiltIn => _libraries[0];
+ 
+     public @this()
+     {
+         var builtIn = new Library.@this("builtin", typeof(@this).Assembly);
+-        builtIn.Discover("PLang.Runtime2.modules");
++        builtIn.Discover("PLang.Runtime2.actions");
+         _libraries.Add(builtIn);
+     }
+ 
+     // === Convenience delegates to BuiltIn (backward compat) ===
+ 
+-    public void Register(string module, string actionName, IAction action) =>
+-        BuiltIn.Register(module, actionName, action);
++    public void Register(string module, string actionName, IClass handler) =>
++        BuiltIn.Register(module, actionName, handler);
+ 
+     public void RegisterCodeGenerated(string module, string actionName, Type type) =>
+         BuiltIn.RegisterCodeGenerated(module, actionName, type);
+@@ -35,22 +35,22 @@ public sealed class @this
+     // === Resolution: walks all libraries, first match wins ===
+ 
+     /// <summary>
+-    /// Resolves an action across all libraries. First match wins.
+-    /// Returns (action, null) on success, (null, error) on failure.
++    /// Resolves a handler across all libraries. First match wins.
++    /// Returns (handler, null) on success, (null, error) on failure.
+     /// </summary>
+-    public (ICodeGenerated? Action, IError? Error) GetCodeGenerated(
++    public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
+         string module, string actionName, PLangContext context)
+     {
+         foreach (var library in _libraries)
+         {
+             // Check explicit instances first (Register(instance) overrides discovered types)
+-            var action = library.Get(module, actionName);
+-            if (action != null)
++            var handler = library.Get(module, actionName);
++            if (handler != null)
+             {
+-                if (action is not ICodeGenerated codeGenerated)
++                if (handler is not ICodeGenerated codeGenerated)
+                     return (null, new ActionError(
+-                        $"Action '{module}.{actionName}' does not implement ICodeGenerated",
+-                        context, "ActionError", 500) { ActionModule = module, ActionName = actionName });
++                        $"Handler '{module}.{actionName}' does not implement ICodeGenerated",
++                        context, "HandlerError", 500) { ActionModule = module, ActionName = actionName });
+                 return (codeGenerated, null);
+             }
+ 
+@@ -82,9 +82,9 @@ public sealed class @this
+ 
+     public int Count => _libraries.Sum(l => l.Count);
+ 
+-    public IEnumerable<IAction> All => _libraries.SelectMany(l => l.All);
++    public IEnumerable<IClass> All => _libraries.SelectMany(l => l.All);
+ 
+-    public IAction? Get(string module, string actionName) =>
++    public IClass? Get(string module, string actionName) =>
+         _libraries.Select(l => l.Get(module, actionName)).FirstOrDefault(h => h != null);
+ 
+     public void Clear()
+diff --git a/PLang/Runtime2/Engine/Memory/Path.cs b/PLang/Runtime2/Engine/Memory/Path.cs
+index b3daa3f3..71c035c1 100644
+--- a/PLang/Runtime2/Engine/Memory/Path.cs
++++ b/PLang/Runtime2/Engine/Memory/Path.cs
+@@ -107,7 +107,7 @@ public sealed class Path
+ 
+     // --- Behavior methods (OBP: behavior belongs to the owner) ---
+ 
+-    public Data Copy(modules.file.Copy action)
++    public Data Copy(actions.file.Copy action)
+     {
+         if (!Exists)
+             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+@@ -122,7 +122,7 @@ public sealed class Path
+             else
+                 CopyDirectory(_absolutePath, dest.Absolute, action.Overwrite, action.IncludeSubfolders);
+ 
+-            return Data.Ok(new modules.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
++            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+         }
+         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+         {
+@@ -130,7 +130,7 @@ public sealed class Path
+         }
+     }
+ 
+-    public Data Move(modules.file.Move action)
++    public Data Move(actions.file.Move action)
+     {
+         if (!Exists)
+             return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+@@ -150,7 +150,7 @@ public sealed class Path
+                 _fs.Directory.Move(_absolutePath, dest.Absolute);
+             }
+ 
+-            return Data.Ok(new modules.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
++            return Data.Ok(new actions.file.types.@file(dest.Absolute, _fs, source: _absolutePath));
+         }
+         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+         {
+@@ -158,7 +158,7 @@ public sealed class Path
+         }
+     }
+ 
+-    public Data Delete(modules.file.Delete action)
++    public Data Delete(actions.file.Delete action)
+     {
+         try
+         {
+@@ -175,7 +175,7 @@ public sealed class Path
+             else if (!action.IgnoreIfNotFound)
+                 return Data.FromError(new ServiceError($"Not found: {Raw}", "NotFound", 404));
+ 
+-            return Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
++            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+         }
+         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+         {
+@@ -190,7 +190,7 @@ public sealed class Path
+ 
+         try
+         {
+-            var file = new modules.file.types.@file(_absolutePath, _fs);
++            var file = new actions.file.types.@file(_absolutePath, _fs);
+             _ = file.Value; // Eager-read so step cache captures content
+             return Data.Ok(file);
+         }
+@@ -200,7 +200,7 @@ public sealed class Path
+         }
+     }
+ 
+-    public Data List(modules.file.List action)
++    public Data List(actions.file.List action)
+     {
+         if (!_fs.Directory.Exists(_absolutePath))
+             return Data.FromError(new ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+@@ -209,7 +209,7 @@ public sealed class Path
+         {
+             var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+             var files = _fs.Directory.GetFiles(_absolutePath, action.Pattern, option)
+-                .Select(f => new modules.file.types.@file(f, _fs))
++                .Select(f => new actions.file.types.@file(f, _fs))
+                 .ToArray();
+             return Data.Ok(files);
+         }
+@@ -220,9 +220,9 @@ public sealed class Path
+     }
+ 
+     /// <summary>Wraps this path as a @file object — used by exists handler</summary>
+-    public Data AsFile() => Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
++    public Data AsFile() => Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+ 
+-    public async Task<Data> Save(modules.file.Save action)
++    public async Task<Data> Save(actions.file.Save action)
+     {
+         try
+         {
+@@ -239,7 +239,7 @@ public sealed class Path
+                     { Stream = stream, Data = action.Value, Extension = Extension });
+             }
+ 
+-            return Data.Ok(new modules.file.types.@file(_absolutePath, _fs));
++            return Data.Ok(new actions.file.types.@file(_absolutePath, _fs));
+         }
+         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+         {
+diff --git a/PLang/Runtime2/Engine/Settings/this.cs b/PLang/Runtime2/Engine/Settings/this.cs
+index 8ce990ae..ec22b086 100644
+--- a/PLang/Runtime2/Engine/Settings/this.cs
++++ b/PLang/Runtime2/Engine/Settings/this.cs
+@@ -66,7 +66,7 @@ public sealed class @this
+     /// </summary>
+     public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
+     {
+-        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.modules.archive" → "archive")
++        // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.actions.archive" → "archive")
+         var fullName = typeof(T).Namespace ?? "";
+         var lastDot = fullName.LastIndexOf('.');
+         var modulePrefix = lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 2999c74c..ef2822ba 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -1,8 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+-using PLang.Runtime2.Engine.DataSource;
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+-using PLang.Runtime2.modules;
++using PLang.Runtime2.actions;
+ using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
+ using System.Globalization;
+ using System.Text.RegularExpressions;
+@@ -113,13 +112,6 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public Settings.@this Settings { get; }
+ 
+-    /// <summary>
+-    /// Shared SettingsData instance registered on every actor's MemoryStack.
+-    /// Provides %Settings.X% variable resolution from system DataSource.
+-    /// Single instance — all actors share the same object.
+-    /// </summary>
+-    internal SettingsData SettingsVariable { get; }
+-
+     /// <summary>
+     /// Debug mode controller. Registers event handlers for step/goal debug output.
+     /// </summary>
+@@ -130,6 +122,11 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public Testing Testing { get; }
+ 
++    /// <summary>
++    /// Builder mode controller. When enabled, actors use in-memory datasources.
++    /// </summary>
++    public Build.@this Building { get; }
++
+     /// <summary>
+     /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
+     /// </summary>
+@@ -200,10 +197,10 @@ public sealed class @this : IAsyncDisposable
+         Events = new EngineEvents();
+         Debug = new Debugging(this);
+         Testing = new Testing(this);
++        Building = new Build.@this(this);
+         Types = new Types.@this();
+         Property = new Property(this);
+         Settings = new Settings.@this();
+-        SettingsVariable = new SettingsData(this);
+         _libraries = libraries ?? new EngineLibraries();
+         _goals = new EngineGoals { Engine = this };
+         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
+diff --git a/PLang/Runtime2/GlobalUsings.cs b/PLang/Runtime2/GlobalUsings.cs
+index bfcb9753..08285cf3 100644
+--- a/PLang/Runtime2/GlobalUsings.cs
++++ b/PLang/Runtime2/GlobalUsings.cs
+@@ -7,6 +7,7 @@ global using ErrorOrder = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.ErrorOrder
+ global using CacheSettings = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.CacheSettings;
+ global using StepCache = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.StepCache;
+ global using StepActions = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this;
++global using IAction = PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.IAction;
+ 
+ // Event types
+ global using EngineEvents = PLang.Runtime2.Engine.Events.@this;
+@@ -49,6 +50,10 @@ global using Debugging = PLang.Runtime2.Engine.Debug.@this;
+ global using Testing = PLang.Runtime2.Engine.Test.@this;
+ global using Property = PLang.Runtime2.Engine.Properties.@this;
+ 
++// Building: can't be global alias — v1 PLang.Building namespace conflict
++// Inside Engine.*: use Build.@this (child namespace resolves naturally)
++// Outside Engine.*: use PLang.Runtime2.Engine.Build.@this or per-file alias
++
+ // Engine: can't be global alias — namespace PLang.Runtime2.Engine shadows it from all PLang.Runtime2.* files
+ // Inside Engine.*: use Engine.@this (parent namespace resolves naturally)
+ // Outside PLang.Runtime2.*: use PLang.Runtime2.Engine.@this or per-file alias
+diff --git a/PLang/Runtime2/modules/Attributes.cs b/PLang/Runtime2/actions/Attributes.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/Attributes.cs
+rename to PLang/Runtime2/actions/Attributes.cs
+index 8ff86504..865275e5 100644
+--- a/PLang/Runtime2/modules/Attributes.cs
++++ b/PLang/Runtime2/actions/Attributes.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules;
++namespace PLang.Runtime2.actions;
+ 
+ [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+ public sealed class ActionAttribute : Attribute
+diff --git a/PLang/Runtime2/modules/IAction.cs b/PLang/Runtime2/actions/IClass.cs
+similarity index 85%
+rename from PLang/Runtime2/modules/IAction.cs
+rename to PLang/Runtime2/actions/IClass.cs
+index 8a3a5070..3fa9959c 100644
+--- a/PLang/Runtime2/modules/IAction.cs
++++ b/PLang/Runtime2/actions/IClass.cs
+@@ -2,9 +2,9 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+ using EngineType = PLang.Runtime2.Engine.@this;
+ 
+-namespace PLang.Runtime2.modules;
++namespace PLang.Runtime2.actions;
+ 
+-public interface IAction
++public interface IClass
+ {
+     EngineType Engine { get; }
+     PLangContext Context { get; }
+diff --git a/PLang/Runtime2/modules/ICodeGenerated.cs b/PLang/Runtime2/actions/ICodeGenerated.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/ICodeGenerated.cs
+rename to PLang/Runtime2/actions/ICodeGenerated.cs
+index af20dfd0..ef989d92 100644
+--- a/PLang/Runtime2/modules/ICodeGenerated.cs
++++ b/PLang/Runtime2/actions/ICodeGenerated.cs
+@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+ using EngineType = PLang.Runtime2.Engine.@this;
+ 
+-namespace PLang.Runtime2.modules;
++namespace PLang.Runtime2.actions;
+ 
+ /// <summary>
+ /// Implemented by generated partial handler classes to support lazy parameter resolution.
+diff --git a/PLang/Runtime2/modules/IContext.cs b/PLang/Runtime2/actions/IContext.cs
+similarity index 76%
+rename from PLang/Runtime2/modules/IContext.cs
+rename to PLang/Runtime2/actions/IContext.cs
+index db81a826..e913bc4f 100644
+--- a/PLang/Runtime2/modules/IContext.cs
++++ b/PLang/Runtime2/actions/IContext.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Context;
+ 
+-namespace PLang.Runtime2.modules;
++namespace PLang.Runtime2.actions;
+ 
+ public interface IContext
+ {
+diff --git a/PLang/Runtime2/modules/archive/Settings.cs b/PLang/Runtime2/actions/archive/Settings.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/archive/Settings.cs
+rename to PLang/Runtime2/actions/archive/Settings.cs
+index 852971dd..23ced13d 100644
+--- a/PLang/Runtime2/modules/archive/Settings.cs
++++ b/PLang/Runtime2/actions/archive/Settings.cs
+@@ -1,7 +1,7 @@
+ using System.IO.Compression;
+ using PLang.Runtime2.Engine.Settings;
+ 
+-namespace PLang.Runtime2.modules.archive;
++namespace PLang.Runtime2.actions.archive;
+ 
+ /// <summary>
+ /// Archive module settings. First use case for ISettings.
+diff --git a/PLang/Runtime2/modules/archive/types.cs b/PLang/Runtime2/actions/archive/types.cs
+similarity index 86%
+rename from PLang/Runtime2/modules/archive/types.cs
+rename to PLang/Runtime2/actions/archive/types.cs
+index d1ffaefb..d6ed6c97 100644
+--- a/PLang/Runtime2/modules/archive/types.cs
++++ b/PLang/Runtime2/actions/archive/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.archive;
++namespace PLang.Runtime2.actions.archive;
+ 
+ /// <summary>
+ /// Result types for archive module actions.
+diff --git a/PLang/Runtime2/modules/assert/AssertHelper.cs b/PLang/Runtime2/actions/assert/AssertHelper.cs
+similarity index 98%
+rename from PLang/Runtime2/modules/assert/AssertHelper.cs
+rename to PLang/Runtime2/actions/assert/AssertHelper.cs
+index 525e5474..3a3ac475 100644
+--- a/PLang/Runtime2/modules/assert/AssertHelper.cs
++++ b/PLang/Runtime2/actions/assert/AssertHelper.cs
+@@ -1,6 +1,6 @@
+ using System.Collections;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ /// <summary>
+ /// Helper for assertion comparisons. Handles type coercion for numeric comparisons.
+diff --git a/PLang/Runtime2/modules/assert/contains.cs b/PLang/Runtime2/actions/assert/contains.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/assert/contains.cs
+rename to PLang/Runtime2/actions/assert/contains.cs
+index 214853ec..afdd3506 100644
+--- a/PLang/Runtime2/modules/assert/contains.cs
++++ b/PLang/Runtime2/actions/assert/contains.cs
+@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ using System.Collections;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("contains")]
+ public partial class Contains : IContext
+diff --git a/PLang/Runtime2/modules/assert/equals.cs b/PLang/Runtime2/actions/assert/equals.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/assert/equals.cs
+rename to PLang/Runtime2/actions/assert/equals.cs
+index 4026a9fb..441ec5d6 100644
+--- a/PLang/Runtime2/modules/assert/equals.cs
++++ b/PLang/Runtime2/actions/assert/equals.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("equals")]
+ public partial class Equals : IContext
+diff --git a/PLang/Runtime2/modules/assert/greaterThan.cs b/PLang/Runtime2/actions/assert/greaterThan.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/assert/greaterThan.cs
+rename to PLang/Runtime2/actions/assert/greaterThan.cs
+index 05aa9d67..84318fbd 100644
+--- a/PLang/Runtime2/modules/assert/greaterThan.cs
++++ b/PLang/Runtime2/actions/assert/greaterThan.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("greaterThan")]
+ public partial class GreaterThan : IContext
+diff --git a/PLang/Runtime2/modules/assert/isFalse.cs b/PLang/Runtime2/actions/assert/isFalse.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/assert/isFalse.cs
+rename to PLang/Runtime2/actions/assert/isFalse.cs
+index a52c1f10..76e69380 100644
+--- a/PLang/Runtime2/modules/assert/isFalse.cs
++++ b/PLang/Runtime2/actions/assert/isFalse.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("isFalse")]
+ public partial class IsFalse : IContext
+diff --git a/PLang/Runtime2/modules/assert/isNotNull.cs b/PLang/Runtime2/actions/assert/isNotNull.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/assert/isNotNull.cs
+rename to PLang/Runtime2/actions/assert/isNotNull.cs
+index df631d25..2a63de55 100644
+--- a/PLang/Runtime2/modules/assert/isNotNull.cs
++++ b/PLang/Runtime2/actions/assert/isNotNull.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("isNotNull")]
+ public partial class IsNotNull : IContext
+diff --git a/PLang/Runtime2/modules/assert/isNull.cs b/PLang/Runtime2/actions/assert/isNull.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/assert/isNull.cs
+rename to PLang/Runtime2/actions/assert/isNull.cs
+index c70868b3..88f0fec0 100644
+--- a/PLang/Runtime2/modules/assert/isNull.cs
++++ b/PLang/Runtime2/actions/assert/isNull.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("isNull")]
+ public partial class IsNull : IContext
+diff --git a/PLang/Runtime2/modules/assert/isTrue.cs b/PLang/Runtime2/actions/assert/isTrue.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/assert/isTrue.cs
+rename to PLang/Runtime2/actions/assert/isTrue.cs
+index c42cf690..0b21f8c2 100644
+--- a/PLang/Runtime2/modules/assert/isTrue.cs
++++ b/PLang/Runtime2/actions/assert/isTrue.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("isTrue")]
+ public partial class IsTrue : IContext
+diff --git a/PLang/Runtime2/modules/assert/lessThan.cs b/PLang/Runtime2/actions/assert/lessThan.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/assert/lessThan.cs
+rename to PLang/Runtime2/actions/assert/lessThan.cs
+index d5d3dda5..2b61092c 100644
+--- a/PLang/Runtime2/modules/assert/lessThan.cs
++++ b/PLang/Runtime2/actions/assert/lessThan.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("lessThan")]
+ public partial class LessThan : IContext
+diff --git a/PLang/Runtime2/modules/assert/notEquals.cs b/PLang/Runtime2/actions/assert/notEquals.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/assert/notEquals.cs
+rename to PLang/Runtime2/actions/assert/notEquals.cs
+index 24cf49b5..f5a82cbd 100644
+--- a/PLang/Runtime2/modules/assert/notEquals.cs
++++ b/PLang/Runtime2/actions/assert/notEquals.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.assert;
++namespace PLang.Runtime2.actions.assert;
+ 
+ [Action("notEquals")]
+ public partial class NotEquals : IContext
+diff --git a/PLang/Runtime2/modules/assert/types.cs b/PLang/Runtime2/actions/assert/types.cs
+similarity index 69%
+rename from PLang/Runtime2/modules/assert/types.cs
+rename to PLang/Runtime2/actions/assert/types.cs
+index 4a3aa517..ec5f500d 100644
+--- a/PLang/Runtime2/modules/assert/types.cs
++++ b/PLang/Runtime2/actions/assert/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.assert.types;
++namespace PLang.Runtime2.actions.assert.types;
+ 
+ public record assert
+ {
+diff --git a/PLang/Runtime2/modules/condition/if.cs b/PLang/Runtime2/actions/condition/if.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/condition/if.cs
+rename to PLang/Runtime2/actions/condition/if.cs
+index 1c25ce5f..d075c0be 100644
+--- a/PLang/Runtime2/modules/condition/if.cs
++++ b/PLang/Runtime2/actions/condition/if.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.condition;
++namespace PLang.Runtime2.actions.condition;
+ 
+ [Action("if")]
+ public partial class If : IContext
+diff --git a/PLang/Runtime2/modules/convert/fromBase64.cs b/PLang/Runtime2/actions/convert/fromBase64.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/convert/fromBase64.cs
+rename to PLang/Runtime2/actions/convert/fromBase64.cs
+index 793e406c..2ef533d0 100644
+--- a/PLang/Runtime2/modules/convert/fromBase64.cs
++++ b/PLang/Runtime2/actions/convert/fromBase64.cs
+@@ -1,7 +1,7 @@
+ using System.Text;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("frombase64")]
+ public partial class FromBase64 : IContext
+diff --git a/PLang/Runtime2/modules/convert/fromJson.cs b/PLang/Runtime2/actions/convert/fromJson.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/convert/fromJson.cs
+rename to PLang/Runtime2/actions/convert/fromJson.cs
+index 9ae0d5f3..f8e92698 100644
+--- a/PLang/Runtime2/modules/convert/fromJson.cs
++++ b/PLang/Runtime2/actions/convert/fromJson.cs
+@@ -1,7 +1,7 @@
+ using System.Text.Json;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("fromjson")]
+ public partial class FromJson : IContext
+diff --git a/PLang/Runtime2/modules/convert/toBase64.cs b/PLang/Runtime2/actions/convert/toBase64.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/convert/toBase64.cs
+rename to PLang/Runtime2/actions/convert/toBase64.cs
+index b3173a9f..05bb1440 100644
+--- a/PLang/Runtime2/modules/convert/toBase64.cs
++++ b/PLang/Runtime2/actions/convert/toBase64.cs
+@@ -1,7 +1,7 @@
+ using System.Text;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("tobase64")]
+ public partial class ToBase64 : IContext
+diff --git a/PLang/Runtime2/modules/convert/toBool.cs b/PLang/Runtime2/actions/convert/toBool.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/convert/toBool.cs
+rename to PLang/Runtime2/actions/convert/toBool.cs
+index 2eba7884..d551504e 100644
+--- a/PLang/Runtime2/modules/convert/toBool.cs
++++ b/PLang/Runtime2/actions/convert/toBool.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("tobool")]
+ public partial class ToBool : IContext
+diff --git a/PLang/Runtime2/modules/convert/toDateTime.cs b/PLang/Runtime2/actions/convert/toDateTime.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/convert/toDateTime.cs
+rename to PLang/Runtime2/actions/convert/toDateTime.cs
+index 4ef10f3a..51884a2d 100644
+--- a/PLang/Runtime2/modules/convert/toDateTime.cs
++++ b/PLang/Runtime2/actions/convert/toDateTime.cs
+@@ -1,7 +1,7 @@
+ using System.Globalization;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("todatetime")]
+ public partial class ToDateTime : IContext
+diff --git a/PLang/Runtime2/modules/convert/toDouble.cs b/PLang/Runtime2/actions/convert/toDouble.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/convert/toDouble.cs
+rename to PLang/Runtime2/actions/convert/toDouble.cs
+index caec08f8..44dba9e5 100644
+--- a/PLang/Runtime2/modules/convert/toDouble.cs
++++ b/PLang/Runtime2/actions/convert/toDouble.cs
+@@ -1,7 +1,7 @@
+ using System.Globalization;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("todouble")]
+ public partial class ToDouble : IContext
+diff --git a/PLang/Runtime2/modules/convert/toInt.cs b/PLang/Runtime2/actions/convert/toInt.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/convert/toInt.cs
+rename to PLang/Runtime2/actions/convert/toInt.cs
+index 28e2487e..9e7e5168 100644
+--- a/PLang/Runtime2/modules/convert/toInt.cs
++++ b/PLang/Runtime2/actions/convert/toInt.cs
+@@ -1,7 +1,7 @@
+ using System.Globalization;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("toint")]
+ public partial class ToInt : IContext
+diff --git a/PLang/Runtime2/modules/convert/toJson.cs b/PLang/Runtime2/actions/convert/toJson.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/convert/toJson.cs
+rename to PLang/Runtime2/actions/convert/toJson.cs
+index 4c12d460..3f606838 100644
+--- a/PLang/Runtime2/modules/convert/toJson.cs
++++ b/PLang/Runtime2/actions/convert/toJson.cs
+@@ -1,7 +1,7 @@
+ using System.Text.Json;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("tojson")]
+ public partial class ToJson : IContext
+diff --git a/PLang/Runtime2/modules/convert/toLong.cs b/PLang/Runtime2/actions/convert/toLong.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/convert/toLong.cs
+rename to PLang/Runtime2/actions/convert/toLong.cs
+index 04f8d1c4..c6f749db 100644
+--- a/PLang/Runtime2/modules/convert/toLong.cs
++++ b/PLang/Runtime2/actions/convert/toLong.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("tolong")]
+ public partial class ToLong : IContext
+diff --git a/PLang/Runtime2/modules/convert/toString.cs b/PLang/Runtime2/actions/convert/toString.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/convert/toString.cs
+rename to PLang/Runtime2/actions/convert/toString.cs
+index 7d898647..8dc43d75 100644
+--- a/PLang/Runtime2/modules/convert/toString.cs
++++ b/PLang/Runtime2/actions/convert/toString.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.convert;
++namespace PLang.Runtime2.actions.convert;
+ 
+ [Action("tostring")]
+ public partial class ToString : IContext
+diff --git a/PLang/Runtime2/modules/convert/types.cs b/PLang/Runtime2/actions/convert/types.cs
+similarity index 68%
+rename from PLang/Runtime2/modules/convert/types.cs
+rename to PLang/Runtime2/actions/convert/types.cs
+index 5a6a4f78..86ff7f2e 100644
+--- a/PLang/Runtime2/modules/convert/types.cs
++++ b/PLang/Runtime2/actions/convert/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.convert.types;
++namespace PLang.Runtime2.actions.convert.types;
+ 
+ public record convert
+ {
+diff --git a/PLang/Runtime2/modules/error/throw.cs b/PLang/Runtime2/actions/error/throw.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/error/throw.cs
+rename to PLang/Runtime2/actions/error/throw.cs
+index 0c4f6427..26959b71 100644
+--- a/PLang/Runtime2/modules/error/throw.cs
++++ b/PLang/Runtime2/actions/error/throw.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.error;
++namespace PLang.Runtime2.actions.error;
+ 
+ [Action("throw", Cacheable = false)]
+ public partial class Throw : IContext
+diff --git a/PLang/Runtime2/modules/error/types.cs b/PLang/Runtime2/actions/error/types.cs
+similarity index 77%
+rename from PLang/Runtime2/modules/error/types.cs
+rename to PLang/Runtime2/actions/error/types.cs
+index c84c47d5..830f0d43 100644
+--- a/PLang/Runtime2/modules/error/types.cs
++++ b/PLang/Runtime2/actions/error/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.error.types;
++namespace PLang.Runtime2.actions.error.types;
+ 
+ public record error
+ {
+diff --git a/PLang/Runtime2/modules/event/afterAction.cs b/PLang/Runtime2/actions/event/afterAction.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/event/afterAction.cs
+rename to PLang/Runtime2/actions/event/afterAction.cs
+index f37d0fb9..3831f496 100644
+--- a/PLang/Runtime2/modules/event/afterAction.cs
++++ b/PLang/Runtime2/actions/event/afterAction.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("afterAction", Cacheable = false)]
+ public partial class AfterAction : IContext
+diff --git a/PLang/Runtime2/modules/event/afterGoal.cs b/PLang/Runtime2/actions/event/afterGoal.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/event/afterGoal.cs
+rename to PLang/Runtime2/actions/event/afterGoal.cs
+index 2ceac233..b0c8e547 100644
+--- a/PLang/Runtime2/modules/event/afterGoal.cs
++++ b/PLang/Runtime2/actions/event/afterGoal.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("afterGoal", Cacheable = false)]
+ public partial class AfterGoal : IContext
+diff --git a/PLang/Runtime2/modules/event/afterStep.cs b/PLang/Runtime2/actions/event/afterStep.cs
+similarity index 97%
+rename from PLang/Runtime2/modules/event/afterStep.cs
+rename to PLang/Runtime2/actions/event/afterStep.cs
+index cd9cba82..23a3906f 100644
+--- a/PLang/Runtime2/modules/event/afterStep.cs
++++ b/PLang/Runtime2/actions/event/afterStep.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("afterStep", Cacheable = false)]
+ public partial class AfterStep : IContext
+diff --git a/PLang/Runtime2/modules/event/beforeAction.cs b/PLang/Runtime2/actions/event/beforeAction.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/event/beforeAction.cs
+rename to PLang/Runtime2/actions/event/beforeAction.cs
+index 4a433bea..06d2b9ae 100644
+--- a/PLang/Runtime2/modules/event/beforeAction.cs
++++ b/PLang/Runtime2/actions/event/beforeAction.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("beforeAction", Cacheable = false)]
+ public partial class BeforeAction : IContext
+diff --git a/PLang/Runtime2/modules/event/beforeGoal.cs b/PLang/Runtime2/actions/event/beforeGoal.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/event/beforeGoal.cs
+rename to PLang/Runtime2/actions/event/beforeGoal.cs
+index cc6ba8cd..0d5aee96 100644
+--- a/PLang/Runtime2/modules/event/beforeGoal.cs
++++ b/PLang/Runtime2/actions/event/beforeGoal.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("beforeGoal", Cacheable = false)]
+ public partial class BeforeGoal : IContext
+diff --git a/PLang/Runtime2/modules/event/beforeStep.cs b/PLang/Runtime2/actions/event/beforeStep.cs
+similarity index 97%
+rename from PLang/Runtime2/modules/event/beforeStep.cs
+rename to PLang/Runtime2/actions/event/beforeStep.cs
+index 79a1f458..a6906e63 100644
+--- a/PLang/Runtime2/modules/event/beforeStep.cs
++++ b/PLang/Runtime2/actions/event/beforeStep.cs
+@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("beforeStep", Cacheable = false)]
+ public partial class BeforeStep : IContext
+diff --git a/PLang/Runtime2/modules/event/remove.cs b/PLang/Runtime2/actions/event/remove.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/event/remove.cs
+rename to PLang/Runtime2/actions/event/remove.cs
+index 5c613bfd..dd712a5f 100644
+--- a/PLang/Runtime2/modules/event/remove.cs
++++ b/PLang/Runtime2/actions/event/remove.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("remove", Cacheable = false)]
+ public partial class Remove : IContext
+diff --git a/PLang/Runtime2/modules/event/skipAction.cs b/PLang/Runtime2/actions/event/skipAction.cs
+similarity index 88%
+rename from PLang/Runtime2/modules/event/skipAction.cs
+rename to PLang/Runtime2/actions/event/skipAction.cs
+index 8a1482b4..dadbb42c 100644
+--- a/PLang/Runtime2/modules/event/skipAction.cs
++++ b/PLang/Runtime2/actions/event/skipAction.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.@event;
++namespace PLang.Runtime2.actions.@event;
+ 
+ [Action("skipAction", Cacheable = false)]
+ public partial class SkipAction : IContext
+diff --git a/PLang/Runtime2/modules/event/types.cs b/PLang/Runtime2/actions/event/types.cs
+similarity index 83%
+rename from PLang/Runtime2/modules/event/types.cs
+rename to PLang/Runtime2/actions/event/types.cs
+index 97021edc..23ecdb34 100644
+--- a/PLang/Runtime2/modules/event/types.cs
++++ b/PLang/Runtime2/actions/event/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.@event.types;
++namespace PLang.Runtime2.actions.@event.types;
+ 
+ public record @event
+ {
+diff --git a/PLang/Runtime2/modules/file/copy.cs b/PLang/Runtime2/actions/file/copy.cs
+similarity index 91%
+rename from PLang/Runtime2/modules/file/copy.cs
+rename to PLang/Runtime2/actions/file/copy.cs
+index 8e99b39f..0da2a801 100644
+--- a/PLang/Runtime2/modules/file/copy.cs
++++ b/PLang/Runtime2/actions/file/copy.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("copy", Cacheable = false)]
+ public partial class Copy : IContext
+diff --git a/PLang/Runtime2/modules/file/delete.cs b/PLang/Runtime2/actions/file/delete.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/file/delete.cs
+rename to PLang/Runtime2/actions/file/delete.cs
+index 70985e34..7313eba6 100644
+--- a/PLang/Runtime2/modules/file/delete.cs
++++ b/PLang/Runtime2/actions/file/delete.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("delete", Cacheable = false)]
+ public partial class Delete : IContext
+diff --git a/PLang/Runtime2/modules/file/exists.cs b/PLang/Runtime2/actions/file/exists.cs
+similarity index 84%
+rename from PLang/Runtime2/modules/file/exists.cs
+rename to PLang/Runtime2/actions/file/exists.cs
+index a9192ec0..13382130 100644
+--- a/PLang/Runtime2/modules/file/exists.cs
++++ b/PLang/Runtime2/actions/file/exists.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("exists")]
+ public partial class Exists : IContext
+diff --git a/PLang/Runtime2/modules/file/list.cs b/PLang/Runtime2/actions/file/list.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/file/list.cs
+rename to PLang/Runtime2/actions/file/list.cs
+index 91f3651f..482d6557 100644
+--- a/PLang/Runtime2/modules/file/list.cs
++++ b/PLang/Runtime2/actions/file/list.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("list")]
+ public partial class List : IContext
+diff --git a/PLang/Runtime2/modules/file/move.cs b/PLang/Runtime2/actions/file/move.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/file/move.cs
+rename to PLang/Runtime2/actions/file/move.cs
+index 8c994eeb..5a42dd92 100644
+--- a/PLang/Runtime2/modules/file/move.cs
++++ b/PLang/Runtime2/actions/file/move.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("move", Cacheable = false)]
+ public partial class Move : IContext
+diff --git a/PLang/Runtime2/modules/file/read.cs b/PLang/Runtime2/actions/file/read.cs
+similarity index 84%
+rename from PLang/Runtime2/modules/file/read.cs
+rename to PLang/Runtime2/actions/file/read.cs
+index 01c7a1c6..54ed155a 100644
+--- a/PLang/Runtime2/modules/file/read.cs
++++ b/PLang/Runtime2/actions/file/read.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("read")]
+ public partial class Read : IContext
+diff --git a/PLang/Runtime2/modules/file/save.cs b/PLang/Runtime2/actions/file/save.cs
+similarity index 86%
+rename from PLang/Runtime2/modules/file/save.cs
+rename to PLang/Runtime2/actions/file/save.cs
+index c03f7489..74b362e1 100644
+--- a/PLang/Runtime2/modules/file/save.cs
++++ b/PLang/Runtime2/actions/file/save.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.file;
++namespace PLang.Runtime2.actions.file;
+ 
+ [Action("save", Cacheable = false)]
+ public partial class Save : IContext
+diff --git a/PLang/Runtime2/modules/file/types.cs b/PLang/Runtime2/actions/file/types.cs
+similarity index 98%
+rename from PLang/Runtime2/modules/file/types.cs
+rename to PLang/Runtime2/actions/file/types.cs
+index 7fa60aeb..bf7c4b01 100644
+--- a/PLang/Runtime2/modules/file/types.cs
++++ b/PLang/Runtime2/actions/file/types.cs
+@@ -2,7 +2,7 @@ using PLang.Interfaces;
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Utility;
+ 
+-namespace PLang.Runtime2.modules.file.types;
++namespace PLang.Runtime2.actions.file.types;
+ 
+ public class @file
+ {
+diff --git a/PLang/Runtime2/modules/goal/call.cs b/PLang/Runtime2/actions/goal/call.cs
+similarity index 89%
+rename from PLang/Runtime2/modules/goal/call.cs
+rename to PLang/Runtime2/actions/goal/call.cs
+index 47cb36b7..b52ef4cb 100644
+--- a/PLang/Runtime2/modules/goal/call.cs
++++ b/PLang/Runtime2/actions/goal/call.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.goal;
++namespace PLang.Runtime2.actions.goal;
+ 
+ [Action("call")]
+ public partial class Call : IContext
+diff --git a/PLang/Runtime2/modules/library/load.cs b/PLang/Runtime2/actions/library/load.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/library/load.cs
+rename to PLang/Runtime2/actions/library/load.cs
+index 18730572..b2ea2fbd 100644
+--- a/PLang/Runtime2/modules/library/load.cs
++++ b/PLang/Runtime2/actions/library/load.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.library;
++namespace PLang.Runtime2.actions.library;
+ 
+ [Action("load", Cacheable = false)]
+ public partial class Load : IContext
+diff --git a/PLang/Runtime2/modules/library/types.cs b/PLang/Runtime2/actions/library/types.cs
+similarity index 69%
+rename from PLang/Runtime2/modules/library/types.cs
+rename to PLang/Runtime2/actions/library/types.cs
+index 7e133bf7..9dea23d5 100644
+--- a/PLang/Runtime2/modules/library/types.cs
++++ b/PLang/Runtime2/actions/library/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.library.types;
++namespace PLang.Runtime2.actions.library.types;
+ 
+ public record library
+ {
+diff --git a/PLang/Runtime2/modules/list/add.cs b/PLang/Runtime2/actions/list/add.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/list/add.cs
+rename to PLang/Runtime2/actions/list/add.cs
+index 6753b12b..3523ba7e 100644
+--- a/PLang/Runtime2/modules/list/add.cs
++++ b/PLang/Runtime2/actions/list/add.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("add", Cacheable = false)]
+ public partial class Add : IContext
+diff --git a/PLang/Runtime2/modules/list/contains.cs b/PLang/Runtime2/actions/list/contains.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/list/contains.cs
+rename to PLang/Runtime2/actions/list/contains.cs
+index dd2007c3..b9b6e69e 100644
+--- a/PLang/Runtime2/modules/list/contains.cs
++++ b/PLang/Runtime2/actions/list/contains.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("contains")]
+ public partial class Contains : IContext
+diff --git a/PLang/Runtime2/modules/list/count.cs b/PLang/Runtime2/actions/list/count.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/list/count.cs
+rename to PLang/Runtime2/actions/list/count.cs
+index 7df5aeff..20a14829 100644
+--- a/PLang/Runtime2/modules/list/count.cs
++++ b/PLang/Runtime2/actions/list/count.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("count")]
+ public partial class Count : IContext
+diff --git a/PLang/Runtime2/modules/list/first.cs b/PLang/Runtime2/actions/list/first.cs
+similarity index 91%
+rename from PLang/Runtime2/modules/list/first.cs
+rename to PLang/Runtime2/actions/list/first.cs
+index 88a230f6..462e50d1 100644
+--- a/PLang/Runtime2/modules/list/first.cs
++++ b/PLang/Runtime2/actions/list/first.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("first")]
+ public partial class First : IContext
+diff --git a/PLang/Runtime2/modules/list/flatten.cs b/PLang/Runtime2/actions/list/flatten.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/list/flatten.cs
+rename to PLang/Runtime2/actions/list/flatten.cs
+index f5f0a048..b12e3dad 100644
+--- a/PLang/Runtime2/modules/list/flatten.cs
++++ b/PLang/Runtime2/actions/list/flatten.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("flatten")]
+ public partial class Flatten : IContext
+diff --git a/PLang/Runtime2/modules/list/get.cs b/PLang/Runtime2/actions/list/get.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/list/get.cs
+rename to PLang/Runtime2/actions/list/get.cs
+index e61d3a12..38fc7a22 100644
+--- a/PLang/Runtime2/modules/list/get.cs
++++ b/PLang/Runtime2/actions/list/get.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("get")]
+ public partial class Get : IContext
+diff --git a/PLang/Runtime2/modules/list/indexof.cs b/PLang/Runtime2/actions/list/indexof.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/list/indexof.cs
+rename to PLang/Runtime2/actions/list/indexof.cs
+index d173f949..00526bd6 100644
+--- a/PLang/Runtime2/modules/list/indexof.cs
++++ b/PLang/Runtime2/actions/list/indexof.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("indexof")]
+ public partial class IndexOf : IContext
+diff --git a/PLang/Runtime2/modules/list/join.cs b/PLang/Runtime2/actions/list/join.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/list/join.cs
+rename to PLang/Runtime2/actions/list/join.cs
+index 73e9aef9..bec6be81 100644
+--- a/PLang/Runtime2/modules/list/join.cs
++++ b/PLang/Runtime2/actions/list/join.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("join")]
+ public partial class Join : IContext
+diff --git a/PLang/Runtime2/modules/list/last.cs b/PLang/Runtime2/actions/list/last.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/list/last.cs
+rename to PLang/Runtime2/actions/list/last.cs
+index 34106308..c27d23b2 100644
+--- a/PLang/Runtime2/modules/list/last.cs
++++ b/PLang/Runtime2/actions/list/last.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("last")]
+ public partial class Last : IContext
+diff --git a/PLang/Runtime2/modules/list/range.cs b/PLang/Runtime2/actions/list/range.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/list/range.cs
+rename to PLang/Runtime2/actions/list/range.cs
+index b3b2dad6..3197a7fc 100644
+--- a/PLang/Runtime2/modules/list/range.cs
++++ b/PLang/Runtime2/actions/list/range.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("range")]
+ public partial class Range : IContext
+diff --git a/PLang/Runtime2/modules/list/remove.cs b/PLang/Runtime2/actions/list/remove.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/list/remove.cs
+rename to PLang/Runtime2/actions/list/remove.cs
+index be48fe6c..dc3ea928 100644
+--- a/PLang/Runtime2/modules/list/remove.cs
++++ b/PLang/Runtime2/actions/list/remove.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("remove", Cacheable = false)]
+ public partial class Remove : IContext
+diff --git a/PLang/Runtime2/modules/list/reverse.cs b/PLang/Runtime2/actions/list/reverse.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/list/reverse.cs
+rename to PLang/Runtime2/actions/list/reverse.cs
+index 9f2dd05e..66e6e7a8 100644
+--- a/PLang/Runtime2/modules/list/reverse.cs
++++ b/PLang/Runtime2/actions/list/reverse.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("reverse", Cacheable = false)]
+ public partial class Reverse : IContext
+diff --git a/PLang/Runtime2/modules/list/set.cs b/PLang/Runtime2/actions/list/set.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/list/set.cs
+rename to PLang/Runtime2/actions/list/set.cs
+index 56bbcfdf..173daa27 100644
+--- a/PLang/Runtime2/modules/list/set.cs
++++ b/PLang/Runtime2/actions/list/set.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("set", Cacheable = false)]
+ public partial class Set : IContext
+diff --git a/PLang/Runtime2/modules/list/sort.cs b/PLang/Runtime2/actions/list/sort.cs
+similarity index 96%
+rename from PLang/Runtime2/modules/list/sort.cs
+rename to PLang/Runtime2/actions/list/sort.cs
+index 57803677..1457cbc1 100644
+--- a/PLang/Runtime2/modules/list/sort.cs
++++ b/PLang/Runtime2/actions/list/sort.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("sort", Cacheable = false)]
+ public partial class Sort : IContext
+diff --git a/PLang/Runtime2/modules/list/split.cs b/PLang/Runtime2/actions/list/split.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/list/split.cs
+rename to PLang/Runtime2/actions/list/split.cs
+index f960c434..7f2494d1 100644
+--- a/PLang/Runtime2/modules/list/split.cs
++++ b/PLang/Runtime2/actions/list/split.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("split")]
+ public partial class Split : IContext
+diff --git a/PLang/Runtime2/modules/list/types.cs b/PLang/Runtime2/actions/list/types.cs
+similarity index 68%
+rename from PLang/Runtime2/modules/list/types.cs
+rename to PLang/Runtime2/actions/list/types.cs
+index 3ce57c5e..378f6e46 100644
+--- a/PLang/Runtime2/modules/list/types.cs
++++ b/PLang/Runtime2/actions/list/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.list.types;
++namespace PLang.Runtime2.actions.list.types;
+ 
+ public record list
+ {
+diff --git a/PLang/Runtime2/modules/list/unique.cs b/PLang/Runtime2/actions/list/unique.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/list/unique.cs
+rename to PLang/Runtime2/actions/list/unique.cs
+index cd75e701..899279ad 100644
+--- a/PLang/Runtime2/modules/list/unique.cs
++++ b/PLang/Runtime2/actions/list/unique.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.list;
++namespace PLang.Runtime2.actions.list;
+ 
+ [Action("unique")]
+ public partial class Unique : IContext
+diff --git a/PLang/Runtime2/modules/loop/foreach.cs b/PLang/Runtime2/actions/loop/foreach.cs
+similarity index 98%
+rename from PLang/Runtime2/modules/loop/foreach.cs
+rename to PLang/Runtime2/actions/loop/foreach.cs
+index 30384c1c..70e39535 100644
+--- a/PLang/Runtime2/modules/loop/foreach.cs
++++ b/PLang/Runtime2/actions/loop/foreach.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.loop;
++namespace PLang.Runtime2.actions.loop;
+ 
+ [Action("foreach")]
+ public partial class Foreach : IContext
+diff --git a/PLang/Runtime2/modules/loop/types.cs b/PLang/Runtime2/actions/loop/types.cs
+similarity index 70%
+rename from PLang/Runtime2/modules/loop/types.cs
+rename to PLang/Runtime2/actions/loop/types.cs
+index a7909a3f..c4e522d8 100644
+--- a/PLang/Runtime2/modules/loop/types.cs
++++ b/PLang/Runtime2/actions/loop/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.loop.types;
++namespace PLang.Runtime2.actions.loop.types;
+ 
+ public record loop
+ {
+diff --git a/PLang/Runtime2/modules/math/MathHelper.cs b/PLang/Runtime2/actions/math/MathHelper.cs
+similarity index 98%
+rename from PLang/Runtime2/modules/math/MathHelper.cs
+rename to PLang/Runtime2/actions/math/MathHelper.cs
+index 18d862cb..ece6bb06 100644
+--- a/PLang/Runtime2/modules/math/MathHelper.cs
++++ b/PLang/Runtime2/actions/math/MathHelper.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ /// <summary>
+ /// Helper for numeric operations that preserves type when possible.
+diff --git a/PLang/Runtime2/modules/math/abs.cs b/PLang/Runtime2/actions/math/abs.cs
+similarity index 89%
+rename from PLang/Runtime2/modules/math/abs.cs
+rename to PLang/Runtime2/actions/math/abs.cs
+index 294fc5a6..961d5131 100644
+--- a/PLang/Runtime2/modules/math/abs.cs
++++ b/PLang/Runtime2/actions/math/abs.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("abs")]
+ public partial class Abs : IContext
+diff --git a/PLang/Runtime2/modules/math/add.cs b/PLang/Runtime2/actions/math/add.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/math/add.cs
+rename to PLang/Runtime2/actions/math/add.cs
+index 1e3602fa..c8b2ad2b 100644
+--- a/PLang/Runtime2/modules/math/add.cs
++++ b/PLang/Runtime2/actions/math/add.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("add")]
+ public partial class Add : IContext
+diff --git a/PLang/Runtime2/modules/math/ceiling.cs b/PLang/Runtime2/actions/math/ceiling.cs
+similarity index 89%
+rename from PLang/Runtime2/modules/math/ceiling.cs
+rename to PLang/Runtime2/actions/math/ceiling.cs
+index 907a0a34..6d376eee 100644
+--- a/PLang/Runtime2/modules/math/ceiling.cs
++++ b/PLang/Runtime2/actions/math/ceiling.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("ceiling")]
+ public partial class Ceiling : IContext
+diff --git a/PLang/Runtime2/modules/math/divide.cs b/PLang/Runtime2/actions/math/divide.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/math/divide.cs
+rename to PLang/Runtime2/actions/math/divide.cs
+index af26822c..f4c8a64f 100644
+--- a/PLang/Runtime2/modules/math/divide.cs
++++ b/PLang/Runtime2/actions/math/divide.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("divide")]
+ public partial class Divide : IContext
+diff --git a/PLang/Runtime2/modules/math/floor.cs b/PLang/Runtime2/actions/math/floor.cs
+similarity index 89%
+rename from PLang/Runtime2/modules/math/floor.cs
+rename to PLang/Runtime2/actions/math/floor.cs
+index 5a339f06..e89b7343 100644
+--- a/PLang/Runtime2/modules/math/floor.cs
++++ b/PLang/Runtime2/actions/math/floor.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("floor")]
+ public partial class Floor : IContext
+diff --git a/PLang/Runtime2/modules/math/max.cs b/PLang/Runtime2/actions/math/max.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/math/max.cs
+rename to PLang/Runtime2/actions/math/max.cs
+index 46bea3de..fd9dda67 100644
+--- a/PLang/Runtime2/modules/math/max.cs
++++ b/PLang/Runtime2/actions/math/max.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("max")]
+ public partial class Max : IContext
+diff --git a/PLang/Runtime2/modules/math/min.cs b/PLang/Runtime2/actions/math/min.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/math/min.cs
+rename to PLang/Runtime2/actions/math/min.cs
+index 4a1c2d98..f4c6bfaf 100644
+--- a/PLang/Runtime2/modules/math/min.cs
++++ b/PLang/Runtime2/actions/math/min.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("min")]
+ public partial class Min : IContext
+diff --git a/PLang/Runtime2/modules/math/modulo.cs b/PLang/Runtime2/actions/math/modulo.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/math/modulo.cs
+rename to PLang/Runtime2/actions/math/modulo.cs
+index 098cb808..2d42194b 100644
+--- a/PLang/Runtime2/modules/math/modulo.cs
++++ b/PLang/Runtime2/actions/math/modulo.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("modulo")]
+ public partial class Modulo : IContext
+diff --git a/PLang/Runtime2/modules/math/multiply.cs b/PLang/Runtime2/actions/math/multiply.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/math/multiply.cs
+rename to PLang/Runtime2/actions/math/multiply.cs
+index f31cda09..7079f2db 100644
+--- a/PLang/Runtime2/modules/math/multiply.cs
++++ b/PLang/Runtime2/actions/math/multiply.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("multiply")]
+ public partial class Multiply : IContext
+diff --git a/PLang/Runtime2/modules/math/power.cs b/PLang/Runtime2/actions/math/power.cs
+similarity index 91%
+rename from PLang/Runtime2/modules/math/power.cs
+rename to PLang/Runtime2/actions/math/power.cs
+index 7ffd0920..a595d650 100644
+--- a/PLang/Runtime2/modules/math/power.cs
++++ b/PLang/Runtime2/actions/math/power.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("power")]
+ public partial class Power : IContext
+diff --git a/PLang/Runtime2/modules/math/random.cs b/PLang/Runtime2/actions/math/random.cs
+similarity index 91%
+rename from PLang/Runtime2/modules/math/random.cs
+rename to PLang/Runtime2/actions/math/random.cs
+index c6e6e83c..5eaed84d 100644
+--- a/PLang/Runtime2/modules/math/random.cs
++++ b/PLang/Runtime2/actions/math/random.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("random")]
+ public partial class Random : IContext
+diff --git a/PLang/Runtime2/modules/math/round.cs b/PLang/Runtime2/actions/math/round.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/math/round.cs
+rename to PLang/Runtime2/actions/math/round.cs
+index eb6215e8..6053838c 100644
+--- a/PLang/Runtime2/modules/math/round.cs
++++ b/PLang/Runtime2/actions/math/round.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("round")]
+ public partial class Round : IContext
+diff --git a/PLang/Runtime2/modules/math/sqrt.cs b/PLang/Runtime2/actions/math/sqrt.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/math/sqrt.cs
+rename to PLang/Runtime2/actions/math/sqrt.cs
+index 26f9c6c1..e8b8b2d6 100644
+--- a/PLang/Runtime2/modules/math/sqrt.cs
++++ b/PLang/Runtime2/actions/math/sqrt.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("sqrt")]
+ public partial class Sqrt : IContext
+diff --git a/PLang/Runtime2/modules/math/subtract.cs b/PLang/Runtime2/actions/math/subtract.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/math/subtract.cs
+rename to PLang/Runtime2/actions/math/subtract.cs
+index 47df042c..6ec362a5 100644
+--- a/PLang/Runtime2/modules/math/subtract.cs
++++ b/PLang/Runtime2/actions/math/subtract.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.math;
++namespace PLang.Runtime2.actions.math;
+ 
+ [Action("subtract")]
+ public partial class Subtract : IContext
+diff --git a/PLang/Runtime2/modules/math/types.cs b/PLang/Runtime2/actions/math/types.cs
+similarity index 58%
+rename from PLang/Runtime2/modules/math/types.cs
+rename to PLang/Runtime2/actions/math/types.cs
+index 279d5a2d..50671493 100644
+--- a/PLang/Runtime2/modules/math/types.cs
++++ b/PLang/Runtime2/actions/math/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.math.types;
++namespace PLang.Runtime2.actions.math.types;
+ 
+ public record math
+ {
+diff --git a/PLang/Runtime2/modules/mock/action.cs b/PLang/Runtime2/actions/mock/action.cs
+similarity index 99%
+rename from PLang/Runtime2/modules/mock/action.cs
+rename to PLang/Runtime2/actions/mock/action.cs
+index 3d1fc022..10d2a5d8 100644
+--- a/PLang/Runtime2/modules/mock/action.cs
++++ b/PLang/Runtime2/actions/mock/action.cs
+@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
+ 
+-namespace PLang.Runtime2.modules.mock;
++namespace PLang.Runtime2.actions.mock;
+ 
+ [Action("intercept", Cacheable = false)]
+ public partial class MockAction : IContext
+diff --git a/PLang/Runtime2/modules/mock/reset.cs b/PLang/Runtime2/actions/mock/reset.cs
+similarity index 95%
+rename from PLang/Runtime2/modules/mock/reset.cs
+rename to PLang/Runtime2/actions/mock/reset.cs
+index 193f3f46..53938de6 100644
+--- a/PLang/Runtime2/modules/mock/reset.cs
++++ b/PLang/Runtime2/actions/mock/reset.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Memory;
+ using PLang.Runtime2.Engine.Events;
+ 
+-namespace PLang.Runtime2.modules.mock;
++namespace PLang.Runtime2.actions.mock;
+ 
+ [Action("reset", Cacheable = false)]
+ public partial class Reset : IContext
+diff --git a/PLang/Runtime2/modules/mock/types.cs b/PLang/Runtime2/actions/mock/types.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/mock/types.cs
+rename to PLang/Runtime2/actions/mock/types.cs
+index 7c639faf..ced51bb4 100644
+--- a/PLang/Runtime2/modules/mock/types.cs
++++ b/PLang/Runtime2/actions/mock/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.mock.types;
++namespace PLang.Runtime2.actions.mock.types;
+ 
+ public class MockHandle
+ {
+diff --git a/PLang/Runtime2/modules/mock/verify.cs b/PLang/Runtime2/actions/mock/verify.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/mock/verify.cs
+rename to PLang/Runtime2/actions/mock/verify.cs
+index 9c2839fe..faa97666 100644
+--- a/PLang/Runtime2/modules/mock/verify.cs
++++ b/PLang/Runtime2/actions/mock/verify.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.mock;
++namespace PLang.Runtime2.actions.mock;
+ 
+ [Action("verify", Cacheable = false)]
+ public partial class Verify : IContext
+diff --git a/PLang/Runtime2/modules/output/types.cs b/PLang/Runtime2/actions/output/types.cs
+similarity index 72%
+rename from PLang/Runtime2/modules/output/types.cs
+rename to PLang/Runtime2/actions/output/types.cs
+index 8174e2b0..3e9fca75 100644
+--- a/PLang/Runtime2/modules/output/types.cs
++++ b/PLang/Runtime2/actions/output/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.output.types;
++namespace PLang.Runtime2.actions.output.types;
+ 
+ public record output
+ {
+diff --git a/PLang/Runtime2/modules/output/write.cs b/PLang/Runtime2/actions/output/write.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/output/write.cs
+rename to PLang/Runtime2/actions/output/write.cs
+index 6bc1cc09..74b62958 100644
+--- a/PLang/Runtime2/modules/output/write.cs
++++ b/PLang/Runtime2/actions/output/write.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Context;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.output;
++namespace PLang.Runtime2.actions.output;
+ 
+ [Action("write", Cacheable = false)]
+ public partial class Write : IContext
+diff --git a/PLang/Runtime2/modules/settings/get.cs b/PLang/Runtime2/actions/settings/get.cs
+similarity index 94%
+rename from PLang/Runtime2/modules/settings/get.cs
+rename to PLang/Runtime2/actions/settings/get.cs
+index 7a419997..ecefbfb7 100644
+--- a/PLang/Runtime2/modules/settings/get.cs
++++ b/PLang/Runtime2/actions/settings/get.cs
+@@ -1,7 +1,7 @@
+ using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.settings;
++namespace PLang.Runtime2.actions.settings;
+ 
+ /// <summary>
+ /// Gets a settings value by key from the System actor's DataSource.
+diff --git a/PLang/Runtime2/modules/settings/remove.cs b/PLang/Runtime2/actions/settings/remove.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/settings/remove.cs
+rename to PLang/Runtime2/actions/settings/remove.cs
+index a6cf1388..f2dfa776 100644
+--- a/PLang/Runtime2/modules/settings/remove.cs
++++ b/PLang/Runtime2/actions/settings/remove.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.settings;
++namespace PLang.Runtime2.actions.settings;
+ 
+ /// <summary>
+ /// Removes a settings value by key from the System actor's DataSource.
+diff --git a/PLang/Runtime2/modules/settings/set.cs b/PLang/Runtime2/actions/settings/set.cs
+similarity index 93%
+rename from PLang/Runtime2/modules/settings/set.cs
+rename to PLang/Runtime2/actions/settings/set.cs
+index 39b5dc2f..93bae0b6 100644
+--- a/PLang/Runtime2/modules/settings/set.cs
++++ b/PLang/Runtime2/actions/settings/set.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.settings;
++namespace PLang.Runtime2.actions.settings;
+ 
+ /// <summary>
+ /// Sets a settings value by key in the System actor's DataSource.
+diff --git a/PLang/Runtime2/modules/settings/types.cs b/PLang/Runtime2/actions/settings/types.cs
+similarity index 78%
+rename from PLang/Runtime2/modules/settings/types.cs
+rename to PLang/Runtime2/actions/settings/types.cs
+index b0f826a0..bce1db5d 100644
+--- a/PLang/Runtime2/modules/settings/types.cs
++++ b/PLang/Runtime2/actions/settings/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.settings;
++namespace PLang.Runtime2.actions.settings;
+ 
+ public static class types
+ {
+diff --git a/PLang/Runtime2/modules/variable/clear.cs b/PLang/Runtime2/actions/variable/clear.cs
+similarity index 86%
+rename from PLang/Runtime2/modules/variable/clear.cs
+rename to PLang/Runtime2/actions/variable/clear.cs
+index ac8d7eb5..8d49e726 100644
+--- a/PLang/Runtime2/modules/variable/clear.cs
++++ b/PLang/Runtime2/actions/variable/clear.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.variable;
++namespace PLang.Runtime2.actions.variable;
+ 
+ [Action("clear", Cacheable = false)]
+ public partial class Clear : IContext
+diff --git a/PLang/Runtime2/modules/variable/exists.cs b/PLang/Runtime2/actions/variable/exists.cs
+similarity index 88%
+rename from PLang/Runtime2/modules/variable/exists.cs
+rename to PLang/Runtime2/actions/variable/exists.cs
+index c04819fa..126dc5c2 100644
+--- a/PLang/Runtime2/modules/variable/exists.cs
++++ b/PLang/Runtime2/actions/variable/exists.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.variable;
++namespace PLang.Runtime2.actions.variable;
+ 
+ [Action("exists")]
+ public partial class Exists : IContext
+diff --git a/PLang/Runtime2/modules/variable/get.cs b/PLang/Runtime2/actions/variable/get.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/variable/get.cs
+rename to PLang/Runtime2/actions/variable/get.cs
+index e4e67e9c..f5c2bb5a 100644
+--- a/PLang/Runtime2/modules/variable/get.cs
++++ b/PLang/Runtime2/actions/variable/get.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.variable;
++namespace PLang.Runtime2.actions.variable;
+ 
+ [Action("get")]
+ public partial class Get : IContext
+diff --git a/PLang/Runtime2/modules/variable/remove.cs b/PLang/Runtime2/actions/variable/remove.cs
+similarity index 90%
+rename from PLang/Runtime2/modules/variable/remove.cs
+rename to PLang/Runtime2/actions/variable/remove.cs
+index 34e9bd60..9abe70af 100644
+--- a/PLang/Runtime2/modules/variable/remove.cs
++++ b/PLang/Runtime2/actions/variable/remove.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.variable;
++namespace PLang.Runtime2.actions.variable;
+ 
+ [Action("remove", Cacheable = false)]
+ public partial class Remove : IContext
+diff --git a/PLang/Runtime2/modules/variable/set.cs b/PLang/Runtime2/actions/variable/set.cs
+similarity index 92%
+rename from PLang/Runtime2/modules/variable/set.cs
+rename to PLang/Runtime2/actions/variable/set.cs
+index 6affd078..2e285568 100644
+--- a/PLang/Runtime2/modules/variable/set.cs
++++ b/PLang/Runtime2/actions/variable/set.cs
+@@ -1,6 +1,6 @@
+ using PLang.Runtime2.Engine.Memory;
+ 
+-namespace PLang.Runtime2.modules.variable;
++namespace PLang.Runtime2.actions.variable;
+ 
+ [Action("set", Cacheable = false)]
+ public partial class Set : IContext
+diff --git a/PLang/Runtime2/modules/variable/types.cs b/PLang/Runtime2/actions/variable/types.cs
+similarity index 79%
+rename from PLang/Runtime2/modules/variable/types.cs
+rename to PLang/Runtime2/actions/variable/types.cs
+index 35fa239f..954266ec 100644
+--- a/PLang/Runtime2/modules/variable/types.cs
++++ b/PLang/Runtime2/actions/variable/types.cs
+@@ -1,4 +1,4 @@
+-namespace PLang.Runtime2.modules.variable.types;
++namespace PLang.Runtime2.actions.variable.types;
+ 
+ public record variable
+ {
+diff --git a/Tests/Runtime2/.build/app.pr b/Tests/Runtime2/.build/app.pr
+index 48bc6755..18a93ad5 100644
+--- a/Tests/Runtime2/.build/app.pr
++++ b/Tests/Runtime2/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+   "id": "de4723f5-3fd4-4e50-abc4-3de53188df14",
+   "created": "2026-02-10T15:24:45.492905Z",
+-  "updated": "2026-02-24T14:49:35.7875367Z",
++  "updated": "2026-02-24T14:10:57.1723573Z",
+   "name": "Runtime2",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Condition/.build/app.pr b/Tests/Runtime2/Condition/.build/app.pr
+deleted file mode 100644
+index 57fc2f53..00000000
+--- a/Tests/Runtime2/Condition/.build/app.pr
++++ /dev/null
+@@ -1,7 +0,0 @@
+-{
+-  "id": "dacfadb5-6ae2-4550-a4d5-ceaac5915126",
+-  "created": "2026-02-24T14:48:59.6055167Z",
+-  "updated": "2026-02-24T14:49:03.3279714Z",
+-  "name": "Condition",
+-  "version": "0.2"
+-}
+\ No newline at end of file
+diff --git a/learnings/runtime2-setup-goal/auditor/v4/learnings.md b/learnings/runtime2-setup-goal/auditor/v4/learnings.md
+deleted file mode 100644
+index 0e4bf3d3..00000000
+--- a/learnings/runtime2-setup-goal/auditor/v4/learnings.md
++++ /dev/null
+@@ -1,31 +0,0 @@
+-# Learnings — Auditor v4 (runtime2-setup-goal)
+-
+-## 1. Cache vs Disk asymmetry in filtered collections
+-
+-When a collection has two access paths (cache lookup and disk load), filters applied to the cache path must also be applied to the disk path. Found this in `EngineGoals`: `Get()` filters `IsSetup` but `GetAsync()` doesn't filter after loading from disk. The contract says "setup goals are only reachable through Setup.RunAsync" but the implementation only enforces this on cache hits.
+-
+-**Pattern to watch:** Any time a lookup method has a fast path (cache) and a slow path (disk/network), verify both paths apply the same invariants.
+-
+-## 2. Test harness masks production wiring gaps
+-
+-Tests that manually construct and `Add()` objects bypass the real discovery/loading path. All 18 setup tests passed because they manually added goals to the collection, but in production, no code loads setup goals before `Setup.RunAsync` runs. The test harness created a "works in tests, fails in production" scenario.
+-
+-**Pattern to watch:** When reviewing tests for a new system, ask: "Who calls the loading/discovery code in production? Is that path tested?" If tests only exercise the post-load behavior, the loading gap is invisible.
+-
+-## 3. Lazy-load vs pre-load design tension
+-
+-Runtime2 uses lazy loading for regular goals (`GetAsync` loads from `.pr` files on demand). But setup goals need pre-loading because they're discovered by type (`IsSetup` flag), not requested by name. This is a fundamental design tension: lazy loading works when you know the name, pre-loading is needed when you need to scan. The setup system correctly implements the iteration-over-loaded-goals pattern but nobody loads the goals first.
+-
+-## 4. OBP compliance was solid
+-
+-The Setup system is well-designed OBP-wise:
+-- `Setup.@this` owns RunAsync, IsExecuted, Record, IsTolerableError — behavior on the owner
+-- `Steps.RunAsync` owns iteration — smart collection (rule 5)
+-- Navigate-don't-pass is respected: `Record(step, engine)` passes the step object, engine for navigation
+-- `context.Setup` is per-request state passed as a parameter (rule 4)
+-
+-Good reference implementation of OBP for future reviews.
+-
+-## 5. Error tolerance patterns from runtime1
+-
+-`IsTolerableError` checks for "already exists" and "duplicate column name" in error messages. This is runtime1 parity for idempotent setup (CREATE TABLE, CREATE INDEX, ALTER TABLE ADD COLUMN). The pattern is string-matching on error messages — fragile but pragmatic for SQLite error messages which are stable across versions.
