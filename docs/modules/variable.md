@@ -1,0 +1,113 @@
+# Variable Module
+
+Set, get, and manage variables in the memory stack.
+
+Variables in PLang use `%percent%` delimiters and support dot notation for object properties, bracket notation for array access, and special accessors like `.first`, `.last`, and `.random`.
+
+## Actions
+
+### set
+
+Store a value in a variable.
+
+```plang
+/ Simple values
+- set %name% = 'John'
+- set %age% = 30
+- set %active% = true
+
+/ Objects
+- set %user% = {name: "John", age: 30}
+
+/ Arrays
+- set %colors% = ["red", "green", "blue"]
+
+/ With explicit type
+- set %count% = '42', type 'int'
+```
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| Name | string | yes | Variable name |
+| Value | object | no | Value to store |
+| Type | string | no | Type hint (int, string, bool, etc.) |
+
+### get
+
+Retrieve a variable's value. Usually you just reference `%varName%` directly — the `get` action is for when you need to check if a variable exists.
+
+```plang
+- get %name%, write to %result%
+```
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| Name | string | yes | Variable name to retrieve |
+
+### exists
+
+Check if a variable exists in the current scope.
+
+```plang
+- check if %name% exists, write to %nameExists%
+- if %nameExists% is true then call HandleName
+```
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| Name | string | yes | Variable name to check |
+
+**Returns:** `true` if the variable exists, `false` otherwise.
+
+### remove
+
+Remove a variable from the memory stack.
+
+```plang
+- remove variable %tempData%
+```
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| Name | string | yes | Variable name to remove |
+
+### clear
+
+Remove all variables from the current memory scope.
+
+```plang
+- clear all variables
+```
+
+No parameters.
+
+## Variable Access Patterns
+
+PLang variables support rich access syntax:
+
+```plang
+- set %user% = {name: "John", age: 30, addresses: [{street: "Main St", nr: 1}, {street: "Oak Ave", nr: 2}]}
+
+/ Dot notation
+- write out %user.name%              / "John"
+
+/ Nested access
+- write out %user.addresses[0].street%  / "Main St"
+
+/ Special accessors
+- write out %user.addresses.first.street%   / "Main St"
+- write out %user.addresses.last.street%    / "Oak Ave"
+- write out %user.addresses.random.street%  / random address
+
+/ Dynamic index
+- set %idx% = 1
+- write out %user.addresses[idx].street%   / "Oak Ave"
+```
