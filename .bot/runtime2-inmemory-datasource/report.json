@@ -208,6 +208,62 @@
         "health": "green",
         "notes": "PASS — code is clean and OBP-compliant. Two non-blocking findings documented."
       }
+    },
+    {
+      "id": "e5a7b9c1-4f6d-8e0a-2b3c-d5e7f9a1b3c5",
+      "bot": "security",
+      "timestamp_start": "2026-03-01T20:00:00Z",
+      "timestamp_end": null,
+      "intent": "Security audit of in-memory SQLite datasource, Building object, and settings handlers",
+      "before": {
+        "assumptions": "Parent branch (runtime2-system-datasource) passed security with one medium carry-forward (DeserializeValue InvalidOperationException). This branch adds InMemory factory, Building object, settings action handlers. All other bots passed.",
+        "risk": "Low — additive feature. Main new attack surface is sentinel connection lifecycle and in-memory DB isolation. Carry-forward finding still open."
+      },
+      "plan": "Phase 1 (Blue): Audit 6 areas — in-memory DB isolation, sentinel lifecycle, DeserializeValue exception gap (carry-forward), SQL injection surface, SettingsData.GetChild trust boundary, Building.IsEnabled public setter. Phase 2 (Red): Exploit assessment for each. Phase 3: Write security-report.json, verdict.json, summary, learnings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/DataSource/SqliteDataSource.cs",
+            "PLang/Runtime2/Engine/DataSource/SettingsData.cs",
+            "PLang/Runtime2/Engine/DataSource/IDataSource.cs",
+            "PLang/Runtime2/Engine/Build/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Errors/DataSourceError.cs",
+            "PLang/Runtime2/Engine/Errors/AskError.cs",
+            "PLang/Runtime2/actions/settings/get.cs",
+            "PLang/Runtime2/actions/settings/set.cs",
+            "PLang/Runtime2/actions/settings/remove.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Navigation.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Test/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue+red team security audit of all new and changed files. Traced exception paths, verified depth guards, confirmed SQL injection mitigations, assessed trust boundaries against PLang threat model."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-inmemory-datasource/security-report.json",
+            ".bot/runtime2-inmemory-datasource/security/v1/verdict.json",
+            ".bot/runtime2-inmemory-datasource/security/v1/plan.md",
+            ".bot/runtime2-inmemory-datasource/security/v1/result.md",
+            ".bot/runtime2-inmemory-datasource/security/v1/summary.md",
+            ".bot/runtime2-inmemory-datasource/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote all security deliverables: structured report, verdict (PASS), detailed results, summaries."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "PASS — 1 medium carry-forward (DeserializeValue InvalidOperationException, currently unreachable), 3 low findings. No new attack surface from in-memory datasource."
+      }
     }
   ]
 }
