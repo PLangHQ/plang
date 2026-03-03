@@ -1,0 +1,52 @@
+{
+  "branch": "runtime2-plang-test-gaps",
+  "sessions": [
+    {
+      "id": "c3d4e5f6-test-gaps-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-03T00:00:00Z",
+      "timestamp_end": "2026-03-03T00:00:00Z",
+      "intent": "Analyze PLang test coverage gaps and produce handoff document for tester/coder",
+      "before": {
+        "assumptions": "23 existing test suites cover module actions. Engine-level behavior coverage unknown.",
+        "risk": "Low — analysis only, no code changes"
+      },
+      "plan": "Map all runtime2 modules and engine subsystems against existing .test.goal coverage. Identify gaps at module action and engine behavior levels. Write prioritized handoff document.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/", "Tests/Runtime2/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mapped all 16 modules (~60 actions) against 23 test suites to identify action-level gaps"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/", "PLang/Runtime2/Engine/Context/PLangContext.cs", "PLang/Runtime2/Engine/Goals/", "PLang/Runtime2/Engine/Events/", "PLang/Runtime2/Engine/Cache/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Scanned all engine subsystems to understand full capability surface: execution pipeline, error handling, events, caching, actors, setup, context variables, channels, debug, test runner"
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorHandling/", "Tests/Runtime2/Retry/", "Tests/Runtime2/Events/", "Tests/Runtime2/EventOverride/", "Tests/Runtime2/Cache/", "Tests/Runtime2/CallStack/", "Tests/Runtime2/ContextVars/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read all engine-level test files to understand depth of existing coverage"
+        },
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote prioritized test gap handoff document with example PLang test code for each gap"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Comprehensive gap analysis complete. Module coverage is reasonable. Engine-level gaps are significant: error handling, events, context variables, goal calls, caching, actors, setup.",
+        "notes": "Step timeout and WaitForExecution exist in model but are not implemented. Builder validation designed on separate branch but not built."
+      }
+    }
+  ]
+}
