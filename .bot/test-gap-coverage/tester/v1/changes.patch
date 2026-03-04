@@ -1,0 +1,1409 @@
+diff --git a/PLang/Services/LlmService/OpenAiService.cs b/PLang/Services/LlmService/OpenAiService.cs
+index d4519fca..24374044 100644
+--- a/PLang/Services/LlmService/OpenAiService.cs
++++ b/PLang/Services/LlmService/OpenAiService.cs
+@@ -83,7 +83,7 @@ namespace PLang.Services.OpenAi
+ 			}
+ 			if (string.IsNullOrEmpty(bearer))
+ 			{
+-				bearer = Environment.GetEnvironmentVariable("OpenApiKey");
++				bearer = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+ 			}
+ 			
+ 			string data = $@"{{
+diff --git a/Tests/Runtime2/ContextVars2/.build/contextvars2.test.pr b/Tests/Runtime2/ContextVars2/.build/contextvars2.test.pr
+new file mode 100644
+index 00000000..1a399040
+--- /dev/null
++++ b/Tests/Runtime2/ContextVars2/.build/contextvars2.test.pr
+@@ -0,0 +1,146 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "assert %!goal.Name% equals \u0022Start\u0022",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: goal name is accessible",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": "Start",
++              "type": "string"
++            },
++            {
++              "name": "Actual",
++              "value": "%!goal.Name%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %!step% is not null",
++      "lineNumber": 5,
++      "indent": 0,
++      "comment": "Test: step is accessible",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%!step%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %!context% is not null",
++      "lineNumber": 7,
++      "indent": 0,
++      "comment": "Test: context is accessible",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%!context%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "assert %!fileSystem% is not null",
++      "lineNumber": 9,
++      "indent": 0,
++      "comment": "Test: fileSystem is accessible",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%!fileSystem%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "assert %!callStack% is not null",
++      "lineNumber": 11,
++      "indent": 0,
++      "comment": "Test: callStack is accessible",
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%!callStack%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/ContextVars2/ContextVars2.test.goal",
++  "prPath": "/ContextVars2/.build/contextvars2.test.pr",
++  "hash": "df9abc748281b55650eecdd2e913a173c7b76aef4649e1e7ceb67f3ed5d3d5c7",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ContextVars2/ContextVars2.test.goal b/Tests/Runtime2/ContextVars2/ContextVars2.test.goal
+new file mode 100644
+index 00000000..f6be5bb5
+--- /dev/null
++++ b/Tests/Runtime2/ContextVars2/ContextVars2.test.goal
+@@ -0,0 +1,11 @@
++Start
++/ Test: goal name is accessible
++- assert %!goal.Name% equals "Start"
++/ Test: step is accessible
++- assert %!step% is not null
++/ Test: context is accessible
++- assert %!context% is not null
++/ Test: fileSystem is accessible
++- assert %!fileSystem% is not null
++/ Test: callStack is accessible
++- assert %!callStack% is not null
+diff --git a/Tests/Runtime2/Convert2/.build/convert2.test.pr b/Tests/Runtime2/Convert2/.build/convert2.test.pr
+new file mode 100644
+index 00000000..f6419d80
+--- /dev/null
++++ b/Tests/Runtime2/Convert2/.build/convert2.test.pr
+@@ -0,0 +1,178 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "convert \u00223.14\u0022 to double, write to %dbl%",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: convert to double",
++      "actions": [
++        {
++          "module": "convert",
++          "action": "todouble",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "3.14",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "dbl"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %dbl% is not null",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%dbl%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "convert \u00229999999999\u0022 to long, write to %lng%",
++      "lineNumber": 6,
++      "indent": 0,
++      "comment": "Test: convert to long",
++      "actions": [
++        {
++          "module": "convert",
++          "action": "tolong",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "9999999999",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "lng"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "assert %lng% is not null",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%lng%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "convert \u00222024-01-15\u0022 to datetime, write to %dt%",
++      "lineNumber": 9,
++      "indent": 0,
++      "comment": "Test: convert to datetime",
++      "actions": [
++        {
++          "module": "convert",
++          "action": "todatetime",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "2024-01-15",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "dt"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %dt% is not null",
++      "lineNumber": 10,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%dt%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Convert2/Convert2.test.goal",
++  "prPath": "/Convert2/.build/convert2.test.pr",
++  "hash": "2544edb8394ede27a8a5fc2a9324a160b44417c8f030d410a10f36996cacdb57",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Convert2/Convert2.test.goal b/Tests/Runtime2/Convert2/Convert2.test.goal
+new file mode 100644
+index 00000000..5f0687ba
+--- /dev/null
++++ b/Tests/Runtime2/Convert2/Convert2.test.goal
+@@ -0,0 +1,10 @@
++Start
++/ Test: convert to double
++- convert "3.14" to double, write to %dbl%
++- assert %dbl% is not null
++/ Test: convert to long
++- convert "9999999999" to long, write to %lng%
++- assert %lng% is not null
++/ Test: convert to datetime
++- convert "2024-01-15" to datetime, write to %dt%
++- assert %dt% is not null
+diff --git a/Tests/Runtime2/GoalCall/.build/goalcall.test.pr b/Tests/Runtime2/GoalCall/.build/goalcall.test.pr
+new file mode 100644
+index 00000000..b945e9b6
+--- /dev/null
++++ b/Tests/Runtime2/GoalCall/.build/goalcall.test.pr
+@@ -0,0 +1,134 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "call goal Greet name=\u0022world\u0022",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: call goal with parameters and return value",
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": {
++                "name": "Greet",
++                "parameters": {
++                  "name": "world"
++                }
++              },
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %greeting% equals \u0022hello world\u0022",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": "hello world",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%greeting%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "call goal Greet name=\u0022plang\u0022",
++      "lineNumber": 6,
++      "indent": 0,
++      "comment": "Test: call goal with different parameter",
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": {
++                "name": "Greet",
++                "parameters": {
++                  "name": "plang"
++                }
++              },
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "assert %greeting% equals \u0022hello plang\u0022",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "expected",
++              "value": "hello plang",
++              "type": "string"
++            },
++            {
++              "name": "actual",
++              "value": "%greeting%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/GoalCall/GoalCall.test.goal",
++  "prPath": "/GoalCall/.build/goalcall.test.pr",
++  "hash": "e3ce6541bd75f51240c8b8fc3f674ea1386fa02c35147b62949e3cd6c6f11755",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/GoalCall/.build/greet.pr b/Tests/Runtime2/GoalCall/.build/greet.pr
+new file mode 100644
+index 00000000..2e35f814
+--- /dev/null
++++ b/Tests/Runtime2/GoalCall/.build/greet.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "Greet",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %greeting% = \u0022hello %name%\u0022",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%greeting%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": "hello %name%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/GoalCall/Greet.goal",
++  "prPath": "/GoalCall/.build/greet.pr",
++  "hash": "c49496dab6eaf3095ad5d9e06cb9c141a6d76ee0fd5423ef035b424ba00e3b77",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Greet"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/GoalCall/GoalCall.test.goal b/Tests/Runtime2/GoalCall/GoalCall.test.goal
+new file mode 100644
+index 00000000..d890beca
+--- /dev/null
++++ b/Tests/Runtime2/GoalCall/GoalCall.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: call goal with parameters and return value
++- call goal Greet name="world"
++- assert %greeting% equals "hello world"
++/ Test: call goal with different parameter
++- call goal Greet name="plang"
++- assert %greeting% equals "hello plang"
+diff --git a/Tests/Runtime2/GoalCall/Greet.goal b/Tests/Runtime2/GoalCall/Greet.goal
+new file mode 100644
+index 00000000..a606fa70
+--- /dev/null
++++ b/Tests/Runtime2/GoalCall/Greet.goal
+@@ -0,0 +1,2 @@
++Greet
++- set %greeting% = "hello %name%"
+diff --git a/Tests/Runtime2/ListOps2/.build/listops2.test.pr b/Tests/Runtime2/ListOps2/.build/listops2.test.pr
+new file mode 100644
+index 00000000..6f0ebc3e
+--- /dev/null
++++ b/Tests/Runtime2/ListOps2/.build/listops2.test.pr
+@@ -0,0 +1,298 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "generate range from 1 to 5, write to %rangeResult%",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: list.range generates a sequence",
++      "actions": [
++        {
++          "module": "list",
++          "action": "range",
++          "parameters": [
++            {
++              "name": "Start",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "End",
++              "value": 5,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "rangeResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %rangeResult% is not null",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%rangeResult%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "set %myList% = [10, 20, 30]",
++      "lineNumber": 6,
++      "indent": 0,
++      "comment": "Test: list.set mutates by index",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": [
++                10,
++                20,
++                30
++              ],
++              "type": "list"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set item at index 1 in %myList% to 99",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "ListName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "Index",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "Value",
++              "value": 99,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "get item at index 1 from %myList%, write to %updated%",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "get",
++          "parameters": [
++            {
++              "name": "ListName",
++              "value": "%myList%",
++              "type": "string"
++            },
++            {
++              "name": "Index",
++              "value": 1,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "updated"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %updated% equals 99",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": 99,
++              "type": "int"
++            },
++            {
++              "name": "Actual",
++              "value": "%updated%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "set %nested% = [[1, 2], [3, 4]]",
++      "lineNumber": 11,
++      "indent": 0,
++      "comment": "Test: list.flatten",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%nested%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": [
++                [
++                  1,
++                  2
++                ],
++                [
++                  3,
++                  4
++                ]
++              ],
++              "type": "list"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "flatten %nested%, write to %flatResult%",
++      "lineNumber": 12,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "list",
++          "action": "flatten",
++          "parameters": [
++            {
++              "name": "ListName",
++              "value": "%nested%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "flatResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "assert %flatResult% is not null",
++      "lineNumber": 13,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%flatResult%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/ListOps2/ListOps2.test.goal",
++  "prPath": "/ListOps2/.build/listops2.test.pr",
++  "hash": "4e933074b7ba290e3ae118eddb8a7c8b621a7de1359cb1ca6754a87ebf5238a9",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ListOps2/ListOps2.test.goal b/Tests/Runtime2/ListOps2/ListOps2.test.goal
+new file mode 100644
+index 00000000..2269bc34
+--- /dev/null
++++ b/Tests/Runtime2/ListOps2/ListOps2.test.goal
+@@ -0,0 +1,13 @@
++Start
++/ Test: list.range generates a sequence
++- generate range from 1 to 5, write to %rangeResult%
++- assert %rangeResult% is not null
++/ Test: list.set mutates by index
++- set %myList% = [10, 20, 30]
++- set item at index 1 in %myList% to 99
++- get item at index 1 from %myList%, write to %updated%
++- assert %updated% equals 99
++/ Test: list.flatten
++- set %nested% = [[1, 2], [3, 4]]
++- flatten %nested%, write to %flatResult%
++- assert %flatResult% is not null
+diff --git a/Tests/Runtime2/Math2/.build/math2.test.pr b/Tests/Runtime2/Math2/.build/math2.test.pr
+new file mode 100644
+index 00000000..71eef5e9
+--- /dev/null
++++ b/Tests/Runtime2/Math2/.build/math2.test.pr
+@@ -0,0 +1,133 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "get random number between 1 and 100, write to %rand%",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: math.random returns a value in range",
++      "actions": [
++        {
++          "module": "math",
++          "action": "random",
++          "parameters": [
++            {
++              "name": "Min",
++              "value": 1,
++              "type": "int"
++            },
++            {
++              "name": "Max",
++              "value": 100,
++              "type": "int"
++            }
++          ],
++          "return": [
++            {
++              "name": "rand"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "assert %rand% is not null",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isNotNull",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%rand%",
++              "type": "object"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %rand% is greater than 0",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "greaterThan",
++          "parameters": [
++            {
++              "name": "A",
++              "value": "%rand%",
++              "type": "object"
++            },
++            {
++              "name": "B",
++              "value": 0,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "assert %rand% is less than 101",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "lessThan",
++          "parameters": [
++            {
++              "name": "A",
++              "value": "%rand%",
++              "type": "object"
++            },
++            {
++              "name": "B",
++              "value": 101,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/Math2/Math2.test.goal",
++  "prPath": "/Math2/.build/math2.test.pr",
++  "hash": "d2abc4c16d14e752433ced90684c262c5eb215c8492895c1becbdc3d41de2e4b",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/Math2/Math2.test.goal b/Tests/Runtime2/Math2/Math2.test.goal
+new file mode 100644
+index 00000000..583ea101
+--- /dev/null
++++ b/Tests/Runtime2/Math2/Math2.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: math.random returns a value in range
++- get random number between 1 and 100, write to %rand%
++- assert %rand% is not null
++- assert %rand% is greater than 0
++- assert %rand% is less than 101
+diff --git a/Tests/Runtime2/VariableOps/.build/variableops.test.pr b/Tests/Runtime2/VariableOps/.build/variableops.test.pr
+new file mode 100644
+index 00000000..ef62c68c
+--- /dev/null
++++ b/Tests/Runtime2/VariableOps/.build/variableops.test.pr
+@@ -0,0 +1,307 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %myVar% = \u0022hello\u0022",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "Test: variable exists after set",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%myVar%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": "hello",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "check if variable %myVar% exists, write to %existsResult%",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "exists",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%myVar%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "existsResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %existsResult.exists% is true",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%existsResult.exists%",
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "remove variable %myVar%",
++      "lineNumber": 7,
++      "indent": 0,
++      "comment": "Test: variable remove",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "remove",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%myVar%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "check if variable %myVar% exists, write to %goneResult%",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "exists",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%myVar%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "goneResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %goneResult.exists% is false",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isFalse",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%goneResult.exists%",
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "set %a% = 1",
++      "lineNumber": 11,
++      "indent": 0,
++      "comment": "Test: variable clear removes all user vars",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%a%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": 1,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "set %b% = 2",
++      "lineNumber": 12,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%b%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": 2,
++              "type": "int"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "clear all variables",
++      "lineNumber": 13,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "clear",
++          "parameters": [],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 9,
++      "text": "check if variable %a% exists, write to %aResult%",
++      "lineNumber": 14,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "exists",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%a%",
++              "type": "string"
++            }
++          ],
++          "return": [
++            {
++              "name": "aResult"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 10,
++      "text": "assert %aResult.exists% is false",
++      "lineNumber": 15,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isFalse",
++          "parameters": [
++            {
++              "name": "Value",
++              "value": "%aResult.exists%",
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/VariableOps/VariableOps.test.goal",
++  "prPath": "/VariableOps/.build/variableops.test.pr",
++  "hash": "b5b4e4ca81d4a5ea66ac1db90ac7f056952e3e6f91bd0958a4a675b3af0b3e0f",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/VariableOps/VariableOps.test.goal b/Tests/Runtime2/VariableOps/VariableOps.test.goal
+new file mode 100644
+index 00000000..f7c569a3
+--- /dev/null
++++ b/Tests/Runtime2/VariableOps/VariableOps.test.goal
+@@ -0,0 +1,15 @@
++Start
++/ Test: variable exists after set
++- set %myVar% = "hello"
++- check if variable %myVar% exists, write to %existsResult%
++- assert %existsResult.exists% is true
++/ Test: variable remove
++- remove variable %myVar%
++- check if variable %myVar% exists, write to %goneResult%
++- assert %goneResult.exists% is false
++/ Test: variable clear removes all user vars
++- set %a% = 1
++- set %b% = 2
++- clear all variables
++- check if variable %a% exists, write to %aResult%
++- assert %aResult.exists% is false
