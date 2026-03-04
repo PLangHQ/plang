@@ -6,6 +6,38 @@ The runtime2 PLang test suite has 29 test suites (was 23, 6 new added). Module-l
 
 This document maps what's tested vs what's not, organized by concern. The tester writes `.test.goal` files, the coder fixes anything that breaks.
 
+## Expected Deliverables
+
+**~12-15 new `.test.goal` files** in `Tests/Runtime2/`, one per concern:
+
+| # | Test Suite | Location | Est. Steps |
+|---|-----------|----------|------------|
+| 1 | ErrorCall | `Tests/Runtime2/ErrorCall/` | `on error call GoalName` standalone, `%!error%` property access |
+| 2 | ErrorNested | `Tests/Runtime2/ErrorNested/` | Error in error handler, nested error handling |
+| 3 | ErrorOrdering | `Tests/Runtime2/ErrorOrdering/` | RetryFirst vs GoalFirst ordering |
+| 4 | EventStep | `Tests/Runtime2/EventStep/` | `beforeStep`, `afterStep` hooks |
+| 5 | EventAction | `Tests/Runtime2/EventAction/` | `afterAction` capture |
+| 6 | EventRemove | `Tests/Runtime2/EventRemove/` | `event.remove` — unregister an event |
+| 7 | EventMultiple | `Tests/Runtime2/EventMultiple/` | Multiple events on same hook, priority ordering |
+| 8 | CacheSliding | `Tests/Runtime2/CacheSliding/` | Sliding cache, custom keys |
+| 9 | GoalCallAdvanced | `Tests/Runtime2/GoalCallAdvanced/` | Dynamic goal name, non-existent goal error, recursive calls |
+| 10 | GoalCallReturn | `Tests/Runtime2/GoalCallReturn/` | Return values via `write to %var%` |
+| 11 | Actors | `Tests/Runtime2/Actors/` | Actor switching (system/service/user) |
+| 12 | SetupGoal | `Tests/Runtime2/SetupGoal/` | Run-once semantics — may need special pattern |
+| 13 | LibraryLoad | `Tests/Runtime2/LibraryLoad/` | `library.load` basic usage |
+
+**Definition of done:**
+- Each test suite has a `*.test.goal` file with `Start` goal
+- Supporting goals in separate `.goal` files where needed
+- All tests build cleanly: `plang p build`
+- All tests pass: `plang p !test`
+- `.pr` files verified after build (LLM can mismap steps)
+- If a test reveals a runtime bug, the coder fixes it and notes what changed
+
+**If the LLM builder can't generate correct `.pr` for error handling tests** (known limitation with `onError` step properties), hand-craft the `.pr` file. Document which `.pr` files were hand-crafted so we know to rebuild them when the builder improves.
+
+**Work in priority order** — error handling first, events second. If something is blocked (e.g., actors need infrastructure), skip it and note the blocker.
+
 ## Key PLang Testing Facts
 
 - Variables are **global** — once set, they live through the entire context, including across goal calls and event handlers
