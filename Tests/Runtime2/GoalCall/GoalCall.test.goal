@@ -1,0 +1,7 @@
+Start
+/ Test: call goal with parameters and return value
+- call goal Greet name="world"
+- assert %greeting% equals "hello world"
+/ Test: call goal with different parameter
+- call goal Greet name="plang"
+- assert %greeting% equals "hello plang"

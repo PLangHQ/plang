@@ -83,7 +83,7 @@ namespace PLang.Services.OpenAi
 			}
 			if (string.IsNullOrEmpty(bearer))
 			{
-				bearer = Environment.GetEnvironmentVariable("OpenApiKey");
+				bearer = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 			}
 			
 			string data = $@"{{

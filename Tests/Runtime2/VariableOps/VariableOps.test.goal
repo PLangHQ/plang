@@ -1,0 +1,15 @@
+Start
+/ Test: variable exists after set
+- set %myVar% = "hello"
+- check if variable %myVar% exists, write to %existsResult%
+- assert %existsResult.exists% is true
+/ Test: variable remove
+- remove variable %myVar%
+- check if variable %myVar% exists, write to %goneResult%
+- assert %goneResult.exists% is false
+/ Test: variable clear removes all user vars
+- set %a% = 1
+- set %b% = 2
+- clear all variables
+- check if variable %a% exists, write to %aResult%
+- assert %aResult.exists% is false

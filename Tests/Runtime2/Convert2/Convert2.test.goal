@@ -1,0 +1,10 @@
+Start
+/ Test: convert to double
+- convert "3.14" to double, write to %dbl%
+- assert %dbl% is not null
+/ Test: convert to long
+- convert "9999999999" to long, write to %lng%
+- assert %lng% is not null
+/ Test: convert to datetime
+- convert "2024-01-15" to datetime, write to %dt%
+- assert %dt% is not null
