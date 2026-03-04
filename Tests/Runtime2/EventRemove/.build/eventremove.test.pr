@@ -1,0 +1,210 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %writeCount% = 0",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "register event, fire, remove, fire again",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%writeCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "before action output.write call Counter, write to %eventBinding%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "Counter",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "eventBinding"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022first\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "first",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %writeCount% equals 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%writeCount%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "remove event %eventBinding%",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "EventId",
+              "value": "%eventBinding.id%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write out \u0022second\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "second",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %writeCount% equals 1",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%writeCount%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventRemove.test.goal",
+  "prPath": "/.build/eventremove.test.pr",
+  "hash": "f3de6ece1c43436e5d397cb7b9ec97a225da4703b4ddf930e06d5807ce1b0ca5",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

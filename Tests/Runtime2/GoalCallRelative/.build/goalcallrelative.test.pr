@@ -1,0 +1,70 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call sub/SubGoal",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "call goal from subdirectory",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "sub/SubGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %subResult% equals \u0022from sub\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "from sub",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%subResult%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/GoalCallRelative/GoalCallRelative.test.goal",
+  "prPath": "/GoalCallRelative/.build/goalcallrelative.test.pr",
+  "hash": "1562645926053a6eeb06ac0a5a455fd67906020d93c5121aa232548f160e531d",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

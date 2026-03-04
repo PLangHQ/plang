@@ -1,0 +1,40 @@
+{
+  "name": "AlwaysFails",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \u0022always fails\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "always fails",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
+  "hash": "d14430030bfce6b6c4d1032abed5c357cd5a4bbd9c74edfbaa30eb5dee9ca4d1",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "AlwaysFails"
+}

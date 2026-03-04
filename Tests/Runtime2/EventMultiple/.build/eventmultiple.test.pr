@@ -1,0 +1,215 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %eventA% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "two events on same hook both fire",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventA%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %eventB% = false",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventB%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "before action output.write call HandlerA",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "HandlerA",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "before action output.write call HandlerB",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "HandlerB",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \u0022trigger\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "trigger",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %eventA% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%eventA%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %eventB% equals true",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%eventB%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventMultiple.test.goal",
+  "prPath": "/.build/eventmultiple.test.pr",
+  "hash": "64a0fea0245b1e406b6081bc219e4eea3d6b9205c2c38e88a7e737df88049fda",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

@@ -1,0 +1,2 @@
+CaptureWrite
+- set %actionFired% = true

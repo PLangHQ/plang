@@ -1,0 +1,5 @@
+Start
+/ on error call goal without retry
+- set %caughtMessage% = ""
+- throw "test error", on error call CatchError
+- assert %caughtMessage% equals "test error"

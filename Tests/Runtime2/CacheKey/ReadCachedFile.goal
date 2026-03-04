@@ -1,0 +1,2 @@
+ReadCachedFile
+- read file 'cachekey.txt', cache for 60 seconds, write to %cachedContent%

@@ -1,0 +1,15 @@
+Start
+/ KNOWN BEHAVIOR: cache key uses literal step text (%var% not resolved)
+/ so the same step with different variable values returns cached result
+- save 'dynkey1.txt' with content 'content1'
+- save 'dynkey2.txt' with content 'content2'
+- set %fileName% = "dynkey1.txt"
+- call ReadDynamic
+- set %result1% = %dynContent%
+- set %fileName% = "dynkey2.txt"
+- call ReadDynamic
+- set %result2% = %dynContent%
+- assert %result1% equals "content1"
+- assert %result2% equals "content1"
+- delete file 'dynkey1.txt'
+- delete file 'dynkey2.txt'

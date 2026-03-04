@@ -1,0 +1,7 @@
+Start
+/ setup dictionary via json
+- set %json% = '{"name": "Alice", "age": "30", "city": "Reykjavik"}'
+- convert %json% from json, write to %dict%
+- set %count% = 0
+- foreach %dict%, call ProcessEntry item=%entry%, key=%key%
+- assert %count% equals 3

@@ -1,0 +1,45 @@
+{
+  "name": "HandlerA",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %eventA% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%eventA%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/HandlerA.goal",
+  "prPath": "/.build/handlera.pr",
+  "hash": "bf58fca94c87060a4caeb2a26b04d68ce5277f90b7684c1ddd16bdb1ca3a1530",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandlerA"
+}

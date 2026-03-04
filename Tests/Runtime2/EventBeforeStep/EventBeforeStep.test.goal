@@ -1,0 +1,7 @@
+Start
+/ before step fires before each step
+- set %stepCount% = 0
+- before step call TrackStep
+- set %value% = "hello"
+- set %value2% = "world"
+- assert %stepCount% is greater than 0

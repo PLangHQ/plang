@@ -1,0 +1,13 @@
+Start
+/ Now is not null
+- assert %Now% is not null
+
+/ NowUtc is not null
+- assert %NowUtc% is not null
+
+/ GUID is not null and changes
+- set %guid1% = %GUID%
+- set %guid2% = %GUID%
+- assert %guid1% is not null
+- assert %guid2% is not null
+- assert %guid1% not equals %guid2%

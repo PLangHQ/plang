@@ -1,0 +1,2 @@
+WildcardHandler
+- set %matchCount% = %matchCount% + 1

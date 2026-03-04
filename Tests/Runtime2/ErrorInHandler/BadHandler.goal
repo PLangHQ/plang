@@ -1,0 +1,3 @@
+BadHandler
+/ this handler also throws
+- throw "handler error"

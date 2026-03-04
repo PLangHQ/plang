@@ -1,0 +1,2 @@
+AlwaysFails
+- throw "always fails"

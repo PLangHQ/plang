@@ -1,0 +1,2 @@
+ProcessItem
+- set %count% = %count% + 1

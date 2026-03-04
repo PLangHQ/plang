@@ -1,0 +1,45 @@
+{
+  "name": "LowPriority",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022%order%,low\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%order%,low",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventPriority/LowPriority.goal",
+  "prPath": "/EventPriority/.build/lowpriority.pr",
+  "hash": "4700b682c7ae0a04edbba23506163b7944627fe12233b66c7c82b56c1fe29368",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "LowPriority"
+}

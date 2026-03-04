@@ -1,0 +1,13 @@
+Start
+/ inner goal sets variable visible to caller
+- set %x% = "before"
+- call InnerGoal
+- assert %x% equals "modified"
+
+/ foreach item visible in called goal
+- add "alpha" to list %items%
+- add "beta" to list %items%
+- set %captured% = ""
+- foreach %items%, call CaptureItem item=%item%
+- assert %captured% contains "alpha"
+- assert %captured% contains "beta"

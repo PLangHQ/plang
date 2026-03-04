@@ -1,0 +1,45 @@
+{
+  "name": "CaptureWrite",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %actionFired% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actionFired%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventAfterAction/CaptureWrite.goal",
+  "prPath": "/EventAfterAction/.build/capturewrite.pr",
+  "hash": "2011595d9be64ee07b2bf82192cec50e98a75e6c761a376a52ff111c0ec84fec",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "CaptureWrite"
+}

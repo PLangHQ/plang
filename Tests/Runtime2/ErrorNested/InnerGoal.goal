@@ -1,0 +1,2 @@
+InnerGoal
+- throw "inner error", on error call InnerHandler

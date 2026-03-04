@@ -1,0 +1,6 @@
+Start
+/ actor datasource isolation
+- set settings 'actorTestKey' = 'actorValue'
+- get settings 'actorTestKey', write to %val%
+- assert %val% equals "actorValue"
+- remove settings 'actorTestKey'

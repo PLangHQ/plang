@@ -1,0 +1,75 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "convert \u0022abc\u0022 to int, on error call HandleConvertError",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "convert invalid string to int should error",
+      "actions": [
+        {
+          "module": "convert",
+          "action": "toint",
+          "parameters": [
+            {
+              "name": "value",
+              "value": "abc",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "HandleConvertError"
+        }
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %convertErrorCaught% equals true",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "actual",
+              "value": "%convertErrorCaught%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ConvertErrors.test.goal",
+  "prPath": "/.build/converterrors.test.pr",
+  "hash": "13c1e7c31c665009f2fb121172cb7e7551bd27ac0f5cf59c4b2091f1f1e42427",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

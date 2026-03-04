@@ -1,0 +1,143 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \u0022bad thing\u0022 key=\u0022CustomKey\u0022 statusCode=422, on error call InspectError",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "error variables accessible in handler",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "bad thing",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "CustomKey",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 422,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "InspectError"
+        }
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %errorMessage% equals \u0022bad thing\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "bad thing",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorMessage%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %errorKey% equals \u0022CustomKey\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "CustomKey",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorKey%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %errorStatusCode% equals 422",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 422,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorStatusCode%",
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorProps/ErrorProps.test.goal",
+  "prPath": "/ErrorProps/.build/errorprops.test.pr",
+  "hash": "fe1fdb6652582ba4770134b84809c427ee5f6d1f8d57b9b1a5ae15a450504d5d",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

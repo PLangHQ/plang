@@ -1,0 +1,45 @@
+{
+  "name": "HandleConvertError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %convertErrorCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%convertErrorCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/HandleConvertError.goal",
+  "prPath": "/.build/handleconverterror.pr",
+  "hash": "03b0619be5343145a375ac18921d05a497cd6cc1dc5529ba57db35635ac2e790",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleConvertError"
+}

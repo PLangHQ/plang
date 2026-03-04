@@ -1,0 +1,5 @@
+Start
+/ nested goal has its own error handler
+- call OuterGoal
+- assert %innerErrorHandled% equals true
+- assert %outerCompleted% equals true

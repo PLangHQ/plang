@@ -1,0 +1,2 @@
+WhenNotEqual
+- set %notEqualResult% = "yes"

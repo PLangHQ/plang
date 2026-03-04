@@ -1,0 +1,7 @@
+Start
+/ wildcard pattern matches multiple actions
+- set %matchCount% = 0
+- before action variable.* call WildcardHandler
+- set %a% = 1
+- set %b% = 2
+- assert %matchCount% is greater than 0

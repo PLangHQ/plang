@@ -1,0 +1,9 @@
+Start
+/ sliding cache keeps value alive on access
+- save 'cacheslide.txt' with content 'original'
+- call ReadCached
+- assert %cachedValue% equals "original"
+- save 'cacheslide.txt' with content 'changed'
+- call ReadCached
+- assert %cachedValue% equals "original"
+- delete file 'cacheslide.txt'

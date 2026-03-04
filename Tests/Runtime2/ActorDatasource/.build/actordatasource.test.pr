@@ -1,0 +1,128 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set settings 'actorTestKey' = 'actorValue'",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "actor datasource isolation",
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "actorTestKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "actorValue",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "get settings 'actorTestKey', write to %val%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "actorTestKey",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "val"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %val% equals \"actorValue\"",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "actorValue",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%val%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "remove settings 'actorTestKey'",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "actorTestKey",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ActorDatasource.test.goal",
+  "prPath": "/.build/actordatasource.test.pr",
+  "hash": "actordatasource_handcrafted_v1",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

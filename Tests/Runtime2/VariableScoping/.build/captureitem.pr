@@ -1,0 +1,63 @@
+{
+  "name": "CaptureItem",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %captured% = \u0022%captured%,%item%\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%captured%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "currentCaptured"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": "%currentCaptured%,%item%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/CaptureItem.goal",
+  "prPath": "/.build/captureitem.pr",
+  "hash": "0160aaa4a74ea79db946d4263b42e3a09d19e75930b406470548fa1d253fcd3d",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "CaptureItem"
+}

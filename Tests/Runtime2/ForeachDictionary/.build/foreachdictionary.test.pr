@@ -1,0 +1,172 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %json% = \u0027{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "setup dictionary via json",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%json%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "convert %json% from json, write to %dict%",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "convert",
+          "action": "fromjson",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%json%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "dict"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %count% = 0",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%count%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "foreach %dict%, call ProcessEntry item=%entry%, key=%key%",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%dict%",
+              "type": "object"
+            },
+            {
+              "name": "GoalName",
+              "value": "ProcessEntry",
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "%entry%",
+              "type": "string"
+            },
+            {
+              "name": "KeyName",
+              "value": "%key%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %count% equals 3",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%count%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ForeachDictionary/ForeachDictionary.test.goal",
+  "prPath": "/ForeachDictionary/.build/foreachdictionary.test.pr",
+  "hash": "30658a2a8af2fb6fc044e79952cb6798b6dc14fd001d25617202fb1864f3e630",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

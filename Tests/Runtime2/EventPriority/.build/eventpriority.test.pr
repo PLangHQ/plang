@@ -1,0 +1,167 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "higher priority fires first",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "before action output.write call LowPriority priority=1",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "LowPriority",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "Priority",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "before action output.write call HighPriority priority=10",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "HighPriority",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            },
+            {
+              "name": "Priority",
+              "value": 10,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u0022trigger\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Content",
+              "value": "trigger",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %order% equals \u0022high,low\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "high,low",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%order%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventPriority/EventPriority.test.goal",
+  "prPath": "/EventPriority/.build/eventpriority.test.pr",
+  "hash": "f2f6b451da31b25f68a203c72e21f235dabe921a1a16be29461144a0357b2dcc",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

@@ -1,0 +1,46 @@
+{
+  "name": "ThrowWithBadHandler",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \"original error\", on error call BadHandler",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "throws an error whose handler also throws",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "original error",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "BadHandler"
+        }
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ThrowWithBadHandler.goal",
+  "prPath": "/.build/throwwithbadhandler.pr",
+  "hash": "throwwithbadhandler_v1",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ThrowWithBadHandler"
+}

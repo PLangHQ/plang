@@ -1,0 +1,30 @@
+Start
+/ greaterThan
+- set %x% = 10
+- if %x% > 5, call WhenGreater
+- assert %greaterResult% equals "yes"
+
+/ lessThan
+- set %y% = 3
+- if %y% < 10, call WhenLess
+- assert %lessResult% equals "yes"
+
+/ equals
+- set %z% = 5
+- if %z% == 5, call WhenEqual
+- assert %equalResult% equals "yes"
+
+/ notEquals
+- set %a% = 7
+- if %a% != 3, call WhenNotEqual
+- assert %notEqualResult% equals "yes"
+
+/ stringContains
+- set %name% = "hello world"
+- if %name% contains "world", call WhenContains
+- assert %containsResult% equals "yes"
+
+/ falseCondition
+- set %b% = 2
+- if %b% > 100, call WhenGreater, else call WhenFalse
+- assert %falseResult% equals "no"

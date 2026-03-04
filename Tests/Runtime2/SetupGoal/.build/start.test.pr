@@ -1,0 +1,46 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %setupDone% equals true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "setup goal ran before this",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%setupDone%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/SetupGoal/Start.test.goal",
+  "prPath": "/SetupGoal/.build/start.test.pr",
+  "hash": "d76419bbe7c7086187ba2e4ea875b68f32db2d9aa89aa8a508bd028d0d35a55a",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

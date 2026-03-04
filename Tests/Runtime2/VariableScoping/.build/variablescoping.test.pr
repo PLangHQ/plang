@@ -1,0 +1,279 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0022before\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "inner goal sets variable visible to caller",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "before",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call InnerGoal",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "InnerGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x% equals \u0022modified\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "modified",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%x%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "add \u0022alpha\u0022 to list %items%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "foreach item visible in called goal",
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "alpha",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "add \u0022beta\u0022 to list %items%",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "beta",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %captured% = \u0022\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "foreach %items%, call CaptureItem item=%item%",
+      "lineNumber": 11,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "object"
+            },
+            {
+              "name": "GoalName",
+              "value": "CaptureItem",
+              "type": "goal.call"
+            },
+            {
+              "name": "ItemName",
+              "value": "%item%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %captured% contains \u0022alpha\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "alpha",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %captured% contains \u0022beta\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "beta",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/VariableScoping.test.goal",
+  "prPath": "/.build/variablescoping.test.pr",
+  "hash": "d27155306837ba906dc0ebff9d17b5aa10292a4780f5c599c9379b7214874d26",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

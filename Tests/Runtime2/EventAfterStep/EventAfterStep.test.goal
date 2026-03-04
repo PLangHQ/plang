@@ -1,0 +1,7 @@
+Start
+/ after step fires after each step
+- set %afterCount% = 0
+- after step call TrackAfterStep
+- set %value% = "hello"
+- set %value2% = "world"
+- assert %afterCount% is greater than 0

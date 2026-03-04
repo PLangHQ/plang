@@ -1,0 +1,4 @@
+Start
+/ call goal from subdirectory
+- call sub/SubGoal
+- assert %subResult% equals "from sub"

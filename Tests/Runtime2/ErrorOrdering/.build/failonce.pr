@@ -1,0 +1,40 @@
+{
+  "name": "FailOnce",
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \u0022fail\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "fail",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorOrdering/FailOnce.goal",
+  "prPath": "/ErrorOrdering/.build/failonce.pr",
+  "hash": "c4a5f3495cea97c31c191fa74746333524538b11f3a518d0be01cb6935270a59",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "FailOnce"
+}

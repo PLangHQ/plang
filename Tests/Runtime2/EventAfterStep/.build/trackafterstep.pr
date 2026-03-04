@@ -1,0 +1,50 @@
+{
+  "name": "TrackAfterStep",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %afterCount% = %afterCount% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%afterCount%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "afterCount"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/TrackAfterStep.goal",
+  "prPath": "/.build/trackafterstep.pr",
+  "hash": "f3fda347d14538822592015b1c4efbbcf1305e38cd54f1d49071412671709b10",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "TrackAfterStep"
+}

@@ -1,0 +1,15 @@
+Start
+/ equals
+- assert 5 equals 5
+
+/ isTrue
+- set %flag% = true
+- assert %flag% is true
+
+/ isNotNull
+- set %val% = "something"
+- assert %val% is not null
+
+/ contains
+- set %text% = "hello world"
+- assert %text% contains "world"

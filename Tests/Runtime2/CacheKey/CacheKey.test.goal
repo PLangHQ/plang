@@ -1,0 +1,9 @@
+Start
+/ same step with same input hits cache
+- save 'cachekey.txt' with content 'value1'
+- call ReadCachedFile
+- set %first% = %cachedContent%
+- save 'cachekey.txt' with content 'value2'
+- call ReadCachedFile
+- assert %cachedContent% equals %first%
+- delete file 'cachekey.txt'

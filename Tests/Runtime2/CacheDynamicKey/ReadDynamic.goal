@@ -1,0 +1,2 @@
+ReadDynamic
+- read file %fileName%, cache for 60 seconds, write to %dynContent%

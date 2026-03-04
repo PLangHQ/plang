@@ -1,0 +1,9 @@
+Start
+/ two events on same hook both fire
+- set %eventA% = false
+- set %eventB% = false
+- before action output.write call HandlerA
+- before action output.write call HandlerB
+- write out "trigger"
+- assert %eventA% equals true
+- assert %eventB% equals true

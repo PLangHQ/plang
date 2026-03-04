@@ -1,0 +1,45 @@
+{
+  "name": "InnerHandler",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %innerErrorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerErrorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorNested/InnerHandler.goal",
+  "prPath": "/ErrorNested/.build/innerhandler.pr",
+  "hash": "991b662e236ef5ae657730bcdc505e34ac31ff1739f3b2d16266123be4bb71f5",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "InnerHandler"
+}

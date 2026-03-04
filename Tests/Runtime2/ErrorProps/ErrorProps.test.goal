@@ -1,0 +1,6 @@
+Start
+/ error variables accessible in handler
+- throw "bad thing" key="CustomKey" statusCode=422, on error call InspectError
+- assert %errorMessage% equals "bad thing"
+- assert %errorKey% equals "CustomKey"
+- assert %errorStatusCode% equals 422

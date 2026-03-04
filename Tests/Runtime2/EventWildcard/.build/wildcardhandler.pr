@@ -1,0 +1,68 @@
+{
+  "name": "WildcardHandler",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %matchCount% = %matchCount% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%matchCount%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "__mathResult"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%matchCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__mathResult%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/WildcardHandler.goal",
+  "prPath": "/.build/wildcardhandler.pr",
+  "hash": "f69497656c4684fb511a4582fdcae07ccf95d90edaa642e8250dc50d3a350ee4",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "WildcardHandler"
+}

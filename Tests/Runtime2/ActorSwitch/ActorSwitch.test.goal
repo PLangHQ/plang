@@ -1,0 +1,6 @@
+Start
+/ write to different actors
+- write out "user message"
+- write out "system message" actor="system"
+- set %actorTestDone% = true
+- assert %actorTestDone% equals true

@@ -112,15 +112,22 @@ public sealed class @this
             return;
         }
 
-        // Fresh engine with the same root as the original engine.
-        // Goal resolution uses Goal.FolderPath for relative lookups,
-        // so the engine root stays at the top level (e.g., Tests/Runtime2/).
-        var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
+        // Each test gets an engine rooted at its own directory so that
+        // helper goals (.pr files) resolve correctly via GetAsync.
+        var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
         await using var testEngine = new Engine.@this(testFs);
         testEngine.Testing.IsEnabled = true;
 
         // Load the test .pr file
         await testEngine.Goals.LoadFromFileAsync(testEngine, prPath, cancellationToken: cancellationToken);
+
+        // Discover and run setup goals before the test
+        var setupResult = await testEngine.Goals.Setup.DiscoverAsync(testEngine, cancellationToken);
+        if (setupResult.Success && testEngine.Goals.Setup.Goals.Any())
+        {
+            var context = testEngine.User.Context;
+            await testEngine.Goals.Setup.RunAsync(testEngine, context, cancellationToken);
+        }
 
         var testGoalName = "Start";
         var goal = testEngine.Goals.Get(testGoalName);
