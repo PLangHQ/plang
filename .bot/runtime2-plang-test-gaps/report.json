@@ -47,6 +47,39 @@
         "health": "Comprehensive gap analysis complete. Module coverage is reasonable. Engine-level gaps are significant: error handling, events, context variables, goal calls, caching, actors, setup.",
         "notes": "Step timeout and WaitForExecution exist in model but are not implemented. Builder validation designed on separate branch but not built."
       }
+    },
+    {
+      "id": "a1b2c3d4-test-gaps-update-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-04T00:00:00Z",
+      "timestamp_end": "2026-03-04T00:00:00Z",
+      "intent": "Update test gap plan after 6 new test suites pushed to runtime2",
+      "before": {
+        "assumptions": "Tester pushed 6 new test suites to runtime2. Need to check which gaps they resolve.",
+        "risk": "Low — documentation update only"
+      },
+      "plan": "Pull latest runtime2, merge into branch, read new test files, update plan.md marking resolved items, update summaries.",
+      "actions": [
+        {
+          "paths": ["Tests/Runtime2/ContextVars2/", "Tests/Runtime2/Convert2/", "Tests/Runtime2/GoalCall/", "Tests/Runtime2/ListOps2/", "Tests/Runtime2/Math2/", "Tests/Runtime2/VariableOps/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read all 6 new test suites to understand what gaps they resolve"
+        },
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/architect/v1/plan.md", ".bot/runtime2-plang-test-gaps/architect/v1/summary.md", ".bot/runtime2-plang-test-gaps/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated plan marking 6 sections as RESOLVED, updated priority list, updated summaries"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Plan updated. 29 test suites now (was 23). Context variables, goal calls (partial), variable ops, convert, list, math all resolved. Remaining: error handling, events, caching, goal calls (advanced), actors, setup, library.load.",
+        "notes": "Error handling is the biggest remaining gap. Builder limitation may require hand-crafted .pr files for some error tests."
+      }
     }
   ]
 }

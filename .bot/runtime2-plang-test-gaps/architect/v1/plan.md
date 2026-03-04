@@ -2,7 +2,7 @@
 
 ## Overview
 
-The runtime2 PLang test suite has 23 test suites covering module actions. Module-level coverage is reasonable. The big gaps are in **engine-level behavior**: error flows, events, caching, context variables, goal calls, actors, and setup.
+The runtime2 PLang test suite has 29 test suites (was 23, 6 new added). Module-level coverage has improved significantly. The remaining gaps are in **engine-level behavior**: error flows, events, caching, actors, and setup.
 
 This document maps what's tested vs what's not, organized by concern. The tester writes `.test.goal` files, the coder fixes anything that breaks.
 
@@ -24,6 +24,8 @@ This document maps what's tested vs what's not, organized by concern. The tester
 - `on error retry N times, then call GoalName` — Retry test proves error goal fires after retries
 
 ### Not Covered
+
+**NOTE:** The tester report flagged that `on error call GoalName` is blocked by the LLM builder not reliably generating the `onError` step property. Consider pre-building `.pr` files for error handling tests to bypass builder limitations.
 
 **`on error call GoalName` (standalone, no retry):**
 ```plang
@@ -122,37 +124,18 @@ Start
 
 ---
 
-## 3. Context Variables (BARELY TESTED)
+## ~~3. Context Variables (BARELY TESTED)~~ RESOLVED
 
-### Covered
-- `%!engine.Name%` — ContextVars test
-- `%!callStack.Depth%` — CallStack test
+Now covered by **ContextVars2** test suite:
+- `%!goal.Name%` — asserted equals "Start"
+- `%!step%` — asserted not null
+- `%!context%` — asserted not null
+- `%!fileSystem%` — asserted not null
+- `%!callStack%` — asserted not null
 
-### Not Covered
+Plus original ContextVars (`%!engine.Name%`) and CallStack (`%!callStack.Depth%`).
 
-Each of these should be tested for basic access and navigation:
-
-```plang
-Start
-/ Goal context
-- assert %!goal% is not null
-- assert %!goal.Name% equals "Start"
-
-/ Step context
-- assert %!step% is not null
-- assert %!step.Text% is not null
-
-/ Engine navigation
-- assert %!engine% is not null
-- assert %!fileSystem% is not null
-
-/ Context itself
-- assert %!context% is not null
-- assert %!context.Id% is not null
-
-/ Memory stack
-- assert %!memoryStack% is not null
-```
+**Remaining small gaps:** `%!memoryStack%`, `%!channels%`, `%!context.Id%` — minor, low priority.
 
 ---
 
@@ -188,74 +171,29 @@ Start
 
 ---
 
-## 5. Goal Calls (NO DEDICATED TEST)
+## ~~5. Goal Calls (NO DEDICATED TEST)~~ PARTIALLY RESOLVED
 
-### Covered
-- Basic `call GoalName` — used everywhere indirectly
-- Variables survive goal call — Events test proves this
+Now covered by **GoalCall** test suite:
+- Goal with parameters — `call goal Greet name="world"` ✓
+- Variable set in called goal flows back — `%greeting%` asserted ✓
 
-### Not Covered
-
-**Goal with parameters:**
-```plang
-Start
-- call Greet name="world", write to %greeting%
-- assert %greeting% equals "hello world"
-
-Greet
-- set %result% = "hello %name%"
-```
-
-**Return values from goal calls — `write to %var%`**
-
-**Dynamic goal name — `call %goalName%`:**
-```plang
-Start
-- set %goalName% = "DynamicTarget"
-- call %goalName%
-- assert %dynamicResult% equals "it worked"
-
-DynamicTarget
-- set %dynamicResult% = "it worked"
-```
-
-**Calling non-existent goal — error path**
-
-**Relative goal resolution — calling goals from subdirectories**
-
-**Recursive calls / max depth (callstack overflow guard at 1000)**
+**Still not covered:**
+- Dynamic goal name — `call %goalName%`
+- Calling non-existent goal — error path
+- Relative goal resolution — calling goals from subdirectories
+- Recursive calls / max depth
+- Return values via `write to %var%` (current test uses global variable, not return)
 
 ---
 
-## 6. Variables (CORE MODULE, 4/5 ACTIONS UNTESTED)
+## ~~6. Variables (CORE MODULE, 4/5 ACTIONS UNTESTED)~~ RESOLVED
 
-### Covered
-- `variable.set` — used everywhere
+Now covered by **VariableOps** test suite:
+- `variable.exists` — set var, check exists = true ✓
+- `variable.remove` — remove var, check exists = false ✓
+- `variable.clear` — clear all, check var gone ✓
 
-### Not Covered
-
-**`variable.exists`:**
-```plang
-Start
-- set %myVar% = "hello"
-- check if variable %myVar% exists, write to %exists%
-- assert %exists% is true
-- check if variable %nonexistent% exists, write to %notExists%
-- assert %notExists% is false
-```
-
-**`variable.get` (explicit action):**
-
-**`variable.remove`:**
-```plang
-Start
-- set %temp% = "value"
-- remove variable %temp%
-- check if variable %temp% exists, write to %gone%
-- assert %gone% is false
-```
-
-**`variable.clear`:**
+**Note:** `variable.get` as explicit action still not tested, but it's used implicitly everywhere via `%variable%` resolution.
 
 ---
 
@@ -289,26 +227,28 @@ Start
 
 ## 9. Module Action Gaps
 
-### convert — missing 3 actions:
-- `todatetime` — zero coverage
-- `todouble` — zero coverage
-- `tolong` — zero coverage
+### ~~convert — missing 3 actions~~ RESOLVED
+Now covered by **Convert2** test suite: `todouble`, `tolong`, `todatetime` ✓
+
+**Note:** Assertions are `is not null` only — value verification would be stronger but works for now.
 
 ### event — missing 4 actions:
 - `afterAction`, `afterStep`, `beforeStep` — zero PLang coverage
 - `event.remove` — zero coverage
 
-### list — missing 3 actions:
-- `flatten`, `range`, `set` (mutate by index)
+### ~~list — missing 3 actions~~ RESOLVED
+Now covered by **ListOps2** test suite: `range`, `set` (mutate by index), `flatten` ✓
 
-### variable — missing 4 actions:
-- `clear`, `exists`, `get`, `remove`
+**Note:** `flatten` and `range` assertions are `is not null` only — weak. Count/value assertions blocked by builder deep-property limitations.
+
+### ~~variable — missing 4 actions~~ RESOLVED
+Now covered by **VariableOps** test suite ✓
 
 ### library — entire module:
 - `library.load` — zero coverage
 
-### math — 1 action:
-- `random` — test that result is within expected range
+### ~~math — 1 action~~ RESOLVED
+Now covered by **Math2** test suite: `random` with range assertion ✓
 
 ---
 
@@ -322,17 +262,25 @@ These exist in the model but aren't wired:
 
 ---
 
-## Priority Order for Tester
+## Updated Priority Order for Tester
 
-1. **Error handling** — most complex, most user-facing, biggest gap
+1. **Error handling** — most complex, most user-facing, biggest gap. Builder limitation flagged — may need hand-crafted `.pr` files.
 2. **Events** — half the surface untested, critical for the validation system design
-3. **Context variables** — quick to write, validates developer access to `%!xxx%`
-4. **Goal calls** — parameters, return values, dynamic names
-5. **Variable module** — 4 missing actions, quick wins
-6. **Caching** — sliding, keys, events
-7. **Convert/list/math gaps** — small, quick
-8. **Actors** — may need infrastructure work
-9. **Setup goals** — may need special test pattern
+3. **Caching** — sliding, keys, events
+4. **Goal calls** — dynamic names, error paths, recursion, return values
+5. **Actors** — may need infrastructure work
+6. **Setup goals** — may need special test pattern
+7. **library.load** — entire module untested
+
+## What Was Resolved (v1 → v1 update)
+
+Six new test suites added by tester (29 total, all passing):
+- **ContextVars2** — `%!goal.Name%`, `%!step%`, `%!context%`, `%!fileSystem%`, `%!callStack%`
+- **Convert2** — `todatetime`, `todouble`, `tolong`
+- **GoalCall** — goal with parameters, variable flow back
+- **ListOps2** — `range`, `set` (mutate by index), `flatten`
+- **Math2** — `random` with range assertion
+- **VariableOps** — `exists`, `remove`, `clear`
 
 ## Test Writing Reminders
 
@@ -342,3 +290,4 @@ These exist in the model but aren't wired:
 - Use event binding to capture side effects (output, errors) for assertion
 - Variables are global — set in an error handler or event handler, assert in `Start`
 - Use mock spy for action interception when events aren't enough
+- For error handling tests: the LLM builder may not reliably generate `onError` step properties — consider hand-crafting `.pr` files
