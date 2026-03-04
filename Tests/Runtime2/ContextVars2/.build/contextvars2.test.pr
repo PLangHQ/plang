@@ -1,0 +1,146 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %!goal.Name% equals \u0022Start\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: goal name is accessible",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Start",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%!goal.Name%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!step% is not null",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Test: step is accessible",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!step%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!context% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Test: context is accessible",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!context%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %!fileSystem% is not null",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": "Test: fileSystem is accessible",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!fileSystem%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %!callStack% is not null",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": "Test: callStack is accessible",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!callStack%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ContextVars2/ContextVars2.test.goal",
+  "prPath": "/ContextVars2/.build/contextvars2.test.pr",
+  "hash": "df9abc748281b55650eecdd2e913a173c7b76aef4649e1e7ceb67f3ed5d3d5c7",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

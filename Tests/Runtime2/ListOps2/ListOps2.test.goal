@@ -1,0 +1,13 @@
+Start
+/ Test: list.range generates a sequence
+- generate range from 1 to 5, write to %rangeResult%
+- assert %rangeResult% is not null
+/ Test: list.set mutates by index
+- set %myList% = [10, 20, 30]
+- set item at index 1 in %myList% to 99
+- get item at index 1 from %myList%, write to %updated%
+- assert %updated% equals 99
+/ Test: list.flatten
+- set %nested% = [[1, 2], [3, 4]]
+- flatten %nested%, write to %flatResult%
+- assert %flatResult% is not null

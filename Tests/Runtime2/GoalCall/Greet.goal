@@ -1,0 +1,2 @@
+Greet
+- set %greeting% = "hello %name%"
