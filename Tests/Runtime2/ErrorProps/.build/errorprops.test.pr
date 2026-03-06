@@ -3,40 +3,25 @@
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022bad thing\u0022 key=\u0022CustomKey\u0022 statusCode=422, on error call InspectError",
+      "text": "call ThrowCustomError, on error call InspectError",
       "lineNumber": 3,
       "indent": 0,
       "comment": "error variables accessible in handler",
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "message",
-              "value": "bad thing",
-              "type": "string"
-            },
-            {
-              "name": "Key",
-              "value": "CustomKey",
-              "type": "string"
-            },
-            {
-              "name": "StatusCode",
-              "value": 422,
-              "type": "int"
+              "name": "goalName",
+              "value": "ThrowCustomError",
+              "type": "goal.call"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "InspectError"
-        }
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -133,7 +118,7 @@
   "visibility": 1,
   "path": "/ErrorProps/ErrorProps.test.goal",
   "prPath": "/ErrorProps/.build/errorprops.test.pr",
-  "hash": "fe1fdb6652582ba4770134b84809c427ee5f6d1f8d57b9b1a5ae15a450504d5d",
+  "hash": "6b293f7820af739e22cac7b3369b2c61a8f52ad92494a47cd28dd8659df08a26",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

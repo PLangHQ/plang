@@ -1,6 +1,6 @@
 Start
 / throw error has expected shape
-- throw "user error" key="TestKey", on error call CatchThrow
+- call ThrowUserError, on error call CatchThrow
 - assert %throwKey% equals "TestKey"
 
 / file not found error

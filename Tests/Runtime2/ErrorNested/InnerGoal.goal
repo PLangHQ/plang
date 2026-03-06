@@ -1,2 +1,2 @@
 InnerGoal
-- throw "inner error", on error call InnerHandler
+- call ThrowInnerError, on error call InnerHandler

@@ -112,9 +112,10 @@ public sealed class @this
             return;
         }
 
-        // Each test gets an engine rooted at its own directory so that
-        // helper goals (.pr files) resolve correctly via GetAsync.
-        var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
+        // Fresh engine with the same root as the original engine.
+        // Goal resolution uses Goal.FolderPath for relative lookups,
+        // so the engine root stays at the top level (e.g., Tests/Runtime2/).
+        var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
         await using var testEngine = new Engine.@this(testFs);
         testEngine.Testing.IsEnabled = true;
 

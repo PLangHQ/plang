@@ -171,19 +171,8 @@
       "actions": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%a%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": 1,
-              "type": "int"
-            }
-          ],
+          "action": "clear",
+          "parameters": [],
           "errors": [],
           "warnings": []
         }
@@ -200,17 +189,17 @@
       "actions": [
         {
           "module": "variable",
-          "action": "set",
+          "action": "exists",
           "parameters": [
             {
               "name": "Name",
-              "value": "%b%",
+              "value": "%a%",
               "type": "string"
-            },
+            }
+          ],
+          "return": [
             {
-              "name": "Value",
-              "value": 2,
-              "type": "int"
+              "name": "aResult"
             }
           ],
           "errors": [],
@@ -228,9 +217,15 @@
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
-          "action": "clear",
-          "parameters": [],
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%aResult.exists%",
+              "type": "bool"
+            }
+          ],
           "errors": [],
           "warnings": []
         }

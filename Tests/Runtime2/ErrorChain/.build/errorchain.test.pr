@@ -22,14 +22,6 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "HandleError"
-        },
-        "retryCount": 2,
-        "order": 1,
-        "ignoreError": false
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -66,8 +58,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorChain.test.goal",
-  "prPath": "/.build/errorchain.test.pr",
+  "path": "/ErrorChain/ErrorChain.test.goal",
+  "prPath": "/ErrorChain/.build/errorchain.test.pr",
   "hash": "0905dd85132139ee82a3e50857b5adfa43949a88471e42134785ab3309c79774",
   "isSetup": false,
   "isEvent": false,

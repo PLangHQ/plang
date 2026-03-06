@@ -29,6 +29,24 @@
           ],
           "errors": [],
           "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%afterCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%afterCount%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
         }
       ],
       "errors": [],
@@ -38,8 +56,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/TrackAfterStep.goal",
-  "prPath": "/.build/trackafterstep.pr",
+  "path": "/EventAfterStep/TrackAfterStep.goal",
+  "prPath": "/EventAfterStep/.build/trackafterstep.pr",
   "hash": "f3fda347d14538822592015b1c4efbbcf1305e38cd54f1d49071412671709b10",
   "isSetup": false,
   "isEvent": false,

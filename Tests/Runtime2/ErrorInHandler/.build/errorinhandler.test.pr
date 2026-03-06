@@ -51,11 +51,6 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "OuterHandler"
-        }
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -92,9 +87,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorInHandler.test.goal",
-  "prPath": "/.build/errorinhandler.test.pr",
-  "hash": "errorinhandler_restructured",
+  "path": "/ErrorInHandler/ErrorInHandler.test.goal",
+  "prPath": "/ErrorInHandler/.build/errorinhandler.test.pr",
+  "hash": "9061b52e751d99b21f3bc671e7df8603d7b75e1a0588136ed9ddf5ccaef8dfc9",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

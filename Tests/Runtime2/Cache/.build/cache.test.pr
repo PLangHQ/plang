@@ -177,8 +177,7 @@
       "cache": {
         "durationSeconds": 300,
         "sliding": true,
-        "key": "%fileData%",
-        "location": "memory"
+        "key": "%fileData%"
       },
       "errors": [],
       "warnings": [],

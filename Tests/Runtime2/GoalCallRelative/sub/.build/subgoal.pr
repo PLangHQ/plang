@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %subResult% = \"from sub\"",
+      "text": "set %subResult% = \u0022from sub\u0022",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -35,7 +35,7 @@
   "visibility": 1,
   "path": "/GoalCallRelative/sub/SubGoal.goal",
   "prPath": "/GoalCallRelative/sub/.build/subgoal.pr",
-  "hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+  "hash": "2f69497474cf18de803ea9e95a1b0a59b7e974bf0de161248ab6b3c096debe10",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

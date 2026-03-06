@@ -1,2 +1,2 @@
 FailOnce
-- throw "fail"
+- throw error "fail"

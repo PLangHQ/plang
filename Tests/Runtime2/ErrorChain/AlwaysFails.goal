@@ -1,2 +1,2 @@
 AlwaysFails
-- throw "always fails"
+- throw error "always fails"

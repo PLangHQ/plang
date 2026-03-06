@@ -1,12 +1,11 @@
 {
-  "name": "BadHandler",
+  "name": "ThrowTestError",
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022handler error\u0022",
-      "lineNumber": 3,
+      "text": "throw error \u0022test error\u0022",
+      "lineNumber": 2,
       "indent": 0,
-      "comment": "this handler also throws",
       "actions": [
         {
           "module": "error",
@@ -14,7 +13,7 @@
           "parameters": [
             {
               "name": "message",
-              "value": "handler error",
+              "value": "test error",
               "type": "string"
             }
           ],
@@ -29,13 +28,13 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorInHandler/BadHandler.goal",
-  "prPath": "/ErrorInHandler/.build/badhandler.pr",
-  "hash": "1794888ed2f8f4ca23d897e0dff63753504299207b71f1a8e2e3c2d0e252d71b",
+  "path": "/ErrorCall/ThrowTestError.goal",
+  "prPath": "/ErrorCall/.build/throwtesterror.pr",
+  "hash": "868086e97bdee3e7e8439b630154d51dc77c7956a460d9ba3ce4e86985806d64",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
   "errors": [],
   "warnings": [],
-  "fullPath": "BadHandler"
+  "fullPath": "ThrowTestError"
 }

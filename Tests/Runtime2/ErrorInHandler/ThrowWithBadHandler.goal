@@ -1,3 +1,3 @@
 ThrowWithBadHandler
-/ throws an error whose handler also throws
-- throw "original error", on error call BadHandler
+/ calls a goal that throws, handler also throws
+- call ThrowOriginal, on error call BadHandler

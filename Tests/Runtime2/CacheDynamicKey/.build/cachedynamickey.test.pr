@@ -4,9 +4,9 @@
     {
       "index": 0,
       "text": "save \u0027dynkey1.txt\u0027 with content \u0027content1\u0027",
-      "lineNumber": 3,
+      "lineNumber": 4,
       "indent": 0,
-      "comment": "cache with different variable values should not hit",
+      "comment": "so the same step with different variable values returns cached result",
       "actions": [
         {
           "module": "file",
@@ -34,7 +34,7 @@
     {
       "index": 1,
       "text": "save \u0027dynkey2.txt\u0027 with content \u0027content2\u0027",
-      "lineNumber": 4,
+      "lineNumber": 5,
       "indent": 0,
       "actions": [
         {
@@ -63,7 +63,7 @@
     {
       "index": 2,
       "text": "set %fileName% = \u0022dynkey1.txt\u0022",
-      "lineNumber": 5,
+      "lineNumber": 6,
       "indent": 0,
       "actions": [
         {
@@ -92,7 +92,7 @@
     {
       "index": 3,
       "text": "call ReadDynamic",
-      "lineNumber": 6,
+      "lineNumber": 7,
       "indent": 0,
       "actions": [
         {
@@ -116,7 +116,7 @@
     {
       "index": 4,
       "text": "set %result1% = %dynContent%",
-      "lineNumber": 7,
+      "lineNumber": 8,
       "indent": 0,
       "actions": [
         {
@@ -145,7 +145,7 @@
     {
       "index": 5,
       "text": "set %fileName% = \u0022dynkey2.txt\u0022",
-      "lineNumber": 8,
+      "lineNumber": 9,
       "indent": 0,
       "actions": [
         {
@@ -174,7 +174,7 @@
     {
       "index": 6,
       "text": "call ReadDynamic",
-      "lineNumber": 9,
+      "lineNumber": 10,
       "indent": 0,
       "actions": [
         {
@@ -198,7 +198,7 @@
     {
       "index": 7,
       "text": "set %result2% = %dynContent%",
-      "lineNumber": 10,
+      "lineNumber": 11,
       "indent": 0,
       "actions": [
         {
@@ -227,7 +227,7 @@
     {
       "index": 8,
       "text": "assert %result1% equals \u0022content1\u0022",
-      "lineNumber": 11,
+      "lineNumber": 12,
       "indent": 0,
       "actions": [
         {
@@ -256,7 +256,7 @@
     {
       "index": 9,
       "text": "assert %result2% equals \u0022content1\u0022",
-      "lineNumber": 12,
+      "lineNumber": 13,
       "indent": 0,
       "actions": [
         {
@@ -265,7 +265,7 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "content1",
+              "value": "content2",
               "type": "string"
             },
             {
@@ -285,7 +285,7 @@
     {
       "index": 10,
       "text": "delete file \u0027dynkey1.txt\u0027",
-      "lineNumber": 13,
+      "lineNumber": 14,
       "indent": 0,
       "actions": [
         {
@@ -319,7 +319,7 @@
     {
       "index": 11,
       "text": "delete file \u0027dynkey2.txt\u0027",
-      "lineNumber": 14,
+      "lineNumber": 15,
       "indent": 0,
       "actions": [
         {
@@ -353,9 +353,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/CacheDynamicKey.test.goal",
-  "prPath": "/.build/cachedynamickey.test.pr",
-  "hash": "19af4084029f3b1bb83f57230b49e9bbcea50fc758a792b9f14899237cb09b60",
+  "path": "/CacheDynamicKey/CacheDynamicKey.test.goal",
+  "prPath": "/CacheDynamicKey/.build/cachedynamickey.test.pr",
+  "hash": "6689ecfd4685eef9afe1012d74d7508eca49e5569b862a00d7e03067edcf662b",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

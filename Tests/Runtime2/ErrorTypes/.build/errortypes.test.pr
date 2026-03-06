@@ -27,12 +27,6 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "CatchThrow"
-        },
-        "ignoreError": false
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -87,12 +81,6 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "CatchFileError"
-        },
-        "ignoreError": false
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -129,8 +117,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorTypes.test.goal",
-  "prPath": "/.build/errortypes.test.pr",
+  "path": "/ErrorTypes/ErrorTypes.test.goal",
+  "prPath": "/ErrorTypes/.build/errortypes.test.pr",
   "hash": "67e3976e609be5d48301ad78f0c61aa229ef860723bc843ad9ecfa0f0f6adf0f",
   "isSetup": false,
   "isEvent": false,

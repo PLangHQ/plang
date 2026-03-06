@@ -9,36 +9,18 @@
       "comment": "empty list foreach",
       "actions": [
         {
-          "module": "list",
-          "action": "add",
+          "module": "variable",
+          "action": "set",
           "parameters": [
             {
-              "name": "ListName",
+              "name": "Name",
               "value": "%items%",
               "type": "string"
             },
             {
               "name": "Value",
-              "value": "temp",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        },
-        {
-          "module": "list",
-          "action": "remove",
-          "parameters": [
-            {
-              "name": "ListName",
-              "value": "%items%",
-              "type": "string"
-            },
-            {
-              "name": "Value",
-              "value": "temp",
-              "type": "string"
+              "value": [],
+              "type": "list"
             }
           ],
           "errors": [],
@@ -144,8 +126,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ForeachEmpty.test.goal",
-  "prPath": "/.build/foreachempty.test.pr",
+  "path": "/ForeachEmpty/ForeachEmpty.test.goal",
+  "prPath": "/ForeachEmpty/.build/foreachempty.test.pr",
   "hash": "c716b8d592bbb4ad1c541b56f194888761b77ab4c83798f3f3f7ad09ddf1ab89",
   "isSetup": false,
   "isEvent": false,

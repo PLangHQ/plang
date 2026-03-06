@@ -25,7 +25,8 @@
       "onError": {
         "goal": {
           "name": "HandleMissing"
-        }
+        },
+        "ignoreError": false
       },
       "errors": [],
       "warnings": [],

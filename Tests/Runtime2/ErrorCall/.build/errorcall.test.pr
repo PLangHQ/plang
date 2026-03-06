@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %caughtMessage% = \"\"",
+      "text": "set %caughtMessage% = \u0022\u0022",
       "lineNumber": 3,
       "indent": 0,
       "comment": "on error call goal without retry",
@@ -33,7 +33,7 @@
     },
     {
       "index": 1,
-      "text": "throw \"test error\", on error call CatchError",
+      "text": "throw \u0022test error\u0022, on error call CatchError",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
@@ -51,18 +51,13 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "CatchError"
-        }
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %caughtMessage% equals \"test error\"",
+      "text": "assert %caughtMessage% equals \u0022test error\u0022",
       "lineNumber": 5,
       "indent": 0,
       "actions": [
@@ -92,9 +87,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorCall.test.goal",
-  "prPath": "/.build/errorcall.test.pr",
-  "hash": "errorcall_handcrafted_v1",
+  "path": "/ErrorCall/ErrorCall.test.goal",
+  "prPath": "/ErrorCall/.build/errorcall.test.pr",
+  "hash": "148357b5d0e5a8aa7ad6b852ed6d9c1bc42d48718b6ef9c39578b62035376db1",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

@@ -3,18 +3,18 @@
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022inner error\u0022, on error call InnerHandler",
+      "text": "call ThrowInnerError, on error call InnerHandler",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "message",
-              "value": "inner error",
-              "type": "string"
+              "name": "goalName",
+              "value": "ThrowInnerError",
+              "type": "goal.call"
             }
           ],
           "errors": [],
@@ -36,7 +36,7 @@
   "visibility": 1,
   "path": "/ErrorNested/InnerGoal.goal",
   "prPath": "/ErrorNested/.build/innergoal.pr",
-  "hash": "eb979a8508c4c20742c259a520e4323e31a30a9a2278b6d1a0b58736050dcd4e",
+  "hash": "4130a3bc77ff5a582d910ec271dea948f5493a8406d5f90d5aba1226ec991d60",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

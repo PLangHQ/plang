@@ -8,18 +8,23 @@
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "math",
+          "action": "add",
           "parameters": [
             {
-              "name": "name",
+              "name": "A",
               "value": "%count%",
               "type": "string"
             },
             {
-              "name": "value",
-              "value": "%count% \u002B 1",
-              "type": "string"
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "count"
             }
           ],
           "errors": [],
@@ -33,8 +38,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ProcessItem.goal",
-  "prPath": "/.build/processitem.pr",
+  "path": "/ForeachEmpty/ProcessItem.goal",
+  "prPath": "/ForeachEmpty/.build/processitem.pr",
   "hash": "d9e72cc1f68f1def51d371c606b3804dc75fd19622af3a5be98897aee8c4fcd9",
   "isSetup": false,
   "isEvent": false,

@@ -1,12 +1,11 @@
 {
-  "name": "BadHandler",
+  "name": "ThrowInnerError",
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022handler error\u0022",
-      "lineNumber": 3,
+      "text": "throw error \u0022inner error\u0022",
+      "lineNumber": 2,
       "indent": 0,
-      "comment": "this handler also throws",
       "actions": [
         {
           "module": "error",
@@ -14,7 +13,7 @@
           "parameters": [
             {
               "name": "message",
-              "value": "handler error",
+              "value": "inner error",
               "type": "string"
             }
           ],
@@ -29,13 +28,13 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorInHandler/BadHandler.goal",
-  "prPath": "/ErrorInHandler/.build/badhandler.pr",
-  "hash": "1794888ed2f8f4ca23d897e0dff63753504299207b71f1a8e2e3c2d0e252d71b",
+  "path": "/ErrorNested/ThrowInnerError.goal",
+  "prPath": "/ErrorNested/.build/throwinnererror.pr",
+  "hash": "eb0da8b83119036e7cf6d4552325d6dcf7edb085dc0857606c9aa067f78547e4",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
   "errors": [],
   "warnings": [],
-  "fullPath": "BadHandler"
+  "fullPath": "ThrowInnerError"
 }
