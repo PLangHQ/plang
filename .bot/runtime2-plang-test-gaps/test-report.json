@@ -1,0 +1,105 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-plang-test-gaps",
+  "timestamp": "2026-03-07T10:00:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 0, "passed": 0, "failed": 0, "skipped": 0, "note": "BUILD FAILURE — DiscoverAsync made private, 3 tests reference it" },
+    "plang": { "total": 64, "passed": 59, "failed": 5, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 7,
+    "uncovered_files": [
+      "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+      "PLang/Runtime2/Engine/Goals/Goal/Methods.cs",
+      "PLang/Runtime2/Engine/Goals/this.cs",
+      "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+      "PLang/Executor.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+      "issue": "C# tests don't compile — DiscoverAsync was made private but 3 tests still call it (lines 305, 331, 346)",
+      "impact": "All 1500 C# tests cannot run. Runtime changes are completely unvalidated at the unit test level.",
+      "suggestion": "Update SetupTests to test through RunAsync (which calls DiscoverAsync internally) or make DiscoverAsync internal with InternalsVisibleTo"
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/ErrorProps/ErrorProps.test.goal",
+      "code_file": "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+      "issue": "ErrorProps, ErrorInHandler, RecursionDepthLimit tests are broken — .pr files missing onError property. The coder hand-crafted some .pr files (ErrorCall works) but left these 3 unfixed.",
+      "impact": "These tests never worked — they were committed in a broken state. Error property access, error chain propagation, and recursion depth limiting have zero PLang test coverage.",
+      "suggestion": "Hand-craft the onError fields in the 3 broken .pr files, or document them as blocked and remove from test suite"
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/ConditionCompound/ConditionCompound.test.goal",
+      "code_file": "PLang/Runtime2/modules/condition/if.cs",
+      "issue": "Test expects expression evaluation (e.g., '%x% > 5') but condition.if takes bool — Convert.ChangeType throws. Coder summary claims fix was applied but code still has 'public partial bool Condition'",
+      "impact": "Compound conditions are untested and don't work. NullReferenceException at runtime.",
+      "suggestion": "Either implement expression evaluation in condition.if (change Condition to string + add parser) or drop the test and document as unsupported syntax"
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "Tests/Runtime2/CacheDynamicKey/CacheDynamicKey.test.goal",
+      "code_file": "N/A",
+      "issue": "Goal text says 'assert %result2% equals \"content1\"' (documenting known cache behavior) but .pr has Expected: 'content2'. Builder generated wrong assertion value.",
+      "impact": "Test was designed to document known cache behavior but doesn't match — assertion failure is a .pr configuration error, not a runtime bug",
+      "suggestion": "Fix the .pr assertion to match the goal intent ('content1' not 'content2')"
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "N/A",
+      "code_file": "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+      "issue": "Steps.RunAsync changed from 'return Data.Ok()' to 'return lastResult ?? Data.Ok()' — no C# test verifies this behavioral change. Deletion test: reverting to Data.Ok() would break no C# test.",
+      "impact": "Goal return value propagation is only tested by PLang integration tests. A regression would not be caught by C# unit tests.",
+      "suggestion": "Add C# test: create goal with steps, verify RunAsync returns last step's Data result (not Data.Ok())"
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "N/A",
+      "code_file": "PLang/Runtime2/Engine/Goals/this.cs",
+      "issue": "Goals keying changed from Name to PrPath to prevent collisions. Get() now does linear scan via FirstOrDefault. Remove() has new fallback path. No C# test covers any of this.",
+      "impact": "Name collision prevention (the reason for the change) is completely untested. Performance regression from linear scan is undetected.",
+      "suggestion": "Add C# tests: (1) Add two goals with same Name but different PrPath, verify both accessible; (2) Remove by name when keyed by PrPath; (3) Get by name with linear scan"
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "N/A",
+      "code_file": "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+      "issue": "Setup discovery narrowed from scanning all .pr files to only 2 convention paths (.build/setup.pr and Setup/.build/setup.pr). No test verifies setup goals in non-standard locations are NOT discovered.",
+      "impact": "Low — this is a performance improvement with documented behavior change",
+      "suggestion": "Add C# test: place setup .pr in non-standard location, verify it's NOT discovered"
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang/Runtime2/Engine/Test/this.cs",
+      "code_file": "PLang/Runtime2/Engine/Test/this.cs",
+      "issue": "Test runner removed post-run assertion error tracking — now returns raw goal result. TrackAssertionFailures AfterStep handler still exists but the backup check for assertion errors that bubble to goal level was removed.",
+      "impact": "Low — AfterStep handler catches most assertion failures. Edge case: assertion error in a step with on error ignore would be silently swallowed.",
+      "suggestion": "Acceptable tradeoff for cleaner code, but document the limitation"
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "C# tests don't compile (DiscoverAsync made private, 3 test references not updated). 5/64 PLang tests fail: 3 missing onError in .pr files (builder limitation, should have been hand-crafted), 1 NullRef in condition evaluation (claimed fix not applied), 1 wrong assertion value in .pr. Additionally, 5 runtime code changes lack C# test coverage — the behavioral changes to step/goal return values and goals keying are only validated by PLang integration tests."
+}

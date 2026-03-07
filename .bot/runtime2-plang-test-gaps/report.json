@@ -139,6 +139,60 @@
         "health": "All 6 files clean. No OBP violations, no dead code, no over-abstraction. Two essential bug fixes (return values), one encapsulation improvement (setup discovery), one collision fix (PrPath keying), one test infrastructure improvement (per-test root).",
         "notes": "Recommend running tester next to validate test quality and coverage."
       }
+    },
+    {
+      "id": "e3f4a5b6-c7d8-9012-ef01-234567890abc",
+      "bot": "tester",
+      "timestamp_start": "2026-03-07T10:00:00Z",
+      "timestamp_end": "2026-03-07T11:00:00Z",
+      "intent": "Test quality analysis of coder v1: 33 new PLang test suites + 3 runtime bug fixes",
+      "before": {
+        "assumptions": "Coder claims 64/64 PLang tests pass, 33 new suites, 3 runtime fixes. Need to verify independently.",
+        "risk": "Medium — if tests are false greens, runtime changes are unvalidated"
+      },
+      "plan": "1. Read coder's plan and summary. 2. Run C# tests. 3. Run PLang tests. 4. Analyze failures (builder bug, runtime bug, or test bug). 5. Review runtime code changes for untested paths. 6. Write test-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/coder/v1/plan.md", ".bot/runtime2-plang-test-gaps/coder/v1/summary.md"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read coder's intent: 33 test suites, 3 runtime bug fixes (step return propagation, goal return propagation, setup discovery)"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# tests: BUILD FAILURE — DiscoverAsync made private but 3 tests still call it. All 1500 C# tests cannot compile."
+        },
+        {
+          "paths": ["Tests/Runtime2/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang tests: 59/64 pass, 5 fail — ErrorProps/ErrorInHandler/RecursionDepthLimit (missing onError in .pr), ConditionCompound (NullRef, claimed fix not applied), CacheDynamicKey (wrong .pr assertion value)"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs", "PLang/Runtime2/Engine/Goals/Goal/Methods.cs", "PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Goals/Setup/this.cs", "PLang/Executor.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Coverage analysis: 5 runtime changes lack C# test coverage. Deletion test proves step/goal return propagation and Goals PrPath keying could regress undetected."
+        },
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/test-report.json", ".bot/runtime2-plang-test-gaps/tester/v1/summary.md", ".bot/runtime2-plang-test-gaps/tester/v1/verdict.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote test-report.json with 8 findings (2 critical, 4 major, 2 minor). Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "complete — FAIL",
+        "health": "C# tests broken (build failure). 5/64 PLang tests fail. 5 runtime changes lack C# test coverage.",
+        "notes": "Must fix: C# compilation, 3 broken PLang tests, ConditionCompound, CacheDynamicKey. Should fix: C# tests for return value propagation and Goals PrPath keying."
+      }
     }
   ]
 }
