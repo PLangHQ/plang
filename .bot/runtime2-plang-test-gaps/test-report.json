@@ -37,7 +37,8 @@
       "code_file": "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
       "issue": "ErrorProps, ErrorInHandler, RecursionDepthLimit tests are broken — .pr files missing onError property. The coder hand-crafted some .pr files (ErrorCall works) but left these 3 unfixed.",
       "impact": "These tests never worked — they were committed in a broken state. Error property access, error chain propagation, and recursion depth limiting have zero PLang test coverage.",
-      "suggestion": "Hand-craft the onError fields in the 3 broken .pr files, or document them as blocked and remove from test suite"
+      "suggestion": "Hand-craft the onError fields in the 3 broken .pr files, or document them as blocked and remove from test suite",
+      "status": "deferred — builder onError fix arriving soon, will unblock these tests"
     },
     {
       "id": 3,
