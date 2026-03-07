@@ -363,10 +363,7 @@ namespace PLang
 			foreach (var param in parameters)
 				engine.MemoryStack.Set(param.Key, param.Value);
 
-			// Discover setup goals only — non-setup goals remain lazy-loaded via GetAsync.
-			await engine.Goals.Setup.DiscoverAsync(engine, cancellationToken);
-
-			// Run setup goals before the main goal
+			// Run setup goals before the main goal (discovery happens internally)
 			var setupResult = await engine.Goals.Setup.RunAsync(engine, engine.Context, cancellationToken);
 			if (!setupResult.Success) return setupResult;
 

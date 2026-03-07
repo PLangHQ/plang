@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022handler error\u0022",
+      "text": "throw error \u0022handler error\u0022",
       "lineNumber": 3,
       "indent": 0,
       "comment": "this handler also throws",
@@ -29,9 +29,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorInHandler/BadHandler.goal",
-  "prPath": "/ErrorInHandler/.build/badhandler.pr",
-  "hash": "1794888ed2f8f4ca23d897e0dff63753504299207b71f1a8e2e3c2d0e252d71b",
+  "path": "/BadHandler.goal",
+  "prPath": "/.build/badhandler.pr",
+  "hash": "3309298281643c81f911daafddd12329b130a468a1d16c280bd8362afd116141",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal performs two tests to validate caching behavior when reading files. The first test checks if reading a file with caching correctly returns the initial value even after the file content is changed. The second test verifies that a custom cache key works as expected, ensuring that the initial value is returned when the file is read again with the same key. Finally, the goal cleans up by deleting the test files created during the process.",
   "steps": [
     {
       "index": 0,
@@ -28,7 +27,6 @@
           "warnings": []
         }
       ],
-      "hash": "13f40555e4e04672176f848ea04006cf6f332aec0525511b63466d5a55d492c0",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -53,7 +51,6 @@
           "warnings": []
         }
       ],
-      "hash": "e9ac39d023a14c29fba64b380c6e772a794613c42ae83febf7589225be952b3f",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -88,7 +85,6 @@
           "warnings": []
         }
       ],
-      "hash": "46ee207913448a198f837460cdd04635bd5174b27098be97f6d05257aaddf672",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -118,7 +114,6 @@
           "warnings": []
         }
       ],
-      "hash": "f5fff4f2d9bf1ade808e0d8bb93e49a5e6c2b9bf8eb527d473577e5688f74568",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -143,7 +138,6 @@
           "warnings": []
         }
       ],
-      "hash": "c5fa2876fd3b62b8053a9b5cc2061c080865ece8d319b4ff606dd82493d2da11",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -178,7 +172,6 @@
           "warnings": []
         }
       ],
-      "hash": "756a064b0d062b0054005caadb57f22258c083c235f39ee6d5e18f2823cbec96",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -209,7 +202,6 @@
           "warnings": []
         }
       ],
-      "hash": "86056a9b5c7e4a75c6ff053c60b7b9c8d839119a53852351cdd2f05de6f672d3",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -234,7 +226,6 @@
           "warnings": []
         }
       ],
-      "hash": "1ce61dc992660be6d2821319c490566124c1949151d671e32958b7e5b6ddb2f2",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -269,7 +260,6 @@
           "warnings": []
         }
       ],
-      "hash": "3e3dc7df9222f75b21b173dbf81a15947a9bf867f3502c3979b0210c54c60e7e",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -299,7 +289,6 @@
           "warnings": []
         }
       ],
-      "hash": "a8d887873816344a36dffccb66274e255841f43ff9d681a5b1a8cfa1b5d3dd22",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -324,7 +313,6 @@
           "warnings": []
         }
       ],
-      "hash": "b54492d4c911fbcb5244bac1a7036d2cd011c77a680bbc9066eb8c4ae71aaf46",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -359,7 +347,6 @@
           "warnings": []
         }
       ],
-      "hash": "22f4542f811dbb5b42ffd3af4f5d10ea7eb3fc003980e6367b08a2444b3e80fd",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -390,7 +377,6 @@
           "warnings": []
         }
       ],
-      "hash": "ce1110c3dfdb491e2fd616a0aee195e50a4b8b8ec62e290dc9d126901ab2fa97",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -420,7 +406,6 @@
           "warnings": []
         }
       ],
-      "hash": "73fcc8f5ef4c9dfbe5dd5a53a9967cfe9df6efc4c59a68fb3b3e3d735c2be373",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -428,16 +413,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Cache/Start.goal",
-  "prPath": "/Cache/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "f17e477ae931c5181d12dec73240bf06296bd740508379e29bb6fd291fe2721d",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "fileData": "This variable holds the data read from the file during the caching tests.",
-    "keyData": "This variable holds the data read from the file using a custom cache key."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

@@ -3,7 +3,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022always fails\u0022",
+      "text": "throw error \u0022always fails\u0022",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -28,9 +28,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorChain/AlwaysFails.goal",
-  "prPath": "/ErrorChain/.build/alwaysfails.pr",
-  "hash": "d14430030bfce6b6c4d1032abed5c357cd5a4bbd9c74edfbaa30eb5dee9ca4d1",
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
+  "hash": "c044f62958f509869a81ea090e1316215181847cb075e091a541ef755eb8783b",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

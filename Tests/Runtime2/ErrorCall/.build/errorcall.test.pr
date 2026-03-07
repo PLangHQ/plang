@@ -6,7 +6,7 @@
       "text": "set %caughtMessage% = \u0022\u0022",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "on error call goal without retry",
+      "comment": "on error call goal catches error from called goal",
       "actions": [
         {
           "module": "variable",
@@ -33,24 +33,30 @@
     },
     {
       "index": 1,
-      "text": "throw \u0022test error\u0022, on error call CatchError",
+      "text": "call ThrowTestError, on error call CatchError",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Message",
-              "value": "test error",
-              "type": "string"
+              "name": "goalName",
+              "value": "ThrowTestError",
+              "type": "goal.call"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "CatchError"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -87,9 +93,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorCall/ErrorCall.test.goal",
-  "prPath": "/ErrorCall/.build/errorcall.test.pr",
-  "hash": "148357b5d0e5a8aa7ad6b852ed6d9c1bc42d48718b6ef9c39578b62035376db1",
+  "path": "/ErrorCall.test.goal",
+  "prPath": "/.build/errorcall.test.pr",
+  "hash": "235547c0dc3f2843669b4182fbbc50886ac4733834147d9b79a9327d74b6acfe",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

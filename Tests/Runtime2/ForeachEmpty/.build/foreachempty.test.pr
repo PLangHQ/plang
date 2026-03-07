@@ -42,12 +42,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%count%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": 0,
               "type": "int"
             }
@@ -126,8 +126,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ForeachEmpty/ForeachEmpty.test.goal",
-  "prPath": "/ForeachEmpty/.build/foreachempty.test.pr",
+  "path": "/ForeachEmpty.test.goal",
+  "prPath": "/.build/foreachempty.test.pr",
   "hash": "c716b8d592bbb4ad1c541b56f194888761b77ab4c83798f3f3f7ad09ddf1ab89",
   "isSetup": false,
   "isEvent": false,

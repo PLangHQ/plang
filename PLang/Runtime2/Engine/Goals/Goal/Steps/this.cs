@@ -28,6 +28,7 @@ public sealed class @this : List<Step.@this>
     /// </summary>
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
     {
+        Data? lastResult = null;
         for (var i = 0; i < Count; i++)
         {
             var step = this[i];
@@ -61,8 +62,10 @@ public sealed class @this : List<Step.@this>
 
             if (cancellationToken.IsCancellationRequested)
                 return Data.FromError(GoalError.Cancelled(context));
+
+            lastResult = stepResult;
         }
 
-        return Data.Ok();
+        return lastResult ?? Data.Ok();
     }
 }

@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal performs a series of assertions to validate various conditions such as inequality, boolean values, null values, and comparisons between numbers. It checks that 5 is not equal to 10, sets a flag to false and asserts its value, sets a variable to null and checks its value, and verifies numerical relationships such as greater than and less than.",
   "steps": [
     {
       "index": 0,
@@ -28,7 +27,6 @@
           "warnings": []
         }
       ],
-      "hash": "c2191b29654d45bf19fe3cefc661c5c648f619adf45f652ffa42537276179018",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -59,7 +57,6 @@
           "warnings": []
         }
       ],
-      "hash": "80bd25ff40acdaf67408503ec24e1ed52cc20fa06d52aabb0afbffab089b018a",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -84,7 +81,6 @@
           "warnings": []
         }
       ],
-      "hash": "eefd588b52569459a0ef62208971a599edf1643a0e30c819fe7c57c44126da8b",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -114,7 +110,6 @@
           "warnings": []
         }
       ],
-      "hash": "50590912304fdf3fa9831dba45ecb8ade5598be977e13f01baec3e9158227deb",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -139,7 +134,6 @@
           "warnings": []
         }
       ],
-      "hash": "d4a14c70cdc9b47e88c8fdf1dc28c319dd71053b2cfe4ca074a554a4604252ee",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -170,7 +164,6 @@
           "warnings": []
         }
       ],
-      "hash": "fc502322a33d367f64e25a6b61cf3cf1192c4e589037172dbd90a77b96c63ee3",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -201,7 +194,6 @@
           "warnings": []
         }
       ],
-      "hash": "cb4896ab24c6cf56e88efff1d91ffa2c5a76c8b3a4df0ccd2c19f51c2b4d7ce9",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -209,16 +201,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Assert/Assert.test.goal",
-  "prPath": "/Assert/.build/assert.test.pr",
+  "path": "/Assert.test.goal",
+  "prPath": "/.build/assert.test.pr",
   "hash": "e2d9ffabdf5587e81ef59702f5e9e92e3993b0d7ab302a3a95928ba2333a3993",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "%flag%": "A boolean variable that is set to false and asserted to be false.",
-    "%nothing%": "A variable that is set to null and asserted to be null."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

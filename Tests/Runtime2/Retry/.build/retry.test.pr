@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "description": "The Start goal executes a series of tests to validate retry mechanisms and error handling. It first tests the behavior when retries are exhausted and execution continues despite errors. It sets a flag before the retry, asserts its value, and then throws a temporary failure error, retrying twice while ignoring the error. After that, it sets another flag to confirm that execution continues. The second test checks if an error goal captures error information correctly after a retry. It throws an error, retries once, and then calls a specific error handling goal, asserting that the error handling was successful.",
   "steps": [
     {
       "index": 0,
@@ -27,6 +28,7 @@
           "warnings": []
         }
       ],
+      "hash": "bfdb39cfa66eabbc12009ec37e0fce37ca3e0822da40fb2c4990fd6eca88e597",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -51,6 +53,7 @@
           "warnings": []
         }
       ],
+      "hash": "5c94cc8060acec8ea1112c808c3d3870c3e4a9504a956a94fe054d24c9b74dc0",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -206,12 +209,17 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Retry/Retry.test.goal",
-  "prPath": "/Retry/.build/retry.test.pr",
+  "path": "/Retry.test.goal",
+  "prPath": "/.build/retry.test.pr",
   "hash": "79e31a2a446a744349397c87f093e59986bd5880f5204646b6b8bf550ef9b074",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "%beforeRetry%": "A boolean variable indicating whether the execution is set to proceed before retrying.",
+    "%afterRetryIgnore%": "A boolean variable indicating whether the execution continues after retry exhaustion and ignoring the error.",
+    "%retryErrorHandled%": "A boolean variable indicating whether the error handling goal was successfully called after the retry."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

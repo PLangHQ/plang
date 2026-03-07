@@ -1,6 +1,5 @@
 {
   "name": "SetTrue",
-  "description": "The SetTrue goal is designed to set the variable \\%wasTrue\\% to true. This goal consists of a single step that directly assigns the boolean value true to the variable, indicating a state of truth.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "8efb69f609a06b2d47a3da7ce5308b933ec807f908fc4cc0089f833980a571ac",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -35,15 +33,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Condition/SetTrue.goal",
-  "prPath": "/Condition/.build/settrue.pr",
+  "path": "/SetTrue.goal",
+  "prPath": "/.build/settrue.pr",
   "hash": "8f32560e33c6d83f655a923794dc4e4fac2d0e7c878bad4a56b7c3967d090af3",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "\\%wasTrue\\%": "A boolean variable that will be set to true by this goal."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "SetTrue"

@@ -3,30 +3,31 @@
   "steps": [
     {
       "index": 0,
-      "text": "throw \u0022user error\u0022 key=\u0022TestKey\u0022, on error call CatchThrow",
+      "text": "call ThrowUserError, on error call CatchThrow",
       "lineNumber": 3,
       "indent": 0,
       "comment": "throw error has expected shape",
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "message",
-              "value": "user error",
-              "type": "string"
-            },
-            {
-              "name": "key",
-              "value": "TestKey",
-              "type": "string"
+              "name": "GoalName",
+              "value": "ThrowUserError",
+              "type": "goal.call"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "CatchThrow"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -72,15 +73,21 @@
           "action": "read",
           "parameters": [
             {
-              "name": "path",
+              "name": "Path",
               "value": "nonexistent_file_xyz.txt",
-              "type": "string"
+              "type": "path"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "CatchFileError"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -117,9 +124,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorTypes/ErrorTypes.test.goal",
-  "prPath": "/ErrorTypes/.build/errortypes.test.pr",
-  "hash": "67e3976e609be5d48301ad78f0c61aa229ef860723bc843ad9ecfa0f0f6adf0f",
+  "path": "/ErrorTypes.test.goal",
+  "prPath": "/.build/errortypes.test.pr",
+  "hash": "e4946738b44c3f684d76d7fc984c2475a26c97617b6629e7204fafed9480129e",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

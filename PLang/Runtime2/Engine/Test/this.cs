@@ -28,9 +28,8 @@ public sealed class @this
     {
         public string FilePath { get; init; } = "";
         public List<AssertionFailure> Failures { get; } = new();
-        public bool Passed => Failures.Count == 0;
-        public bool Errored { get; set; }
-        public string? ErrorMessage { get; set; }
+        public Data Result { get; set; } = Data.Ok();
+        public bool Passed => Result.Success && Failures.Count == 0;
     }
 
     private sealed class AssertionFailure
@@ -74,13 +73,12 @@ public sealed class @this
 
             try
             {
-                await RunSingleTest(fileSystem, rootDir, testFile, result, cancellationToken);
-                Console.WriteLine(result.Passed && !result.Errored ? " PASS" : " FAIL");
+                result.Result = await RunSingleTest(fileSystem, rootDir, testFile, result, cancellationToken);
+                Console.WriteLine(result.Passed ? " PASS" : " FAIL");
             }
             catch (Exception ex)
             {
-                result.Errored = true;
-                result.ErrorMessage = ex.Message;
+                result.Result = Data.FromError(Error.FromException(ex));
                 Console.WriteLine(" ERROR");
             }
 
@@ -88,10 +86,10 @@ public sealed class @this
         }
 
         PrintSummary(results);
-        return results.Any(r => !r.Passed || r.Errored) ? 1 : 0;
+        return results.Any(r => !r.Passed) ? 1 : 0;
     }
 
-    private static async Task RunSingleTest(
+    private static async Task<Data> RunSingleTest(
         Interfaces.IPLangFileSystem fileSystem,
         string rootDir,
         string testFile,
@@ -106,38 +104,25 @@ public sealed class @this
 
         var prPath = fileSystem.Path.Combine(dir, ".build", fileName.ToLowerInvariant() + ".test.pr");
         if (!fileSystem.File.Exists(prPath))
-        {
-            result.Errored = true;
-            result.ErrorMessage = "Built .pr file not found. Run 'plang p build' first.";
-            return;
-        }
+            return Data.FromError(new ServiceError("PrNotFound", "Built .pr file not found. Run 'plang p build' first.", 404));
 
-        // Fresh engine with the same root as the original engine.
-        // Goal resolution uses Goal.FolderPath for relative lookups,
-        // so the engine root stays at the top level (e.g., Tests/Runtime2/).
-        var testFs = new SafeFileSystem.PLangFileSystem(rootDir, "");
+        // Each test folder is its own PLang app root.
+        // Setup discovery and goal resolution work relative to this root.
+        var testFs = new SafeFileSystem.PLangFileSystem(dir, "");
         await using var testEngine = new Engine.@this(testFs);
         testEngine.Testing.IsEnabled = true;
 
         // Load the test .pr file
         await testEngine.Goals.LoadFromFileAsync(testEngine, prPath, cancellationToken: cancellationToken);
 
-        // Discover and run setup goals before the test
-        var setupResult = await testEngine.Goals.Setup.DiscoverAsync(testEngine, cancellationToken);
-        if (setupResult.Success && testEngine.Goals.Setup.Goals.Any())
-        {
-            var context = testEngine.User.Context;
-            await testEngine.Goals.Setup.RunAsync(testEngine, context, cancellationToken);
-        }
+        // Run setup goals (e.g., create DB tables) before the test
+        var setupResult = await testEngine.Goals.Setup.RunAsync(testEngine, testEngine.User.Context, cancellationToken);
+        if (!setupResult.Success) return setupResult;
 
         var testGoalName = "Start";
         var goal = testEngine.Goals.Get(testGoalName);
         if (goal == null)
-        {
-            result.Errored = true;
-            result.ErrorMessage = $"Goal '{testGoalName}' not found in {prPath}";
-            return;
-        }
+            return Data.FromError(new ServiceError("GoalNotFound", $"Goal '{testGoalName}' not found in {prPath}", 404));
 
         // Register assertion failure tracking
         var events = testEngine.Context.User.Events;
@@ -149,27 +134,7 @@ public sealed class @this
             stopOnError: false
         );
 
-        var runResult = await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
-
-        if (!runResult.Success)
-        {
-            if (runResult.Error is AssertionError assertError && result.Failures.Count == 0)
-            {
-                // Assertion failure bubbled up to goal level (not caught by AfterStep handler)
-                var step = testEngine.User.Context.Step;
-                result.Failures.Add(new AssertionFailure
-                {
-                    StepIndex = step?.Index ?? -1,
-                    StepText = step?.Text ?? "",
-                    Message = assertError.Message
-                });
-            }
-            else if (runResult.Error is not AssertionError && result.Failures.Count == 0)
-            {
-                result.Errored = true;
-                result.ErrorMessage = runResult.Error?.Message ?? "Goal execution failed";
-            }
-        }
+        return await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
     }
 
     private static Task<Data> TrackAssertionFailures(PLangContext context, TestResult result)
@@ -193,8 +158,8 @@ public sealed class @this
 
     private static void PrintSummary(List<TestResult> results)
     {
-        var passed = results.Count(r => r.Passed && !r.Errored);
-        var failed = results.Count(r => !r.Passed || r.Errored);
+        var passed = results.Count(r => r.Passed);
+        var failed = results.Count(r => !r.Passed);
         var total = results.Count;
 
         Console.WriteLine();
@@ -212,13 +177,13 @@ public sealed class @this
             Console.WriteLine($"Test run summary: {passed} passed, {failed} failed, {total} total");
             Console.WriteLine();
 
-            foreach (var result in results.Where(r => !r.Passed || r.Errored))
+            foreach (var result in results.Where(r => !r.Passed))
             {
                 Console.WriteLine($"  FAILED: {result.FilePath}");
 
-                if (result.Errored)
+                if (!result.Result.Success)
                 {
-                    Console.WriteLine($"    Error: {result.ErrorMessage}");
+                    Console.WriteLine($"    Error: {result.Result.Error?.Message}");
                 }
 
                 foreach (var failure in result.Failures)

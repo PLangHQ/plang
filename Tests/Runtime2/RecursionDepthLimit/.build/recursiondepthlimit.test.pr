@@ -51,12 +51,6 @@
           "warnings": []
         }
       ],
-      "onError": {
-        "goal": {
-          "name": "HandleRecursionError"
-        },
-        "ignoreError": false
-      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -93,8 +87,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/RecursionDepthLimit/RecursionDepthLimit.test.goal",
-  "prPath": "/RecursionDepthLimit/.build/recursiondepthlimit.test.pr",
+  "path": "/RecursionDepthLimit.test.goal",
+  "prPath": "/.build/recursiondepthlimit.test.pr",
   "hash": "c203ae142bb75d0e0723f5f4f53cbc1149d157b73e4be07bc3ebc62614375d1f",
   "isSetup": false,
   "isEvent": false,

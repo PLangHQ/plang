@@ -1,6 +1,5 @@
 {
   "name": "ReadCached",
-  "description": "The ReadCached goal reads data from a file named \u0027testdata.txt\u0027 and stores the content in the variable \\%fileData\\%. The data is cached for a duration of 5 minutes to optimize performance and reduce repeated file access.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "4bed0a0f792bd8a833e94a8d5f3f12efdb3b5f5db81e187efd3e012d59a7fdaa",
       "cache": {
         "durationSeconds": 300,
         "sliding": false
@@ -39,15 +37,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Cache/ReadCached.goal",
-  "prPath": "/Cache/.build/readcached.pr",
+  "path": "/ReadCached.goal",
+  "prPath": "/.build/readcached.pr",
   "hash": "5f68681458a1ffb0d4acce31cf8cbec954a4886d1b5bea3bed4c1000bb400d82",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "fileData": "This variable will hold the content read from \u0027testdata.txt\u0027."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "ReadCached"

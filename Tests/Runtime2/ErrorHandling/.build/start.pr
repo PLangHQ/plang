@@ -60,6 +60,9 @@
           "warnings": []
         }
       ],
+      "onError": {
+        "ignoreError": true
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -130,8 +133,8 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorHandling/Start.goal",
-  "prPath": "/ErrorHandling/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "a62861f371f2946312c99a533e117f289f0453174b3226594b150eef77078b6c",
   "isSetup": false,
   "isEvent": false,
