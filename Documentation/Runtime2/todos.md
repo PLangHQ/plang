@@ -268,3 +268,41 @@ Target audiences:
 **Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.
 
 **Fix:** Change `"HandlerError"` → `"ActionError"` and `"Handler error"` → `"Action error"` in the test, update assertion to `"ActionError(500)"`.
+
+---
+
+## Builder Drops onError — LLM Reliability Problem
+**Date:** 2026-03-07
+**Context:** Builder drops `onError` silently — 5 test suites affected (ErrorCall, ErrorChain, ErrorProps, ErrorTypes, ErrorInHandler). Structural validation can check onError shape when present but cannot detect when it's MISSING.
+
+**Why parser extraction won't work:** There is NO parser for PLang code. The LLM IS the parser. Users can express error handling as "on error call X", "þegar villa kemur", "when something goes wrong" — any language, any phrasing. Deterministic extraction of modifiers from step text is not possible.
+
+**Possible approaches:**
+1. **Golden eval suite** (Phase 2 of builder consistency framework) — curated .goal/.pr.golden pairs where onError is known-required. Measures how often the LLM drops it.
+2. **LLM-as-judge** (Phase 4) — second LLM validates that error handling intent was preserved.
+3. **Prompt improvement** — Stronger examples and instruction language in BuildGoal.llm. Cheapest to try first.
+4. **Switch to a more consistent LLM** — Consistency scoring (Phase 3) can identify which LLMs are reliable for onError.
+
+**Not a structural validation problem.** The structural validator checks what the LLM produced, not what it should have produced.
+
+---
+
+## LLM Rewrites Literal Values in Assertions
+**Date:** 2026-03-07
+**Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".
+
+**Problem:** Structural validation can't catch this — the parameter name and type are correct, only the VALUE is wrong. The LLM is semantically modifying the developer's intent.
+
+**Possible approaches:**
+1. **Golden eval suite** (Phase 2 of builder consistency framework) — curated .goal/.pr.golden pairs catch value drift
+2. **Literal preservation rule** — if a parameter value in the step text is a quoted literal (`"content1"`), the .pr must preserve it exactly. This could be a structural check IF we can reliably identify quoted literals in step text.
+3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
+
+**Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
+
+---
+
+## Builder Consistency Framework
+**Date:** 2026-03-06
+**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
+**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
