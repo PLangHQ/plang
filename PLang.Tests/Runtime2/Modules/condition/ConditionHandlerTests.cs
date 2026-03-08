@@ -71,6 +71,7 @@ public class ConditionHandlerTests : IDisposable
         var trueGoal = new Goal
         {
             Name = "TrueBranch",
+            Path = "/TrueBranch.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -121,6 +122,7 @@ public class ConditionHandlerTests : IDisposable
         var falseGoal = new Goal
         {
             Name = "FalseBranch",
+            Path = "/FalseBranch.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -192,6 +194,7 @@ public class ConditionHandlerTests : IDisposable
         var writeGoal = new Goal
         {
             Name = "WriteExists",
+            Path = "/WriteExists.goal",
             Steps = new GoalSteps
             {
                 new Step

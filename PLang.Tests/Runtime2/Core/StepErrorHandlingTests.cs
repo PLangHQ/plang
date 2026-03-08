@@ -76,6 +76,7 @@ public class StepErrorHandlingTests
         var countGoal = new Goal
         {
             Name = "CountAttempt",
+            Path = "/CountAttempt.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -143,6 +144,7 @@ public class StepErrorHandlingTests
         var errorGoal = new Goal
         {
             Name = "HandleError",
+            Path = "/HandleError.goal",
             Steps = new GoalSteps
             {
                 new Step

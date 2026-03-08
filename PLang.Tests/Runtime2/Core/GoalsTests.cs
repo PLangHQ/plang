@@ -18,7 +18,7 @@ public class GoalsTests
     public async Task Add_AddsGoal()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
 
         goals.Add(goal);
 
@@ -29,7 +29,7 @@ public class GoalsTests
     public async Task Add_RegistersByName()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
 
         goals.Add(goal);
 
@@ -40,18 +40,18 @@ public class GoalsTests
     public async Task Add_RegistersByPath()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal", Path = "goals/test" };
+        var goal = new Goal { Name = "TestGoal", Path = "/goals/test.goal" };
 
         goals.Add(goal);
 
-        await Assert.That(goals.Get("goals/test")).IsEqualTo(goal);
+        await Assert.That(goals.Get("/goals/test.goal")).IsEqualTo(goal);
     }
 
     [Test]
     public async Task Get_ByName_ReturnsGoal()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
         var result = goals.Get("TestGoal");
@@ -63,7 +63,7 @@ public class GoalsTests
     public async Task Get_CaseInsensitive()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
         await Assert.That(goals.Get("testgoal")).IsEqualTo(goal);
@@ -93,7 +93,7 @@ public class GoalsTests
     public async Task Get_TriesVariations_WithGoalExtension()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal.goal" };
+        var goal = new Goal { Name = "TestGoal.goal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
         var result = goals.Get("TestGoal");
@@ -105,11 +105,9 @@ public class GoalsTests
     public async Task Get_TriesVariations_WithLeadingSlash()
     {
         var goals = new EngineGoals();
-        // The Get method tries TrimStart('/'), so looking up "/goals/test" will find "goals/test"
         var goal = new Goal { Name = "/goals/test", Path = "/goals/test" };
         goals.Add(goal);
 
-        // Look up with the leading slash since that's the actual name
         var result = goals.Get("/goals/test");
 
         await Assert.That(result).IsEqualTo(goal);
@@ -119,7 +117,7 @@ public class GoalsTests
     public async Task Get_TriesVariations_SlashConversion()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "goals/test" };
+        var goal = new Goal { Name = "goals/test", Path = "/goals/test.goal" };
         goals.Add(goal);
 
         var result = goals.Get("goals\\test");
@@ -131,7 +129,7 @@ public class GoalsTests
     public async Task Indexer_ReturnsGoal()
     {
         var goals = new EngineGoals();
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
         var result = goals["TestGoal"];
@@ -153,7 +151,7 @@ public class GoalsTests
     public async Task Contains_ExistingGoal_ReturnsTrue()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "TestGoal" });
+        goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         await Assert.That(goals.Contains("TestGoal")).IsTrue();
     }
@@ -170,7 +168,7 @@ public class GoalsTests
     public async Task Remove_RemovesGoal()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "TestGoal", Path = "test" });
+        goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         var removed = goals.Remove("TestGoal");
 
@@ -182,11 +180,11 @@ public class GoalsTests
     public async Task Remove_RemovesPathLookups()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "TestGoal", Path = "test" });
+        goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         goals.Remove("TestGoal");
 
-        await Assert.That(goals.Get("test")).IsNull();
+        await Assert.That(goals.Get("/TestGoal.goal")).IsNull();
     }
 
     [Test]
@@ -203,8 +201,8 @@ public class GoalsTests
     public async Task Clear_RemovesAllGoals()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "Goal1" });
-        goals.Add(new Goal { Name = "Goal2" });
+        goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
+        goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
 
         goals.Clear();
 
@@ -215,8 +213,8 @@ public class GoalsTests
     public async Task Names_ReturnsAllNames()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "Goal1" });
-        goals.Add(new Goal { Name = "Goal2" });
+        goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
+        goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
 
         var names = goals.Names.ToList();
 
@@ -228,8 +226,8 @@ public class GoalsTests
     public async Task All_ReturnsAllGoals()
     {
         var goals = new EngineGoals();
-        var goal1 = new Goal { Name = "Goal1" };
-        var goal2 = new Goal { Name = "Goal2" };
+        var goal1 = new Goal { Name = "Goal1", Path = "/Goal1.goal" };
+        var goal2 = new Goal { Name = "Goal2", Path = "/Goal2.goal" };
         goals.Add(goal1);
         goals.Add(goal2);
 
@@ -243,8 +241,8 @@ public class GoalsTests
     public async Task Public_ReturnsOnlyPublicGoals()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "PublicGoal", Visibility = Visibility.Public });
-        goals.Add(new Goal { Name = "PrivateGoal", Visibility = Visibility.Private });
+        goals.Add(new Goal { Name = "PublicGoal", Path = "/PublicGoal.goal", Visibility = Visibility.Public });
+        goals.Add(new Goal { Name = "PrivateGoal", Path = "/PrivateGoal.goal", Visibility = Visibility.Private });
 
         var publicGoals = goals.Public.ToList();
 
@@ -256,8 +254,8 @@ public class GoalsTests
     public async Task Setup_ReturnsOnlySetupGoals()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+        goals.Add(new Goal { Name = "SetupGoal", Path = "/SetupGoal.goal", IsSetup = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsSetup = false });
 
         var setupGoals = goals.Setup.Goals.ToList();
 
@@ -269,8 +267,8 @@ public class GoalsTests
     public async Task Events_ReturnsOnlyEventGoals()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "EventGoal", IsEvent = true });
-        goals.Add(new Goal { Name = "NormalGoal", IsEvent = false });
+        goals.Add(new Goal { Name = "EventGoal", Path = "/EventGoal.goal", IsEvent = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsEvent = false });
 
         var eventGoals = goals.Events.ToList();
 
@@ -279,11 +277,11 @@ public class GoalsTests
     }
 
     [Test]
-    public async Task Add_SameNameTwice_ReplacesGoal()
+    public async Task Add_SamePathTwice_ReplacesGoal()
     {
         var goals = new EngineGoals();
-        var goal1 = new Goal { Name = "TestGoal", Description = "First" };
-        var goal2 = new Goal { Name = "TestGoal", Description = "Second" };
+        var goal1 = new Goal { Name = "TestGoal", Path = "/TestGoal.goal", Description = "First" };
+        var goal2 = new Goal { Name = "TestGoal", Path = "/TestGoal.goal", Description = "Second" };
         goals.Add(goal1);
 
         goals.Add(goal2);
@@ -296,9 +294,9 @@ public class GoalsTests
     public async Task Count_ReturnsCorrectCount()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "Goal1" });
-        goals.Add(new Goal { Name = "Goal2" });
-        goals.Add(new Goal { Name = "Goal3" });
+        goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
+        goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
+        goals.Add(new Goal { Name = "Goal3", Path = "/Goal3.goal" });
 
         await Assert.That(goals.Count).IsEqualTo(3);
     }
@@ -307,8 +305,8 @@ public class GoalsTests
     public async Task Get_ExcludesSetupGoals()
     {
         var goals = new EngineGoals();
-        goals.Add(new Goal { Name = "SetupDb", IsSetup = true });
-        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+        goals.Add(new Goal { Name = "SetupDb", Path = "/SetupDb.goal", IsSetup = true });
+        goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsSetup = false });
 
         await Assert.That(goals.Get("SetupDb")).IsNull();
         await Assert.That(goals.Get("NormalGoal")).IsNotNull();
@@ -325,15 +323,12 @@ public class GoalsTests
             var fs = new PLangFileSystem(tempDir, "");
             await using var engine = new PLang.Runtime2.Engine.@this(fs);
 
-            // Create a .pr.json file on disk with IsSetup = true
-            // GetAsync resolves: root / nameDir / .build / filename.pr
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
-            // GetAsync should load from disk but return null because IsSetup = true
             var result = await engine.Goals.GetAsync("SetupDb");
 
             await Assert.That(result).IsNull();
@@ -358,7 +353,7 @@ public class GoalsTests
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "normalgoal.pr");
-            var json = """{"name":"NormalGoal","isSetup":false,"steps":[]}""";
+            var json = """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
             var result = await engine.Goals.GetAsync("NormalGoal");
@@ -386,7 +381,7 @@ public class GoalsTests
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
             var prPath = System.IO.Path.Combine(buildDir, "setupdb.pr");
-            var json = """{"name":"SetupDb","isSetup":true,"steps":[]}""";
+            var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
             var result = await engine.Goals.GetByPrPathAsync(prPath);
@@ -403,12 +398,105 @@ public class GoalsTests
     public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
     {
         var goals = new EngineGoals();
-        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "test/.build/setupdb.pr" };
+        var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "/SetupDb.goal" };
         goals.Add(setupGoal);
 
-        // Even if the goal is cached by path, GetByPrPathAsync should exclude it
-        var result = await goals.GetByPrPathAsync("test/.build/setupdb.pr");
+        var result = await goals.GetByPrPathAsync("/.build/setupdb.pr");
 
         await Assert.That(result).IsNull();
+    }
+
+    // --- PrPath keying tests ---
+    // PrPath is computed from Path: "/Foo.goal" -> "/.build/foo.pr"
+
+    [Test]
+    public async Task Add_KeysByPrPath_PreventsSameNameCollision()
+    {
+        var goals = new EngineGoals();
+        var goal1 = new Goal { Name = "Setup", IsSetup = true, Path = "/Setup.goal" };
+        var goal2 = new Goal { Name = "Setup", IsSetup = true, Path = "/Setup/Setup.goal" };
+
+        goals.Add(goal1);
+        goals.Add(goal2);
+
+        var setupGoals = goals.Setup.Goals.ToList();
+        await Assert.That(setupGoals.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Get_FindsGoalKeyedByPrPath()
+    {
+        var goals = new EngineGoals();
+        var goal = new Goal { Name = "Start", Path = "/Start.goal" };
+        goals.Add(goal);
+
+        var found = goals.Get("Start");
+
+        await Assert.That(found).IsNotNull();
+        await Assert.That(found!.Name).IsEqualTo("Start");
+    }
+
+    [Test]
+    public async Task Get_FindsCorrectGoal_WhenMultipleSameNameDifferentPrPath()
+    {
+        var goals = new EngineGoals();
+        var goal1 = new Goal { Name = "Helper", Path = "/a/Helper.goal" };
+        var goal2 = new Goal { Name = "Helper", Path = "/b/Helper.goal" };
+        goals.Add(goal1);
+        goals.Add(goal2);
+
+        var found = goals.Get("Helper");
+
+        await Assert.That(found).IsNotNull();
+        await Assert.That(found!.Name).IsEqualTo("Helper");
+    }
+
+    [Test]
+    public async Task Remove_ByName_WorksWhenKeyedByPrPath()
+    {
+        var goals = new EngineGoals();
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        goals.Add(goal);
+
+        var removed = goals.Remove("TestGoal");
+
+        await Assert.That(removed).IsTrue();
+        await Assert.That(goals.Get("TestGoal")).IsNull();
+        await Assert.That(goals.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Remove_ByName_ClearsPathIndex()
+    {
+        var goals = new EngineGoals();
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
+        goals.Add(goal);
+
+        goals.Remove("TestGoal");
+
+        await Assert.That(goals.Get("/TestGoal.goal")).IsNull();
+    }
+
+    [Test]
+    public async Task Add_SamePrPath_ReplacesGoal()
+    {
+        var goals = new EngineGoals();
+        var goal1 = new Goal { Name = "Start", Path = "/Start.goal", Description = "First" };
+        var goal2 = new Goal { Name = "Start", Path = "/Start.goal", Description = "Second" };
+
+        goals.Add(goal1);
+        goals.Add(goal2);
+
+        await Assert.That(goals.Count).IsEqualTo(1);
+        await Assert.That(goals.Get("Start")!.Description).IsEqualTo("Second");
+    }
+
+    [Test]
+    public async Task Add_ThrowsWhenNoPrPath()
+    {
+        var goals = new EngineGoals();
+        var goal = new Goal { Name = "TestGoal" };
+
+        await Assert.That(() => goals.Add(goal)).ThrowsException();
     }
 }

@@ -33,11 +33,9 @@ public sealed class @this
     public void Add(Goal.@this goal)
     {
         goal.Engine = Engine;
-        // Key by PrPath (unique) to avoid collisions between goals with the same name
-        // (e.g., multiple Setup.goal files in different folders).
-        // Fall back to Name for goals without a PrPath.
-        var key = !string.IsNullOrEmpty(goal.PrPath) ? goal.PrPath : goal.Name;
-        _goals[key] = goal;
+        if (string.IsNullOrEmpty(goal.PrPath))
+            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
+        _goals[goal.PrPath] = goal;
         if (!string.IsNullOrEmpty(goal.Path))
             _byPath[goal.Path] = goal;
     }
@@ -83,6 +81,10 @@ public sealed class @this
             if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
             if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
+                return goal;
+            goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
+                && g.Name.Equals(variation, StringComparison.OrdinalIgnoreCase));
+            if (goal != null)
                 return goal;
         }
 
@@ -192,7 +194,7 @@ public sealed class @this
     /// <summary>
     /// Gets all goal names.
     /// </summary>
-    public IEnumerable<string> Names => _goals.Keys;
+    public IEnumerable<string> Names => _goals.Values.Select(g => g.Name);
 
     /// <summary>
     /// All goals including setup and event goals. Used internally by Setup.Goals.
@@ -238,7 +240,9 @@ public sealed class @this
             return null;
 
         // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
-        if (_byPath.TryGetValue(prPath, out var cached))
+        if (_goals.TryGetValue(prPath, out var cached))
+            return cached.IsSetup ? null : cached;
+        if (_byPath.TryGetValue(prPath, out cached))
             return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory

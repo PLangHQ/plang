@@ -31,10 +31,10 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _engine.Goals.Add(new Goal { Name = "Zebra", IsSetup = true });
-        _engine.Goals.Add(new Goal { Name = "Setup", IsSetup = true });
-        _engine.Goals.Add(new Goal { Name = "Alpha", IsSetup = true });
-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+        _engine.Goals.Add(new Goal { Name = "Zebra", IsSetup = true, Path = "/Zebra.goal" });
+        _engine.Goals.Add(new Goal { Name = "Setup", IsSetup = true, Path = "/Setup.goal" });
+        _engine.Goals.Add(new Goal { Name = "Alpha", IsSetup = true, Path = "/Alpha.goal" });
+        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
 
         var setupGoals = _engine.Goals.Setup.Goals.ToList();
 
@@ -47,8 +47,8 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _engine.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true });
-        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false });
+        _engine.Goals.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = "/SetupGoal.goal" });
+        _engine.Goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
 
         var found = _engine.Goals.Get("SetupGoal");
         var normal = _engine.Goals.Get("NormalGoal");
@@ -96,7 +96,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
@@ -131,7 +131,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -155,7 +155,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this()
         };
         _engine.Goals.Add(goal);
@@ -192,7 +192,7 @@ public class SetupTests
         };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -218,7 +218,7 @@ public class SetupTests
         };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -239,7 +239,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step })
         };
         step.Goal = goal;
@@ -267,7 +267,7 @@ public class SetupTests
             Actions = CreateNoOpActions() };
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true,
+            Name = "Setup", IsSetup = true, Path = "/Setup.goal",
             Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
@@ -286,49 +286,49 @@ public class SetupTests
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
     }
 
-    // --- DiscoverAsync tests ---
+    // --- Discovery tests (via RunAsync, which calls DiscoverAsync internally) ---
 
     [Test]
-    public async Task DiscoverAsync_OnlyLoadsSetupGoals()
+    public async Task RunAsync_OnlyLoadsSetupGoals()
     {
-        // Create .pr files on disk — one setup, one non-setup
+        // Create .pr files on disk — one setup at convention path, one non-setup
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "setup.pr"),
-            """{"name":"Setup","isSetup":true,"steps":[]}""");
+            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","steps":[]}""");
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "start.pr"),
-            """{"name":"Start","isSetup":false,"steps":[]}""");
+            """{"name":"Start","isSetup":false,"path":"/Start.goal","steps":[]}""");
 
-        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Only the setup goal should be in the collection
         var setupGoals = _engine.Goals.Setup.Goals.ToList();
         await Assert.That(setupGoals.Count).IsEqualTo(1);
         await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
-        // Non-setup goal should NOT be in the collection
+        // Non-setup goal should NOT be in the collection (not at a convention path)
         await Assert.That(_engine.Goals.Get("Start")).IsNull();
     }
 
     [Test]
-    public async Task DiscoverAsync_NonSetupGoalsRemainLazyLoadable()
+    public async Task RunAsync_NonSetupGoalsRemainLazyLoadable()
     {
-        // Create .pr files on disk — one setup, one non-setup
+        // Create .pr files on disk — one setup at convention path, one non-setup
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
 
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "setup.pr"),
-            """{"name":"Setup","isSetup":true,"steps":[]}""");
+            """{"name":"Setup","isSetup":true,"path":"/Setup.goal","steps":[]}""");
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "normalgoal.pr"),
-            """{"name":"NormalGoal","isSetup":false,"steps":[]}""");
+            """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""");
 
-        // Discover — only setup goals loaded
-        await _engine.Goals.Setup.DiscoverAsync(_engine);
+        // RunAsync discovers and runs setup goals internally
+        await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
 
         // Non-setup goal should not be in collection yet
         await Assert.That(_engine.Goals.Get("NormalGoal")).IsNull();
@@ -340,12 +340,49 @@ public class SetupTests
     }
 
     [Test]
-    public async Task DiscoverAsync_HandlesEmptyDirectory()
+    public async Task RunAsync_HandlesEmptyDirectory()
     {
-        // No .pr files at all
-        var result = await _engine.Goals.Setup.DiscoverAsync(_engine);
+        // No .pr files at all — RunAsync discovers nothing and succeeds
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
 
         await Assert.That(result.Success).IsTrue();
+        await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
+    }
+
+    [Test]
+    public async Task RunAsync_DiscoversFromSetupSubfolder()
+    {
+        // Setup goal in Setup/.build/setup.pr (second convention path)
+        var setupBuildDir = System.IO.Path.Combine(_tempDir, "Setup", ".build");
+        System.IO.Directory.CreateDirectory(setupBuildDir);
+
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(setupBuildDir, "setup.pr"),
+            """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","steps":[]}""");
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var setupGoals = _engine.Goals.Setup.Goals.ToList();
+        await Assert.That(setupGoals.Count).IsEqualTo(1);
+        await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
+    }
+
+    [Test]
+    public async Task RunAsync_IgnoresNonConventionPaths()
+    {
+        // Setup goal in a non-standard location — should NOT be discovered
+        var customDir = System.IO.Path.Combine(_tempDir, "CustomFolder", ".build");
+        System.IO.Directory.CreateDirectory(customDir);
+
+        System.IO.File.WriteAllText(
+            System.IO.Path.Combine(customDir, "setup.pr"),
+            """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","steps":[]}""");
+
+        var result = await _engine.Goals.Setup.RunAsync(_engine, _engine.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        // No setup goals discovered from non-convention path
         await Assert.That(_engine.Goals.Setup.Goals.Any()).IsFalse();
     }
 
