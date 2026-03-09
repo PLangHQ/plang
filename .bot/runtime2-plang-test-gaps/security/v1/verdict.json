@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical or high findings. 3 low-severity accepted-risk items (bare catch in setup discovery, path in test error messages, linear scan in Get). Branch has net-positive security impact: eliminates recursive .pr scan, adds Path validation, improves test isolation." }
