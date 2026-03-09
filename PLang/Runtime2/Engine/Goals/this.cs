@@ -194,7 +194,7 @@ public sealed class @this
     /// <summary>
     /// Gets all goal names.
     /// </summary>
-    public IEnumerable<string> Names => _goals.Values.Select(g => g.Name);
+    public IEnumerable<string> Names => _goals.Values.Where(g => !g.IsSetup).Select(g => g.Name);
 
     /// <summary>
     /// All goals including setup and event goals. Used internally by Setup.Goals.

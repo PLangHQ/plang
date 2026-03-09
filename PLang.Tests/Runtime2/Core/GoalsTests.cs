@@ -499,4 +499,26 @@ public class GoalsTests
 
         await Assert.That(() => goals.Add(goal)).ThrowsException();
     }
+
+    [Test]
+    public async Task Add_ThrowsWhenPathIsEmptyString()
+    {
+        var goals = new EngineGoals();
+        var goal = new Goal { Name = "TestGoal", Path = "" };
+
+        await Assert.That(() => goals.Add(goal)).ThrowsException();
+    }
+
+    [Test]
+    public async Task Names_ExcludesSetupGoals()
+    {
+        var goals = new EngineGoals();
+        goals.Add(new Goal { Name = "SetupDb", IsSetup = true, Path = "/SetupDb.goal" });
+        goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
+
+        var names = goals.Names.ToList();
+
+        await Assert.That(names.Count).IsEqualTo(1);
+        await Assert.That(names[0]).IsEqualTo("NormalGoal");
+    }
 }
