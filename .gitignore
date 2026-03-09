@@ -24,3 +24,6 @@ coverage.cobertura.xml
 
 .claude/settings.local.json
 characters/
+
+# PLang test runtime workspace directories
+Tests/**/workspace/
