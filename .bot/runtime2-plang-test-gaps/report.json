@@ -393,6 +393,53 @@
         "health": "No critical or high findings. 3 low-severity accepted-risk items. Branch has net-positive security impact.",
         "notes": "Recommend auditor next for code integrity review before merge."
       }
+    },
+    {
+      "id": "e0f1a2b3-c4d5-6789-af01-890123456789",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-09T20:00:00Z",
+      "timestamp_end": "2026-03-09T20:30:00Z",
+      "intent": "Final pre-merge code integrity audit of all branch changes",
+      "before": {
+        "assumptions": "Tester v3 PASS, codeanalyzer v2 PASS, security v1 PASS. Branch has 7 changed production C# files, 33 new PLang test suites, 1511/1511 C# tests passing.",
+        "risk": "Low — review only, no code changes"
+      },
+      "plan": "1. Read all bot output (coder, tester, codeanalyzer, security). 2. Review full production code diff in context. 3. Check OBP compliance. 4. Verify contracts, error handling, exception safety. 5. Cross-reference test coverage. 6. Write auditor-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/coder/v2/summary.md", ".bot/runtime2-plang-test-gaps/test-report.json", ".bot/runtime2-plang-test-gaps/security-report.json", ".bot/runtime2-plang-test-gaps/codeanalyzer/v2/summary.md"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all prior bot output to understand branch history and prior findings"
+        },
+        {
+          "paths": ["PLang/Executor.cs", "PLang/Runtime2/Engine/Goals/Goal/Methods.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs", "PLang/Runtime2/Engine/Goals/Goal/this.cs", "PLang/Runtime2/Engine/Goals/Setup/this.cs", "PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Test/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full review of all 7 production files: OBP compliance (0 violations), contract integrity (sound), error handling (adequate), return value propagation (correct)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Core/GoalsTests.cs", "PLang.Tests/Runtime2/Goals/Setup/SetupTests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test adequacy review: PrPath keying (7 tests), Path enforcement (2 tests), Names filter (1 test), Setup discovery (5 tests), Setup execution (6 tests). All honest, all cover the intended code paths."
+        },
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/auditor-report.json", ".bot/runtime2-plang-test-gaps/auditor/v2/verdict.json", ".bot/runtime2-plang-test-gaps/auditor/v2/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote auditor-report.json (3 minor findings), verdict.json (pass), summary.md"
+        }
+      ],
+      "after": {
+        "status": "complete — PASS",
+        "health": "All 7 production files clean. 0 OBP violations. 3 minor/nit findings. Branch ready for merge.",
+        "notes": "Recommend docs bot for documentation completeness before merge."
+      }
     }
   ]
 }
