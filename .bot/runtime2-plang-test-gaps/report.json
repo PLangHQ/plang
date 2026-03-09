@@ -287,6 +287,46 @@
         "health": "C# tests all pass (1509/1509). PLang failures are pre-existing. 3 new findings in Goals/this.cs: Names setup filter, empty Path guard, Add() check clarity.",
         "notes": "Findings #1, #6, #7 from v1 fully resolved. Findings #2-4 deferred to builder. Finding #5 deferred (PLang integration coverage sufficient). 3 new minor findings for coder v3."
       }
+    },
+    {
+      "id": "b7c8d9e0-f1a2-3456-cd01-567890123456",
+      "bot": "tester",
+      "timestamp_start": "2026-03-09T12:00:00Z",
+      "timestamp_end": "2026-03-09T12:30:00Z",
+      "intent": "Validate coder fixes for tester v2 findings #9, #10, #11",
+      "before": {
+        "assumptions": "Coder fixed findings #9 (Names setup filter) and #10 (empty Path bypass) in commit 15442d8f. Finding #11 was low priority.",
+        "risk": "Low — validation only"
+      },
+      "plan": "1. Read fix commit. 2. Run C# tests. 3. Run PLang tests. 4. Verify new tests are honest. 5. Write verdict.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/this.cs", "PLang/Runtime2/Engine/Goals/Goal/this.cs", "PLang.Tests/Runtime2/Core/GoalsTests.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified fix commit 15442d8f: Names property now has .Where(g => !g.IsSetup), PrPath getter now uses string.IsNullOrEmpty(Path). Both fixes correct. 2 new tests added."
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# tests: 1511/1511 pass. PLang tests: 59/64 pass (5 pre-existing deferred). No regressions."
+        },
+        {
+          "paths": [".bot/runtime2-plang-test-gaps/test-report.json", ".bot/runtime2-plang-test-gaps/tester/v3/"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote test-report.json, verdict.json (pass), summary.md for tester v3."
+        }
+      ],
+      "after": {
+        "status": "complete — PASS",
+        "health": "All must-fix findings resolved. 1511/1511 C# pass, 59/64 PLang pass. Tests are honest.",
+        "notes": "Finding #11 (minor semantic mislabeling) not fixed — acceptable. Recommend security analyst next."
+      }
     }
   ]
 }

@@ -7,3 +7,7 @@ Verdict: **needs-fixes**. C# tests don't compile (DiscoverAsync made private, 3 
 ## v2: Re-validation of Coder v2 Fixes
 
 Verdict: **pass-with-findings**. C# build fixed (1509/1509 pass). Coder addressed findings #1 (build failure), #6 (PrPath keying tests), and #7 (convention discovery tests). Also enforced strict Goal.Path requirement with 60+ test site updates. Three new findings: `Names` property includes setup goals (inconsistent with Get/All/Count — major), empty Path bypasses enforcement (medium), semantic mislabeling in Add() check (low). PLang tests: 59/65 pass, 6 fail (all pre-existing/deferred). See [v2/summary.md](v2/summary.md) for details.
+
+## v3: Validation of Findings #9 and #10 Fixes
+
+Verdict: **approved**. Findings #9 (Names setup filter) and #10 (empty Path bypass) both fixed with honest tests. 1511/1511 C# tests pass. PLang: 59/64 pass (5 pre-existing deferred). Finding #11 (minor semantic mislabeling) not fixed — acceptable. No regressions, no new findings. See [v3/summary.md](v3/summary.md) for details.
