@@ -149,6 +149,16 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 
 ---
 
+## GoalFirst Retry Behavior
+
+When `ErrorOrder` is `GoalFirst`, the error goal runs first. If the error goal **succeeds**, the runtime considers the error handled and returns immediately — **retries are skipped entirely**. This is by design: the error goal resolved the problem, so there's nothing to retry.
+
+Only if the error goal fails (or is absent) does the runtime proceed to retries. This means `GoalFirst` with both a goal and retries configured will only use the retries as a fallback when the error goal can't handle the problem.
+
+See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
+
+---
+
 ## Error Reporting — When to use what
 
 **Rule: match the error mechanism to the return type.**

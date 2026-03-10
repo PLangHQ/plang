@@ -80,8 +80,12 @@ public class ErrorHandler
 {
     public GoalToCallInfo? Goal { get; set; }
     public int? RetryCount { get; set; }
-    public int? RetryOverSeconds { get; set; }
+    public int? RetryOverMs { get; set; }
     public ErrorOrder? Order { get; set; }
+    public bool IgnoreError { get; set; }
+    public string? Message { get; set; }
+    public int? StatusCode { get; set; }
+    public string? Key { get; set; }
 }
 
 public enum ErrorOrder
@@ -298,7 +302,7 @@ public Task<GoalResult> GetMethods(string module, string format)
 ### Shared Types
 
 #### ErrorHandler
-{ goal?: GoalToCallInfo, retryCount?: int, retryOverSeconds?: int, order?: "GoalFirst" | "RetryFirst" }
+{ goal?: GoalToCallInfo, retryCount?: int, retryOverMs?: int, order?: "GoalFirst" | "RetryFirst", ignoreError?: bool, message?: string, statusCode?: int, key?: string }
 
 #### GoalToCallInfo
 { name: string, parameters?: object }

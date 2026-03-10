@@ -309,8 +309,12 @@ public class ErrorHandler
 {
     public GoalToCallInfo? Goal { get; set; }
     public int? RetryCount { get; set; }
-    public int? RetryOverSeconds { get; set; }
+    public int? RetryOverMs { get; set; }
     public ErrorOrder? Order { get; set; }
+    public bool IgnoreError { get; set; }
+    public string? Message { get; set; }
+    public int? StatusCode { get; set; }
+    public string? Key { get; set; }
 }
 
 public enum ErrorOrder { GoalFirst, RetryFirst }
@@ -427,7 +431,7 @@ Complete example of a built step in the `.pr` JSON:
             "onError": {
                 "goal": { "name": "HandleDbError", "parameters": null },
                 "retryCount": 3,
-                "retryOverSeconds": 10,
+                "retryOverMs": 10000,
                 "order": "RetryFirst"
             },
             "cache": {
