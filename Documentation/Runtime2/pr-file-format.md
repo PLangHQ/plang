@@ -179,7 +179,7 @@ At runtime, `%name%` is resolved from `MemoryStack` via the source-generated laz
     "parameters": { "error": "%error%" }
   },
   "retryCount": 3,
-  "retryOverSeconds": 10,
+  "retryOverMs": 10000,
   "order": "before",
   "ignoreError": false,
   "message": "Step failed",

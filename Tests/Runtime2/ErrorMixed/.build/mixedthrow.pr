@@ -12,7 +12,7 @@
           "action": "throw",
           "parameters": [
             {
-              "name": "Message",
+              "name": "message",
               "value": "mixed error",
               "type": "string"
             }

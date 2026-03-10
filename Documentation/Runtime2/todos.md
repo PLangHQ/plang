@@ -131,7 +131,7 @@ Target audiences:
 | 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
 | 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
 | 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
-| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverSeconds fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
+| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverMs fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
 
 **Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
 

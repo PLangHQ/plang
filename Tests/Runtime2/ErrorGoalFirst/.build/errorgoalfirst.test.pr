@@ -56,7 +56,7 @@
           "name": "GoalFirstHandler"
         },
         "retryCount": 2,
-        "order": 0,
+        "order": "GoalFirst",
         "ignoreError": false
       },
       "errors": [],

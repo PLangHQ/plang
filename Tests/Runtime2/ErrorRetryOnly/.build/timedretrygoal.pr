@@ -23,7 +23,7 @@
       ],
       "onError": {
         "retryCount": 2,
-        "retryOverSeconds": 1,
+        "retryOverMs": 500,
         "ignoreError": false
       },
       "errors": [],

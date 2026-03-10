@@ -63,7 +63,7 @@ Error handling modifiers:
 - `on error ignore` → `onError: {ignoreError: true}`
 - `on error call <GoalName>` → `onError: {goal: {name: "<GoalName>"}}`
 - `on error retry X times` → `onError: {retryCount: X}`
-- `on error retry X times over Y seconds` → `onError: {retryCount: X, retryOverSeconds: Y}`
+- `on error retry X times over Y` → `onError: {retryCount: X, retryOverMs: Y}`
 - `on error retry X times, then call <GoalName>` → `onError: {retryCount: X, order: "RetryFirst", goal: {name: "<GoalName>"}}`
 - `on error call <GoalName>, then retry X times` → `onError: {retryCount: X, order: "GoalFirst", goal: {name: "<GoalName>"}}`
 
@@ -86,7 +86,7 @@ Start
 - read file 'config.json', write to \%config\%\n    cache for 5 minutes
 - throw error "something went wrong", on error ignore
 - call ProcessData, on error call HandleError
-- call LoadData, on error retry 3 times over 5 seconds
+- call LoadData, on error retry 3 times over 5000
 - call SaveData, on error retry 2 times, then call HandleSaveError
 - if \%count\%, call ProcessData
 ```
@@ -106,7 +106,7 @@ Response:
     {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationSeconds": 300}},
     {"index": 7, "actions": [{"module": "error", "action": "throw", "parameters": [{"name": "message", "value": "something went wrong", "type": "string"}]}], "onError": {"ignoreError": true}},
     {"index": 8, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "ProcessData", "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
-    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverSeconds": 5}},
+    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverMs": 5000}},
     {"index": 10, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "SaveData", "type": "goal.call"}]}], "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleSaveError"}}},
     {"index": 11, "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Condition", "value": "\%count\%", "type": "bool"}, {"name": "GoalIfTrue", "value": "ProcessData", "type": "goal.call"}]}]}
   ]
