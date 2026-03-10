@@ -1,2 +1,3 @@
 BareRetryGoal
-- throw error "always fails", on error retry 2 times
+- set %bareRetryAttempts% = %bareRetryAttempts% + 1
+- throw error "always fails"

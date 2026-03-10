@@ -114,10 +114,10 @@
       "timestamp_end": "2026-03-10T02:30:00Z",
       "intent": "Code analysis of all changes on runtime2-builder-onerror-fix vs runtime2",
       "before": {
-        "assumptions": "Branch has prompt changes, RetryOverSeconds→RetryOverMs rename, and new test suites. Need to verify rename completeness and test quality.",
+        "assumptions": "Branch has prompt changes, RetryOverSeconds->RetryOverMs rename, and new test suites. Need to verify rename completeness and test quality.",
         "risk": "Low — analysis only, no code changes"
       },
-      "plan": "Review all 61 changed files across 5 analysis passes: OBP compliance, simplification, readability, behavioral reasoning (trace retryOverSeconds→retryOverMs rename end-to-end), deletion test (do PLang tests actually verify retry behavior?).",
+      "plan": "Review all 61 changed files across 5 analysis passes: OBP compliance, simplification, readability, behavioral reasoning (trace retryOverSeconds->retryOverMs rename end-to-end), deletion test (do PLang tests actually verify retry behavior?).",
       "actions": [
         {
           "paths": ["system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr"],
@@ -145,6 +145,46 @@
         "status": "complete",
         "health": "Verdict: FAIL. Stale .pr blocks correct builder operation. Test quality gap in retry tests.",
         "notes": "Coder must rebuild system/builder/ to fix stale .pr. Test-designer should consider strengthening retry tests to verify actual retry behavior."
+      }
+    },
+    {
+      "id": "coder-v1-2026-03-10",
+      "bot": "coder",
+      "timestamp_start": "2026-03-10T08:30:00Z",
+      "timestamp_end": "2026-03-10T09:00:00Z",
+      "intent": "Fix stale builder .pr and strengthen retry PLang tests per codeanalyzer findings",
+      "before": {
+        "assumptions": "Builder .pr has retryOverSeconds but source already has retryOverMs. Retry tests only check error propagation, not actual retry counts.",
+        "risk": "Low for .pr rename. Medium for test restructuring — changed retry ownership from throw step to call step."
+      },
+      "plan": "1. Replace retryOverSeconds with retryOverMs in builder .pr files. 2. Restructure ErrorRetryOnly and ErrorGoalFirst tests: add counter variables in called goals, move retry from throw to call step, assert counter values. 3. Delete stale .build folders. 4. Note blocker: no OpenAI API key for rebuilding.",
+      "actions": [
+        {
+          "paths": ["system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr", "system/builder/.build/BuildGoal/00. Goal.pr"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mechanical rename retryOverSeconds -> retryOverMs to align .pr with source .goal/.llm. Manual edit because no LLM API key available to rebuild."
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal", "Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal", "Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal", "Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal", "Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Restructured: added counter increments in called goals, moved retry from throw to call step, added counter assertions"
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/.build/", "Tests/Runtime2/ErrorGoalFirst/.build/"],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deleted stale .build folders — goal files changed, need LLM rebuild"
+        }
+      ],
+      "after": {
+        "status": "complete with blocker",
+        "health": "Code changes done. Tests need LLM rebuild (no OpenAI API key in env).",
+        "notes": "Run 'plang p build --llmservice=openai' in ErrorRetryOnly/ and ErrorGoalFirst/ when API key is available, then run 'plang p !test' to verify."
       }
     }
   ]

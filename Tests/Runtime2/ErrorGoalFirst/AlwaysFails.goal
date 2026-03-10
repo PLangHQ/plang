@@ -1,2 +1,3 @@
 AlwaysFails
+- set %goalFirstAttempts% = %goalFirstAttempts% + 1
 - throw error "always fails"
