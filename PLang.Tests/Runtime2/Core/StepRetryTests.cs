@@ -232,6 +232,7 @@ public class StepRetryTests
         var errorGoal = new Goal
         {
             Name = "CaptureError",
+            Path = "/CaptureError.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -416,6 +417,7 @@ public class StepRetryTests
         return new Goal
         {
             Name = goalName,
+            Path = $"/{goalName}.goal",
             Steps = new GoalSteps
             {
                 new Step

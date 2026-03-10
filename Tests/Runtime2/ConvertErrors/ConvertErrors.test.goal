@@ -1,0 +1,4 @@
+Start
+/ convert invalid string to int should error
+- convert "abc" to int, on error call HandleConvertError
+- assert %convertErrorCaught% equals true

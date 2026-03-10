@@ -1,0 +1,76 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call NonExistentGoal, on error call HandleMissing",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "calling non-existent goal should error",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "NonExistentGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "HandleMissing"
+        },
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %missingCaught% equals true",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%missingCaught%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/GoalCallMissing.test.goal",
+  "prPath": "/.build/goalcallmissing.test.pr",
+  "hash": "76f394b61c3720fc41d77b475aab0aecf7ac812c1b29f4fa236e5a89d8719db9",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

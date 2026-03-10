@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal tests the file reading functionality with caching. It first saves a value to a file, reads it using a cached method, and asserts that the read value is not null. Then, it saves a new value to the same file and asserts that the cached read still returns the first value, demonstrating that the cache is working correctly. Finally, it cleans up by deleting the test file.",
   "steps": [
     {
       "index": 0,
@@ -28,7 +27,6 @@
           "warnings": []
         }
       ],
-      "hash": "39f197bd5234ee13f926b6e64a84f5d38df3f23f776fb68d60df51b1be5cccc5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -53,7 +51,6 @@
           "warnings": []
         }
       ],
-      "hash": "94aa776071cd0c603ef5c84bdc716f7397605328a588bb633e3822265a439834",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -83,7 +80,6 @@
           "warnings": []
         }
       ],
-      "hash": "3ce022785bc903ae1f6dbafb641bd70bb136b767e0f702ac7626580db1da5af8",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -113,7 +109,6 @@
           "warnings": []
         }
       ],
-      "hash": "803be928af5aeaa2d0c4557a5c1266545a58f3c4c5fa075a4b3b5fcfcad2d7a4",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -138,7 +133,6 @@
           "warnings": []
         }
       ],
-      "hash": "4155ecb222c46aed0f78f72bf0b25e4a6759c96fc12fe718cc80ae216760473d",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -173,12 +167,10 @@
           "warnings": []
         }
       ],
-      "hash": "6cdac3424767b861be6d4fd65a1e941678fdb45c60f85d7f77c57f520ceff244",
       "cache": {
         "durationSeconds": 300,
         "sliding": true,
-        "key": "%fileData%",
-        "location": "memory"
+        "key": "%fileData%"
       },
       "errors": [],
       "warnings": [],
@@ -205,7 +197,6 @@
           "warnings": []
         }
       ],
-      "hash": "40c1e98b3786c1c19db7ccaf383f2d7fa465ad5e203be8f62fabb73d8f13da6d",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -213,15 +204,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Cache/Cache.test.goal",
-  "prPath": "/Cache/.build/cache.test.pr",
+  "path": "/Cache.test.goal",
+  "prPath": "/.build/cache.test.pr",
   "hash": "486a37bc35b087547fd9e706d230c7a846c3c0dfdb504874c2ee77a84e25f742",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "%fileData%": "This variable holds the data read from the file and is used to assert the correctness of the cached read."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

@@ -1,6 +1,5 @@
 {
   "name": "SetWrong",
-  "description": "The SetWrong goal is designed to set a variable indicating whether something was wrong. It accomplishes this by setting the variable \\%wasWrong\\% to true.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "a3a4d8433d8b8a072c36f2821ae1969bc85f4f5221b1b9c16b6fe173033c73e5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -35,15 +33,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Condition/SetWrong.goal",
-  "prPath": "/Condition/.build/setwrong.pr",
+  "path": "/SetWrong.goal",
+  "prPath": "/.build/setwrong.pr",
   "hash": "3235da80ce0ade81fe3d32c1e6355171f60ef8d8f86f7a1f1d89f3ace8e2cbea",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "\\%wasWrong\\%": "A boolean variable that indicates if something was wrong, which will be set to true by this goal."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "SetWrong"

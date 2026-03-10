@@ -34,6 +34,7 @@ public class ForeachTests
         var captureGoal = new Goal
         {
             Name = "ProcessItem",
+            Path = "/ProcessItem.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -107,6 +108,7 @@ public class ForeachTests
         var goal = new Goal
         {
             Name = "CaptureGoal",
+            Path = "/CaptureGoal.goal",
             Steps = new GoalSteps()
         };
         _engine.Goals.Add(goal);
@@ -132,7 +134,7 @@ public class ForeachTests
         var context = CreateContext();
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
 
-        var goal = new Goal { Name = "DictGoal", Steps = new GoalSteps() };
+        var goal = new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() };
         _engine.Goals.Add(goal);
 
         var action = new Foreach

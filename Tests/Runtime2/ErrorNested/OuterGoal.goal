@@ -1,0 +1,3 @@
+OuterGoal
+- call InnerGoal
+- set %outerCompleted% = true

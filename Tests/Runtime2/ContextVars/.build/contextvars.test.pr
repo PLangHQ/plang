@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal verifies that the engine name is set and matches the expected value \u0027Runtime2\u0027. It ensures that the engine is properly initialized before proceeding.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "867ccf95f5f8adc7a6529ecb7e80595396ffd60799b99a48891c51b53ac9a6bf",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -57,7 +55,6 @@
           "warnings": []
         }
       ],
-      "hash": "b5b19970d7809608a3538467161b7ba0023c1b30d38a23af78e8f59e1278ba75",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -65,15 +62,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ContextVars/ContextVars.test.goal",
-  "prPath": "/ContextVars/.build/contextvars.test.pr",
+  "path": "/ContextVars.test.goal",
+  "prPath": "/.build/contextvars.test.pr",
   "hash": "df75fe9990944fa764eff466f9b0ed11506f5c0ba769ae307a5de0c97f4962b0",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "%engine.Name%": "The name of the engine that needs to be validated; it should not be null and must equal \u0027Runtime2\u0027 to successfully call this goal."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

@@ -1,0 +1,93 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-plang-test-gaps",
+  "timestamp": "2026-03-09T18:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "setup-discovery",
+      "exposure": "DiscoverAsync reads .pr files from convention paths and deserializes them as Goal objects",
+      "trust_boundary": ".pr files on disk — authored by the user via builder, trusted in PLang's model",
+      "mitigations": [
+        "Convention-based: only 2 fixed paths checked (setup.pr at root/.build and Setup/.build)",
+        "IsSetup filter: only goals with IsSetup=true are loaded",
+        "Bare catch: unparseable files are silently skipped",
+        "Private method: no external caller can invoke DiscoverAsync directly"
+      ],
+      "gaps": [
+        "Bare catch swallows ALL exceptions including potential depth-guard exceptions from deserialization. Pre-existing, not introduced by this branch."
+      ]
+    },
+    {
+      "area": "goal-keying",
+      "exposure": "Goals dictionary now keyed by PrPath (derived from Goal.Path) instead of Name",
+      "trust_boundary": "Goal.Path comes from .pr file deserialization — user-authored content",
+      "mitigations": [
+        "ArgumentException thrown if PrPath is null/empty",
+        "ConcurrentDictionary with OrdinalIgnoreCase comparer prevents case-based collisions",
+        "PrPath derivation normalizes path separators and lowercases filename"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "return-value-propagation",
+      "exposure": "Steps.RunAsync and Goal.RunAsync now return last step result instead of Data.Ok()",
+      "trust_boundary": "Step results are internal — contain action handler output, variable values, error details",
+      "mitigations": [
+        "Data type already handles error/success uniformly",
+        "No new data paths exposed to external consumers"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "test-runner-isolation",
+      "exposure": "Each test gets its own engine with root set to the test's directory instead of shared Tests/Runtime2/",
+      "trust_boundary": "Test files are developer-authored, not external input",
+      "mitigations": [
+        "Fresh PLangFileSystem per test",
+        "Fresh Engine per test with IAsyncDisposable cleanup",
+        "Setup goals run per-test, scoped to test directory"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Bare catch in Setup/DiscoverAsync swallows all exceptions from .pr deserialization, including potential depth-guard or memory-limit exceptions",
+      "preconditions": "A malformed .pr file at a convention path (root/.build/setup.pr or Setup/.build/setup.pr) that triggers a stack overflow or OOM during deserialization",
+      "impact": "Depth guard exceptions from JSON deserialization would be silently swallowed, making the security boundary invisible. However, StackOverflowException is unrecoverable in .NET (kills the process regardless of catch), and OOM typically propagates despite catch blocks.",
+      "affected_files": ["PLang/Runtime2/Engine/Goals/Setup/this.cs"],
+      "exploit_sketch": "Place a deeply-nested JSON structure in .build/setup.pr. If deserialization has a depth guard that throws, the bare catch swallows it and continues as if nothing happened. Without the depth guard, StackOverflowException kills the process (uncatchable).",
+      "proposed_fix": "Narrow the catch to specific expected exceptions (JsonException, IOException, UnauthorizedAccessException). Let unexpected exceptions propagate. This is a pre-existing pattern, not introduced by this branch.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Test runner includes .pr file path in error messages (ServiceError with prPath in message string)",
+      "preconditions": "An attacker would need to see test runner console output. Test runner is developer-facing only.",
+      "impact": "File paths disclosed in error messages. Minimal impact since the test runner is a development tool, not a production API.",
+      "affected_files": ["PLang/Runtime2/Engine/Test/this.cs"],
+      "exploit_sketch": "Not exploitable in practice — test runner output goes to developer console.",
+      "proposed_fix": "No fix needed. Development tool, not production surface.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Get() method performs O(n) linear scan of _goals.Values.FirstOrDefault() multiple times per lookup when the name doesn't match by PrPath or Path",
+      "preconditions": "A PLang app with thousands of goals where frequent lookups miss the fast-path dictionaries",
+      "impact": "Performance degradation. Not a denial-of-service since the user controls the number of goals in their own app.",
+      "affected_files": ["PLang/Runtime2/Engine/Goals/this.cs"],
+      "exploit_sketch": "Not a security issue in PLang's threat model. The user controls their own goal count. An external attacker cannot add goals.",
+      "proposed_fix": "Could add a third index (_byName dictionary) for O(1) name lookups if performance becomes an issue. Low priority.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "This branch has a net-positive security impact. The most significant change (Setup discovery) eliminates a recursive directory scan that loaded ALL .pr files at startup, replacing it with a convention-based approach checking only 2 fixed paths. This removes a resource exhaustion vector (thousands of .pr files) and reduces the deserialization attack surface. The PrPath keying change adds proper input validation (ArgumentException on null/empty Path) and prevents name collision attacks. The test runner isolation improvement gives each test its own engine root. No new attack surface is introduced. All 3 findings are low severity and pre-existing or by-design. Verdict: PASS."
+}

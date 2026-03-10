@@ -1,0 +1,2 @@
+FailOnce
+- throw error "fail"

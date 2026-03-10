@@ -1,0 +1,6 @@
+Start
+/ after action captures that action fired
+- set %actionFired% = false
+- after action output.write call CaptureWrite
+- write out "hello world"
+- assert %actionFired% equals true

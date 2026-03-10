@@ -1,0 +1,105 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtMessage% = \u0022\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "on error call goal catches error from called goal",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtMessage%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call ThrowTestError, on error call CatchError",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "ThrowTestError",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "CatchError"
+        },
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %caughtMessage% equals \u0022test error\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "test error",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%caughtMessage%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorCall.test.goal",
+  "prPath": "/.build/errorcall.test.pr",
+  "hash": "235547c0dc3f2843669b4182fbbc50886ac4733834147d9b79a9327d74b6acfe",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

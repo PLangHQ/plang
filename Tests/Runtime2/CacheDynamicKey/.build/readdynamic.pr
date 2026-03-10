@@ -1,0 +1,49 @@
+{
+  "name": "ReadDynamic",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file %fileName%, cache for 60 seconds, write to %dynContent%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "%fileName%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "dynContent"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "cache": {
+        "durationSeconds": 60,
+        "sliding": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ReadDynamic.goal",
+  "prPath": "/.build/readdynamic.pr",
+  "hash": "6be69c3cb33a009372019e5e90329b907076205b03438ba823ca200138c8887f",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ReadDynamic"
+}

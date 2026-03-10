@@ -1,0 +1,3 @@
+OuterHandler
+/ catches the propagated error from BadHandler
+- set %outerHandled% = true

@@ -1,0 +1,2 @@
+ThrowUserError
+- throw error "user error" key="TestKey"

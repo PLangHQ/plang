@@ -1,0 +1,45 @@
+{
+  "name": "HandleError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %errorHandled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/HandleError.goal",
+  "prPath": "/.build/handleerror.pr",
+  "hash": "1376351dc7f25863a595270b1af8c3730d2565282dc96e395d1903c06e59b4ab",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HandleError"
+}

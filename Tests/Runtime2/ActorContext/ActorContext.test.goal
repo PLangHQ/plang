@@ -1,0 +1,5 @@
+Start
+/ context variables available
+- assert %!engine% is not null
+- assert %!context% is not null
+- assert %!memoryStack% is not null

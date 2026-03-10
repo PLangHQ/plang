@@ -1,6 +1,5 @@
 {
   "name": "InnerTest",
-  "description": "The InnerTest goal sets the variable \\%innerDepth\\% to the current depth of the call stack. It then asserts that \\%innerDepth\\% is not null, ensuring that the inner depth has been successfully set before proceeding.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "bc6f22c7a5a2cfa8ac34fe16496ee415b051f641083a66d7bb94b0cbaf62aae7",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -57,7 +55,6 @@
           "warnings": []
         }
       ],
-      "hash": "5c435f1750e50f835170fd8fddabf047d327bec10a56004ddbeda6735e9d7917",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -65,15 +62,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/CallStack/InnerTest.goal",
-  "prPath": "/CallStack/.build/innertest.pr",
+  "path": "/InnerTest.goal",
+  "prPath": "/.build/innertest.pr",
   "hash": "a0d1c2c18daadf2830d295223c957d36d744628c4a5f9499b77cfe081ae2496c",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "!callStack.Depth": "The current depth of the call stack, which is used to set the \\%innerDepth\\% variable."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "InnerTest"

@@ -1,0 +1,52 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-plang-test-gaps",
+  "timestamp": "2026-03-09T12:00:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 1511, "passed": 1511, "failed": 0, "skipped": 0 },
+    "plang": { "total": 64, "passed": 59, "failed": 5, "skipped": 0, "note": "All 5 failures are pre-existing and deferred (3 builder onError, 1 NullRef in condition eval, 1 wrong assertion in .pr)" }
+  },
+  "coverage": {
+    "changed_files_covered": 3,
+    "changed_files_total": 3,
+    "uncovered_files": []
+  },
+  "findings": [
+    {
+      "id": 9,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Core/GoalsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/this.cs",
+      "issue": "Names property was missing setup filter — inconsistent with Get/All/Count",
+      "impact": "Setup goals would leak into Names enumeration",
+      "suggestion": "Add .Where(g => !g.IsSetup) to Names property",
+      "status": "FIXED — code fix + Names_ExcludesSetupGoals test added"
+    },
+    {
+      "id": 10,
+      "severity": "major",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Core/GoalsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/Goal/this.cs",
+      "issue": "Empty Path bypassed enforcement — PrPath computed '.build\\.pr' for empty string",
+      "impact": "Garbage key would be added to goals dictionary",
+      "suggestion": "Change Path null check to string.IsNullOrEmpty(Path) in PrPath getter",
+      "status": "FIXED — code fix + Add_ThrowsWhenPathIsEmptyString test added"
+    },
+    {
+      "id": 11,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Core/GoalsTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Goals/this.cs",
+      "issue": "Add() checks goal.PrPath but error says 'must have a Path set' — functionally correct but semantically misleading",
+      "impact": "Low — developer confusion only, no runtime impact",
+      "suggestion": "Check goal.Path instead of goal.PrPath in Add() for clarity",
+      "status": "NOT FIXED — low priority, acceptable"
+    }
+  ],
+  "verdict": "approved",
+  "summary": "All tester v2 must-fix findings (#9, #10) are resolved with correct code fixes and honest tests. 1511/1511 C# tests pass (up from 1509). PLang tests: 59/64 pass, all 5 failures are pre-existing/deferred. Finding #11 (minor semantic mislabeling) remains unfixed but is acceptable. No new findings. No regressions."
+}

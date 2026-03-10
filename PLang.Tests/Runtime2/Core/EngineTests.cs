@@ -266,7 +266,7 @@ public class EngineTests
     public async Task RunGoalAsync_EmptyGoal_ReturnsSuccess()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
-        var goal = new Goal { Name = "EmptyGoal" };
+        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
         engine.Goals.Add(goal);
 
         var result = await engine.RunGoalAsync("EmptyGoal");
@@ -278,7 +278,7 @@ public class EngineTests
     public async Task RunGoalAsync_CancelledToken_ReturnsError()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -293,7 +293,7 @@ public class EngineTests
     public async Task RunGoalAsync_SetsContextGoal()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
         using var context = engine.CreateContext();
         await engine.RunGoalAsync(goal, context);
@@ -308,7 +308,7 @@ public class EngineTests
     public async Task RunGoalAsync_PushesCallFrame()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
-        var goal = new Goal { Name = "TestGoal" };
+        var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
 
         using var context = engine.CreateContext();
@@ -326,6 +326,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
+            Path = "/TestGoal.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -350,6 +351,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
+            Path = "/TestGoal.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "get", index: 0, text: "get variable")
@@ -371,6 +373,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
+            Path = "/TestGoal.goal",
             Steps = new GoalSteps
             {
                 new Step
@@ -556,6 +559,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
+            Path = "/TestGoal.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -581,6 +585,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "TestGoal",
+            Path = "/TestGoal.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -691,6 +696,7 @@ public class EngineTests
         var goal = new Goal
         {
             Name = "SummaryGoal",
+            Path = "/SummaryGoal.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",

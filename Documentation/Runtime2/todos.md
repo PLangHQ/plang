@@ -263,6 +263,37 @@ Target audiences:
 
 ---
 
+## Builder Drops onError — 5 Test Failures
+**Date:** 2026-03-07
+**Summary:** The builder LLM inconsistently drops `onError` step properties when generating .pr files. Steps like `call GoalThatThrows, on error call Handler` produce .pr with no `onError` property, so errors propagate uncaught. Affects: ErrorCall, ErrorChain, ErrorProps, ErrorTypes, ErrorInHandler tests. Pre-existing tests (Retry, ErrorHandling) still have `onError` because the builder skips unchanged files.
+
+**Fix:** Part of the builder consistency framework. Structural validation (validating .pr output against module registry) should catch this and feed it back to the LLM for retry. Short-term: rebuild these tests and verify the .pr output, or improve the builder prompt to be more consistent about `onError`.
+
+**Related: LLM rewrites assertion values.** The CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it thinks it knows better. The structural validator needs to catch when the LLM changes literal values in assertions — the `.goal` file says `"content1"`, the `.pr` must say `"content1"`.
+
+---
+
+## Action-Based Conditions
+**Date:** 2026-03-07
+**Summary:** Redesign `condition/if` so Left and Right sides of a condition can be actions, not just literals. Since runtime2 supports multiple actions per step, conditions compose naturally with any module action.
+
+**Design:**
+- `if file.txt exists` → Left: `file.exists` action (returns bool), implicit `== true`
+- `if select count() from users > 0` → Left: `db.select` action (returns number), Operator: `>`, Right: literal `0`
+- `if %x% > %y%` → Left: resolved variable, Operator: `>`, Right: resolved variable
+- Compound: AND/OR over multiple conditions
+
+**Why:** Current `bool Condition` requires the LLM to pre-resolve everything at build time. Action-based conditions let any module participate without the condition module knowing about it. Architect to design the Condition type, .pr format, and builder prompt changes.
+
+---
+
+## Builder Consistency Framework
+**Date:** 2026-03-06
+**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
+**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
+
+---
+
 ## ~~ErrorInfoTests still uses "HandlerError" test data~~ ✅ DONE (2026-02-23)
 **Date:** 2026-02-23
 **Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.

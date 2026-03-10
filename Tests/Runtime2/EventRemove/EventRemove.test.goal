@@ -1,0 +1,9 @@
+Start
+/ register event, fire, remove, fire again
+- set %writeCount% = 0
+- before action output.write call Counter, write to %eventBinding%
+- write out "first"
+- assert %writeCount% equals 1
+- remove event %eventBinding%
+- write out "second"
+- assert %writeCount% equals 1

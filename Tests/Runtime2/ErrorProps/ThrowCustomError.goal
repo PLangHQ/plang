@@ -1,0 +1,2 @@
+ThrowCustomError
+- throw error "bad thing" key="CustomKey" statusCode=422

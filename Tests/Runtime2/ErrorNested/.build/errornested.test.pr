@@ -1,0 +1,99 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call OuterGoal",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "nested goal has its own error handler",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "OuterGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %innerErrorHandled% equals true",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%innerErrorHandled%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %outerCompleted% equals true",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%outerCompleted%",
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorNested.test.goal",
+  "prPath": "/.build/errornested.test.pr",
+  "hash": "eface4842d172e49f079b7c923ec031455e493795997eed156dfb2c5932ded09",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

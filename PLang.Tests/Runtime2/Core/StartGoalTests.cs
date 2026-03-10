@@ -21,6 +21,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Start",
+            Path = "/Start.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -100,6 +101,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
+            Path = "/Test.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -130,6 +132,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
+            Path = "/Test.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -160,6 +163,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
+            Path = "/Test.goal",
             Steps = new GoalSteps
             {
                 MakeStep("output", "write",
@@ -187,6 +191,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
+            Path = "/Test.goal",
             Steps = new GoalSteps
             {
                 MakeStep("output", "write",
@@ -211,6 +216,7 @@ public class StartGoalTests
         var goal = new Goal
         {
             Name = "Test",
+            Path = "/Test.goal",
             Steps = new GoalSteps
             {
                 MakeStep("variable", "set",

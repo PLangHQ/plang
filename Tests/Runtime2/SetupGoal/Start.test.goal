@@ -1,0 +1,3 @@
+Start
+/ setup goal ran before this
+- assert %setupDone% equals true

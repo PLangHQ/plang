@@ -1,5 +1,6 @@
 {
   "name": "HandleRetryError",
+  "description": "The HandleRetryError goal is designed to handle retry errors by setting a flag indicating that the retry error has been managed. When this goal is executed, it will set the variable \\%retryErrorHandled\\% to true, signaling that the error handling process is complete.",
   "steps": [
     {
       "index": 0,
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "3d3a63a4632cb68647e46eace38d72256c6111b602589caa4968303510a26843",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -33,12 +35,15 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Retry/HandleRetryError.goal",
-  "prPath": "/Retry/.build/handleretryerror.pr",
+  "path": "/HandleRetryError.goal",
+  "prPath": "/.build/handleretryerror.pr",
   "hash": "73b3860a35906d869cb5de411b068adead6bdd7c71fe0fb150d31fb361764d07",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
+  "inputParameters": {
+    "\\%retryErrorHandled\\%": "A boolean variable that indicates whether the retry error has been handled or not."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "HandleRetryError"

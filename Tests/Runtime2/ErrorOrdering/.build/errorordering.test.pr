@@ -1,0 +1,107 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "retry first then call goal",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call FailOnce, on error retry 1 times, then call LogRetryError",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "FailOnce",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "LogRetryError"
+        },
+        "retryCount": 1,
+        "order": 1,
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %order% contains \u0022error\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "name": "Container",
+              "value": "%order%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorOrdering.test.goal",
+  "prPath": "/.build/errorordering.test.pr",
+  "hash": "8217f9ae1fd77c5d79ce4de7422b957fa4d6488f4f5a15783e06d4cac17554c9",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

@@ -1,0 +1,2 @@
+ThrowInnerError
+- throw error "inner error"

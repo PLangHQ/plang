@@ -1,0 +1,2 @@
+Counter
+- set %writeCount% = %writeCount% + 1

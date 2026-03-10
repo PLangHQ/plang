@@ -1,0 +1,49 @@
+{
+  "name": "ReadCachedFile",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027cachekey.txt\u0027, cache for 60 seconds, write to %cachedContent%",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "cachekey.txt",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "cachedContent"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "cache": {
+        "durationSeconds": 60,
+        "sliding": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ReadCachedFile.goal",
+  "prPath": "/.build/readcachedfile.pr",
+  "hash": "6ff8c2cc9562f2dbf49ed77ca42193fbf83f254af4027126043bc50bf99ce5ed",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ReadCachedFile"
+}

@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal is designed to output the name of the engine. It retrieves the engine\u0027s name and writes it out as a string.",
   "steps": [
     {
       "index": 0,
@@ -32,7 +31,6 @@
           "warnings": []
         }
       ],
-      "hash": "f78b95bb2fa247f88494bf6a314e57eed2624f85810647860570e8a4f05434e5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -40,15 +38,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ContextVars/Start.goal",
-  "prPath": "/ContextVars/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "8b6374c35852e84debb59b409923cad0cfdc505a033e320c617dbe904aedd593",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "!engine.Name": "The name of the engine that needs to be outputted."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

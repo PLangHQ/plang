@@ -1,0 +1,46 @@
+{
+  "name": "OuterHandler",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %outerHandled% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "catches the propagated error from BadHandler",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outerHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/OuterHandler.goal",
+  "prPath": "/.build/outerhandler.pr",
+  "hash": "83871615f7b8a2927d7c1bde9488ab89cda74b382b3b083c0eb2b4bc7f7d5833",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "OuterHandler"
+}

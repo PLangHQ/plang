@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "C# tests don't compile (DiscoverAsync made private). 5/64 PLang tests fail: 3 missing onError in .pr, 1 NullRef in condition eval (claimed fix not applied), 1 wrong .pr assertion. 5 runtime code changes lack C# test coverage."
+}

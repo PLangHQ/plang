@@ -1,0 +1,5 @@
+Start
+/ retry first then call goal
+- set %order% = ""
+- call FailOnce, on error retry 1 times, then call LogRetryError
+- assert %order% contains "error"

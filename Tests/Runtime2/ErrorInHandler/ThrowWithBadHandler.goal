@@ -1,0 +1,3 @@
+ThrowWithBadHandler
+/ calls a goal that throws, handler also throws
+- call ThrowOriginal, on error call BadHandler

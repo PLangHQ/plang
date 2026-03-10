@@ -1,0 +1,5 @@
+Start
+/ recursion should error cleanly
+- set %depth% = 0
+- call Recurse, on error call HandleRecursionError
+- assert %recursionErrorCaught% equals true

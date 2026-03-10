@@ -1,0 +1,8 @@
+Start
+/ return value mapped to variable via write to
+- read file 'testfile.txt', write to %content%
+- assert %content% equals "hello from file"
+
+/ goal call return
+- call ComputeValue, write to %result%
+- assert %result% is not null

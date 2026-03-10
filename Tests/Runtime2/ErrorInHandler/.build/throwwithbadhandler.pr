@@ -1,0 +1,52 @@
+{
+  "name": "ThrowWithBadHandler",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ThrowOriginal, on error call BadHandler",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "calls a goal that throws, handler also throws",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "ThrowOriginal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": [
+            {
+              "key": "missingVariable",
+              "message": "Referenced goal ThrowOriginal may throw an error; ensure it is defined"
+            }
+          ]
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "BadHandler"
+        },
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ThrowWithBadHandler.goal",
+  "prPath": "/.build/throwwithbadhandler.pr",
+  "hash": "b43d22352eff677f132f533b2217d3ce27a7bf756502eecf5629d7afc615f391",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "ThrowWithBadHandler"
+}

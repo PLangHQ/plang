@@ -1,0 +1,162 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %matchCount% = 0",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "wildcard pattern matches multiple actions",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%matchCount%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "before action variable.* call WildcardHandler",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "event",
+          "action": "beforeAction",
+          "parameters": [
+            {
+              "name": "GoalToCall",
+              "value": "WildcardHandler",
+              "type": "goal.call"
+            },
+            {
+              "name": "ActionPattern",
+              "value": "variable.*",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %a% = 1",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %b% = 2",
+      "lineNumber": 6,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %matchCount% is greater than 0",
+      "lineNumber": 7,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "greaterThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%matchCount%",
+              "type": "string"
+            },
+            {
+              "name": "B",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/EventWildcard.test.goal",
+  "prPath": "/.build/eventwildcard.test.pr",
+  "hash": "d6eeafe20a79b3571ba49fccfd9e1fe43d86db6d27dcb18cc6488b23c52269be",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

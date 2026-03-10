@@ -1,0 +1,2 @@
+InnerHandler
+- set %innerErrorHandled% = true

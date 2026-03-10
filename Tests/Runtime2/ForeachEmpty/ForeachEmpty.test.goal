@@ -1,0 +1,6 @@
+Start
+/ empty list foreach
+- set %items% = []
+- set %count% = 0
+- foreach %items%, call ProcessItem item=%item%
+- assert %count% equals 0

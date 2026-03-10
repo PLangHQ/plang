@@ -29,41 +29,43 @@ public sealed class @this
         .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Discovers setup goals by scanning .pr files on disk.
-    /// Only setup goals (IsSetup == true) are added to the goals collection.
-    /// Non-setup goals remain lazy-loadable via GetAsync — preserving the lazy-load convention.
+    /// Discovers setup goals by convention:
+    /// 1. Root .build/setup.pr (the app's main Setup.goal)
+    /// 2. Setup/.build/setup.pr (a dedicated Setup/ folder)
+    /// Does NOT scan all .pr files — there could be thousands.
     /// </summary>
-    public async Task<Data> DiscoverAsync(Engine.@this engine, CancellationToken ct = default)
+    private async Task<Data> DiscoverAsync(Engine.@this engine, CancellationToken ct = default)
     {
-        try
-        {
-            var files = engine.FileSystem.Directory.GetFiles(
-                engine.AbsolutePath, "*.pr", SearchOption.AllDirectories);
+        var fs = engine.FileSystem;
+        var root = engine.AbsolutePath;
 
-            foreach (var file in files)
+        var candidates = new[]
+        {
+            fs.Path.Combine(root, ".build", "setup.pr"),
+            fs.Path.Combine(root, "Setup", ".build", "setup.pr"),
+        };
+
+        foreach (var file in candidates)
+        {
+            if (!fs.File.Exists(file)) continue;
+
+            try
             {
-                try
-                {
-                    var goal = await engine.Channels.ReadAsync<Goal.@this>(file, ct);
-                    if (goal == null || !goal.IsSetup) continue;
+                var goal = await engine.Channels.ReadAsync<Goal.@this>(file, ct);
+                if (goal == null || !goal.IsSetup) continue;
 
-                    foreach (var step in goal.Steps)
-                        step.Goal = goal;
+                foreach (var step in goal.Steps)
+                    step.Goal = goal;
 
-                    _goals.Add(goal);
-                }
-                catch
-                {
-                    // Skip unparseable files — they'll fail when lazy-loaded later
-                }
+                _goals.Add(goal);
             }
+            catch
+            {
+                // Skip unparseable files — they'll fail when lazy-loaded later
+            }
+        }
 
-            return Data.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(Error.FromException(ex));
-        }
+        return Data.Ok();
     }
 
     /// <summary>
@@ -73,6 +75,11 @@ public sealed class @this
     /// </summary>
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct = default)
     {
+        var discoverResult = await DiscoverAsync(engine, ct);
+        if (!discoverResult.Success) return discoverResult;
+
+        if (!Goals.Any()) return Data.Ok();
+
         context.Setup = this;
         try
         {
