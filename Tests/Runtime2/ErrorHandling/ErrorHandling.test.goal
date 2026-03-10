@@ -1,6 +1,6 @@
 Start
 - set %beforeError% = true
 - assert %beforeError% is true
-- throw error "something went wrong", on error ignore
+- call ThrowError, on error ignore
 - set %afterIgnored% = true
 - assert %afterIgnored% is true, "execution should continue after ignored error"

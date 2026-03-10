@@ -1,5 +1,6 @@
 {
   "name": "Start",
+  "path": "/Start.goal",
   "steps": [
     {
       "index": 0,

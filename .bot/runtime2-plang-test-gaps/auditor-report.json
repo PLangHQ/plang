@@ -1,0 +1,39 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-plang-test-gaps",
+  "timestamp": "2026-03-09T20:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "Final pre-merge audit of 7 production C# files and 33 PLang test suites. The branch is solid: 5 targeted runtime improvements (return value propagation, setup convention discovery, PrPath keying, per-test engine roots, Goal.Path enforcement) all implemented correctly with adequate test coverage. OBP compliance is clean — no violations. Three minor findings, none blocking. Tester v3, codeanalyzer v2, and security v1 all passed. Recommend merge.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "style",
+      "file": "PLang/Runtime2/Engine/Test/this.cs",
+      "line": 94,
+      "issue": "Dead parameter: `rootDir` is passed to `RunSingleTest` but never used inside the method. After the per-test root change (line 111 uses `dir` instead), this parameter serves no purpose.",
+      "impact": "No functional impact. Cosmetic dead code that adds confusion for future readers.",
+      "suggestion": "Remove the `rootDir` parameter from `RunSingleTest` and update the call site on line 76 to not pass it."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Goals/Setup/this.cs",
+      "line": 62,
+      "issue": "Bare `catch` in DiscoverAsync swallows all exceptions, including `OperationCanceledException`. If cancellation fires during `ReadAsync`, it will be silently ignored and discovery continues to the next candidate.",
+      "impact": "Low — there are only 2 candidates, so at worst one extra file read after cancellation. But the pattern violates the 'behavior methods never throw' convention by hiding cancellation signals.",
+      "suggestion": "Narrow the catch to `catch (Exception ex) when (ex is not OperationCanceledException)` or simply `catch (JsonException)` + `catch (IOException)`. This is pre-existing, not introduced by this branch."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Goals/this.cs",
+      "line": 37,
+      "issue": "Add() throws `ArgumentException` (line 37) — a throwing method in the goals collection. Per CLAUDE.md, behavior methods should return Data, not throw. However, Add() is a void method that sets structural state, not a behavior method returning Data, so throwing is arguably correct here.",
+      "impact": "None — callers (LoadFromFileAsync, tests) all wrap this in try/catch that returns Data. The exception is caught at the right boundary.",
+      "suggestion": "No change needed. This is a design choice, not a bug. Noted for consistency awareness."
+    }
+  ]
+}

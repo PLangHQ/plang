@@ -1,0 +1,46 @@
+{
+  "name": "InnerGoal",
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ThrowInnerError, on error call InnerHandler",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "goalName",
+              "value": "ThrowInnerError",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "InnerHandler"
+        },
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/InnerGoal.goal",
+  "prPath": "/.build/innergoal.pr",
+  "hash": "4130a3bc77ff5a582d910ec271dea948f5493a8406d5f90d5aba1226ec991d60",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "InnerGoal"
+}

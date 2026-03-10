@@ -1,0 +1,4 @@
+Start
+/ stepResult available after step
+- set %x% = "hello"
+- assert %__stepResult%  is not null

@@ -1,0 +1,2 @@
+CaptureItem
+- set %captured% = "%captured%,%item%"

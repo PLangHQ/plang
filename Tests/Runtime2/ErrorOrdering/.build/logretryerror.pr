@@ -1,0 +1,45 @@
+{
+  "name": "LogRetryError",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022error\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "error",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/LogRetryError.goal",
+  "prPath": "/.build/logretryerror.pr",
+  "hash": "10304a95b0f8d47df5e6743747d3499089d293d94f07dd86e9e61d1920626df4",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "LogRetryError"
+}

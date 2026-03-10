@@ -1,0 +1,2 @@
+CatchFileError
+- set %fileErrorCaught% = true

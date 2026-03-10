@@ -1,0 +1,45 @@
+{
+  "name": "Setup",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %setupDone% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%setupDone%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/Setup.goal",
+  "prPath": "/.build/setup.pr",
+  "hash": "2d2dec015ff663d86339323ff9f796aba98ee02207725d7986183fa6ac70792d",
+  "isSetup": true,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Setup"
+}

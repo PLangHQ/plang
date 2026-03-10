@@ -1,0 +1,4 @@
+Start
+/ retry then error goal, both fail
+- call AlwaysFails, on error retry 2 times, then call HandleError
+- assert %errorHandled% equals true

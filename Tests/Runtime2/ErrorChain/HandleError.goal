@@ -1,0 +1,2 @@
+HandleError
+- set %errorHandled% = true

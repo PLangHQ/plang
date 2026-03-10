@@ -1,0 +1,2 @@
+TrackStep
+- set %stepCount% = %stepCount% + 1

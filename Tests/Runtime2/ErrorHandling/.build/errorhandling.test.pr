@@ -56,18 +56,18 @@
     },
     {
       "index": 2,
-      "text": "throw error \u0022something went wrong\u0022, on error ignore",
+      "text": "call ThrowError, on error ignore",
       "lineNumber": 4,
       "indent": 0,
       "actions": [
         {
-          "module": "error",
-          "action": "throw",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "message",
-              "value": "something went wrong",
-              "type": "string"
+              "name": "goalName",
+              "value": "ThrowError",
+              "type": "goal.call"
             }
           ],
           "errors": [],
@@ -142,9 +142,9 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/ErrorHandling/ErrorHandling.test.goal",
-  "prPath": "/ErrorHandling/.build/errorhandling.test.pr",
-  "hash": "8841b0997803f585e337b1afcd43095652156dccb0c3bbe117493bdf6ccda6a6",
+  "path": "/ErrorHandling.test.goal",
+  "prPath": "/.build/errorhandling.test.pr",
+  "hash": "5dd18f8197b7fb8d830935dfa8dd8e695f52bbcd4e9e3bcedc0da9cf1e452d7a",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

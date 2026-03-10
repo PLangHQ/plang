@@ -1,0 +1,45 @@
+{
+  "name": "HighPriority",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %order% = \u0022high\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%order%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "high",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/HighPriority.goal",
+  "prPath": "/.build/highpriority.pr",
+  "hash": "d9eb2aa3b80c378302515251fead35ab361c1bb178aec105af69de8a5380da39",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "HighPriority"
+}

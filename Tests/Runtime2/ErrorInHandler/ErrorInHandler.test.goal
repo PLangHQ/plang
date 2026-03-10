@@ -1,0 +1,5 @@
+Start
+/ error in error handler should propagate to outer handler
+- set %outerHandled% = false
+- call ThrowWithBadHandler, on error call OuterHandler
+- assert %outerHandled% equals true

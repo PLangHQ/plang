@@ -1,6 +1,5 @@
 {
   "name": "Inner",
-  "description": "The Inner goal outputs the current depth of the call stack and the call stack itself. It provides insight into the current execution context by displaying the depth and the contents of the call stack.",
   "steps": [
     {
       "index": 0,
@@ -32,7 +31,6 @@
           "warnings": []
         }
       ],
-      "hash": "f3720482ef8827096c49a0da2dc933daec40d2aa24339838d10263edb48932df",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -67,7 +65,6 @@
           "warnings": []
         }
       ],
-      "hash": "96883950435550e4bc54d4e430d8383f68b68195e91b85de2c0359b822f7cab5",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -75,16 +72,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/CallStack/Inner.goal",
-  "prPath": "/CallStack/.build/inner.pr",
+  "path": "/Inner.goal",
+  "prPath": "/.build/inner.pr",
   "hash": "52ff33cb8a1a04394f6719f7673e978785d8c953ec09b0229eed9f74e8ce6d0a",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "!callStack.Depth": "The current depth of the call stack, which indicates how many function calls are currently active.",
-    "!callStack": "The current state of the call stack, which contains the list of active function calls."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Inner"

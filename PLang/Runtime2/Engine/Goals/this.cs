@@ -33,7 +33,9 @@ public sealed class @this
     public void Add(Goal.@this goal)
     {
         goal.Engine = Engine;
-        _goals[goal.Name] = goal;
+        if (string.IsNullOrEmpty(goal.PrPath))
+            throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
+        _goals[goal.PrPath] = goal;
         if (!string.IsNullOrEmpty(goal.Path))
             _byPath[goal.Path] = goal;
     }
@@ -51,18 +53,23 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
-        // Try exact match first
+        // Try by PrPath key (exact match)
         if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
-        // Try by path
+        // Try by path index
         if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
+            return goal;
+
+        // Search by goal Name across all values (since _goals is keyed by PrPath)
+        goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
+            && g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (goal != null)
             return goal;
 
         // Try with different extensions/variations
         var variations = new[]
         {
-            name,
             name + ".goal",
             name.TrimStart('/'),
             name.Replace('\\', '/'),
@@ -74,6 +81,10 @@ public sealed class @this
             if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
                 return goal;
             if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
+                return goal;
+            goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
+                && g.Name.Equals(variation, StringComparison.OrdinalIgnoreCase));
+            if (goal != null)
                 return goal;
         }
 
@@ -151,12 +162,23 @@ public sealed class @this
     /// </summary>
     public bool Remove(string name)
     {
+        // Try removing by key directly (PrPath)
         if (_goals.TryRemove(name, out var goal))
         {
             if (!string.IsNullOrEmpty(goal.Path))
                 _byPath.TryRemove(goal.Path, out _);
             return true;
         }
+
+        // Find by name and remove by its PrPath key
+        var found = _goals.FirstOrDefault(kv => kv.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (found.Value != null && _goals.TryRemove(found.Key, out goal))
+        {
+            if (!string.IsNullOrEmpty(goal.Path))
+                _byPath.TryRemove(goal.Path, out _);
+            return true;
+        }
+
         return false;
     }
 
@@ -172,7 +194,7 @@ public sealed class @this
     /// <summary>
     /// Gets all goal names.
     /// </summary>
-    public IEnumerable<string> Names => _goals.Keys;
+    public IEnumerable<string> Names => _goals.Values.Where(g => !g.IsSetup).Select(g => g.Name);
 
     /// <summary>
     /// All goals including setup and event goals. Used internally by Setup.Goals.
@@ -218,7 +240,9 @@ public sealed class @this
             return null;
 
         // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
-        if (_byPath.TryGetValue(prPath, out var cached))
+        if (_goals.TryGetValue(prPath, out var cached))
+            return cached.IsSetup ? null : cached;
+        if (_byPath.TryGetValue(prPath, out cached))
             return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory

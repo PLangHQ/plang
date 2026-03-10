@@ -1,6 +1,5 @@
 {
   "name": "Start",
-  "description": "The Start goal performs a series of conversions between different data types, including integer, string, boolean, base64, and JSON. It initializes variables for each conversion and outputs the results. The goal demonstrates how to convert values and handle structured data in the Plang programming language.",
   "steps": [
     {
       "index": 0,
@@ -27,7 +26,6 @@
           "warnings": []
         }
       ],
-      "hash": "b22fa9011748d8c3086709e4d2c8737b870e74a8dcf18c73f676b04854dddd03",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -62,7 +60,6 @@
           "warnings": []
         }
       ],
-      "hash": "72dfd68efc4e7ac67dae70b6e53104f8703129daeacc1d6c2711857f45b5ad9c",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -92,7 +89,6 @@
           "warnings": []
         }
       ],
-      "hash": "f9712dd8c04c66cf26b69c250a12b309c0f2e20722ea0e5d627a9d24016f18a8",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -127,7 +123,6 @@
           "warnings": []
         }
       ],
-      "hash": "d4ed3e55eca4a665e1a19a23a15a3d35d8a3ba4ed9bae2d8e99ab88a07cb50fa",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -157,7 +152,6 @@
           "warnings": []
         }
       ],
-      "hash": "5acfe1886ec1480bfa25110a95310aabd67f06569728156b58f09d89112cc66f",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -192,7 +186,6 @@
           "warnings": []
         }
       ],
-      "hash": "ced3392f60fcfc3210841773b1421f638c263e0d92370bf1e92163ab5cd946e8",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -222,7 +215,6 @@
           "warnings": []
         }
       ],
-      "hash": "2a0b655a30d7a4851307f07e0e1b22bbf8a6cea8fb84dff109e90acc1f123b68",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -257,7 +249,6 @@
           "warnings": []
         }
       ],
-      "hash": "6297fae9f4a84162914c62468f207cf3f0a250e383ceb6fa8d5382a479a2e369",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -287,7 +278,6 @@
           "warnings": []
         }
       ],
-      "hash": "e26a45f6124234a05815662ddc435aef38eb208d38ab5085894078b0a3c93cf7",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -322,7 +312,6 @@
           "warnings": []
         }
       ],
-      "hash": "22236495bf78400256263daa30726c8b28c7a2e69ef092dcf531cca0ba9e3552",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -488,22 +477,12 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/Convert/Start.goal",
-  "prPath": "/Convert/.build/start.pr",
+  "path": "/Start.goal",
+  "prPath": "/.build/start.pr",
   "hash": "95c19ce5ee3f27e273d92738c79c7b11e51e8572ab73ef6ae1131c685f53f6fc",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
-  "inputParameters": {
-    "%intVal%": "An integer value resulting from converting a string representation of a number.",
-    "%strVal%": "A string value resulting from converting a float number.",
-    "%boolVal%": "A boolean value resulting from converting a string representation of a boolean.",
-    "%b64%": "A base64 encoded string resulting from converting a regular string.",
-    "%decoded%": "A decoded string resulting from converting a base64 encoded string.",
-    "%obj%": "An object containing properties such as name and age.",
-    "%json%": "A JSON string representation of the object.",
-    "%parsed%": "An object resulting from parsing the JSON string."
-  },
   "errors": [],
   "warnings": [],
   "fullPath": "Start"

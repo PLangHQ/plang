@@ -1,0 +1,8 @@
+Start
+/ throw error has expected shape
+- call ThrowUserError, on error call CatchThrow
+- assert %throwKey% equals "TestKey"
+
+/ file not found error
+- read file 'nonexistent_file_xyz.txt', on error call CatchFileError
+- assert %fileErrorCaught% equals true

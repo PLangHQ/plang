@@ -1,0 +1,7 @@
+Start
+/ higher priority fires first
+- set %order% = ""
+- before action output.write call LowPriority priority=1
+- before action output.write call HighPriority priority=10
+- write out "trigger"
+- assert %order% equals "high,low"

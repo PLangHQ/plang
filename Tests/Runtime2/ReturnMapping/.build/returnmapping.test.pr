@@ -1,0 +1,129 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027testfile.txt\u0027, write to %content%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "return value mapped to variable via write to",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "testfile.txt",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "content"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %content% equals \u0022hello from file\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello from file",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call ComputeValue, write to %result%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "goal call return",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "ComputeValue",
+              "type": "goal.call"
+            }
+          ],
+          "return": [
+            {
+              "name": "result"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %result% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ReturnMapping.test.goal",
+  "prPath": "/.build/returnmapping.test.pr",
+  "hash": "ba1e8a7a596d62252f35788e36c944329a98ea084bb938853375490f6abf180f",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

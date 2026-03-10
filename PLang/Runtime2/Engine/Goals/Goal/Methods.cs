@@ -69,7 +69,7 @@ public sealed partial class @this
                 return Data.FromError(eventError);
             }
 
-            return Data.Ok();
+            return stepsResult;
         }
         finally
         {

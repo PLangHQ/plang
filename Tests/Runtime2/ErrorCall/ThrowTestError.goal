@@ -1,0 +1,2 @@
+ThrowTestError
+- throw error "test error"

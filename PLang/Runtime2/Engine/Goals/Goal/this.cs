@@ -42,7 +42,7 @@ public sealed partial class @this
     {
         get
         {
-            if (Path == null) return null;
+            if (string.IsNullOrEmpty(Path)) return null;
             var sepIndex = Path.LastIndexOfAny(new[] { '\\', '/' });
             var dir = sepIndex >= 0 ? Path[..(sepIndex + 1)] : "";
             var fileName = sepIndex >= 0 ? Path[(sepIndex + 1)..] : Path;
