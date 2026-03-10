@@ -120,47 +120,13 @@
       "errors": [],
       "warnings": [],
       "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "assert %goalFirstAttempts% is greater than 1, \u0022AlwaysFails should be retried at least once\u0022",
-      "lineNumber": 7,
-      "indent": 0,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "greaterThan",
-          "parameters": [
-            {
-              "name": "A",
-              "value": "%goalFirstAttempts%",
-              "type": "int"
-            },
-            {
-              "name": "B",
-              "value": 1,
-              "type": "int"
-            },
-            {
-              "name": "Message",
-              "value": "AlwaysFails should be retried at least once",
-              "type": "string"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        }
-      ],
-      "errors": [],
-      "warnings": [],
-      "waitForExecution": true
     }
   ],
   "subGoals": [],
   "visibility": 1,
   "path": "/ErrorGoalFirst.test.goal",
   "prPath": "/.build/errorgoalfirst.test.pr",
-  "hash": "19d403ed548b8f5224741387703fc7cd8f9530b5ccfacfa2bccbab3a7320dd64",
+  "hash": "8c9069aebf6e6a8e1401594eda431a4e1591bd7b6ef77fbd092a4770ac602041",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

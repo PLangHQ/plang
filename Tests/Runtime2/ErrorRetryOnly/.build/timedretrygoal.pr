@@ -3,38 +3,28 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %timedRetryAttempts% = %timedRetryAttempts% \u002B 1",
+      "text": "add 1 to %timedRetryAttempts%, write to %timedRetryAttempts%",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "math",
+          "action": "add",
           "parameters": [
             {
-              "name": "Name",
+              "name": "A",
               "value": "%timedRetryAttempts%",
-              "type": "string"
+              "type": "object"
             },
             {
-              "name": "Value",
-              "value": {
-                "module": "math",
-                "action": "add",
-                "parameters": [
-                  {
-                    "name": "A",
-                    "value": "%timedRetryAttempts%",
-                    "type": "string"
-                  },
-                  {
-                    "name": "B",
-                    "value": 1,
-                    "type": "int"
-                  }
-                ]
-              },
-              "type": "object"
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "timedRetryAttempts"
             }
           ],
           "errors": [],
@@ -56,7 +46,7 @@
           "action": "throw",
           "parameters": [
             {
-              "name": "Message",
+              "name": "message",
               "value": "timed fail",
               "type": "string"
             }
@@ -74,7 +64,7 @@
   "visibility": 1,
   "path": "/TimedRetryGoal.goal",
   "prPath": "/.build/timedretrygoal.pr",
-  "hash": "2232ae39aa0db6616a5675ed13ce80e1948cec3b67927f7ab586819517f01330",
+  "hash": "92a7990b883411041213bea0bfc53d85d6740a2bcb8f0d5eb8f539278c4f5773",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

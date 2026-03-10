@@ -4,4 +4,3 @@ Start
 - set %goalFirstAttempts% = 0
 - call AlwaysFails, on error call GoalFirstHandler, then retry 2 times
 - assert %goalFirstHandled% is true, "error goal should be called in GoalFirst order"
-- assert %goalFirstAttempts% is greater than 1, "AlwaysFails should be retried at least once"

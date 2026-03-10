@@ -3,28 +3,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %goalFirstAttempts% = %goalFirstAttempts% \u002B 1",
+      "text": "add 1 to %goalFirstAttempts%, write to %goalFirstAttempts%",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
-        {
-          "module": "variable",
-          "action": "get",
-          "parameters": [
-            {
-              "name": "name",
-              "value": "%goalFirstAttempts%",
-              "type": "string"
-            }
-          ],
-          "return": [
-            {
-              "name": "goalFirstAttempts"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        },
         {
           "module": "math",
           "action": "add",
@@ -32,7 +14,7 @@
             {
               "name": "A",
               "value": "%goalFirstAttempts%",
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "B",
@@ -43,24 +25,6 @@
           "return": [
             {
               "name": "goalFirstAttempts"
-            }
-          ],
-          "errors": [],
-          "warnings": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "name",
-              "value": "%goalFirstAttempts%",
-              "type": "string"
-            },
-            {
-              "name": "value",
-              "value": "%goalFirstAttempts%",
-              "type": "int"
             }
           ],
           "errors": [],
@@ -100,7 +64,7 @@
   "visibility": 1,
   "path": "/AlwaysFails.goal",
   "prPath": "/.build/alwaysfails.pr",
-  "hash": "2949241c77aadb5bdc7e2a0c057672b6897f36b0168914225b899b2838d35389",
+  "hash": "8471256554cdd0229cf7f59c5972fd35dc6dd2642fa255754f7d3e489df20ebc",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,

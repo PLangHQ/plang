@@ -12,12 +12,12 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
+              "name": "Name",
               "value": "%notEqualResult%",
               "type": "string"
             },
             {
-              "name": "value",
+              "name": "Value",
               "value": "yes",
               "type": "string"
             }
