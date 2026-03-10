@@ -106,6 +106,46 @@
         "health": "3 test suites created (11 files). Full onError modifier space now covered.",
         "notes": "Design finding: retry time should be ms not seconds. Coder needs to update prompt and consider runtime property rename."
       }
+    },
+    {
+      "id": "ca-v1-2026-03-10",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-10T02:00:00Z",
+      "timestamp_end": "2026-03-10T02:30:00Z",
+      "intent": "Code analysis of all changes on runtime2-builder-onerror-fix vs runtime2",
+      "before": {
+        "assumptions": "Branch has prompt changes, RetryOverSeconds→RetryOverMs rename, and new test suites. Need to verify rename completeness and test quality.",
+        "risk": "Low — analysis only, no code changes"
+      },
+      "plan": "Review all 61 changed files across 5 analysis passes: OBP compliance, simplification, readability, behavioral reasoning (trace retryOverSeconds→retryOverMs rename end-to-end), deletion test (do PLang tests actually verify retry behavior?).",
+      "actions": [
+        {
+          "paths": ["system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FAIL: Stale .pr file still has retryOverSeconds in JSON schema at line 181. Builder will tell LLM to use wrong field name."
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/", "Tests/Runtime2/ErrorGoalFirst/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "NEEDS WORK: Tests verify error propagation but not retry count, timing, or ordering. Would pass even if retry was completely broken."
+        },
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/codeanalyzer/v1/verdict.json", ".bot/runtime2-builder-onerror-fix/codeanalyzer/v1/summary.md", ".bot/runtime2-builder-onerror-fix/codeanalyzer/v1/plan.md", ".bot/runtime2-builder-onerror-fix/codeanalyzer/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Analysis output files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Verdict: FAIL. Stale .pr blocks correct builder operation. Test quality gap in retry tests.",
+        "notes": "Coder must rebuild system/builder/ to fix stale .pr. Test-designer should consider strengthening retry tests to verify actual retry behavior."
+      }
     }
   ]
 }
