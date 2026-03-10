@@ -1,0 +1,192 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %bareRetryCaught% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "bare retry \u2014 retries exhaust, error propagates to caller",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bareRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call BareRetryGoal, on error call BareRetryCatcher",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "BareRetryGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "BareRetryCatcher"
+        }
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %bareRetryCaught% is true, \u0022bare retry exhaustion should propagate error to caller\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%bareRetryCaught%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "bare retry exhaustion should propagate error to caller",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %timedRetryCaught% = false",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "timed retry \u2014 retry over milliseconds",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "call TimedRetryGoal, on error call TimedRetryCatcher",
+      "lineNumber": 8,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "TimedRetryGoal",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "TimedRetryCatcher"
+        }
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %timedRetryCaught% is true, \u0022timed retry exhaustion should propagate error to caller\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%timedRetryCaught%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "timed retry exhaustion should propagate error to caller",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorRetryOnly.test.goal",
+  "prPath": "/.build/errorretryonly.test.pr",
+  "hash": "729f2f01446a00a74dc5d377c4186e693eae96f2323ba4282af5d3637758cca4",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}

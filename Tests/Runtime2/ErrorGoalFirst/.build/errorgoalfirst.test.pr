@@ -1,0 +1,107 @@
+{
+  "name": "Start",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goalFirstHandled% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "GoalFirst order \u2014 call error handler first, then retry",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goalFirstHandled%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call AlwaysFails, on error call GoalFirstHandler, then retry 2 times",
+      "lineNumber": 4,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": "AlwaysFails",
+              "type": "goal.call"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "onError": {
+        "goal": {
+          "name": "GoalFirstHandler"
+        },
+        "retryCount": 2,
+        "order": 0,
+        "ignoreError": false
+      },
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %goalFirstHandled% is true, \u0022error goal should be called in GoalFirst order\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goalFirstHandled%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "error goal should be called in GoalFirst order",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/ErrorGoalFirst.test.goal",
+  "prPath": "/.build/errorgoalfirst.test.pr",
+  "hash": "b2591684516537b11387722af86357a4f354e761c621a77d0eb095818783af65",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "Start"
+}
