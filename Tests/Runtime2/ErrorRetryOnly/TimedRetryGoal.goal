@@ -1,0 +1,2 @@
+TimedRetryGoal
+- throw error "timed fail", on error retry 2 times over 500

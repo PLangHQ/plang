@@ -1,0 +1,9 @@
+Start
+/ bare retry — retries exhaust, error propagates to caller
+- set %bareRetryCaught% = false
+- call BareRetryGoal, on error call BareRetryCatcher
+- assert %bareRetryCaught% is true, "bare retry exhaustion should propagate error to caller"
+/ timed retry — retry over milliseconds
+- set %timedRetryCaught% = false
+- call TimedRetryGoal, on error call TimedRetryCatcher
+- assert %timedRetryCaught% is true, "timed retry exhaustion should propagate error to caller"

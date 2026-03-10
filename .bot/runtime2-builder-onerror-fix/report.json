@@ -59,6 +59,53 @@
         "health": "All test coverage verified. No gaps found.",
         "notes": "Only remaining work is BuildGoal.llm prompt improvement (coder task). No C# tests applicable — fix targets LLM behavior."
       }
+    },
+    {
+      "id": "td-v2-2026-03-10",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-10T01:00:00Z",
+      "timestamp_end": "2026-03-10T01:30:00Z",
+      "intent": "Independent gap analysis of onError PLang test coverage — create 3 new test suites",
+      "before": {
+        "assumptions": "v1 only validated architect's list. Need independent analysis of full onError modifier space.",
+        "risk": "Low — creating new test files only"
+      },
+      "plan": "Map all 6 onError patterns from BuildGoal.llm against existing tests. Identify untested patterns: bare retry, timed retry (ms), GoalFirst order, mixed strategies. Create 3 test suites (11 files).",
+      "actions": [
+        {
+          "paths": ["system/builder/llm/BuildGoal.llm", "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mapped full onError modifier syntax and runtime types to identify coverage gaps"
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal", "Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal", "Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal", "Tests/Runtime2/ErrorRetryOnly/BareRetryCatcher.goal", "Tests/Runtime2/ErrorRetryOnly/TimedRetryCatcher.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Bare retry + timed retry (ms) — tests builder generates retryCount and retryOverMs"
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal", "Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal", "Tests/Runtime2/ErrorGoalFirst/GoalFirstHandler.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "GoalFirst order — only RetryFirst was previously tested"
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorMixed/ErrorMixed.test.goal", "Tests/Runtime2/ErrorMixed/MixedThrow.goal", "Tests/Runtime2/ErrorMixed/MixedCatcher.goal"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mixed strategies (ignore + call + retry+ignore) in one goal — stresses builder"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "3 test suites created (11 files). Full onError modifier space now covered.",
+        "notes": "Design finding: retry time should be ms not seconds. Coder needs to update prompt and consider runtime property rename."
+      }
     }
   ]
 }

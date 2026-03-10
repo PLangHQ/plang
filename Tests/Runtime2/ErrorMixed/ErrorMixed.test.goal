@@ -1,0 +1,13 @@
+Start
+/ ignore error — execution continues
+- throw error "ignored", on error ignore
+- set %afterIgnore% = true
+- assert %afterIgnore% is true, "should continue after ignored error"
+/ call error handler
+- set %mixedCaught% = false
+- call MixedThrow, on error call MixedCatcher
+- assert %mixedCaught% is true, "error handler should be called"
+/ retry then ignore — execution continues
+- throw error "retried", on error retry 1 times, ignore
+- set %afterRetryIgnore% = true
+- assert %afterRetryIgnore% is true, "should continue after retry + ignore"

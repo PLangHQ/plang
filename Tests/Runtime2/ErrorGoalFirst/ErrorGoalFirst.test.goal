@@ -1,0 +1,5 @@
+Start
+/ GoalFirst order — call error handler first, then retry
+- set %goalFirstHandled% = false
+- call AlwaysFails, on error call GoalFirstHandler, then retry 2 times
+- assert %goalFirstHandled% is true, "error goal should be called in GoalFirst order"
