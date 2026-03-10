@@ -447,6 +447,53 @@
         "health": "Verdict: PASS. No critical/high findings. 3 low-severity accepted-risk items.",
         "notes": "Recommend running auditor next for code integrity review before merge."
       }
+    },
+    {
+      "id": "auditor-v1-2026-03-10",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-10T18:00:00Z",
+      "timestamp_end": "2026-03-10T18:30:00Z",
+      "intent": "Final code integrity audit before merge — verify OBP compliance, rename completeness, and test quality",
+      "before": {
+        "assumptions": "All prior pipeline stages passed (codeanalyzer v2, tester v2, security v1). Branch has well-scoped changes: rename, prompt rules, tests.",
+        "risk": "Low — review only, no code changes"
+      },
+      "plan": "Review all C# changes for OBP compliance, verify RetryOverSeconds->RetryOverMs rename completeness, check builder prompt accuracy, assess PLang test quality, verify .pr files are builder-generated. Write auditor-report.json and verdict.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs", "PLang/Runtime2/Engine/Utility/GoalMapper.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "C# changes are clean: sealed data class rename, delay calc fix, GoalMapper passthrough. OBP compliant."
+        },
+        {
+          "paths": ["system/builder/llm/BuildGoal.llm", "system/builder/BuildGoal.goal", "system/builder/templates/goalFormatForLlm.template"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder prompt has 2 CRITICAL rules, retryOverMs in all examples/schema. Template uses RetryOverMs."
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/", "Tests/Runtime2/ErrorGoalFirst/", "Tests/Runtime2/ErrorMixed/", "Tests/Runtime2/OnErrorMultilingual/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "4 PLang test suites verify error handling patterns. ErrorRetryOnly asserts attempt counts. ErrorGoalFirst verifies handler called. ErrorMixed tests ignore+call+retry combinations."
+        },
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/auditor-report.json", ".bot/runtime2-builder-onerror-fix/auditor/v1/verdict.json", ".bot/runtime2-builder-onerror-fix/auditor/v1/plan.md", ".bot/runtime2-builder-onerror-fix/auditor/v1/summary.md", ".bot/runtime2-builder-onerror-fix/auditor/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit report, verdict (PASS), plan, and summaries"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Verdict: PASS. No critical or major findings. 4 minor/nit items documented.",
+        "notes": "Branch is ready for merge. Suggest running docs bot for documentation completeness."
+      }
     }
   ]
 }

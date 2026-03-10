@@ -1,0 +1,1 @@
+**v1** — Final audit before merge. Reviewed all C# changes, builder prompt, tests, and .pr files. Verdict: PASS. No critical or major findings. Rename is end-to-end consistent, OBP compliance is clean, builder prompt correctly preserves onError and literal values. 4 minor/nit findings documented. See [v1/summary.md](v1/summary.md).
