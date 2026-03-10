@@ -266,6 +266,53 @@
         "health": "Verdict: PASS. Both v1 issues resolved.",
         "notes": "Minor: ErrorGoalFirst uses > 1 instead of equals 3 for attempt count. Cosmetic: 5 builder per-step .pr files have historical RetryOverSeconds in SupportingObjects schema."
       }
+    },
+    {
+      "id": "tester-v1-2026-03-10",
+      "bot": "tester",
+      "timestamp_start": "2026-03-10T12:00:00Z",
+      "intent": "Run all C# and PLang tests on runtime2-builder-onerror-fix branch",
+      "before": {
+        "assumptions": "Coder v2 rebuilt all .pr files properly. Branch has prompt changes, RetryOverSeconds->RetryOverMs rename, and 3 new PLang test suites.",
+        "risk": "Low — test execution only"
+      },
+      "plan": "1. Build C# solution. 2. Run all C# tests. 3. Find and run all PLang tests in Tests/Runtime2/. 4. Analyze results and write test-report.json, verdict.json, summary.md.",
+      "actions": [
+        {
+          "paths": ["PLang/PLang.csproj", "PLang.Tests/PLang.Tests.csproj"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Built solution — PLang and PLang.Tests compile clean (0 errors)"
+        },
+        {
+          "paths": ["PLang.Tests/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran C# tests: 1511 passed, 0 failed"
+        },
+        {
+          "paths": ["Tests/Runtime2/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran 68 PLang tests: 65 passed, 3 failed (ErrorRetryOnly, ErrorGoalFirst, ConditionCompound)"
+        },
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/test-report.json", ".bot/runtime2-builder-onerror-fix/tester/v1/verdict.json", ".bot/runtime2-builder-onerror-fix/tester/v1/summary.md", ".bot/runtime2-builder-onerror-fix/tester/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test report, verdict (fail), and summaries written"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Verdict: FAIL. 3 PLang test failures expose builder non-determinism and GoalFirst retry bug.",
+        "notes": "C# tests all green. PLang failures are in new test suites (ErrorRetryOnly, ErrorGoalFirst) and one rebuild side effect (ConditionCompound)."
+      },
+      "timestamp_end": "2026-03-10T12:45:00Z"
     }
   ]
 }
