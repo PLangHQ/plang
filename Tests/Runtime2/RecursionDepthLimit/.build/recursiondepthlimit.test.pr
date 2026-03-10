@@ -51,6 +51,12 @@
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "HandleRecursionError"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -73,7 +79,7 @@
             {
               "name": "Actual",
               "value": "%recursionErrorCaught%",
-              "type": "bool"
+              "type": "string"
             }
           ],
           "errors": [],

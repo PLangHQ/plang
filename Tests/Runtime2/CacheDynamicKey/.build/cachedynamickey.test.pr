@@ -15,7 +15,7 @@
             {
               "name": "path",
               "value": "dynkey1.txt",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "value",
@@ -44,7 +44,7 @@
             {
               "name": "path",
               "value": "dynkey2.txt",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "value",
@@ -78,7 +78,7 @@
             {
               "name": "value",
               "value": "dynkey1.txt",
-              "type": "string"
+              "type": "object"
             }
           ],
           "errors": [],
@@ -160,7 +160,7 @@
             {
               "name": "value",
               "value": "dynkey2.txt",
-              "type": "string"
+              "type": "object"
             }
           ],
           "errors": [],
@@ -237,7 +237,7 @@
             {
               "name": "Expected",
               "value": "content1",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -265,8 +265,8 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "content2",
-              "type": "string"
+              "value": "content1",
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -295,17 +295,7 @@
             {
               "name": "path",
               "value": "dynkey1.txt",
-              "type": "string"
-            },
-            {
-              "name": "ignoreIfNotFound",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "recursive",
-              "value": false,
-              "type": "bool"
+              "type": "path"
             }
           ],
           "errors": [],
@@ -329,17 +319,7 @@
             {
               "name": "path",
               "value": "dynkey2.txt",
-              "type": "string"
-            },
-            {
-              "name": "ignoreIfNotFound",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "recursive",
-              "value": false,
-              "type": "bool"
+              "type": "path"
             }
           ],
           "errors": [],

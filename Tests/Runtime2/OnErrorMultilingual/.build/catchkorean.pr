@@ -1,9 +1,9 @@
 {
-  "name": "WhenNotEqual",
+  "name": "CatchKorean",
   "steps": [
     {
       "index": 0,
-      "text": "set %notEqualResult% = \u0022yes\u0022",
+      "text": "set %caughtKorean% = true",
       "lineNumber": 2,
       "indent": 0,
       "actions": [
@@ -12,14 +12,14 @@
           "action": "set",
           "parameters": [
             {
-              "name": "name",
-              "value": "%notEqualResult%",
+              "name": "Name",
+              "value": "%caughtKorean%",
               "type": "string"
             },
             {
-              "name": "value",
-              "value": "yes",
-              "type": "string"
+              "name": "Value",
+              "value": true,
+              "type": "bool"
             }
           ],
           "errors": [],
@@ -33,13 +33,13 @@
   ],
   "subGoals": [],
   "visibility": 1,
-  "path": "/WhenNotEqual.goal",
-  "prPath": "/.build/whennotequal.pr",
-  "hash": "f2cf30bee91c8b93db51f99b9fdb98ce9e33742153bdfb98d51b0048e91b922e",
+  "path": "/CatchKorean.goal",
+  "prPath": "/.build/catchkorean.pr",
+  "hash": "3b18578c44926d4e26969ac70d3b0f43035e8d6f639daaf1931fb509b0fc09c1",
   "isSetup": false,
   "isEvent": false,
   "isTest": false,
   "errors": [],
   "warnings": [],
-  "fullPath": "WhenNotEqual"
+  "fullPath": "CatchKorean"
 }
