@@ -1,0 +1,2 @@
+TimedRetryCatcher
+- set %timedRetryCaught% = true

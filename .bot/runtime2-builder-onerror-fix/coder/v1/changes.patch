@@ -1,0 +1,1858 @@
+diff --git a/Documentation/Runtime2/pr-file-format.md b/Documentation/Runtime2/pr-file-format.md
+index 798d9073..c188f76b 100644
+--- a/Documentation/Runtime2/pr-file-format.md
++++ b/Documentation/Runtime2/pr-file-format.md
+@@ -179,7 +179,7 @@ At runtime, `%name%` is resolved from `MemoryStack` via the source-generated laz
+     "parameters": { "error": "%error%" }
+   },
+   "retryCount": 3,
+-  "retryOverSeconds": 10,
++  "retryOverMs": 10000,
+   "order": "before",
+   "ignoreError": false,
+   "message": "Step failed",
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index 7b32b91e..e938e8e4 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -131,7 +131,7 @@ Target audiences:
+ | 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+ | 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+ | 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+-| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverSeconds fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
++| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverMs fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
+ 
+ **Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
+ 
+@@ -299,3 +299,41 @@ Target audiences:
+ **Context:** Code analyzer review of runtime2-terminology-fix. Coder renamed all production "HandlerError" → "ActionError" but missed test data in `ErrorInfoTests.cs:198,204`. The `Format_IncludesErrorChain` test uses `"HandlerError"` as error key and asserts `"HandlerError(500)"` in output.
+ 
+ **Fix:** Change `"HandlerError"` → `"ActionError"` and `"Handler error"` → `"Action error"` in the test, update assertion to `"ActionError(500)"`.
++
++---
++
++## Builder Drops onError — LLM Reliability Problem
++**Date:** 2026-03-07
++**Context:** Builder drops `onError` silently — 5 test suites affected (ErrorCall, ErrorChain, ErrorProps, ErrorTypes, ErrorInHandler). Structural validation can check onError shape when present but cannot detect when it's MISSING.
++
++**Why parser extraction won't work:** There is NO parser for PLang code. The LLM IS the parser. Users can express error handling as "on error call X", "þegar villa kemur", "when something goes wrong" — any language, any phrasing. Deterministic extraction of modifiers from step text is not possible.
++
++**Possible approaches:**
++1. **Golden eval suite** (Phase 2 of builder consistency framework) — curated .goal/.pr.golden pairs where onError is known-required. Measures how often the LLM drops it.
++2. **LLM-as-judge** (Phase 4) — second LLM validates that error handling intent was preserved.
++3. **Prompt improvement** — Stronger examples and instruction language in BuildGoal.llm. Cheapest to try first.
++4. **Switch to a more consistent LLM** — Consistency scoring (Phase 3) can identify which LLMs are reliable for onError.
++
++**Not a structural validation problem.** The structural validator checks what the LLM produced, not what it should have produced.
++
++---
++
++## LLM Rewrites Literal Values in Assertions
++**Date:** 2026-03-07
++**Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".
++
++**Problem:** Structural validation can't catch this — the parameter name and type are correct, only the VALUE is wrong. The LLM is semantically modifying the developer's intent.
++
++**Possible approaches:**
++1. **Golden eval suite** (Phase 2 of builder consistency framework) — curated .goal/.pr.golden pairs catch value drift
++2. **Literal preservation rule** — if a parameter value in the step text is a quoted literal (`"content1"`), the .pr must preserve it exactly. This could be a structural check IF we can reliably identify quoted literals in step text.
++3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
++
++**Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
++
++---
++
++## Builder Consistency Framework
++**Date:** 2026-03-06
++**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
++**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
+diff --git a/PLang.Tests/Runtime2/Core/StepRetryTests.cs b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+index c404310d..f2542528 100644
+--- a/PLang.Tests/Runtime2/Core/StepRetryTests.cs
++++ b/PLang.Tests/Runtime2/Core/StepRetryTests.cs
+@@ -309,7 +309,7 @@ public class StepRetryTests
+         var goal = CreateGoalWithFlakyStep(new ErrorHandler
+         {
+             RetryCount = 50,
+-            RetryOverSeconds = 10 // ~200ms between retries
++            RetryOverMs = 10000 // ~200ms between retries
+         });
+ 
+         var context = _engine.CreateContext();
+diff --git a/PLang.Tests/Runtime2/Utility/GoalDataTests.cs b/PLang.Tests/Runtime2/Utility/GoalDataTests.cs
+index efcb7bb0..1b5f5eec 100644
+--- a/PLang.Tests/Runtime2/Utility/GoalDataTests.cs
++++ b/PLang.Tests/Runtime2/Utility/GoalDataTests.cs
+@@ -149,7 +149,7 @@ public class GoalSerializationTests
+                     {
+                         Goal = new GoalCall { Name = "HandleError", Parameters = new Dictionary<string, object?> { { "msg", "oops" } } },
+                         RetryCount = 3,
+-                        RetryOverSeconds = 60,
++                        RetryOverMs = 60000,
+                         Order = ErrorOrder.RetryFirst,
+                         IgnoreError = false,
+                         Message = "Something failed",
+@@ -166,7 +166,7 @@ public class GoalSerializationTests
+         var err = deserialized.Steps[0].OnError!;
+         await Assert.That(err.Goal!.Name).IsEqualTo("HandleError");
+         await Assert.That(err.RetryCount).IsEqualTo(3);
+-        await Assert.That(err.RetryOverSeconds).IsEqualTo(60);
++        await Assert.That(err.RetryOverMs).IsEqualTo(60000);
+         await Assert.That(err.Order).IsEqualTo(ErrorOrder.RetryFirst);
+         await Assert.That(err.IgnoreError).IsFalse();
+         await Assert.That(err.Message).IsEqualTo("Something failed");
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs
+index af0f95fb..80012787 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs
+@@ -25,9 +25,9 @@ public sealed class ErrorHandler
+     public int? RetryCount { get; init; }
+ 
+     /// <summary>
+-    /// Total time window in seconds over which retries should occur.
++    /// Total time window in milliseconds over which retries should occur.
+     /// </summary>
+-    public int? RetryOverSeconds { get; init; }
++    public int? RetryOverMs { get; init; }
+ 
+     /// <summary>
+     /// Order of error handling operations.
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+index aa2c8b94..55776c11 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs
+@@ -135,9 +135,9 @@ public sealed partial class @this
+         var retryCount = handler.RetryCount ?? 0;
+         if (retryCount <= 0) return Data.FromError(new Error("No retries configured"));
+ 
+-        var totalSeconds = handler.RetryOverSeconds ?? 0;
+-        var delayMs = retryCount > 1 && totalSeconds > 0
+-            ? (int)(totalSeconds * 1000.0 / (retryCount - 1))
++        var totalMs = handler.RetryOverMs ?? 0;
++        var delayMs = retryCount > 1 && totalMs > 0
++            ? (int)(totalMs / (retryCount - 1))
+             : 0;
+ 
+         for (int attempt = 0; attempt < retryCount; attempt++)
+diff --git a/PLang/Runtime2/Engine/Utility/GoalMapper.cs b/PLang/Runtime2/Engine/Utility/GoalMapper.cs
+index 0a0154f0..542031d9 100644
+--- a/PLang/Runtime2/Engine/Utility/GoalMapper.cs
++++ b/PLang/Runtime2/Engine/Utility/GoalMapper.cs
+@@ -110,8 +110,8 @@ public static class GoalMapper
+         {
+             Goal = MapGoalToCallInfo(oldHandler.GoalToCall),
+             RetryCount = oldHandler.RetryHandler?.RetryCount,
+-            RetryOverSeconds = oldHandler.RetryHandler?.RetryDelayInMilliseconds != null
+-                ? (int)(oldHandler.RetryHandler.RetryDelayInMilliseconds.Value / 1000)
++            RetryOverMs = oldHandler.RetryHandler?.RetryDelayInMilliseconds != null
++                ? (int)oldHandler.RetryHandler.RetryDelayInMilliseconds.Value
+                 : null,
+             Order = oldHandler.RunRetryBeforeCallingGoalToCall
+                 ? ErrorOrder.RetryFirst
+diff --git a/Tests/Runtime2/CacheDynamicKey/.build/app.pr b/Tests/Runtime2/CacheDynamicKey/.build/app.pr
+index 47239098..4c7b675c 100644
+--- a/Tests/Runtime2/CacheDynamicKey/.build/app.pr
++++ b/Tests/Runtime2/CacheDynamicKey/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+-  "id": "23ad9fa4-154f-4088-ae11-d9223c434ebf",
+-  "created": "2026-03-04T14:14:00.9984776Z",
+-  "updated": "2026-03-07T05:58:58.349923Z",
++  "id": "81f6b5dc-4fbc-42af-9d77-393e166ba161",
++  "created": "2026-03-10T07:56:20.551979Z",
++  "updated": "2026-03-10T07:57:33.0605638Z",
+   "name": "CacheDynamicKey",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/Tests/Runtime2/CacheDynamicKey/.build/cachedynamickey.test.pr b/Tests/Runtime2/CacheDynamicKey/.build/cachedynamickey.test.pr
+index e73308e0..fadb4a29 100644
+--- a/Tests/Runtime2/CacheDynamicKey/.build/cachedynamickey.test.pr
++++ b/Tests/Runtime2/CacheDynamicKey/.build/cachedynamickey.test.pr
+@@ -15,7 +15,7 @@
+             {
+               "name": "path",
+               "value": "dynkey1.txt",
+-              "type": "string"
++              "type": "path"
+             },
+             {
+               "name": "value",
+@@ -44,7 +44,7 @@
+             {
+               "name": "path",
+               "value": "dynkey2.txt",
+-              "type": "string"
++              "type": "path"
+             },
+             {
+               "name": "value",
+@@ -78,7 +78,7 @@
+             {
+               "name": "value",
+               "value": "dynkey1.txt",
+-              "type": "string"
++              "type": "object"
+             }
+           ],
+           "errors": [],
+@@ -160,7 +160,7 @@
+             {
+               "name": "value",
+               "value": "dynkey2.txt",
+-              "type": "string"
++              "type": "object"
+             }
+           ],
+           "errors": [],
+@@ -237,7 +237,7 @@
+             {
+               "name": "Expected",
+               "value": "content1",
+-              "type": "string"
++              "type": "object"
+             },
+             {
+               "name": "Actual",
+@@ -265,8 +265,8 @@
+           "parameters": [
+             {
+               "name": "Expected",
+-              "value": "content2",
+-              "type": "string"
++              "value": "content1",
++              "type": "object"
+             },
+             {
+               "name": "Actual",
+@@ -295,17 +295,7 @@
+             {
+               "name": "path",
+               "value": "dynkey1.txt",
+-              "type": "string"
+-            },
+-            {
+-              "name": "ignoreIfNotFound",
+-              "value": false,
+-              "type": "bool"
+-            },
+-            {
+-              "name": "recursive",
+-              "value": false,
+-              "type": "bool"
++              "type": "path"
+             }
+           ],
+           "errors": [],
+@@ -329,17 +319,7 @@
+             {
+               "name": "path",
+               "value": "dynkey2.txt",
+-              "type": "string"
+-            },
+-            {
+-              "name": "ignoreIfNotFound",
+-              "value": false,
+-              "type": "bool"
+-            },
+-            {
+-              "name": "recursive",
+-              "value": false,
+-              "type": "bool"
++              "type": "path"
+             }
+           ],
+           "errors": [],
+diff --git a/Tests/Runtime2/ConditionCompound/.build/app.pr b/Tests/Runtime2/ConditionCompound/.build/app.pr
+index 4c3b59b4..3743e3dc 100644
+--- a/Tests/Runtime2/ConditionCompound/.build/app.pr
++++ b/Tests/Runtime2/ConditionCompound/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+-  "id": "cd0a2b31-1faa-4311-9efc-7c021a9f7926",
+-  "created": "2026-03-04T14:14:05.2189551Z",
+-  "updated": "2026-03-07T05:59:27.8468383Z",
++  "id": "d9f362a8-4e12-4de1-b820-3f2af66366e8",
++  "created": "2026-03-10T07:23:44.9097747Z",
++  "updated": "2026-03-10T07:24:19.7944465Z",
+   "name": "ConditionCompound",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ConditionCompound/.build/whennotequal.pr b/Tests/Runtime2/ConditionCompound/.build/whennotequal.pr
+index 6f1b6790..c4c50984 100644
+--- a/Tests/Runtime2/ConditionCompound/.build/whennotequal.pr
++++ b/Tests/Runtime2/ConditionCompound/.build/whennotequal.pr
+@@ -12,12 +12,12 @@
+           "action": "set",
+           "parameters": [
+             {
+-              "name": "Name",
++              "name": "name",
+               "value": "%notEqualResult%",
+               "type": "string"
+             },
+             {
+-              "name": "Value",
++              "name": "value",
+               "value": "yes",
+               "type": "string"
+             }
+diff --git a/Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal b/Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal
+new file mode 100644
+index 00000000..b6cc34d9
+--- /dev/null
++++ b/Tests/Runtime2/ErrorGoalFirst/AlwaysFails.goal
+@@ -0,0 +1,3 @@
++AlwaysFails
++- set %goalFirstAttempts% = %goalFirstAttempts% + 1
++- throw error "always fails"
+diff --git a/Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal b/Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal
+new file mode 100644
+index 00000000..93fea386
+--- /dev/null
++++ b/Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ GoalFirst order — call error handler first, then retry
++- set %goalFirstHandled% = false
++- set %goalFirstAttempts% = 0
++- call AlwaysFails, on error call GoalFirstHandler, then retry 2 times
++- assert %goalFirstHandled% is true, "error goal should be called in GoalFirst order"
++- assert %goalFirstAttempts% is greater than 1, "AlwaysFails should be retried at least once"
+diff --git a/Tests/Runtime2/ErrorGoalFirst/GoalFirstHandler.goal b/Tests/Runtime2/ErrorGoalFirst/GoalFirstHandler.goal
+new file mode 100644
+index 00000000..4685d326
+--- /dev/null
++++ b/Tests/Runtime2/ErrorGoalFirst/GoalFirstHandler.goal
+@@ -0,0 +1,2 @@
++GoalFirstHandler
++- set %goalFirstHandled% = true
+diff --git a/Tests/Runtime2/ErrorInHandler/.build/errorinhandler.test.pr b/Tests/Runtime2/ErrorInHandler/.build/errorinhandler.test.pr
+index 169fa22b..3d331796 100644
+--- a/Tests/Runtime2/ErrorInHandler/.build/errorinhandler.test.pr
++++ b/Tests/Runtime2/ErrorInHandler/.build/errorinhandler.test.pr
+@@ -51,6 +51,12 @@
+           "warnings": []
+         }
+       ],
++      "onError": {
++        "goal": {
++          "name": "OuterHandler"
++        },
++        "ignoreError": false
++      },
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
+diff --git a/Tests/Runtime2/ErrorMixed/.build/app.pr b/Tests/Runtime2/ErrorMixed/.build/app.pr
+new file mode 100644
+index 00000000..aa6d851e
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/.build/app.pr
+@@ -0,0 +1,7 @@
++{
++  "id": "be47b588-09ed-4a46-92bb-13de6abccc8b",
++  "created": "2026-03-10T06:49:00.8538182Z",
++  "updated": "2026-03-10T06:49:16.3186345Z",
++  "name": "ErrorMixed",
++  "version": "0.2"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ErrorMixed/.build/errormixed.test.pr b/Tests/Runtime2/ErrorMixed/.build/errormixed.test.pr
+new file mode 100644
+index 00000000..768549ca
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/.build/errormixed.test.pr
+@@ -0,0 +1,278 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "throw error \u0022ignored\u0022, on error ignore",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "ignore error \u2014 execution continues",
++      "actions": [
++        {
++          "module": "error",
++          "action": "throw",
++          "parameters": [
++            {
++              "name": "message",
++              "value": "ignored",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "ignoreError": true
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "set %afterIgnore% = true",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%afterIgnore%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "assert %afterIgnore% is true, \u0022should continue after ignored error\u0022",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%afterIgnore%",
++              "type": "bool"
++            },
++            {
++              "name": "message",
++              "value": "should continue after ignored error",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "set %mixedCaught% = false",
++      "lineNumber": 7,
++      "indent": 0,
++      "comment": "call error handler",
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%mixedCaught%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": false,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "call MixedThrow, on error call MixedCatcher",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "MixedThrow",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "MixedCatcher"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "assert %mixedCaught% is true, \u0022error handler should be called\u0022",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%mixedCaught%",
++              "type": "bool"
++            },
++            {
++              "name": "message",
++              "value": "error handler should be called",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "throw error \u0022retried\u0022, on error retry 1 times, ignore",
++      "lineNumber": 11,
++      "indent": 0,
++      "comment": "retry then ignore \u2014 execution continues",
++      "actions": [
++        {
++          "module": "error",
++          "action": "throw",
++          "parameters": [
++            {
++              "name": "message",
++              "value": "retried",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "retryCount": 1,
++        "ignoreError": true
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "set %afterRetryIgnore% = true",
++      "lineNumber": 12,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "name",
++              "value": "%afterRetryIgnore%",
++              "type": "string"
++            },
++            {
++              "name": "value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "assert %afterRetryIgnore% is true, \u0022should continue after retry \u002B ignore\u0022",
++      "lineNumber": 13,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "isTrue",
++          "parameters": [
++            {
++              "name": "value",
++              "value": "%afterRetryIgnore%",
++              "type": "bool"
++            },
++            {
++              "name": "message",
++              "value": "should continue after retry \u002B ignore",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/ErrorMixed.test.goal",
++  "prPath": "/.build/errormixed.test.pr",
++  "hash": "3ad0f6057e4dd8ca0b68c1e7d679ba43c5380cdda5d58dddb98e6f39b5eb4da4",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ErrorMixed/.build/mixedcatcher.pr b/Tests/Runtime2/ErrorMixed/.build/mixedcatcher.pr
+new file mode 100644
+index 00000000..3b49e8d0
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/.build/mixedcatcher.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "MixedCatcher",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %mixedCaught% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%mixedCaught%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/MixedCatcher.goal",
++  "prPath": "/.build/mixedcatcher.pr",
++  "hash": "3e1ad42c8b499b6b1c2d878281df8820783f88874a6de127ec1f849758bec095",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "MixedCatcher"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ErrorMixed/.build/mixedthrow.pr b/Tests/Runtime2/ErrorMixed/.build/mixedthrow.pr
+new file mode 100644
+index 00000000..14dd22cc
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/.build/mixedthrow.pr
+@@ -0,0 +1,40 @@
++{
++  "name": "MixedThrow",
++  "steps": [
++    {
++      "index": 0,
++      "text": "throw error \u0022mixed error\u0022",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "error",
++          "action": "throw",
++          "parameters": [
++            {
++              "name": "message",
++              "value": "mixed error",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/MixedThrow.goal",
++  "prPath": "/.build/mixedthrow.pr",
++  "hash": "eaaab4541c34568a6c8e2778cb9b5501f8d4cd9cee6aaccc6fd890bec30507a7",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "MixedThrow"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/ErrorMixed/ErrorMixed.test.goal b/Tests/Runtime2/ErrorMixed/ErrorMixed.test.goal
+new file mode 100644
+index 00000000..45353741
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/ErrorMixed.test.goal
+@@ -0,0 +1,13 @@
++Start
++/ ignore error — execution continues
++- throw error "ignored", on error ignore
++- set %afterIgnore% = true
++- assert %afterIgnore% is true, "should continue after ignored error"
++/ call error handler
++- set %mixedCaught% = false
++- call MixedThrow, on error call MixedCatcher
++- assert %mixedCaught% is true, "error handler should be called"
++/ retry then ignore — execution continues
++- throw error "retried", on error retry 1 times, ignore
++- set %afterRetryIgnore% = true
++- assert %afterRetryIgnore% is true, "should continue after retry + ignore"
+diff --git a/Tests/Runtime2/ErrorMixed/MixedCatcher.goal b/Tests/Runtime2/ErrorMixed/MixedCatcher.goal
+new file mode 100644
+index 00000000..9d55425b
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/MixedCatcher.goal
+@@ -0,0 +1,2 @@
++MixedCatcher
++- set %mixedCaught% = true
+diff --git a/Tests/Runtime2/ErrorMixed/MixedThrow.goal b/Tests/Runtime2/ErrorMixed/MixedThrow.goal
+new file mode 100644
+index 00000000..c7dda163
+--- /dev/null
++++ b/Tests/Runtime2/ErrorMixed/MixedThrow.goal
+@@ -0,0 +1,2 @@
++MixedThrow
++- throw error "mixed error"
+diff --git a/Tests/Runtime2/ErrorProps/.build/errorprops.test.pr b/Tests/Runtime2/ErrorProps/.build/errorprops.test.pr
+index 63a33978..cba6dcfe 100644
+--- a/Tests/Runtime2/ErrorProps/.build/errorprops.test.pr
++++ b/Tests/Runtime2/ErrorProps/.build/errorprops.test.pr
+@@ -22,6 +22,12 @@
+           "warnings": []
+         }
+       ],
++      "onError": {
++        "goal": {
++          "name": "InspectError"
++        },
++        "ignoreError": false
++      },
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
+diff --git a/Tests/Runtime2/ErrorRetryOnly/BareRetryCatcher.goal b/Tests/Runtime2/ErrorRetryOnly/BareRetryCatcher.goal
+new file mode 100644
+index 00000000..93d6a7c0
+--- /dev/null
++++ b/Tests/Runtime2/ErrorRetryOnly/BareRetryCatcher.goal
+@@ -0,0 +1,2 @@
++BareRetryCatcher
++- set %bareRetryCaught% = true
+diff --git a/Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal b/Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal
+new file mode 100644
+index 00000000..74b996f7
+--- /dev/null
++++ b/Tests/Runtime2/ErrorRetryOnly/BareRetryGoal.goal
+@@ -0,0 +1,3 @@
++BareRetryGoal
++- set %bareRetryAttempts% = %bareRetryAttempts% + 1
++- throw error "always fails"
+diff --git a/Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal b/Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal
+new file mode 100644
+index 00000000..e61fae62
+--- /dev/null
++++ b/Tests/Runtime2/ErrorRetryOnly/ErrorRetryOnly.test.goal
+@@ -0,0 +1,13 @@
++Start
++/ bare retry — retries exhaust, error propagates to caller
++- set %bareRetryCaught% = false
++- set %bareRetryAttempts% = 0
++- call BareRetryGoal, on error retry 2 times, then call BareRetryCatcher
++- assert %bareRetryCaught% is true, "bare retry exhaustion should propagate error to caller"
++- assert %bareRetryAttempts% equals 3, "should have 1 initial + 2 retries = 3 attempts"
++/ timed retry — retry over milliseconds
++- set %timedRetryCaught% = false
++- set %timedRetryAttempts% = 0
++- call TimedRetryGoal, on error retry 2 times over 500, then call TimedRetryCatcher
++- assert %timedRetryCaught% is true, "timed retry exhaustion should propagate error to caller"
++- assert %timedRetryAttempts% equals 3, "timed retry should have 1 initial + 2 retries = 3 attempts"
+diff --git a/Tests/Runtime2/ErrorRetryOnly/TimedRetryCatcher.goal b/Tests/Runtime2/ErrorRetryOnly/TimedRetryCatcher.goal
+new file mode 100644
+index 00000000..7a6e65d1
+--- /dev/null
++++ b/Tests/Runtime2/ErrorRetryOnly/TimedRetryCatcher.goal
+@@ -0,0 +1,2 @@
++TimedRetryCatcher
++- set %timedRetryCaught% = true
+diff --git a/Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal b/Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal
+new file mode 100644
+index 00000000..5b3e2562
+--- /dev/null
++++ b/Tests/Runtime2/ErrorRetryOnly/TimedRetryGoal.goal
+@@ -0,0 +1,3 @@
++TimedRetryGoal
++- set %timedRetryAttempts% = %timedRetryAttempts% + 1
++- throw error "timed fail"
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/app.pr b/Tests/Runtime2/OnErrorMultilingual/.build/app.pr
+new file mode 100644
+index 00000000..462bf80d
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/app.pr
+@@ -0,0 +1,7 @@
++{
++  "id": "1e676305-09a2-4f3f-8b06-feffbcbefaa5",
++  "created": "2026-03-10T07:55:44.7651776Z",
++  "updated": "2026-03-10T07:57:41.9289085Z",
++  "name": "OnErrorMultilingual",
++  "version": "0.2"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catcharabic.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catcharabic.pr
+new file mode 100644
+index 00000000..7e160c9b
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catcharabic.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchArabic",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtArabic% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtArabic%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchArabic.goal",
++  "prPath": "/.build/catcharabic.pr",
++  "hash": "650e67de529784866ae24a6d7f43d3383a23a6f0fc9739fcd15f674d2fb4e47a",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchArabic"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catchenglish.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catchenglish.pr
+new file mode 100644
+index 00000000..f029e71c
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catchenglish.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchEnglish",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtEnglish% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtEnglish%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchEnglish.goal",
++  "prPath": "/.build/catchenglish.pr",
++  "hash": "7c55a79012099956bed73b9c8e89fd06d57ff82b7bd5f05cfd7ff60c11fa472d",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchEnglish"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catchicelandic.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catchicelandic.pr
+new file mode 100644
+index 00000000..cb9085b2
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catchicelandic.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchIcelandic",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtIcelandic% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtIcelandic%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchIcelandic.goal",
++  "prPath": "/.build/catchicelandic.pr",
++  "hash": "2140c32942f83335e448a49c23210e2a2237eb77ddf6ec752a0b37dcfbb79cb1",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchIcelandic"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catchjapanese.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catchjapanese.pr
+new file mode 100644
+index 00000000..c6485c43
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catchjapanese.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchJapanese",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtJapanese% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtJapanese%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchJapanese.goal",
++  "prPath": "/.build/catchjapanese.pr",
++  "hash": "65dd7d38a2aa4ba585b74a6376bc34680f676a9593b78815dbcfdecbc076dc4e",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchJapanese"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catchkorean.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catchkorean.pr
+new file mode 100644
+index 00000000..9ff24991
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catchkorean.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchKorean",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtKorean% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtKorean%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchKorean.goal",
++  "prPath": "/.build/catchkorean.pr",
++  "hash": "3b18578c44926d4e26969ac70d3b0f43035e8d6f639daaf1931fb509b0fc09c1",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchKorean"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/catchswahili.pr b/Tests/Runtime2/OnErrorMultilingual/.build/catchswahili.pr
+new file mode 100644
+index 00000000..91b37687
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/catchswahili.pr
+@@ -0,0 +1,45 @@
++{
++  "name": "CatchSwahili",
++  "steps": [
++    {
++      "index": 0,
++      "text": "set %caughtSwahili% = true",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "variable",
++          "action": "set",
++          "parameters": [
++            {
++              "name": "Name",
++              "value": "%caughtSwahili%",
++              "type": "string"
++            },
++            {
++              "name": "Value",
++              "value": true,
++              "type": "bool"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/CatchSwahili.goal",
++  "prPath": "/.build/catchswahili.pr",
++  "hash": "c17c0def77b69d7bb5ee9b4841afaf9f939815ba16545c5ddd173e1b4b056f6d",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "CatchSwahili"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/onerrormultilingual.test.pr b/Tests/Runtime2/OnErrorMultilingual/.build/onerrormultilingual.test.pr
+new file mode 100644
+index 00000000..3a200b85
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/onerrormultilingual.test.pr
+@@ -0,0 +1,371 @@
++{
++  "name": "Start",
++  "steps": [
++    {
++      "index": 0,
++      "text": "call ThrowError, on error call CatchEnglish",
++      "lineNumber": 3,
++      "indent": 0,
++      "comment": "on error expressed in multiple languages should all produce onError in .pr",
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchEnglish"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 1,
++      "text": "call ThrowError, a villu kalla i CatchIcelandic",
++      "lineNumber": 4,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchIcelandic"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 2,
++      "text": "call ThrowError, \u30A8\u30E9\u30FC\u6642\u306B CatchJapanese \u3092\u547C\u3076",
++      "lineNumber": 5,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchJapanese"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 3,
++      "text": "call ThrowError, \u0639\u0646\u062F \u0627\u0644\u062E\u0637\u0623 \u0627\u062A\u0635\u0644 \u0628\u0640 CatchArabic",
++      "lineNumber": 6,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchArabic"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 4,
++      "text": "call ThrowError, \uC624\uB958 \uBC1C\uC0DD \uC2DC CatchKorean \uD638\uCD9C",
++      "lineNumber": 7,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchKorean"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 5,
++      "text": "call ThrowError, kwa hitilafu piga CatchSwahili",
++      "lineNumber": 8,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "goal",
++          "action": "call",
++          "parameters": [
++            {
++              "name": "goalName",
++              "value": "ThrowError",
++              "type": "goal.call"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "onError": {
++        "goal": {
++          "name": "CatchSwahili"
++        },
++        "ignoreError": false
++      },
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 6,
++      "text": "assert %caughtEnglish% equals true",
++      "lineNumber": 9,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtEnglish%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 7,
++      "text": "assert %caughtIcelandic% equals true",
++      "lineNumber": 10,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtIcelandic%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 8,
++      "text": "assert %caughtJapanese% equals true",
++      "lineNumber": 11,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtJapanese%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 9,
++      "text": "assert %caughtArabic% equals true",
++      "lineNumber": 12,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtArabic%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 10,
++      "text": "assert %caughtKorean% equals true",
++      "lineNumber": 13,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtKorean%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    },
++    {
++      "index": 11,
++      "text": "assert %caughtSwahili% equals true",
++      "lineNumber": 14,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "assert",
++          "action": "equals",
++          "parameters": [
++            {
++              "name": "Expected",
++              "value": true,
++              "type": "bool"
++            },
++            {
++              "name": "Actual",
++              "value": "%caughtSwahili%",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/OnErrorMultilingual.test.goal",
++  "prPath": "/.build/onerrormultilingual.test.pr",
++  "hash": "a60b6f05d1fc21878298e4478af9e7cc0334746e825439371ba731a997d1a1f9",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "Start"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/.build/throwerror.pr b/Tests/Runtime2/OnErrorMultilingual/.build/throwerror.pr
+new file mode 100644
+index 00000000..584b20c9
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/.build/throwerror.pr
+@@ -0,0 +1,40 @@
++{
++  "name": "ThrowError",
++  "steps": [
++    {
++      "index": 0,
++      "text": "throw \u0022intentional error\u0022",
++      "lineNumber": 2,
++      "indent": 0,
++      "actions": [
++        {
++          "module": "error",
++          "action": "throw",
++          "parameters": [
++            {
++              "name": "message",
++              "value": "intentional error",
++              "type": "string"
++            }
++          ],
++          "errors": [],
++          "warnings": []
++        }
++      ],
++      "errors": [],
++      "warnings": [],
++      "waitForExecution": true
++    }
++  ],
++  "subGoals": [],
++  "visibility": 1,
++  "path": "/ThrowError.goal",
++  "prPath": "/.build/throwerror.pr",
++  "hash": "1aed39b583d1bddf5c62fd52b1b0c456cfe0f0a2fc018f13f634e3e52573e767",
++  "isSetup": false,
++  "isEvent": false,
++  "isTest": false,
++  "errors": [],
++  "warnings": [],
++  "fullPath": "ThrowError"
++}
+\ No newline at end of file
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchArabic.goal b/Tests/Runtime2/OnErrorMultilingual/CatchArabic.goal
+new file mode 100644
+index 00000000..a5d7aebb
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchArabic.goal
+@@ -0,0 +1,2 @@
++CatchArabic
++- set %caughtArabic% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchEnglish.goal b/Tests/Runtime2/OnErrorMultilingual/CatchEnglish.goal
+new file mode 100644
+index 00000000..d8704c9d
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchEnglish.goal
+@@ -0,0 +1,2 @@
++CatchEnglish
++- set %caughtEnglish% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchIcelandic.goal b/Tests/Runtime2/OnErrorMultilingual/CatchIcelandic.goal
+new file mode 100644
+index 00000000..e43af5a1
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchIcelandic.goal
+@@ -0,0 +1,2 @@
++CatchIcelandic
++- set %caughtIcelandic% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchJapanese.goal b/Tests/Runtime2/OnErrorMultilingual/CatchJapanese.goal
+new file mode 100644
+index 00000000..9c5f8c35
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchJapanese.goal
+@@ -0,0 +1,2 @@
++CatchJapanese
++- set %caughtJapanese% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchKorean.goal b/Tests/Runtime2/OnErrorMultilingual/CatchKorean.goal
+new file mode 100644
+index 00000000..43fe7b18
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchKorean.goal
+@@ -0,0 +1,2 @@
++CatchKorean
++- set %caughtKorean% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/CatchSwahili.goal b/Tests/Runtime2/OnErrorMultilingual/CatchSwahili.goal
+new file mode 100644
+index 00000000..4efab637
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/CatchSwahili.goal
+@@ -0,0 +1,2 @@
++CatchSwahili
++- set %caughtSwahili% = true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/OnErrorMultilingual.test.goal b/Tests/Runtime2/OnErrorMultilingual/OnErrorMultilingual.test.goal
+new file mode 100644
+index 00000000..249f29bc
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/OnErrorMultilingual.test.goal
+@@ -0,0 +1,14 @@
++Start
++/ on error expressed in multiple languages should all produce onError in .pr
++- call ThrowError, on error call CatchEnglish
++- call ThrowError, a villu kalla i CatchIcelandic
++- call ThrowError, エラー時に CatchJapanese を呼ぶ
++- call ThrowError, عند الخطأ اتصل بـ CatchArabic
++- call ThrowError, 오류 발생 시 CatchKorean 호출
++- call ThrowError, kwa hitilafu piga CatchSwahili
++- assert %caughtEnglish% equals true
++- assert %caughtIcelandic% equals true
++- assert %caughtJapanese% equals true
++- assert %caughtArabic% equals true
++- assert %caughtKorean% equals true
++- assert %caughtSwahili% equals true
+diff --git a/Tests/Runtime2/OnErrorMultilingual/ThrowError.goal b/Tests/Runtime2/OnErrorMultilingual/ThrowError.goal
+new file mode 100644
+index 00000000..d8a21f32
+--- /dev/null
++++ b/Tests/Runtime2/OnErrorMultilingual/ThrowError.goal
+@@ -0,0 +1,2 @@
++ThrowError
++- throw "intentional error"
+diff --git a/Tests/Runtime2/RecursionDepthLimit/.build/app.pr b/Tests/Runtime2/RecursionDepthLimit/.build/app.pr
+index bf5f6535..a53c1bb7 100644
+--- a/Tests/Runtime2/RecursionDepthLimit/.build/app.pr
++++ b/Tests/Runtime2/RecursionDepthLimit/.build/app.pr
+@@ -1,7 +1,7 @@
+ {
+-  "id": "913c741f-9b81-4411-a130-6b164f98a044",
+-  "created": "2026-03-04T14:15:07.091455Z",
+-  "updated": "2026-03-07T06:02:13.4137209Z",
++  "id": "42ba9824-b47b-4622-beae-9edc271544a6",
++  "created": "2026-03-10T07:56:39.4817439Z",
++  "updated": "2026-03-10T07:56:51.0129Z",
+   "name": "RecursionDepthLimit",
+   "version": "0.2"
+ }
+\ No newline at end of file
+diff --git a/Tests/Runtime2/RecursionDepthLimit/.build/recurse.pr b/Tests/Runtime2/RecursionDepthLimit/.build/recurse.pr
+index 79453233..38f00fdb 100644
+--- a/Tests/Runtime2/RecursionDepthLimit/.build/recurse.pr
++++ b/Tests/Runtime2/RecursionDepthLimit/.build/recurse.pr
+@@ -14,7 +14,7 @@
+             {
+               "name": "A",
+               "value": "%depth%",
+-              "type": "string"
++              "type": "object"
+             },
+             {
+               "name": "B",
+diff --git a/Tests/Runtime2/RecursionDepthLimit/.build/recursiondepthlimit.test.pr b/Tests/Runtime2/RecursionDepthLimit/.build/recursiondepthlimit.test.pr
+index 41c0c0d8..e47fcb4d 100644
+--- a/Tests/Runtime2/RecursionDepthLimit/.build/recursiondepthlimit.test.pr
++++ b/Tests/Runtime2/RecursionDepthLimit/.build/recursiondepthlimit.test.pr
+@@ -51,6 +51,12 @@
+           "warnings": []
+         }
+       ],
++      "onError": {
++        "goal": {
++          "name": "HandleRecursionError"
++        },
++        "ignoreError": false
++      },
+       "errors": [],
+       "warnings": [],
+       "waitForExecution": true
+@@ -73,7 +79,7 @@
+             {
+               "name": "Actual",
+               "value": "%recursionErrorCaught%",
+-              "type": "bool"
++              "type": "string"
+             }
+           ],
+           "errors": [],
+diff --git a/system/builder/.build/BuildGoal/00. Goal.pr b/system/builder/.build/BuildGoal/00. Goal.pr
+index 0089b71f..101a49b0 100644
+--- a/system/builder/.build/BuildGoal/00. Goal.pr	
++++ b/system/builder/.build/BuildGoal/00. Goal.pr	
+@@ -189,7 +189,7 @@
+       "UserIntent": null
+     },
+     {
+-      "Text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%",
++      "Text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%",
+       "Comment": null,
+       "ModuleType": "PLang.Modules.LlmModule",
+       "Name": "call_llm_with_structured_prompt_and_error_handling",
+diff --git a/system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr b/system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr
+index ae25b40b..304d069a 100644
+--- a/system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr	
++++ b/system/builder/.build/BuildGoal/07. call_llm_with_structured_prompt_and_error_handling.pr	
+@@ -1,5 +1,5 @@
+ {
+-  "Text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%",
++  "Text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%",
+   "ModuleType": "PLang.Modules.LlmModule",
+   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+   "Function": {
+@@ -33,7 +33,7 @@
+       {
+         "Type": "System.String",
+         "Name": "scheme",
+-        "Value": "{errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationSeconds: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string}, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}]}"
++        "Value": "{errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationSeconds: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}]}"
+       },
+       {
+         "Type": "System.String",
+@@ -178,7 +178,7 @@
+                   "retryCount": {
+                     "type": "integer"
+                   },
+-                  "retryOverSeconds": {
++                  "retryOverMs": {
+                     "type": "integer"
+                   },
+                   "order": {
+@@ -347,14 +347,14 @@
+           "content": [
+             {
+               "type": "text",
+-              "text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%"
++              "text": "[llm] system: %buildGoalPrompt%\n        user: %goalForLlm%\n         scheme: {\n            errors?: [{key: string, message: string}],\n            warnings?: [{key: string, message: string}],\n            steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool,\n                  errors?: [{key: string, message: string}],\n                  warnings?: [{key: string, message: string}],\n                  cache?: {durationSeconds: long, sliding?: bool, key?: string},\n                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string},\n                  actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],\n                              errors?: [{key: string, message: string}],\n                              warnings?: [{key: string, message: string}]}]}]\n                }\n        on error HandleBuildGoalFailure\n        write to %stepResults%"
+             }
+           ]
+         }
+       ],
+       "type": "PLang.Modules.LlmModule.Builder",
+       "caching": true,
+-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to send a structured prompt to an LLM with a system message (%buildGoalPrompt%) and a user message (%goalForLlm%) and expects a JSON response matching a detailed schema. The user also wants to handle errors with a specific goal (HandleBuildGoalFailure) and store the LLM's response into %stepResults%. The AskLlm function supports sending prompt messages, specifying a response schema, error handling, and capturing the return value.\",\n  \"Name\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%buildGoalPrompt%\"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%goalForLlm%\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"scheme\",\n      \"Value\": \"{errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationSeconds: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string}, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}]}\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"llmResponseType\",\n      \"Value\": \"json\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%stepResults%\"\n    }\n  ]\n}",
++      "RawResponse": "{\n  \"Reasoning\": \"The user wants to send a structured prompt to an LLM with a system message (%buildGoalPrompt%) and a user message (%goalForLlm%) and expects a JSON response matching a detailed schema. The user also wants to handle errors with a specific goal (HandleBuildGoalFailure) and store the LLM's response into %stepResults%. The AskLlm function supports sending prompt messages, specifying a response schema, error handling, and capturing the return value.\",\n  \"Name\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%buildGoalPrompt%\"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%goalForLlm%\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"scheme\",\n      \"Value\": \"{errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, approved?: bool, rebuildReason?: string, needsDetail?: bool, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], cache?: {durationSeconds: long, sliding?: bool, key?: string}, onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string}, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}]}\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"llmResponseType\",\n      \"Value\": \"json\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%stepResults%\"\n    }\n  ]\n}",
+       "Tools": null
+     }
+   ]
+diff --git a/system/builder/BuildGoal.goal b/system/builder/BuildGoal.goal
+index 2a302e37..36cc020a 100644
+--- a/system/builder/BuildGoal.goal
++++ b/system/builder/BuildGoal.goal
+@@ -19,7 +19,7 @@ BuildGoal
+                   errors?: [{key: string, message: string}],
+                   warnings?: [{key: string, message: string}],
+                   cache?: {durationSeconds: long, sliding?: bool, key?: string},
+-                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverSeconds?: int, order?: string, message?: string},
++                  onError?: {ignoreError?: bool, goal?: {name: string}, retryCount?: int, retryOverMs?: int, order?: string, message?: string},
+                   actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], return?: [{name: string}],
+                               errors?: [{key: string, message: string}],
+                               warnings?: [{key: string, message: string}]}]}]
+diff --git a/system/builder/llm/BuildGoal.llm b/system/builder/llm/BuildGoal.llm
+index fc116002..f90615d1 100644
+--- a/system/builder/llm/BuildGoal.llm
++++ b/system/builder/llm/BuildGoal.llm
+@@ -63,7 +63,7 @@ Error handling modifiers:
+ - `on error ignore` → `onError: {ignoreError: true}`
+ - `on error call <GoalName>` → `onError: {goal: {name: "<GoalName>"}}`
+ - `on error retry X times` → `onError: {retryCount: X}`
+-- `on error retry X times over Y seconds` → `onError: {retryCount: X, retryOverSeconds: Y}`
++- `on error retry X times over Y` → `onError: {retryCount: X, retryOverMs: Y}`
+ - `on error retry X times, then call <GoalName>` → `onError: {retryCount: X, order: "RetryFirst", goal: {name: "<GoalName>"}}`
+ - `on error call <GoalName>, then retry X times` → `onError: {retryCount: X, order: "GoalFirst", goal: {name: "<GoalName>"}}`
+ 
+@@ -86,7 +86,7 @@ Start
+ - read file 'config.json', write to \%config\%\n    cache for 5 minutes
+ - throw error "something went wrong", on error ignore
+ - call ProcessData, on error call HandleError
+-- call LoadData, on error retry 3 times over 5 seconds
++- call LoadData, on error retry 3 times over 5000
+ - call SaveData, on error retry 2 times, then call HandleSaveError
+ - if \%count\%, call ProcessData
+ ```
+@@ -106,7 +106,7 @@ Response:
+     {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationSeconds": 300}},
+     {"index": 7, "actions": [{"module": "error", "action": "throw", "parameters": [{"name": "message", "value": "something went wrong", "type": "string"}]}], "onError": {"ignoreError": true}},
+     {"index": 8, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "ProcessData", "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
+-    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverSeconds": 5}},
++    {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverMs": 5000}},
+     {"index": 10, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "SaveData", "type": "goal.call"}]}], "onError": {"retryCount": 2, "order": "RetryFirst", "goal": {"name": "HandleSaveError"}}},
+     {"index": 11, "actions": [{"module": "condition", "action": "if", "parameters": [{"name": "Condition", "value": "\%count\%", "type": "bool"}, {"name": "GoalIfTrue", "value": "ProcessData", "type": "goal.call"}]}]}
+   ]
+@@ -123,4 +123,6 @@ Response:
+ - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
+ - For `goal.call` type parameters: the value is a plain string with the goal name (e.g., "ProcessData"). When the goal needs parameters, use the object form matching the goal.call schema: {"name": "GoalName", "parameters": {"key": "value"}}. The field inside the object is `name`, not the parameter name.
+ - Omit nullable parameters (types ending in ?) entirely when not applicable — do NOT include them with empty or null values.
+-- \%variable\% references in parameter values are resolved at runtime. NEVER pre-evaluate them at build time. For bool parameters, use the \%variable\% reference string (e.g., "\%isReady\%") — the runtime resolves it to the variable's value and converts to bool. Do not hardcode true/false based on what you think the variable's value might be.
+\ No newline at end of file
++- \%variable\% references in parameter values are resolved at runtime. NEVER pre-evaluate them at build time. For bool parameters, use the \%variable\% reference string (e.g., "\%isReady\%") — the runtime resolves it to the variable's value and converts to bool. Do not hardcode true/false based on what you think the variable's value might be.
++- CRITICAL: When a step expresses error handling intent (calling a goal on failure, retrying, ignoring errors), you MUST include the `onError` object on the step result. This applies to ALL step types including `goal.call` steps. Missing `onError` is a build-breaking bug.
++- NEVER alter literal values from the step text. If the step says `assert %x% equals "content1"`, the expected value MUST be "content1" — not "content2" or any other value. You are a compiler, not an editor. Reproduce the user's values exactly, even if you think they are wrong. Flag concerns as warnings, but never change the values.
+\ No newline at end of file
+diff --git a/system/builder/templates/goalFormatForLlm.template b/system/builder/templates/goalFormatForLlm.template
+index 770588b0..86b46596 100644
+--- a/system/builder/templates/goalFormatForLlm.template
++++ b/system/builder/templates/goalFormatForLlm.template
+@@ -1,7 +1,7 @@
+ {{ if goal.Comment }}/ {{ goal.Comment }}
+ {{ end }}{{ goal.Name }}
+ {{ for step in goal.Steps }}{{ if step.Comment }}/ {{ step.Comment }}
+-{{ end }}{{ " " | string.pad_left step.Indent }}- {{ step.Text }}  <= pr: {{ if step.Actions.size > 0 }}{"actions":[{{ for a in step.Actions }}{"module":"{{ a.Module }}","action":"{{ a.ActionName }}","parameters":[{{ for p in a.Parameters }}{"name":"{{ p.Name }}","value":{{ p.Value | json false }}{{ if p.Type }},"type":"{{ p.Type }}"{{ end }}}{{ if !for.last }},{{ end }}{{ end }}]{{ if a.Return }},"return":[{{ for r in a.Return }}{"name":"{{ r.Name }}"}{{ if !for.last }},{{ end }}{{ end }}]{{ end }}}{{ if !for.last }},{{ end }}{{ end }}]{{ if step.Cache }},"cache":{"durationSeconds":{{ step.Cache.DurationSeconds }}{{ if step.Cache.Sliding }},"sliding":true{{ end }}{{ if step.Cache.Key }},"key":"{{ step.Cache.Key }}"{{ end }}}{{ end }}{{ if step.OnError }},"onError":{{ "{" }}"ignoreError":{{ step.OnError.IgnoreError | string.downcase }}{{ if step.OnError.Goal }},"goal":{"name":"{{ step.OnError.Goal.Name }}"}{{ end }}{{ if step.OnError.RetryCount }},"retryCount":{{ step.OnError.RetryCount }}{{ end }}{{ if step.OnError.RetryOverSeconds }},"retryOverSeconds":{{ step.OnError.RetryOverSeconds }}{{ end }}{{ if step.OnError.Order }},"order":"{{ step.OnError.Order }}"{{ end }}{{ "}" }}{{ end }}}{{ else }}null{{ end }}
++{{ end }}{{ " " | string.pad_left step.Indent }}- {{ step.Text }}  <= pr: {{ if step.Actions.size > 0 }}{"actions":[{{ for a in step.Actions }}{"module":"{{ a.Module }}","action":"{{ a.ActionName }}","parameters":[{{ for p in a.Parameters }}{"name":"{{ p.Name }}","value":{{ p.Value | json false }}{{ if p.Type }},"type":"{{ p.Type }}"{{ end }}}{{ if !for.last }},{{ end }}{{ end }}]{{ if a.Return }},"return":[{{ for r in a.Return }}{"name":"{{ r.Name }}"}{{ if !for.last }},{{ end }}{{ end }}]{{ end }}}{{ if !for.last }},{{ end }}{{ end }}]{{ if step.Cache }},"cache":{"durationSeconds":{{ step.Cache.DurationSeconds }}{{ if step.Cache.Sliding }},"sliding":true{{ end }}{{ if step.Cache.Key }},"key":"{{ step.Cache.Key }}"{{ end }}}{{ end }}{{ if step.OnError }},"onError":{{ "{" }}"ignoreError":{{ step.OnError.IgnoreError | string.downcase }}{{ if step.OnError.Goal }},"goal":{"name":"{{ step.OnError.Goal.Name }}"}{{ end }}{{ if step.OnError.RetryCount }},"retryCount":{{ step.OnError.RetryCount }}{{ end }}{{ if step.OnError.RetryOverMs }},"retryOverMs":{{ step.OnError.RetryOverMs }}{{ end }}{{ if step.OnError.Order }},"order":"{{ step.OnError.Order }}"{{ end }}{{ "}" }}{{ end }}}{{ else }}null{{ end }}
+ {{ end }}{{ if goal.Errors.size > 0 }}
+ errors:
+ {{ for e in goal.Errors }}- {key: "{{ e.Key }}", message: "{{ e.Message }}"}

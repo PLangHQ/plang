@@ -149,7 +149,7 @@ public class GoalSerializationTests
                     {
                         Goal = new GoalCall { Name = "HandleError", Parameters = new Dictionary<string, object?> { { "msg", "oops" } } },
                         RetryCount = 3,
-                        RetryOverSeconds = 60,
+                        RetryOverMs = 60000,
                         Order = ErrorOrder.RetryFirst,
                         IgnoreError = false,
                         Message = "Something failed",
@@ -166,7 +166,7 @@ public class GoalSerializationTests
         var err = deserialized.Steps[0].OnError!;
         await Assert.That(err.Goal!.Name).IsEqualTo("HandleError");
         await Assert.That(err.RetryCount).IsEqualTo(3);
-        await Assert.That(err.RetryOverSeconds).IsEqualTo(60);
+        await Assert.That(err.RetryOverMs).IsEqualTo(60000);
         await Assert.That(err.Order).IsEqualTo(ErrorOrder.RetryFirst);
         await Assert.That(err.IgnoreError).IsFalse();
         await Assert.That(err.Message).IsEqualTo("Something failed");

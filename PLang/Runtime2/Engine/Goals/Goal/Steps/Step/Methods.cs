@@ -135,9 +135,9 @@ public sealed partial class @this
         var retryCount = handler.RetryCount ?? 0;
         if (retryCount <= 0) return Data.FromError(new Error("No retries configured"));
 
-        var totalSeconds = handler.RetryOverSeconds ?? 0;
-        var delayMs = retryCount > 1 && totalSeconds > 0
-            ? (int)(totalSeconds * 1000.0 / (retryCount - 1))
+        var totalMs = handler.RetryOverMs ?? 0;
+        var delayMs = retryCount > 1 && totalMs > 0
+            ? (int)(totalMs / (retryCount - 1))
             : 0;
 
         for (int attempt = 0; attempt < retryCount; attempt++)

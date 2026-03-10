@@ -309,7 +309,7 @@ public class StepRetryTests
         var goal = CreateGoalWithFlakyStep(new ErrorHandler
         {
             RetryCount = 50,
-            RetryOverSeconds = 10 // ~200ms between retries
+            RetryOverMs = 10000 // ~200ms between retries
         });
 
         var context = _engine.CreateContext();

@@ -51,6 +51,12 @@
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "OuterHandler"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true

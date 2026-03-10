@@ -1,0 +1,3 @@
+BareRetryGoal
+- add 1 to %bareRetryAttempts%, write to %bareRetryAttempts%
+- throw error "always fails"

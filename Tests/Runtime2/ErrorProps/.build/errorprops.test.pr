@@ -22,6 +22,12 @@
           "warnings": []
         }
       ],
+      "onError": {
+        "goal": {
+          "name": "InspectError"
+        },
+        "ignoreError": false
+      },
       "errors": [],
       "warnings": [],
       "waitForExecution": true

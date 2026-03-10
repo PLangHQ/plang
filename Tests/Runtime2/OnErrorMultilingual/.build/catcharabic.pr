@@ -1,0 +1,45 @@
+{
+  "name": "CatchArabic",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtArabic% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtArabic%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/CatchArabic.goal",
+  "prPath": "/.build/catcharabic.pr",
+  "hash": "650e67de529784866ae24a6d7f43d3383a23a6f0fc9739fcd15f674d2fb4e47a",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "CatchArabic"
+}

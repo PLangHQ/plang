@@ -14,7 +14,7 @@
             {
               "name": "A",
               "value": "%depth%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "B",

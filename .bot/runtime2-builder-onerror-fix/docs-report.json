@@ -1,0 +1,44 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-builder-onerror-fix",
+  "timestamp": "2026-03-10T19:00:00Z",
+  "reviewed_version": "v3",
+  "summary": "Four documentation files updated. Two stale builder spec docs had RetryOverSeconds renamed to RetryOverMs and gained 4 missing ErrorHandler properties (IgnoreError, Message, StatusCode, Key). GoalFirst retry-skip behavior added to good_to_know.md. Retry testing todo updated to DONE. No XML doc gaps — ErrorHandler.cs already fully documented. No missing PLang examples — 4 test suites exist.",
+  "stats": {
+    "gaps_found": 4,
+    "gaps_filled": 4,
+    "docs_updated": 4,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "consistency",
+      "action": "updated",
+      "file": "Skill/builder/builder-implementation-spec.md",
+      "description": "Renamed RetryOverSeconds to RetryOverMs in ErrorHandler class and shared types. Added IgnoreError, Message, StatusCode, Key properties."
+    },
+    {
+      "id": 2,
+      "type": "consistency",
+      "action": "updated",
+      "file": "Skill/builder/builder-design-conversation.md",
+      "description": "Renamed RetryOverSeconds to RetryOverMs in ErrorHandler type and .pr JSON example. Added 4 new properties."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/good_to_know.md",
+      "description": "Added GoalFirst Retry Behavior section — when error goal succeeds, retries are skipped."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/todos.md",
+      "description": "Updated retry testing status from NOT STARTED to DONE with test suite references."
+    }
+  ],
+  "findings": []
+}

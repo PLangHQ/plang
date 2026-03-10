@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 PLang test failures: ErrorRetryOnly (builder non-determinism corrupts counter variable), ErrorGoalFirst (GoalFirst retry order doesn't execute retries), ConditionCompound (rebuild side effect). New tests are honest but expose unfixed bugs." }

@@ -1,0 +1,45 @@
+{
+  "name": "CatchIcelandic",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtIcelandic% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtIcelandic%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/CatchIcelandic.goal",
+  "prPath": "/.build/catchicelandic.pr",
+  "hash": "2140c32942f83335e448a49c23210e2a2237eb77ddf6ec752a0b37dcfbb79cb1",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "CatchIcelandic"
+}

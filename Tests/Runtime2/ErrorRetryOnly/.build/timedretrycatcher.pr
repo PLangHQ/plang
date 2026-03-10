@@ -1,0 +1,45 @@
+{
+  "name": "TimedRetryCatcher",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %timedRetryCaught% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%timedRetryCaught%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/TimedRetryCatcher.goal",
+  "prPath": "/.build/timedretrycatcher.pr",
+  "hash": "2ee0b19a20799dc95b62d476df367ee3b8366f58cd7889c6e9db0fd775d67f4c",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "TimedRetryCatcher"
+}

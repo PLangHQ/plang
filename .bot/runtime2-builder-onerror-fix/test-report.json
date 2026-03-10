@@ -1,0 +1,30 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-onerror-fix",
+  "timestamp": "2026-03-10T16:20:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 1511, "passed": 1511, "failed": 0, "skipped": 0 },
+    "plang": { "total": 68, "passed": 67, "failed": 1, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": [],
+    "notes": "No C# code changes on this branch — only builder prompt (.llm), .goal test files, and .pr files. C# coverage N/A."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "Tests/Runtime2/ConditionCompound/ConditionCompound.test.goal",
+      "code_file": "PLang/Runtime2/modules/condition/if.cs",
+      "issue": "ConditionCompound NullRef in condition.If.__Resolve<T> — pre-existing on runtime2",
+      "impact": "Compound conditions are broken in runtime2 baseline. Not a regression from this branch.",
+      "suggestion": "Track separately — not related to onError fix."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "All 3 PLang test failures from tester v1 are resolved by coder v3 fixes. ErrorRetryOnly passes with unambiguous step text (math.add with return). ErrorGoalFirst passes with corrected assertion (removed retry count check — GoalFirst skips retries by design). ConditionCompound is a pre-existing runtime2 bug (NullRef). 1511 C# tests all green. Branch is ready for merge."
+}

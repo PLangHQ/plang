@@ -1,0 +1,2 @@
+GoalFirstHandler
+- set %goalFirstHandled% = true

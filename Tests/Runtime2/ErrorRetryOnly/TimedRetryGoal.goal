@@ -1,0 +1,3 @@
+TimedRetryGoal
+- add 1 to %timedRetryAttempts%, write to %timedRetryAttempts%
+- throw error "timed fail"

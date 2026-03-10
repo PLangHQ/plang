@@ -1,0 +1,2 @@
+BareRetryCatcher
+- set %bareRetryCaught% = true

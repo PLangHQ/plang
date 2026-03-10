@@ -1,0 +1,14 @@
+Start
+/ on error expressed in multiple languages should all produce onError in .pr
+- call ThrowError, on error call CatchEnglish
+- call ThrowError, a villu kalla i CatchIcelandic
+- call ThrowError, エラー時に CatchJapanese を呼ぶ
+- call ThrowError, عند الخطأ اتصل بـ CatchArabic
+- call ThrowError, 오류 발생 시 CatchKorean 호출
+- call ThrowError, kwa hitilafu piga CatchSwahili
+- assert %caughtEnglish% equals true
+- assert %caughtIcelandic% equals true
+- assert %caughtJapanese% equals true
+- assert %caughtArabic% equals true
+- assert %caughtKorean% equals true
+- assert %caughtSwahili% equals true

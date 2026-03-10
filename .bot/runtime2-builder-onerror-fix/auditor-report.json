@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-onerror-fix",
+  "timestamp": "2026-03-10T18:00:00Z",
+  "reviewed_version": "v3",
+  "summary": "Clean, well-scoped rename of RetryOverSeconds to RetryOverMs with builder prompt strengthening. All C# changes follow OBP — ErrorHandler is a sealed data class with init-only properties, Methods.cs navigates via the handler object, GoalMapper does direct field mapping. The rename is end-to-end consistent in all production code, C# tests, and builder schema. Residual RetryOverSeconds references exist only in legacy v0.1 per-step .pr files (cosmetic, not loaded by v0.2 runtime) and .bot/ documentation. Builder prompt correctly uses retryOverMs in all examples and schema. Four new PLang test suites exercise error handling patterns well. No critical or major findings.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "style",
+      "file": "system/builder/.build/ApplyStep/ProcessStep/01. validate_actions_with_error_handling.pr",
+      "line": 58,
+      "issue": "Legacy v0.1 per-step .pr files still reference RetryOverSeconds in SupportingObjects schema metadata",
+      "impact": "No runtime impact — v0.2 single-file format is what the engine loads. These folders are remnants of the old per-step build format. However, they could confuse future reviewers searching for stale references.",
+      "suggestion": "Consider deleting the legacy per-step folders (system/builder/.build/BuildGoal/, system/builder/.build/ApplyStep/, system/builder/.build/Build/, system/builder/.build/BuildStep/) in a cleanup PR. They are superseded by the v0.2 single-file .pr files."
+    },
+    {
+      "id": 2,
+      "severity": "nit",
+      "category": "test",
+      "file": "Tests/Runtime2/ErrorGoalFirst/ErrorGoalFirst.test.goal",
+      "line": 4,
+      "issue": "ErrorGoalFirst test initializes %goalFirstAttempts% but never asserts on it",
+      "impact": "The variable is set and incremented in AlwaysFails.goal but the assertion was removed in coder v3 (GoalFirst skips retries when error goal succeeds — correct behavior). The counter variable is now dead code in the test.",
+      "suggestion": "Remove the `set %goalFirstAttempts% = 0` step and the increment in AlwaysFails.goal for clarity, or add a comment explaining why the counter is intentionally not asserted. Low priority — test still verifies the correct invariant."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "style",
+      "file": "Tests/Runtime2/CacheDynamicKey/.build/cachedynamickey.test.pr",
+      "line": 18,
+      "issue": "Rebuilt .pr file changed parameter types (string -> path, string -> object) compared to runtime2 baseline",
+      "impact": "No functional impact — test passes. The type changes reflect the LLM's updated type inference during rebuild. The value preservation fix (content2 -> content1 at line 268) is the important correction.",
+      "suggestion": "No action needed. The type changes are cosmetic and the value fix is correct."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs",
+      "line": 162,
+      "issue": "Bare catch block in RetryAsync swallows all exceptions silently during retry attempts",
+      "impact": "By design — the retry loop should continue on any exception. However, the bare catch means even catastrophic exceptions (OutOfMemoryException, StackOverflowException) are swallowed within retry attempts. In practice, these rarely occur and the retry count limits exposure.",
+      "suggestion": "Consider catching Exception instead of bare catch to exclude CLR-critical exceptions, or log the swallowed exception for debugging. Low priority — the retry loop terminates after retryCount iterations regardless."
+    }
+  ]
+}

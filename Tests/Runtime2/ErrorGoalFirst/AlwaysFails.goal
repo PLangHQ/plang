@@ -1,0 +1,3 @@
+AlwaysFails
+- add 1 to %goalFirstAttempts%, write to %goalFirstAttempts%
+- throw error "always fails"

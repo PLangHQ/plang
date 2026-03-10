@@ -1,0 +1,2 @@
+ThrowError
+- throw "intentional error"

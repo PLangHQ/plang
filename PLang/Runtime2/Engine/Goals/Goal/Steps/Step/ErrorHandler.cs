@@ -25,9 +25,9 @@ public sealed class ErrorHandler
     public int? RetryCount { get; init; }
 
     /// <summary>
-    /// Total time window in seconds over which retries should occur.
+    /// Total time window in milliseconds over which retries should occur.
     /// </summary>
-    public int? RetryOverSeconds { get; init; }
+    public int? RetryOverMs { get; init; }
 
     /// <summary>
     /// Order of error handling operations.

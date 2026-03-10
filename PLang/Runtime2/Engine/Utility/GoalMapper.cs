@@ -110,8 +110,8 @@ public static class GoalMapper
         {
             Goal = MapGoalToCallInfo(oldHandler.GoalToCall),
             RetryCount = oldHandler.RetryHandler?.RetryCount,
-            RetryOverSeconds = oldHandler.RetryHandler?.RetryDelayInMilliseconds != null
-                ? (int)(oldHandler.RetryHandler.RetryDelayInMilliseconds.Value / 1000)
+            RetryOverMs = oldHandler.RetryHandler?.RetryDelayInMilliseconds != null
+                ? (int)oldHandler.RetryHandler.RetryDelayInMilliseconds.Value
                 : null,
             Order = oldHandler.RunRetryBeforeCallingGoalToCall
                 ? ErrorOrder.RetryFirst
