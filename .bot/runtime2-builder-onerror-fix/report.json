@@ -1,0 +1,64 @@
+{
+  "branch": "runtime2-builder-onerror-fix",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-setup-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-09T00:00:00Z",
+      "timestamp_end": "2026-03-09T00:00:00Z",
+      "intent": "Design fix for builder onError dropping and CacheDynamicKey literal rewriting",
+      "before": {
+        "assumptions": "Builder LLM inconsistently drops onError properties from .pr files and rewrites intentional literal values",
+        "risk": "Low — design only"
+      },
+      "plan": "Strengthen BuildGoal.llm prompt with CRITICAL rules for onError preservation and literal value preservation. Write 6 PLang test suites.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect plan with prompt changes and 6 test suites"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Plan written, ready for test-designer and coder",
+        "notes": "Test suites may already exist on runtime2 after plang-test-gaps merge"
+      }
+    },
+    {
+      "id": "td-v1-2026-03-10",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-10T00:00:00Z",
+      "timestamp_end": "2026-03-10T00:00:00Z",
+      "intent": "Assess test coverage for builder onError fix — determine if new tests are needed",
+      "before": {
+        "assumptions": "Architect specified 6 PLang test suites. Branch was behind runtime2 which merged runtime2-plang-test-gaps with 33 test suites.",
+        "risk": "Low — assessment only, no code changes"
+      },
+      "plan": "Merge runtime2 into branch to get existing tests. Compare architect's 6 test specs against existing coverage. Write verdict.",
+      "actions": [
+        {
+          "paths": ["Tests/Runtime2/ErrorCall/", "Tests/Runtime2/ErrorChain/", "Tests/Runtime2/ErrorProps/", "Tests/Runtime2/ErrorTypes/", "Tests/Runtime2/ErrorInHandler/", "Tests/Runtime2/CacheDynamicKey/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "All 6 test suites from architect's plan already exist on runtime2. Compared each against architect's spec — full coverage."
+        },
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/test-designer/v1/plan.md", ".bot/runtime2-builder-onerror-fix/test-designer/v1/summary.md", ".bot/runtime2-builder-onerror-fix/test-designer/v1/verdict.json", ".bot/runtime2-builder-onerror-fix/test-designer/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict: no new tests needed. Existing suite covers architect's requirements."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All test coverage verified. No gaps found.",
+        "notes": "Only remaining work is BuildGoal.llm prompt improvement (coder task). No C# tests applicable — fix targets LLM behavior."
+      }
+    }
+  ]
+}
