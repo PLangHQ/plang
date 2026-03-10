@@ -1,3 +1,24 @@
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index 98229d2c..ef8e70ea 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -149,6 +149,16 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun.
+ 
+ ---
+ 
++## GoalFirst Retry Behavior
++
++When `ErrorOrder` is `GoalFirst`, the error goal runs first. If the error goal **succeeds**, the runtime considers the error handled and returns immediately — **retries are skipped entirely**. This is by design: the error goal resolved the problem, so there's nothing to retry.
++
++Only if the error goal fails (or is absent) does the runtime proceed to retries. This means `GoalFirst` with both a goal and retries configured will only use the retries as a fallback when the error goal can't handle the problem.
++
++See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
++
++---
++
+ ## Error Reporting — When to use what
+ 
+ **Rule: match the error mechanism to the return type.**
 diff --git a/Documentation/Runtime2/pr-file-format.md b/Documentation/Runtime2/pr-file-format.md
 index 798d9073..c188f76b 100644
 --- a/Documentation/Runtime2/pr-file-format.md
@@ -12,7 +33,7 @@ index 798d9073..c188f76b 100644
    "ignoreError": false,
    "message": "Step failed",
 diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
-index 7b32b91e..e938e8e4 100644
+index 7b32b91e..db6922a0 100644
 --- a/Documentation/Runtime2/todos.md
 +++ b/Documentation/Runtime2/todos.md
 @@ -131,7 +131,7 @@ Target audiences:
@@ -20,7 +41,7 @@ index 7b32b91e..e938e8e4 100644
  | 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
  | 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
 -| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverSeconds fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
-+| 7 | **Retry testing** | NOT STARTED | ErrorHandler has RetryCount/RetryOverMs fields. Verify Step.Methods.cs actually executes the retry loop end-to-end. |
++| 7 | **Retry testing** | DONE | Covered by `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry with attempt counting) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). Added on `runtime2-builder-onerror-fix`. |
  
  **Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
  
@@ -149,6 +170,60 @@ index 0a0154f0..542031d9 100644
                  : null,
              Order = oldHandler.RunRetryBeforeCallingGoalToCall
                  ? ErrorOrder.RetryFirst
+diff --git a/Skill/builder/builder-design-conversation.md b/Skill/builder/builder-design-conversation.md
+index 032fa3a0..22271502 100644
+--- a/Skill/builder/builder-design-conversation.md
++++ b/Skill/builder/builder-design-conversation.md
+@@ -309,8 +309,12 @@ public class ErrorHandler
+ {
+     public GoalToCallInfo? Goal { get; set; }
+     public int? RetryCount { get; set; }
+-    public int? RetryOverSeconds { get; set; }
++    public int? RetryOverMs { get; set; }
+     public ErrorOrder? Order { get; set; }
++    public bool IgnoreError { get; set; }
++    public string? Message { get; set; }
++    public int? StatusCode { get; set; }
++    public string? Key { get; set; }
+ }
+ 
+ public enum ErrorOrder { GoalFirst, RetryFirst }
+@@ -427,7 +431,7 @@ Complete example of a built step in the `.pr` JSON:
+             "onError": {
+                 "goal": { "name": "HandleDbError", "parameters": null },
+                 "retryCount": 3,
+-                "retryOverSeconds": 10,
++                "retryOverMs": 10000,
+                 "order": "RetryFirst"
+             },
+             "cache": {
+diff --git a/Skill/builder/builder-implementation-spec.md b/Skill/builder/builder-implementation-spec.md
+index f8bb1dc9..36339095 100644
+--- a/Skill/builder/builder-implementation-spec.md
++++ b/Skill/builder/builder-implementation-spec.md
+@@ -80,8 +80,12 @@ public class ErrorHandler
+ {
+     public GoalToCallInfo? Goal { get; set; }
+     public int? RetryCount { get; set; }
+-    public int? RetryOverSeconds { get; set; }
++    public int? RetryOverMs { get; set; }
+     public ErrorOrder? Order { get; set; }
++    public bool IgnoreError { get; set; }
++    public string? Message { get; set; }
++    public int? StatusCode { get; set; }
++    public string? Key { get; set; }
+ }
+ 
+ public enum ErrorOrder
+@@ -298,7 +302,7 @@ public Task<GoalResult> GetMethods(string module, string format)
+ ### Shared Types
+ 
+ #### ErrorHandler
+-{ goal?: GoalToCallInfo, retryCount?: int, retryOverSeconds?: int, order?: "GoalFirst" | "RetryFirst" }
++{ goal?: GoalToCallInfo, retryCount?: int, retryOverMs?: int, order?: "GoalFirst" | "RetryFirst", ignoreError?: bool, message?: string, statusCode?: int, key?: string }
+ 
+ #### GoalToCallInfo
+ { name: string, parameters?: object }
 diff --git a/Tests/Runtime2/CacheDynamicKey/.build/app.pr b/Tests/Runtime2/CacheDynamicKey/.build/app.pr
 index 47239098..4c7b675c 100644
 --- a/Tests/Runtime2/CacheDynamicKey/.build/app.pr
