@@ -1,0 +1,110 @@
+{
+  "name": "AlwaysFails",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %goalFirstAttempts% = %goalFirstAttempts% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%goalFirstAttempts%",
+              "type": "string"
+            }
+          ],
+          "return": [
+            {
+              "name": "goalFirstAttempts"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        },
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%goalFirstAttempts%",
+              "type": "int"
+            },
+            {
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "goalFirstAttempts"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "name",
+              "value": "%goalFirstAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "value",
+              "value": "%goalFirstAttempts%",
+              "type": "int"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error \u0022always fails\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "always fails",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/AlwaysFails.goal",
+  "prPath": "/.build/alwaysfails.pr",
+  "hash": "2949241c77aadb5bdc7e2a0c057672b6897f36b0168914225b899b2838d35389",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "AlwaysFails"
+}

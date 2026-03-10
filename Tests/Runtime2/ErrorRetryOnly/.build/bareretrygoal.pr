@@ -1,0 +1,74 @@
+{
+  "name": "BareRetryGoal",
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %bareRetryAttempts% = %bareRetryAttempts% \u002B 1",
+      "lineNumber": 2,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%bareRetryAttempts%",
+              "type": "string"
+            },
+            {
+              "name": "B",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "return": [
+            {
+              "name": "bareRetryAttempts"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error \u0022always fails\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "message",
+              "value": "always fails",
+              "type": "string"
+            }
+          ],
+          "errors": [],
+          "warnings": []
+        }
+      ],
+      "errors": [],
+      "warnings": [],
+      "waitForExecution": true
+    }
+  ],
+  "subGoals": [],
+  "visibility": 1,
+  "path": "/BareRetryGoal.goal",
+  "prPath": "/.build/bareretrygoal.pr",
+  "hash": "cf9adb95b09494096cbd3e26b19d4cfe3b814398f00b5909e2a05acafe48ee30",
+  "isSetup": false,
+  "isEvent": false,
+  "isTest": false,
+  "errors": [],
+  "warnings": [],
+  "fullPath": "BareRetryGoal"
+}

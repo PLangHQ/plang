@@ -1,10 +1,11 @@
 {
   "name": "HandleValidationError",
+  "description": "The HandleValidationError goal is designed to handle validation errors that occur during the execution of steps in a process. It sets the validation error for a specific step in the goal\u0027s steps array based on the provided error information. After updating the validation error, it calls the BuildStep function to process the step that encountered the error.",
   "steps": [
     {
       "index": 0,
       "text": "set %goal.Steps[stepResult.index].validationError% = %!error%",
-      "lineNumber": 10,
+      "lineNumber": 15,
       "indent": 0,
       "actions": [
         {
@@ -26,6 +27,7 @@
           "warnings": []
         }
       ],
+      "hash": "5ee5dd1fbe80605ada6b76439f70876ab11238383b594b514169c14768aa717f",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -33,7 +35,7 @@
     {
       "index": 1,
       "text": "call BuildStep, step=%goal.Steps[stepResult.index]%",
-      "lineNumber": 11,
+      "lineNumber": 16,
       "indent": 0,
       "actions": [
         {
@@ -43,13 +45,14 @@
             {
               "name": "GoalName",
               "value": "BuildStep",
-              "type": "string"
+              "type": "goal.call"
             }
           ],
           "errors": [],
           "warnings": []
         }
       ],
+      "hash": "b20e7979740f67d0f3a622141ea7ec7cc2dfd6ca77c6612e9044dfca884ca0ee",
       "errors": [],
       "warnings": [],
       "waitForExecution": true
@@ -57,11 +60,15 @@
   ],
   "subGoals": [],
   "visibility": 0,
-  "path": "\\ApplyStep.goal",
-  "prPath": "\\.build\\applystep.pr",
+  "path": "/ApplyStep.goal",
+  "prPath": "/.build/applystep.pr",
   "hash": "740696222d70cdd9ef9012b3e56f6b05ff654d2b2372710dbef8386afd2ce83b",
   "isSetup": false,
   "isEvent": false,
+  "isTest": false,
+  "inputParameters": {
+    "%error%": "The error information that needs to be set as the validation error for the specific step."
+  },
   "errors": [],
   "warnings": [],
   "fullPath": "HandleValidationError"

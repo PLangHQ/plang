@@ -186,6 +186,46 @@
         "health": "Code changes done. Tests need LLM rebuild (no OpenAI API key in env).",
         "notes": "Run 'plang p build --llmservice=openai' in ErrorRetryOnly/ and ErrorGoalFirst/ when API key is available, then run 'plang p !test' to verify."
       }
+    },
+    {
+      "id": "coder-v2-2026-03-10",
+      "bot": "coder",
+      "timestamp_start": "2026-03-10T10:00:00Z",
+      "timestamp_end": "2026-03-10T10:30:00Z",
+      "intent": "Revert manual .pr edits and rebuild properly with plang builder",
+      "before": {
+        "assumptions": "v1 manually edited .pr files which is never allowed. OpenAI API key is now available.",
+        "risk": "Low — reverting to builder-generated output and rebuilding"
+      },
+      "plan": "1. Revert manual .pr edits via git checkout HEAD~2. 2. Rebuild system/builder with plang builder (force rebuild by deleting stale BuildGoal folder). 3. Rebuild ErrorRetryOnly and ErrorGoalFirst test .pr files. 4. Verify retryOverMs in rebuilt files.",
+      "actions": [
+        {
+          "paths": ["system/builder/.build/BuildGoal/"],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reverted manual edits then deleted stale per-step folder to force v0.2 rebuild"
+        },
+        {
+          "paths": ["system/builder/.build/buildgoal.pr", "system/builder/.build/build.pr", "system/builder/.build/applystep.pr", "system/builder/.build/buildstep.pr", "system/builder/.build/app.pr"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder regenerated into v0.2 single-file format. No retryOverSeconds anywhere."
+        },
+        {
+          "paths": ["Tests/Runtime2/ErrorRetryOnly/.build/", "Tests/Runtime2/ErrorGoalFirst/.build/"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt test .pr files. ErrorRetryOnly has retryOverMs: 500 correctly."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All .pr files rebuilt by plang builder. No manual edits. retryOverMs used correctly.",
+        "notes": "Builder now uses v0.2 single-file format for BuildGoal. Old per-step folder deleted."
+      }
     }
   ]
 }
