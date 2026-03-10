@@ -414,6 +414,39 @@
         "notes": "Branch is ready for merge. Suggest running security analyst next."
       },
       "timestamp_end": "2026-03-10T16:30:00Z"
+    },
+    {
+      "id": "sec-v1-2026-03-10",
+      "bot": "security",
+      "timestamp_start": "2026-03-10T17:00:00Z",
+      "timestamp_end": "2026-03-10T17:30:00Z",
+      "intent": "Security review of builder onError fix, RetryOverMs rename, and LLM prompt strengthening",
+      "before": {
+        "assumptions": "Branch has passed codeanalyzer v2 and tester v2. Changes are well-scoped: rename, prompt rules, tests.",
+        "risk": "Low — review only, no code changes"
+      },
+      "plan": "Blue team: map attack surface of error handling flow (retry mechanism, error goal execution, builder prompt, GoalMapper conversion). Red team: attempt to find exploitable vectors. Verify rename completeness.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Goals/Goal/Steps/Step/ErrorHandler.cs", "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Methods.cs", "PLang/Runtime2/Engine/Utility/GoalMapper.cs", "system/builder/llm/BuildGoal.llm", "system/builder/BuildGoal.goal", "system/builder/templates/goalFormatForLlm.template"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed all C# runtime changes, builder prompt, template, and schema for security implications. Verified end-to-end rename completeness."
+        },
+        {
+          "paths": [".bot/runtime2-builder-onerror-fix/security-report.json", ".bot/runtime2-builder-onerror-fix/security/v1/verdict.json", ".bot/runtime2-builder-onerror-fix/security/v1/plan.md", ".bot/runtime2-builder-onerror-fix/security/v1/summary.md", ".bot/runtime2-builder-onerror-fix/security/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, verdict (PASS), plan, and summaries"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Verdict: PASS. No critical/high findings. 3 low-severity accepted-risk items.",
+        "notes": "Recommend running auditor next for code integrity review before merge."
+      }
     }
   ]
 }
