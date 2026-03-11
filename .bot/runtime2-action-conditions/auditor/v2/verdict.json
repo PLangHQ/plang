@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All 4 v1 findings resolved: If.Run() and Compare.Run() now catch evaluator exceptions returning Data.FromError, WiderNumericType defaults to decimal, non-IComparable throws ArgumentException. 7 new tests with strong assertions cover all new code paths." }
