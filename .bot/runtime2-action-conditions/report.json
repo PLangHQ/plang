@@ -159,6 +159,35 @@
         "health": "4 mechanical fixes + 1 behavioral bug to address",
         "notes": "No OBP violations. Thread safety confirmed. Key finding: DefaultEvaluator.Contains uses reference equality for boxed numerics, causing int vs long mismatches in collection lookups."
       }
+    },
+    {
+      "id": "e5f6a7b8-anal-0002",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-11T13:00:00Z",
+      "timestamp_end": "2026-03-11T13:20:00Z",
+      "intent": "Re-review action-based conditions after coder fixes for v1 findings",
+      "before": {
+        "assumptions": "Coder applied all 5 v1 fixes. Need to verify each fix and check for fix-introduced issues.",
+        "risk": "Fix-introduced code (ContainsElement) may itself have issues or lack test coverage."
+      },
+      "plan": "Verify all 5 v1 findings fixed. Run abbreviated 5-pass on changed code. Focus on fix-introduced surface (ContainsElement method). Check deletion test for new code paths.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 5 fixes verified. ContainsElement implementation correct. One test gap: no test for mixed numeric types in collection Contains."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict PASS",
+        "health": "Green — all fixes correct, one test gap noted",
+        "notes": "ContainsElement NormalizeTypes path for mixed numeric collection lookups has no test. Recommend tester adds Evaluate(new List<long>{5L}, 'contains', (int)5)."
+      }
     }
   ]
 }
