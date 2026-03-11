@@ -283,6 +283,20 @@ Target audiences:
 
 ---
 
+## Move Builder to Runtime2
+**Date:** 2026-03-11
+**Context:** The builder currently runs on v1 runtime (`PlangModule/Program.cs`). Module-specific build-time validation (e.g., file.read checks static paths exist) requires Runtime2 features (action-based conditions, `Left/Operator/Right` format). Can't write validate `.goal` files that run on v1.
+
+**What to do:**
+- Migrate builder pipeline (`Build.goal`, `BuildGoal.goal`, `ApplyStep.goal`) to run on Runtime2 engine
+- Replace `[plang] ValidateActions` with Runtime2 action(s)
+- Enable module-specific validate `.goal` files (e.g., `system/modules/file/validate/validateRead.goal`)
+- Rebuild system `.pr` files with Runtime2 builder
+
+**Continue on branch:** `runtime2-builder-validation` — shelved until this migration is done. That branch will add the validate goals and wire them into ApplyStep.
+
+---
+
 ## Builder Consistency Framework
 **Date:** 2026-03-06
 **Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
