@@ -51,6 +51,14 @@ if (HasIndentedChildren(i))
 }
 ```
 
+### Codeanalyzer v1 fixes applied
+
+- `DefaultEvaluator` sealed
+- `WiderNumericType` array moved to `static readonly` field
+- `Contains`/`In` now normalize types per element (fixes boxed int vs long mismatch)
+- `HasIndentedChildren` changed from `public` to `internal`
+- Duplicate XML summary on `Steps.RunAsync` merged
+
 ## Next steps
 
 - Builder prompt update (`BuildGoal.llm`) to generate Left/Operator/Right instead of bool Condition

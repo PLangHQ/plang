@@ -123,9 +123,9 @@
         }
       ],
       "after": {
-        "status": "Complete — 69 new tests + 1580 existing all pass",
+        "status": "Complete — 69 new tests + 1580 existing all pass. Codeanalyzer fixes applied.",
         "health": "Green — zero regressions",
-        "notes": "Key discovery: Data.Merge loses non-list values. Solved via __condition__ MemoryStack signal. Next: builder prompt update, PLang pipeline tests."
+        "notes": "Key discovery: Data.Merge loses non-list values. Solved via __condition__ MemoryStack signal. Codeanalyzer v1 fixes: sealed DefaultEvaluator, static array, Contains boxing fix, HasIndentedChildren internal, merged duplicate summary."
       }
     },
     {
