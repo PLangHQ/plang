@@ -1,0 +1,5 @@
+Start
+/ Test: multi-action condition — file.exists produces bool, condition.if branches on it
+- file save "testfile.txt", content "hello"
+- if testfile.txt exists, call ProcessFile
+- assert %result% equals "file-processed", "GoalIfTrue should run when file exists"

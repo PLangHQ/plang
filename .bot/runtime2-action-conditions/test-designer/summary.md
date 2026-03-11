@@ -1,0 +1,1 @@
+**v1** — Designed 90 tests (69 C#, 21 PLang) for action-based conditions: DefaultEvaluator operators/truthiness/type normalization, condition.if handler branching, condition.compare, Steps.RunAsync sub-step skip logic, and full pipeline integration including multi-action conditions via file.exists. See [v1/summary.md](v1/summary.md).

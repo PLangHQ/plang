@@ -1,0 +1,5 @@
+Start
+/ Test: equals operator calls goal when values match
+- set %z% = 5
+- if %z% == 5, call WhenEqual
+- assert %result% equals "equal", "GoalIfTrue should have been called for z == 5"

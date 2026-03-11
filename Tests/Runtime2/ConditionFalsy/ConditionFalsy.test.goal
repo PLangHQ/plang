@@ -1,0 +1,5 @@
+Start
+/ Test: falsy value triggers else branch (GoalIfFalse)
+- set %flag% = false
+- if %flag%, call HandleTrue, else call HandleFalse
+- assert %result% equals "false-branch", "GoalIfFalse should have been called"

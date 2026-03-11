@@ -1,0 +1,2 @@
+WhenLTE
+- set %result% = "lte"

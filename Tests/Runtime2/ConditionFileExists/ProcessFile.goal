@@ -1,0 +1,2 @@
+ProcessFile
+- set %result% = "file-processed"

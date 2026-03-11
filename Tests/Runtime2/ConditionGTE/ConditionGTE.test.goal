@@ -1,0 +1,5 @@
+Start
+/ Test: greater-or-equal operator calls goal on equal values (boundary)
+- set %x% = 5
+- if %x% >= 5, call WhenGTE
+- assert %result% equals "gte", "GoalIfTrue should have been called for x >= 5"

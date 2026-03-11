@@ -1,0 +1,6 @@
+Start
+/ Test: compound AND condition — both sides must be true
+- set %a% = 5
+- set %b% = 3
+- if %a% > 1 and %b% < 10, call DoThing
+- assert %result% equals "both-true", "AND condition should pass when both sides true"

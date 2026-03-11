@@ -1,0 +1,2 @@
+WhenMissing
+- set %result% = "missing"

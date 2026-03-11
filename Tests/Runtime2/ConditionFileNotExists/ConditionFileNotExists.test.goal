@@ -1,0 +1,4 @@
+Start
+/ Test: multi-action condition — file doesn't exist, else branch runs
+- if missing_file_abc123.txt exists, call WhenExists, else call WhenMissing
+- assert %result% equals "missing", "GoalIfFalse should run when file doesn't exist"

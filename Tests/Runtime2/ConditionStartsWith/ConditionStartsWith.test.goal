@@ -1,0 +1,5 @@
+Start
+/ Test: startswith string operator calls goal when prefix matches
+- set %name% = "hello world"
+- if %name% startswith "hello", call WhenStarts
+- assert %result% equals "starts", "GoalIfTrue should have been called for startswith"

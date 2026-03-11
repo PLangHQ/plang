@@ -1,0 +1,12 @@
+Start
+/ Test: nested conditions — inner false only skips inner block, outer continues
+- set %x% = 10
+- set %y% = 3
+- set %innerRan% = "no"
+- set %outerAfterRan% = "no"
+- if %x% > 5
+    - if %y% > 100
+        - set %innerRan% = "yes"
+    - set %outerAfterRan% = "yes"
+- assert %innerRan% equals "no", "inner block should be skipped (y not > 100)"
+- assert %outerAfterRan% equals "yes", "outer block step after inner-if should execute"

@@ -1,0 +1,5 @@
+Start
+/ Test: not-equals operator calls goal when values differ
+- set %a% = 7
+- if %a% != 3, call WhenNotEqual
+- assert %result% equals "not-equal", "GoalIfTrue should have been called for a != 3"

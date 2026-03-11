@@ -1,0 +1,9 @@
+Start
+/ Test: sub-steps under a true condition execute
+- set %flag% = true
+- set %innerRan% = false
+- if %flag%
+    - set %innerRan% = true
+    - set %innerValue% = "executed"
+- assert %innerRan% is true, "indented steps should execute when condition is true"
+- assert %innerValue% equals "executed", "indented set should have run"

@@ -1,0 +1,2 @@
+WhenExists
+- set %result% = "exists"
