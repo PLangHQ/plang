@@ -8,248 +8,224 @@ public class DefaultEvaluatorTests
 
     // --- Batch 1: Evaluate() — All Operators ---
 
-    // == operator
     [Test]
     public async Task Evaluate_Equals_SameInts_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "==", 5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_Equals_DifferentInts_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "==", 10)).IsFalse();
     }
 
-    // != operator
     [Test]
     public async Task Evaluate_NotEquals_DifferentValues_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "!=", 10)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_NotEquals_SameValues_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "!=", 5)).IsFalse();
     }
 
-    // > operator
     [Test]
     public async Task Evaluate_GreaterThan_LeftBigger_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(10, ">", 5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_GreaterThan_Equal_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, ">", 5)).IsFalse();
     }
 
-    // < operator
     [Test]
     public async Task Evaluate_LessThan_LeftSmaller_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(3, "<", 5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_LessThan_Equal_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "<", 5)).IsFalse();
     }
 
-    // >= operator
     [Test]
     public async Task Evaluate_GreaterOrEqual_EqualValues_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, ">=", 5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_GreaterOrEqual_LeftSmaller_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(3, ">=", 5)).IsFalse();
     }
 
-    // <= operator
     [Test]
     public async Task Evaluate_LessOrEqual_EqualValues_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(5, "<=", 5)).IsTrue();
     }
 
-    // contains operator
     [Test]
     public async Task Evaluate_Contains_SubstringPresent_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "contains", "world")).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_Contains_SubstringAbsent_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "contains", "xyz")).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_Contains_CaseInsensitive_ReturnsTrue()
     {
-        // "hello world" contains "WORLD" should be true (case-insensitive)
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "contains", "WORLD")).IsTrue();
     }
 
-    // startswith operator
     [Test]
     public async Task Evaluate_StartsWith_MatchingPrefix_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "startswith", "hello")).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_StartsWith_NonMatchingPrefix_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "startswith", "world")).IsFalse();
     }
 
-    // endswith operator
     [Test]
     public async Task Evaluate_EndsWith_MatchingSuffix_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("hello world", "endswith", "world")).IsTrue();
     }
 
-    // in operator
     [Test]
     public async Task Evaluate_In_ValueInList_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(2, "in", list)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_In_ValueNotInList_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(5, "in", list)).IsFalse();
     }
 
-    // isEmpty operator
     [Test]
     public async Task Evaluate_IsEmpty_EmptyList_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(new List<object>(), "isempty", null)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_IsEmpty_NonEmptyList_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(new List<object> { 1 }, "isempty", null)).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_IsEmpty_NullValue_ReturnsTrue()
     {
-        // null should be considered empty
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(null, "isempty", null)).IsTrue();
     }
 
     // --- Batch 2: Logical, Unary, Edge Cases ---
 
-    // NOT operator
     [Test]
     public async Task Evaluate_Not_TruthyValue_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(true, "not", null)).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_Not_FalsyValue_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(null, "not", null)).IsTrue();
     }
 
-    // AND operator
     [Test]
     public async Task Evaluate_And_BothTrue_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(true, "and", true)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_And_OneFalse_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(true, "and", false)).IsFalse();
     }
 
-    // OR operator
     [Test]
     public async Task Evaluate_Or_BothFalse_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(false, "or", false)).IsFalse();
     }
 
     [Test]
     public async Task Evaluate_Or_OneTrueOneFalse_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(true, "or", false)).IsTrue();
     }
 
-    // Type normalization
     [Test]
     public async Task Evaluate_IntVsLong_NormalizesAndCompares()
     {
-        // (int)5 == (long)5 — JSON numeric boxing
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate((int)5, "==", (long)5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_IntVsDouble_NormalizesAndCompares()
     {
-        // (int)5 > (double)4.5
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate((int)5, ">", (double)4.5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_StringVsInt_ConvertsStringAndCompares()
     {
-        // "5" == 5
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("5", "==", 5)).IsTrue();
     }
 
-    // Null handling
     [Test]
     public async Task Evaluate_NullEqualsNull_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(null, "==", null)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_NullNotEqualsValue_ReturnsTrue()
     {
-        // null != 5
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(null, "!=", 5)).IsTrue();
     }
 
     [Test]
     public async Task Evaluate_NullGreaterThan_ReturnsFalse()
     {
-        // null > 5 — can't compare, should be false
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate(null, ">", 5)).IsFalse();
     }
 
-    // String case insensitivity
     [Test]
     public async Task Evaluate_StringEquality_CaseInsensitive()
     {
-        // "Hello" == "hello"
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.Evaluate("Hello", "==", "hello")).IsTrue();
     }
 
-    // Unsupported operator
     [Test]
     public async Task Evaluate_UnsupportedOperator_ThrowsNotSupported()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(() => _eval.Evaluate(1, "xor", 2)).Throws<NotSupportedException>();
     }
 
     // --- Batch 3: IsTruthy() ---
@@ -257,80 +233,78 @@ public class DefaultEvaluatorTests
     [Test]
     public async Task IsTruthy_Null_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(null)).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_BoolTrue_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(true)).IsTrue();
     }
 
     [Test]
     public async Task IsTruthy_BoolFalse_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(false)).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_ZeroInt_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(0)).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_NonZeroInt_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(42)).IsTrue();
     }
 
     [Test]
     public async Task IsTruthy_ZeroLong_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(0L)).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_ZeroDouble_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(0.0)).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_EmptyString_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy("")).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_WhitespaceString_ReturnsFalse()
     {
-        // "  " should be falsy (IsNullOrWhiteSpace)
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy("  ")).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_NonEmptyString_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy("hello")).IsTrue();
     }
 
     [Test]
     public async Task IsTruthy_EmptyCollection_ReturnsFalse()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(new List<int>())).IsFalse();
     }
 
     [Test]
     public async Task IsTruthy_NonEmptyCollection_ReturnsTrue()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(new List<int> { 1 })).IsTrue();
     }
 
     [Test]
     public async Task IsTruthy_ArbitraryObject_ReturnsTrue()
     {
-        // non-null object with no special handling should be truthy
-        Assert.Fail("Not implemented");
+        await Assert.That(_eval.IsTruthy(new object())).IsTrue();
     }
 }
