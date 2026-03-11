@@ -3,8 +3,16 @@ using System.Globalization;
 
 namespace PLang.Runtime2.modules.condition.providers;
 
+/// <summary>
+/// Default condition evaluator shipped with PLang.
+/// Handles all comparison, string, collection, logical, and unary operators.
+/// Type normalization widens numeric operands to a common type before comparison
+/// (int/long/double/decimal widening, string-to-number conversion).
+/// String comparisons are case-insensitive by default.
+/// </summary>
 public sealed class DefaultEvaluator : IEvaluator
 {
+    /// <inheritdoc/>
     public bool Evaluate(object? left, string op, object? right)
     {
         (left, right) = NormalizeTypes(left, right);
@@ -29,6 +37,7 @@ public sealed class DefaultEvaluator : IEvaluator
         };
     }
 
+    /// <inheritdoc/>
     public bool IsTruthy(object? value) => value switch
     {
         null => false,

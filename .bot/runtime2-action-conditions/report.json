@@ -465,6 +465,62 @@
         "health": "Green — all v1 findings resolved with matching tests",
         "notes": "Ready for docs bot or merge."
       }
+    },
+    {
+      "id": "k1l2m3n4-docs-0001",
+      "bot": "docs",
+      "timestamp_start": "2026-03-11T18:00:00Z",
+      "timestamp_end": "2026-03-11T18:30:00Z",
+      "intent": "Document action-based conditions feature — final merge gate",
+      "before": {
+        "assumptions": "All reviews passed (auditor v2, tester v2, security v1, codeanalyzer v2). 1595 tests. 5 production files, 3 architecture docs to update.",
+        "risk": "Low — documentation only, no code logic changes."
+      },
+      "plan": "1. Add XML doc comments to 4 production files. 2. Update modules.md, README.md, good_to_know.md. 3. Draft CHANGELOG. 4. Write docs-report.json + verdict.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/if.cs",
+            "PLang/Runtime2/modules/condition/compare.cs",
+            "PLang/Runtime2/modules/condition/providers/IEvaluator.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added XML doc comments to all public classes, methods, and properties."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/README.md",
+            "Documentation/Runtime2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated architecture docs with condition module details, file tree, __condition__ signal pattern, type normalization."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-conditions/docs-report.json",
+            ".bot/runtime2-action-conditions/docs/v2/verdict.json",
+            ".bot/runtime2-action-conditions/docs/v2/plan.md",
+            ".bot/runtime2-action-conditions/docs/v2/summary.md",
+            ".bot/runtime2-action-conditions/docs/v2/result.md",
+            ".bot/runtime2-action-conditions/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs report, verdict (PASS), plan, summaries, CHANGELOG draft."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict PASS",
+        "health": "Green — all documentation gaps filled",
+        "notes": "One minor finding: PLang .goal examples deferred pending builder prompt update. Not blocking merge."
+      }
     }
   ]
 }

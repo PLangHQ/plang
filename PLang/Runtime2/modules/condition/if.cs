@@ -5,15 +5,32 @@ using PLang.Runtime2.modules.condition.providers;
 
 namespace PLang.Runtime2.modules.condition;
 
+/// <summary>
+/// Evaluates a condition and branches execution.
+/// When <see cref="Operator"/> is null, performs a truthy check on <see cref="Left"/>.
+/// When <see cref="Operator"/> is set, evaluates Left op Right via <see cref="DefaultEvaluator"/>.
+/// Branches to <see cref="GoalIfTrue"/>/<see cref="GoalIfFalse"/> when set (goal mode),
+/// or signals sub-step execution via the <c>__condition__</c> MemoryStack key (sub-step mode).
+/// </summary>
 [Action("if")]
 public partial class If : IContext
 {
+    /// <summary>The left operand (value or %variable%).</summary>
     public partial object? Left { get; init; }
+    /// <summary>The comparison operator (null for truthy check). Case-insensitive.</summary>
     public partial string? Operator { get; init; }
+    /// <summary>The right operand (null for unary operators like NOT, isEmpty).</summary>
     public partial object? Right { get; init; }
+    /// <summary>Goal to call when the condition is true.</summary>
     public partial GoalCall? GoalIfTrue { get; init; }
+    /// <summary>Goal to call when the condition is false.</summary>
     public partial GoalCall? GoalIfFalse { get; init; }
 
+    /// <summary>
+    /// Evaluates the condition and either calls a goal or returns a bool for sub-step control.
+    /// Sets <c>__condition__</c> in MemoryStack so <c>Steps.RunAsync</c> can skip/execute indented children.
+    /// Returns <see cref="Data"/> with error key "EvaluationError" on unsupported operators or type mismatches.
+    /// </summary>
     public async Task<Data> Run()
     {
         var evaluator = new DefaultEvaluator();

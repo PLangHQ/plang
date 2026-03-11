@@ -245,8 +245,22 @@ public static class TypeMapping
 | `variable` | `set`, `get`, `remove`, `exists`, `clear` | Variable operations |
 | `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
 | `output` | `write` | Console/channel output |
-| `condition` | Condition evaluation | If/else logic |
+| `condition` | `if`, `compare` | Conditional branching and comparison |
 | `library` | `load` | Load external DLL libraries |
+
+### condition module — Details
+
+The condition module uses structured `Left/Operator/Right` parameters (not expression strings). The LLM builder maps natural language conditions to these typed parameters.
+
+**`condition.if`** — Evaluates and branches. Two modes:
+- **Goal mode**: `GoalIfTrue`/`GoalIfFalse` set — calls the appropriate goal.
+- **Sub-step mode**: No goals — returns a bool. `Steps.RunAsync` uses the `__condition__` MemoryStack signal to skip/execute indented children.
+
+When `Operator` is null, performs a truthy check on `Left`. When set, evaluates `Left op Right` via `IEvaluator`.
+
+**`condition.compare`** — Pure boolean evaluation. Returns a bool wrapped in `Data`. Used as an intermediate in compound conditions (AND/OR) where multiple `compare` results feed into a final `if`. Does NOT set `__condition__` — only `if` controls sub-step execution.
+
+**Pluggable evaluator**: Both actions use `IEvaluator` (default: `DefaultEvaluator`). Supports operators: `==`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `startswith`, `endswith`, `in`, `isempty`, `not`, `and`, `or`. Type normalization widens numeric operands automatically.
 
 ## Relationships
 

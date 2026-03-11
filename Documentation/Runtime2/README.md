@@ -259,7 +259,13 @@ PLang/Runtime2/
 │
 └── actions/
     ├── IClass.cs, IContext.cs, ICodeGenerated.cs, Attributes.cs
-    ├── variable/   file/   output/   condition/   event/
+    ├── variable/   file/   output/   event/
+    ├── condition/
+    │   ├── if.cs         condition.if — evaluates + branches (goal or sub-step mode)
+    │   ├── compare.cs    condition.compare — pure bool (for compound AND/OR)
+    │   └── providers/
+    │       ├── IEvaluator.cs         Pluggable comparison engine interface
+    │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
     ├── goal/   loop/   list/   math/   convert/
     ├── assert/   mock/   error/   library/
 ```
