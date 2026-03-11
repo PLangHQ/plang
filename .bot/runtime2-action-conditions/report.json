@@ -331,6 +331,53 @@
         "health": "Two major findings require coder fix",
         "notes": "If.Run() and Compare.Run() can throw unhandled exceptions from evaluator. Violates 'behavior methods never throw' contract. OBP compliance is clean. Send back to coder."
       }
+    },
+    {
+      "id": "h8i9j0k1-code-0002",
+      "bot": "coder",
+      "timestamp_start": "2026-03-11T16:00:00Z",
+      "timestamp_end": null,
+      "intent": "Fix auditor FAIL findings: add try/catch to If.Run() and Compare.Run(), fix WiderNumericType fallback, fix non-IComparable Compare",
+      "before": {
+        "assumptions": "Auditor found 2 major contract violations (unhandled exceptions) + 1 minor + 1 nit. Security found non-IComparable silent fallback.",
+        "risk": "Low — straightforward exception handling additions with matching tests."
+      },
+      "plan": "1. Add try/catch to If.Run() and Compare.Run() returning Data.FromError for evaluator exceptions. 2. Fix WiderNumericType fallback from byte to decimal. 3. Throw for non-IComparable in Compare(). 4. Add 6+ tests covering all fixes. 5. Strengthen existing weak assertions.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/if.cs",
+            "PLang/Runtime2/modules/condition/compare.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added try/catch for evaluator exceptions returning ValidationError with rich diagnostics (operator, types, values, fix suggestion)."
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "WiderNumericType fallback changed from byte to decimal. Non-IComparable Compare() now throws ArgumentException."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 new tests: unsupported operator, non-IComparable, __condition__ negative test, strengthened weak assertions."
+        }
+      ],
+      "after": {
+        "status": "Complete — all 4 auditor findings + security #4 fixed. 1595 tests pass.",
+        "health": "Green — zero regressions",
+        "notes": "Rich error messages include operator, operand types/values, and fix suggestions for LLM/user diagnosis."
+      }
     }
   ]
 }

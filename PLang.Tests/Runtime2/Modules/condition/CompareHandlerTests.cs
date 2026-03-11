@@ -56,4 +56,38 @@ public class CompareHandlerTests : IDisposable
         await Assert.That(result.Value is bool).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
     }
+
+    [Test]
+    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
+    {
+        var action = new Compare { Context = _engine.CreateContext(), Left = 1, Operator = "xor", Right = 2 };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(result.Error!.Message).Contains("xor");
+        await Assert.That(result.Error!.Message).Contains("Int32");
+    }
+
+    [Test]
+    public async Task Run_DoesNotSetConditionSignal()
+    {
+        var context = _engine.CreateContext();
+        var action = new Compare { Context = context, Left = 10, Operator = ">", Right = 5 };
+        await action.Run();
+
+        var signal = context.MemoryStack.Get("__condition__");
+        await Assert.That(signal).IsNull();
+    }
+
+    [Test]
+    public async Task Run_NonComparableType_ReturnsEvaluationError()
+    {
+        var action = new Compare { Context = _engine.CreateContext(), Left = new object(), Operator = ">", Right = 5 };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(result.Error!.Message).Contains("does not support comparison");
+    }
 }

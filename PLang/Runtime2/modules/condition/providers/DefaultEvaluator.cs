@@ -59,7 +59,7 @@ public sealed class DefaultEvaluator : IEvaluator
         if (left == null || right == null) return left == null && right == null ? 0 : (left == null ? -1 : 1);
         if (left is IComparable lc)
             return lc.CompareTo(right);
-        return 0;
+        throw new ArgumentException($"Type '{left.GetType().Name}' does not support comparison operators (>, <, >=, <=)");
     }
 
     private static bool Contains(object? left, object? right)
@@ -147,8 +147,8 @@ public sealed class DefaultEvaluator : IEvaluator
         var order = NumericOrder;
         var ai = Array.IndexOf(order, a);
         var bi = Array.IndexOf(order, b);
-        if (ai < 0) ai = 0;
-        if (bi < 0) bi = 0;
+        if (ai < 0) ai = order.Length - 1;
+        if (bi < 0) bi = order.Length - 1;
         return order[Math.Max(ai, bi)];
     }
 

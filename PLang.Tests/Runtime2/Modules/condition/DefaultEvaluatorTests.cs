@@ -270,6 +270,21 @@ public class DefaultEvaluatorTests
         await Assert.That(() => _eval.Evaluate(1, "xor", 2)).Throws<NotSupportedException>();
     }
 
+    [Test]
+    public async Task Evaluate_NonComparableType_GreaterThan_ThrowsArgumentException()
+    {
+        await Assert.That(() => _eval.Evaluate(new object(), ">", 5)).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task Evaluate_UnknownNumericType_DoesNotThrow()
+    {
+        // ushort is not in IsNumeric — falls through to Equals/Compare without numeric normalization.
+        // Verifies no crash on types outside the standard numeric set.
+        await Assert.That(_eval.Evaluate((ushort)5, "==", (ushort)5)).IsTrue();
+        await Assert.That(_eval.Evaluate((ushort)5, "!=", (ushort)10)).IsTrue();
+    }
+
     // --- Batch 3: IsTruthy() ---
 
     [Test]

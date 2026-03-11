@@ -213,5 +213,29 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+    }
+
+    [Test]
+    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
+    {
+        var action = new If { Context = CreateContext(), Left = 1, Operator = "xor", Right = 2 };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(result.Error!.Message).Contains("xor");
+        await Assert.That(result.Error!.Message).Contains("Int32");
+    }
+
+    [Test]
+    public async Task Run_IncompatibleComparisonTypes_ReturnsEvaluationError()
+    {
+        var action = new If { Context = CreateContext(), Left = new object(), Operator = ">", Right = 5 };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
+        await Assert.That(result.Error!.Message).Contains("does not support comparison");
     }
 }
