@@ -127,6 +127,38 @@
         "health": "Green — zero regressions",
         "notes": "Key discovery: Data.Merge loses non-list values. Solved via __condition__ MemoryStack signal. Next: builder prompt update, PLang pipeline tests."
       }
+    },
+    {
+      "id": "d4e5f6a7-anal-0001",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-11T12:00:00Z",
+      "timestamp_end": "2026-03-11T12:30:00Z",
+      "intent": "Code analysis of coder v1 action-based conditions implementation",
+      "before": {
+        "assumptions": "Coder v1 complete with 69 tests passing. 5 production files to review.",
+        "risk": "OBP violations, thread safety of __condition__ signal, evaluator hardcoding, Data contract misuse."
+      },
+      "plan": "5-pass analysis (OBP, simplification, readability, behavioral, deletion) of IEvaluator.cs, DefaultEvaluator.cs, if.cs, compare.cs, Steps/this.cs. Focus on thread safety of __condition__ signal, Data usage, source generator compatibility, and OBP compliance.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/providers/IEvaluator.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/modules/condition/if.cs",
+            "PLang/Runtime2/modules/condition/compare.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass analysis. Found 4 mechanical issues + 1 medium-severity behavioral bug (Contains with boxed numerics)."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict NEEDS WORK",
+        "health": "4 mechanical fixes + 1 behavioral bug to address",
+        "notes": "No OBP violations. Thread safety confirmed. Key finding: DefaultEvaluator.Contains uses reference equality for boxed numerics, causing int vs long mismatches in collection lookups."
+      }
     }
   ]
 }
