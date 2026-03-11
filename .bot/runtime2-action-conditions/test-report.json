@@ -1,72 +1,50 @@
 {
   "tester": "tester",
   "branch": "runtime2-action-conditions",
-  "timestamp": "2026-03-11T09:30:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-03-11T16:30:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 1588, "passed": 1588, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 1595, "passed": 1595, "failed": 0, "skipped": 0 },
     "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 5,
-    "changed_files_total": 5,
+    "changed_files_covered": 3,
+    "changed_files_total": 3,
     "uncovered_files": [],
-    "note": "Coverage tool failed to generate output (known TUnit/dotnet-coverage issue). Manual analysis confirms all 5 production files have dedicated test files."
+    "note": "All 3 changed production files (if.cs, compare.cs, DefaultEvaluator.cs) have dedicated tests exercising the v2 changes."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs",
-      "code_file": "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
-      "issue": "ContainsElement mixed-numeric path had no test. Contains operator only tested with strings, never with collections. In operator only tested with same-type elements.",
-      "impact": "The ContainsElement fix (normalizing types per element to handle boxed int vs long) was review-driven code with no test proving it worked. Could regress silently.",
-      "suggestion": "Added 6 tests: collection contains (hit/miss), mixed-numeric contains (int-in-long-list, long-in-int-list), mixed-numeric in (both directions). All pass. FIXED.",
-      "status": "fixed"
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs",
-      "code_file": "PLang/Runtime2/modules/condition/if.cs",
-      "issue": "__condition__ MemoryStack signal (line 26 of if.cs) was not directly tested by any If handler test. Only tested indirectly through StepsSubStepTests.",
-      "impact": "If the signal mechanism broke (e.g., wrong key name, wrong value type), only integration-level step tests would catch it, not the unit tests. The deletion test: if line 26 were deleted, no IfHandlerTest would fail.",
-      "suggestion": "Added 2 tests verifying __condition__ is set to true/false in MemoryStack after Run(). FIXED.",
-      "status": "fixed"
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs",
-      "code_file": "PLang/Runtime2/modules/condition/if.cs",
-      "issue": "Run_GoalExecutionFails_PropagatesError (line 182) only asserts result.Success == false. Does not check Error.Key or Error.StatusCode.",
-      "impact": "Code could return the wrong error type (e.g., 'SerializationError' instead of 'NotFound') and the test would still pass.",
-      "suggestion": "Add assertion on result.Error.Key == 'NotFound' or equivalent. Not fixed in this session (minor)."
-    },
-    {
-      "id": 4,
       "severity": "minor",
       "type": "weak-assertion",
       "test_file": "PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs",
       "code_file": "PLang/Runtime2/modules/condition/if.cs",
-      "issue": "IfTrue_GoalNotFound_ReturnsError (line 164) only asserts result.Success == false. Same weak assertion pattern.",
-      "impact": "Same as finding 3.",
-      "suggestion": "Strengthen with Error.Key assertion. Not fixed (minor, same pattern as finding 3)."
+      "issue": "IfTrue_GoalNotFound_ReturnsError (line 175) still only asserts result.Success == false. No Error.Key check. Carried over from v1 finding #4.",
+      "impact": "Code could return the wrong error type and the test would still pass.",
+      "suggestion": "Add: await Assert.That(result.Error!.Key).IsEqualTo(\"NotFound\");"
     },
     {
-      "id": 5,
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs",
+      "code_file": "PLang/Runtime2/modules/condition/if.cs",
+      "issue": "ValidationError.FixSuggestion property (if.cs lines 59-61, compare.cs lines 31) is set but never verified by any test. If deleted, no test fails.",
+      "impact": "Low — FixSuggestion is a UX diagnostic aid, not a correctness concern. But the deletion test proves it's untested.",
+      "suggestion": "Add assertion: await Assert.That(result.Error!.FixSuggestion).Contains(\"operator\"); to one of the error-path tests."
+    },
+    {
+      "id": 3,
       "severity": "minor",
       "type": "missing-plang-test",
       "test_file": null,
       "code_file": "PLang/Runtime2/modules/condition/if.cs",
-      "issue": "No PLang .goal pipeline tests exist for the new condition actions (if with Left/Operator/Right, compare, sub-steps). Builder prompt not yet updated.",
-      "impact": "Full pipeline (builder -> .pr -> GoalMapper -> runtime) is untested for the new action format. Expected: builder prompt update is a separate task.",
-      "suggestion": "PLang pipeline tests should be added when the builder prompt is updated to generate Left/Operator/Right. Not actionable until then."
+      "issue": "No PLang .goal pipeline tests exist for the new condition actions. Carried over from v1 finding #5. Deferred pending builder prompt update.",
+      "impact": "Full pipeline (builder -> .pr -> GoalMapper -> runtime) is untested for the new action format.",
+      "suggestion": "PLang pipeline tests should be added when the builder prompt is updated to generate Left/Operator/Right."
     }
   ],
   "verdict": "approved",
-  "summary": "All 1588 C# tests pass (1580 existing + 8 new). Two major gaps fixed: (1) ContainsElement mixed-numeric path now has 6 tests proving the review-driven NormalizeTypes fix works, (2) __condition__ MemoryStack signal now directly tested in IfHandlerTests. Two minor weak-assertion findings noted but not blocking. PLang pipeline tests deferred pending builder prompt update. Zero regressions."
+  "summary": "All 1595 C# tests pass (1588 from v1 + 7 new in v2). Zero regressions. Coder v2 addressed all 4 auditor findings: (1) If.Run() try/catch with strong error-path tests checking Error.Key and message content, (2) Compare.Run() same pattern, (3) WiderNumericType decimal fallback, (4) Compare __condition__ negative test. Security finding #4 (non-IComparable throws) also fixed with dedicated tests. The v1 weak assertion in ConditionHandlerTests.IfTrue_GoalNotFound_ReturnsError remains unfixed (minor). FixSuggestion property is untested (minor). PLang pipeline tests still deferred. All new tests are honest — deletion of the try/catch blocks would cause unhandled exceptions and test failures."
 }
