@@ -1,0 +1,977 @@
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index db6922a0..6275f1dd 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -125,15 +125,11 @@ Target audiences:
+ 
+ | # | Item | Status | Notes |
+ |---|------|--------|-------|
+-| 1 | **system.sqlite** | NOT STARTED | System database. Ingi bringing details. |
+-| 2 | **Setup.goal** | NOT STARTED | How DB and store are set up. Depends on system.sqlite. |
+-| 3 | **Settings** | IN PROGRESS | Goal-scoped module settings. On `runtime2-settings` branch. |
+-| 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+-| 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+-| 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+-| 7 | **Retry testing** | DONE | Covered by `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry with attempt counting) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). Added on `runtime2-builder-onerror-fix`. |
+-
+-**Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
++| 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
++| 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
++| 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
++| 4 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
++| 5 | **Retry testing** | ✅ DONE | `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). |
+ 
+ ---
+ 
+@@ -330,10 +326,3 @@ Target audiences:
+ 3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
+ 
+ **Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
+-
+----
+-
+-## Builder Consistency Framework
+-**Date:** 2026-03-06
+-**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
+-**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
+diff --git a/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs
+new file mode 100644
+index 00000000..05ebc84e
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs
+@@ -0,0 +1,30 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class CompareHandlerTests
++{
++    // --- Batch 5: condition.compare Handler ---
++
++    [Test]
++    public async Task Run_GreaterThan_ReturnsDataWithTrue()
++    {
++        // Left=10, Operator=">", Right=5 → Data.Ok(true)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
++    {
++        // Left=3, Operator=">", Right=5 → Data.Ok(false)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_ResultValueIsBool()
++    {
++        // Data.Value must be specifically bool, not boxed int or string
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs b/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs
+new file mode 100644
+index 00000000..72084993
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs
+@@ -0,0 +1,336 @@
++using PLang.Runtime2.modules.condition.providers;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class DefaultEvaluatorTests
++{
++    private readonly DefaultEvaluator _eval = new();
++
++    // --- Batch 1: Evaluate() — All Operators ---
++
++    // == operator
++    [Test]
++    public async Task Evaluate_Equals_SameInts_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_Equals_DifferentInts_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // != operator
++    [Test]
++    public async Task Evaluate_NotEquals_DifferentValues_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_NotEquals_SameValues_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // > operator
++    [Test]
++    public async Task Evaluate_GreaterThan_LeftBigger_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterThan_Equal_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // < operator
++    [Test]
++    public async Task Evaluate_LessThan_LeftSmaller_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_LessThan_Equal_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // >= operator
++    [Test]
++    public async Task Evaluate_GreaterOrEqual_EqualValues_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterOrEqual_LeftSmaller_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // <= operator
++    [Test]
++    public async Task Evaluate_LessOrEqual_EqualValues_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // contains operator
++    [Test]
++    public async Task Evaluate_Contains_SubstringPresent_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_SubstringAbsent_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CaseInsensitive_ReturnsTrue()
++    {
++        // "hello world" contains "WORLD" should be true (case-insensitive)
++        Assert.Fail("Not implemented");
++    }
++
++    // startswith operator
++    [Test]
++    public async Task Evaluate_StartsWith_MatchingPrefix_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_StartsWith_NonMatchingPrefix_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // endswith operator
++    [Test]
++    public async Task Evaluate_EndsWith_MatchingSuffix_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // in operator
++    [Test]
++    public async Task Evaluate_In_ValueInList_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_In_ValueNotInList_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // isEmpty operator
++    [Test]
++    public async Task Evaluate_IsEmpty_EmptyList_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_IsEmpty_NonEmptyList_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_IsEmpty_NullValue_ReturnsTrue()
++    {
++        // null should be considered empty
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 2: Logical, Unary, Edge Cases ---
++
++    // NOT operator
++    [Test]
++    public async Task Evaluate_Not_TruthyValue_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_Not_FalsyValue_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // AND operator
++    [Test]
++    public async Task Evaluate_And_BothTrue_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_And_OneFalse_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // OR operator
++    [Test]
++    public async Task Evaluate_Or_BothFalse_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_Or_OneTrueOneFalse_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // Type normalization
++    [Test]
++    public async Task Evaluate_IntVsLong_NormalizesAndCompares()
++    {
++        // (int)5 == (long)5 — JSON numeric boxing
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_IntVsDouble_NormalizesAndCompares()
++    {
++        // (int)5 > (double)4.5
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_StringVsInt_ConvertsStringAndCompares()
++    {
++        // "5" == 5
++        Assert.Fail("Not implemented");
++    }
++
++    // Null handling
++    [Test]
++    public async Task Evaluate_NullEqualsNull_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_NullNotEqualsValue_ReturnsTrue()
++    {
++        // null != 5
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Evaluate_NullGreaterThan_ReturnsFalse()
++    {
++        // null > 5 — can't compare, should be false
++        Assert.Fail("Not implemented");
++    }
++
++    // String case insensitivity
++    [Test]
++    public async Task Evaluate_StringEquality_CaseInsensitive()
++    {
++        // "Hello" == "hello"
++        Assert.Fail("Not implemented");
++    }
++
++    // Unsupported operator
++    [Test]
++    public async Task Evaluate_UnsupportedOperator_ThrowsNotSupported()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 3: IsTruthy() ---
++
++    [Test]
++    public async Task IsTruthy_Null_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_BoolTrue_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_BoolFalse_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroInt_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_NonZeroInt_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroLong_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroDouble_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_EmptyString_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_WhitespaceString_ReturnsFalse()
++    {
++        // "  " should be falsy (IsNullOrWhiteSpace)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_NonEmptyString_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_EmptyCollection_ReturnsFalse()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_NonEmptyCollection_ReturnsTrue()
++    {
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task IsTruthy_ArbitraryObject_ReturnsTrue()
++    {
++        // non-null object with no special handling should be truthy
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs
+new file mode 100644
+index 00000000..2a9aadb4
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs
+@@ -0,0 +1,65 @@
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class IfHandlerTests
++{
++    // --- Batch 4: condition.if Handler ---
++
++    [Test]
++    public async Task Run_NoOperator_TruthyLeft_ReturnsTrue()
++    {
++        // Operator is null, Left is truthy → returns Data with true
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_NoOperator_FalsyLeft_ReturnsFalse()
++    {
++        // Operator is null, Left is null/0/false → returns Data with false
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_WithOperator_DelegatesToEvaluator()
++    {
++        // Left=10, Operator=">", Right=5 → evaluator called, returns true
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_ConditionTrue_GoalIfTrue_CallsGoal()
++    {
++        // GoalIfTrue set, condition true → goal is executed
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_ConditionFalse_GoalIfFalse_CallsGoal()
++    {
++        // GoalIfFalse set, condition false → else goal is executed
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_ConditionTrue_NoGoalIfTrue_ReturnsTrueNoCall()
++    {
++        // No goals set, condition true → returns true (sub-step mode)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_ConditionFalse_NoGoals_ReturnsFalse()
++    {
++        // No goals set, condition false → returns false (sub-step mode)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Run_GoalExecutionFails_PropagatesError()
++    {
++        // GoalIfTrue points to nonexistent goal → error propagated
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs b/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs
+new file mode 100644
+index 00000000..3ca0d722
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs
+@@ -0,0 +1,79 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class StepsSubStepTests
++{
++    // --- Batch 6: Steps.RunAsync Sub-Step Logic ---
++
++    [Test]
++    public async Task RunAsync_FalseCondition_SkipsIndentedChildren()
++    {
++        // Step at indent 0 returns false + has indented children at indent 4
++        // → children are skipped
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_TrueCondition_ExecutesIndentedChildren()
++    {
++        // Step at indent 0 returns true + has indented children at indent 4
++        // → children execute
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_FalseCondition_ResumesAtSameIndent()
++    {
++        // [indent 0: false] [indent 4: child] [indent 0: next]
++        // → child skipped, next executes
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_NestedConditions_InnerFalseSkipsOnlyInner()
++    {
++        // [indent 0: true] [indent 4: false] [indent 8: inner-child] [indent 4: outer-child]
++        // → inner-child skipped, outer-child executes
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_NoIndentedChildren_FalseDoesNotSkip()
++    {
++        // [indent 0: false] [indent 0: next]
++        // → next executes (no children to skip)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_TwoConsecutiveConditions_EachControlsOwnBlock()
++    {
++        // [indent 0: false] [indent 4: child-A] [indent 0: true] [indent 4: child-B]
++        // → child-A skipped, child-B executes
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_DeeplyNested_ThreeLevels()
++    {
++        // [indent 0: true] [indent 4: true] [indent 8: leaf]
++        // → all execute
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_NonConditionStep_FalseValue_DoesNotSkip()
++    {
++        // A non-condition step (e.g., variable.set) that happens to return a falsy value
++        // should NOT trigger sub-step skipping — only condition steps with indented children should
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task RunAsync_HasIndentedChildren_CorrectDetection()
++    {
++        // Helper method: returns true when next step has higher indent, false when same or lower
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal b/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal
+new file mode 100644
+index 00000000..19ff063c
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: compound AND condition — both sides must be true
++- set %a% = 5
++- set %b% = 3
++- if %a% > 1 and %b% < 10, call DoThing
++- assert %result% equals "both-true", "AND condition should pass when both sides true"
+diff --git a/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal b/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal
+new file mode 100644
+index 00000000..b8af8b59
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal
+@@ -0,0 +1,2 @@
++DoThing
++- set %result% = "both-true"
+diff --git a/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal b/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal
+new file mode 100644
+index 00000000..7068834e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: compound OR condition — first false, second true → goal called
++- set %a% = 99
++- set %b% = 2
++- if %a% == 1 or %b% == 2, call DoThing
++- assert %result% equals "or-true", "OR condition should pass when at least one side true"
+diff --git a/Tests/Runtime2/ConditionCompoundOr/DoThing.goal b/Tests/Runtime2/ConditionCompoundOr/DoThing.goal
+new file mode 100644
+index 00000000..3deb6a2e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundOr/DoThing.goal
+@@ -0,0 +1,2 @@
++DoThing
++- set %result% = "or-true"
+diff --git a/Tests/Runtime2/ConditionContains/ConditionContains.test.goal b/Tests/Runtime2/ConditionContains/ConditionContains.test.goal
+new file mode 100644
+index 00000000..3c647a4b
+--- /dev/null
++++ b/Tests/Runtime2/ConditionContains/ConditionContains.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: contains string operator calls goal when substring present
++- set %name% = "hello world"
++- if %name% contains "world", call WhenContains
++- assert %result% equals "contains", "GoalIfTrue should have been called for contains"
+diff --git a/Tests/Runtime2/ConditionContains/WhenContains.goal b/Tests/Runtime2/ConditionContains/WhenContains.goal
+new file mode 100644
+index 00000000..734942f2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionContains/WhenContains.goal
+@@ -0,0 +1,2 @@
++WhenContains
++- set %result% = "contains"
+diff --git a/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal b/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal
+new file mode 100644
+index 00000000..069a2e39
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: else branch — false condition calls GoalIfFalse
++- set %x% = 2
++- if %x% > 100, call WhenBig, else call WhenSmall
++- assert %result% equals "small", "else branch should execute when condition is false"
+diff --git a/Tests/Runtime2/ConditionElseBranch/WhenBig.goal b/Tests/Runtime2/ConditionElseBranch/WhenBig.goal
+new file mode 100644
+index 00000000..2d1fea40
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/WhenBig.goal
+@@ -0,0 +1,2 @@
++WhenBig
++- set %result% = "big"
+diff --git a/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal b/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal
+new file mode 100644
+index 00000000..5c6598e2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal
+@@ -0,0 +1,2 @@
++WhenSmall
++- set %result% = "small"
+diff --git a/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal b/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal
+new file mode 100644
+index 00000000..da8d7216
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: endswith string operator calls goal when suffix matches
++- set %name% = "hello world"
++- if %name% endswith "world", call WhenEnds
++- assert %result% equals "ends", "GoalIfTrue should have been called for endswith"
+diff --git a/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal b/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal
+new file mode 100644
+index 00000000..ce08b217
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal
+@@ -0,0 +1,2 @@
++WhenEnds
++- set %result% = "ends"
+diff --git a/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal b/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal
+new file mode 100644
+index 00000000..00944823
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: equals operator calls goal when values match
++- set %z% = 5
++- if %z% == 5, call WhenEqual
++- assert %result% equals "equal", "GoalIfTrue should have been called for z == 5"
+diff --git a/Tests/Runtime2/ConditionEquals/WhenEqual.goal b/Tests/Runtime2/ConditionEquals/WhenEqual.goal
+new file mode 100644
+index 00000000..d97a55fa
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEquals/WhenEqual.goal
+@@ -0,0 +1,2 @@
++WhenEqual
++- set %result% = "equal"
+diff --git a/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal b/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal
+new file mode 100644
+index 00000000..8966ac4a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: falsy value triggers else branch (GoalIfFalse)
++- set %flag% = false
++- if %flag%, call HandleTrue, else call HandleFalse
++- assert %result% equals "false-branch", "GoalIfFalse should have been called"
+diff --git a/Tests/Runtime2/ConditionFalsy/HandleFalse.goal b/Tests/Runtime2/ConditionFalsy/HandleFalse.goal
+new file mode 100644
+index 00000000..f1715b1e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/HandleFalse.goal
+@@ -0,0 +1,2 @@
++HandleFalse
++- set %result% = "false-branch"
+diff --git a/Tests/Runtime2/ConditionFalsy/HandleTrue.goal b/Tests/Runtime2/ConditionFalsy/HandleTrue.goal
+new file mode 100644
+index 00000000..d8159706
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/HandleTrue.goal
+@@ -0,0 +1,2 @@
++HandleTrue
++- set %result% = "true-branch"
+diff --git a/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal b/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal
+new file mode 100644
+index 00000000..94072bc2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: multi-action condition — file.exists produces bool, condition.if branches on it
++- file save "testfile.txt", content "hello"
++- if testfile.txt exists, call ProcessFile
++- assert %result% equals "file-processed", "GoalIfTrue should run when file exists"
+diff --git a/Tests/Runtime2/ConditionFileExists/ProcessFile.goal b/Tests/Runtime2/ConditionFileExists/ProcessFile.goal
+new file mode 100644
+index 00000000..595c459b
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExists/ProcessFile.goal
+@@ -0,0 +1,2 @@
++ProcessFile
++- set %result% = "file-processed"
+diff --git a/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal b/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal
+new file mode 100644
+index 00000000..d4de1c8e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: multi-action condition with sub-steps — file.exists + indented block
++- file save "testfile.txt", content "hello"
++- set %innerRan% = "no"
++- if testfile.txt exists
++    - set %innerRan% = "yes"
++- assert %innerRan% equals "yes", "sub-steps should execute when file exists"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal b/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal
+new file mode 100644
+index 00000000..23504483
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal
+@@ -0,0 +1,4 @@
++Start
++/ Test: multi-action condition — file doesn't exist, else branch runs
++- if missing_file_abc123.txt exists, call WhenExists, else call WhenMissing
++- assert %result% equals "missing", "GoalIfFalse should run when file doesn't exist"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal b/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal
+new file mode 100644
+index 00000000..c24cba29
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal
+@@ -0,0 +1,2 @@
++WhenExists
++- set %result% = "exists"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal b/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal
+new file mode 100644
+index 00000000..1155d06c
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal
+@@ -0,0 +1,2 @@
++WhenMissing
++- set %result% = "missing"
+diff --git a/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal b/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal
+new file mode 100644
+index 00000000..33325f55
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: greater-or-equal operator calls goal on equal values (boundary)
++- set %x% = 5
++- if %x% >= 5, call WhenGTE
++- assert %result% equals "gte", "GoalIfTrue should have been called for x >= 5"
+diff --git a/Tests/Runtime2/ConditionGTE/WhenGTE.goal b/Tests/Runtime2/ConditionGTE/WhenGTE.goal
+new file mode 100644
+index 00000000..df1eaf16
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGTE/WhenGTE.goal
+@@ -0,0 +1,2 @@
++WhenGTE
++- set %result% = "gte"
+diff --git a/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal b/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal
+new file mode 100644
+index 00000000..ec2bcffc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: greater than operator calls goal when condition is true
++- set %x% = 10
++- if %x% > 5, call WhenGreater
++- assert %result% equals "greater", "GoalIfTrue should have been called for x > 5"
+diff --git a/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal b/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal
+new file mode 100644
+index 00000000..a10fe25f
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal
+@@ -0,0 +1,2 @@
++WhenGreater
++- set %result% = "greater"
+diff --git a/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal b/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal
+new file mode 100644
+index 00000000..7fc097eb
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: less-or-equal operator calls goal on equal values (boundary)
++- set %x% = 5
++- if %x% <= 5, call WhenLTE
++- assert %result% equals "lte", "GoalIfTrue should have been called for x <= 5"
+diff --git a/Tests/Runtime2/ConditionLTE/WhenLTE.goal b/Tests/Runtime2/ConditionLTE/WhenLTE.goal
+new file mode 100644
+index 00000000..972134c6
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLTE/WhenLTE.goal
+@@ -0,0 +1,2 @@
++WhenLTE
++- set %result% = "lte"
+diff --git a/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal b/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal
+new file mode 100644
+index 00000000..5fd4957a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: less than operator calls goal when condition is true
++- set %y% = 3
++- if %y% < 10, call WhenLess
++- assert %result% equals "less", "GoalIfTrue should have been called for y < 10"
+diff --git a/Tests/Runtime2/ConditionLessThan/WhenLess.goal b/Tests/Runtime2/ConditionLessThan/WhenLess.goal
+new file mode 100644
+index 00000000..66a442cc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLessThan/WhenLess.goal
+@@ -0,0 +1,2 @@
++WhenLess
++- set %result% = "less"
+diff --git a/Tests/Runtime2/ConditionNested/ConditionNested.test.goal b/Tests/Runtime2/ConditionNested/ConditionNested.test.goal
+new file mode 100644
+index 00000000..059a399a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNested/ConditionNested.test.goal
+@@ -0,0 +1,12 @@
++Start
++/ Test: nested conditions — inner false only skips inner block, outer continues
++- set %x% = 10
++- set %y% = 3
++- set %innerRan% = "no"
++- set %outerAfterRan% = "no"
++- if %x% > 5
++    - if %y% > 100
++        - set %innerRan% = "yes"
++    - set %outerAfterRan% = "yes"
++- assert %innerRan% equals "no", "inner block should be skipped (y not > 100)"
++- assert %outerAfterRan% equals "yes", "outer block step after inner-if should execute"
+diff --git a/Tests/Runtime2/ConditionNot/ConditionNot.test.goal b/Tests/Runtime2/ConditionNot/ConditionNot.test.goal
+new file mode 100644
+index 00000000..0a6b0824
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNot/ConditionNot.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: NOT negation — false flag negated to true calls goal
++- set %flag% = false
++- if not %flag%, call WhenFalse
++- assert %result% equals "negated", "NOT should negate falsy to truthy"
+diff --git a/Tests/Runtime2/ConditionNot/WhenFalse.goal b/Tests/Runtime2/ConditionNot/WhenFalse.goal
+new file mode 100644
+index 00000000..44546e99
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNot/WhenFalse.goal
+@@ -0,0 +1,2 @@
++WhenFalse
++- set %result% = "negated"
+diff --git a/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal b/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal
+new file mode 100644
+index 00000000..0d2c4bfc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: not-equals operator calls goal when values differ
++- set %a% = 7
++- if %a% != 3, call WhenNotEqual
++- assert %result% equals "not-equal", "GoalIfTrue should have been called for a != 3"
+diff --git a/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal b/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal
+new file mode 100644
+index 00000000..200521d4
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal
+@@ -0,0 +1,2 @@
++WhenNotEqual
++- set %result% = "not-equal"
+diff --git a/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal b/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal
+new file mode 100644
+index 00000000..1c5d49c5
+--- /dev/null
++++ b/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: startswith string operator calls goal when prefix matches
++- set %name% = "hello world"
++- if %name% startswith "hello", call WhenStarts
++- assert %result% equals "starts", "GoalIfTrue should have been called for startswith"
+diff --git a/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal b/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal
+new file mode 100644
+index 00000000..27117eea
+--- /dev/null
++++ b/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal
+@@ -0,0 +1,2 @@
++WhenStarts
++- set %result% = "starts"
+diff --git a/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal b/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal
+new file mode 100644
+index 00000000..9f38dfc5
+--- /dev/null
++++ b/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: sub-steps under a false condition are skipped
++- set %flag% = false
++- set %innerRan% = "no"
++- if %flag%
++    - set %innerRan% = "yes"
++- assert %innerRan% equals "no", "indented steps should be skipped when condition is false"
+diff --git a/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal b/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal
+new file mode 100644
+index 00000000..513c9f57
+--- /dev/null
++++ b/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal
+@@ -0,0 +1,9 @@
++Start
++/ Test: sub-steps under a true condition execute
++- set %flag% = true
++- set %innerRan% = false
++- if %flag%
++    - set %innerRan% = true
++    - set %innerValue% = "executed"
++- assert %innerRan% is true, "indented steps should execute when condition is true"
++- assert %innerValue% equals "executed", "indented set should have run"
+diff --git a/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal b/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal
+new file mode 100644
+index 00000000..9127c562
+--- /dev/null
++++ b/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: truthy check on a true boolean variable calls GoalIfTrue
++- set %flag% = true
++- if %flag%, call HandleTrue
++- assert %result% equals "true-branch", "GoalIfTrue should have been called"
+diff --git a/Tests/Runtime2/ConditionTruthy/HandleTrue.goal b/Tests/Runtime2/ConditionTruthy/HandleTrue.goal
+new file mode 100644
+index 00000000..d8159706
+--- /dev/null
++++ b/Tests/Runtime2/ConditionTruthy/HandleTrue.goal
+@@ -0,0 +1,2 @@
++HandleTrue
++- set %result% = "true-branch"
