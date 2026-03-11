@@ -1,0 +1,7 @@
+Start
+/ Test: sub-steps under a false condition are skipped
+- set %flag% = false
+- set %innerRan% = "no"
+- if %flag%
+    - set %innerRan% = "yes"
+- assert %innerRan% equals "no", "indented steps should be skipped when condition is false"

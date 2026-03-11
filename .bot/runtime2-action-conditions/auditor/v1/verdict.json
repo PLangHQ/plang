@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Two major findings: If.Run() and Compare.Run() can throw unhandled exceptions from the evaluator, violating the 'behavior methods never throw' contract. Fix with try/catch returning Data.FromError." }

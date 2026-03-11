@@ -1,0 +1,1870 @@
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index db6922a0..6275f1dd 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -125,15 +125,11 @@ Target audiences:
+ 
+ | # | Item | Status | Notes |
+ |---|------|--------|-------|
+-| 1 | **system.sqlite** | NOT STARTED | System database. Ingi bringing details. |
+-| 2 | **Setup.goal** | NOT STARTED | How DB and store are set up. Depends on system.sqlite. |
+-| 3 | **Settings** | IN PROGRESS | Goal-scoped module settings. On `runtime2-settings` branch. |
+-| 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+-| 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+-| 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+-| 7 | **Retry testing** | DONE | Covered by `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry with attempt counting) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). Added on `runtime2-builder-onerror-fix`. |
+-
+-**Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
++| 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
++| 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
++| 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
++| 4 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
++| 5 | **Retry testing** | ✅ DONE | `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). |
+ 
+ ---
+ 
+@@ -330,10 +326,3 @@ Target audiences:
+ 3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
+ 
+ **Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
+-
+----
+-
+-## Builder Consistency Framework
+-**Date:** 2026-03-06
+-**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
+-**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
+diff --git a/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs
+new file mode 100644
+index 00000000..9d26873c
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs
+@@ -0,0 +1,93 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition;
++using PLang.SafeFileSystem;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class CompareHandlerTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLangFileSystem _fs;
++    private readonly PLang.Runtime2.Engine.@this _engine;
++
++    public CompareHandlerTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _fs = new PLangFileSystem(_tempDir, "");
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    [Test]
++    public async Task Run_GreaterThan_ReturnsDataWithTrue()
++    {
++        var action = new Compare { Context = _engine.CreateContext(), Left = 10, Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
++    {
++        var action = new Compare { Context = _engine.CreateContext(), Left = 3, Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(false);
++    }
++
++    [Test]
++    public async Task Run_ResultValueIsBool()
++    {
++        var action = new Compare { Context = _engine.CreateContext(), Left = 5, Operator = "==", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Value is bool).IsTrue();
++        await Assert.That((bool)result.Value!).IsTrue();
++    }
++
++    [Test]
++    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
++    {
++        var action = new Compare { Context = _engine.CreateContext(), Left = 1, Operator = "xor", Right = 2 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
++        await Assert.That(result.Error!.Message).Contains("xor");
++        await Assert.That(result.Error!.Message).Contains("Int32");
++    }
++
++    [Test]
++    public async Task Run_DoesNotSetConditionSignal()
++    {
++        var context = _engine.CreateContext();
++        var action = new Compare { Context = context, Left = 10, Operator = ">", Right = 5 };
++        await action.Run();
++
++        var signal = context.MemoryStack.Get("__condition__");
++        await Assert.That(signal).IsNull();
++    }
++
++    [Test]
++    public async Task Run_NonComparableType_ReturnsEvaluationError()
++    {
++        var action = new Compare { Context = _engine.CreateContext(), Left = new object(), Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
++        await Assert.That(result.Error!.Message).Contains("does not support comparison");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+index 59d3c8dc..3ce53d58 100644
+--- a/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
++++ b/PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs
+@@ -38,7 +38,7 @@ public class ConditionHandlerTests : IDisposable
+     [Test]
+     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
+     {
+-        var action = new If { Context = CreateContext(), Condition = true };
++        var action = new If { Context = CreateContext(), Left = true };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -48,7 +48,7 @@ public class ConditionHandlerTests : IDisposable
+     [Test]
+     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
+     {
+-        var action = new If { Context = CreateContext(), Condition = false };
++        var action = new If { Context = CreateContext(), Left = false };
+         var result = await action.Run();
+ 
+         await Assert.That(result.Success).IsTrue();
+@@ -95,7 +95,7 @@ public class ConditionHandlerTests : IDisposable
+         var action = new If
+         {
+             Context = CreateContext(),
+-            Condition = true,
++            Left = true,
+             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
+             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
+         };
+@@ -146,7 +146,7 @@ public class ConditionHandlerTests : IDisposable
+         var action = new If
+         {
+             Context = CreateContext(),
+-            Condition = false,
++            Left = false,
+             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
+             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
+         };
+@@ -167,7 +167,7 @@ public class ConditionHandlerTests : IDisposable
+         var action = new If
+         {
+             Context = CreateContext(),
+-            Condition = true,
++            Left = true,
+             GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
+         };
+         var result = await action.Run();
+@@ -248,7 +248,7 @@ public class ConditionHandlerTests : IDisposable
+                             ActionName = "if",
+                             Parameters = new System.Collections.Generic.List<Data>
+                             {
+-                                new Data("condition", "%fileResult.Exists%"),
++                                new Data("left", "%fileResult.Exists%"),
+                                 new Data("goalIfTrue", "WriteExists")
+                             }
+                         }
+diff --git a/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs b/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs
+new file mode 100644
+index 00000000..20f86d75
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs
+@@ -0,0 +1,367 @@
++using PLang.Runtime2.modules.condition.providers;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class DefaultEvaluatorTests
++{
++    private readonly DefaultEvaluator _eval = new();
++
++    // --- Batch 1: Evaluate() — All Operators ---
++
++    [Test]
++    public async Task Evaluate_Equals_SameInts_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(5, "==", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Equals_DifferentInts_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(5, "==", 10)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_NotEquals_DifferentValues_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(5, "!=", 10)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_NotEquals_SameValues_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(5, "!=", 5)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterThan_LeftBigger_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(10, ">", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterThan_Equal_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(5, ">", 5)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_LessThan_LeftSmaller_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(3, "<", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_LessThan_Equal_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(5, "<", 5)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterOrEqual_EqualValues_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(5, ">=", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_GreaterOrEqual_LeftSmaller_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(3, ">=", 5)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_LessOrEqual_EqualValues_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(5, "<=", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_SubstringPresent_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "contains", "world")).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_SubstringAbsent_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "contains", "xyz")).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CaseInsensitive_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "contains", "WORLD")).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CollectionContainsElement_ReturnsTrue()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(list, "contains", 2)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CollectionMissingElement_ReturnsFalse()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(list, "contains", 99)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CollectionMixedNumeric_IntInLongList_ReturnsTrue()
++    {
++        var list = new List<object> { 5L, 10L, 15L };
++        await Assert.That(_eval.Evaluate(list, "contains", (int)5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_Contains_CollectionMixedNumeric_LongInIntList_ReturnsTrue()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(list, "contains", 2L)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_In_MixedNumeric_IntInLongList_ReturnsTrue()
++    {
++        var list = new List<object> { 5L, 10L, 15L };
++        await Assert.That(_eval.Evaluate((int)5, "in", list)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_In_MixedNumeric_LongInIntList_ReturnsTrue()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(2L, "in", list)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_StartsWith_MatchingPrefix_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "startswith", "hello")).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_StartsWith_NonMatchingPrefix_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "startswith", "world")).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_EndsWith_MatchingSuffix_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate("hello world", "endswith", "world")).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_In_ValueInList_ReturnsTrue()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(2, "in", list)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_In_ValueNotInList_ReturnsFalse()
++    {
++        var list = new List<object> { 1, 2, 3 };
++        await Assert.That(_eval.Evaluate(5, "in", list)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_IsEmpty_EmptyList_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(new List<object>(), "isempty", null)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_IsEmpty_NonEmptyList_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(new List<object> { 1 }, "isempty", null)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_IsEmpty_NullValue_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(null, "isempty", null)).IsTrue();
++    }
++
++    // --- Batch 2: Logical, Unary, Edge Cases ---
++
++    [Test]
++    public async Task Evaluate_Not_TruthyValue_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(true, "not", null)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_Not_FalsyValue_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(null, "not", null)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_And_BothTrue_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(true, "and", true)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_And_OneFalse_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(true, "and", false)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_Or_BothFalse_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(false, "or", false)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_Or_OneTrueOneFalse_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(true, "or", false)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_IntVsLong_NormalizesAndCompares()
++    {
++        await Assert.That(_eval.Evaluate((int)5, "==", (long)5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_IntVsDouble_NormalizesAndCompares()
++    {
++        await Assert.That(_eval.Evaluate((int)5, ">", (double)4.5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_StringVsInt_ConvertsStringAndCompares()
++    {
++        await Assert.That(_eval.Evaluate("5", "==", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_NullEqualsNull_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(null, "==", null)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_NullNotEqualsValue_ReturnsTrue()
++    {
++        await Assert.That(_eval.Evaluate(null, "!=", 5)).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_NullGreaterThan_ReturnsFalse()
++    {
++        await Assert.That(_eval.Evaluate(null, ">", 5)).IsFalse();
++    }
++
++    [Test]
++    public async Task Evaluate_StringEquality_CaseInsensitive()
++    {
++        await Assert.That(_eval.Evaluate("Hello", "==", "hello")).IsTrue();
++    }
++
++    [Test]
++    public async Task Evaluate_UnsupportedOperator_ThrowsNotSupported()
++    {
++        await Assert.That(() => _eval.Evaluate(1, "xor", 2)).Throws<NotSupportedException>();
++    }
++
++    [Test]
++    public async Task Evaluate_NonComparableType_GreaterThan_ThrowsArgumentException()
++    {
++        await Assert.That(() => _eval.Evaluate(new object(), ">", 5)).Throws<ArgumentException>();
++    }
++
++    [Test]
++    public async Task Evaluate_UnknownNumericType_DoesNotThrow()
++    {
++        // ushort is not in IsNumeric — falls through to Equals/Compare without numeric normalization.
++        // Verifies no crash on types outside the standard numeric set.
++        await Assert.That(_eval.Evaluate((ushort)5, "==", (ushort)5)).IsTrue();
++        await Assert.That(_eval.Evaluate((ushort)5, "!=", (ushort)10)).IsTrue();
++    }
++
++    // --- Batch 3: IsTruthy() ---
++
++    [Test]
++    public async Task IsTruthy_Null_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(null)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_BoolTrue_ReturnsTrue()
++    {
++        await Assert.That(_eval.IsTruthy(true)).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTruthy_BoolFalse_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(false)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroInt_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(0)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_NonZeroInt_ReturnsTrue()
++    {
++        await Assert.That(_eval.IsTruthy(42)).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroLong_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(0L)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_ZeroDouble_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(0.0)).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_EmptyString_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy("")).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_WhitespaceString_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy("  ")).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_NonEmptyString_ReturnsTrue()
++    {
++        await Assert.That(_eval.IsTruthy("hello")).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTruthy_EmptyCollection_ReturnsFalse()
++    {
++        await Assert.That(_eval.IsTruthy(new List<int>())).IsFalse();
++    }
++
++    [Test]
++    public async Task IsTruthy_NonEmptyCollection_ReturnsTrue()
++    {
++        await Assert.That(_eval.IsTruthy(new List<int> { 1 })).IsTrue();
++    }
++
++    [Test]
++    public async Task IsTruthy_ArbitraryObject_ReturnsTrue()
++    {
++        await Assert.That(_eval.IsTruthy(new object())).IsTrue();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs b/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs
+new file mode 100644
+index 00000000..0ea75770
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs
+@@ -0,0 +1,241 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition;
++using PLang.SafeFileSystem;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class IfHandlerTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLangFileSystem _fs;
++    private readonly PLang.Runtime2.Engine.@this _engine;
++
++    public IfHandlerTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _fs = new PLangFileSystem(_tempDir, "");
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private PLangContext CreateContext() => _engine.CreateContext();
++
++    [Test]
++    public async Task Run_NoOperator_TruthyLeft_ReturnsTrue()
++    {
++        var action = new If { Context = CreateContext(), Left = 42 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task Run_NoOperator_FalsyLeft_ReturnsFalse()
++    {
++        var action = new If { Context = CreateContext(), Left = null };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(false);
++    }
++
++    [Test]
++    public async Task Run_WithOperator_DelegatesToEvaluator()
++    {
++        var action = new If { Context = CreateContext(), Left = 10, Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task Run_ConditionTrue_GoalIfTrue_CallsGoal()
++    {
++        var captureStream = new System.IO.MemoryStream();
++        _engine.User.Channels.Register(new Channel(
++            EngineChannels.Default, captureStream,
++            ChannelDirection.Output, ownsStream: true)
++        { ContentType = "text/plain" });
++
++        var trueGoal = new Goal
++        {
++            Name = "TrueBranch",
++            Path = "/TrueBranch.goal",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Index = 0,
++                    Text = "write true branch",
++                    Actions = new StepActions
++                    {
++                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                        {
++                            Module = "output",
++                            ActionName = "write",
++                            Parameters = new List<Data> { new Data("content", "true-branch") }
++                        }
++                    }
++                }
++            }
++        };
++        _engine.Goals.Add(trueGoal);
++
++        var action = new If
++        {
++            Context = CreateContext(),
++            Left = true,
++            GoalIfTrue = new GoalCall { Name = "TrueBranch" }
++        };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(true);
++
++        captureStream.Position = 0;
++        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
++        await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
++    }
++
++    [Test]
++    public async Task Run_ConditionFalse_GoalIfFalse_CallsGoal()
++    {
++        var captureStream = new System.IO.MemoryStream();
++        _engine.User.Channels.Register(new Channel(
++            EngineChannels.Default, captureStream,
++            ChannelDirection.Output, ownsStream: true)
++        { ContentType = "text/plain" });
++
++        var falseGoal = new Goal
++        {
++            Name = "FalseBranch",
++            Path = "/FalseBranch.goal",
++            Steps = new GoalSteps
++            {
++                new Step
++                {
++                    Index = 0,
++                    Text = "write false branch",
++                    Actions = new StepActions
++                    {
++                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                        {
++                            Module = "output",
++                            ActionName = "write",
++                            Parameters = new List<Data> { new Data("content", "false-branch") }
++                        }
++                    }
++                }
++            }
++        };
++        _engine.Goals.Add(falseGoal);
++
++        var action = new If
++        {
++            Context = CreateContext(),
++            Left = false,
++            GoalIfFalse = new GoalCall { Name = "FalseBranch" }
++        };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(false);
++
++        captureStream.Position = 0;
++        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
++        await Assert.That(output).IsEqualTo("false-branch" + System.Environment.NewLine);
++    }
++
++    [Test]
++    public async Task Run_ConditionTrue_NoGoalIfTrue_ReturnsTrueNoCall()
++    {
++        var action = new If { Context = CreateContext(), Left = 10, Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task Run_ConditionFalse_NoGoals_ReturnsFalse()
++    {
++        var action = new If { Context = CreateContext(), Left = 3, Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value).IsEqualTo(false);
++    }
++
++    [Test]
++    public async Task Run_SetsConditionSignalInMemoryStack()
++    {
++        var context = CreateContext();
++        var action = new If { Context = context, Left = 10, Operator = ">", Right = 5 };
++        await action.Run();
++
++        var signal = context.MemoryStack.Get("__condition__");
++        await Assert.That(signal).IsNotNull();
++        await Assert.That(signal!.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task Run_FalseCondition_SetsConditionSignalFalse()
++    {
++        var context = CreateContext();
++        var action = new If { Context = context, Left = 3, Operator = ">", Right = 5 };
++        await action.Run();
++
++        var signal = context.MemoryStack.Get("__condition__");
++        await Assert.That(signal).IsNotNull();
++        await Assert.That(signal!.Value).IsEqualTo(false);
++    }
++
++    [Test]
++    public async Task Run_GoalExecutionFails_PropagatesError()
++    {
++        var action = new If
++        {
++            Context = CreateContext(),
++            Left = true,
++            GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
++        };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
++    {
++        var action = new If { Context = CreateContext(), Left = 1, Operator = "xor", Right = 2 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
++        await Assert.That(result.Error!.Message).Contains("xor");
++        await Assert.That(result.Error!.Message).Contains("Int32");
++    }
++
++    [Test]
++    public async Task Run_IncompatibleComparisonTypes_ReturnsEvaluationError()
++    {
++        var action = new If { Context = CreateContext(), Left = new object(), Operator = ">", Right = 5 };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
++        await Assert.That(result.Error!.Message).Contains("does not support comparison");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs b/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs
+new file mode 100644
+index 00000000..08dc8282
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs
+@@ -0,0 +1,276 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition;
++using PLang.SafeFileSystem;
++
++namespace PLang.Tests.Runtime2.Modules.condition;
++
++public class StepsSubStepTests : IDisposable
++{
++    private readonly string _tempDir;
++    private readonly PLangFileSystem _fs;
++    private readonly PLang.Runtime2.Engine.@this _engine;
++
++    public StepsSubStepTests()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _fs = new PLangFileSystem(_tempDir, "");
++        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
++    }
++
++    public void Dispose()
++    {
++        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++        if (System.IO.Directory.Exists(_tempDir))
++            System.IO.Directory.Delete(_tempDir, true);
++    }
++
++    private PLangContext CreateContext() => _engine.CreateContext();
++
++    /// <summary>
++    /// Creates a step that runs a condition.if action returning the given bool value.
++    /// </summary>
++    private Step MakeConditionStep(int index, int indent, bool conditionResult)
++    {
++        return new Step
++        {
++            Index = index,
++            Indent = indent,
++            Text = $"if condition = {conditionResult}",
++            Actions = new StepActions
++            {
++                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = "condition",
++                    ActionName = "if",
++                    Parameters = new List<Data> { new Data("left", conditionResult) }
++                }
++            }
++        };
++    }
++
++    /// <summary>
++    /// Creates a step that writes a marker string to the output channel.
++    /// </summary>
++    private Step MakeOutputStep(int index, int indent, string marker)
++    {
++        return new Step
++        {
++            Index = index,
++            Indent = indent,
++            Text = $"write {marker}",
++            Actions = new StepActions
++            {
++                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = "output",
++                    ActionName = "write",
++                    Parameters = new List<Data> { new Data("content", marker) }
++                }
++            }
++        };
++    }
++
++    /// <summary>
++    /// Creates a step that sets a variable (returns the variable value, not a bool).
++    /// </summary>
++    private Step MakeSetStep(int index, int indent, string varName, object? value)
++    {
++        return new Step
++        {
++            Index = index,
++            Indent = indent,
++            Text = $"set {varName} = {value}",
++            Actions = new StepActions
++            {
++                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
++                {
++                    Module = "variable",
++                    ActionName = "set",
++                    Parameters = new List<Data>
++                    {
++                        new Data("name", varName),
++                        new Data("value", value)
++                    }
++                }
++            }
++        };
++    }
++
++    private (System.IO.MemoryStream stream, Func<string> getOutput) SetupCapture()
++    {
++        var stream = new System.IO.MemoryStream();
++        _engine.User.Channels.Register(new Channel(
++            EngineChannels.Default, stream,
++            ChannelDirection.Output, ownsStream: true)
++        { ContentType = "text/plain" });
++
++        return (stream, () =>
++        {
++            stream.Position = 0;
++            return new System.IO.StreamReader(stream).ReadToEnd();
++        });
++    }
++
++    [Test]
++    public async Task RunAsync_FalseCondition_SkipsIndentedChildren()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, false),
++            MakeOutputStep(1, 4, "should-be-skipped")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(getOutput()).DoesNotContain("should-be-skipped");
++    }
++
++    [Test]
++    public async Task RunAsync_TrueCondition_ExecutesIndentedChildren()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, true),
++            MakeOutputStep(1, 4, "child-executed")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(getOutput()).Contains("child-executed");
++    }
++
++    [Test]
++    public async Task RunAsync_FalseCondition_ResumesAtSameIndent()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, false),
++            MakeOutputStep(1, 4, "child-skipped"),
++            MakeOutputStep(2, 0, "next-runs")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = getOutput();
++        await Assert.That(output).DoesNotContain("child-skipped");
++        await Assert.That(output).Contains("next-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_NestedConditions_InnerFalseSkipsOnlyInner()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, true),        // outer true → children execute
++            MakeConditionStep(1, 4, false),        // inner false → inner children skipped
++            MakeOutputStep(2, 8, "inner-skipped"), // inner child
++            MakeOutputStep(3, 4, "outer-runs")     // outer child at indent 4
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = getOutput();
++        await Assert.That(output).DoesNotContain("inner-skipped");
++        await Assert.That(output).Contains("outer-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_NoIndentedChildren_FalseDoesNotSkip()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, false),  // false but no indented children
++            MakeOutputStep(1, 0, "next-runs") // same indent — not a child
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(getOutput()).Contains("next-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_TwoConsecutiveConditions_EachControlsOwnBlock()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, false),
++            MakeOutputStep(1, 4, "child-A-skipped"),
++            MakeConditionStep(2, 0, true),
++            MakeOutputStep(3, 4, "child-B-runs")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        var output = getOutput();
++        await Assert.That(output).DoesNotContain("child-A-skipped");
++        await Assert.That(output).Contains("child-B-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_DeeplyNested_ThreeLevels()
++    {
++        var (_, getOutput) = SetupCapture();
++        var steps = new GoalSteps
++        {
++            MakeConditionStep(0, 0, true),
++            MakeConditionStep(1, 4, true),
++            MakeOutputStep(2, 8, "leaf-runs")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(getOutput()).Contains("leaf-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_NonConditionStep_FalseValue_DoesNotSkip()
++    {
++        var (_, getOutput) = SetupCapture();
++        // variable.set with value false — returns a variable types object, not bool false
++        // Even if it somehow returned false, the child should not be skipped
++        // because set returns Data.Ok(variable{...}), not Data.Ok(false)
++        var steps = new GoalSteps
++        {
++            MakeSetStep(0, 0, "myVar", false),
++            MakeOutputStep(1, 4, "child-runs")
++        };
++        var context = CreateContext();
++        var result = await steps.RunAsync(_engine, context);
++
++        await Assert.That(result.Success).IsTrue();
++        // variable.set returns Data.Ok({name, value, type}) — Value is a variable object, not bool false
++        // So HasIndentedChildren check passes but Value is not bool false → children execute
++        await Assert.That(getOutput()).Contains("child-runs");
++    }
++
++    [Test]
++    public async Task RunAsync_HasIndentedChildren_CorrectDetection()
++    {
++        var steps = new GoalSteps
++        {
++            MakeOutputStep(0, 0, "parent"),
++            MakeOutputStep(1, 4, "child"),
++            MakeOutputStep(2, 0, "sibling")
++        };
++
++        await Assert.That(steps.HasIndentedChildren(0)).IsTrue();  // step[1].Indent > step[0].Indent
++        await Assert.That(steps.HasIndentedChildren(1)).IsFalse(); // step[2].Indent < step[1].Indent
++        await Assert.That(steps.HasIndentedChildren(2)).IsFalse(); // no step[3]
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+index e923f852..791d92c7 100644
+--- a/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
++++ b/PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs
+@@ -23,22 +23,53 @@ public sealed class @this : List<Step.@this>
+ 
+     /// <summary>
+     /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
+-    /// When context.Setup is set, implements run-once semantics:
+-    /// skips already-executed steps and records new executions.
++    /// Sub-step logic: indented steps default to NOT executing — a condition
++    /// step proves its children by setting __condition__ = true in memory.
++    /// When context.Setup is set, implements run-once semantics.
++    /// All sub-step state is local — fully thread-safe.
+     /// </summary>
+     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
+     {
+         Data? lastResult = null;
++        // Sub-step tracking: indented steps don't execute unless proven true.
++        // When a step has indented children and its result is NOT bool true,
++        // skipBelowIndent is set to that step's indent, skipping deeper steps.
++        int? skipBelowIndent = null;
++
+         for (var i = 0; i < Count; i++)
+         {
+             var step = this[i];
+ 
++            // Sub-step skip: if we're skipping indented children, check indent level
++            if (skipBelowIndent != null)
++            {
++                if (step.Indent > skipBelowIndent)
++                    continue;
++                // Back to parent level or shallower — stop skipping
++                skipBelowIndent = null;
++            }
++
+             // Setup run-once check: skip steps that have already been executed
+             if (context.Setup != null && await context.Setup.IsExecuted(step, engine))
+                 continue;
+ 
+             var stepResult = await step.RunAsync(engine, context, cancellationToken);
+ 
++            // Sub-step control: indented steps default to NOT executing.
++            // A condition step proves its children by setting __condition__ = true in memory.
++            // Only condition steps (those that set __condition__) can trigger sub-step skipping.
++            // Non-condition steps with indented children are ignored — children always execute.
++            if (HasIndentedChildren(i))
++            {
++                var conditionSignal = context.MemoryStack.Get("__condition__");
++                if (conditionSignal != null)
++                {
++                    context.MemoryStack.Remove("__condition__");
++                    if (conditionSignal.Value is not true)
++                        skipBelowIndent = step.Indent;
++                }
++            }
++
+             // Determine if the step error is tolerated:
+             // - Success (no error)
+             // - Explicit IgnoreError on the step
+@@ -68,4 +99,12 @@ public sealed class @this : List<Step.@this>
+ 
+         return lastResult ?? Data.Ok();
+     }
++
++    /// <summary>
++    /// Returns true if the step at the given index has a following step with higher indent.
++    /// </summary>
++    internal bool HasIndentedChildren(int index)
++    {
++        return index + 1 < Count && this[index + 1].Indent > this[index].Indent;
++    }
+ }
+diff --git a/PLang/Runtime2/modules/condition/compare.cs b/PLang/Runtime2/modules/condition/compare.cs
+new file mode 100644
+index 00000000..b2abe6a4
+--- /dev/null
++++ b/PLang/Runtime2/modules/condition/compare.cs
+@@ -0,0 +1,35 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition.providers;
++
++namespace PLang.Runtime2.modules.condition;
++
++[Action("compare")]
++public partial class Compare : IContext
++{
++    public partial object? Left { get; init; }
++    public partial string Operator { get; init; }
++    public partial object? Right { get; init; }
++
++    public Task<Data> Run()
++    {
++        var evaluator = new DefaultEvaluator();
++        try
++        {
++            bool result = evaluator.Evaluate(Left, Operator, Right);
++            return Task.FromResult(Data.Ok(result));
++        }
++        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
++        {
++            var leftType = Left?.GetType().Name ?? "null";
++            var rightType = Right?.GetType().Name ?? "null";
++            var message = $"Comparison failed: '{Left}' ({leftType}) {Operator} '{Right}' ({rightType}) — {ex.Message}";
++
++            return Task.FromResult(Data.FromError(new ValidationError(message, Context, "EvaluationError")
++            {
++                Exception = ex,
++                FixSuggestion = $"Check that operator '{Operator}' is supported (==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, not, and, or) and that both operands are compatible types."
++            }));
++        }
++    }
++}
+diff --git a/PLang/Runtime2/modules/condition/if.cs b/PLang/Runtime2/modules/condition/if.cs
+index 1c25ce5f..68e06125 100644
+--- a/PLang/Runtime2/modules/condition/if.cs
++++ b/PLang/Runtime2/modules/condition/if.cs
+@@ -1,25 +1,64 @@
+ using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Errors;
+ using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.condition.providers;
+ 
+ namespace PLang.Runtime2.modules.condition;
+ 
+ [Action("if")]
+ public partial class If : IContext
+ {
+-    public partial bool Condition { get; init; }
++    public partial object? Left { get; init; }
++    public partial string? Operator { get; init; }
++    public partial object? Right { get; init; }
+     public partial GoalCall? GoalIfTrue { get; init; }
+     public partial GoalCall? GoalIfFalse { get; init; }
+ 
+     public async Task<Data> Run()
+     {
+-        GoalCall? goalToCall = Condition ? GoalIfTrue : GoalIfFalse;
++        var evaluator = new DefaultEvaluator();
++
++        bool result;
++        try
++        {
++            result = Operator == null
++                ? evaluator.IsTruthy(Left)
++                : evaluator.Evaluate(Left, Operator, Right);
++        }
++        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
++        {
++            return Data.FromError(EvaluationError(ex));
++        }
++
++        // Store condition outcome so Steps.RunAsync can check it for sub-step control.
++        // Data.Merge (used by Actions.RunAsync) loses the bool Value, so we signal via memory.
++        Context.MemoryStack.Set("__condition__", result);
++
++        GoalCall? goalToCall = result ? GoalIfTrue : GoalIfFalse;
+ 
+         if (goalToCall != null)
+         {
+-            var result = await Context.Engine!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
+-            if (!result.Success) return result;
++            var goalResult = await Context.Engine!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
++            if (!goalResult.Success) return goalResult;
+         }
+ 
+-        return Data.Ok(Condition);
++        return Data.Ok(result);
++    }
++
++    private ValidationError EvaluationError(Exception ex)
++    {
++        var leftType = Left?.GetType().Name ?? "null";
++        var rightType = Right?.GetType().Name ?? "null";
++        var message = Operator != null
++            ? $"Condition evaluation failed: '{Left}' ({leftType}) {Operator} '{Right}' ({rightType}) — {ex.Message}"
++            : $"Condition evaluation failed: IsTruthy('{Left}' ({leftType})) — {ex.Message}";
++
++        return new ValidationError(message, Context, "EvaluationError")
++        {
++            Exception = ex,
++            FixSuggestion = Operator != null
++                ? $"Check that operator '{Operator}' is supported (==, !=, >, <, >=, <=, contains, startswith, endswith, in, isempty, not, and, or) and that both operands are compatible types."
++                : "Check that the left operand is a type that can be evaluated for truthiness."
++        };
+     }
+ }
+diff --git a/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs b/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+new file mode 100644
+index 00000000..3fe7d927
+--- /dev/null
++++ b/PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs
+@@ -0,0 +1,161 @@
++using System.Collections;
++using System.Globalization;
++
++namespace PLang.Runtime2.modules.condition.providers;
++
++public sealed class DefaultEvaluator : IEvaluator
++{
++    public bool Evaluate(object? left, string op, object? right)
++    {
++        (left, right) = NormalizeTypes(left, right);
++
++        return op.ToLowerInvariant() switch
++        {
++            "==" => AreEqual(left, right),
++            "!=" => !AreEqual(left, right),
++            ">" => Compare(left, right) > 0,
++            "<" => Compare(left, right) < 0,
++            ">=" => Compare(left, right) >= 0,
++            "<=" => Compare(left, right) <= 0,
++            "contains" => Contains(left, right),
++            "startswith" => StringOp(left, right, (s, r) => s.StartsWith(r, StringComparison.OrdinalIgnoreCase)),
++            "endswith" => StringOp(left, right, (s, r) => s.EndsWith(r, StringComparison.OrdinalIgnoreCase)),
++            "in" => In(left, right),
++            "isempty" => IsEmpty(left),
++            "not" => !IsTruthy(left),
++            "and" => IsTruthy(left) && IsTruthy(right),
++            "or" => IsTruthy(left) || IsTruthy(right),
++            _ => throw new NotSupportedException($"Operator '{op}' is not supported")
++        };
++    }
++
++    public bool IsTruthy(object? value) => value switch
++    {
++        null => false,
++        bool b => b,
++        int i => i != 0,
++        long l => l != 0,
++        double d => d != 0.0,
++        decimal m => m != 0m,
++        float f => f != 0f,
++        string s => !string.IsNullOrWhiteSpace(s),
++        ICollection c => c.Count > 0,
++        _ => true
++    };
++
++    private static bool AreEqual(object? left, object? right)
++    {
++        if (left == null && right == null) return true;
++        if (left == null || right == null) return false;
++
++        if (left is string ls && right is string rs)
++            return string.Equals(ls, rs, StringComparison.OrdinalIgnoreCase);
++
++        return left.Equals(right);
++    }
++
++    private static int Compare(object? left, object? right)
++    {
++        if (left == null || right == null) return left == null && right == null ? 0 : (left == null ? -1 : 1);
++        if (left is IComparable lc)
++            return lc.CompareTo(right);
++        throw new ArgumentException($"Type '{left.GetType().Name}' does not support comparison operators (>, <, >=, <=)");
++    }
++
++    private static bool Contains(object? left, object? right)
++    {
++        return left switch
++        {
++            string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
++            IEnumerable coll when left is not string => ContainsElement(coll, right),
++            _ => false
++        };
++    }
++
++    /// <summary>
++    /// Checks if a collection contains an element using AreEqual (handles boxed numeric mismatches).
++    /// </summary>
++    private static bool ContainsElement(IEnumerable coll, object? target)
++    {
++        foreach (var item in coll)
++        {
++            var (normalizedItem, normalizedTarget) = NormalizeTypes(item, target);
++            if (AreEqual(normalizedItem, normalizedTarget))
++                return true;
++        }
++        return false;
++    }
++
++    private static bool StringOp(object? left, object? right, Func<string, string, bool> op)
++    {
++        var ls = left?.ToString();
++        var rs = right?.ToString();
++        if (ls == null || rs == null) return false;
++        return op(ls, rs);
++    }
++
++    private static bool In(object? left, object? right)
++    {
++        if (right is IEnumerable enumerable && right is not string)
++            return ContainsElement(enumerable, left);
++        return false;
++    }
++
++    private static bool IsEmpty(object? value)
++    {
++        if (value == null) return true;
++        if (value is string s) return string.IsNullOrWhiteSpace(s);
++        if (value is ICollection c) return c.Count == 0;
++        return false;
++    }
++
++    private static (object? left, object? right) NormalizeTypes(object? left, object? right)
++    {
++        if (left == null || right == null) return (left, right);
++
++        if (IsNumeric(left) && IsNumeric(right))
++        {
++            var targetType = WiderNumericType(left.GetType(), right.GetType());
++            return (Convert.ChangeType(left, targetType, CultureInfo.InvariantCulture),
++                    Convert.ChangeType(right, targetType, CultureInfo.InvariantCulture));
++        }
++
++        if (left is string ls && IsNumeric(right))
++        {
++            var converted = TryParseNumeric(ls);
++            if (converted != null)
++                return NormalizeTypes(converted, right);
++        }
++        if (right is string rs && IsNumeric(left))
++        {
++            var converted = TryParseNumeric(rs);
++            if (converted != null)
++                return NormalizeTypes(left, converted);
++        }
++
++        return (left, right);
++    }
++
++    private static bool IsNumeric(object? value) =>
++        value is int or long or double or float or decimal or short or byte;
++
++    private static readonly Type[] NumericOrder =
++        { typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
++
++    private static Type WiderNumericType(Type a, Type b)
++    {
++        var order = NumericOrder;
++        var ai = Array.IndexOf(order, a);
++        var bi = Array.IndexOf(order, b);
++        if (ai < 0) ai = order.Length - 1;
++        if (bi < 0) bi = order.Length - 1;
++        return order[Math.Max(ai, bi)];
++    }
++
++    private static object? TryParseNumeric(string s)
++    {
++        if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
++            return d;
++        return null;
++    }
++}
+diff --git a/PLang/Runtime2/modules/condition/providers/IEvaluator.cs b/PLang/Runtime2/modules/condition/providers/IEvaluator.cs
+new file mode 100644
+index 00000000..02be313f
+--- /dev/null
++++ b/PLang/Runtime2/modules/condition/providers/IEvaluator.cs
+@@ -0,0 +1,7 @@
++namespace PLang.Runtime2.modules.condition.providers;
++
++public interface IEvaluator
++{
++    bool Evaluate(object? left, string op, object? right);
++    bool IsTruthy(object? value);
++}
+diff --git a/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal b/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal
+new file mode 100644
+index 00000000..19ff063c
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundAnd/ConditionCompoundAnd.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: compound AND condition — both sides must be true
++- set %a% = 5
++- set %b% = 3
++- if %a% > 1 and %b% < 10, call DoThing
++- assert %result% equals "both-true", "AND condition should pass when both sides true"
+diff --git a/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal b/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal
+new file mode 100644
+index 00000000..b8af8b59
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundAnd/DoThing.goal
+@@ -0,0 +1,2 @@
++DoThing
++- set %result% = "both-true"
+diff --git a/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal b/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal
+new file mode 100644
+index 00000000..7068834e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundOr/ConditionCompoundOr.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: compound OR condition — first false, second true → goal called
++- set %a% = 99
++- set %b% = 2
++- if %a% == 1 or %b% == 2, call DoThing
++- assert %result% equals "or-true", "OR condition should pass when at least one side true"
+diff --git a/Tests/Runtime2/ConditionCompoundOr/DoThing.goal b/Tests/Runtime2/ConditionCompoundOr/DoThing.goal
+new file mode 100644
+index 00000000..3deb6a2e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionCompoundOr/DoThing.goal
+@@ -0,0 +1,2 @@
++DoThing
++- set %result% = "or-true"
+diff --git a/Tests/Runtime2/ConditionContains/ConditionContains.test.goal b/Tests/Runtime2/ConditionContains/ConditionContains.test.goal
+new file mode 100644
+index 00000000..3c647a4b
+--- /dev/null
++++ b/Tests/Runtime2/ConditionContains/ConditionContains.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: contains string operator calls goal when substring present
++- set %name% = "hello world"
++- if %name% contains "world", call WhenContains
++- assert %result% equals "contains", "GoalIfTrue should have been called for contains"
+diff --git a/Tests/Runtime2/ConditionContains/WhenContains.goal b/Tests/Runtime2/ConditionContains/WhenContains.goal
+new file mode 100644
+index 00000000..734942f2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionContains/WhenContains.goal
+@@ -0,0 +1,2 @@
++WhenContains
++- set %result% = "contains"
+diff --git a/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal b/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal
+new file mode 100644
+index 00000000..069a2e39
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/ConditionElseBranch.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: else branch — false condition calls GoalIfFalse
++- set %x% = 2
++- if %x% > 100, call WhenBig, else call WhenSmall
++- assert %result% equals "small", "else branch should execute when condition is false"
+diff --git a/Tests/Runtime2/ConditionElseBranch/WhenBig.goal b/Tests/Runtime2/ConditionElseBranch/WhenBig.goal
+new file mode 100644
+index 00000000..2d1fea40
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/WhenBig.goal
+@@ -0,0 +1,2 @@
++WhenBig
++- set %result% = "big"
+diff --git a/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal b/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal
+new file mode 100644
+index 00000000..5c6598e2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionElseBranch/WhenSmall.goal
+@@ -0,0 +1,2 @@
++WhenSmall
++- set %result% = "small"
+diff --git a/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal b/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal
+new file mode 100644
+index 00000000..da8d7216
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEndsWith/ConditionEndsWith.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: endswith string operator calls goal when suffix matches
++- set %name% = "hello world"
++- if %name% endswith "world", call WhenEnds
++- assert %result% equals "ends", "GoalIfTrue should have been called for endswith"
+diff --git a/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal b/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal
+new file mode 100644
+index 00000000..ce08b217
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEndsWith/WhenEnds.goal
+@@ -0,0 +1,2 @@
++WhenEnds
++- set %result% = "ends"
+diff --git a/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal b/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal
+new file mode 100644
+index 00000000..00944823
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEquals/ConditionEquals.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: equals operator calls goal when values match
++- set %z% = 5
++- if %z% == 5, call WhenEqual
++- assert %result% equals "equal", "GoalIfTrue should have been called for z == 5"
+diff --git a/Tests/Runtime2/ConditionEquals/WhenEqual.goal b/Tests/Runtime2/ConditionEquals/WhenEqual.goal
+new file mode 100644
+index 00000000..d97a55fa
+--- /dev/null
++++ b/Tests/Runtime2/ConditionEquals/WhenEqual.goal
+@@ -0,0 +1,2 @@
++WhenEqual
++- set %result% = "equal"
+diff --git a/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal b/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal
+new file mode 100644
+index 00000000..8966ac4a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/ConditionFalsy.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: falsy value triggers else branch (GoalIfFalse)
++- set %flag% = false
++- if %flag%, call HandleTrue, else call HandleFalse
++- assert %result% equals "false-branch", "GoalIfFalse should have been called"
+diff --git a/Tests/Runtime2/ConditionFalsy/HandleFalse.goal b/Tests/Runtime2/ConditionFalsy/HandleFalse.goal
+new file mode 100644
+index 00000000..f1715b1e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/HandleFalse.goal
+@@ -0,0 +1,2 @@
++HandleFalse
++- set %result% = "false-branch"
+diff --git a/Tests/Runtime2/ConditionFalsy/HandleTrue.goal b/Tests/Runtime2/ConditionFalsy/HandleTrue.goal
+new file mode 100644
+index 00000000..d8159706
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFalsy/HandleTrue.goal
+@@ -0,0 +1,2 @@
++HandleTrue
++- set %result% = "true-branch"
+diff --git a/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal b/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal
+new file mode 100644
+index 00000000..94072bc2
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExists/ConditionFileExists.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: multi-action condition — file.exists produces bool, condition.if branches on it
++- file save "testfile.txt", content "hello"
++- if testfile.txt exists, call ProcessFile
++- assert %result% equals "file-processed", "GoalIfTrue should run when file exists"
+diff --git a/Tests/Runtime2/ConditionFileExists/ProcessFile.goal b/Tests/Runtime2/ConditionFileExists/ProcessFile.goal
+new file mode 100644
+index 00000000..595c459b
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExists/ProcessFile.goal
+@@ -0,0 +1,2 @@
++ProcessFile
++- set %result% = "file-processed"
+diff --git a/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal b/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal
+new file mode 100644
+index 00000000..d4de1c8e
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileExistsSubSteps/ConditionFileExistsSubSteps.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: multi-action condition with sub-steps — file.exists + indented block
++- file save "testfile.txt", content "hello"
++- set %innerRan% = "no"
++- if testfile.txt exists
++    - set %innerRan% = "yes"
++- assert %innerRan% equals "yes", "sub-steps should execute when file exists"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal b/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal
+new file mode 100644
+index 00000000..23504483
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/ConditionFileNotExists.test.goal
+@@ -0,0 +1,4 @@
++Start
++/ Test: multi-action condition — file doesn't exist, else branch runs
++- if missing_file_abc123.txt exists, call WhenExists, else call WhenMissing
++- assert %result% equals "missing", "GoalIfFalse should run when file doesn't exist"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal b/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal
+new file mode 100644
+index 00000000..c24cba29
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/WhenExists.goal
+@@ -0,0 +1,2 @@
++WhenExists
++- set %result% = "exists"
+diff --git a/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal b/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal
+new file mode 100644
+index 00000000..1155d06c
+--- /dev/null
++++ b/Tests/Runtime2/ConditionFileNotExists/WhenMissing.goal
+@@ -0,0 +1,2 @@
++WhenMissing
++- set %result% = "missing"
+diff --git a/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal b/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal
+new file mode 100644
+index 00000000..33325f55
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGTE/ConditionGTE.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: greater-or-equal operator calls goal on equal values (boundary)
++- set %x% = 5
++- if %x% >= 5, call WhenGTE
++- assert %result% equals "gte", "GoalIfTrue should have been called for x >= 5"
+diff --git a/Tests/Runtime2/ConditionGTE/WhenGTE.goal b/Tests/Runtime2/ConditionGTE/WhenGTE.goal
+new file mode 100644
+index 00000000..df1eaf16
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGTE/WhenGTE.goal
+@@ -0,0 +1,2 @@
++WhenGTE
++- set %result% = "gte"
+diff --git a/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal b/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal
+new file mode 100644
+index 00000000..ec2bcffc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGreaterThan/ConditionGreaterThan.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: greater than operator calls goal when condition is true
++- set %x% = 10
++- if %x% > 5, call WhenGreater
++- assert %result% equals "greater", "GoalIfTrue should have been called for x > 5"
+diff --git a/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal b/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal
+new file mode 100644
+index 00000000..a10fe25f
+--- /dev/null
++++ b/Tests/Runtime2/ConditionGreaterThan/WhenGreater.goal
+@@ -0,0 +1,2 @@
++WhenGreater
++- set %result% = "greater"
+diff --git a/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal b/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal
+new file mode 100644
+index 00000000..7fc097eb
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLTE/ConditionLTE.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: less-or-equal operator calls goal on equal values (boundary)
++- set %x% = 5
++- if %x% <= 5, call WhenLTE
++- assert %result% equals "lte", "GoalIfTrue should have been called for x <= 5"
+diff --git a/Tests/Runtime2/ConditionLTE/WhenLTE.goal b/Tests/Runtime2/ConditionLTE/WhenLTE.goal
+new file mode 100644
+index 00000000..972134c6
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLTE/WhenLTE.goal
+@@ -0,0 +1,2 @@
++WhenLTE
++- set %result% = "lte"
+diff --git a/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal b/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal
+new file mode 100644
+index 00000000..5fd4957a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLessThan/ConditionLessThan.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: less than operator calls goal when condition is true
++- set %y% = 3
++- if %y% < 10, call WhenLess
++- assert %result% equals "less", "GoalIfTrue should have been called for y < 10"
+diff --git a/Tests/Runtime2/ConditionLessThan/WhenLess.goal b/Tests/Runtime2/ConditionLessThan/WhenLess.goal
+new file mode 100644
+index 00000000..66a442cc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionLessThan/WhenLess.goal
+@@ -0,0 +1,2 @@
++WhenLess
++- set %result% = "less"
+diff --git a/Tests/Runtime2/ConditionNested/ConditionNested.test.goal b/Tests/Runtime2/ConditionNested/ConditionNested.test.goal
+new file mode 100644
+index 00000000..059a399a
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNested/ConditionNested.test.goal
+@@ -0,0 +1,12 @@
++Start
++/ Test: nested conditions — inner false only skips inner block, outer continues
++- set %x% = 10
++- set %y% = 3
++- set %innerRan% = "no"
++- set %outerAfterRan% = "no"
++- if %x% > 5
++    - if %y% > 100
++        - set %innerRan% = "yes"
++    - set %outerAfterRan% = "yes"
++- assert %innerRan% equals "no", "inner block should be skipped (y not > 100)"
++- assert %outerAfterRan% equals "yes", "outer block step after inner-if should execute"
+diff --git a/Tests/Runtime2/ConditionNot/ConditionNot.test.goal b/Tests/Runtime2/ConditionNot/ConditionNot.test.goal
+new file mode 100644
+index 00000000..0a6b0824
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNot/ConditionNot.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: NOT negation — false flag negated to true calls goal
++- set %flag% = false
++- if not %flag%, call WhenFalse
++- assert %result% equals "negated", "NOT should negate falsy to truthy"
+diff --git a/Tests/Runtime2/ConditionNot/WhenFalse.goal b/Tests/Runtime2/ConditionNot/WhenFalse.goal
+new file mode 100644
+index 00000000..44546e99
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNot/WhenFalse.goal
+@@ -0,0 +1,2 @@
++WhenFalse
++- set %result% = "negated"
+diff --git a/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal b/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal
+new file mode 100644
+index 00000000..0d2c4bfc
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNotEquals/ConditionNotEquals.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: not-equals operator calls goal when values differ
++- set %a% = 7
++- if %a% != 3, call WhenNotEqual
++- assert %result% equals "not-equal", "GoalIfTrue should have been called for a != 3"
+diff --git a/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal b/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal
+new file mode 100644
+index 00000000..200521d4
+--- /dev/null
++++ b/Tests/Runtime2/ConditionNotEquals/WhenNotEqual.goal
+@@ -0,0 +1,2 @@
++WhenNotEqual
++- set %result% = "not-equal"
+diff --git a/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal b/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal
+new file mode 100644
+index 00000000..1c5d49c5
+--- /dev/null
++++ b/Tests/Runtime2/ConditionStartsWith/ConditionStartsWith.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: startswith string operator calls goal when prefix matches
++- set %name% = "hello world"
++- if %name% startswith "hello", call WhenStarts
++- assert %result% equals "starts", "GoalIfTrue should have been called for startswith"
+diff --git a/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal b/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal
+new file mode 100644
+index 00000000..27117eea
+--- /dev/null
++++ b/Tests/Runtime2/ConditionStartsWith/WhenStarts.goal
+@@ -0,0 +1,2 @@
++WhenStarts
++- set %result% = "starts"
+diff --git a/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal b/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal
+new file mode 100644
+index 00000000..9f38dfc5
+--- /dev/null
++++ b/Tests/Runtime2/ConditionSubStepsFalse/ConditionSubStepsFalse.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: sub-steps under a false condition are skipped
++- set %flag% = false
++- set %innerRan% = "no"
++- if %flag%
++    - set %innerRan% = "yes"
++- assert %innerRan% equals "no", "indented steps should be skipped when condition is false"
+diff --git a/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal b/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal
+new file mode 100644
+index 00000000..513c9f57
+--- /dev/null
++++ b/Tests/Runtime2/ConditionSubStepsTrue/ConditionSubStepsTrue.test.goal
+@@ -0,0 +1,9 @@
++Start
++/ Test: sub-steps under a true condition execute
++- set %flag% = true
++- set %innerRan% = false
++- if %flag%
++    - set %innerRan% = true
++    - set %innerValue% = "executed"
++- assert %innerRan% is true, "indented steps should execute when condition is true"
++- assert %innerValue% equals "executed", "indented set should have run"
+diff --git a/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal b/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal
+new file mode 100644
+index 00000000..9127c562
+--- /dev/null
++++ b/Tests/Runtime2/ConditionTruthy/ConditionTruthy.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: truthy check on a true boolean variable calls GoalIfTrue
++- set %flag% = true
++- if %flag%, call HandleTrue
++- assert %result% equals "true-branch", "GoalIfTrue should have been called"
+diff --git a/Tests/Runtime2/ConditionTruthy/HandleTrue.goal b/Tests/Runtime2/ConditionTruthy/HandleTrue.goal
+new file mode 100644
+index 00000000..d8159706
+--- /dev/null
++++ b/Tests/Runtime2/ConditionTruthy/HandleTrue.goal
+@@ -0,0 +1,2 @@
++HandleTrue
++- set %result% = "true-branch"

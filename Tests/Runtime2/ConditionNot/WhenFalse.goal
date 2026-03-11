@@ -1,0 +1,2 @@
+WhenFalse
+- set %result% = "negated"

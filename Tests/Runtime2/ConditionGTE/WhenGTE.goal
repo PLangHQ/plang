@@ -1,0 +1,2 @@
+WhenGTE
+- set %result% = "gte"

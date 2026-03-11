@@ -173,3 +173,34 @@ See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
 **Why this matters:** `Data` has `Error`, `Success`, `Error.Key`, `Error.StatusCode` built in. Returning `null` from a `Data?` method loses information — the caller can't distinguish "not found" from "depth exceeded" or "permission denied." Use `Data.FromError` so the error travels through the normal pipeline with a clear key and status code.
 
 **When a throw converts to Data.FromError:** Methods like `RehydrateNestedData` throw because they're called inside `Decompress()` which has a try/catch that converts exceptions to `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists.
+
+---
+
+## Sub-Step Execution — The `__condition__` Signal
+
+Indented steps (sub-steps) default to NOT executing. They must be "proven true" by a parent condition step. The mechanism:
+
+1. `condition.if` evaluates its condition and stores the result as `__condition__` in MemoryStack.
+2. `Steps.RunAsync` checks for `__condition__` after each step that has indented children.
+3. If `__condition__` exists and is not `true`, `skipBelowIndent` is set to the step's indent level — all deeper steps are skipped.
+4. The signal is consumed (removed) immediately after reading to prevent stale signals from affecting later steps.
+
+**Why MemoryStack instead of Data.Value?** `Actions.RunAsync` merges action results via `Data.Merge`, which casts Value to `List<Data>`. A bool Value gets lost in the merge. The MemoryStack signal bypasses this.
+
+**Thread safety:** `skipBelowIndent` is a local variable in `Steps.RunAsync` — each concurrent request gets its own copy. Step objects are never mutated.
+
+**Non-condition steps with indented children:** Only steps that set `__condition__` can trigger sub-step skipping. If a step has indented children but didn't set `__condition__`, the children always execute. This prevents non-condition steps from accidentally blocking their children.
+
+**Nesting:** Works at arbitrary depth. When an inner `if` returns false, only its immediate indented children are skipped. The outer condition's children at the parent indent level continue executing normally.
+
+---
+
+## Condition Evaluation — Type Normalization
+
+`DefaultEvaluator.NormalizeTypes` handles the JSON numeric boxing problem for conditions:
+
+1. **Both numeric** → convert to the wider type (`byte → short → int → long → float → double → decimal`)
+2. **One string, one numeric** → try parsing the string as a number, then normalize
+3. **Unknown numeric type** → falls back to `decimal` (the widest), not `byte`
+
+This prevents `InvalidCastException` when comparing `int` vs `long` (a common JSON deserialization mismatch). The `ContainsElement` helper applies the same normalization per-element for collection `contains`/`in` checks.

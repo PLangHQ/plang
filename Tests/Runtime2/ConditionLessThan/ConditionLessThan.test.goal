@@ -1,0 +1,5 @@
+Start
+/ Test: less than operator calls goal when condition is true
+- set %y% = 3
+- if %y% < 10, call WhenLess
+- assert %result% equals "less", "GoalIfTrue should have been called for y < 10"

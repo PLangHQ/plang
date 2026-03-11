@@ -1,0 +1,5 @@
+Start
+/ Test: NOT negation — false flag negated to true calls goal
+- set %flag% = false
+- if not %flag%, call WhenFalse
+- assert %result% equals "negated", "NOT should negate falsy to truthy"

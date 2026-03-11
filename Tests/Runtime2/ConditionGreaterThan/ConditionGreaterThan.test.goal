@@ -1,0 +1,5 @@
+Start
+/ Test: greater than operator calls goal when condition is true
+- set %x% = 10
+- if %x% > 5, call WhenGreater
+- assert %result% equals "greater", "GoalIfTrue should have been called for x > 5"

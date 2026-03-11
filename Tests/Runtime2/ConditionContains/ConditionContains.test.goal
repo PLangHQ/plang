@@ -1,0 +1,5 @@
+Start
+/ Test: contains string operator calls goal when substring present
+- set %name% = "hello world"
+- if %name% contains "world", call WhenContains
+- assert %result% equals "contains", "GoalIfTrue should have been called for contains"

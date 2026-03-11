@@ -1,0 +1,2 @@
+WhenEqual
+- set %result% = "equal"

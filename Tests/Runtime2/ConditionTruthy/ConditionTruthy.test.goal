@@ -1,0 +1,5 @@
+Start
+/ Test: truthy check on a true boolean variable calls GoalIfTrue
+- set %flag% = true
+- if %flag%, call HandleTrue
+- assert %result% equals "true-branch", "GoalIfTrue should have been called"

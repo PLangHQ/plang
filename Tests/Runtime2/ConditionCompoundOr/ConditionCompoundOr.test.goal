@@ -1,0 +1,6 @@
+Start
+/ Test: compound OR condition — first false, second true → goal called
+- set %a% = 99
+- set %b% = 2
+- if %a% == 1 or %b% == 2, call DoThing
+- assert %result% equals "or-true", "OR condition should pass when at least one side true"

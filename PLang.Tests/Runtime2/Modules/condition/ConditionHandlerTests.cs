@@ -38,7 +38,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = CreateContext(), Condition = true };
+        var action = new If { Context = CreateContext(), Left = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -48,7 +48,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = CreateContext(), Condition = false };
+        var action = new If { Context = CreateContext(), Left = false };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -95,7 +95,7 @@ public class ConditionHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Condition = true,
+            Left = true,
             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
@@ -146,7 +146,7 @@ public class ConditionHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Condition = false,
+            Left = false,
             GoalIfTrue = new GoalCall { Name = "TrueBranch" },
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
@@ -167,7 +167,7 @@ public class ConditionHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Condition = true,
+            Left = true,
             GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
         };
         var result = await action.Run();
@@ -248,7 +248,7 @@ public class ConditionHandlerTests : IDisposable
                             ActionName = "if",
                             Parameters = new System.Collections.Generic.List<Data>
                             {
-                                new Data("condition", "%fileResult.Exists%"),
+                                new Data("left", "%fileResult.Exists%"),
                                 new Data("goalIfTrue", "WriteExists")
                             }
                         }

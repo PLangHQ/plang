@@ -1,0 +1,5 @@
+Start
+/ Test: else branch — false condition calls GoalIfFalse
+- set %x% = 2
+- if %x% > 100, call WhenBig, else call WhenSmall
+- assert %result% equals "small", "else branch should execute when condition is false"

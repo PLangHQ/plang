@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "No critical or high severity findings. One medium finding (__condition__ signal spoofing via stale MemoryStack key) is design-level and requires specific preconditions. Three low findings are code quality or accepted risk."
+}

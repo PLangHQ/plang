@@ -1,0 +1,7 @@
+Start
+/ Test: multi-action condition with sub-steps — file.exists + indented block
+- file save "testfile.txt", content "hello"
+- set %innerRan% = "no"
+- if testfile.txt exists
+    - set %innerRan% = "yes"
+- assert %innerRan% equals "yes", "sub-steps should execute when file exists"

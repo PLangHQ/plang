@@ -1,0 +1,75 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-action-conditions",
+  "timestamp": "2026-03-11T18:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "All documentation gaps for the action-based conditions feature have been filled. XML doc comments added to all 4 production files (if.cs, compare.cs, IEvaluator.cs, DefaultEvaluator.cs). Architecture docs updated: modules.md condition section expanded with if/compare details, README.md file tree updated with providers/ subtree, good_to_know.md updated with __condition__ signal pattern and type normalization notes. CHANGELOG entry drafted. PLang .goal examples are deferred (builder prompt not yet updated) — not blocking.",
+  "stats": {
+    "gaps_found": 7,
+    "gaps_filled": 7,
+    "docs_updated": 7,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/Runtime2/modules/condition/if.cs",
+      "description": "Added XML docs on If class, all 5 properties, and Run() method including error key documentation"
+    },
+    {
+      "id": 2,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/Runtime2/modules/condition/compare.cs",
+      "description": "Added XML docs on Compare class, all 3 properties, and Run() method"
+    },
+    {
+      "id": 3,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/Runtime2/modules/condition/providers/IEvaluator.cs",
+      "description": "Added XML docs on IEvaluator interface, Evaluate() with exception docs, IsTruthy() with truthiness rules"
+    },
+    {
+      "id": 4,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+      "description": "Added XML docs on DefaultEvaluator class and inheritdoc on both methods"
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/modules.md",
+      "description": "Expanded condition module entry with if/compare details, sub-step mode, pluggable evaluator, supported operators"
+    },
+    {
+      "id": 6,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/README.md",
+      "description": "Added condition/providers/ subtree to file structure showing if.cs, compare.cs, IEvaluator.cs, DefaultEvaluator.cs"
+    },
+    {
+      "id": 7,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/good_to_know.md",
+      "description": "Added two sections: __condition__ signal pattern (why MemoryStack, thread safety, nesting) and type normalization rules"
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "missing-example",
+      "file": "PLang/Runtime2/modules/condition/if.cs",
+      "issue": "No PLang .goal examples exist for the new condition format",
+      "resolution": "flagged-for-tester",
+      "detail": "Builder prompt (BuildGoal.llm) not yet updated to generate Left/Operator/Right. Examples can't be validated until then. Tracked separately."
+    }
+  ]
+}

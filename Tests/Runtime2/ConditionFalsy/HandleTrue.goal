@@ -1,0 +1,2 @@
+HandleTrue
+- set %result% = "true-branch"

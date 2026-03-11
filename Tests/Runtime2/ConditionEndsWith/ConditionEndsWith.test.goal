@@ -1,0 +1,5 @@
+Start
+/ Test: endswith string operator calls goal when suffix matches
+- set %name% = "hello world"
+- if %name% endswith "world", call WhenEnds
+- assert %result% equals "ends", "GoalIfTrue should have been called for endswith"
