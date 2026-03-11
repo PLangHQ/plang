@@ -1,0 +1,36 @@
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index db6922a0..6275f1dd 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -125,15 +125,11 @@ Target audiences:
+ 
+ | # | Item | Status | Notes |
+ |---|------|--------|-------|
+-| 1 | **system.sqlite** | NOT STARTED | System database. Ingi bringing details. |
+-| 2 | **Setup.goal** | NOT STARTED | How DB and store are set up. Depends on system.sqlite. |
+-| 3 | **Settings** | IN PROGRESS | Goal-scoped module settings. On `runtime2-settings` branch. |
+-| 4 | **Variable persistence** | NOT STARTED | Storing and loading variables (to/from system.sqlite). |
+-| 5 | **Input action** | NOT STARTED | Console input (`input.read`). Output exists, input doesn't. |
+-| 6 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+-| 7 | **Retry testing** | DONE | Covered by `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry with attempt counting) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). Added on `runtime2-builder-onerror-fix`. |
+-
+-**Dependency chain:** system.sqlite → Setup.goal → variable persistence. Settings is parallel. Input and pluggable implementations are independent. Retry is independent.
++| 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
++| 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
++| 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
++| 4 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
++| 5 | **Retry testing** | ✅ DONE | `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). |
+ 
+ ---
+ 
+@@ -330,10 +326,3 @@ Target audiences:
+ 3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
+ 
+ **Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
+-
+----
+-
+-## Builder Consistency Framework
+-**Date:** 2026-03-06
+-**Details:** [builder-consistency-framework.md](builder-consistency-framework.md)
+-**Summary:** Structural validation on every build (validates .pr against module registry, feeds errors back to LLM for self-correction). Golden eval suite on-demand for benchmarking LLM accuracy. Architect to design and implement.
