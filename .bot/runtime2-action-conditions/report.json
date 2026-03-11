@@ -241,6 +241,51 @@
         "health": "Green — all major gaps fixed, zero regressions",
         "notes": "Two major gaps fixed: ContainsElement mixed-numeric (6 tests) and __condition__ signal (2 tests). Two minor weak-assertion findings noted. PLang pipeline tests deferred."
       }
+    },
+    {
+      "id": "a1b2c3d4-sec-0001",
+      "bot": "security",
+      "timestamp_start": "2026-03-11T14:00:00Z",
+      "timestamp_end": "2026-03-11T14:45:00Z",
+      "intent": "Security review of action-based conditions implementation",
+      "before": {
+        "assumptions": "Coder v1 complete, codeanalyzer passed, tester approved. 5 production files to review for security.",
+        "risk": "MemoryStack signal spoofing, evaluator injection, type confusion, DoS via crafted inputs."
+      },
+      "plan": "Phase 1 (blue team): Map attack surface for evaluator dispatch, type normalization, __condition__ signal, sub-step skip logic, collection iteration. Phase 2 (red team): Test operator injection, type confusion in Compare, __condition__ spoofing, collection DoS, NormalizeTypes recursion, strict bool check. Phase 3: Write security-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/providers/IEvaluator.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/modules/condition/if.cs",
+            "PLang/Runtime2/modules/condition/compare.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue team + red team security review. 5 attack surface areas mapped, 5 findings identified."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-conditions/security-report.json",
+            ".bot/runtime2-action-conditions/security/v1/verdict.json",
+            ".bot/runtime2-action-conditions/security/v1/plan.md",
+            ".bot/runtime2-action-conditions/security/v1/summary.md",
+            ".bot/runtime2-action-conditions/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report, verdict (PASS), plan, and summaries."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict PASS",
+        "health": "Green — no critical or high findings",
+        "notes": "One medium finding: __condition__ stale signal spoofing. Three low findings. Two accepted-risk. Recommend auditor review next."
+      }
     }
   ]
 }

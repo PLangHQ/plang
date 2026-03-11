@@ -1,0 +1,155 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-action-conditions",
+  "timestamp": "2026-03-11T14:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "evaluator-operator-dispatch",
+      "exposure": "DefaultEvaluator.Evaluate receives operator string from deserialized .pr file. Dispatched via ToLowerInvariant() switch.",
+      "trust_boundary": "Operator string originates from LLM builder output, stored in .pr JSON, deserialized at runtime. If .pr is from untrusted source, attacker controls operator.",
+      "mitigations": [
+        "Switch expression with explicit operator list — unknown operators throw NotSupportedException",
+        "Step.Methods.cs:49 catch(Exception) converts all unhandled exceptions to StepError",
+        "Operator is a simple string comparison, no eval/reflection"
+      ],
+      "gaps": [
+        "If.Run() does not catch evaluator exceptions — relies on outer Step catch. Violates 'methods returning Data must return Data on every path' rule.",
+        "NotSupportedException becomes a generic StepError — no distinct error key for invalid operators"
+      ]
+    },
+    {
+      "area": "type-normalization-and-comparison",
+      "exposure": "Left/Right values are object? from deserialized .pr JSON. NormalizeTypes converts between numeric types. Compare uses IComparable.CompareTo.",
+      "trust_boundary": "Values originate from .pr file parameters or resolved MemoryStack variables. External data (API responses, user input) can flow into conditions via variables.",
+      "mitigations": [
+        "NormalizeTypes handles null gracefully",
+        "Numeric widening via Convert.ChangeType with InvariantCulture",
+        "NormalizeTypes recursion is bounded — string→number conversion produces numeric on first recurse, numeric→numeric terminates on second call (max depth 2)",
+        "ContainsElement normalizes per-element (fixes boxed int vs long)"
+      ],
+      "gaps": [
+        "IComparable.CompareTo(right) can throw ArgumentException if right is incompatible type (e.g., comparing string to DateTime after normalization fails to convert)",
+        "Compare() returns 0 for non-IComparable types — silently treating incomparable values as equal in > < >= <= checks"
+      ]
+    },
+    {
+      "area": "condition-signal-mechanism",
+      "exposure": "__condition__ key in MemoryStack used as inter-step communication channel between If handler and Steps.RunAsync.",
+      "trust_boundary": "MemoryStack has no key-name access controls. Any PLang step (via variable/set) or any action handler can read/write __condition__.",
+      "mitigations": [
+        "Signal is consumed (Remove) immediately after reading — short-lived window",
+        "Only checked when HasIndentedChildren returns true — non-condition steps with children are unaffected",
+        "Value is checked with 'is not true' pattern match — only bool true passes, not truthy equivalents"
+      ],
+      "gaps": [
+        "No write protection on __condition__ key — any step can set it",
+        "If a non-condition action sets __condition__ (bug or spoofing), it controls sub-step execution",
+        "No namespacing or scope isolation for the signal"
+      ]
+    },
+    {
+      "area": "sub-step-skip-logic",
+      "exposure": "Steps.RunAsync uses skipBelowIndent to skip indented children when condition is false. Skip decision based on indent level comparison.",
+      "trust_boundary": "Indent values come from deserialized Step objects (.pr file). If .pr is crafted, indent values could be arbitrary.",
+      "mitigations": [
+        "skipBelowIndent is local variable — thread-safe, no shared state",
+        "Skip resets when encountering a step at parent level or shallower",
+        "HasIndentedChildren is a simple index+1 check — bounded by collection size"
+      ],
+      "gaps": [
+        "No validation that indent values are non-negative or within reasonable bounds",
+        "Crafted .pr with negative indent could confuse skip logic (step.Indent > skipBelowIndent would be false for negative values, so skip would end early — fail-open, children execute)"
+      ]
+    },
+    {
+      "area": "collection-iteration-dos",
+      "exposure": "ContainsElement iterates entire collection, calling NormalizeTypes per element. Contains and In operators exposed.",
+      "trust_boundary": "Collection size controlled by data flowing into condition — could be external API response stored in variable.",
+      "mitigations": [
+        "No unbounded recursion — NormalizeTypes per element is O(1)",
+        "Standard .NET collection iteration"
+      ],
+      "gaps": [
+        "No size limit on collection — O(n) with normalization overhead per element",
+        "Attacker-controlled collection from external source could be arbitrarily large"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "code-execution",
+      "vector": "__condition__ MemoryStack signal can be spoofed by any step. A variable/set action setting %__condition__% = true before a condition step would cause indented children to execute regardless of the actual condition result.",
+      "preconditions": "Attacker must control .pr file content (crafted or tampered .pr). Or: untrusted external data writes to __condition__ key via a set-variable step that uses user input as key name.",
+      "impact": "Bypass condition checks — execute steps that should be skipped, or skip steps that should execute. Severity depends on what the condition guards (could be security-relevant like permission checks).",
+      "affected_files": [
+        "PLang/Runtime2/modules/condition/if.cs:26",
+        "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs:64-69"
+      ],
+      "exploit_sketch": "Craft .pr with: Step 1: variable/set __condition__ = true. Step 2 (indent 0): condition.if Left=false (would normally be false). Step 3 (indent 1): sensitive-action. Steps.RunAsync sees __condition__=true from Step 1 (set before Step 2 runs), but Step 2 overwrites it. Race depends on ordering. More reliable: place set-variable AFTER the condition step but BEFORE Steps checks the signal — impossible since check is immediate. Actual viable attack: Step 1 is a non-condition step that sets __condition__=true via its handler; Step 2 is indent 0 with indented children. Since Step 1 has no indented children, HasIndentedChildren is false, signal is NOT consumed. Step 2 has children, HasIndentedChildren is true, reads the stale __condition__=true from Step 1, children execute.",
+      "proposed_fix": "Option A: Scope __condition__ to the specific step — use a namespaced key like __condition__{stepIndex}__. Option B: Clear __condition__ before each step execution in RunAsync, not just on consumption. Option C: Instead of MemoryStack signaling, return the condition result through a dedicated channel (e.g., a StepResult property).",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "injection",
+      "vector": "If.Run() and Compare.Run() do not catch exceptions from DefaultEvaluator. NotSupportedException (unknown operator) and ArgumentException (IComparable type mismatch) propagate as unhandled exceptions.",
+      "preconditions": "Crafted .pr file with unsupported operator string, or condition with incompatible types that survive NormalizeTypes.",
+      "impact": "Step fails with generic StepError (caught by Step.Methods.cs:49). Not a crash — but error message may leak internal type information. Violates 'methods returning Data must return Data' convention.",
+      "affected_files": [
+        "PLang/Runtime2/modules/condition/if.cs:16-37",
+        "PLang/Runtime2/modules/condition/compare.cs:13-18",
+        "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs:28"
+      ],
+      "exploit_sketch": ".pr file with operator: 'EXEC' → NotSupportedException('Operator EXEC is not supported') → StepError with message containing operator name. Not exploitable beyond information disclosure of the operator string itself.",
+      "proposed_fix": "Wrap evaluator calls in If.Run() and Compare.Run() with try/catch returning Data.FromError with a distinct 'ConditionEvaluationError' key. This follows the 'behavior methods never throw' convention and provides better error diagnostics.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "ContainsElement iterates entire collection with NormalizeTypes per element. No size limit.",
+      "preconditions": "External data (API response, file content) stored in variable, then used as left operand of 'contains' or right operand of 'in'. Attacker controls collection size.",
+      "impact": "CPU-bound DoS proportional to collection size. Not a crash, but could stall step execution.",
+      "affected_files": [
+        "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs:78-87"
+      ],
+      "exploit_sketch": "External API returns array of 10M elements → stored in %apiResponse% → condition step: 'if %apiResponse% contains \"needle\"' → ContainsElement iterates all 10M elements with NormalizeTypes per element.",
+      "proposed_fix": "Consider adding a configurable iteration limit (e.g., 100K elements) with early termination and warning. Low priority — this is the same risk as any O(n) operation on user data, and PLang already trusts the user.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "Compare() returns 0 for non-IComparable left operand, making incomparable types appear equal in >, <, >=, <= comparisons.",
+      "preconditions": "Left operand is a non-IComparable type (custom object, dictionary, etc.) from deserialized .pr or variable resolution.",
+      "impact": "Silent logic error: `customObject > 5` evaluates as false (Compare returns 0, 0 > 0 is false), `customObject >= 5` evaluates as true (0 >= 0). Could lead to unexpected branch execution.",
+      "affected_files": [
+        "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs:57-63"
+      ],
+      "exploit_sketch": "Store a Dictionary in %config%. Condition: 'if %config% >= 0' → Compare returns 0, 0 >= 0 is true. The dictionary silently passes a numeric comparison.",
+      "proposed_fix": "Return Data.FromError or throw when left is not IComparable and operator requires comparison. The current 'return 0' default silently masks type errors.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "injection",
+      "vector": "conditionSignal.Value type check uses 'is not true' pattern match, which only matches bool true. If __condition__ is set to a non-bool truthy value (e.g., integer 1, string 'true'), children are skipped even though the value is 'truthy'.",
+      "preconditions": "__condition__ set to a non-bool value. Only happens if: (a) a non-If handler writes to __condition__, or (b) spoofing via variable/set with type coercion.",
+      "impact": "Sub-steps incorrectly skipped when __condition__ has a truthy non-bool value. This is actually fail-secure (children don't execute when signal is ambiguous), so impact is denial of expected execution rather than bypass.",
+      "affected_files": [
+        "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs:68"
+      ],
+      "exploit_sketch": "Step sets %__condition__% = 1 (integer). Steps.RunAsync reads it, conditionSignal.Value is (int)1, 'is not true' matches (not a bool), skipBelowIndent is set. Children are skipped despite truthy value.",
+      "proposed_fix": "This is actually good defensive behavior — strict bool check means only the legitimate If handler (which always sets bool) can enable sub-steps. Document this as intentional. No code change needed.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "The action-based conditions implementation has a clean security posture with one medium-severity finding. The __condition__ MemoryStack signal (finding #1) is the primary concern — it uses an unprotected shared namespace for inter-step communication, and a stale signal from a prior non-condition step could influence sub-step execution. The evaluator exception handling (finding #2) is a code quality issue mitigated by the outer Step catch. Collection DoS (finding #3) and silent comparison fallback (finding #4) are low-severity accepted risks. The strict bool check on the signal (finding #5) is actually a security strength. No critical findings. Overall: solid implementation with one design-level improvement opportunity around signal isolation."
+}
