@@ -1,0 +1,1 @@
+**v1** — Designed action-based conditions: structured Left/Operator/Right on `condition.if`, `condition.compare` for compound intermediates, sub-step execution via Steps.RunAsync local skip logic, pluggable `IEvaluator` provider pattern. Ready for test-designer. See [v1/summary.md](v1/summary.md).

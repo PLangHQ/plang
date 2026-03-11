@@ -1,0 +1,38 @@
+{
+  "branch": "runtime2-action-conditions",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-arch-0001",
+      "bot": "architect",
+      "timestamp_start": "2026-03-11T00:00:00Z",
+      "timestamp_end": "2026-03-11T01:00:00Z",
+      "intent": "Design action-based conditions for condition.if module",
+      "before": {
+        "assumptions": "Current condition.if has single bool Condition parameter. Expressions like '%x% > 5' stored as string but TypeMapping.ConvertTo cannot evaluate them. Multi-action steps already work in runtime2.",
+        "risk": "Changing .pr format for conditions affects all existing condition tests. Builder prompt must be updated."
+      },
+      "plan": "Redesign condition.if with Left/Operator/Right parameters. Add condition.compare for compound intermediates. Add sub-step execution (indented blocks) to Steps.RunAsync using local skip state. Add pluggable IEvaluator provider pattern in module's providers/ folder. Update builder prompt with structured condition format.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-action-conditions/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full architectural design after three rounds of steering from Ingi. Covers condition restructuring, sub-step execution, pluggable providers."
+        },
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated foundation checklist: marked system.sqlite, Setup.goal, Settings as DONE. Removed variable persistence and input action (modules, not core). Removed duplicate Builder Consistency Framework entry."
+        }
+      ],
+      "after": {
+        "status": "Design complete, ready for test-designer",
+        "health": "Plan approved by Ingi after 3 steering rounds",
+        "notes": "Key decisions from Ingi: sub-steps are runtime not builder tricks (LLM non-determinism), Step is readonly/shared (no Execute flag), providers live in the module. Next: run test-designer."
+      }
+    }
+  ]
+}
