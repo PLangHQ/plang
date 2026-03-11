@@ -1,0 +1,49 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-action-conditions",
+  "timestamp": "2026-03-11T15:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Implementation is clean, well-structured, and OBP-compliant. The main finding is that If.Run() and Compare.Run() do not catch exceptions thrown by DefaultEvaluator (NotSupportedException for unknown operators, ArgumentException for incompatible CompareTo types, OverflowException from numeric conversion). This violates the 'behavior methods never throw' rule. All other modules in the codebase use Data.FromError for error paths. One minor finding on WiderNumericType fallback. One nit on missing negative test. 1588 tests pass with zero regressions.",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/modules/condition/if.cs",
+      "line": 20,
+      "issue": "If.Run() calls evaluator.IsTruthy() and evaluator.Evaluate() without try/catch. DefaultEvaluator throws NotSupportedException (unsupported operator, line 28 of DefaultEvaluator.cs), ArgumentException (IComparable.CompareTo with incompatible types), and OverflowException (Convert.ChangeType overflow). The method signature promises Task<Data> but can throw.",
+      "impact": "Violates the 'behavior methods never throw' contract. If the builder (which is non-deterministic) produces an unsupported operator, the engine gets an unhandled exception instead of a Data error. Every other module in the codebase returns Data.FromError for error conditions.",
+      "suggestion": "Wrap lines 20-22 in try { ... } catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException) { return Data.FromError(new ServiceError(ex.Message, \"EvaluationError\", 400)); }. Add a test that passes an unsupported operator through If.Run() and asserts result.Success == false and result.Error.Key == \"EvaluationError\"."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "category": "contract",
+      "file": "PLang/Runtime2/modules/condition/compare.cs",
+      "line": 16,
+      "issue": "Compare.Run() has the same unguarded evaluator call as If.Run(). evaluator.Evaluate() can throw NotSupportedException, ArgumentException, or OverflowException, but Compare.Run() returns Task<Data> and must never throw.",
+      "impact": "Same as finding #1. Unhandled exception instead of Data error on malformed input from the builder.",
+      "suggestion": "Same pattern: wrap in try/catch returning Data.FromError. Add a test for unsupported operator through Compare.Run()."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "safety",
+      "file": "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+      "line": 150,
+      "issue": "WiderNumericType falls back to index 0 (byte) when a numeric type is not in the NumericOrder array (e.g., ushort, uint, ulong, nint). This causes Convert.ChangeType to attempt narrowing to byte, which throws OverflowException for large values.",
+      "impact": "Low probability since PLang uses standard int/long/double. But if a non-standard numeric type arrives via JSON deserialization or a plugin, the OverflowException would be confusing (pointing at byte conversion rather than the real issue).",
+      "suggestion": "Change the fallback from index 0 to the last index (decimal), which safely widens everything. Or throw ArgumentException('Unsupported numeric type') when IndexOf returns -1. Either way, finding #1's try/catch would contain the blast radius."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "test",
+      "file": "PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs",
+      "line": 31,
+      "issue": "No test verifies that Compare.Run() does NOT set __condition__ in MemoryStack. Compare is pure evaluation (no branching signal), but without a negative test, a future refactor could accidentally add the signal and break sub-step isolation.",
+      "impact": "Low. But a 3-line assertion (check context.MemoryStack.Get('__condition__') is null after Compare.Run()) prevents the regression.",
+      "suggestion": "Add: var signal = context.MemoryStack.Get(\"__condition__\"); await Assert.That(signal).IsNull();"
+    }
+  ]
+}

@@ -286,6 +286,51 @@
         "health": "Green — no critical or high findings",
         "notes": "One medium finding: __condition__ stale signal spoofing. Three low findings. Two accepted-risk. Recommend auditor review next."
       }
+    },
+    {
+      "id": "g7h8i9j0-audit-0001",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-11T15:00:00Z",
+      "timestamp_end": "2026-03-11T15:30:00Z",
+      "intent": "Final audit of action-based conditions implementation",
+      "before": {
+        "assumptions": "All prior reviews passed (codeanalyzer v2, tester v1, security v1). 1588 tests passing.",
+        "risk": "Contract violations missed by prior reviews. Exception handling gaps in handler methods."
+      },
+      "plan": "1. Read coder summary, all verdicts. 2. Read all 5 production + 5 test files. 3. Run full test suite. 4. OBP 5-rule check. 5. Contract integrity: exception handling, Data return guarantees. 6. Test quality: exception paths, negative tests. 7. Write findings, verdict, summaries.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/condition/providers/IEvaluator.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/modules/condition/if.cs",
+            "PLang/Runtime2/modules/condition/compare.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full audit: OBP compliance clean. Found 2 major contract violations (unhandled exceptions in If.Run and Compare.Run), 1 minor safety issue, 1 nit."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-action-conditions/auditor-report.json",
+            ".bot/runtime2-action-conditions/auditor/v1/verdict.json",
+            ".bot/runtime2-action-conditions/auditor/v1/plan.md",
+            ".bot/runtime2-action-conditions/auditor/v1/summary.md",
+            ".bot/runtime2-action-conditions/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit report, verdict (FAIL), plan, and summaries."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict FAIL",
+        "health": "Two major findings require coder fix",
+        "notes": "If.Run() and Compare.Run() can throw unhandled exceptions from evaluator. Violates 'behavior methods never throw' contract. OBP compliance is clean. Send back to coder."
+      }
     }
   ]
 }
