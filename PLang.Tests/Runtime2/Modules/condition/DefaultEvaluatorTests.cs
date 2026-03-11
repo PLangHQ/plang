@@ -93,6 +93,48 @@ public class DefaultEvaluatorTests
     }
 
     [Test]
+    public async Task Evaluate_Contains_CollectionContainsElement_ReturnsTrue()
+    {
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(list, "contains", 2)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_Contains_CollectionMissingElement_ReturnsFalse()
+    {
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(list, "contains", 99)).IsFalse();
+    }
+
+    [Test]
+    public async Task Evaluate_Contains_CollectionMixedNumeric_IntInLongList_ReturnsTrue()
+    {
+        var list = new List<object> { 5L, 10L, 15L };
+        await Assert.That(_eval.Evaluate(list, "contains", (int)5)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_Contains_CollectionMixedNumeric_LongInIntList_ReturnsTrue()
+    {
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(list, "contains", 2L)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_In_MixedNumeric_IntInLongList_ReturnsTrue()
+    {
+        var list = new List<object> { 5L, 10L, 15L };
+        await Assert.That(_eval.Evaluate((int)5, "in", list)).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_In_MixedNumeric_LongInIntList_ReturnsTrue()
+    {
+        var list = new List<object> { 1, 2, 3 };
+        await Assert.That(_eval.Evaluate(2L, "in", list)).IsTrue();
+    }
+
+    [Test]
     public async Task Evaluate_StartsWith_MatchingPrefix_ReturnsTrue()
     {
         await Assert.That(_eval.Evaluate("hello world", "startswith", "hello")).IsTrue();

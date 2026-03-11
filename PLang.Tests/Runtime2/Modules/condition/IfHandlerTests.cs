@@ -178,6 +178,30 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Run_SetsConditionSignalInMemoryStack()
+    {
+        var context = CreateContext();
+        var action = new If { Context = context, Left = 10, Operator = ">", Right = 5 };
+        await action.Run();
+
+        var signal = context.MemoryStack.Get("__condition__");
+        await Assert.That(signal).IsNotNull();
+        await Assert.That(signal!.Value).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task Run_FalseCondition_SetsConditionSignalFalse()
+    {
+        var context = CreateContext();
+        var action = new If { Context = context, Left = 3, Operator = ">", Right = 5 };
+        await action.Run();
+
+        var signal = context.MemoryStack.Get("__condition__");
+        await Assert.That(signal).IsNotNull();
+        await Assert.That(signal!.Value).IsEqualTo(false);
+    }
+
+    [Test]
     public async Task Run_GoalExecutionFails_PropagatesError()
     {
         var action = new If

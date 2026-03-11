@@ -188,6 +188,59 @@
         "health": "Green — all fixes correct, one test gap noted",
         "notes": "ContainsElement NormalizeTypes path for mixed numeric collection lookups has no test. Recommend tester adds Evaluate(new List<long>{5L}, 'contains', (int)5)."
       }
+    },
+    {
+      "id": "f6a7b8c9-test-0001",
+      "bot": "tester",
+      "timestamp_start": "2026-03-11T09:20:00Z",
+      "timestamp_end": "2026-03-11T09:45:00Z",
+      "intent": "Validate test quality for action-based conditions, fix coverage gaps",
+      "before": {
+        "assumptions": "Coder v1 complete with 69 tests. Codeanalyzer v2 passed with one test gap noted (ContainsElement mixed-numeric).",
+        "risk": "Review-driven code (ContainsElement) may lack test coverage. Other gaps may exist in the 69-test suite."
+      },
+      "plan": "1. Run full C# test suite (1580 tests) — verify zero regressions. 2. Analyze test quality across all 5 test files. 3. Apply false-green hunting: deletion test, review-driven code check, weak assertion scan. 4. Add missing ContainsElement mixed-numeric test. 5. Check for other coverage gaps. 6. Write test-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/CompareHandlerTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/StepsSubStepTests.cs",
+            "PLang.Tests/Runtime2/Modules/condition/ConditionHandlerTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Analyzed all 5 test files for false greens, weak assertions, and coverage gaps."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/condition/DefaultEvaluatorTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 6 tests: collection contains (hit/miss), mixed-numeric contains (int-in-long-list, long-in-int-list), mixed-numeric in (both directions)."
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/condition/IfHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 2 tests verifying __condition__ signal is set in MemoryStack for true and false conditions."
+        },
+        {
+          "paths": [".bot/runtime2-action-conditions/test-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test report with 5 findings (2 major fixed, 2 minor noted, 1 deferred)."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict APPROVED. 1588 tests pass (8 new).",
+        "health": "Green — all major gaps fixed, zero regressions",
+        "notes": "Two major gaps fixed: ContainsElement mixed-numeric (6 tests) and __condition__ signal (2 tests). Two minor weak-assertion findings noted. PLang pipeline tests deferred."
+      }
     }
   ]
 }
