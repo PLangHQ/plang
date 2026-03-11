@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace PLang.Runtime2.modules.condition.providers;
 
-public class DefaultEvaluator : IEvaluator
+public sealed class DefaultEvaluator : IEvaluator
 {
     public bool Evaluate(object? left, string op, object? right)
     {
@@ -67,9 +67,23 @@ public class DefaultEvaluator : IEvaluator
         return left switch
         {
             string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
-            IEnumerable coll when left is not string => coll.Cast<object>().Contains(right),
+            IEnumerable coll when left is not string => ContainsElement(coll, right),
             _ => false
         };
+    }
+
+    /// <summary>
+    /// Checks if a collection contains an element using AreEqual (handles boxed numeric mismatches).
+    /// </summary>
+    private static bool ContainsElement(IEnumerable coll, object? target)
+    {
+        foreach (var item in coll)
+        {
+            var (normalizedItem, normalizedTarget) = NormalizeTypes(item, target);
+            if (AreEqual(normalizedItem, normalizedTarget))
+                return true;
+        }
+        return false;
     }
 
     private static bool StringOp(object? left, object? right, Func<string, string, bool> op)
@@ -83,7 +97,7 @@ public class DefaultEvaluator : IEvaluator
     private static bool In(object? left, object? right)
     {
         if (right is IEnumerable enumerable && right is not string)
-            return enumerable.Cast<object>().Contains(left);
+            return ContainsElement(enumerable, left);
         return false;
     }
 
@@ -125,9 +139,12 @@ public class DefaultEvaluator : IEvaluator
     private static bool IsNumeric(object? value) =>
         value is int or long or double or float or decimal or short or byte;
 
+    private static readonly Type[] NumericOrder =
+        { typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
+
     private static Type WiderNumericType(Type a, Type b)
     {
-        var order = new[] { typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
+        var order = NumericOrder;
         var ai = Array.IndexOf(order, a);
         var bi = Array.IndexOf(order, b);
         if (ai < 0) ai = 0;

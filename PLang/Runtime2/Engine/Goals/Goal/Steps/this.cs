@@ -23,14 +23,9 @@ public sealed class @this : List<Step.@this>
 
     /// <summary>
     /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
-    /// When context.Setup is set, implements run-once semantics:
-    /// skips already-executed steps and records new executions.
-    /// </summary>
-    /// <summary>
-    /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
-    /// Sub-step logic: indented steps default to NOT executing.
-    /// A condition step returning bool true "proves" its children,
-    /// allowing indented steps below it to execute.
+    /// Sub-step logic: indented steps default to NOT executing — a condition
+    /// step proves its children by setting __condition__ = true in memory.
+    /// When context.Setup is set, implements run-once semantics.
     /// All sub-step state is local — fully thread-safe.
     /// </summary>
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
@@ -108,7 +103,7 @@ public sealed class @this : List<Step.@this>
     /// <summary>
     /// Returns true if the step at the given index has a following step with higher indent.
     /// </summary>
-    public bool HasIndentedChildren(int index)
+    internal bool HasIndentedChildren(int index)
     {
         return index + 1 < Count && this[index + 1].Indent > this[index].Indent;
     }
