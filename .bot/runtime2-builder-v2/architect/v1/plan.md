@@ -39,11 +39,26 @@ Piece 7: build module      ← depends on all above
 Piece 8: builder v2 integration ← wire Build2 to runtime2 engine
 ```
 
+## Branching Instructions
+
+All piece branches are created from `runtime2-builder-v2` and merged back into it when complete:
+
+```bash
+git checkout runtime2-builder-v2
+git pull
+git checkout -b runtime2-builder-v2-<piece-name>
+# ... do work, commit, push ...
+# create PR targeting runtime2-builder-v2
+# after merge, next piece branches from updated runtime2-builder-v2
+```
+
+When all 8 pieces are merged into `runtime2-builder-v2`, that branch merges into `runtime2`.
+
 ---
 
 ## Piece 1: Identity Module
 
-**Branch**: `runtime2-identity`
+**Branch**: `runtime2-builder-v2-identity` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Purpose**: Key pair management. Every PLang app has an identity (public/private key pair). The public key IS the identity.
 
 ### Storage
@@ -119,7 +134,7 @@ The identity module manages its own SQLite table directly in C#. No dependency o
 
 ## Piece 2: Signing Module
 
-**Branch**: `runtime2-signing`
+**Branch**: `runtime2-builder-v2-signing` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: Piece 1 (identity)
 **Purpose**: Cryptographic signing and verification. Every IO in PLang will be signed.
 
@@ -243,7 +258,7 @@ Critical: sign and verify must use identical serialization:
 
 ## Piece 3: HTTP Module
 
-**Branch**: `runtime2-http`
+**Branch**: `runtime2-builder-v2-http` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: Piece 2 (signing)
 **Purpose**: General-purpose HTTP client. All requests signed by default.
 
@@ -349,7 +364,7 @@ HTTP errors return `Data.FromError(new ServiceError(...))` with status code, mes
 
 ## Piece 4: Template Module
 
-**Branch**: `runtime2-template`
+**Branch**: `runtime2-builder-v2-template` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: nothing (standalone, can be done in parallel with pieces 1-3)
 **Purpose**: Scriban template rendering. Builder uses this to construct LLM prompts.
 
@@ -425,7 +440,7 @@ The runtime1 functions `callGoal` and `callApp` from templates need thought — 
 
 ## Piece 5: LLM Module
 
-**Branch**: `runtime2-llm`
+**Branch**: `runtime2-builder-v2-llm` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: Piece 3 (http)
 **Purpose**: LLM calls with structured output. The builder's core — sends goals to LLM, gets structured JSON back.
 
@@ -550,7 +565,7 @@ When `Tools` is provided:
 
 ## Piece 6: Error Module Extensions
 
-**Branch**: `runtime2-error-extensions`
+**Branch**: `runtime2-builder-v2-error-extensions` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: nothing (engine-level, but good to do after the modules so we can test with real builder flows)
 **Purpose**: Execution flow control signals the builder needs — endGoal, retry, return.
 
@@ -637,7 +652,7 @@ This is engine-level work in `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs` (w
 
 ## Piece 7: Build Module
 
-**Branch**: `runtime2-build-module`
+**Branch**: `runtime2-builder-v2-build-module` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: Pieces 1-6 (all modules + error extensions)
 **Purpose**: Builder self-referential operations exposed as a PLang module. These are C# engine operations the builder .goal files call.
 
@@ -696,7 +711,7 @@ Each action delegates to Engine.Build (C# engine internals). The module is thin 
 
 ## Piece 8: Builder V2 Integration
 
-**Branch**: `runtime2-builder-v2-integration`
+**Branch**: `runtime2-builder-v2-integration` (create from `runtime2-builder-v2`, PR back into `runtime2-builder-v2`)
 **Depends on**: Piece 7 (build module)
 **Purpose**: Wire it all together — the builder .goal files compiled to v2 .pr and running on runtime2.
 
@@ -738,13 +753,15 @@ Each action delegates to Engine.Build (C# engine internals). The module is thin 
 
 | Piece | Module | Branch | Depends on | Parallel? |
 |-------|--------|--------|------------|-----------|
-| 1 | identity | runtime2-identity | — | Start here |
-| 2 | signing | runtime2-signing | 1 | After 1 |
-| 3 | http | runtime2-http | 2 | After 2 |
-| 4 | template | runtime2-template | — | **Parallel with 1-3** |
-| 5 | llm | runtime2-llm | 3 | After 3 |
-| 6 | error extensions | runtime2-error-extensions | — | **Parallel with 1-5** |
-| 7 | build module | runtime2-build-module | 1-6 | After all |
-| 8 | integration | runtime2-builder-v2-integration | 7 | Last |
+| 1 | identity | `runtime2-builder-v2-identity` | — | Start here |
+| 2 | signing | `runtime2-builder-v2-signing` | 1 | After 1 |
+| 3 | http | `runtime2-builder-v2-http` | 2 | After 2 |
+| 4 | template | `runtime2-builder-v2-template` | — | **Parallel with 1-3** |
+| 5 | llm | `runtime2-builder-v2-llm` | 3 | After 3 |
+| 6 | error extensions | `runtime2-builder-v2-error-extensions` | — | **Parallel with 1-5** |
+| 7 | build module | `runtime2-builder-v2-build-module` | 1-6 | After all |
+| 8 | integration | `runtime2-builder-v2-integration` | 7 | Last |
 
-Pieces 4 and 6 can be done in parallel with the identity→signing→http chain. The critical path is: **identity → signing → http → llm → build module → integration**.
+All branches created from `runtime2-builder-v2`, all PRs target `runtime2-builder-v2`. When all 8 are merged, `runtime2-builder-v2` merges into `runtime2`.
+
+Critical path: **identity → signing → http → llm → build module → integration**.
