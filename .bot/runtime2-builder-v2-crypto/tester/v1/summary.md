@@ -11,42 +11,30 @@ Test quality analysis for the crypto module: hash/verify action handlers, Defaul
 
 ## Coverage
 
-Coverage tool (Cobertura) does not instrument the crypto module source files — they use the source generator's partial class pattern and don't appear in coverage output. The tests DO exercise the code (verified by tracing test → source), but automated coverage numbers are unavailable for these specific files. This is a coverage tool limitation, not a test gap.
+Coverage tool (Cobertura) does not instrument the crypto module source files — they use the source generator's partial class pattern and don't appear in coverage output. The tests DO exercise the code (verified by tracing), but automated coverage numbers are unavailable for these specific files.
 
 ## Findings
 
-### Finding 1 (Minor): Engine.Providers `Get<T>()`, `Has<T>()`, `Remove<T>()` have zero tests
+### Finding 1 (Major): Engine.Providers — 60% untested public API
 
-`Engine.Providers` has 5 methods. Only `Register<T>()` and `GetOrDefault<T>()` are exercised (via ProviderResolutionTests). The remaining three — `Get<T>()`, `Has<T>()`, `Remove<T>()` — could be deleted without failing any test. These are simple dictionary wrappers, but they're public API that other modules will depend on.
+`Engine.Providers` has 5 public methods. Only `Register<T>()` and `GetOrDefault<T>()` are exercised. `Get<T>()`, `Has<T>()`, `Remove<T>()` could be deleted without failing any test. This is new infrastructure that every future module depends on — provider hot-swapping, conditional registration, cleanup paths all flow through these methods.
 
-**Impact**: A bug in `Remove<T>()` (e.g., wrong type key) would go undetected.
+### Finding 2 (Major): False-green on JSON serialization test
 
-### Finding 2 (Minor): `Hash.SerializeData()` string path not isolated
+`Hash_ObjectInput_SerializesToJsonBeforeHashing` checks consistency (same hash twice) but doesn't prove JSON serialization happened. If `SerializeData()` switched from `JsonSerializer.Serialize()` to `data.ToString()`, the test would still pass — but cross-system hash verification would silently break because the input bytes changed. The serialization format is the contract between systems; it needs a known-value anchor.
 
-`SerializeData()` has two branches: byte[] → raw, everything else → JSON. The byte[] path is tested in `Hash_ByteArrayInput_FormatIsRaw`. The JSON path is implicitly tested via every string hash test. However, no test verifies the actual JSON serialization output — e.g., that `SerializeData("hello")` produces `"\"hello\""` (JSON-serialized string with quotes). If `JsonSerializer.Serialize()` behavior changed or the method switched to `Encoding.UTF8.GetBytes(data.ToString())`, existing tests would still pass because they only check hash length/non-emptiness, not the hash value itself.
+### Finding 3 (Major): Algorithm override test doesn't verify hash changed
 
-The `Hash_ObjectInput_SerializesToJsonBeforeHashing` test partially covers this (consistency check), but doesn't anchor to a known value.
+`Hash_ExplicitAlgorithm_OverridesDefault` checks `algorithm == "sha256"` and `hash.Length == 64`, but keccak256 also produces 64-char hex. If the `Algorithm` property were ignored in `hash.cs`, this test would pass. DefaultProviderTests cover each algorithm in isolation, but the handler integration test — whose job is to verify the parameter flows through — doesn't actually do that.
 
-**Impact**: Low — `System.Text.Json` is stable. But the test name claims "SerializesToJsonBeforeHashing" without actually proving JSON serialization happened.
+### Finding 4 (Minor): PLang tests deferred
 
-### Finding 3 (Minor): `Hash_ExplicitAlgorithm_OverridesDefault` doesn't verify different hash
+6 .goal files exist but can't be built/run until crypto module is registered with the builder (piece 8). Known deferral.
 
-The test checks `algorithm == "sha256"` and `hash.Length == 64`, but doesn't verify the hash is different from what keccak256 would produce. Both algorithms produce 32-byte (64 hex char) output. If the algorithm parameter were ignored, this test would still pass.
+### Finding 5 (Minor): HashedData.ToString() untested
 
-**Impact**: Caught by `DefaultProviderTests` which verify known test vectors, so this is a defense-in-depth gap, not a true false green.
+Informational. Convenience method returning Hash property.
 
-### Finding 4 (Minor): PLang tests cannot be validated
+## Verdict: NEEDS-FIXES
 
-6 PLang .goal test files exist but have no .pr files — the crypto module isn't registered with the builder yet (piece 8 of the pipeline). These tests are untestable until the builder knows about the crypto module. This is a known deferral, not a bug.
-
-### Finding 5 (Informational): `HashedData.ToString()` untested
-
-`HashedData.ToString()` returns `Hash`. No test calls `ToString()`. Minor — it's a convenience method.
-
-## Verdict: APPROVED
-
-The test suite is honest. All critical paths are tested with strong assertions (error keys, status codes, known test vectors). The findings are all minor — no false greens, no missing coverage of critical behavior. The provider error propagation tests (review-driven code from codeanalyzer v1) are present and check error keys, not just `Success == false`.
-
-## Recommendation
-
-Run the **security** analyst next.
+Three major findings. The test suite structure is solid and error handling tests are strong (error keys, status codes), but the deletion test and false-green analysis expose gaps that would let subtle bugs through. Send back to the **coder** for fixes.

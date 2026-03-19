@@ -1,3 +1,3 @@
 # Tester — runtime2-builder-v2-crypto
 
-**v1** — APPROVED. Crypto module tests are honest. 1675 C# tests pass, 0 fail. 5 minor findings: untested Engine.Providers methods (Get/Has/Remove), two weak assertions in HashActionTests, PLang tests not buildable yet, HashedData.ToString() untested. No false greens. See [v1/summary.md](v1/summary.md).
+**v1** — NEEDS-FIXES. 1675 C# tests pass, 0 fail. 3 major findings: Engine.Providers has 60% untested public API (Get/Has/Remove), JSON serialization test is a false green (consistency check doesn't prove JSON happened), algorithm override test doesn't verify hash value changed. Error handling tests are strong. See [v1/summary.md](v1/summary.md).
