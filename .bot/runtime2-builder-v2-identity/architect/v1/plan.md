@@ -147,12 +147,10 @@ PLang/Runtime2/modules/identity/
 
 **Flow:**
 1. Load identity from DataSource
-2. Set `IsArchived = true`, `IsDefault = false`
-3. Save back to DataSource
-4. If it was the default: find next non-archived (ordered by Created), make it default
-5. If no non-archived remain: `%MyIdentity%` becomes null (next access auto-creates via lazy resolver)
-6. Update `%MyIdentity%` on MemoryStack
-7. Return `Data.Ok()`
+2. If it's the default: return `Data.Fail("Cannot archive the default identity. Set a different default first.")`
+3. Set `IsArchived = true`
+4. Save back to DataSource
+5. Return `Data.Ok()`
 
 ### setDefault
 
@@ -228,9 +226,8 @@ internal static class KeyGenerator
 - get: auto-creates "default" when none exist
 - getAll: returns only non-archived
 - getAll: empty when all archived
-- archive: sets IsArchived, clears IsDefault
-- archive: auto-promotes next identity as default
-- archive: last identity archived, %MyIdentity% becomes null
+- archive: sets IsArchived on non-default identity
+- archive: returns error when archiving the default identity
 - setDefault: switches default, clears old default
 - setDefault: error when name doesn't exist or is archived
 - export: returns private key string
@@ -240,11 +237,12 @@ internal static class KeyGenerator
 - Create identity, verify %MyIdentity% resolves to public key
 - Create named identity, get by name
 - Create two identities, switch default, verify %MyIdentity% changes
-- Archive default, verify auto-promote
+- Archive default identity, verify error returned
+- Archive non-default identity, verify success
 - Get identity when none exist (auto-create)
 - %MyIdentity.Name% dot navigation
 - Export private key
-- Create, archive all, verify next access auto-creates
+- Create two, archive non-default, verify default unchanged
 
 ### Infrastructure tests (~5)
 - [Sensitive] attribute: property excluded from JsonStreamSerializer output
@@ -284,7 +282,7 @@ internal static class KeyGenerator
 - `%Identity%` and `%ServiceIdentity%` are reserved for User/Service actors (set by HTTP/signing layer, not managed here)
 - Private key excluded from output serialization via `[Sensitive]`
 - Private key included in DataSource storage
-- Archive auto-promotes next identity as default
+- Archive rejects default identity — developer must `set default` to another identity first
 - Stored in System actor's DataSource, table `"identity"`
 - Ed25519 key generation via NSec (internal, no signing module dependency)
 - `[Sensitive]` attribute and `SensitivePropertyFilter` available for other modules
