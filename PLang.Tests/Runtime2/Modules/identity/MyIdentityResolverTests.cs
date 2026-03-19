@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.identity;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.identity;
@@ -32,35 +33,81 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_ResolvesOnFirstAccess_AutoCreates()
     {
-        // memoryStack.Get("MyIdentity") returns IdentityVariable when none exist (auto-creates default)
-        Assert.Fail("Not implemented");
+        // Access %MyIdentity% via MemoryStack — should auto-create default identity
+        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        await Assert.That(data).IsNotNull();
+
+        var identity = data!.Value as IdentityVariable;
+        await Assert.That(identity).IsNotNull();
+        await Assert.That(identity!.Name).IsEqualTo("default");
+        await Assert.That(identity.IsDefault).IsTrue();
     }
 
     [Test]
     public async Task MyIdentity_DotNotation_Name()
     {
-        // memoryStack.Get("MyIdentity.Name") returns the identity name
-        Assert.Fail("Not implemented");
+        // Trigger auto-create by accessing Identity
+        _ = _engine.System.Identity.Value;
+
+        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        await Assert.That(data).IsNotNull();
+
+        // Navigate to Name via Data.GetChild
+        var nameData = new Data("MyIdentity", data!.Value);
+        var child = nameData.GetChild("Name");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value?.ToString()).IsEqualTo("default");
     }
 
     [Test]
     public async Task MyIdentity_DotNotation_PublicKey()
     {
-        // memoryStack.Get("MyIdentity.PublicKey") returns the public key
-        Assert.Fail("Not implemented");
+        _ = _engine.System.Identity.Value;
+
+        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        var pkData = new Data("MyIdentity", data!.Value);
+        var child = pkData.GetChild("PublicKey");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value?.ToString()).IsNotNull();
+
+        // Should be base64
+        var bytes = Convert.FromBase64String(child.Value!.ToString()!);
+        await Assert.That(bytes.Length).IsEqualTo(32);
     }
 
     [Test]
     public async Task MyIdentity_StringContext_ReturnsPublicKey()
     {
-        // ToString() gives public key, just like IdentityVariable.ToString()
-        Assert.Fail("Not implemented");
+        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        var identity = data!.Value as IdentityVariable;
+
+        // ToString() should return the public key
+        await Assert.That(identity!.ToString()).IsEqualTo(identity.PublicKey);
     }
 
     [Test]
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
-        // After switching default identity, %MyIdentity% reflects new identity
-        Assert.Fail("Not implemented");
+        var ctx = _engine.System.Context;
+
+        // Create two identities
+        var h1 = new Create { Context = ctx, Name = "first", SetAsDefault = true };
+        await h1.Run();
+        var h2 = new Create { Context = ctx, Name = "second", SetAsDefault = false };
+        await h2.Run();
+
+        // Verify %MyIdentity% is "first"
+        var data1 = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        var id1 = data1!.Value as IdentityVariable;
+        await Assert.That(id1!.Name).IsEqualTo("first");
+
+        // Switch default
+        var setDefault = new SetDefault { Context = ctx, Name = "second" };
+        await setDefault.Run();
+
+        // %MyIdentity% should now be "second"
+        var data2 = _engine.System.Context.MemoryStack.Get("MyIdentity");
+        var id2 = data2!.Value as IdentityVariable;
+        await Assert.That(id2!.Name).IsEqualTo("second");
     }
 }

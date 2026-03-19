@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.identity;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.identity;
@@ -29,52 +30,81 @@ public class IdentityVariableTests
         catch { /* best effort cleanup */ }
     }
 
+    private IdentityVariable CreateTestIdentity() => new()
+    {
+        Name = "test",
+        PublicKey = "dGVzdHB1YmxpY2tleQ==",
+        PrivateKey = "dGVzdHByaXZhdGVrZXk=",
+        IsDefault = true,
+        IsArchived = false,
+        Created = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc)
+    };
+
     [Test]
     public async Task ToString_ReturnsPublicKey()
     {
-        // String context gives public key (not private key, not name)
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        await Assert.That(identity.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
 
     [Test]
     public async Task DotNavigation_Name_ReturnsName()
     {
-        // GetChild("Name") returns the identity name
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("Name");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value?.ToString()).IsEqualTo("test");
     }
 
     [Test]
     public async Task DotNavigation_PublicKey_ReturnsPublicKey()
     {
-        // GetChild("PublicKey") returns the public key
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("PublicKey");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
 
     [Test]
     public async Task DotNavigation_Created_ReturnsCreated()
     {
-        // GetChild("Created") returns the creation timestamp
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("Created");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value).IsTypeOf<DateTime>();
     }
 
     [Test]
     public async Task DotNavigation_IsArchived_ReturnsIsArchived()
     {
-        // GetChild("IsArchived") returns the archived flag
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("IsArchived");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value).IsEqualTo(false);
     }
 
     [Test]
     public async Task DotNavigation_IsDefault_ReturnsIsDefault()
     {
-        // GetChild("IsDefault") returns the default flag
-        Assert.Fail("Not implemented");
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("IsDefault");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value).IsEqualTo(true);
     }
 
     [Test]
     public async Task DotNavigation_PrivateKey_ReturnsPrivateKey()
     {
-        // GetChild("PrivateKey") returns the private key — [Sensitive] is serialization only, not access control
-        Assert.Fail("Not implemented");
+        // [Sensitive] is serialization only, not access control — dot navigation works
+        var identity = CreateTestIdentity();
+        var data = new Data("identity", identity);
+        var child = data.GetChild("PrivateKey");
+        await Assert.That(child).IsNotNull();
+        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
     }
 }
