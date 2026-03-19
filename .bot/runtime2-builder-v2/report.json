@@ -2,17 +2,63 @@
   "branch": "runtime2-builder-v2",
   "sessions": [
     {
-      "id": "a1b2c3d4-identity-module-design",
+      "id": "b2c3d4e5-master-plan",
       "bot": "architect",
       "timestamp_start": "2026-03-19T00:00:00Z",
-      "intent": "Architect Piece 1: Identity Module for runtime2 builder v2",
+      "timestamp_end": "2026-03-19T00:00:00Z",
+      "intent": "Create umbrella branch and master plan for runtime2 builder v2 (8 pieces)",
       "before": {
-        "assumptions": "Runtime2 has IDataSource, MemoryStack with lazy resolvers, module pattern with [Action] handlers. No identity module exists yet.",
-        "risk": "Low — identity is standalone, no dependencies on other new pieces."
+        "assumptions": "Runtime2 has modules for variable, output, goal, loop, condition, list, convert, event, file, error, assert, mock, settings, library, math. Builder needs identity, signing, http, template, llm, error extensions, build module, integration.",
+        "risk": "Low — umbrella branch, no code changes."
       },
-      "plan": "",
-      "actions": [],
-      "after": {}
+      "plan": "8-piece master plan: identity → signing → http → template (parallel) → llm → error extensions (parallel) → build module → integration. Each piece gets own branch off runtime2-builder-v2, merges back. When all 8 done, runtime2-builder-v2 merges to runtime2.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/v1/plan.md", ".bot/runtime2-builder-v2/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Master plan for all 8 pieces of builder v2 migration"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Umbrella branch created. Piece 1 (identity) branched and handed to test-designer. Piece 2 (signing) discussion starting.",
+        "notes": "Piece branches: runtime2-builder-v2-identity (in progress with test-designer)"
+      }
+    },
+    {
+      "id": "a7f8e9d0-crypto-signing-design",
+      "bot": "architect",
+      "timestamp_start": "2026-03-19T12:00:00Z",
+      "timestamp_end": "2026-03-19T13:00:00Z",
+      "intent": "Design pieces 2 (crypto) and 3 (signing), revise piece order and identity's key generation",
+      "before": {
+        "assumptions": "Piece 1 (identity) is implemented. Original plan had 8 pieces with signing as piece 2.",
+        "risk": "Low — design work, no code changes."
+      },
+      "plan": "Insert crypto module as piece 2 (hashing for signing). Redesign signing as piece 3 with swappable providers. Move key generation from identity to signing provider. Total pieces: 9.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Crypto module plan (piece 2) and signing module plan (piece 3). Key design decisions: signing is a module not engine service, provider swappable via settings (per-call → actor → engine default → Ed25519), hashing delegates to crypto module, identity becomes opaque key vault, contracts are pass-through consent strings."
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated summary with v2 progression"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Pieces 2-3 designed. Identity revision noted (key generation → signing provider). Ready for piece branches.",
+        "notes": "Piece 1 revision (opaque key vault) will be applied when piece 3 lands."
+      }
     }
   ]
 }
