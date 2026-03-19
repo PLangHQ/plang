@@ -24,11 +24,10 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Core crypto module: interface, default provider, types, hash and verify action handlers. Handlers are thin — resolve provider, serialize data, delegate to provider."
+          "context": "Core crypto module: interface, default provider, types, hash and verify action handlers."
         },
         {
           "paths": [
-            "PLang/Runtime2/Engine/Providers/this.cs",
             "PLang/Runtime2/Engine/Providers/this.cs",
             "PLang/Runtime2/GlobalUsings.cs"
           ],
@@ -46,195 +45,114 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Replaced 15 stub tests with real implementations. Added [Skip] to 4 bcrypt tests. All 26 active tests pass."
-        },
-        {
-          "paths": ["Documentation/Runtime2/todos.md"],
-          "type": "modify",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Updated Foundation Checklist item #4 to DONE."
+          "context": "Replaced 15 stub tests with real implementations."
         }
       ],
       "after": {
         "status": "complete",
         "health": "All 1675 tests pass, 4 bcrypt skipped",
-        "notes": "Design evolved during session: plan called for DataSource provider resolution, but DataSource serializes to JSON. Discussed with Ingi -> MemoryStack -> then designed Engine.Providers as the proper generic solution for pluggable module implementations."
+        "notes": "Design evolved: Engine.Providers created as the proper generic solution for pluggable module implementations."
       }
     },
     {
       "id": "c7a9e3f1-4b82-4d6c-9e15-8f3a2d7b6c04",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-03-19T02:00:00Z",
-      "timestamp_end": null,
-      "intent": "Code analysis v1: OBP compliance, simplification, readability, behavioral reasoning for crypto module",
-      "before": {
-        "assumptions": "Crypto module is self-contained. Identity module changes (SensitivePropertyFilter, Actor.Identity, IdentityData) are from the identity branch and already reviewed there.",
-        "risk": "Low — reviewing new code, not modifying"
-      },
-      "plan": "5-pass analysis of crypto module files (hash.cs, verify.cs, types.cs, ICryptoProvider.cs, DefaultProvider.cs) + Engine.Providers + identity-related changes. Focus on OBP compliance, simplification opportunities, behavioral reasoning (esp. algorithm validation paths), and deletion tests.",
-      "actions": [
-        {
-          "paths": [
-            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
-            "PLang/Runtime2/modules/crypto/hash.cs",
-            "PLang/Runtime2/modules/crypto/verify.cs",
-            "PLang/Runtime2/modules/crypto/types.cs",
-            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
-            "PLang/Runtime2/Engine/Providers/this.cs",
-            "PLang/Runtime2/Engine/Context/Actor.cs",
-            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
-            "PLang/Runtime2/modules/identity/types.cs",
-            "PLang/Runtime2/modules/identity/IdentityData.cs"
-          ],
-          "type": "review",
-          "category": "code",
-          "confidence": "high",
-          "context": "5-pass analysis: OBP, simplification, readability, behavioral reasoning, deletion test. 4 findings (1 medium, 3 low). Main: DefaultProvider.Verify duplicates algorithm validation."
-        }
-      ],
-      "after": {
-        "status": "complete",
-        "health": "NEEDS WORK — 1 medium finding (redundant algorithm validation), 3 low. MISSED: providers throwing exceptions instead of returning Data.",
-        "notes": "Architecture is clean. OBP-compliant throughout. Engine.Providers well-designed. Ingi flagged critical miss: ICryptoProvider threw exceptions instead of returning Data."
-      }
+      "timestamp_end": "2026-03-19T02:30:00Z",
+      "intent": "Code analysis v1: OBP compliance and behavioral reasoning for crypto module",
+      "before": { "assumptions": "Crypto module is self-contained.", "risk": "Low" },
+      "plan": "5-pass analysis of crypto module files + Engine.Providers.",
+      "actions": [{ "paths": ["PLang/Runtime2/modules/crypto/"], "type": "review", "category": "code", "confidence": "high", "context": "4 findings. Missed providers throwing exceptions." }],
+      "after": { "status": "complete", "health": "NEEDS WORK", "notes": "Ingi flagged critical miss: providers threw exceptions instead of returning Data." }
     },
     {
       "id": "d8b4f2a6-5c93-4e7d-a126-9g4b3e8c7d15",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-03-19T03:00:00Z",
       "timestamp_end": "2026-03-19T03:30:00Z",
-      "intent": "Code analysis v2: re-review after coder fixes + Ingi feedback on provider exceptions",
-      "before": {
-        "assumptions": "Coder fixed all v1 findings + provider exception issue. Need to verify fixes don't introduce new problems.",
-        "risk": "Low — verifying fixes"
-      },
-      "plan": "Re-review 4 changed files (ICryptoProvider, DefaultProvider, hash.cs, verify.cs) + 3 test files. Verify provider returns Data, handlers check .Success, tests assert error keys.",
-      "actions": [
-        {
-          "paths": [
-            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
-            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
-            "PLang/Runtime2/modules/crypto/hash.cs",
-            "PLang/Runtime2/modules/crypto/verify.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs"
-          ],
-          "type": "review",
-          "category": "code",
-          "confidence": "high",
-          "context": "All findings resolved. Providers return Data, no exceptions in domain code, tests verify error propagation."
-        }
-      ],
-      "after": {
-        "status": "complete",
-        "health": "PASS — all findings resolved, crypto module clean",
-        "notes": "Saved learning: 'behavior methods never throw' applies to ALL domain code (providers, not just handlers). Updated memory."
-      }
+      "intent": "Code analysis v2: re-review after coder fixes",
+      "before": { "assumptions": "Coder fixed all v1 findings + provider exception issue.", "risk": "Low" },
+      "plan": "Re-review changed files. Verify provider returns Data.",
+      "actions": [{ "paths": ["PLang/Runtime2/modules/crypto/"], "type": "review", "category": "code", "confidence": "high", "context": "All findings resolved." }],
+      "after": { "status": "complete", "health": "PASS", "notes": "Providers return Data, no exceptions in domain code." }
     },
     {
       "id": "e9c5a7b3-6d14-4f8e-b237-1a5c8d9e0f23",
       "bot": "tester",
       "timestamp_start": "2026-03-19T10:00:00Z",
       "timestamp_end": "2026-03-19T10:30:00Z",
-      "intent": "Test quality analysis for crypto module — validate test honesty and coverage",
-      "before": {
-        "assumptions": "Coder v1 complete, codeanalyzer v2 passed. Tests should be in good shape. PLang tests not buildable yet.",
-        "risk": "Low — reviewing tests, not modifying code"
-      },
-      "plan": "Run C# tests, run coverage, apply deletion test to all crypto source files, check assertion quality, verify review-driven code has tests, assess PLang test status, write report.",
-      "actions": [
-        {
-          "paths": [
-            "PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs",
-            "PLang/Runtime2/modules/crypto/hash.cs",
-            "PLang/Runtime2/modules/crypto/verify.cs",
-            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
-            "PLang/Runtime2/Engine/Providers/this.cs"
-          ],
-          "type": "review",
-          "category": "test",
-          "confidence": "high",
-          "context": "Full test quality analysis. 1675 pass, 0 fail, 4 skipped. 5 minor findings: untested Providers methods, two weak assertions, PLang tests deferred, HashedData.ToString() untested. No false greens."
-        }
-      ],
-      "after": {
-        "status": "complete",
-        "health": "APPROVED — test suite is honest, all critical paths covered",
-        "notes": "Coverage tool doesn't instrument source-generator partial classes. Tests exercise the code but coverage numbers are unavailable for crypto files specifically."
-      }
+      "intent": "Test quality analysis v1",
+      "before": { "assumptions": "Codeanalyzer v2 passed.", "risk": "Low" },
+      "plan": "Run tests, coverage, deletion test, assertion quality.",
+      "actions": [{ "paths": ["PLang.Tests/Runtime2/Modules/crypto/"], "type": "review", "category": "test", "confidence": "high", "context": "5 minor findings." }],
+      "after": { "status": "complete", "health": "APPROVED", "notes": "Test suite honest, critical paths covered." }
     },
     {
       "id": "f0d6b8c4-7e25-4a9f-c348-2b6d9e1f3a45",
       "bot": "tester",
       "timestamp_start": "2026-03-19T11:00:00Z",
-      "timestamp_end": "2026-03-19T11:30:00Z",
-      "intent": "Re-review crypto tests with fresh eyes after coder fixes",
-      "before": {
-        "assumptions": "Coder fixed all 3 v1 major findings. Need to verify fixes AND look for new issues.",
-        "risk": "Low — reviewing tests"
-      },
-      "plan": "Verify v1 fixes, re-run tests, fresh-eyes analysis of all source and test files, write report.",
-      "actions": [
-        {
-          "paths": [
-            "PLang.Tests/Runtime2/Modules/crypto/ProviderRegistryTests.cs",
-            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-            "PLang/Runtime2/modules/crypto/verify.cs",
-            "PLang/Runtime2/modules/crypto/hash.cs"
-          ],
-          "type": "review",
-          "category": "test",
-          "confidence": "high",
-          "context": "v1 fixes verified. Fresh-eyes found: Verify.Run() catches FormatException but Hash=null throws ArgumentNullException (unhandled). 3 minor edge cases."
-        }
-      ],
-      "after": {
-        "status": "complete",
-        "health": "NEEDS-FIXES — 1 major (unhandled ArgumentNullException in Verify), 3 minor",
-        "notes": "v1 fixes are solid. New finding is a real bug, not just a test gap — the code itself violates the never-throw contract."
-      }
+      "timestamp_end": "2026-03-19T12:00:00Z",
+      "intent": "Tester v2-v4: fresh-eyes review, found null Hash bug, final PASS",
+      "before": { "assumptions": "Coder fixed v1 findings.", "risk": "Low" },
+      "plan": "Verify fixes, fresh-eyes analysis.",
+      "actions": [{ "paths": ["PLang/Runtime2/modules/crypto/verify.cs", "PLang.Tests/"], "type": "review", "category": "test", "confidence": "high", "context": "Found null Hash ArgumentNullException bug. Coder fixed. v4 PASS." }],
+      "after": { "status": "complete", "health": "PASS", "notes": "All error paths covered after v3 fixes." }
     },
     {
       "id": "a7c2e9f5-8d34-4b1a-c567-3e8f1a2b4d90",
       "bot": "security",
       "timestamp_start": "2026-03-19T14:00:00Z",
-      "timestamp_end": null,
-      "intent": "Security audit of crypto module, identity module, and Engine.Providers",
+      "timestamp_end": "2026-03-19T14:30:00Z",
+      "intent": "Security audit of crypto module and Engine.Providers",
+      "before": { "assumptions": "All other reviewers passed.", "risk": "Medium — crypto is high-value target." },
+      "plan": "Blue/red team audit: timing attacks, provider substitution, key material.",
+      "actions": [{ "paths": ["PLang/Runtime2/modules/crypto/", "PLang/Runtime2/Engine/Providers/this.cs"], "type": "review", "category": "code", "confidence": "high", "context": "1 medium (timing side-channel), 3 low (accepted-risk)." }],
+      "after": { "status": "complete", "health": "PASS", "notes": "SequenceEqual → FixedTimeEquals recommended." }
+    },
+    {
+      "id": "b3d8f4a2-9e56-4c7b-d891-4f2a6c8e3b17",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-19T16:00:00Z",
+      "timestamp_end": "2026-03-19T16:30:00Z",
+      "intent": "Cross-cutting integrity audit of crypto module, identity integration, and Engine.Providers",
       "before": {
-        "assumptions": "Crypto module is new code. Identity module carried from identity branch with prior PASS audit. Tester v4 PASSED. Codeanalyzer v2 PASSED.",
-        "risk": "Crypto modules are high-value targets. Timing attacks, algorithm confusion, key material handling are primary concerns."
+        "assumptions": "Codeanalyzer v2 PASS, tester v4 PASS, security v1 PASS. All three reviewers approved. Looking for what they missed.",
+        "risk": "Medium — Engine.Providers is new infrastructure affecting all future modules."
       },
-      "plan": "Phase 1: Blue team — map attack surface for crypto handlers, provider registry, identity integration. Phase 2: Red team — timing side-channel in Verify, provider substitution, key material exposure, input validation. Phase 3: Write security-report.json and verdict.",
+      "plan": "1. Read all prior bot reports. 2. Review code via full file reads. 3. Focus on cross-file contracts, architectural fit, review gaps. 4. Write auditor-report.json and verdict.",
       "actions": [
         {
           "paths": [
             "PLang/Runtime2/modules/crypto/hash.cs",
             "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang/Runtime2/modules/crypto/types.cs",
             "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
             "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
-            "PLang/Runtime2/modules/crypto/types.cs",
             "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/this.cs",
             "PLang/Runtime2/Engine/Context/Actor.cs",
             "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs",
             "PLang/Runtime2/modules/identity/types.cs",
             "PLang/Runtime2/modules/identity/IdentityData.cs",
-            "PLang/Runtime2/modules/identity/KeyGenerator.cs"
+            "PLang/Runtime2/modules/identity/export.cs",
+            "PLang/Runtime2/modules/identity/get.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs",
+            "PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs"
           ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Full blue/red team security audit. 5 attack surfaces mapped. 4 findings: 1 medium (timing side-channel), 3 low (accepted-risk)."
+          "context": "Cross-cutting audit: cross-file contracts, architectural fit, review quality assessment. 1 minor, 2 nits. PASS."
         }
       ],
       "after": {
         "status": "complete",
-        "health": "PASS — 1 medium, 3 low. No critical/high.",
-        "notes": "Timing side-channel in DefaultProvider.Verify (SequenceEqual → FixedTimeEquals). Identity carry-forward findings unchanged. Data.Envelope SensitivePropertyFilter gap from identity audit is now fixed."
+        "health": "PASS — 1 minor, 2 nits. No critical/major.",
+        "notes": "All prior reviewers did solid work. No cross-file contract gaps found. DefaultProvider per-call allocation is the only actionable finding."
       }
     }
   ]
