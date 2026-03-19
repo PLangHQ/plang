@@ -18,6 +18,9 @@ public partial class Verify : IContext
         if (Data == null)
             return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
 
+        if (string.IsNullOrEmpty(Hash))
+            return Engine.Memory.Data.FromError(new ActionError("Hash cannot be null or empty", "InvalidHash", 400));
+
         byte[] hashBytes;
         try
         {

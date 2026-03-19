@@ -181,6 +181,17 @@ public class HashActionTests
     }
 
     [Test]
+    public async Task Verify_NullHash_ReturnsError()
+    {
+        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = null!, Algorithm = "keccak256" };
+        var result = await verifyAction.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("InvalidHash");
+    }
+
+    [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
         var verifyAction = new Verify { Context = Ctx, Data = null, Hash = "abc123", Algorithm = "keccak256" };
