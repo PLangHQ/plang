@@ -1,0 +1,101 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-v2-identity",
+  "timestamp": "2026-03-19T12:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "key-generation",
+      "exposure": "Ed25519 key pair generation via NSec. Exported byte arrays on managed heap.",
+      "trust_boundary": "Internal — only called by create handler and GetOrCreateDefaultAsync",
+      "mitigations": ["NSec uses OS CSPRNG", "Key object disposed via using", "Internal static class"],
+      "gaps": ["Exported byte[] not zeroed after base64 encoding"]
+    },
+    {
+      "area": "key-storage",
+      "exposure": "Private key stored as plaintext string in SQLite (.db/system.sqlite)",
+      "trust_boundary": "Local filesystem",
+      "mitigations": ["OS file permissions", "User-sovereign model"],
+      "gaps": ["No encryption at rest"]
+    },
+    {
+      "area": "output-serialization",
+      "exposure": "IdentityVariable serialized through JsonStreamSerializer to channels",
+      "trust_boundary": "Channel output (HTTP, console, file)",
+      "mitigations": ["[Sensitive] attribute on PrivateKey", "SensitivePropertyFilter always in modifier chain", "ToString() returns PublicKey only"],
+      "gaps": ["Data.Envelope._envelopeJsonOptions missing SensitivePropertyFilter"]
+    },
+    {
+      "area": "identity-name-input",
+      "exposure": "User-provided identity names used as DataSource keys",
+      "trust_boundary": "Handler parameters from .pr files",
+      "mitigations": ["Parameterized SQL (@key)", "Hardcoded table name", "Empty/whitespace validation", "Case-insensitive duplicate check"],
+      "gaps": []
+    },
+    {
+      "area": "default-identity-resolution",
+      "exposure": "Auto-create on first access, sync-over-async in property getter",
+      "trust_boundary": "Internal — Actor.Identity property",
+      "mitigations": ["Sequential execution model (no SynchronizationContext)", "Single source of truth in GetOrCreateDefaultAsync", "3-step resolution prevents data loss"],
+      "gaps": []
+    },
+    {
+      "area": "export-handler",
+      "exposure": "Returns raw private key string in Data.Value",
+      "trust_boundary": "User-initiated action",
+      "mitigations": ["User explicitly requested export", "User-sovereign model"],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Exported Ed25519 byte arrays (privateKeyBytes) persist on managed heap after base64 encoding until GC collects them",
+      "preconditions": "Attacker has managed heap access (memory dump, debugger attach)",
+      "impact": "Private key material readable from process memory after key generation",
+      "affected_files": ["PLang/Runtime2/modules/identity/KeyGenerator.cs", "PLang/Services/IdentityService/IPublicPrivateKeyCreator.cs"],
+      "exploit_sketch": "Attach debugger or dump process memory after identity creation. Scan for 32-byte Ed25519 seed patterns in heap.",
+      "proposed_fix": "Add CryptographicOperations.ZeroMemory(privateKeyBytes) after Convert.ToBase64String(). Defense-in-depth only — attacker with heap access already owns the process.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "IdentityVariable.PrivateKey is a .NET string (immutable, not zeroable). Persists in memory until GC.",
+      "preconditions": "Attacker has managed heap access",
+      "impact": "Private key readable from process memory for actor lifetime",
+      "affected_files": ["PLang/Runtime2/modules/identity/types.cs"],
+      "exploit_sketch": "Same as finding 1. The string representation is even easier to find than raw bytes.",
+      "proposed_fix": "Architectural decision — SecureString is deprecated in .NET. Accept as inherent to managed runtime. The [Sensitive] attribute correctly prevents output-channel leakage.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "Data.Envelope._envelopeJsonOptions does not include SensitivePropertyFilter. If IdentityVariable-bearing Data is compressed, private key is serialized unfiltered into the gzip payload.",
+      "preconditions": "Compress() must be called on Data containing IdentityVariable (currently zero call sites)",
+      "impact": "Private key leaks into compressed payload, which may cross transport boundaries",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "exploit_sketch": "Future: when Compress() is wired into channel output or Data transport, any Data wrapping an IdentityVariable would include the plaintext private key in the compressed JSON.",
+      "proposed_fix": "Add SensitivePropertyFilter.Filter to _envelopeJsonOptions TypeInfoResolver.Modifiers. Zero-risk change, defense-in-depth.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "IdentityData caches the default IdentityVariable (including PrivateKey) for the actor's lifetime. Old values not zeroed on Update().",
+      "preconditions": "Attacker has managed heap access",
+      "impact": "Previously-default identity's private key may persist in GC-unreachable but not-yet-collected heap memory",
+      "affected_files": ["PLang/Runtime2/modules/identity/IdentityData.cs", "PLang/Runtime2/Engine/Context/Actor.cs"],
+      "exploit_sketch": "Same as finding 1/2. Old IdentityVariable objects remain on heap after Update() replaces the cached reference.",
+      "proposed_fix": "Not actionable in managed runtime without SecureString. Accept as inherent.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "The identity module is well-designed for PLang's user-sovereign threat model. All output serialization paths correctly filter [Sensitive] properties. SQL injection is prevented by parameterized queries. Name validation is thorough. The only actionable finding is a theoretical gap in Data.Envelope.Compress() (medium, zero current call sites). All other findings are defense-in-depth suggestions rated low under the user-sovereign model. Verdict: PASS."
+}

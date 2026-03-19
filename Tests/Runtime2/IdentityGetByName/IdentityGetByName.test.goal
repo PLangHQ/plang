@@ -1,0 +1,3 @@
+Start
+/ Test: create a named identity, get it by name, verify Name and PublicKey properties
+- throw "not implemented"

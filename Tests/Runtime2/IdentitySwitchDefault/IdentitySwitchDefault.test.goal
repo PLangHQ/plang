@@ -1,0 +1,3 @@
+Start
+/ Test: create two identities, switch default, verify %MyIdentity% reflects the new default
+- throw "not implemented"

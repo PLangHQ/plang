@@ -25,6 +25,10 @@ public sealed class JsonStreamSerializer : ISerializer
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { SensitivePropertyFilter.Filter }
+            },
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
@@ -43,7 +47,7 @@ public sealed class JsonStreamSerializer : ISerializer
             {
                 TypeInfoResolver = new DefaultJsonTypeInfoResolver
                 {
-                    Modifiers = { ViewPropertyFilter.For(v) }
+                    Modifiers = { SensitivePropertyFilter.Filter, ViewPropertyFilter.For(v) }
                 }
             };
             return new JsonStreamSerializer(viewOptions);

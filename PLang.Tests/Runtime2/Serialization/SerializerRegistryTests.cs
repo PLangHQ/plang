@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
+using SerializerRegistry = PLang.Runtime2.Engine.Channels.Serializers.@this;
 
 namespace PLang.Tests.Runtime2.Serialization;
 
@@ -7,7 +8,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Constructor_RegistersDefaultSerializers()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         await Assert.That(registry.GetByContentType("application/json")).IsNotNull();
         await Assert.That(registry.GetByContentType("text/plain")).IsNotNull();
@@ -16,7 +17,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_ReturnsJsonSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var defaultSerializer = registry.Default;
 
@@ -26,7 +27,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_CanBeSet()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
         var textSerializer = registry.Text;
 
         registry.Default = textSerializer;
@@ -37,7 +38,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Default_SetNull_ThrowsArgumentNullException()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
@@ -48,7 +49,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Json_ReturnsJsonSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var json = registry.Json;
 
@@ -58,7 +59,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Text_ReturnsTextSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var text = registry.Text;
 
@@ -68,7 +69,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Register_AddsSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
         var customSerializer = new CustomSerializer();
 
         registry.Register(customSerializer);
@@ -79,7 +80,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Register_AddsToExtensionLookup()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
         var customSerializer = new CustomSerializer();
 
         registry.Register(customSerializer);
@@ -90,7 +91,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_ExactMatch_ReturnsSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByContentType("application/json");
 
@@ -101,7 +102,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_WithCharset_ReturnsSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByContentType("application/json; charset=utf-8");
 
@@ -112,7 +113,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_AlternativeJsonType_ReturnsJsonSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByContentType("text/json");
 
@@ -123,7 +124,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_CaseInsensitive()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var lower = registry.GetByContentType("application/json");
         var upper = registry.GetByContentType("APPLICATION/JSON");
@@ -137,7 +138,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByContentType_Unknown_ReturnsNull()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByContentType("unknown/type");
 
@@ -147,7 +148,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_ExactMatch_ReturnsSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByExtension(".json");
 
@@ -157,7 +158,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_WithoutDot_AddsDot()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByExtension("json");
 
@@ -167,7 +168,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_TextExtension_ReturnsTextSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByExtension(".txt");
 
@@ -178,7 +179,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_CaseInsensitive()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var lower = registry.GetByExtension(".json");
         var upper = registry.GetByExtension(".JSON");
@@ -190,7 +191,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetByExtension_Unknown_ReturnsNull()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetByExtension(".xyz");
 
@@ -200,7 +201,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_WithContentType_ReturnsSerializer()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetOrDefault("text/plain");
 
@@ -210,7 +211,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_NullContentType_ReturnsDefault()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetOrDefault(null);
 
@@ -220,7 +221,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_EmptyContentType_ReturnsDefault()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetOrDefault("");
 
@@ -230,7 +231,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task GetOrDefault_UnknownContentType_ReturnsDefault()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var serializer = registry.GetOrDefault("unknown/type");
 
@@ -240,7 +241,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task ContentTypes_ReturnsAllRegisteredTypes()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var types = registry.ContentTypes.ToList();
 
@@ -252,7 +253,7 @@ public class SerializerRegistryTests
     [Test]
     public async Task Extensions_ReturnsAllRegisteredExtensions()
     {
-        var registry = new Serializers();
+        var registry = new SerializerRegistry();
 
         var extensions = registry.Extensions.ToList();
 

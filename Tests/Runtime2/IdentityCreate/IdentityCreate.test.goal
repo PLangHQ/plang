@@ -1,0 +1,3 @@
+Start
+/ Test: create an identity and verify %MyIdentity% resolves to its public key
+- throw "not implemented"

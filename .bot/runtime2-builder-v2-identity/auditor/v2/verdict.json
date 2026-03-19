@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All critical/major findings resolved. IdentityData.ResolveDefault() has try/catch, Export uses GetOrCreateDefaultAsync, Data.Envelope has SensitivePropertyFilter. 1649 tests pass. No test for ResolveDefault failure path (hard to arrange), accepted." }

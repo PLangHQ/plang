@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "GetOrCreateDefaultAsync doesn't check SaveAsync result — phantom identity on save failure (regression from v1 which did check it)" }

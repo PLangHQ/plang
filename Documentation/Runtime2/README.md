@@ -22,8 +22,10 @@ Engine (@this, sealed, IAsyncDisposable)
     ├── System       (internal engine operations)
     ├── Service      (external service operations)
     └── User         (end user operations)
+         ├── Identity → IdentityData (lazy, auto-creates default Ed25519 key pair)
+         ├── DataSource → IDataSource (lazy, per-actor SQLite)
          └── Context → PLangContext
-                        ├── MemoryStack   (variable storage)
+                        ├── MemoryStack   (variable storage, includes %MyIdentity% DynamicData)
                         ├── CallStack     (execution tracking)
                         ├── System/User   (EventScope → EngineEvents)
                         └── Actor         (identity)
@@ -161,7 +163,7 @@ PLang/Runtime2/
 ├── Engine/
 │   ├── this.cs                Central orchestrator (root of object graph)
 │   ├── Info.cs                Version/build info
-│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default] attributes
+│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default], [Sensitive] attributes
 │   │
 │   ├── Goals/
 │   │   ├── this.cs            @this (alias: EngineGoals) — goal collection
@@ -227,6 +229,7 @@ PLang/Runtime2/
 │   │   └── Serializers/
 │   │       ├── this.cs        @this (alias: Serializers) — content-type routing
 │   │       ├── ViewPropertyFilter.cs  View-based property filtering
+│   │       ├── SensitivePropertyFilter.cs  Strips [Sensitive] properties from output
 │   │       └── Serializer/
 │   │           ├── this.cs    ISerializer — serializer interface
 │   │           ├── JsonStreamSerializer.cs  System.Text.Json implementation
@@ -267,5 +270,17 @@ PLang/Runtime2/
     │       ├── IEvaluator.cs         Pluggable comparison engine interface
     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
     ├── goal/   loop/   list/   math/   convert/
+    ├── identity/
+    │   ├── types.cs       IdentityVariable — Ed25519 key pair with OBP persistence
+    │   ├── IdentityData.cs Lazy-resolving Data subclass on Actor.Identity
+    │   ├── KeyGenerator.cs Ed25519 key generation via NSec
+    │   ├── create.cs      identity.create — new identity with key pair
+    │   ├── get.cs         identity.get — by name or default (auto-create)
+    │   ├── getAll.cs      identity.getAll — list non-archived
+    │   ├── archive.cs     identity.archive — soft-delete
+    │   ├── unarchive.cs   identity.unarchive — restore
+    │   ├── rename.cs      identity.rename — atomic rename
+    │   ├── setDefault.cs  identity.setDefault — switch default
+    │   └── export.cs      identity.export — private key export
     ├── assert/   mock/   error/   library/
 ```

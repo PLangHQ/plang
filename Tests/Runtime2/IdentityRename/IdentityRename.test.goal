@@ -1,0 +1,3 @@
+Start
+/ Test: rename an identity, verify old name is gone and new name returns same keys
+- throw "not implemented"

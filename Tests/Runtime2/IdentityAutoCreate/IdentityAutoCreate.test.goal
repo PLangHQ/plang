@@ -1,0 +1,3 @@
+Start
+/ Test: access %MyIdentity% when no identities exist, verify auto-created default identity
+- throw "not implemented"
