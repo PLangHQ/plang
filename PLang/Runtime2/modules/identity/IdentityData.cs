@@ -49,6 +49,14 @@ public class IdentityData : Data
     /// </remarks>
     private IdentityVariable? ResolveDefault()
     {
-        return IdentityVariable.GetOrCreateDefaultAsync(_engine).GetAwaiter().GetResult();
+        try
+        {
+            return IdentityVariable.GetOrCreateDefaultAsync(_engine).GetAwaiter().GetResult();
+        }
+        catch (InvalidOperationException)
+        {
+            // Save failure during auto-create/promotion — return null, IdentityData handles null Value
+            return null;
+        }
     }
 }

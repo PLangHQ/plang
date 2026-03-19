@@ -579,17 +579,16 @@ public class IdentityHandlerTests
         await Assert.That(identity.IsDefault).IsTrue();
     }
 
-    // --- export with no default returns error ---
+    // --- export null name uses same resolution as get ---
 
     [Test]
-    public async Task Export_NullName_NoDefault_ReturnsError()
+    public async Task Export_NullName_AutoCreatesLikeGet()
     {
-        // No identities exist, but export doesn't auto-create — it just checks for an existing default
-        // First create a non-default, non-archived identity so LoadAll returns something but no default
-        // Actually, with zero identities the path is the same — no default found
+        // Export(null) should use GetOrCreateDefaultAsync, same as Get(null)
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(result.Success).IsTrue();
+        // Should have auto-created and returned the private key
+        await Assert.That(result.Value as string).IsNotNull();
     }
 }

@@ -25,11 +25,14 @@ public partial class Export : IContext
         }
         else
         {
-            // Get default
-            var all = await IdentityVariable.LoadAllAsync(Context.Engine);
-            identity = all.Find(i => i.IsDefault && !i.IsArchived);
-            if (identity == null)
-                return Data.FromError(new ActionError("No default identity found", "NotFound", 404));
+            try
+            {
+                identity = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Data.FromError(new ServiceError(ex.Message, "SaveError", 500));
+            }
         }
 
         return Data.Ok(identity.PrivateKey);

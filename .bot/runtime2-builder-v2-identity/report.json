@@ -623,6 +623,53 @@
         "health": "FAIL — 1 major finding",
         "notes": "Major: IdentityData.ResolveDefault() has no try/catch around GetOrCreateDefaultAsync which throws on save failure. Lazy %MyIdentity% access would crash. Recommend sending back to coder."
       }
+    },
+    {
+      "id": "e5f6a7b8-coder-v6",
+      "bot": "coder",
+      "timestamp_start": "2026-03-19T22:00:00Z",
+      "intent": "Fix auditor v1 findings: unhandled exception, export consistency, envelope filter",
+      "before": {
+        "assumptions": "3 fixes needed: try/catch in ResolveDefault, Export uses GetOrCreateDefaultAsync, SensitivePropertyFilter in Envelope.",
+        "risk": "Low — targeted fixes with clear scope."
+      },
+      "plan": "1. IdentityData.cs: try/catch InvalidOperationException in ResolveDefault, return null. 2. export.cs: use GetOrCreateDefaultAsync for null-name. 3. Data.Envelope.cs: add SensitivePropertyFilter to options. 4. Update export test.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/identity/IdentityData.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Add try/catch for unhandled exception in lazy resolver"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/identity/export.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Use GetOrCreateDefaultAsync for null-name path, consistent with Get"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Add SensitivePropertyFilter to envelope JSON options (defense-in-depth)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Update export test to expect auto-create instead of NotFound"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1649 tests pass. Auditor findings #1, #2, #3 fixed. #4, #5 skipped (known limitation, moot).",
+        "notes": "Identity module ready for final review."
+      },
+      "timestamp_end": "2026-03-19T22:15:00Z"
     }
   ]
 }

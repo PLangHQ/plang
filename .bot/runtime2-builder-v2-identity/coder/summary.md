@@ -14,3 +14,6 @@ Fixed flaky `Sensitive_IdentityVariable_PrivateKeyExcluded` (base64 `+` JSON esc
 
 ## v5 — Fix Auto-Create Overwrite
 Fixed data loss bug: `GetOrCreateDefaultAsync` now promotes existing non-archived identities to default instead of creating new ones that overwrite. Added 2 tests. All 1649 tests pass. See [v5/summary.md](v5/summary.md).
+
+## v6 — Auditor Fixes
+Added try/catch in `IdentityData.ResolveDefault()` for unhandled exception path. Made Export(null) use `GetOrCreateDefaultAsync` for consistency with Get. Added `SensitivePropertyFilter` to `Data.Envelope` options. All 1649 tests pass. See [v6/summary.md](v6/summary.md).
