@@ -8,17 +8,16 @@
     "plang": { "total": 6, "passed": 0, "failed": 0, "skipped": 6 }
   },
   "coverage": {
-    "changed_files_covered": 1,
-    "changed_files_total": 7,
-    "uncovered_files": [
-      "PLang/Runtime2/modules/crypto/hash.cs",
-      "PLang/Runtime2/modules/crypto/verify.cs",
-      "PLang/Runtime2/modules/crypto/types.cs",
-      "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
-      "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
-      "PLang/Runtime2/Engine/Providers/this.cs"
-    ],
-    "notes": "Coverage tool limitation — source-generator partial classes not instrumented. Tests exercise the code (verified by tracing)."
+    "changed_files_covered": 6,
+    "changed_files_total": 6,
+    "file_coverage": {
+      "PLang/Runtime2/modules/crypto/hash.cs": "100%",
+      "PLang/Runtime2/modules/crypto/verify.cs": "100%",
+      "PLang/Runtime2/modules/crypto/types.cs": "75% (ToString untested)",
+      "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs": "100%",
+      "PLang/Runtime2/Engine/Providers/this.cs": "100%"
+    },
+    "notes": "Previous run crashed due to --coverage-output being a directory instead of a file path. Fixed: all source files now instrumented. Generated .g.cs files at 11-15% (expected — tests call Run() directly, not through generated pipeline). ICryptoProvider.cs is an interface, no coverable lines."
   },
   "findings": [
     {
