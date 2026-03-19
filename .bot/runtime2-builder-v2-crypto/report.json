@@ -95,8 +95,42 @@
       ],
       "after": {
         "status": "complete",
-        "health": "NEEDS WORK — 1 medium finding (redundant algorithm validation), 3 low",
-        "notes": "Architecture is clean. OBP-compliant throughout. Engine.Providers well-designed. Recommend sending back to coder for minor fixes."
+        "health": "NEEDS WORK — 1 medium finding (redundant algorithm validation), 3 low. MISSED: providers throwing exceptions instead of returning Data.",
+        "notes": "Architecture is clean. OBP-compliant throughout. Engine.Providers well-designed. Ingi flagged critical miss: ICryptoProvider threw exceptions instead of returning Data."
+      }
+    },
+    {
+      "id": "d8b4f2a6-5c93-4e7d-a126-9g4b3e8c7d15",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-19T03:00:00Z",
+      "timestamp_end": "2026-03-19T03:30:00Z",
+      "intent": "Code analysis v2: re-review after coder fixes + Ingi feedback on provider exceptions",
+      "before": {
+        "assumptions": "Coder fixed all v1 findings + provider exception issue. Need to verify fixes don't introduce new problems.",
+        "risk": "Low — verifying fixes"
+      },
+      "plan": "Re-review 4 changed files (ICryptoProvider, DefaultProvider, hash.cs, verify.cs) + 3 test files. Verify provider returns Data, handlers check .Success, tests assert error keys.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
+            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
+            "PLang/Runtime2/modules/crypto/hash.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All findings resolved. Providers return Data, no exceptions in domain code, tests verify error propagation."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all findings resolved, crypto module clean",
+        "notes": "Saved learning: 'behavior methods never throw' applies to ALL domain code (providers, not just handlers). Updated memory."
       }
     }
   ]
