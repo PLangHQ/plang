@@ -54,17 +54,20 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_SerializesToJsonBeforeHashing()
     {
-        var action1 = new Hash { Context = Ctx, Data = new { Name = "test", Value = 42 }, Algorithm = "keccak256" };
-        var action2 = new Hash { Context = Ctx, Data = new { Name = "test", Value = 42 }, Algorithm = "keccak256" };
+        // Known value: JsonSerializer.Serialize("hello") = "\"hello\""
+        // keccak256 of UTF8 bytes of "\"hello\"" is a fixed value.
+        // Compute reference: hash the JSON-serialized form directly via DefaultProvider.
+        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize("hello"));
+        var refHash = new PLang.Runtime2.modules.crypto.providers.DefaultProvider().Hash(jsonBytes, "keccak256");
+        var expectedHex = Convert.ToHexString((byte[])refHash.Value!).ToLowerInvariant();
 
-        var result1 = await action1.Run();
-        var result2 = await action2.Run();
+        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var result = await action.Run();
 
-        await Assert.That(result1.Success).IsTrue();
-        await Assert.That(result2.Success).IsTrue();
-        var hash1 = (result1.Value as HashedData)!.Hash;
-        var hash2 = (result2.Value as HashedData)!.Hash;
-        await Assert.That(hash1).IsEqualTo(hash2);
+        await Assert.That(result.Success).IsTrue();
+        var hashed = (result.Value as HashedData)!;
+        await Assert.That(hashed.Format).IsEqualTo("json");
+        await Assert.That(hashed.Hash).IsEqualTo(expectedHex);
     }
 
     [Test]
@@ -82,15 +85,20 @@ public class HashActionTests
     [Test]
     public async Task Hash_ExplicitAlgorithm_OverridesDefault()
     {
-        // SHA256 of JSON-serialized "test" → JsonSerializer.Serialize("test") = "\"test\""
-        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "sha256" };
-        var result = await action.Run();
+        // Same input, different algorithms → different hashes
+        var keccakAction = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
+        var sha256Action = new Hash { Context = Ctx, Data = "test", Algorithm = "sha256" };
 
-        await Assert.That(result.Success).IsTrue();
-        var hashed = result.Value as HashedData;
-        await Assert.That(hashed).IsNotNull();
-        await Assert.That(hashed!.Algorithm).IsEqualTo("sha256");
-        await Assert.That(hashed.Hash.Length).IsEqualTo(64);
+        var keccakResult = await keccakAction.Run();
+        var sha256Result = await sha256Action.Run();
+
+        await Assert.That(keccakResult.Success).IsTrue();
+        await Assert.That(sha256Result.Success).IsTrue();
+        var keccakHash = (keccakResult.Value as HashedData)!;
+        var sha256Hash = (sha256Result.Value as HashedData)!;
+        await Assert.That(sha256Hash.Algorithm).IsEqualTo("sha256");
+        await Assert.That(keccakHash.Algorithm).IsEqualTo("keccak256");
+        await Assert.That(sha256Hash.Hash).IsNotEqualTo(keccakHash.Hash);
     }
 
     [Test]
