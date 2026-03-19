@@ -68,7 +68,36 @@ public class IdentityHandlerTests
         Assert.Fail("Not implemented");
     }
 
+    [Test]
+    public async Task Create_DuplicateName_ReturnsError()
+    {
+        // Creating with a name that already exists (non-archived) should return error
+        // ARCHITECT QUESTION: what about creating with a name that exists but is archived? Re-create or error?
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Create_EmptyOrWhitespaceName_ReturnsError()
+    {
+        // Empty string or whitespace-only name should return error, not silently default
+        Assert.Fail("Not implemented");
+    }
+
     // --- get ---
+
+    [Test]
+    public async Task Get_NonExistentName_ReturnsError()
+    {
+        // Get("nosuch") when that name doesn't exist should return Data.Fail()
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Get_NullName_NoDefaultExists_AutoCreates()
+    {
+        // All identities created with SetAsDefault=false — Get(null) should auto-create a default
+        Assert.Fail("Not implemented");
+    }
 
     [Test]
     public async Task Get_ByName_ReturnsMatchingIdentity()
@@ -160,7 +189,21 @@ public class IdentityHandlerTests
         Assert.Fail("Not implemented");
     }
 
+    [Test]
+    public async Task SetDefault_AlreadyDefault_IsIdempotent()
+    {
+        // Setting the current default as default again should succeed (no-op)
+        Assert.Fail("Not implemented");
+    }
+
     // --- export ---
+
+    [Test]
+    public async Task Export_NonExistentName_ReturnsError()
+    {
+        // Export("nosuch") should return Data.Fail(), not throw
+        Assert.Fail("Not implemented");
+    }
 
     [Test]
     public async Task Export_ReturnsPrivateKeyString()

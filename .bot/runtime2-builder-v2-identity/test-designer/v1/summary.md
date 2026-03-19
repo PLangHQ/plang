@@ -6,12 +6,12 @@ Test contract stubs for the PLang Runtime2 identity module — Ed25519 key pair 
 
 ## What was done
 
-Created 40 test stubs across 12 files:
+Created 48 test stubs across 12 files:
 
-### C# Tests (32 tests)
+### C# Tests (40 tests)
 
-- **`PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`** (18 tests) — Handler CRUD: create with key validation, default management, DataSource storage, get by name/null/auto-create, getAll filtering, archive with error paths, setDefault, export
-- **`PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs`** (4 tests) — Type behavior: ToString returns public key, dot navigation for Name/PublicKey/Created
+- **`PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs`** (24 tests) — Handler CRUD: create with key validation, default management, DataSource storage, duplicate name error, empty name error, get by name/null/auto-create/non-existent error/no-default-exists, getAll filtering, archive with error paths, setDefault + idempotent, export + non-existent error
+- **`PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs`** (7 tests) — Type behavior: ToString returns public key, dot navigation for Name/PublicKey/Created/IsArchived/IsDefault, PrivateKey dot-nav blocked
 - **`PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs`** (5 tests) — Lazy resolver: auto-create on first access, dot notation, string context, update after setDefault
 - **`PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs`** (5 tests) — [Sensitive] attribute: excluded from output serialization, included in raw/storage, no-op on types without it, coexists with other attributes, end-to-end with IdentityVariable
 
@@ -26,27 +26,27 @@ Created 40 test stubs across 12 files:
 - `Tests/Runtime2/IdentityDotNavigation/` — %MyIdentity.Name%, %MyIdentity.PublicKey%
 - `Tests/Runtime2/IdentityExport/` — export private key
 
-## Code example
+### Tests added in gap review (v1.1)
 
-C# handler test pattern (same as SettingsDataTests):
+8 new stubs added after gap analysis:
 
-```csharp
-[Test]
-public async Task Create_GeneratesValidEd25519KeyPair()
-{
-    // Keys are non-null, base64-decodable, correct lengths (32 bytes public, 32 bytes private)
-    Assert.Fail("Not implemented");
-}
-```
+| # | Test | Category | Notes |
+|---|---|---|---|
+| 1 | `Create_DuplicateName_ReturnsError` | Critical | Architect Q: what about archived duplicates? |
+| 2 | `Create_EmptyOrWhitespaceName_ReturnsError` | Medium | Name validation |
+| 3 | `Get_NonExistentName_ReturnsError` | Critical | Missing error path |
+| 4 | `Get_NullName_NoDefaultExists_AutoCreates` | Medium | No default but identities exist |
+| 5 | `SetDefault_AlreadyDefault_IsIdempotent` | Critical | Edge case |
+| 6 | `Export_NonExistentName_ReturnsError` | Critical | Missing error path |
+| 7 | `DotNavigation_IsArchived_ReturnsIsArchived` | Medium | Missing property coverage |
+| 8 | `DotNavigation_IsDefault_ReturnsIsDefault` | Medium | Missing property coverage |
+| 9 | `DotNavigation_PrivateKey_IsBlocked` | Critical | Security — architect Q: blocked at var level or only serialization? |
 
-PLang test pattern:
+## Open Questions for Architect
 
-```plang
-Start
-/ Test: create an identity and verify %MyIdentity% resolves to its public key
-- throw "not implemented"
-```
+1. **Create duplicate name (archived)**: Should creating with an archived name re-create or error?
+2. **PrivateKey dot navigation**: Should `%MyIdentity.PrivateKey%` be blocked at the variable level, or is `[Sensitive]` only a serialization concern?
 
 ## Status
 
-All stubs written. Ready for coder to implement production code and fill in test bodies.
+All stubs written. Ready for architect to resolve open questions, then coder to implement.

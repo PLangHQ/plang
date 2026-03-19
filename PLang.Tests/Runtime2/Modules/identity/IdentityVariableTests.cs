@@ -56,4 +56,26 @@ public class IdentityVariableTests
         // GetChild("Created") returns the creation timestamp
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task DotNavigation_IsArchived_ReturnsIsArchived()
+    {
+        // GetChild("IsArchived") returns the archived flag
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task DotNavigation_IsDefault_ReturnsIsDefault()
+    {
+        // GetChild("IsDefault") returns the default flag
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task DotNavigation_PrivateKey_IsBlocked()
+    {
+        // GetChild("PrivateKey") should NOT return the private key via dot navigation
+        // ARCHITECT QUESTION: should this return null/error, or is [Sensitive] only for serialization?
+        Assert.Fail("Not implemented");
+    }
 }
