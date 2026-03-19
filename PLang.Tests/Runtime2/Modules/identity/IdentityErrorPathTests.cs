@@ -9,9 +9,10 @@ using PLangEngine = PLang.Runtime2.Engine.@this;
 namespace PLang.Tests.Runtime2.Modules.identity;
 
 /// <summary>
-/// Tests for identity module error paths identified by tester v2:
+/// Tests for identity module error paths identified by tester v2 and v3:
 /// - GetOrCreateDefaultAsync promote/auto-create save failures
 /// - Handler catch blocks (export.cs, get.cs, IdentityData.cs)
+/// - Handler save/remove failures (create, setDefault, rename, archive, unarchive)
 /// - LoadAllAsync when DataSource.GetAll fails
 /// - Deserialize with unrecognized value types
 /// </summary>
@@ -102,6 +103,7 @@ public class IdentityErrorPathTests
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("SaveError");
         await Assert.That(result.Error.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error.Message).Contains("Failed to save");
     }
 
     [Test]
@@ -118,6 +120,7 @@ public class IdentityErrorPathTests
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("SaveError");
         await Assert.That(result.Error.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error.Message).Contains("Failed to save");
     }
 
     [Test]
@@ -130,9 +133,161 @@ public class IdentityErrorPathTests
         // Create a fresh IdentityData that hasn't resolved yet
         var identityData = new IdentityData(_engine);
 
-        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync throws → caught → null
+        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync throws InvalidOperationException
+        // → caught by IdentityData.ResolveDefault() → returns null (this IS the contract)
         var value = identityData.Value;
         await Assert.That(value).IsNull();
+    }
+
+    // --- Handler save/remove failure paths ---
+
+    [Test]
+    public async Task Create_ClearDefaultSaveFails_ReturnsError()
+    {
+        // Create an existing default identity
+        var h = new Create { Context = Ctx, Name = "existing", SetAsDefault = true };
+        await h.Run();
+
+        // Swap to failing save — clearing old default fails
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Create { Context = Ctx, Name = "new", SetAsDefault = true };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task Create_SaveNewIdentityFails_ReturnsError()
+    {
+        // Swap to failing save — saving the new identity fails
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Create { Context = Ctx, Name = "newid", SetAsDefault = false };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task SetDefault_ClearOldDefaultSaveFails_ReturnsError()
+    {
+        // Create two identities: one default, one not
+        var h1 = new Create { Context = Ctx, Name = "old", SetAsDefault = true };
+        await h1.Run();
+        var h2 = new Create { Context = Ctx, Name = "new", SetAsDefault = false };
+        await h2.Run();
+
+        // Swap to failing save — clearing old default fails
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new SetDefault { Context = Ctx, Name = "new" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task SetDefault_SaveNewDefaultFails_ReturnsError()
+    {
+        // Create a single non-default identity (no existing defaults to clear)
+        var h = new Create { Context = Ctx, Name = "target", SetAsDefault = false };
+        await h.Run();
+
+        // Swap to failing save — saving the new default fails
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new SetDefault { Context = Ctx, Name = "target" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task Rename_SaveNewNameFails_ReturnsError()
+    {
+        var h = new Create { Context = Ctx, Name = "oldname", SetAsDefault = false };
+        await h.Run();
+
+        // Swap to failing save — saving with new name fails
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task Rename_RemoveOldNameFails_ReturnsError()
+    {
+        var h = new Create { Context = Ctx, Name = "oldname", SetAsDefault = false };
+        await h.Run();
+
+        // Swap to failing remove — save succeeds but remove fails
+        SwapDataSource(_engine.System, new FailingRemoveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task Archive_SaveFails_ReturnsError()
+    {
+        var h = new Create { Context = Ctx, Name = "toarchive", SetAsDefault = false };
+        await h.Run();
+
+        // Swap to failing save
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Archive { Context = Ctx, Name = "toarchive" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+    }
+
+    [Test]
+    public async Task Unarchive_SaveFails_ReturnsError()
+    {
+        // Create and archive an identity
+        var h = new Create { Context = Ctx, Name = "tounarchive", SetAsDefault = false };
+        await h.Run();
+        var archiveH = new Archive { Context = Ctx, Name = "tounarchive" };
+        await archiveH.Run();
+
+        // Swap to failing save
+        SwapDataSource(_engine.System, new FailingSaveDataSource(
+            _engine.System.DataSource));
+
+        var handler = new Unarchive { Context = Ctx, Name = "tounarchive" };
+        var result = await handler.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
     // --- LoadAllAsync when DataSource.GetAll fails ---
@@ -218,6 +373,27 @@ public class IdentityErrorPathTests
         public Task<Data> Exists(string table, string key) => _inner.Exists(table, key);
         public Task<Data> Tables() => _inner.Tables();
         public void Dispose() { } // Don't dispose inner — test cleanup handles it
+    }
+
+    /// <summary>
+    /// DataSource wrapper that delegates all operations except Remove, which always fails.
+    /// Used to trigger remove-failure path in rename handler.
+    /// </summary>
+    private class FailingRemoveDataSource : IDataSource
+    {
+        private readonly IDataSource _inner;
+        public FailingRemoveDataSource(IDataSource inner) => _inner = inner;
+
+        public Task<Data> Get(string table, string key) => _inner.Get(table, key);
+        public Task<Data> GetAll(string table) => _inner.GetAll(table);
+        public Task<Data> Set(string table, string key, object? value) => _inner.Set(table, key, value);
+        public Task<Data> Remove(string table, string key)
+            => Task.FromResult(Data.FromError(
+                new DataSourceError("Simulated remove failure", "IOError", 500)
+                { TableName = table, KeyName = key }));
+        public Task<Data> Exists(string table, string key) => _inner.Exists(table, key);
+        public Task<Data> Tables() => _inner.Tables();
+        public void Dispose() { }
     }
 
     /// <summary>
