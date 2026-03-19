@@ -239,6 +239,37 @@ This means:
 
 ---
 
+## Engine.Providers — Pluggable Module Implementations
+
+`Engine.Providers` (`PLang.Runtime2.Engine.Providers.@this`) is a type-keyed `ConcurrentDictionary<Type, object>` that lets modules define swappable implementation interfaces. Each module:
+
+1. Defines a provider interface (e.g., `ICryptoProvider`)
+2. Ships a default implementation (e.g., `DefaultProvider`)
+3. Resolves at runtime via `Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`
+
+PLang developers override by loading a DLL that implements the interface and registering it:
+```
+set crypto provider my-crypto.dll
+```
+→ `engine.Providers.Register<ICryptoProvider>(loadedInstance)`
+
+**Design decisions:**
+- **Type-keyed, not string-keyed** — compile-time safety, no typo bugs. Each interface maps to exactly one registered provider.
+- **Thread-safe** — `ConcurrentDictionary` allows concurrent reads and writes from multiple contexts.
+- **No audit trail for replacement** — by design. Provider swapping is a user-sovereign operation. The security review accepted this.
+- **DefaultProvider is allocated per-call** in `Hash.ResolveProvider`. Auditor flagged this as minor (could be a static singleton). Accepted as-is since crypto providers are expected to be stateless.
+
+**API:**
+- `Register<T>(T provider)` — registers or replaces
+- `Get<T>()` — returns provider or null
+- `GetOrDefault<T>(T default)` — returns provider or fallback
+- `Has<T>()` — check if registered
+- `Remove<T>()` — unregister
+
+The pattern is generic — any future module (e.g., signing, encryption, storage) can define its own provider interface and follow the same pattern.
+
+---
+
 ## Condition Evaluation — Type Normalization
 
 `DefaultEvaluator.NormalizeTypes` handles the JSON numeric boxing problem for conditions:

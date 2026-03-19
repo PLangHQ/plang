@@ -83,6 +83,12 @@ public sealed class @this : IAsyncDisposable
     public EngineLibraries Libraries => _libraries;
 
     /// <summary>
+    /// Type-keyed provider registry for pluggable module implementations.
+    /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
+    /// </summary>
+    public EngineProviders Providers { get; } = new();
+
+    /// <summary>
     /// The loaded goals.
     /// </summary>
     public EngineGoals Goals => _goals;

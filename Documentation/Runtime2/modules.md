@@ -247,6 +247,7 @@ public static class TypeMapping
 | `output` | `write` | Console/channel output |
 | `condition` | `if`, `compare` | Conditional branching and comparison |
 | `identity` | `create`, `get`, `getAll`, `archive`, `unarchive`, `rename`, `setDefault`, `export` | Ed25519 identity management |
+| `crypto` | `hash`, `verify` | Cryptographic hashing and verification |
 | `library` | `load` | Load external DLL libraries |
 
 ### condition module — Details
@@ -287,6 +288,27 @@ The identity module manages Ed25519 key pairs stored in the System actor's DataS
 | `export` | `Name` (optional) | Returns raw private key string. By name or default (auto-creates if needed). |
 
 All mutating actions are `Cacheable = false`. All return `Data` — errors use `ActionError` (validation) or `ServiceError` (save failures).
+
+### crypto module — Details
+
+The crypto module provides hashing and verification with pluggable algorithm providers. Handlers are thin — they validate input, delegate to the provider, and format the result. Shared logic (`SerializeData`, `ResolveProvider`, `FormatHash`) lives as `internal static` methods on `Hash`, reused by `Verify`.
+
+**Provider resolution**: `Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`. PLang developers can swap in a custom provider by loading a DLL that implements `ICryptoProvider` (see Engine.Providers in `good_to_know.md`).
+
+**Data serialization**: Before hashing, input is normalized — `byte[]` passes through as "raw", everything else is JSON-serialized to UTF-8 bytes ("json" format). This ensures deterministic hashing of objects.
+
+**Result type — `HashedData`**: Contains `Algorithm` (lowercase), `Format` ("raw"/"json"), and `Hash` (lowercase hex). `ToString()` returns the hex hash, so `%result%` in string context gives the hash directly.
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `hash` | `Data` (required), `Algorithm` (default: "keccak256") | Hashes data via provider. Returns `HashedData`. |
+| `verify` | `Data` (required), `Hash` (hex string, required), `Algorithm` (default: "keccak256") | Re-hashes data and compares against expected hash. Returns `bool`. |
+
+**Default algorithms**: Keccak256 (via Nethereum `Sha3Keccack`) and SHA256 (via `System.Security.Cryptography`). Unsupported algorithms return `Data.FromError("UnsupportedAlgorithm", 400)`.
+
+Both actions are `Cacheable = false`. Both return `Data` — errors use `ActionError` (validation: null data, invalid hex) or provider-level errors (unsupported algorithm). Providers return `Data`, never throw.
 
 ## Relationships
 

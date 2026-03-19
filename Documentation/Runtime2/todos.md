@@ -128,7 +128,7 @@ Target audiences:
 | 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
 | 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
 | 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
-| 4 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
+| 4 | **Pluggable action implementations** | ✅ DONE | `Engine.Providers` — type-keyed service registry. Modules define provider interfaces (e.g., `ICryptoProvider`), register defaults, PLang developers override via DLL. Implemented with crypto module (2026-03-19). |
 | 5 | **Retry testing** | ✅ DONE | `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). |
 
 ---
@@ -325,6 +325,18 @@ Target audiences:
 4. **Switch to a more consistent LLM** — Consistency scoring (Phase 3) can identify which LLMs are reliable for onError.
 
 **Not a structural validation problem.** The structural validator checks what the LLM produced, not what it should have produced.
+
+---
+
+## Retire Libraries as Central Action Registry
+**Date:** 2026-03-19
+**Context:** During crypto module / Providers implementation. Libraries currently serves two roles: (1) central registry for source-generated action handlers (ICodeGenerated), and (2) external DLL loading. With Providers handling pluggable module implementations, Libraries' role narrows to just compiled action dispatch.
+
+**What to do:**
+- Move compiled action handlers (ICodeGenerated) to per-module storage instead of central flat registry.
+- Re-evaluate `IAction` interface — source-generated handlers use `ICodeGenerated` + `IContext` + `Run()`. The `IAction.ExecuteAsync` bridge may be unnecessary.
+- External DLL loading (`library.load`) should register into per-module structure or into Providers.
+- Libraries' "walk the list, first match wins" resolution might move to per-module resolution.
 
 ---
 

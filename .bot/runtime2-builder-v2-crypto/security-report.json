@@ -1,0 +1,134 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-v2-crypto",
+  "timestamp": "2026-03-19T14:30:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "crypto-hash-verify",
+      "exposure": "Hash and Verify action handlers accept arbitrary user data, algorithm selection, and hex-encoded hashes",
+      "trust_boundary": "All inputs come from .pr files (user-authored). External data enters only if the user pipes it in via variables.",
+      "mitigations": [
+        "Null checks on Data and Hash parameters",
+        "FormatException catch on hex decoding",
+        "Algorithm validated via switch expression — unsupported returns error, not exception",
+        "Providers return Data, never throw — behavior methods contract enforced"
+      ],
+      "gaps": [
+        "Verify uses SequenceEqual (non-constant-time) — timing side-channel"
+      ]
+    },
+    {
+      "area": "engine-providers-registry",
+      "exposure": "Type-keyed ConcurrentDictionary allowing any code to register/replace module providers",
+      "trust_boundary": "Same assembly boundary — only PLang assembly code and user-loaded libraries can access Engine.Providers",
+      "mitigations": [
+        "ConcurrentDictionary is thread-safe",
+        "Generic type constraints (where T : class) prevent value type registration",
+        "No providers registered in production code yet — only consumed via GetOrDefault with hardcoded defaults"
+      ],
+      "gaps": [
+        "No audit trail for provider registration — a replaced provider is silently overwritten (by design for user-sovereign model)"
+      ]
+    },
+    {
+      "area": "data-verified-property",
+      "exposure": "Bool property controlling trust decisions on received Data",
+      "trust_boundary": "internal SetVerified — only same-assembly code can set it",
+      "mitigations": [
+        "{ get; private set; } prevents external assignment",
+        "internal SetVerified limits to same assembly",
+        "[JsonIgnore] prevents deserialization from setting it",
+        "Not yet connected to actual crypto verification — placeholder"
+      ],
+      "gaps": [
+        "Any code in PLang assembly can call SetVerified — no crypto proof required (acceptable: assembly = trusted boundary)"
+      ]
+    },
+    {
+      "area": "sensitive-attribute-filtering",
+      "exposure": "Private keys marked [Sensitive] on IdentityVariable.PrivateKey",
+      "trust_boundary": "Serialization output boundary — JsonStreamSerializer",
+      "mitigations": [
+        "SensitivePropertyFilter strips [Sensitive] properties from JsonStreamSerializer output",
+        "Data.Envelope._envelopeJsonOptions includes SensitivePropertyFilter.Filter (fixed since identity branch)",
+        "Storage serialization (DataSource) correctly preserves sensitive data for persistence"
+      ],
+      "gaps": [
+        "Dot navigation (%MyIdentity.PrivateKey%) still resolves — by design, user-sovereign",
+        "Raw JsonSerializer.Serialize (outside stream serializer) would include sensitive data — no known call sites for identity objects"
+      ]
+    },
+    {
+      "area": "identity-module",
+      "exposure": "Ed25519 key generation, storage, export, rename, archive operations",
+      "trust_boundary": "All operations are user-initiated via .pr files. Keys stored in actor's SQLite DataSource.",
+      "mitigations": [
+        "Parameterized SQL queries — no injection vectors",
+        "Name validation (non-empty) on create",
+        "Uniqueness check across all identities including archived",
+        "Rename is atomic (save-new then remove-old)",
+        "Archive prevents setting as default",
+        "Export handler returns raw key on explicit user request (user-sovereign)"
+      ],
+      "gaps": [
+        "Ed25519 byte arrays not zeroed after encoding (managed runtime limitation)",
+        "Private key stored as plain base64 string in SQLite (accepted risk — disk encryption is user's responsibility)"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "crypto-timing",
+      "vector": "DefaultProvider.Verify uses Span<byte>.SequenceEqual which short-circuits on first byte mismatch, enabling timing side-channel attacks. An attacker making repeated verification requests can determine the expected hash byte-by-byte by measuring response times.",
+      "preconditions": "PLang app exposes a verification endpoint to external clients (e.g., HTTP API that verifies submitted data against stored hashes). Attacker can make many requests with controlled timing measurement.",
+      "impact": "Attacker can recover the expected hash value without knowing the original data. For integrity verification (not password hashing), this reveals the hash but not necessarily the pre-image.",
+      "affected_files": ["PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs"],
+      "exploit_sketch": "1. Send verify requests with hash = 00...00 (all zeros), vary first byte until timing increases. 2. Lock first byte, vary second byte. 3. Repeat for all 32 bytes. Each byte requires ~256 attempts with statistical significance. Total: ~8192 requests for a 256-bit hash.",
+      "proposed_fix": "Replace `actual.AsSpan().SequenceEqual(expectedHash)` with `CryptographicOperations.FixedTimeEquals(actual, expectedHash)`. This is a one-line change. CryptographicOperations.FixedTimeEquals is available in .NET 6+.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Ed25519 private key byte arrays from NSec.Cryptography are not explicitly zeroed after base64 encoding in KeyGenerator.cs. The byte[] remains in managed memory until GC collects it.",
+      "preconditions": "Attacker has memory read access to the process (e.g., via debugger, memory dump, or cold boot attack).",
+      "impact": "Private key material may be recoverable from process memory after key generation.",
+      "affected_files": ["PLang/Runtime2/modules/identity/KeyGenerator.cs"],
+      "exploit_sketch": "Dump process memory, scan for Ed25519 key patterns (32-byte aligned, high entropy).",
+      "proposed_fix": "Inherent limitation of .NET managed runtime — Array.Clear helps but GC can still copy. Accept as managed runtime risk. Consider using SecureString or platform-specific secure memory in future if high-assurance key protection is needed.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Private key stored as unprotected base64 string in IdentityVariable and persisted to SQLite. [Sensitive] attribute only filters serialization output, not storage.",
+      "preconditions": "Attacker has file system access to .db/system.sqlite.",
+      "impact": "All identity private keys are readable from the database file.",
+      "affected_files": [
+        "PLang/Runtime2/modules/identity/types.cs",
+        "PLang/Runtime2/modules/identity/IdentityData.cs"
+      ],
+      "exploit_sketch": "sqlite3 .db/system.sqlite \"SELECT * FROM identities;\"",
+      "proposed_fix": "By design — user-sovereign model. The user owns their disk. Disk encryption is the user's responsibility. Document that .db/ contains sensitive key material.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "design-note",
+      "vector": "Engine.Providers allows silent provider replacement — Register<T> overwrites without logging or notification. A library loaded via library.load could replace the crypto provider with a weak implementation.",
+      "preconditions": "User loads an untrusted library that calls engine.Providers.Register<ICryptoProvider>(weakProvider).",
+      "impact": "All subsequent crypto operations use the weak provider. Hash verification could be bypassed.",
+      "affected_files": ["PLang/Runtime2/Engine/Providers/this.cs"],
+      "exploit_sketch": "Ship a library DLL that registers a crypto provider whose Verify() always returns true.",
+      "proposed_fix": "Not a vulnerability — user-sovereign model. The user chose to load the library. library.load already grants full trust. Consider adding a debug-level log when a provider is replaced, for transparency.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "Crypto module is well-designed with clean separation between handlers (thin) and providers (pluggable). One medium finding: timing side-channel in DefaultProvider.Verify using SequenceEqual instead of CryptographicOperations.FixedTimeEquals. Three low/accepted-risk findings consistent with managed runtime and user-sovereign threat model. Identity module carries forward from prior PASS audit with no regressions. Data.Envelope now correctly includes SensitivePropertyFilter. Overall posture: PASS — the timing fix is recommended but not blocking given the threat model."
+}

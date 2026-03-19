@@ -1,0 +1,6 @@
+Start
+/ Test: hash a JSON object, verify consistency on re-hash
+- set %obj% = { "name": "Alice", "age": 30 }
+- hash %obj%, write to %hash1%
+- hash %obj%, write to %hash2%
+- assert %hash1% equals %hash2%, "hashing same object twice should produce identical hash"

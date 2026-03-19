@@ -1,0 +1,7 @@
+Start
+/ Test: verify with wrong hash returns false
+- set %data% = "hello world"
+- hash %data%, write to %correctHash%
+- set %wrongHash% = "0000000000000000000000000000000000000000000000000000000000000000"
+- verify hash of %data% against %wrongHash%, write to %isValid%
+- assert %isValid% is false, "verify with wrong hash should return false"
