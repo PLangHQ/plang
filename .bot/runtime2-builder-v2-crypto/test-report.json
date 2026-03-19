@@ -1,10 +1,10 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-v2-crypto",
-  "timestamp": "2026-03-19T10:30:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-03-19T11:00:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 1679, "passed": 1675, "failed": 0, "skipped": 4 },
+    "csharp": { "total": 1688, "passed": 1684, "failed": 0, "skipped": 4 },
     "plang": { "total": 6, "passed": 0, "failed": 0, "skipped": 6 }
   },
   "coverage": {
@@ -18,60 +18,50 @@
       "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
       "PLang/Runtime2/Engine/Providers/this.cs"
     ],
-    "notes": "Coverage tool does not instrument source-generator partial classes. Tests DO exercise the code (verified by tracing). Only Engine/this.cs (84.8%) appears in coverage."
+    "notes": "Coverage tool limitation — source-generator partial classes not instrumented. Tests exercise the code (verified by tracing)."
   },
   "findings": [
     {
       "id": 1,
       "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Providers/this.cs",
-      "issue": "Engine.Providers Get<T>(), Has<T>(), Remove<T>() have zero tests — 3 of 5 public methods on new infrastructure. Deletion test: these methods could be deleted without failing any test.",
-      "impact": "Every future module depends on Engine.Providers. A bug in Remove<T>() (e.g., wrong type key) or Has<T>() would go undetected. Provider hot-swapping at runtime would silently break.",
-      "suggestion": "Add a dedicated ProviderRegistryTests class testing all 5 public methods including register-remove-get round-trip"
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/crypto/verify.cs",
+      "issue": "Verify.Run() catches FormatException from Convert.FromHexString(Hash) but Hash=null throws ArgumentNullException, which is unhandled. Violates 'behavior methods never throw' contract.",
+      "impact": "If a .pr file or source generator passes null Hash, Verify throws an unhandled exception instead of returning Data.FromError(). This is the exact bug pattern the auditor has flagged as major on other modules.",
+      "suggestion": "Either widen catch to include ArgumentNullException, or add a null guard before Convert.FromHexString. Add a test with Hash = null! to prove the fix."
     },
     {
       "id": 2,
-      "severity": "major",
-      "type": "false-green",
+      "severity": "minor",
+      "type": "edge-case",
       "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
-      "issue": "Hash_ObjectInput_SerializesToJsonBeforeHashing claims to verify JSON serialization but only checks consistency (same object hashed twice). If SerializeData() switched from JsonSerializer.Serialize() to data.ToString(), the test would still pass — but cross-system hash verification would silently break because input bytes changed.",
-      "impact": "Serialization boundary is the contract between systems. A change here would produce different hashes for the same logical data, breaking any stored/shared hashes. The test doesn't catch this.",
-      "suggestion": "Add a known-value test anchoring the exact bytes: hash of a specific object with keccak256 should equal a pre-computed hex string. This pins the serialization format."
+      "code_file": "PLang/Runtime2/modules/crypto/verify.cs",
+      "issue": "No test for Verify with Hash = \"\" (empty string). Behavior is correct (returns false) but undocumented by tests.",
+      "impact": "Low — correct behavior, just undocumented",
+      "suggestion": "Optional: add a test documenting empty hash behavior"
     },
     {
       "id": 3,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
-      "issue": "Hash_ExplicitAlgorithm_OverridesDefault checks algorithm name and hash length but not that the hash value differs from keccak256. Both algorithms produce 32 bytes (64 hex chars). If the Algorithm property were ignored in hash.cs, this test would still pass.",
-      "impact": "DefaultProviderTests verify each algorithm in isolation, but this handler test is supposed to verify that the Algorithm parameter flows through the handler correctly. It doesn't — the integration gap means a hardcoded algorithm in hash.cs would go undetected at the handler level.",
-      "suggestion": "Hash same input with keccak256 and sha256 via the handler, assert the hashes differ"
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/ProviderRegistryTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Providers/this.cs",
+      "issue": "All 9 registry tests use ICryptoProvider as type key. No test verifies type isolation (registering type A doesn't affect type B).",
+      "impact": "Near zero — ConcurrentDictionary<Type, object> guarantees isolation by framework",
+      "suggestion": "Optional: add one test with two different interface types"
     },
     {
       "id": 4,
       "severity": "minor",
-      "type": "missing-plang-test",
-      "test_file": "Tests/Runtime2/Crypto/",
-      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
-      "issue": "6 PLang .goal tests exist but cannot be built or run — crypto module not registered with builder yet",
-      "impact": "Full pipeline validation (goal → builder → .pr → runtime) deferred until builder integration (piece 8)",
-      "suggestion": "Build and run PLang tests after crypto module is registered with the builder"
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "missing-coverage",
+      "type": "edge-case",
       "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/crypto/types.cs",
-      "issue": "HashedData.ToString() is untested",
-      "impact": "Minimal — convenience method returning Hash property",
-      "suggestion": "Informational only, no action needed"
+      "code_file": "PLang/Runtime2/modules/crypto/verify.cs",
+      "issue": "No test for mixed-case Algorithm names (e.g., 'Keccak256'). Hash normalizes to lowercase in HashedData, but Verify passes raw Algorithm to provider.",
+      "impact": "Low — DefaultProvider normalizes internally. Custom providers might not.",
+      "suggestion": "Optional: test with Algorithm = 'KECCAK256' to document case handling"
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "Test suite structure is solid but has 3 major findings: Engine.Providers has 60% untested public API (deletion test fails), the JSON serialization test is a false green (doesn't prove JSON happened), and the algorithm override test doesn't verify the hash actually changed. These mean subtle bugs in provider lifecycle, serialization format, or algorithm routing would go undetected. Provider error propagation tests (review-driven) are strong. PLang tests deferred (known)."
+  "summary": "v1 findings all resolved. Fresh-eyes analysis found 1 major: Verify.Run() can throw unhandled ArgumentNullException when Hash is null (catch only handles FormatException). This violates the 'behavior methods never throw' contract. 3 minor edge cases. All previous test quality issues fixed — serialization anchor works, algorithm verification works, provider registry fully tested."
 }

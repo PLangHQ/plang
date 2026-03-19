@@ -166,6 +166,37 @@
         "health": "APPROVED — test suite is honest, all critical paths covered",
         "notes": "Coverage tool doesn't instrument source-generator partial classes. Tests exercise the code but coverage numbers are unavailable for crypto files specifically."
       }
+    },
+    {
+      "id": "f0d6b8c4-7e25-4a9f-c348-2b6d9e1f3a45",
+      "bot": "tester",
+      "timestamp_start": "2026-03-19T11:00:00Z",
+      "timestamp_end": "2026-03-19T11:30:00Z",
+      "intent": "Re-review crypto tests with fresh eyes after coder fixes",
+      "before": {
+        "assumptions": "Coder fixed all 3 v1 major findings. Need to verify fixes AND look for new issues.",
+        "risk": "Low — reviewing tests"
+      },
+      "plan": "Verify v1 fixes, re-run tests, fresh-eyes analysis of all source and test files, write report.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang/Runtime2/modules/crypto/hash.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "v1 fixes verified. Fresh-eyes found: Verify.Run() catches FormatException but Hash=null throws ArgumentNullException (unhandled). 3 minor edge cases."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS-FIXES — 1 major (unhandled ArgumentNullException in Verify), 3 minor",
+        "notes": "v1 fixes are solid. New finding is a real bug, not just a test gap — the code itself violates the never-throw contract."
+      }
     }
   ]
 }
