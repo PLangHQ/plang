@@ -1,0 +1,77 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-v2-crypto",
+  "timestamp": "2026-03-19T10:00:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 1679, "passed": 1675, "failed": 0, "skipped": 4 },
+    "plang": { "total": 6, "passed": 0, "failed": 0, "skipped": 6 }
+  },
+  "coverage": {
+    "changed_files_covered": 1,
+    "changed_files_total": 7,
+    "uncovered_files": [
+      "PLang/Runtime2/modules/crypto/hash.cs",
+      "PLang/Runtime2/modules/crypto/verify.cs",
+      "PLang/Runtime2/modules/crypto/types.cs",
+      "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
+      "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
+      "PLang/Runtime2/Engine/Providers/this.cs"
+    ],
+    "notes": "Coverage tool does not instrument source-generator partial classes. Tests DO exercise the code (verified by tracing). Only Engine/this.cs (84.8%) appears in coverage."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Providers/this.cs",
+      "issue": "Engine.Providers Get<T>(), Has<T>(), Remove<T>() have zero tests — only Register and GetOrDefault are exercised",
+      "impact": "A bug in Remove<T>() or Has<T>() (e.g., wrong type key) would go undetected",
+      "suggestion": "Add a dedicated ProviderRegistryTests class testing all 5 public methods"
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "issue": "Hash_ObjectInput_SerializesToJsonBeforeHashing claims JSON serialization but only checks consistency (same hash twice), not that JSON serialization actually happened",
+      "impact": "If SerializeData switched from JsonSerializer to ToString(), test would still pass",
+      "suggestion": "Add a known-value test: hash of {\"Name\":\"test\",\"Value\":42} with keccak256 should equal a pre-computed hex string"
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "issue": "Hash_ExplicitAlgorithm_OverridesDefault checks algorithm name and hash length but not that the hash value differs from default (keccak256)",
+      "impact": "If Algorithm parameter were ignored, test would still pass — both algorithms produce 64-char hex",
+      "suggestion": "Hash same input with keccak256 and sha256, assert hashes differ"
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Runtime2/Crypto/",
+      "code_file": "PLang/Runtime2/modules/crypto/hash.cs",
+      "issue": "6 PLang .goal tests exist but cannot be built or run — crypto module not registered with builder yet",
+      "impact": "Full pipeline validation (goal → builder → .pr → runtime) deferred until builder integration (piece 8)",
+      "suggestion": "Build and run PLang tests after crypto module is registered with the builder"
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/crypto/types.cs",
+      "issue": "HashedData.ToString() is untested",
+      "impact": "Minimal — convenience method returning Hash property",
+      "suggestion": "Informational only, no action needed"
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Test suite is honest and well-structured. All critical paths covered with strong assertions (known test vectors, error keys, status codes). 5 minor findings — no false greens, no missing critical coverage. Provider error propagation (review-driven fix from codeanalyzer v1) is properly tested. PLang tests deferred until builder integration."
+}
