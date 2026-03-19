@@ -19,13 +19,6 @@
           "category": "doc",
           "confidence": "high",
           "context": "Full architecture plan for identity module, designed interactively with Ingi"
-        },
-        {
-          "paths": [".bot/runtime2-builder-v2-identity/architect/v1/summary.md", ".bot/runtime2-builder-v2-identity/architect/summary.md"],
-          "type": "create",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Session summaries for handoff"
         }
       ],
       "after": {
@@ -77,8 +70,41 @@
       ],
       "after": {
         "status": "complete",
-        "health": "All 40 test stubs created — 32 C# (4 files), 8 PLang (8 directories). Ready for coder.",
-        "notes": "Follows exact patterns from SettingsDataTests.cs and existing PLang test goals."
+        "health": "48 test stubs created (40 C# + 8 PLang). Two open questions flagged for architect.",
+        "notes": "Questions: (1) duplicate name when archived — error or re-create? (2) PrivateKey dot navigation — blocked or serialization-only?"
+      }
+    },
+    {
+      "id": "c3d4e5f6-identity-v2-review",
+      "bot": "architect",
+      "timestamp_start": "2026-03-19T07:00:00Z",
+      "timestamp_end": "2026-03-19T07:30:00Z",
+      "intent": "Resolve test-designer open questions, add rename + unarchive actions",
+      "before": {
+        "assumptions": "Test-designer flagged two design questions. Ingi will confirm direction.",
+        "risk": "Low — design decisions only, no code changes."
+      },
+      "plan": "Resolve both questions: (1) duplicate name = always error, add unarchive + rename actions. (2) [Sensitive] is serialization only, dot navigation works. Update plan to v2 with new actions and corrected test expectations.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-identity/architect/v2/v1_review_summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Summary of test-designer questions and architect decisions"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-identity/architect/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated plan with 8 actions (was 6), 59 tests (was 48), resolved open questions"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "v2 plan ready. Two new actions (unarchive, rename), one test renamed, 11 new tests specified. Ready for test-designer to update stubs, then coder.",
+        "notes": "Ingi confirmed both decisions. Names are identities — never reuse across archived. [Sensitive] is serialization boundary, not access control."
       }
     }
   ]
