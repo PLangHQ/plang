@@ -1,6 +1,7 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.DataSource;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.identity;
 
 namespace PLang.Runtime2.Engine.Context;
 
@@ -10,6 +11,7 @@ namespace PLang.Runtime2.Engine.Context;
 public sealed class Actor : IAsyncDisposable
 {
     private readonly Lazy<IDataSource> _dataSource;
+    private IdentityData? _identity;
 
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
@@ -38,6 +40,13 @@ public sealed class Actor : IAsyncDisposable
     public IDataSource DataSource => _dataSource.Value;
 
     /// <summary>
+    /// Identity data for this actor. Lazy — created on first access.
+    /// For System actor: auto-loads/creates default identity from DataSource.
+    /// For User/Service: starts empty, set externally by HTTP/signing layer.
+    /// </summary>
+    public IdentityData Identity => _identity ??= new IdentityData(Engine);
+
+    /// <summary>
     /// Resolves an actor by name using the engine.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
@@ -64,6 +73,10 @@ public sealed class Actor : IAsyncDisposable
         // Register shared SettingsData — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
         Context.MemoryStack.Put(engine.SettingsVariable);
+
+        // Register lazy %MyIdentity% — resolves to the System actor's default identity.
+        // DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
+        Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
     }
 
     private IDataSource CreateDataSource()

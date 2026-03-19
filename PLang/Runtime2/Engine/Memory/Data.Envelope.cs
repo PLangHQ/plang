@@ -1,7 +1,9 @@
 using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Errors;
 
 namespace PLang.Runtime2.Engine.Memory;
@@ -23,7 +25,11 @@ public partial class Data
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new TypeJsonConverter() }
+        Converters = { new TypeJsonConverter() },
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { SensitivePropertyFilter.Filter }
+        }
     };
 
     /// <summary>

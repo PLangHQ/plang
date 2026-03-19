@@ -246,6 +246,7 @@ public static class TypeMapping
 | `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
 | `output` | `write` | Console/channel output |
 | `condition` | `if`, `compare` | Conditional branching and comparison |
+| `identity` | `create`, `get`, `getAll`, `archive`, `unarchive`, `rename`, `setDefault`, `export` | Ed25519 identity management |
 | `library` | `load` | Load external DLL libraries |
 
 ### condition module — Details
@@ -261,6 +262,31 @@ When `Operator` is null, performs a truthy check on `Left`. When set, evaluates 
 **`condition.compare`** — Pure boolean evaluation. Returns a bool wrapped in `Data`. Used as an intermediate in compound conditions (AND/OR) where multiple `compare` results feed into a final `if`. Does NOT set `__condition__` — only `if` controls sub-step execution.
 
 **Pluggable evaluator**: Both actions use `IEvaluator` (default: `DefaultEvaluator`). Supports operators: `==`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `startswith`, `endswith`, `in`, `isempty`, `not`, `and`, `or`. Type normalization widens numeric operands automatically.
+
+### identity module — Details
+
+The identity module manages Ed25519 key pairs stored in the System actor's DataSource (`identity` table). Each identity has a name, public/private key pair, default flag, and archive flag.
+
+**Core type — `IdentityVariable`**: OBP-compliant entity that owns its persistence (`LoadAsync`, `SaveAsync`, `RemoveAsync` navigate to `engine.System.DataSource`). The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
+
+**Lazy resolution — `IdentityData`**: A `Data` subclass on `Actor.Identity` that lazily resolves the default identity on first access. Auto-creates a "default" identity if none exist. Uses sync-over-async (safe in PLang's sequential execution model with no SynchronizationContext). Handlers call `Update()` after changing the default.
+
+**`%MyIdentity%`**: Registered on every actor's MemoryStack as `DynamicData` pointing to `engine.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `create` | `Name` (default: "default"), `SetAsDefault` (default: false) | Creates identity with Ed25519 key pair. Validates name uniqueness (case-insensitive, includes archived). |
+| `get` | `Name` (optional) | By name: returns identity or 404. No name: returns default, auto-creates if needed. |
+| `getAll` | — | Lists all non-archived identities. |
+| `archive` | `Name` | Soft-deletes. Cannot archive the default — set a different default first. Idempotent. |
+| `unarchive` | `Name` | Restores archived identity. Idempotent. |
+| `rename` | `Name`, `NewName` | Atomic rename: save-new-first, then remove-old (no data loss on failure). Updates `%MyIdentity%` if default. |
+| `setDefault` | `Name` | Switches default. Cannot set archived identity. Clears all existing defaults. Idempotent. |
+| `export` | `Name` (optional) | Returns raw private key string. By name or default (auto-creates if needed). |
+
+All mutating actions are `Cacheable = false`. All return `Data` — errors use `ActionError` (validation) or `ServiceError` (save failures).
 
 ## Relationships
 

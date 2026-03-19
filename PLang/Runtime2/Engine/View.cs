@@ -31,3 +31,12 @@ public sealed class DefaultAttribute : Attribute { }
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class OutAttribute : Attribute { }
+
+/// <summary>
+/// Marks properties that contain sensitive data (e.g., private keys).
+/// Excluded from all output serialization (JsonStreamSerializer).
+/// Included in storage serialization (raw JsonSerializer for DataSource).
+/// Does NOT block code-level access — %MyIdentity.PrivateKey% still works.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class SensitiveAttribute : Attribute { }
