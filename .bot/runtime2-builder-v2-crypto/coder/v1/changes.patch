@@ -1,0 +1,2936 @@
+diff --git a/Documentation/Runtime2/README.md b/Documentation/Runtime2/README.md
+index 0b63625f..8c44ea6d 100644
+--- a/Documentation/Runtime2/README.md
++++ b/Documentation/Runtime2/README.md
+@@ -22,8 +22,10 @@ Engine (@this, sealed, IAsyncDisposable)
+     ├── System       (internal engine operations)
+     ├── Service      (external service operations)
+     └── User         (end user operations)
++         ├── Identity → IdentityData (lazy, auto-creates default Ed25519 key pair)
++         ├── DataSource → IDataSource (lazy, per-actor SQLite)
+          └── Context → PLangContext
+-                        ├── MemoryStack   (variable storage)
++                        ├── MemoryStack   (variable storage, includes %MyIdentity% DynamicData)
+                         ├── CallStack     (execution tracking)
+                         ├── System/User   (EventScope → EngineEvents)
+                         └── Actor         (identity)
+@@ -161,7 +163,7 @@ PLang/Runtime2/
+ ├── Engine/
+ │   ├── this.cs                Central orchestrator (root of object graph)
+ │   ├── Info.cs                Version/build info
+-│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default] attributes
++│   ├── View.cs                [Store], [LlmBuilder], [Debug], [Default], [Sensitive] attributes
+ │   │
+ │   ├── Goals/
+ │   │   ├── this.cs            @this (alias: EngineGoals) — goal collection
+@@ -227,6 +229,7 @@ PLang/Runtime2/
+ │   │   └── Serializers/
+ │   │       ├── this.cs        @this (alias: Serializers) — content-type routing
+ │   │       ├── ViewPropertyFilter.cs  View-based property filtering
++│   │       ├── SensitivePropertyFilter.cs  Strips [Sensitive] properties from output
+ │   │       └── Serializer/
+ │   │           ├── this.cs    ISerializer — serializer interface
+ │   │           ├── JsonStreamSerializer.cs  System.Text.Json implementation
+@@ -267,5 +270,17 @@ PLang/Runtime2/
+     │       ├── IEvaluator.cs         Pluggable comparison engine interface
+     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
+     ├── goal/   loop/   list/   math/   convert/
++    ├── identity/
++    │   ├── types.cs       IdentityVariable — Ed25519 key pair with OBP persistence
++    │   ├── IdentityData.cs Lazy-resolving Data subclass on Actor.Identity
++    │   ├── KeyGenerator.cs Ed25519 key generation via NSec
++    │   ├── create.cs      identity.create — new identity with key pair
++    │   ├── get.cs         identity.get — by name or default (auto-create)
++    │   ├── getAll.cs      identity.getAll — list non-archived
++    │   ├── archive.cs     identity.archive — soft-delete
++    │   ├── unarchive.cs   identity.unarchive — restore
++    │   ├── rename.cs      identity.rename — atomic rename
++    │   ├── setDefault.cs  identity.setDefault — switch default
++    │   └── export.cs      identity.export — private key export
+     ├── assert/   mock/   error/   library/
+ ```
+diff --git a/Documentation/Runtime2/good_to_know.md b/Documentation/Runtime2/good_to_know.md
+index 20e026e8..bf45186c 100644
+--- a/Documentation/Runtime2/good_to_know.md
++++ b/Documentation/Runtime2/good_to_know.md
+@@ -195,6 +195,50 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true"
+ 
+ ---
+ 
++## [Sensitive] Attribute — Two-Mode Serialization
++
++The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityVariable.PrivateKey`). It controls a two-mode serialization split:
++
++- **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
++- **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
++- **Code-level access**: Unaffected. `%MyIdentity.PrivateKey%` in PLang code resolves normally — the attribute only controls serialization.
++
++The filter is always-on — it's wired into both `JsonStreamSerializer`'s default options and `Data.Envelope`'s `_envelopeJsonOptions`. No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
++
++---
++
++## IdentityData — Lazy Resolution with Sync-Over-Async
++
++`IdentityData` (on `Actor.Identity`) lazily resolves the default identity on first property access. It uses sync-over-async (`GetAwaiter().GetResult()`) in the `Value` getter because:
++
++1. C# properties can't be `async`
++2. PLang runs sequentially per context with no `SynchronizationContext`
++3. SQLite I/O (via DataSource) is synchronous underneath
++
++The resolution chain: check for existing default → promote any non-archived identity → auto-create "default" with new Ed25519 keys. All through `IdentityVariable.GetOrCreateDefaultAsync()`, the single source of truth.
++
++Handlers call `Identity.Update(newDefault)` after changing the default to refresh the cached value. The `ResolveDefault()` method catches `InvalidOperationException` (save failure) and returns null — IdentityData handles null gracefully.
++
++---
++
++## %MyIdentity% — DynamicData Registration
++
++`%MyIdentity%` is registered on every actor's MemoryStack as a `DynamicData`:
++
++```csharp
++Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
++```
++
++This means:
++- It always points to the **System** actor's default identity (not the current actor's)
++- It re-evaluates on every access (DynamicData calls the lambda each time)
++- Changes via `setDefault`, `rename`, or auto-create are reflected immediately
++- `%MyIdentity%` in string context gives the public key (`IdentityVariable.ToString()`)
++- `%MyIdentity.PrivateKey%` navigates via dot-notation to the private key
++- `%MyIdentity.Name%`, `%MyIdentity.IsDefault%`, etc. all work via standard MemoryStack navigation
++
++---
++
+ ## Condition Evaluation — Type Normalization
+ 
+ `DefaultEvaluator.NormalizeTypes` handles the JSON numeric boxing problem for conditions:
+diff --git a/Documentation/Runtime2/modules.md b/Documentation/Runtime2/modules.md
+index e7522d46..83222374 100644
+--- a/Documentation/Runtime2/modules.md
++++ b/Documentation/Runtime2/modules.md
+@@ -246,6 +246,7 @@ public static class TypeMapping
+ | `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
+ | `output` | `write` | Console/channel output |
+ | `condition` | `if`, `compare` | Conditional branching and comparison |
++| `identity` | `create`, `get`, `getAll`, `archive`, `unarchive`, `rename`, `setDefault`, `export` | Ed25519 identity management |
+ | `library` | `load` | Load external DLL libraries |
+ 
+ ### condition module — Details
+@@ -262,6 +263,31 @@ When `Operator` is null, performs a truthy check on `Left`. When set, evaluates
+ 
+ **Pluggable evaluator**: Both actions use `IEvaluator` (default: `DefaultEvaluator`). Supports operators: `==`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `startswith`, `endswith`, `in`, `isempty`, `not`, `and`, `or`. Type normalization widens numeric operands automatically.
+ 
++### identity module — Details
++
++The identity module manages Ed25519 key pairs stored in the System actor's DataSource (`identity` table). Each identity has a name, public/private key pair, default flag, and archive flag.
++
++**Core type — `IdentityVariable`**: OBP-compliant entity that owns its persistence (`LoadAsync`, `SaveAsync`, `RemoveAsync` navigate to `engine.System.DataSource`). The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
++
++**Lazy resolution — `IdentityData`**: A `Data` subclass on `Actor.Identity` that lazily resolves the default identity on first access. Auto-creates a "default" identity if none exist. Uses sync-over-async (safe in PLang's sequential execution model with no SynchronizationContext). Handlers call `Update()` after changing the default.
++
++**`%MyIdentity%`**: Registered on every actor's MemoryStack as `DynamicData` pointing to `engine.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
++
++**Actions:**
++
++| Action | Parameters | Behavior |
++|--------|-----------|----------|
++| `create` | `Name` (default: "default"), `SetAsDefault` (default: false) | Creates identity with Ed25519 key pair. Validates name uniqueness (case-insensitive, includes archived). |
++| `get` | `Name` (optional) | By name: returns identity or 404. No name: returns default, auto-creates if needed. |
++| `getAll` | — | Lists all non-archived identities. |
++| `archive` | `Name` | Soft-deletes. Cannot archive the default — set a different default first. Idempotent. |
++| `unarchive` | `Name` | Restores archived identity. Idempotent. |
++| `rename` | `Name`, `NewName` | Atomic rename: save-new-first, then remove-old (no data loss on failure). Updates `%MyIdentity%` if default. |
++| `setDefault` | `Name` | Switches default. Cannot set archived identity. Clears all existing defaults. Idempotent. |
++| `export` | `Name` (optional) | Returns raw private key string. By name or default (auto-creates if needed). |
++
++All mutating actions are `Cacheable = false`. All return `Data` — errors use `ActionError` (validation) or `ServiceError` (save failures).
++
+ ## Relationships
+ 
+ - Registered in [Engine](engine.md) via `Libraries` property (`Libraries`)
+diff --git a/PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs b/PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs
+new file mode 100644
+index 00000000..b9747ec4
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs
+@@ -0,0 +1,169 @@
++using PLang.Runtime2.modules.crypto.providers;
++
++namespace PLang.Tests.Runtime2.Modules.crypto;
++
++public class DefaultProviderTests
++{
++    private readonly DefaultProvider _provider = new();
++
++    // --- Hash: Keccak256 ---
++
++    [Test]
++    public async Task Hash_Keccak256_ProducesCorrectHash()
++    {
++        // Known input → known Keccak256 hex output.
++        // Reference: keccak256("test") = 9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658
++        var input = System.Text.Encoding.UTF8.GetBytes("test");
++        var hash = _provider.Hash(input, "keccak256");
++        var hex = Convert.ToHexString(hash).ToLowerInvariant();
++
++        await Assert.That(hex).IsEqualTo("9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658");
++    }
++
++    [Test]
++    public async Task Hash_SHA256_ProducesCorrectHash()
++    {
++        // Reference: sha256("test") = 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
++        var input = System.Text.Encoding.UTF8.GetBytes("test");
++        var hash = _provider.Hash(input, "sha256");
++        var hex = Convert.ToHexString(hash).ToLowerInvariant();
++
++        await Assert.That(hex).IsEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
++    }
++
++    [Test]
++    [Skip("Bcrypt deferred — not needed for signing module")]
++    public async Task Hash_Bcrypt_ProducesValidHash()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("password123");
++        var hash = _provider.Hash(input, "bcrypt");
++        var bcryptString = System.Text.Encoding.UTF8.GetString(hash);
++
++        await Assert.That(bcryptString).StartsWith("$2");
++    }
++
++    [Test]
++    [Skip("Bcrypt deferred — not needed for signing module")]
++    public async Task Hash_Bcrypt_SameInput_DifferentHashes()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("password123");
++        var hash1 = _provider.Hash(input, "bcrypt");
++        var hash2 = _provider.Hash(input, "bcrypt");
++
++        // Bcrypt uses random salt — same input must produce different output
++        await Assert.That(hash1).IsNotEquivalentTo(hash2);
++    }
++
++    [Test]
++    public async Task Hash_UnknownAlgorithm_Throws()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("test");
++
++        await Assert.That(() => _provider.Hash(input, "md5")).Throws<NotSupportedException>();
++    }
++
++    [Test]
++    public async Task Hash_EmptyInput_DoesNotThrow()
++    {
++        var input = Array.Empty<byte>();
++        var hash = _provider.Hash(input, "keccak256");
++
++        await Assert.That(hash).IsNotNull();
++        await Assert.That(hash.Length).IsGreaterThan(0);
++    }
++
++    [Test]
++    public async Task Hash_Keccak256_OutputIs32Bytes()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("any data");
++        var hash = _provider.Hash(input, "keccak256");
++
++        await Assert.That(hash.Length).IsEqualTo(32);
++    }
++
++    [Test]
++    public async Task Hash_SHA256_OutputIs32Bytes()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("any data");
++        var hash = _provider.Hash(input, "sha256");
++
++        await Assert.That(hash.Length).IsEqualTo(32);
++    }
++
++    // --- Verify ---
++
++    [Test]
++    public async Task Verify_Keccak256_RoundTrip_ReturnsTrue()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
++        var hash = _provider.Hash(input, "keccak256");
++        var result = _provider.Verify(input, hash, "keccak256");
++
++        await Assert.That(result).IsTrue();
++    }
++
++    [Test]
++    public async Task Verify_Keccak256_WrongData_ReturnsFalse()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
++        var hash = _provider.Hash(input, "keccak256");
++        var wrongInput = System.Text.Encoding.UTF8.GetBytes("different data");
++        var result = _provider.Verify(wrongInput, hash, "keccak256");
++
++        await Assert.That(result).IsFalse();
++    }
++
++    [Test]
++    public async Task Verify_SHA256_RoundTrip_ReturnsTrue()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
++        var hash = _provider.Hash(input, "sha256");
++        var result = _provider.Verify(input, hash, "sha256");
++
++        await Assert.That(result).IsTrue();
++    }
++
++    [Test]
++    public async Task Verify_SHA256_WrongHash_ReturnsFalse()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
++        var hash = _provider.Hash(input, "sha256");
++        // Tamper with the hash
++        hash[0] = (byte)(hash[0] ^ 0xFF);
++        var result = _provider.Verify(input, hash, "sha256");
++
++        await Assert.That(result).IsFalse();
++    }
++
++    [Test]
++    [Skip("Bcrypt deferred — not needed for signing module")]
++    public async Task Verify_Bcrypt_CorrectPassword_ReturnsTrue()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("mypassword");
++        var hash = _provider.Hash(input, "bcrypt");
++        var result = _provider.Verify(input, hash, "bcrypt");
++
++        await Assert.That(result).IsTrue();
++    }
++
++    [Test]
++    [Skip("Bcrypt deferred — not needed for signing module")]
++    public async Task Verify_Bcrypt_WrongPassword_ReturnsFalse()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("mypassword");
++        var hash = _provider.Hash(input, "bcrypt");
++        var wrongInput = System.Text.Encoding.UTF8.GetBytes("wrongpassword");
++        var result = _provider.Verify(wrongInput, hash, "bcrypt");
++
++        await Assert.That(result).IsFalse();
++    }
++
++    [Test]
++    public async Task Verify_UnknownAlgorithm_Throws()
++    {
++        var input = System.Text.Encoding.UTF8.GetBytes("test");
++        var fakeHash = new byte[32];
++
++        await Assert.That(() => _provider.Verify(input, fakeHash, "md5")).Throws<NotSupportedException>();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs b/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs
+new file mode 100644
+index 00000000..e55e613e
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs
+@@ -0,0 +1,206 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.crypto;
++using PLang.Runtime2.modules.crypto.providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.crypto;
++
++public class HashActionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    // --- Hash action ---
++
++    [Test]
++    public async Task Hash_StringInput_ReturnsHashedData()
++    {
++        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        var hashed = result.Value as HashedData;
++        await Assert.That(hashed).IsNotNull();
++        await Assert.That(hashed!.Algorithm).IsEqualTo("keccak256");
++        await Assert.That(hashed.Format).IsEqualTo("json");
++        await Assert.That(hashed.Hash).IsNotEmpty();
++        await Assert.That(hashed.Hash.Length).IsEqualTo(64); // 32 bytes = 64 hex chars
++    }
++
++    [Test]
++    public async Task Hash_ObjectInput_SerializesToJsonBeforeHashing()
++    {
++        var action1 = new Hash { Context = Ctx, Data = new { Name = "test", Value = 42 }, Algorithm = "keccak256" };
++        var action2 = new Hash { Context = Ctx, Data = new { Name = "test", Value = 42 }, Algorithm = "keccak256" };
++
++        var result1 = await action1.Run();
++        var result2 = await action2.Run();
++
++        await Assert.That(result1.Success).IsTrue();
++        await Assert.That(result2.Success).IsTrue();
++        var hash1 = (result1.Value as HashedData)!.Hash;
++        var hash2 = (result2.Value as HashedData)!.Hash;
++        await Assert.That(hash1).IsEqualTo(hash2);
++    }
++
++    [Test]
++    public async Task Hash_ByteArrayInput_FormatIsRaw()
++    {
++        var action = new Hash { Context = Ctx, Data = new byte[] { 1, 2, 3 }, Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        var hashed = result.Value as HashedData;
++        await Assert.That(hashed).IsNotNull();
++        await Assert.That(hashed!.Format).IsEqualTo("raw");
++    }
++
++    [Test]
++    public async Task Hash_ExplicitAlgorithm_OverridesDefault()
++    {
++        // SHA256 of JSON-serialized "test" → JsonSerializer.Serialize("test") = "\"test\""
++        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "sha256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        var hashed = result.Value as HashedData;
++        await Assert.That(hashed).IsNotNull();
++        await Assert.That(hashed!.Algorithm).IsEqualTo("sha256");
++        await Assert.That(hashed.Hash.Length).IsEqualTo(64);
++    }
++
++    [Test]
++    public async Task Hash_NullInput_ReturnsError()
++    {
++        var action = new Hash { Context = Ctx, Data = null, Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
++        await Assert.That(result.Error.StatusCode).IsEqualTo(400);
++    }
++
++    [Test]
++    public async Task Hash_UnsupportedAlgorithm_ReturnsError()
++    {
++        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "md5" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
++    }
++
++    [Test]
++    public async Task Hash_ProviderThrows_ReturnsDataFail()
++    {
++        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
++
++        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
++    }
++
++    // --- Verify action ---
++
++    [Test]
++    public async Task Verify_RoundTrip_ReturnsTrue()
++    {
++        var hashAction = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
++        var hashResult = await hashAction.Run();
++        var hashed = (hashResult.Value as HashedData)!;
++
++        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = hashed.Hash, Algorithm = "keccak256" };
++        var result = await verifyAction.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsTrue();
++    }
++
++    [Test]
++    public async Task Verify_WrongHash_ReturnsFalse()
++    {
++        var hashAction = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
++        var hashResult = await hashAction.Run();
++        var hashed = (hashResult.Value as HashedData)!;
++
++        // Use a different hash (flip first char)
++        var wrongHash = (hashed.Hash[0] == 'a' ? 'b' : 'a') + hashed.Hash[1..];
++        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = wrongHash, Algorithm = "keccak256" };
++        var result = await verifyAction.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsFalse();
++    }
++
++    [Test]
++    public async Task Verify_CorruptedHashString_ReturnsError()
++    {
++        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = "not-a-valid-hex-string!!!", Algorithm = "keccak256" };
++        var result = await verifyAction.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Key).IsEqualTo("InvalidHash");
++    }
++
++    [Test]
++    public async Task Verify_NullInput_ReturnsError()
++    {
++        var verifyAction = new Verify { Context = Ctx, Data = null, Hash = "abc123", Algorithm = "keccak256" };
++        var result = await verifyAction.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
++        await Assert.That(result.Error.StatusCode).IsEqualTo(400);
++    }
++
++    [Test]
++    public async Task Verify_ProviderThrows_ReturnsDataFail()
++    {
++        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
++
++        // Need a valid hex string so we get past the hex decode
++        var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
++        var result = await verifyAction.Run();
++
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error).IsNotNull();
++        await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
++    }
++
++    private class ThrowingCryptoProvider : ICryptoProvider
++    {
++        public byte[] Hash(byte[] data, string algorithm) => throw new InvalidOperationException("Provider failure");
++        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => throw new InvalidOperationException("Provider failure");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs b/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs
+new file mode 100644
+index 00000000..7514010b
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs
+@@ -0,0 +1,93 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.crypto;
++using PLang.Runtime2.modules.crypto.providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.crypto;
++
++public class ProviderResolutionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    [Test]
++    public async Task Hash_UsesProviderFromSettings_NotDefault()
++    {
++        var mock = new MockCryptoProvider();
++        Ctx.MemoryStack.Set("CryptoProvider", mock);
++
++        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        var hashed = result.Value as HashedData;
++        await Assert.That(hashed).IsNotNull();
++        // Mock returns all-zero bytes → hex is all zeros
++        await Assert.That(hashed!.Hash).IsEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
++    }
++
++    [Test]
++    public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
++    {
++        // Fresh engine, no crypto settings — should use DefaultProvider
++        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        var hashed = result.Value as HashedData;
++        await Assert.That(hashed).IsNotNull();
++        // Should not be all zeros (DefaultProvider produces real keccak256)
++        await Assert.That(hashed!.Hash).IsNotEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
++        await Assert.That(hashed.Hash.Length).IsEqualTo(64);
++    }
++
++    [Test]
++    public async Task Verify_UsesProviderFromSettings()
++    {
++        var mock = new AlwaysTrueVerifier();
++        Ctx.MemoryStack.Set("CryptoProvider", mock);
++
++        // Even with garbage hash, mock returns true
++        var action = new Verify { Context = Ctx, Data = "hello", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
++        var result = await action.Run();
++
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That((bool)result.Value!).IsTrue();
++    }
++
++    private class MockCryptoProvider : ICryptoProvider
++    {
++        public byte[] Hash(byte[] data, string algorithm) => new byte[32]; // all zeros
++        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => false;
++    }
++
++    private class AlwaysTrueVerifier : ICryptoProvider
++    {
++        public byte[] Hash(byte[] data, string algorithm) => new byte[32];
++        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => true;
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
+new file mode 100644
+index 00000000..c5ed20b7
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
+@@ -0,0 +1,594 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.DataSource;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.identity;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class IdentityHandlerTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    // --- create ---
++
++    [Test]
++    public async Task Create_GeneratesValidEd25519KeyPair()
++    {
++        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = true };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity).IsNotNull();
++        await Assert.That(identity!.PublicKey).IsNotNull();
++        await Assert.That(identity.PrivateKey).IsNotNull();
++
++        // Base64-decodable, correct lengths (32 bytes each for Ed25519)
++        var pubBytes = Convert.FromBase64String(identity.PublicKey);
++        var privBytes = Convert.FromBase64String(identity.PrivateKey);
++        await Assert.That(pubBytes.Length).IsEqualTo(32);
++        await Assert.That(privBytes.Length).IsEqualTo(32);
++    }
++
++    [Test]
++    public async Task Create_DefaultFalse_IsNotDefault()
++    {
++        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = false };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.IsDefault).IsFalse();
++    }
++
++    [Test]
++    public async Task Create_SetAsDefaultTrue_BecomesDefault()
++    {
++        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = true };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.IsDefault).IsTrue();
++    }
++
++    [Test]
++    public async Task Create_SetAsDefaultTrue_ClearsPreviousDefault()
++    {
++        var h1 = new Create { Context = Ctx, Name = "first", SetAsDefault = true };
++        await h1.Run();
++
++        var h2 = new Create { Context = Ctx, Name = "second", SetAsDefault = true };
++        await h2.Run();
++
++        // First should no longer be default
++        var first = await IdentityVariable.LoadAsync(_engine, "first");
++        await Assert.That(first!.IsDefault).IsFalse();
++
++        var second = await IdentityVariable.LoadAsync(_engine, "second");
++        await Assert.That(second!.IsDefault).IsTrue();
++    }
++
++    [Test]
++    public async Task Create_StoresInSystemDataSource()
++    {
++        var handler = new Create { Context = Ctx, Name = "stored", SetAsDefault = false };
++        await handler.Run();
++
++        var loaded = await IdentityVariable.LoadAsync(_engine, "stored");
++        await Assert.That(loaded).IsNotNull();
++        await Assert.That(loaded!.Name).IsEqualTo("stored");
++    }
++
++    [Test]
++    public async Task Create_DuplicateName_ReturnsError()
++    {
++        var h1 = new Create { Context = Ctx, Name = "dup", SetAsDefault = false };
++        await h1.Run();
++
++        var h2 = new Create { Context = Ctx, Name = "dup", SetAsDefault = false };
++        var result = await h2.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
++    }
++
++    [Test]
++    public async Task Create_DuplicateArchivedName_ReturnsError()
++    {
++        // Create and archive
++        var h1 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
++        await h1.Run();
++
++        var archiveH = new Archive { Context = Ctx, Name = "archived" };
++        await archiveH.Run();
++
++        // Try to create with same name — should fail
++        var h2 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
++        var result = await h2.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
++    }
++
++    [Test]
++    public async Task Create_EmptyOrWhitespaceName_ReturnsError()
++    {
++        var h1 = new Create { Context = Ctx, Name = "", SetAsDefault = false };
++        var result1 = await h1.Run();
++        await Assert.That(result1.Success).IsFalse();
++        await Assert.That(result1.Error!.Key).IsEqualTo("ValidationError");
++
++        var h2 = new Create { Context = Ctx, Name = "   ", SetAsDefault = false };
++        var result2 = await h2.Run();
++        await Assert.That(result2.Success).IsFalse();
++        await Assert.That(result2.Error!.Key).IsEqualTo("ValidationError");
++    }
++
++    // --- get ---
++
++    [Test]
++    public async Task Get_NonExistentName_ReturnsError()
++    {
++        var handler = new Get { Context = Ctx, Name = "nosuch" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Get_NullName_NoDefaultExists_PromotesExisting()
++    {
++        // Create two non-default identities
++        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = false };
++        var r1 = await h1.Run();
++        var originalKey = (r1.Value as IdentityVariable)!.PublicKey;
++        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = false };
++        await h2.Run();
++
++        // Get(null) should promote the first non-archived identity as default
++        var handler = new Get { Context = Ctx, Name = null };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.IsDefault).IsTrue();
++        await Assert.That(identity.Name).IsEqualTo("a");
++        await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
++    }
++
++    [Test]
++    public async Task Get_ByName_ReturnsMatchingIdentity()
++    {
++        var create = new Create { Context = Ctx, Name = "alice", SetAsDefault = false };
++        await create.Run();
++
++        var handler = new Get { Context = Ctx, Name = "alice" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.Name).IsEqualTo("alice");
++    }
++
++    [Test]
++    public async Task Get_NullName_ReturnsDefaultIdentity()
++    {
++        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
++        await create.Run();
++
++        var handler = new Get { Context = Ctx, Name = null };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.Name).IsEqualTo("mydefault");
++        await Assert.That(identity.IsDefault).IsTrue();
++    }
++
++    [Test]
++    public async Task Get_NoIdentitiesExist_AutoCreatesDefault()
++    {
++        var handler = new Get { Context = Ctx, Name = null };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.Name).IsEqualTo("default");
++        await Assert.That(identity.IsDefault).IsTrue();
++        await Assert.That(identity.PublicKey).IsNotNull();
++    }
++
++    [Test]
++    public async Task Get_ReturnsIdentityVariable_WithAllProperties()
++    {
++        var create = new Create { Context = Ctx, Name = "full", SetAsDefault = true };
++        await create.Run();
++
++        var handler = new Get { Context = Ctx, Name = "full" };
++        var result = await handler.Run();
++        var identity = result.Value as IdentityVariable;
++
++        await Assert.That(identity!.Name).IsEqualTo("full");
++        await Assert.That(identity.PublicKey).IsNotNull();
++        await Assert.That(identity.PrivateKey).IsNotNull();
++        await Assert.That(identity.IsDefault).IsTrue();
++        await Assert.That(identity.IsArchived).IsFalse();
++        await Assert.That(identity.Created).IsNotEqualTo(default(DateTime));
++    }
++
++    // --- getAll ---
++
++    [Test]
++    public async Task GetAll_ReturnsOnlyNonArchived()
++    {
++        var h1 = new Create { Context = Ctx, Name = "active1", SetAsDefault = false };
++        await h1.Run();
++        var h2 = new Create { Context = Ctx, Name = "active2", SetAsDefault = false };
++        await h2.Run();
++        var h3 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
++        await h3.Run();
++
++        var archiveH = new Archive { Context = Ctx, Name = "archived" };
++        await archiveH.Run();
++
++        var handler = new GetAll { Context = Ctx };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var list = result.Value as List<IdentityVariable>;
++        await Assert.That(list!.Count).IsEqualTo(2);
++        await Assert.That(list.Any(i => i.Name == "archived")).IsFalse();
++    }
++
++    [Test]
++    public async Task GetAll_AllArchived_ReturnsEmptyList()
++    {
++        var h1 = new Create { Context = Ctx, Name = "only", SetAsDefault = false };
++        await h1.Run();
++
++        var archiveH = new Archive { Context = Ctx, Name = "only" };
++        await archiveH.Run();
++
++        var handler = new GetAll { Context = Ctx };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var list = result.Value as List<IdentityVariable>;
++        await Assert.That(list!.Count).IsEqualTo(0);
++    }
++
++    // --- archive ---
++
++    [Test]
++    public async Task Archive_NonDefaultIdentity_SetsIsArchivedTrue()
++    {
++        var create = new Create { Context = Ctx, Name = "toarchive", SetAsDefault = false };
++        await create.Run();
++
++        var handler = new Archive { Context = Ctx, Name = "toarchive" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var loaded = await IdentityVariable.LoadAsync(_engine, "toarchive");
++        await Assert.That(loaded!.IsArchived).IsTrue();
++    }
++
++    [Test]
++    public async Task Archive_DefaultIdentity_ReturnsError()
++    {
++        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = true };
++        await create.Run();
++
++        var handler = new Archive { Context = Ctx, Name = "def" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("CannotArchiveDefault");
++    }
++
++    [Test]
++    public async Task Archive_NonExistentName_ReturnsError()
++    {
++        var handler = new Archive { Context = Ctx, Name = "nope" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Archive_AlreadyArchived_IsIdempotent()
++    {
++        var create = new Create { Context = Ctx, Name = "twice", SetAsDefault = false };
++        await create.Run();
++
++        var h1 = new Archive { Context = Ctx, Name = "twice" };
++        await h1.Run();
++
++        var h2 = new Archive { Context = Ctx, Name = "twice" };
++        var result = await h2.Run();
++        await Assert.That(result.Success).IsTrue();
++    }
++
++    // --- setDefault ---
++
++    [Test]
++    public async Task SetDefault_SwitchesDefault_ClearsOldDefault()
++    {
++        var h1 = new Create { Context = Ctx, Name = "old", SetAsDefault = true };
++        await h1.Run();
++        var h2 = new Create { Context = Ctx, Name = "new", SetAsDefault = false };
++        await h2.Run();
++
++        var handler = new SetDefault { Context = Ctx, Name = "new" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var oldId = await IdentityVariable.LoadAsync(_engine, "old");
++        await Assert.That(oldId!.IsDefault).IsFalse();
++
++        var newId = await IdentityVariable.LoadAsync(_engine, "new");
++        await Assert.That(newId!.IsDefault).IsTrue();
++    }
++
++    [Test]
++    public async Task SetDefault_ArchivedOrMissing_ReturnsError()
++    {
++        // Missing
++        var h1 = new SetDefault { Context = Ctx, Name = "missing" };
++        var r1 = await h1.Run();
++        await Assert.That(r1.Success).IsFalse();
++        await Assert.That(r1.Error!.Key).IsEqualTo("NotFound");
++
++        // Archived
++        var create = new Create { Context = Ctx, Name = "arch", SetAsDefault = false };
++        await create.Run();
++        var archive = new Archive { Context = Ctx, Name = "arch" };
++        await archive.Run();
++
++        var h2 = new SetDefault { Context = Ctx, Name = "arch" };
++        var r2 = await h2.Run();
++        await Assert.That(r2.Success).IsFalse();
++        await Assert.That(r2.Error!.Key).IsEqualTo("ArchivedIdentity");
++    }
++
++    [Test]
++    public async Task SetDefault_AlreadyDefault_IsIdempotent()
++    {
++        var create = new Create { Context = Ctx, Name = "already", SetAsDefault = true };
++        await create.Run();
++
++        var handler = new SetDefault { Context = Ctx, Name = "already" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.IsDefault).IsTrue();
++    }
++
++    // --- unarchive ---
++
++    [Test]
++    public async Task Unarchive_RestoresArchivedIdentity()
++    {
++        var create = new Create { Context = Ctx, Name = "restore", SetAsDefault = false };
++        await create.Run();
++
++        var archiveH = new Archive { Context = Ctx, Name = "restore" };
++        await archiveH.Run();
++
++        var handler = new Unarchive { Context = Ctx, Name = "restore" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var loaded = await IdentityVariable.LoadAsync(_engine, "restore");
++        await Assert.That(loaded!.IsArchived).IsFalse();
++    }
++
++    [Test]
++    public async Task Unarchive_NonExistentName_ReturnsError()
++    {
++        var handler = new Unarchive { Context = Ctx, Name = "nope" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Unarchive_NotArchived_IsIdempotent()
++    {
++        var create = new Create { Context = Ctx, Name = "active", SetAsDefault = false };
++        await create.Run();
++
++        var handler = new Unarchive { Context = Ctx, Name = "active" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var identity = result.Value as IdentityVariable;
++        await Assert.That(identity!.Name).IsEqualTo("active");
++    }
++
++    // --- rename ---
++
++    [Test]
++    public async Task Rename_ChangesName_KeepsKeys()
++    {
++        var create = new Create { Context = Ctx, Name = "oldname", SetAsDefault = false };
++        var createResult = await create.Run();
++        var originalKey = (createResult.Value as IdentityVariable)!.PublicKey;
++
++        var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++
++        var renamed = result.Value as IdentityVariable;
++        await Assert.That(renamed!.Name).IsEqualTo("newname");
++        await Assert.That(renamed.PublicKey).IsEqualTo(originalKey);
++
++        // Old name should be gone
++        var old = await IdentityVariable.LoadAsync(_engine, "oldname");
++        await Assert.That(old).IsNull();
++    }
++
++    [Test]
++    public async Task Rename_DuplicateNewName_ReturnsError()
++    {
++        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = false };
++        await h1.Run();
++        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = false };
++        await h2.Run();
++
++        var handler = new Rename { Context = Ctx, Name = "a", NewName = "b" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
++    }
++
++    [Test]
++    public async Task Rename_NonExistentName_ReturnsError()
++    {
++        var handler = new Rename { Context = Ctx, Name = "nope", NewName = "whatever" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Rename_DefaultIdentity_UpdatesMyIdentity()
++    {
++        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = true };
++        await create.Run();
++
++        var handler = new Rename { Context = Ctx, Name = "def", NewName = "renamed" };
++        await handler.Run();
++
++        // %MyIdentity% should reflect the new name
++        var myIdentity = _engine.System.Identity.Value as IdentityVariable;
++        await Assert.That(myIdentity!.Name).IsEqualTo("renamed");
++    }
++
++    [Test]
++    public async Task Rename_EmptyNewName_ReturnsError()
++    {
++        var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = false };
++        await create.Run();
++
++        var handler = new Rename { Context = Ctx, Name = "valid", NewName = "" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
++    }
++
++    // --- export ---
++
++    [Test]
++    public async Task Export_NonExistentName_ReturnsError()
++    {
++        var handler = new Export { Context = Ctx, Name = "nosuch" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsFalse();
++        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
++    }
++
++    [Test]
++    public async Task Export_ReturnsPrivateKeyString()
++    {
++        var create = new Create { Context = Ctx, Name = "exportme", SetAsDefault = true };
++        var createResult = await create.Run();
++        var expectedKey = (createResult.Value as IdentityVariable)!.PrivateKey;
++
++        var handler = new Export { Context = Ctx, Name = "exportme" };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value as string).IsEqualTo(expectedKey);
++    }
++
++    [Test]
++    public async Task Export_NullName_ReturnsDefaultPrivateKey()
++    {
++        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
++        var createResult = await create.Run();
++        var expectedKey = (createResult.Value as IdentityVariable)!.PrivateKey;
++
++        var handler = new Export { Context = Ctx, Name = null };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++        await Assert.That(result.Value as string).IsEqualTo(expectedKey);
++    }
++
++    // --- get by-name does NOT overwrite %MyIdentity% ---
++
++    [Test]
++    public async Task Get_ByName_DoesNotOverwriteMyIdentity()
++    {
++        var h1 = new Create { Context = Ctx, Name = "default", SetAsDefault = true };
++        await h1.Run();
++        var h2 = new Create { Context = Ctx, Name = "other", SetAsDefault = false };
++        await h2.Run();
++
++        // Fetch non-default by name
++        var getOther = new Get { Context = Ctx, Name = "other" };
++        await getOther.Run();
++
++        // %MyIdentity% should still be the default, not "other"
++        var myIdentity = _engine.System.Identity.Value as IdentityVariable;
++        await Assert.That(myIdentity!.Name).IsEqualTo("default");
++    }
++
++    // --- auto-create promotes existing identity instead of overwriting ---
++
++    [Test]
++    public async Task GetOrCreateDefault_ExistingNonDefault_PromotesInsteadOfOverwriting()
++    {
++        // Create an identity named "default" but NOT as the default
++        var create = new Create { Context = Ctx, Name = "default", SetAsDefault = false };
++        var createResult = await create.Run();
++        var originalKey = (createResult.Value as IdentityVariable)!.PublicKey;
++
++        // Now trigger auto-create by getting default (none marked as default yet)
++        var get = new Get { Context = Ctx, Name = null };
++        var getResult = await get.Run();
++        await Assert.That(getResult.Success).IsTrue();
++
++        var identity = getResult.Value as IdentityVariable;
++        // Should have promoted the existing "default", not created a new one
++        await Assert.That(identity!.Name).IsEqualTo("default");
++        await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
++        await Assert.That(identity.IsDefault).IsTrue();
++    }
++
++    // --- export null name uses same resolution as get ---
++
++    [Test]
++    public async Task Export_NullName_AutoCreatesLikeGet()
++    {
++        // Export(null) should use GetOrCreateDefaultAsync, same as Get(null)
++        var handler = new Export { Context = Ctx, Name = null };
++        var result = await handler.Run();
++        await Assert.That(result.Success).IsTrue();
++        // Should have auto-created and returned the private key
++        await Assert.That(result.Value as string).IsNotNull();
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs
+new file mode 100644
+index 00000000..d0f69763
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs
+@@ -0,0 +1,110 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.identity;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class IdentityVariableTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_idvar_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private IdentityVariable CreateTestIdentity() => new()
++    {
++        Name = "test",
++        PublicKey = "dGVzdHB1YmxpY2tleQ==",
++        PrivateKey = "dGVzdHByaXZhdGVrZXk=",
++        IsDefault = true,
++        IsArchived = false,
++        Created = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc)
++    };
++
++    [Test]
++    public async Task ToString_ReturnsPublicKey()
++    {
++        var identity = CreateTestIdentity();
++        await Assert.That(identity.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
++    }
++
++    [Test]
++    public async Task DotNavigation_Name_ReturnsName()
++    {
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("Name");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value?.ToString()).IsEqualTo("test");
++    }
++
++    [Test]
++    public async Task DotNavigation_PublicKey_ReturnsPublicKey()
++    {
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("PublicKey");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
++    }
++
++    [Test]
++    public async Task DotNavigation_Created_ReturnsCreated()
++    {
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("Created");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value).IsTypeOf<DateTime>();
++    }
++
++    [Test]
++    public async Task DotNavigation_IsArchived_ReturnsIsArchived()
++    {
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("IsArchived");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value).IsEqualTo(false);
++    }
++
++    [Test]
++    public async Task DotNavigation_IsDefault_ReturnsIsDefault()
++    {
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("IsDefault");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value).IsEqualTo(true);
++    }
++
++    [Test]
++    public async Task DotNavigation_PrivateKey_ReturnsPrivateKey()
++    {
++        // [Sensitive] is serialization only, not access control — dot navigation works
++        var identity = CreateTestIdentity();
++        var data = new Data("identity", identity);
++        var child = data.GetChild("PrivateKey");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs b/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs
+new file mode 100644
+index 00000000..d7840645
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs
+@@ -0,0 +1,113 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.identity;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class MyIdentityResolverTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task MyIdentity_ResolvesOnFirstAccess_AutoCreates()
++    {
++        // Access %MyIdentity% via MemoryStack — should auto-create default identity
++        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        await Assert.That(data).IsNotNull();
++
++        var identity = data!.Value as IdentityVariable;
++        await Assert.That(identity).IsNotNull();
++        await Assert.That(identity!.Name).IsEqualTo("default");
++        await Assert.That(identity.IsDefault).IsTrue();
++    }
++
++    [Test]
++    public async Task MyIdentity_DotNotation_Name()
++    {
++        // Trigger auto-create by accessing Identity
++        _ = _engine.System.Identity.Value;
++
++        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        await Assert.That(data).IsNotNull();
++
++        // Navigate to Name via Data.GetChild
++        var nameData = new Data("MyIdentity", data!.Value);
++        var child = nameData.GetChild("Name");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value?.ToString()).IsEqualTo("default");
++    }
++
++    [Test]
++    public async Task MyIdentity_DotNotation_PublicKey()
++    {
++        _ = _engine.System.Identity.Value;
++
++        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        var pkData = new Data("MyIdentity", data!.Value);
++        var child = pkData.GetChild("PublicKey");
++        await Assert.That(child).IsNotNull();
++        await Assert.That(child!.Value?.ToString()).IsNotNull();
++
++        // Should be base64
++        var bytes = Convert.FromBase64String(child.Value!.ToString()!);
++        await Assert.That(bytes.Length).IsEqualTo(32);
++    }
++
++    [Test]
++    public async Task MyIdentity_StringContext_ReturnsPublicKey()
++    {
++        var data = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        var identity = data!.Value as IdentityVariable;
++
++        // ToString() should return the public key
++        await Assert.That(identity!.ToString()).IsEqualTo(identity.PublicKey);
++    }
++
++    [Test]
++    public async Task MyIdentity_UpdatedAfterSetDefault()
++    {
++        var ctx = _engine.System.Context;
++
++        // Create two identities
++        var h1 = new Create { Context = ctx, Name = "first", SetAsDefault = true };
++        await h1.Run();
++        var h2 = new Create { Context = ctx, Name = "second", SetAsDefault = false };
++        await h2.Run();
++
++        // Verify %MyIdentity% is "first"
++        var data1 = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        var id1 = data1!.Value as IdentityVariable;
++        await Assert.That(id1!.Name).IsEqualTo("first");
++
++        // Switch default
++        var setDefault = new SetDefault { Context = ctx, Name = "second" };
++        await setDefault.Run();
++
++        // %MyIdentity% should now be "second"
++        var data2 = _engine.System.Context.MemoryStack.Get("MyIdentity");
++        var id2 = data2!.Value as IdentityVariable;
++        await Assert.That(id2!.Name).IsEqualTo("second");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs b/PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs
+index 241ee8ef..0ed52027 100644
+--- a/PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs
++++ b/PLang.Tests/Runtime2/Serialization/SerializerRegistryTests.cs
+@@ -1,4 +1,5 @@
+ using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
++using SerializerRegistry = PLang.Runtime2.Engine.Channels.Serializers.@this;
+ 
+ namespace PLang.Tests.Runtime2.Serialization;
+ 
+@@ -7,7 +8,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Constructor_RegistersDefaultSerializers()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         await Assert.That(registry.GetByContentType("application/json")).IsNotNull();
+         await Assert.That(registry.GetByContentType("text/plain")).IsNotNull();
+@@ -16,7 +17,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Default_ReturnsJsonSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var defaultSerializer = registry.Default;
+ 
+@@ -26,7 +27,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Default_CanBeSet()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+         var textSerializer = registry.Text;
+ 
+         registry.Default = textSerializer;
+@@ -37,7 +38,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Default_SetNull_ThrowsArgumentNullException()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+         {
+@@ -48,7 +49,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Json_ReturnsJsonSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var json = registry.Json;
+ 
+@@ -58,7 +59,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Text_ReturnsTextSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var text = registry.Text;
+ 
+@@ -68,7 +69,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Register_AddsSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+         var customSerializer = new CustomSerializer();
+ 
+         registry.Register(customSerializer);
+@@ -79,7 +80,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Register_AddsToExtensionLookup()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+         var customSerializer = new CustomSerializer();
+ 
+         registry.Register(customSerializer);
+@@ -90,7 +91,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByContentType_ExactMatch_ReturnsSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByContentType("application/json");
+ 
+@@ -101,7 +102,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByContentType_WithCharset_ReturnsSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByContentType("application/json; charset=utf-8");
+ 
+@@ -112,7 +113,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByContentType_AlternativeJsonType_ReturnsJsonSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByContentType("text/json");
+ 
+@@ -123,7 +124,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByContentType_CaseInsensitive()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var lower = registry.GetByContentType("application/json");
+         var upper = registry.GetByContentType("APPLICATION/JSON");
+@@ -137,7 +138,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByContentType_Unknown_ReturnsNull()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByContentType("unknown/type");
+ 
+@@ -147,7 +148,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByExtension_ExactMatch_ReturnsSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByExtension(".json");
+ 
+@@ -157,7 +158,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByExtension_WithoutDot_AddsDot()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByExtension("json");
+ 
+@@ -167,7 +168,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByExtension_TextExtension_ReturnsTextSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByExtension(".txt");
+ 
+@@ -178,7 +179,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByExtension_CaseInsensitive()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var lower = registry.GetByExtension(".json");
+         var upper = registry.GetByExtension(".JSON");
+@@ -190,7 +191,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetByExtension_Unknown_ReturnsNull()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetByExtension(".xyz");
+ 
+@@ -200,7 +201,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetOrDefault_WithContentType_ReturnsSerializer()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetOrDefault("text/plain");
+ 
+@@ -210,7 +211,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetOrDefault_NullContentType_ReturnsDefault()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetOrDefault(null);
+ 
+@@ -220,7 +221,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetOrDefault_EmptyContentType_ReturnsDefault()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetOrDefault("");
+ 
+@@ -230,7 +231,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task GetOrDefault_UnknownContentType_ReturnsDefault()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var serializer = registry.GetOrDefault("unknown/type");
+ 
+@@ -240,7 +241,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task ContentTypes_ReturnsAllRegisteredTypes()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var types = registry.ContentTypes.ToList();
+ 
+@@ -252,7 +253,7 @@ public class SerializerRegistryTests
+     [Test]
+     public async Task Extensions_ReturnsAllRegisteredExtensions()
+     {
+-        var registry = new Serializers();
++        var registry = new SerializerRegistry();
+ 
+         var extensions = registry.Extensions.ToList();
+ 
+diff --git a/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs b/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs
+new file mode 100644
+index 00000000..4d13c5d6
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs
+@@ -0,0 +1,126 @@
++using System.Text.Json;
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
++using PLang.Runtime2.modules.identity;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Serializers;
++
++public class SensitivePropertyFilterTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sensitive_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task Sensitive_ExcludedFromJsonStreamSerializer()
++    {
++        var identity = new IdentityVariable
++        {
++            Name = "test",
++            PublicKey = "pubkey123",
++            PrivateKey = "secret456",
++            IsDefault = true,
++            IsArchived = false,
++            Created = DateTime.UtcNow
++        };
++
++        var serializer = new JsonStreamSerializer();
++        var json = serializer.Serialize(identity);
++
++        await Assert.That(json).Contains("pubkey123");
++        await Assert.That(json).DoesNotContain("secret456");
++        await Assert.That(json).Contains("test");
++    }
++
++    [Test]
++    public async Task Sensitive_IncludedInRawJsonSerializer()
++    {
++        var identity = new IdentityVariable
++        {
++            Name = "test",
++            PublicKey = "pubkey123",
++            PrivateKey = "secret456",
++            IsDefault = true
++        };
++
++        // Raw JsonSerializer (used by DataSource) has no SensitivePropertyFilter
++        var json = JsonSerializer.Serialize(identity);
++
++        await Assert.That(json).Contains("pubkey123");
++        await Assert.That(json).Contains("secret456");
++    }
++
++    [Test]
++    public async Task Sensitive_NoOpOnTypesWithoutAttribute()
++    {
++        // A type without [Sensitive] should serialize normally
++        var obj = new { Name = "test", Value = 42 };
++
++        var serializer = new JsonStreamSerializer();
++        var json = serializer.Serialize(obj);
++
++        await Assert.That(json).Contains("test");
++        await Assert.That(json).Contains("42");
++    }
++
++    [Test]
++    public async Task Sensitive_WorksAlongsideViewAttributes()
++    {
++        var identity = new IdentityVariable
++        {
++            Name = "test",
++            PublicKey = "pubkey123",
++            PrivateKey = "secret456",
++            IsDefault = true
++        };
++
++        // ForView should also strip [Sensitive] in addition to view filtering
++        var serializer = new JsonStreamSerializer();
++        var storeSerializer = serializer.ForView(View.Store);
++        var storeJson = storeSerializer.Serialize(identity);
++
++        // IdentityVariable doesn't use view attributes, so Store view serializes all non-sensitive
++        await Assert.That(storeJson).DoesNotContain("secret456");
++    }
++
++    [Test]
++    public async Task Sensitive_IdentityVariable_PrivateKeyExcluded()
++    {
++        // End-to-end: create real identity, serialize, verify PrivateKey absent
++        var create = new Create { Context = _engine.System.Context, Name = "e2e", SetAsDefault = true };
++        var result = await create.Run();
++        var identity = result.Value as IdentityVariable;
++
++        var serializer = new JsonStreamSerializer();
++        var json = serializer.Serialize(identity);
++
++        // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
++        var deserialized = JsonSerializer.Deserialize<JsonElement>(json);
++        await Assert.That(deserialized.GetProperty("publicKey").GetString()).IsEqualTo(identity!.PublicKey);
++        await Assert.That(json).DoesNotContain(identity.PrivateKey);
++        // Also check the escaped form of PrivateKey isn't present
++        var escapedPrivateKey = JsonSerializer.Serialize(identity.PrivateKey).Trim('"');
++        await Assert.That(json).DoesNotContain(escapedPrivateKey);
++        await Assert.That(deserialized.GetProperty("name").GetString()).IsEqualTo("e2e");
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs b/PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+new file mode 100644
+index 00000000..ef82f78f
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs
+@@ -0,0 +1,23 @@
++using System.Text.Json.Serialization.Metadata;
++
++namespace PLang.Runtime2.Engine.Channels.Serializers;
++
++/// <summary>
++/// Always-on filter that strips properties marked with [Sensitive] from serialization output.
++/// Applied to JsonStreamSerializer's default options so all output paths exclude sensitive data.
++/// Storage (raw JsonSerializer via DataSource) does NOT use this filter — sensitive data persists.
++/// </summary>
++public static class SensitivePropertyFilter
++{
++    public static void Filter(JsonTypeInfo typeInfo)
++    {
++        if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
++
++        for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
++        {
++            var prop = typeInfo.Properties[i];
++            if (prop.AttributeProvider?.IsDefined(typeof(SensitiveAttribute), false) == true)
++                typeInfo.Properties.RemoveAt(i);
++        }
++    }
++}
+diff --git a/PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs b/PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs
+index e7f9cef0..f1a0a52e 100644
+--- a/PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs
++++ b/PLang/Runtime2/Engine/Channels/Serializers/Serializer/JsonStreamSerializer.cs
+@@ -25,6 +25,10 @@ public sealed class JsonStreamSerializer : ISerializer
+             PropertyNameCaseInsensitive = true,
+             WriteIndented = false,
+             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
++            TypeInfoResolver = new DefaultJsonTypeInfoResolver
++            {
++                Modifiers = { SensitivePropertyFilter.Filter }
++            },
+             Converters =
+             {
+                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+@@ -43,7 +47,7 @@ public sealed class JsonStreamSerializer : ISerializer
+             {
+                 TypeInfoResolver = new DefaultJsonTypeInfoResolver
+                 {
+-                    Modifiers = { ViewPropertyFilter.For(v) }
++                    Modifiers = { SensitivePropertyFilter.Filter, ViewPropertyFilter.For(v) }
+                 }
+             };
+             return new JsonStreamSerializer(viewOptions);
+diff --git a/PLang/Runtime2/Engine/Context/Actor.cs b/PLang/Runtime2/Engine/Context/Actor.cs
+index 4f583003..4b51153e 100644
+--- a/PLang/Runtime2/Engine/Context/Actor.cs
++++ b/PLang/Runtime2/Engine/Context/Actor.cs
+@@ -1,6 +1,7 @@
+ using PLang.Runtime2.Engine;
+ using PLang.Runtime2.Engine.DataSource;
+ using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.identity;
+ 
+ namespace PLang.Runtime2.Engine.Context;
+ 
+@@ -10,6 +11,7 @@ namespace PLang.Runtime2.Engine.Context;
+ public sealed class Actor : IAsyncDisposable
+ {
+     private readonly Lazy<IDataSource> _dataSource;
++    private IdentityData? _identity;
+ 
+     /// <summary>
+     /// Name of the actor ("System", "Service", or "User").
+@@ -37,6 +39,13 @@ public sealed class Actor : IAsyncDisposable
+     /// </summary>
+     public IDataSource DataSource => _dataSource.Value;
+ 
++    /// <summary>
++    /// Identity data for this actor. Lazy — created on first access.
++    /// For System actor: auto-loads/creates default identity from DataSource.
++    /// For User/Service: starts empty, set externally by HTTP/signing layer.
++    /// </summary>
++    public IdentityData Identity => _identity ??= new IdentityData(Engine);
++
+     /// <summary>
+     /// Resolves an actor by name using the engine.
+     /// Convention: types with this signature are auto-resolved by the source generator.
+@@ -64,6 +73,10 @@ public sealed class Actor : IAsyncDisposable
+         // Register shared SettingsData — same object for all actors.
+         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
+         Context.MemoryStack.Put(engine.SettingsVariable);
++
++        // Register lazy %MyIdentity% — resolves to the System actor's default identity.
++        // DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
++        Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
+     }
+ 
+     private IDataSource CreateDataSource()
+diff --git a/PLang/Runtime2/Engine/Memory/Data.Envelope.cs b/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+index 7973ee41..a6dbb502 100644
+--- a/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
++++ b/PLang/Runtime2/Engine/Memory/Data.Envelope.cs
+@@ -1,7 +1,9 @@
+ using System.IO.Compression;
+ using System.Text.Json;
+ using System.Text.Json.Serialization;
++using System.Text.Json.Serialization.Metadata;
+ using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Channels.Serializers;
+ using PLang.Runtime2.Engine.Errors;
+ 
+ namespace PLang.Runtime2.Engine.Memory;
+@@ -23,7 +25,11 @@ public partial class Data
+         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+         PropertyNameCaseInsensitive = true,
+         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+-        Converters = { new TypeJsonConverter() }
++        Converters = { new TypeJsonConverter() },
++        TypeInfoResolver = new DefaultJsonTypeInfoResolver
++        {
++            Modifiers = { SensitivePropertyFilter.Filter }
++        }
+     };
+ 
+     /// <summary>
+diff --git a/PLang/Runtime2/Engine/View.cs b/PLang/Runtime2/Engine/View.cs
+index bdbb94a4..11456f91 100644
+--- a/PLang/Runtime2/Engine/View.cs
++++ b/PLang/Runtime2/Engine/View.cs
+@@ -31,3 +31,12 @@ public sealed class DefaultAttribute : Attribute { }
+ /// </summary>
+ [AttributeUsage(AttributeTargets.Property)]
+ public sealed class OutAttribute : Attribute { }
++
++/// <summary>
++/// Marks properties that contain sensitive data (e.g., private keys).
++/// Excluded from all output serialization (JsonStreamSerializer).
++/// Included in storage serialization (raw JsonSerializer for DataSource).
++/// Does NOT block code-level access — %MyIdentity.PrivateKey% still works.
++/// </summary>
++[AttributeUsage(AttributeTargets.Property)]
++public sealed class SensitiveAttribute : Attribute { }
+diff --git a/PLang/Runtime2/modules/crypto/hash.cs b/PLang/Runtime2/modules/crypto/hash.cs
+new file mode 100644
+index 00000000..143bc785
+--- /dev/null
++++ b/PLang/Runtime2/modules/crypto/hash.cs
+@@ -0,0 +1,68 @@
++using System.Text;
++using System.Text.Json;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.crypto.providers;
++
++namespace PLang.Runtime2.modules.crypto;
++
++[Action("hash", Cacheable = false)]
++public partial class Hash : IContext
++{
++    public partial object? Data { get; init; }
++
++    [Default("keccak256")]
++    public partial string Algorithm { get; init; }
++
++    public async Task<Data> Run()
++    {
++        if (Data == null)
++            return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
++
++        try
++        {
++            var provider = ResolveProvider(Context);
++            var (bytes, format) = SerializeData(Data);
++            var hashBytes = provider.Hash(bytes, Algorithm);
++            var hex = FormatHash(hashBytes);
++
++            return Engine.Memory.Data.Ok(new HashedData
++            {
++                Algorithm = Algorithm.ToLowerInvariant(),
++                Format = format,
++                Hash = hex
++            });
++        }
++        catch (NotSupportedException ex)
++        {
++            return Engine.Memory.Data.FromError(new ActionError(ex.Message, "UnsupportedAlgorithm", 400));
++        }
++        catch (Exception ex)
++        {
++            return Engine.Memory.Data.FromError(ActionError.FromException(ex, "CryptoError", 500));
++        }
++    }
++
++    internal static (byte[] bytes, string format) SerializeData(object data)
++    {
++        if (data is byte[] raw)
++            return (raw, "raw");
++
++        var json = JsonSerializer.Serialize(data);
++        return (Encoding.UTF8.GetBytes(json), "json");
++    }
++
++    internal static string FormatHash(byte[] hashBytes)
++    {
++        return Convert.ToHexString(hashBytes).ToLowerInvariant();
++    }
++
++    internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.Context.PLangContext context)
++    {
++        var data = context.MemoryStack.Get("CryptoProvider");
++        if (data?.Value is ICryptoProvider provider)
++            return provider;
++
++        return new DefaultProvider();
++    }
++}
+diff --git a/PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs b/PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
+new file mode 100644
+index 00000000..9b9a2056
+--- /dev/null
++++ b/PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
+@@ -0,0 +1,28 @@
++using System.Security.Cryptography;
++using Nethereum.Util;
++
++namespace PLang.Runtime2.modules.crypto.providers;
++
++public class DefaultProvider : ICryptoProvider
++{
++    public byte[] Hash(byte[] data, string algorithm)
++    {
++        return algorithm.ToLowerInvariant() switch
++        {
++            "keccak256" => new Sha3Keccack().CalculateHash(data),
++            "sha256" => SHA256.HashData(data),
++            _ => throw new NotSupportedException($"Algorithm '{algorithm}' is not supported")
++        };
++    }
++
++    public bool Verify(byte[] data, byte[] expectedHash, string algorithm)
++    {
++        if (algorithm.ToLowerInvariant() == "keccak256" || algorithm.ToLowerInvariant() == "sha256")
++        {
++            var actual = Hash(data, algorithm);
++            return actual.AsSpan().SequenceEqual(expectedHash);
++        }
++
++        throw new NotSupportedException($"Algorithm '{algorithm}' is not supported");
++    }
++}
+diff --git a/PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs b/PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs
+new file mode 100644
+index 00000000..a247e76a
+--- /dev/null
++++ b/PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs
+@@ -0,0 +1,7 @@
++namespace PLang.Runtime2.modules.crypto.providers;
++
++public interface ICryptoProvider
++{
++    byte[] Hash(byte[] data, string algorithm);
++    bool Verify(byte[] data, byte[] expectedHash, string algorithm);
++}
+diff --git a/PLang/Runtime2/modules/crypto/types.cs b/PLang/Runtime2/modules/crypto/types.cs
+new file mode 100644
+index 00000000..f699e362
+--- /dev/null
++++ b/PLang/Runtime2/modules/crypto/types.cs
+@@ -0,0 +1,9 @@
++namespace PLang.Runtime2.modules.crypto;
++
++public class HashedData
++{
++    public string Algorithm { get; set; } = "";
++    public string Format { get; set; } = "";
++    public string Hash { get; set; } = "";
++    public override string ToString() => Hash;
++}
+diff --git a/PLang/Runtime2/modules/crypto/verify.cs b/PLang/Runtime2/modules/crypto/verify.cs
+new file mode 100644
+index 00000000..ea3f8283
+--- /dev/null
++++ b/PLang/Runtime2/modules/crypto/verify.cs
+@@ -0,0 +1,44 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.modules.crypto.providers;
++
++namespace PLang.Runtime2.modules.crypto;
++
++[Action("verify", Cacheable = false)]
++public partial class Verify : IContext
++{
++    public partial object? Data { get; init; }
++    public partial string Hash { get; init; }
++
++    [Default("keccak256")]
++    public partial string Algorithm { get; init; }
++
++    public async Task<Data> Run()
++    {
++        if (Data == null)
++            return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
++
++        try
++        {
++            var provider = crypto.Hash.ResolveProvider(Context);
++            var (bytes, _) = crypto.Hash.SerializeData(Data);
++            var hashBytes = Convert.FromHexString(Hash);
++            var match = provider.Verify(bytes, hashBytes, Algorithm);
++
++            return Engine.Memory.Data.Ok(match);
++        }
++        catch (FormatException)
++        {
++            return Engine.Memory.Data.FromError(new ActionError("Hash string is not valid hexadecimal", "InvalidHash", 400));
++        }
++        catch (NotSupportedException ex)
++        {
++            return Engine.Memory.Data.FromError(new ActionError(ex.Message, "UnsupportedAlgorithm", 400));
++        }
++        catch (Exception ex)
++        {
++            return Engine.Memory.Data.FromError(ActionError.FromException(ex, "CryptoError", 500));
++        }
++    }
++
++}
+diff --git a/PLang/Runtime2/modules/identity/IdentityData.cs b/PLang/Runtime2/modules/identity/IdentityData.cs
+new file mode 100644
+index 00000000..b7b6d5ce
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/IdentityData.cs
+@@ -0,0 +1,62 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Data subclass that lazily resolves the default identity from System DataSource.
++/// Lives on Actor as a property. Handlers call Update() after changing the default.
++/// Auto-creates a "default" identity if none exist on first access.
++/// </summary>
++public class IdentityData : Data
++{
++    private readonly Engine.@this _engine;
++    private bool _resolved;
++
++    public IdentityData(Engine.@this engine) : base("Identity", null)
++    {
++        _engine = engine;
++    }
++
++    public override object? Value
++    {
++        get
++        {
++            if (!_resolved && base.Value == null)
++            {
++                _resolved = true;
++                base.Value = ResolveDefault();
++            }
++            return base.Value;
++        }
++        set
++        {
++            base.Value = value;
++            _resolved = true;
++        }
++    }
++
++    /// <summary>
++    /// Updates the cached identity. Called by handlers after changing the default.
++    /// </summary>
++    public void Update(IdentityVariable? identity)
++    {
++        Value = identity;
++    }
++
++    /// <remarks>
++    /// Sync-over-async is safe here: properties can't be async, and PLang runs sequentially
++    /// per context with no SynchronizationContext. SQLite I/O is synchronous under the hood.
++    /// </remarks>
++    private IdentityVariable? ResolveDefault()
++    {
++        try
++        {
++            return IdentityVariable.GetOrCreateDefaultAsync(_engine).GetAwaiter().GetResult();
++        }
++        catch (InvalidOperationException)
++        {
++            // Save failure during auto-create/promotion — return null, IdentityData handles null Value
++            return null;
++        }
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/KeyGenerator.cs b/PLang/Runtime2/modules/identity/KeyGenerator.cs
+new file mode 100644
+index 00000000..a09862f5
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/KeyGenerator.cs
+@@ -0,0 +1,28 @@
++using NSec.Cryptography;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Internal Ed25519 key generation via NSec.
++/// Returns base64-encoded key pair strings.
++/// </summary>
++internal static class KeyGenerator
++{
++    public static (string PublicKey, string PrivateKey) GenerateEd25519()
++    {
++        var algorithm = SignatureAlgorithm.Ed25519;
++
++        using var key = Key.Create(algorithm, new KeyCreationParameters
++        {
++            ExportPolicy = KeyExportPolicies.AllowPlaintextExport
++        });
++
++        var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
++        var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
++
++        return (
++            Convert.ToBase64String(publicKeyBytes),
++            Convert.ToBase64String(privateKeyBytes)
++        );
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/archive.cs b/PLang/Runtime2/modules/identity/archive.cs
+new file mode 100644
+index 00000000..f79a9623
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/archive.cs
+@@ -0,0 +1,36 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Archives an identity (soft-delete). Cannot archive the default identity.
++/// Idempotent — archiving an already-archived identity succeeds.
++/// PLang: archive identity 'alice'
++/// </summary>
++[Action("archive", Cacheable = false)]
++public partial class Archive : IContext
++{
++    public partial string Name { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
++        if (identity == null)
++            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++
++        if (identity.IsDefault)
++            return Data.FromError(new ActionError(
++                "Cannot archive the default identity. Set a different default first.",
++                "CannotArchiveDefault", 400));
++
++        if (identity.IsArchived)
++            return Data.Ok();
++
++        identity.IsArchived = true;
++        var result = await identity.SaveAsync(Context.Engine);
++        if (!result.Success) return result;
++
++        return Data.Ok();
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/create.cs b/PLang/Runtime2/modules/identity/create.cs
+new file mode 100644
+index 00000000..f6f1ba4d
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/create.cs
+@@ -0,0 +1,60 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Creates a new identity with an Ed25519 key pair.
++/// PLang: create identity 'alice', set as default
++/// </summary>
++[Action("create", Cacheable = false)]
++public partial class Create : IContext
++{
++    [Default("default")]
++    public partial string Name { get; init; }
++
++    [Default(false)]
++    public partial bool SetAsDefault { get; init; }
++
++    public async Task<Data> Run()
++    {
++        if (string.IsNullOrWhiteSpace(Name))
++            return Data.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
++
++        // Check uniqueness across all identities (including archived)
++        var all = await IdentityVariable.LoadAllAsync(Context.Engine);
++        if (all.Exists(i => string.Equals(i.Name, Name, StringComparison.OrdinalIgnoreCase)))
++            return Data.FromError(new ActionError($"Identity '{Name}' already exists", "DuplicateName", 409));
++
++        var (publicKey, privateKey) = KeyGenerator.GenerateEd25519();
++
++        // If SetAsDefault, clear existing defaults
++        if (SetAsDefault)
++        {
++            foreach (var existing in all.Where(i => i.IsDefault))
++            {
++                existing.IsDefault = false;
++                var saveResult = await existing.SaveAsync(Context.Engine);
++                if (!saveResult.Success) return saveResult;
++            }
++        }
++
++        var identity = new IdentityVariable
++        {
++            Name = Name,
++            PublicKey = publicKey,
++            PrivateKey = privateKey,
++            IsDefault = SetAsDefault,
++            IsArchived = false,
++            Created = DateTime.UtcNow
++        };
++
++        var result = await identity.SaveAsync(Context.Engine);
++        if (!result.Success) return result;
++
++        if (SetAsDefault)
++            Context.Engine.System.Identity.Update(identity);
++
++        return Data.Ok(identity);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/export.cs b/PLang/Runtime2/modules/identity/export.cs
+new file mode 100644
+index 00000000..d3ee3d2e
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/export.cs
+@@ -0,0 +1,40 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Exports the private key of an identity.
++/// Returns the raw private key string.
++/// PLang: export identity 'alice' private key, write to %privateKey%
++/// </summary>
++[Action("export")]
++public partial class Export : IContext
++{
++    public partial string? Name { get; init; }
++
++    public async Task<Data> Run()
++    {
++        IdentityVariable? identity;
++
++        if (Name != null)
++        {
++            identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
++            if (identity == null)
++                return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++        }
++        else
++        {
++            try
++            {
++                identity = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
++            }
++            catch (InvalidOperationException ex)
++            {
++                return Data.FromError(new ServiceError(ex.Message, "SaveError", 500));
++            }
++        }
++
++        return Data.Ok(identity.PrivateKey);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/get.cs b/PLang/Runtime2/modules/identity/get.cs
+new file mode 100644
+index 00000000..8ba3f043
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/get.cs
+@@ -0,0 +1,40 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Gets an identity by name, or the default identity.
++/// Auto-creates a default if none exist.
++/// PLang: get identity 'alice', write to %identity%
++/// </summary>
++[Action("get")]
++public partial class Get : IContext
++{
++    public partial string? Name { get; init; }
++
++    public async Task<Data> Run()
++    {
++        if (Name != null)
++        {
++            var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
++            if (identity == null)
++                return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++
++            return Data.Ok(identity);
++        }
++
++        // Get default identity — auto-create if none exist
++        IdentityVariable def;
++        try
++        {
++            def = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
++        }
++        catch (InvalidOperationException ex)
++        {
++            return Data.FromError(new ServiceError(ex.Message, "SaveError", 500));
++        }
++        Context.Engine.System.Identity.Update(def);
++        return Data.Ok(def);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/getAll.cs b/PLang/Runtime2/modules/identity/getAll.cs
+new file mode 100644
+index 00000000..ced2ce24
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/getAll.cs
+@@ -0,0 +1,18 @@
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Lists all non-archived identities.
++/// PLang: get all identities, write to %identities%
++/// </summary>
++[Action("getAll")]
++public partial class GetAll : IContext
++{
++    public async Task<Data> Run()
++    {
++        var all = await IdentityVariable.LoadAllAsync(Context.Engine);
++        var active = all.Where(i => !i.IsArchived).ToList();
++        return Data.Ok(active);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/rename.cs b/PLang/Runtime2/modules/identity/rename.cs
+new file mode 100644
+index 00000000..e05dcb69
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/rename.cs
+@@ -0,0 +1,48 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Renames an identity. Keys are preserved, old name is removed from DataSource.
++/// If the renamed identity is the default, updates %MyIdentity%.
++/// PLang: rename identity 'alice' to 'alice-prod'
++/// </summary>
++[Action("rename", Cacheable = false)]
++public partial class Rename : IContext
++{
++    public partial string Name { get; init; }
++    public partial string NewName { get; init; }
++
++    public async Task<Data> Run()
++    {
++        if (string.IsNullOrWhiteSpace(NewName))
++            return Data.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
++
++        var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
++        if (identity == null)
++            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++
++        // Check new name uniqueness across all identities (including archived)
++        var all = await IdentityVariable.LoadAllAsync(Context.Engine);
++        if (all.Exists(i => string.Equals(i.Name, NewName, StringComparison.OrdinalIgnoreCase)))
++            return Data.FromError(new ActionError($"Identity '{NewName}' already exists", "DuplicateName", 409));
++
++        // Save with new name first, then remove old entry.
++        // If save fails, old entry is untouched — no data loss.
++        var oldName = identity.Name;
++        identity.Name = NewName;
++        var saveResult = await identity.SaveAsync(Context.Engine);
++        if (!saveResult.Success) return saveResult;
++
++        identity.Name = oldName;
++        var removeResult = await identity.RemoveAsync(Context.Engine);
++        identity.Name = NewName;
++        if (!removeResult.Success) return removeResult;
++
++        if (identity.IsDefault)
++            Context.Engine.System.Identity.Update(identity);
++
++        return Data.Ok(identity);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/setDefault.cs b/PLang/Runtime2/modules/identity/setDefault.cs
+new file mode 100644
+index 00000000..74506d4b
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/setDefault.cs
+@@ -0,0 +1,44 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Switches which identity is the default. Only one default at a time.
++/// PLang: set default identity to 'alice'
++/// </summary>
++[Action("setDefault", Cacheable = false)]
++public partial class SetDefault : IContext
++{
++    public partial string Name { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var all = await IdentityVariable.LoadAllAsync(Context.Engine);
++
++        var target = all.Find(i => string.Equals(i.Name, Name, StringComparison.OrdinalIgnoreCase));
++        if (target == null)
++            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++
++        if (target.IsArchived)
++            return Data.FromError(new ActionError($"Cannot set archived identity '{Name}' as default", "ArchivedIdentity", 400));
++
++        if (target.IsDefault)
++            return Data.Ok(target);
++
++        // Clear all existing defaults, set the target
++        foreach (var identity in all.Where(i => i.IsDefault))
++        {
++            identity.IsDefault = false;
++            var result = await identity.SaveAsync(Context.Engine);
++            if (!result.Success) return result;
++        }
++
++        target.IsDefault = true;
++        var saveResult = await target.SaveAsync(Context.Engine);
++        if (!saveResult.Success) return saveResult;
++
++        Context.Engine.System.Identity.Update(target);
++        return Data.Ok(target);
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/types.cs b/PLang/Runtime2/modules/identity/types.cs
+new file mode 100644
+index 00000000..5fb544e2
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/types.cs
+@@ -0,0 +1,145 @@
++using PLang.Runtime2.Engine;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Represents a PLang identity (Ed25519 key pair with metadata).
++/// OBP: persistence methods belong to the owner — LoadAsync/SaveAsync/RemoveAsync navigate to DataSource.
++/// </summary>
++public sealed class IdentityVariable
++{
++    private const string Table = "identity";
++
++    public string Name { get; set; } = "";
++    public string PublicKey { get; set; } = "";
++
++    [Sensitive]
++    public string PrivateKey { get; set; } = "";
++
++    public bool IsDefault { get; set; }
++    public bool IsArchived { get; set; }
++    public DateTime Created { get; set; }
++
++    /// <summary>
++    /// String context returns the public key — %MyIdentity% in a string gives the public key.
++    /// </summary>
++    public override string ToString() => PublicKey;
++
++    // --- OBP: persistence belongs to the owner ---
++
++    /// <summary>
++    /// Loads a single identity by name from System DataSource.
++    /// Returns null if not found.
++    /// </summary>
++    public static async Task<IdentityVariable?> LoadAsync(Engine.@this engine, string name)
++    {
++        var dataSource = engine.System.DataSource;
++        var result = await dataSource.Get(Table, name);
++
++        if (!result.Success || result.Value == null)
++            return null;
++
++        return Deserialize(result.Value);
++    }
++
++    /// <summary>
++    /// Loads all identities (including archived) from System DataSource.
++    /// </summary>
++    public static async Task<List<IdentityVariable>> LoadAllAsync(Engine.@this engine)
++    {
++        var dataSource = engine.System.DataSource;
++        var result = await dataSource.GetAll(Table);
++
++        if (!result.Success || result.Value is not List<Data> items)
++            return new List<IdentityVariable>();
++
++        var identities = new List<IdentityVariable>();
++        foreach (var item in items)
++        {
++            var identity = Deserialize(item.Value);
++            if (identity != null)
++                identities.Add(identity);
++        }
++        return identities;
++    }
++
++    /// <summary>
++    /// Gets the default non-archived identity, or auto-creates one if none exist.
++    /// Single source of truth for default identity resolution — used by both Get handler and IdentityData.
++    /// </summary>
++    public static async Task<IdentityVariable> GetOrCreateDefaultAsync(Engine.@this engine)
++    {
++        var all = await LoadAllAsync(engine);
++        var def = all.Find(i => i.IsDefault && !i.IsArchived);
++        if (def != null) return def;
++
++        // Promote an existing non-archived identity (e.g. one named "default" without IsDefault=true)
++        var candidate = all.Find(i => !i.IsArchived);
++        if (candidate != null)
++        {
++            candidate.IsDefault = true;
++            var promoteResult = await candidate.SaveAsync(engine);
++            if (!promoteResult.Success)
++                throw new InvalidOperationException($"Failed to promote identity '{candidate.Name}' to default: {promoteResult.Error?.Message}");
++            return candidate;
++        }
++
++        // No identities at all — auto-create
++        var (publicKey, privateKey) = KeyGenerator.GenerateEd25519();
++        def = new IdentityVariable
++        {
++            Name = "default",
++            PublicKey = publicKey,
++            PrivateKey = privateKey,
++            IsDefault = true,
++            IsArchived = false,
++            Created = DateTime.UtcNow
++        };
++        var saveResult = await def.SaveAsync(engine);
++        if (!saveResult.Success)
++            throw new InvalidOperationException($"Failed to save auto-created default identity: {saveResult.Error?.Message}");
++        return def;
++    }
++
++    /// <summary>
++    /// Saves this identity to System DataSource, keyed by Name.
++    /// </summary>
++    public async Task<Data> SaveAsync(Engine.@this engine)
++    {
++        var dataSource = engine.System.DataSource;
++        return await dataSource.Set(Table, Name, this);
++    }
++
++    /// <summary>
++    /// Removes this identity from System DataSource by Name.
++    /// </summary>
++    public async Task<Data> RemoveAsync(Engine.@this engine)
++    {
++        var dataSource = engine.System.DataSource;
++        return await dataSource.Remove(Table, Name);
++    }
++
++    private static IdentityVariable? Deserialize(object? value)
++    {
++        if (value is IdentityVariable iv)
++            return iv;
++
++        if (value is Dictionary<string, object?> dict)
++        {
++            return new IdentityVariable
++            {
++                Name = dict.TryGetValue("Name", out var n) ? n?.ToString() ?? "" : "",
++                PublicKey = dict.TryGetValue("PublicKey", out var pk) ? pk?.ToString() ?? "" : "",
++                PrivateKey = dict.TryGetValue("PrivateKey", out var prk) ? prk?.ToString() ?? "" : "",
++                IsDefault = dict.TryGetValue("IsDefault", out var d) && d is bool bd && bd,
++                IsArchived = dict.TryGetValue("IsArchived", out var a) && a is bool ba && ba,
++                Created = dict.TryGetValue("Created", out var c)
++                    ? (c is DateTime dt ? dt : c is string s && DateTime.TryParse(s, out var parsed) ? parsed : DateTime.UtcNow)
++                    : DateTime.UtcNow
++            };
++        }
++
++        return null;
++    }
++}
+diff --git a/PLang/Runtime2/modules/identity/unarchive.cs b/PLang/Runtime2/modules/identity/unarchive.cs
+new file mode 100644
+index 00000000..70f2b940
+--- /dev/null
++++ b/PLang/Runtime2/modules/identity/unarchive.cs
+@@ -0,0 +1,31 @@
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++
++namespace PLang.Runtime2.modules.identity;
++
++/// <summary>
++/// Restores an archived identity.
++/// Idempotent — unarchiving an active identity succeeds.
++/// PLang: unarchive identity 'alice'
++/// </summary>
++[Action("unarchive", Cacheable = false)]
++public partial class Unarchive : IContext
++{
++    public partial string Name { get; init; }
++
++    public async Task<Data> Run()
++    {
++        var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
++        if (identity == null)
++            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
++
++        if (!identity.IsArchived)
++            return Data.Ok(identity);
++
++        identity.IsArchived = false;
++        var result = await identity.SaveAsync(Context.Engine);
++        if (!result.Success) return result;
++
++        return Data.Ok(identity);
++    }
++}
+diff --git a/Tests/Runtime2/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal b/Tests/Runtime2/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal
+new file mode 100644
+index 00000000..d48338da
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: hash password with bcrypt, then verify round-trip
++- set %password% = "mysecretpassword"
++- hash %password% using bcrypt, write to %hashed%
++- verify hash of %password% against %hashed%, write to %isValid%
++- assert %isValid% is true, "bcrypt verify should return true for correct password"
+diff --git a/Tests/Runtime2/Crypto/HashDefault/HashDefault.test.goal b/Tests/Runtime2/Crypto/HashDefault/HashDefault.test.goal
+new file mode 100644
+index 00000000..dc64a4a1
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/HashDefault/HashDefault.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: hash string with default algorithm (keccak256), verify hash is non-empty
++- set %data% = "hello world"
++- hash %data%, write to %hash%
++- assert %hash% is not empty, "hash should produce non-empty result"
+diff --git a/Tests/Runtime2/Crypto/HashObject/HashObject.test.goal b/Tests/Runtime2/Crypto/HashObject/HashObject.test.goal
+new file mode 100644
+index 00000000..569e09e6
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/HashObject/HashObject.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: hash a JSON object, verify consistency on re-hash
++- set %obj% = { "name": "Alice", "age": 30 }
++- hash %obj%, write to %hash1%
++- hash %obj%, write to %hash2%
++- assert %hash1% equals %hash2%, "hashing same object twice should produce identical hash"
+diff --git a/Tests/Runtime2/Crypto/HashSHA256/HashSHA256.test.goal b/Tests/Runtime2/Crypto/HashSHA256/HashSHA256.test.goal
+new file mode 100644
+index 00000000..56bcc603
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/HashSHA256/HashSHA256.test.goal
+@@ -0,0 +1,5 @@
++Start
++/ Test: hash string with explicit sha256 algorithm
++- set %data% = "hello world"
++- hash %data% using sha256, write to %hash%
++- assert %hash% is not empty, "sha256 hash should produce non-empty result"
+diff --git a/Tests/Runtime2/Crypto/ProviderSwap/ProviderSwap.test.goal b/Tests/Runtime2/Crypto/ProviderSwap/ProviderSwap.test.goal
+new file mode 100644
+index 00000000..981a1a8e
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/ProviderSwap/ProviderSwap.test.goal
+@@ -0,0 +1,6 @@
++Start
++/ Test: set crypto provider via settings, then hash — verifies builder recognizes the setting
++- set the crypto provider as sha256-only
++- set %data% = "hello world"
++- hash %data%, write to %hash%
++- assert %hash% is not empty, "hash with swapped provider should still work"
+diff --git a/Tests/Runtime2/Crypto/VerifyWrongHash/VerifyWrongHash.test.goal b/Tests/Runtime2/Crypto/VerifyWrongHash/VerifyWrongHash.test.goal
+new file mode 100644
+index 00000000..f01f5bd9
+--- /dev/null
++++ b/Tests/Runtime2/Crypto/VerifyWrongHash/VerifyWrongHash.test.goal
+@@ -0,0 +1,7 @@
++Start
++/ Test: verify with wrong hash returns false
++- set %data% = "hello world"
++- hash %data%, write to %correctHash%
++- set %wrongHash% = "0000000000000000000000000000000000000000000000000000000000000000"
++- verify hash of %data% against %wrongHash%, write to %isValid%
++- assert %isValid% is false, "verify with wrong hash should return false"
+diff --git a/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal b/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal
+new file mode 100644
+index 00000000..bac77bcc
+--- /dev/null
++++ b/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: try to archive the default identity, verify error is returned
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal b/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal
+new file mode 100644
+index 00000000..fb7d5bfa
+--- /dev/null
++++ b/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create two identities, archive non-default, verify success and default unchanged
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal b/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal
+new file mode 100644
+index 00000000..00fc4a8f
+--- /dev/null
++++ b/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: access %MyIdentity% when no identities exist, verify auto-created default identity
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal b/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal
+new file mode 100644
+index 00000000..dfdba1fb
+--- /dev/null
++++ b/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create an identity and verify %MyIdentity% resolves to its public key
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal b/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal
+new file mode 100644
+index 00000000..ed300ce7
+--- /dev/null
++++ b/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: access %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityExport/IdentityExport.test.goal b/Tests/Runtime2/IdentityExport/IdentityExport.test.goal
+new file mode 100644
+index 00000000..5994f097
+--- /dev/null
++++ b/Tests/Runtime2/IdentityExport/IdentityExport.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: export private key and verify non-empty string returned
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal b/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal
+new file mode 100644
+index 00000000..f5b11955
+--- /dev/null
++++ b/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create a named identity, get it by name, verify Name and PublicKey properties
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityRename/IdentityRename.test.goal b/Tests/Runtime2/IdentityRename/IdentityRename.test.goal
+new file mode 100644
+index 00000000..b875b586
+--- /dev/null
++++ b/Tests/Runtime2/IdentityRename/IdentityRename.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: rename an identity, verify old name is gone and new name returns same keys
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal b/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal
+new file mode 100644
+index 00000000..f4c4d1bc
+--- /dev/null
++++ b/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create two identities, switch default, verify %MyIdentity% reflects the new default
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityUnarchive/IdentityUnarchive.test.goal b/Tests/Runtime2/IdentityUnarchive/IdentityUnarchive.test.goal
+new file mode 100644
+index 00000000..95fdacbf
+--- /dev/null
++++ b/Tests/Runtime2/IdentityUnarchive/IdentityUnarchive.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: archive an identity then unarchive it, verify it is accessible again
++- throw "not implemented"
