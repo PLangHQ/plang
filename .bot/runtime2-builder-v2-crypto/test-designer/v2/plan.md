@@ -59,15 +59,16 @@ Tests that the action handlers use the provider chain correctly. Uses a mock `IC
 | # | Test | What it verifies |
 |---|------|-----------------|
 | 1 | `Hash_UsesProviderFromSettings_NotDefault` | Register mock provider via settings → hash action calls mock, not DefaultProvider |
-| 2 | `Hash_PerCallAlgorithm_OverridesDefault` | Per-call `algorithm` param takes priority over engine default |
-| 3 | `Hash_NoProviderConfigured_FallsToBuiltInDefault` | No settings → uses DefaultProvider (Keccak256) |
-| 4 | `Verify_UsesProviderFromSettings` | Mock provider registered → verify action calls mock |
+| 2 | `Hash_NoProviderConfigured_FallsToBuiltInDefault` | No settings → uses DefaultProvider (Keccak256) |
+| 3 | `Verify_UsesProviderFromSettings` | Mock provider registered → verify action calls mock |
 
 **Why separate file:** Provider resolution is integration-level. It needs engine context, settings, mock wiring. Different concern from pure algorithm correctness.
 
+**Note:** The crypto hash action has no per-call `Provider` parameter (unlike signing's `sign` action). The resolution chain's "per-call param" level does not apply here. Algorithm selection is tested in Batch 3 instead.
+
 ---
 
-### Batch 3: Hash + Verify Action Handlers (~11 tests)
+### Batch 3: Hash + Verify Action Handlers (~12 tests)
 
 Action-level tests with `PLangContext`. Verifies handlers wire up correctly: serialization, `HashedData` return shape, error containment.
 
@@ -80,21 +81,22 @@ Action-level tests with `PLangContext`. Verifies handlers wire up correctly: ser
 | 1 | `Hash_StringInput_ReturnsHashedData` | String → `HashedData` with algorithm set, `Format="json"`, hex hash |
 | 2 | `Hash_ObjectInput_SerializesToJsonBeforeHashing` | Object is JSON-serialized, hash is deterministic for same object |
 | 3 | `Hash_ByteArrayInput_FormatIsRaw` | `byte[]` input → `Format="raw"`, no JSON serialization |
-| 4 | `Hash_NullInput_ReturnsError` | `null` data → `Data.Success == false`, does not throw |
-| 5 | `Hash_UnsupportedAlgorithm_ReturnsError` | Unknown algorithm → `Data.Success == false` with meaningful error key |
-| 6 | `Hash_ProviderThrows_ReturnsDataFail` | Provider that throws `Exception` → handler catches, returns `Data.Fail()` |
+| 4 | `Hash_ExplicitAlgorithm_OverridesDefault` | Passing `algorithm="sha256"` produces SHA256 output, not default keccak256 (moved from Batch 2 — this is action param plumbing, not provider resolution) |
+| 5 | `Hash_NullInput_ReturnsError` | `null` data → `Data.Success == false`, does not throw |
+| 6 | `Hash_UnsupportedAlgorithm_ReturnsError` | Unknown algorithm → `Data.Success == false` with meaningful error key |
+| 7 | `Hash_ProviderThrows_ReturnsDataFail` | Provider that throws `Exception` → handler catches, returns `Data.Fail()` |
 
 #### Verify action
 
 | # | Test | What it verifies |
 |---|------|-----------------|
-| 7 | `Verify_RoundTrip_ReturnsTrue` | Hash via action, verify via action → `Data.Ok(true)` |
-| 8 | `Verify_WrongHash_ReturnsFalse` | Correct data but wrong hash → `Data.Ok(false)` |
-| 9 | `Verify_CorruptedHashString_ReturnsError` | Non-hex garbage as hash → `Data.Success == false` (not a crash) |
-| 10 | `Verify_NullInput_ReturnsError` | Null data → `Data.Success == false`, does not throw |
-| 11 | `Verify_ProviderThrows_ReturnsDataFail` | Provider that throws → handler catches, returns `Data.Fail()` |
+| 8 | `Verify_RoundTrip_ReturnsTrue` | Hash via action, verify via action → `Data.Ok(true)` |
+| 9 | `Verify_WrongHash_ReturnsFalse` | Correct data but wrong hash → `Data.Ok(false)` |
+| 10 | `Verify_CorruptedHashString_ReturnsError` | Non-hex garbage as hash → `Data.Success == false` (not a crash) |
+| 11 | `Verify_NullInput_ReturnsError` | Null data → `Data.Success == false`, does not throw |
+| 12 | `Verify_ProviderThrows_ReturnsDataFail` | Provider that throws → handler catches, returns `Data.Fail()` |
 
-**Error-path rationale (from patterns.md):** Every handler returning `Data` must never throw. Catch exceptions and return `Data.FromError()`. Tests 4, 6, 9, 10, 11 enforce this contract.
+**Error-path rationale (from patterns.md):** Every handler returning `Data` must never throw. Catch exceptions and return `Data.FromError()`. Tests 5, 7, 10, 11, 12 enforce this contract.
 
 ---
 
@@ -134,13 +136,13 @@ End-to-end: write `.test.goal` → `plang p build` → `plang p !test`. Each fil
 | Provider | SHA256 verify round-trip + failure | `Verify_SHA256_RoundTrip_ReturnsTrue`, `_WrongHash_ReturnsFalse` |
 | Provider | Bcrypt verify correct + wrong | `Verify_Bcrypt_CorrectPassword_ReturnsTrue`, `_WrongPassword_ReturnsFalse` |
 | Resolution | Mock provider overrides default | `Hash_UsesProviderFromSettings_NotDefault` |
-| Resolution | Per-call override | `Hash_PerCallAlgorithm_OverridesDefault` |
 | Resolution | Fallback to built-in | `Hash_NoProviderConfigured_FallsToBuiltInDefault` |
 | Resolution | Verify uses provider from settings | `Verify_UsesProviderFromSettings` |
 | Action | String → HashedData (format=json) | `Hash_StringInput_ReturnsHashedData` |
 | Action | Object → JSON serialized hash | `Hash_ObjectInput_SerializesToJsonBeforeHashing` |
 | Action | byte[] → format=raw | `Hash_ByteArrayInput_FormatIsRaw` |
 | Action | Null input → error | `Hash_NullInput_ReturnsError`, `Verify_NullInput_ReturnsError` |
+| Action | Explicit algorithm override | `Hash_ExplicitAlgorithm_OverridesDefault` |
 | Action | Unsupported algorithm → error | `Hash_UnsupportedAlgorithm_ReturnsError` |
 | Action | Provider throws → Data.Fail | `Hash_ProviderThrows_ReturnsDataFail`, `Verify_ProviderThrows_ReturnsDataFail` |
 | Action | Verify round-trip | `Verify_RoundTrip_ReturnsTrue` |
@@ -169,8 +171,8 @@ End-to-end: write `.test.goal` → `plang p build` → `plang p !test`. Each fil
 | File | Tests | Purpose |
 |------|-------|---------|
 | `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs` | 15 | Pure algorithm correctness: hash + verify for all 3 algorithms |
-| `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` | 4 | Provider swap, resolution chain, fallback |
-| `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` | 11 | Action handler wiring, HashedData shape, error containment |
+| `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` | 3 | Provider swap, fallback to default |
+| `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` | 12 | Action handler wiring, algorithm selection, HashedData shape, error containment |
 | `Tests/Runtime2/Crypto/HashDefault/HashDefault.test.goal` | 1 | PLang: default hash |
 | `Tests/Runtime2/Crypto/HashSHA256/HashSHA256.test.goal` | 1 | PLang: explicit algorithm |
 | `Tests/Runtime2/Crypto/HashBcryptVerify/HashBcryptVerify.test.goal` | 1 | PLang: bcrypt round-trip |

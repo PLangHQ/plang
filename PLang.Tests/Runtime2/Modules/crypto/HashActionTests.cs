@@ -66,6 +66,20 @@ public class HashActionTests : IDisposable
     }
 
     [Test]
+    public async Task Hash_ExplicitAlgorithm_OverridesDefault()
+    {
+        // Passing algorithm="sha256" should produce SHA256 output even though
+        // the default algorithm is keccak256. Tests action parameter plumbing.
+        // Note: crypto hash has no per-call Provider param (unlike signing).
+        //
+        // Arrange: create Hash action with Data="test", Algorithm="sha256"
+        // Act: Run()
+        // Assert: HashedData.Algorithm == "sha256",
+        //         HashedData.Hash matches known SHA256("test") hex
+        await Assert.Fail("stub — implementation depends on crypto module");
+    }
+
+    [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
         // Null data → Data.Success == false, handler does not throw.

@@ -42,18 +42,6 @@ public class ProviderResolutionTests : IDisposable
     }
 
     [Test]
-    public async Task Hash_PerCallAlgorithm_OverridesDefault()
-    {
-        // Even if engine default is keccak256, passing algorithm="sha256"
-        // per-call should produce SHA256 output.
-        //
-        // Arrange: engine with default provider
-        // Act: hash action with explicit algorithm="sha256"
-        // Assert: output matches known SHA256 hash, not Keccak256
-        await Assert.Fail("stub — implementation depends on crypto module");
-    }
-
-    [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
         // No settings configured at all — should use DefaultProvider with keccak256.
