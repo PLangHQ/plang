@@ -231,6 +231,36 @@
         "health": "Analysis complete. Verdict: needs-fixes. 3 major findings require coder action.",
         "notes": "Key gaps: export default path untested (60% line), two weak error key assertions, all PLang tests are stubs."
       }
+    },
+    {
+      "id": "e2f3a4b5-codeanalyzer-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-19T15:00:00Z",
+      "timestamp_end": "2026-03-19T15:20:00Z",
+      "intent": "Re-review coder v2 fixes for identity module",
+      "before": {
+        "assumptions": "Coder v2 addressed all 7 findings from analyzer v1. Need to verify fixes are correct and check for regressions.",
+        "risk": "Low — focused re-review of fix-introduced code only."
+      },
+      "plan": "Verify each of 7 fixes: trace by-name path, check GetOrCreateDefaultAsync edge cases, verify rename atomicity, validate new tests.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-identity/codeanalyzer/v2/result.md",
+            ".bot/runtime2-builder-v2-identity/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-builder-v2-identity/codeanalyzer/v2/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-review of 4 changed files. All 7 original fixes correct. 1 new finding: GetOrCreateDefaultAsync doesn't check SaveAsync result."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Analysis complete. Verdict: FAIL (soft). 1 medium-severity regression in consolidated method.",
+        "notes": "GetOrCreateDefaultAsync line 88 doesn't check SaveAsync result. Original Get.Run() did check it. Quick fix."
+      }
     }
   ]
 }
