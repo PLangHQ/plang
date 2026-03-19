@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "GetOrCreateDefaultAsync can silently overwrite user-created 'default' identity — data loss bug with no test coverage" }

@@ -1,10 +1,10 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-v2-identity",
-  "timestamp": "2026-03-19T17:00:00Z",
-  "tested_version": "v2",
+  "timestamp": "2026-03-19T19:00:00Z",
+  "tested_version": "v3",
   "test_run": {
-    "csharp": { "total": 1647, "passed": 1646, "failed": 1, "skipped": 0 },
+    "csharp": { "total": 1647, "passed": 1647, "failed": 0, "skipped": 0 },
     "plang": { "total": 10, "passed": 0, "failed": 0, "skipped": 10 }
   },
   "coverage": {
@@ -31,43 +31,33 @@
       "id": 1,
       "severity": "major",
       "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
-      "issue": "Sensitive_IdentityVariable_PrivateKeyExcluded (line 117) is a flaky test. It asserts `json.Contains(identity.PublicKey)` but System.Text.Json escapes '+' in base64 strings to '\\u002B'. When the random Ed25519 key contains '+', the raw string comparison fails. This is intermittent — depends on key generation randomness.",
-      "impact": "Test suite has an intermittent failure that undermines CI trust. Failed 1/1647 on this run.",
-      "suggestion": "Either: (a) deserialize the JSON back and compare property values instead of string matching, or (b) use `JsonSerializer.Serialize(identity.PublicKey)` to get the escaped form for comparison, or (c) use the hardcoded test data (like the other sensitive tests) instead of real key generation."
+      "test_file": "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs",
+      "code_file": "PLang/Runtime2/modules/identity/types.cs",
+      "issue": "GetOrCreateDefaultAsync (line 78-91) auto-creates an identity named 'default' without checking if that name already exists. If a user previously called Create(Name='default', SetAsDefault=false), the auto-create silently overwrites it — SaveAsync uses Name as the DataSource key, so the user's key pair is destroyed. The Create handler's Name parameter has [Default('default')], making this a realistic scenario.",
+      "impact": "Silent data loss. User's Ed25519 key pair is replaced with a new one, permanently. Any signatures or identity references based on the original public key become invalid.",
+      "suggestion": "GetOrCreateDefaultAsync should either: (a) check for existing 'default' name and promote it to IsDefault=true instead of creating, or (b) use a different auto-create name like 'default-1', or (c) throw/return error if name 'default' is taken. Add test: Create('default', SetAsDefault=false), then trigger auto-create, verify original keys preserved."
     },
     {
       "id": 2,
       "severity": "minor",
-      "type": "weak-assertion",
+      "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs",
-      "code_file": "PLang/Runtime2/modules/identity/create.cs",
-      "issue": "Create_EmptyOrWhitespaceName_ReturnsError (line 147): whitespace name case only checks Success==false, does NOT check error key. Carried over from v1 finding #2.",
-      "impact": "Low — validation logic is simple, but wrong error type would pass undetected.",
-      "suggestion": "Add `await Assert.That(result2.Error!.Key).IsEqualTo(\"ValidationError\");`"
+      "code_file": "PLang/Runtime2/modules/identity/export.cs",
+      "issue": "No test for Export(Name=null) when no default exists. The path at lines 29-32 (load all, find default, return 404) has no dedicated test.",
+      "impact": "Low — the logic is simple and correct. But if the !i.IsArchived filter were accidentally removed from line 30, no test would catch it.",
+      "suggestion": "Add Export_NullName_NoDefault_ReturnsError test."
     },
     {
       "id": 3,
       "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs",
-      "code_file": "PLang/Runtime2/modules/identity/setDefault.cs",
-      "issue": "SetDefault_ArchivedOrMissing_ReturnsError (line 359): missing-identity case only checks Success==false, does NOT check error key. Carried over from v1 finding #3.",
-      "impact": "Low — but inconsistent with the archived case in the same test which correctly checks error key.",
-      "suggestion": "Add `await Assert.That(r1.Error!.Key).IsEqualTo(\"NotFound\");`"
-    },
-    {
-      "id": 4,
-      "severity": "minor",
       "type": "missing-plang-test",
       "test_file": "Tests/Runtime2/Identity*/*.test.goal",
       "code_file": "PLang/Runtime2/modules/identity/",
-      "issue": "All 10 PLang test goals remain stubs. Carried over from v1 finding #4. Acknowledged as blocked on builder prompt update.",
-      "impact": "No builder pipeline validation. Acceptable if builder prompt work is tracked separately.",
-      "suggestion": "Track as separate task. Not blocking for code review."
+      "issue": "All 10 PLang test goals remain stubs. Tracked separately, blocked on builder prompt.",
+      "impact": "No builder pipeline validation.",
+      "suggestion": "Not blocking for this review cycle."
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "Coverage significantly improved after coder v2/v3 (types.cs 52%→100% branch, export.cs 38%→50% branch, IdentityData 88%→100%). Major v1 findings #1 and #5 are fixed. However: 1 flaky test failure found (Sensitive_IdentityVariable_PrivateKeyExcluded — base64 '+' escaping issue), 2 carried-over weak assertions (minor), PLang stubs still pending. The flaky test is the only blocking issue."
+  "summary": "All 1647 C# tests pass. Previous findings all fixed. Deep analysis revealed 1 new major finding missed in v1/v2: GetOrCreateDefaultAsync can silently overwrite a user-created identity named 'default' (data loss). This is both a code bug and a test gap — no test exercises this scenario. 1 minor export path gap. PLang stubs tracked separately."
 }
