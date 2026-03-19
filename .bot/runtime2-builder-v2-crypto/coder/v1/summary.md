@@ -2,32 +2,42 @@
 
 ## What this is
 
-A crypto module for PLang Runtime2 providing hashing (Keccak256, SHA256) and hash verification. This is piece 2 of the builder-v2 migration. The signing module (piece 3) depends on this for data hashing. Bcrypt support is deferred.
+A crypto module for PLang Runtime2 providing hashing (Keccak256, SHA256) and hash verification, plus `Engine.Providers` — a generic type-keyed registry for pluggable module implementations. This is piece 2 of the builder-v2 migration. The signing module (piece 3) depends on this for data hashing. Bcrypt support is deferred.
 
 ## What was done
 
 ### Files created
+- `PLang/Runtime2/Engine/Providers/this.cs` — `Engine.Providers`, type-keyed `ConcurrentDictionary<Type, object>` with `Register<T>`, `Get<T>`, `GetOrDefault<T>`. Solves Foundation Checklist item #4 (pluggable action implementations).
 - `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` — Provider interface (`Hash`, `Verify`)
 - `PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs` — Built-in provider using Nethereum (Keccak256) and System.Security.Cryptography (SHA256)
 - `PLang/Runtime2/modules/crypto/types.cs` — `HashedData` type (Algorithm, Format, Hash)
-- `PLang/Runtime2/modules/crypto/hash.cs` — Hash action handler with JSON serialization of non-byte inputs
-- `PLang/Runtime2/modules/crypto/verify.cs` — Verify action handler with hex decode and provider dispatch
+- `PLang/Runtime2/modules/crypto/hash.cs` — Thin hash action handler: resolve provider, serialize, delegate
+- `PLang/Runtime2/modules/crypto/verify.cs` — Thin verify action handler: resolve provider, decode hex, delegate
 
 ### Files modified
-- `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` — 12 stubs replaced with real tests
-- `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` — 3 stubs replaced
+- `PLang/Runtime2/Engine/this.cs` — Added `Providers` property
+- `PLang/Runtime2/GlobalUsings.cs` — Added `EngineProviders` alias
+- `PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs` — 12 stubs → real tests
+- `PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs` — 3 stubs → real tests
 - `PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs` — 4 bcrypt tests skipped
+- `Documentation/Runtime2/todos.md` — Updated item #4, added Libraries retirement todo
 
 ### Key decisions
 
-1. **Provider resolution via MemoryStack, not DataSource** — The plan called for DataSource, but DataSource serializes to JSON (SQLite). An `ICryptoProvider` can't survive JSON round-trip. Changed to `Context.MemoryStack.Get("CryptoProvider")` which stores object references in-memory.
+1. **Engine.Providers for pluggable implementations** — Design evolved during session. Plan called for DataSource, but DataSource serializes to JSON (can't store object references). Discussed with Ingi → designed `Engine.Providers` as the generic solution. A PLang developer loads a DLL implementing `ICryptoProvider`, the handler picks it up via `Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`.
 
-2. **Static helper methods on Hash** — `SerializeData()`, `FormatHash()`, and `ResolveProvider()` are `internal static` on the `Hash` class so the `Verify` handler reuses them. The `Verify.Hash` property shadowed the `Hash` class name, requiring `crypto.Hash.` qualification.
+2. **Handlers are thin** — Hash and verify handlers just resolve the provider and delegate. All crypto logic lives in the provider. This pattern applies to any module (condition, DB, templating, etc.).
+
+3. **Static helper methods on Hash** — `SerializeData()`, `FormatHash()`, and `ResolveProvider()` are `internal static` on the `Hash` class so the `Verify` handler reuses them.
 
 ## Code example
 
 ```csharp
-// hash.cs — action handler pattern
+// Engine.Providers — generic pattern for any module
+engine.Providers.Register<ICryptoProvider>(new DefaultProvider());  // module default
+engine.Providers.Register<ICryptoProvider>(new MyKmsProvider());    // PLang developer override
+
+// hash.cs — thin handler delegates to provider
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {
@@ -41,13 +51,13 @@ public partial class Hash : IContext
             return Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
         try
         {
-            var provider = ResolveProvider(Context);
+            var provider = context.Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider());
             var (bytes, format) = SerializeData(Data);
             var hashBytes = provider.Hash(bytes, Algorithm);
             return Data.Ok(new HashedData { Algorithm = Algorithm.ToLowerInvariant(), Format = format, Hash = FormatHash(hashBytes) });
         }
-        catch (NotSupportedException ex) { return Data.FromError(new ActionError(ex.Message, "UnsupportedAlgorithm", 400)); }
-        catch (Exception ex) { return Data.FromError(ActionError.FromException(ex, "CryptoError", 500)); }
+        catch (NotSupportedException ex) { ... }
+        catch (Exception ex) { ... }
     }
 }
 ```

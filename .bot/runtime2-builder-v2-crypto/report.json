@@ -5,13 +5,13 @@
       "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       "bot": "coder",
       "timestamp_start": "2026-03-19T00:00:00Z",
-      "timestamp_end": "2026-03-19T00:30:00Z",
-      "intent": "Implement crypto module for hashing (Keccak256, SHA256) and hash verification",
+      "timestamp_end": "2026-03-19T01:00:00Z",
+      "intent": "Implement crypto module with pluggable provider architecture (Engine.Providers)",
       "before": {
         "assumptions": "Test stubs and plan already exist from test-designer. Identity module patterns are the reference for handler structure.",
         "risk": "Low — self-contained module with no dependencies on existing modules"
       },
-      "plan": "Implement ICryptoProvider interface, DefaultProvider (keccak256/sha256), HashedData type, hash handler, verify handler. Fill in test stubs. Skip bcrypt tests.",
+      "plan": "Implement ICryptoProvider interface, DefaultProvider (keccak256/sha256), HashedData type, hash handler, verify handler. Fill in test stubs. Skip bcrypt tests. Add Engine.Providers as generic pluggable implementation registry.",
       "actions": [
         {
           "paths": [
@@ -24,7 +24,18 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Core crypto module: interface, default provider, types, hash and verify action handlers. Provider resolution uses MemoryStack (not DataSource) since providers are runtime objects that can't survive JSON serialization."
+          "context": "Core crypto module: interface, default provider, types, hash and verify action handlers. Handlers are thin — resolve provider, serialize data, delegate to provider."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/GlobalUsings.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Engine.Providers — type-keyed ConcurrentDictionary<Type, object> for pluggable module implementations. Solves Foundation Checklist item #4 (pluggable action implementations). PLang developers override defaults by loading DLLs that implement the same provider interface."
         },
         {
           "paths": [
@@ -35,13 +46,20 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Replaced 15 stub tests with real implementations. Added [Skip] to 4 bcrypt tests. All 26 active tests pass."
+          "context": "Replaced 15 stub tests with real implementations. Added [Skip] to 4 bcrypt tests. All 26 active tests pass. Tests use Engine.Providers.Register<ICryptoProvider>() for mock injection."
+        },
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated Foundation Checklist item #4 to DONE. Added todo for retiring Libraries as central action registry."
         }
       ],
       "after": {
         "status": "complete",
-        "health": "All 1675 tests pass (26 crypto + 1649 existing), 4 bcrypt skipped",
-        "notes": "Changed provider resolution from DataSource to MemoryStack — DataSource serializes to JSON which can't round-trip ICryptoProvider objects. PLang tests deferred until module is registered with the builder (piece 8)."
+        "health": "All 1675 tests pass, 4 bcrypt skipped",
+        "notes": "Design evolved during session: plan called for DataSource provider resolution, but DataSource serializes to JSON. Discussed with Ingi → MemoryStack → then designed Engine.Providers as the proper generic solution for pluggable module implementations. Todo added for retiring Libraries."
       }
     }
   ]

@@ -148,6 +148,38 @@ index e7522d46..83222374 100644
  ## Relationships
  
  - Registered in [Engine](engine.md) via `Libraries` property (`Libraries`)
+diff --git a/Documentation/Runtime2/todos.md b/Documentation/Runtime2/todos.md
+index bd998479..8d925314 100644
+--- a/Documentation/Runtime2/todos.md
++++ b/Documentation/Runtime2/todos.md
+@@ -128,7 +128,7 @@ Target audiences:
+ | 1 | **system.sqlite** | ✅ DONE | `SqliteDataSource.cs` + `IDataSource.cs`. Per-actor `.db/{name}.sqlite`, in-memory for testing/building. |
+ | 2 | **Setup.goal** | ✅ DONE | `Setup/this.cs` — discovers by convention, runs once per step, persists in system DataSource. Integrated into `Executor.cs` startup. |
+ | 3 | **Settings** | ✅ DONE | Merged 2026-02-22. Scope chain, `ISettings`, source-generated props, `SettingsData` bridge, settings module handlers. |
+-| 4 | **Pluggable action implementations** | NOT STARTED | Actions like templating should allow plugging in any rendering engine. Architecture for swappable implementors behind a stable action interface. Same pattern needed for DB, crypto, etc. |
++| 4 | **Pluggable action implementations** | ✅ DONE | `Engine.Providers` — type-keyed service registry. Modules define provider interfaces (e.g., `ICryptoProvider`), register defaults, PLang developers override via DLL. Implemented with crypto module (2026-03-19). |
+ | 5 | **Retry testing** | ✅ DONE | `Tests/Runtime2/ErrorRetryOnly/` (bare + timed retry) and `Tests/Runtime2/ErrorGoalFirst/` (GoalFirst order). |
+ 
+ ---
+@@ -328,6 +328,18 @@ Target audiences:
+ 
+ ---
+ 
++## Retire Libraries as Central Action Registry
++**Date:** 2026-03-19
++**Context:** During crypto module / Providers implementation. Libraries currently serves two roles: (1) central registry for source-generated action handlers (ICodeGenerated), and (2) external DLL loading. With Providers handling pluggable module implementations, Libraries' role narrows to just compiled action dispatch.
++
++**What to do:**
++- Move compiled action handlers (ICodeGenerated) to per-module storage instead of central flat registry.
++- Re-evaluate `IAction` interface — source-generated handlers use `ICodeGenerated` + `IContext` + `Run()`. The `IAction.ExecuteAsync` bridge may be unnecessary.
++- External DLL loading (`library.load`) should register into per-module structure or into Providers.
++- Libraries' "walk the list, first match wins" resolution might move to per-module resolution.
++
++---
++
+ ## LLM Rewrites Literal Values in Assertions
+ **Date:** 2026-03-07
+ **Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".
 diff --git a/PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs b/PLang.Tests/Runtime2/Modules/crypto/DefaultProviderTests.cs
 new file mode 100644
 index 00000000..b9747ec4
@@ -325,7 +357,7 @@ index 00000000..b9747ec4
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs b/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs
 new file mode 100644
-index 00000000..e55e613e
+index 00000000..fc2d03e6
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/crypto/HashActionTests.cs
 @@ -0,0 +1,206 @@
@@ -450,7 +482,7 @@ index 00000000..e55e613e
 +    [Test]
 +    public async Task Hash_ProviderThrows_ReturnsDataFail()
 +    {
-+        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
++        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
 +
 +        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
 +        var result = await action.Run();
@@ -518,7 +550,7 @@ index 00000000..e55e613e
 +    [Test]
 +    public async Task Verify_ProviderThrows_ReturnsDataFail()
 +    {
-+        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
++        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
 +
 +        // Need a valid hex string so we get past the hex decode
 +        var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
@@ -537,7 +569,7 @@ index 00000000..e55e613e
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs b/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs
 new file mode 100644
-index 00000000..7514010b
+index 00000000..f2572a44
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/crypto/ProviderResolutionTests.cs
 @@ -0,0 +1,93 @@
@@ -581,7 +613,7 @@ index 00000000..7514010b
 +    public async Task Hash_UsesProviderFromSettings_NotDefault()
 +    {
 +        var mock = new MockCryptoProvider();
-+        Ctx.MemoryStack.Set("CryptoProvider", mock);
++        _engine.Providers.Register<ICryptoProvider>(mock);
 +
 +        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
 +        var result = await action.Run();
@@ -612,7 +644,7 @@ index 00000000..7514010b
 +    public async Task Verify_UsesProviderFromSettings()
 +    {
 +        var mock = new AlwaysTrueVerifier();
-+        Ctx.MemoryStack.Set("CryptoProvider", mock);
++        _engine.Providers.Register<ICryptoProvider>(mock);
 +
 +        // Even with garbage hash, mock returns true
 +        var action = new Verify { Context = Ctx, Data = "hello", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
@@ -1952,6 +1984,69 @@ index 7973ee41..a6dbb502 100644
      };
  
      /// <summary>
+diff --git a/PLang/Runtime2/Engine/Providers/this.cs b/PLang/Runtime2/Engine/Providers/this.cs
+new file mode 100644
+index 00000000..2d800ed2
+--- /dev/null
++++ b/PLang/Runtime2/Engine/Providers/this.cs
+@@ -0,0 +1,57 @@
++using System.Collections.Concurrent;
++
++namespace PLang.Runtime2.Engine.Providers;
++
++/// <summary>
++/// Type-keyed service registry for pluggable module implementations.
++/// Each module defines a provider interface (e.g., ICryptoProvider). Modules register
++/// their default implementation. PLang developers override by loading a DLL that
++/// implements the same interface.
++///
++/// PLang: "set crypto provider my.dll" → registers ICryptoProvider from my.dll
++/// Handler: engine.Providers.Get&lt;ICryptoProvider&gt;() ?? new DefaultProvider()
++/// </summary>
++public sealed class @this
++{
++    private readonly ConcurrentDictionary<Type, object> _providers = new();
++
++    /// <summary>
++    /// Registers a provider. Replaces any existing registration for the same type.
++    /// </summary>
++    public void Register<T>(T provider) where T : class
++    {
++        _providers[typeof(T)] = provider;
++    }
++
++    /// <summary>
++    /// Gets a registered provider, or null if none registered.
++    /// </summary>
++    public T? Get<T>() where T : class
++    {
++        return _providers.TryGetValue(typeof(T), out var p) ? (T)p : null;
++    }
++
++    /// <summary>
++    /// Gets a registered provider, or the default if none registered.
++    /// </summary>
++    public T GetOrDefault<T>(T defaultProvider) where T : class
++    {
++        return Get<T>() ?? defaultProvider;
++    }
++
++    /// <summary>
++    /// Checks if a provider is registered for the given type.
++    /// </summary>
++    public bool Has<T>() where T : class
++    {
++        return _providers.ContainsKey(typeof(T));
++    }
++
++    /// <summary>
++    /// Removes a provider registration.
++    /// </summary>
++    public bool Remove<T>() where T : class
++    {
++        return _providers.TryRemove(typeof(T), out _);
++    }
++}
 diff --git a/PLang/Runtime2/Engine/View.cs b/PLang/Runtime2/Engine/View.cs
 index bdbb94a4..11456f91 100644
 --- a/PLang/Runtime2/Engine/View.cs
@@ -1969,12 +2064,43 @@ index bdbb94a4..11456f91 100644
 +/// </summary>
 +[AttributeUsage(AttributeTargets.Property)]
 +public sealed class SensitiveAttribute : Attribute { }
+diff --git a/PLang/Runtime2/Engine/this.cs b/PLang/Runtime2/Engine/this.cs
+index 69ced081..9e0c361e 100644
+--- a/PLang/Runtime2/Engine/this.cs
++++ b/PLang/Runtime2/Engine/this.cs
+@@ -82,6 +82,12 @@ public sealed class @this : IAsyncDisposable
+     /// </summary>
+     public EngineLibraries Libraries => _libraries;
+ 
++    /// <summary>
++    /// Type-keyed provider registry for pluggable module implementations.
++    /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
++    /// </summary>
++    public EngineProviders Providers { get; } = new();
++
+     /// <summary>
+     /// The loaded goals.
+     /// </summary>
+diff --git a/PLang/Runtime2/GlobalUsings.cs b/PLang/Runtime2/GlobalUsings.cs
+index c9e4fec0..9bcf3842 100644
+--- a/PLang/Runtime2/GlobalUsings.cs
++++ b/PLang/Runtime2/GlobalUsings.cs
+@@ -40,6 +40,9 @@ global using SettingsScope = PLang.Runtime2.Engine.Settings.Scope;
+ // Type system
+ global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
+ 
++// Providers subsystem
++global using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
++
+ // Standalone concepts
+ global using ICache = PLang.Runtime2.Engine.Cache.ICache;
+ global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
 diff --git a/PLang/Runtime2/modules/crypto/hash.cs b/PLang/Runtime2/modules/crypto/hash.cs
 new file mode 100644
-index 00000000..143bc785
+index 00000000..70052d39
 --- /dev/null
 +++ b/PLang/Runtime2/modules/crypto/hash.cs
-@@ -0,0 +1,68 @@
+@@ -0,0 +1,64 @@
 +using System.Text;
 +using System.Text.Json;
 +using PLang.Runtime2.Engine.Errors;
@@ -2036,11 +2162,7 @@ index 00000000..143bc785
 +
 +    internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.Context.PLangContext context)
 +    {
-+        var data = context.MemoryStack.Get("CryptoProvider");
-+        if (data?.Value is ICryptoProvider provider)
-+            return provider;
-+
-+        return new DefaultProvider();
++        return context.Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider());
 +    }
 +}
 diff --git a/PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs b/PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs
