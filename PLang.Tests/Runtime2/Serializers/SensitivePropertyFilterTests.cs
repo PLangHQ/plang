@@ -114,8 +114,13 @@ public class SensitivePropertyFilterTests
         var serializer = new JsonStreamSerializer();
         var json = serializer.Serialize(identity);
 
-        await Assert.That(json).Contains(identity!.PublicKey);
+        // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
+        var deserialized = JsonSerializer.Deserialize<JsonElement>(json);
+        await Assert.That(deserialized.GetProperty("publicKey").GetString()).IsEqualTo(identity!.PublicKey);
         await Assert.That(json).DoesNotContain(identity.PrivateKey);
-        await Assert.That(json).Contains("e2e");
+        // Also check the escaped form of PrivateKey isn't present
+        var escapedPrivateKey = JsonSerializer.Serialize(identity.PrivateKey).Trim('"');
+        await Assert.That(json).DoesNotContain(escapedPrivateKey);
+        await Assert.That(deserialized.GetProperty("name").GetString()).IsEqualTo("e2e");
     }
 }

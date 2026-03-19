@@ -8,3 +8,6 @@ Fixed behavioral bug (get.cs overwrote %MyIdentity% on by-name fetch), deduplica
 
 ## v3 — SaveAsync Result Check
 Fixed regression from v2: `GetOrCreateDefaultAsync` now checks `SaveAsync` result and throws on failure (prevents phantom identity). `Get.Run()` catches and returns `Data.FromError`. All 1647 tests pass. See [v3/summary.md](v3/summary.md).
+
+## v4 — Fix Flaky Test + Weak Assertions
+Fixed flaky `Sensitive_IdentityVariable_PrivateKeyExcluded` (base64 `+` JSON escaping), added 2 missing `Error.Key` assertions. All 1647 tests pass. See [v4/summary.md](v4/summary.md).

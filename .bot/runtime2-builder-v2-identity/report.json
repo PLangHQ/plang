@@ -353,6 +353,39 @@
         "health": "1 flaky test found, 2 minor weak assertions remain, PLang stubs still pending.",
         "notes": "Sensitive_IdentityVariable_PrivateKeyExcluded fails intermittently due to base64 '+' escaping. Only blocking issue."
       }
+    },
+    {
+      "id": "b1c2d3e4-coder-v4",
+      "bot": "coder",
+      "timestamp_start": "2026-03-19T18:00:00Z",
+      "intent": "Fix flaky test and weak assertions from tester v2",
+      "before": {
+        "assumptions": "3 actionable findings: 1 flaky test (base64 escaping), 2 weak assertions.",
+        "risk": "Low — test-only changes."
+      },
+      "plan": "Fix Sensitive_IdentityVariable_PrivateKeyExcluded by deserializing JSON and comparing values. Add Error.Key assertions for whitespace create and missing setDefault.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replace raw Contains() with JsonElement property comparison to avoid base64 escaping flakiness"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Add Error.Key assertions for whitespace create and missing setDefault cases"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1647 tests pass. No flaky failures.",
+        "notes": "PLang test stubs remain (blocked on builder prompt) — tracked separately."
+      },
+      "timestamp_end": "2026-03-19T18:10:00Z"
     }
   ]
 }

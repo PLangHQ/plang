@@ -145,6 +145,7 @@ public class IdentityHandlerTests
         var h2 = new Create { Context = Ctx, Name = "   ", SetAsDefault = false };
         var result2 = await h2.Run();
         await Assert.That(result2.Success).IsFalse();
+        await Assert.That(result2.Error!.Key).IsEqualTo("ValidationError");
     }
 
     // --- get ---
@@ -357,6 +358,7 @@ public class IdentityHandlerTests
         var h1 = new SetDefault { Context = Ctx, Name = "missing" };
         var r1 = await h1.Run();
         await Assert.That(r1.Success).IsFalse();
+        await Assert.That(r1.Error!.Key).IsEqualTo("NotFound");
 
         // Archived
         var create = new Create { Context = Ctx, Name = "arch", SetAsDefault = false };
