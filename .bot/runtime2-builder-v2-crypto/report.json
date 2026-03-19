@@ -197,6 +197,45 @@
         "health": "NEEDS-FIXES — 1 major (unhandled ArgumentNullException in Verify), 3 minor",
         "notes": "v1 fixes are solid. New finding is a real bug, not just a test gap — the code itself violates the never-throw contract."
       }
+    },
+    {
+      "id": "a7c2e9f5-8d34-4b1a-c567-3e8f1a2b4d90",
+      "bot": "security",
+      "timestamp_start": "2026-03-19T14:00:00Z",
+      "timestamp_end": null,
+      "intent": "Security audit of crypto module, identity module, and Engine.Providers",
+      "before": {
+        "assumptions": "Crypto module is new code. Identity module carried from identity branch with prior PASS audit. Tester v4 PASSED. Codeanalyzer v2 PASSED.",
+        "risk": "Crypto modules are high-value targets. Timing attacks, algorithm confusion, key material handling are primary concerns."
+      },
+      "plan": "Phase 1: Blue team — map attack surface for crypto handlers, provider registry, identity integration. Phase 2: Red team — timing side-channel in Verify, provider substitution, key material exposure, input validation. Phase 3: Write security-report.json and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/crypto/hash.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
+            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
+            "PLang/Runtime2/modules/crypto/types.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang/Runtime2/modules/identity/types.cs",
+            "PLang/Runtime2/modules/identity/IdentityData.cs",
+            "PLang/Runtime2/modules/identity/KeyGenerator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full blue/red team security audit. 5 attack surfaces mapped. 4 findings: 1 medium (timing side-channel), 3 low (accepted-risk)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 1 medium, 3 low. No critical/high.",
+        "notes": "Timing side-channel in DefaultProvider.Verify (SequenceEqual → FixedTimeEquals). Identity carry-forward findings unchanged. Data.Envelope SensitivePropertyFilter gap from identity audit is now fixed."
+      }
     }
   ]
 }
