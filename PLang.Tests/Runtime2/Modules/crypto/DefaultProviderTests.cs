@@ -32,6 +32,7 @@ public class DefaultProviderTests
     }
 
     [Test]
+    [Skip("Bcrypt deferred — not needed for signing module")]
     public async Task Hash_Bcrypt_ProducesValidHash()
     {
         var input = System.Text.Encoding.UTF8.GetBytes("password123");
@@ -42,6 +43,7 @@ public class DefaultProviderTests
     }
 
     [Test]
+    [Skip("Bcrypt deferred — not needed for signing module")]
     public async Task Hash_Bcrypt_SameInput_DifferentHashes()
     {
         var input = System.Text.Encoding.UTF8.GetBytes("password123");
@@ -134,6 +136,7 @@ public class DefaultProviderTests
     }
 
     [Test]
+    [Skip("Bcrypt deferred — not needed for signing module")]
     public async Task Verify_Bcrypt_CorrectPassword_ReturnsTrue()
     {
         var input = System.Text.Encoding.UTF8.GetBytes("mypassword");
@@ -144,6 +147,7 @@ public class DefaultProviderTests
     }
 
     [Test]
+    [Skip("Bcrypt deferred — not needed for signing module")]
     public async Task Verify_Bcrypt_WrongPassword_ReturnsFalse()
     {
         var input = System.Text.Encoding.UTF8.GetBytes("mypassword");

@@ -37,36 +37,57 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_UsesProviderFromSettings_NotDefault()
     {
-        // Register a mock ICryptoProvider that returns a known marker hash.
-        // When settings point to this provider, the hash action should use it
-        // instead of DefaultProvider.
-        //
-        // Arrange: set crypto.provider setting to "mock"
-        // Register MockCryptoProvider that returns all-zero bytes
-        // Act: hash via action handler
-        // Assert: result matches mock output, not real Keccak256
-        await Assert.Fail("stub — implementation depends on crypto module");
+        var mock = new MockCryptoProvider();
+        Ctx.MemoryStack.Set("CryptoProvider", mock);
+
+        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var hashed = result.Value as HashedData;
+        await Assert.That(hashed).IsNotNull();
+        // Mock returns all-zero bytes → hex is all zeros
+        await Assert.That(hashed!.Hash).IsEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
     }
 
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // No settings configured at all — should use DefaultProvider with keccak256.
-        //
-        // Arrange: fresh engine, no crypto settings
-        // Act: hash action with no algorithm specified
-        // Assert: output matches known Keccak256 hash
-        await Assert.Fail("stub — implementation depends on crypto module");
+        // Fresh engine, no crypto settings — should use DefaultProvider
+        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var hashed = result.Value as HashedData;
+        await Assert.That(hashed).IsNotNull();
+        // Should not be all zeros (DefaultProvider produces real keccak256)
+        await Assert.That(hashed!.Hash).IsNotEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
+        await Assert.That(hashed.Hash.Length).IsEqualTo(64);
     }
 
     [Test]
     public async Task Verify_UsesProviderFromSettings()
     {
-        // Same as Hash_UsesProviderFromSettings but for the verify action.
-        //
-        // Arrange: register mock ICryptoProvider via settings
-        // Act: verify via action handler
-        // Assert: mock provider's Verify was called (returns known value)
-        await Assert.Fail("stub — implementation depends on crypto module");
+        var mock = new AlwaysTrueVerifier();
+        Ctx.MemoryStack.Set("CryptoProvider", mock);
+
+        // Even with garbage hash, mock returns true
+        var action = new Verify { Context = Ctx, Data = "hello", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That((bool)result.Value!).IsTrue();
+    }
+
+    private class MockCryptoProvider : ICryptoProvider
+    {
+        public byte[] Hash(byte[] data, string algorithm) => new byte[32]; // all zeros
+        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => false;
+    }
+
+    private class AlwaysTrueVerifier : ICryptoProvider
+    {
+        public byte[] Hash(byte[] data, string algorithm) => new byte[32];
+        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => true;
     }
 }
