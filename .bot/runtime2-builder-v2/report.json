@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-builder-v2",
+  "sessions": [
+    {
+      "id": "b2c3d4e5-master-plan",
+      "bot": "architect",
+      "timestamp_start": "2026-03-19T00:00:00Z",
+      "timestamp_end": "2026-03-19T00:00:00Z",
+      "intent": "Create umbrella branch and master plan for runtime2 builder v2 (8 pieces)",
+      "before": {
+        "assumptions": "Runtime2 has modules for variable, output, goal, loop, condition, list, convert, event, file, error, assert, mock, settings, library, math. Builder needs identity, signing, http, template, llm, error extensions, build module, integration.",
+        "risk": "Low — umbrella branch, no code changes."
+      },
+      "plan": "8-piece master plan: identity → signing → http → template (parallel) → llm → error extensions (parallel) → build module → integration. Each piece gets own branch off runtime2-builder-v2, merges back. When all 8 done, runtime2-builder-v2 merges to runtime2.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/v1/plan.md", ".bot/runtime2-builder-v2/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Master plan for all 8 pieces of builder v2 migration"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Umbrella branch created. Piece 1 (identity) branched and handed to test-designer. Piece 2 (signing) discussion starting.",
+        "notes": "Piece branches: runtime2-builder-v2-identity (in progress with test-designer)"
+      }
+    }
+  ]
+}
