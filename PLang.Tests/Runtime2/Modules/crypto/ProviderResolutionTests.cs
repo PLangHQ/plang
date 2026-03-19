@@ -1,36 +1,43 @@
-using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.crypto;
 using PLang.Runtime2.modules.crypto.providers;
-using PLang.SafeFileSystem;
+using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.crypto;
 
-public class ProviderResolutionTests : IDisposable
+public class ProviderResolutionTests
 {
-    private readonly string _tempDir;
-    private readonly PLangFileSystem _fs;
-    private readonly PLang.Runtime2.Engine.@this _engine;
+    private string _tempDir = null!;
+    private PLangEngine _engine = null!;
 
-    public ProviderResolutionTests()
+    [Before(Test)]
+    public void Setup()
     {
-        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
+        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new PLangEngine(_tempDir);
     }
 
-    public void Dispose()
+    [After(Test)]
+    public void Cleanup()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        if (System.IO.Directory.Exists(_tempDir))
-            System.IO.Directory.Delete(_tempDir, true);
+        try
+        {
+            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            if (System.IO.Directory.Exists(_tempDir))
+                System.IO.Directory.Delete(_tempDir, true);
+        }
+        catch { /* best effort cleanup */ }
     }
+
+    private PLangContext Ctx => _engine.System.Context;
 
     [Test]
     public async Task Hash_UsesProviderFromSettings_NotDefault()
     {
-        // Register a mock provider that returns a known marker hash
+        // Register a mock ICryptoProvider that returns a known marker hash.
         // When settings point to this provider, the hash action should use it
         // instead of DefaultProvider.
         //
@@ -57,7 +64,7 @@ public class ProviderResolutionTests : IDisposable
     {
         // Same as Hash_UsesProviderFromSettings but for the verify action.
         //
-        // Arrange: register mock provider via settings
+        // Arrange: register mock ICryptoProvider via settings
         // Act: verify via action handler
         // Assert: mock provider's Verify was called (returns known value)
         await Assert.Fail("stub — implementation depends on crypto module");

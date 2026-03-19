@@ -1,31 +1,38 @@
-using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Context;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.crypto;
 using PLang.Runtime2.modules.crypto.providers;
-using PLang.SafeFileSystem;
+using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.crypto;
 
-public class HashActionTests : IDisposable
+public class HashActionTests
 {
-    private readonly string _tempDir;
-    private readonly PLangFileSystem _fs;
-    private readonly PLang.Runtime2.Engine.@this _engine;
+    private string _tempDir = null!;
+    private PLangEngine _engine = null!;
 
-    public HashActionTests()
+    [Before(Test)]
+    public void Setup()
     {
-        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
+        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _fs = new PLangFileSystem(_tempDir, "");
-        _engine = new PLang.Runtime2.Engine.@this(_tempDir, fileSystem: _fs);
+        _engine = new PLangEngine(_tempDir);
     }
 
-    public void Dispose()
+    [After(Test)]
+    public void Cleanup()
     {
-        _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        if (System.IO.Directory.Exists(_tempDir))
-            System.IO.Directory.Delete(_tempDir, true);
+        try
+        {
+            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            if (System.IO.Directory.Exists(_tempDir))
+                System.IO.Directory.Delete(_tempDir, true);
+        }
+        catch { /* best effort cleanup */ }
     }
+
+    private PLangContext Ctx => _engine.System.Context;
 
     // --- Hash action ---
 
@@ -34,7 +41,7 @@ public class HashActionTests : IDisposable
     {
         // String input → HashedData with Algorithm="keccak256", Format="json", Hash=hex string.
         //
-        // Arrange: create Hash action with Data="hello", default algorithm
+        // Arrange: create Hash action with Context=Ctx, Data="hello", default algorithm
         // Act: Run()
         // Assert: result.Success, result.Value is HashedData,
         //         hashedData.Algorithm == "keccak256",
@@ -50,7 +57,7 @@ public class HashActionTests : IDisposable
         //
         // Arrange: create Hash action with Data = new { Name = "test", Value = 42 }
         // Act: Run() twice with identical object
-        // Assert: both produce the same Hash value (deterministic serialization)
+        // Assert: both produce the same HashedData.Hash value (deterministic serialization)
         await Assert.Fail("stub — implementation depends on crypto module");
     }
 
@@ -82,32 +89,34 @@ public class HashActionTests : IDisposable
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        // Null data → Data.Success == false, handler does not throw.
+        // Null data → Data.FromError(new ActionError(..., "ValidationError", 400)).
+        // Handler must not throw.
         //
         // Arrange: create Hash action with Data = null
         // Act: Run()
-        // Assert: result.Success == false, result.Error is not null
+        // Assert: result.Success == false, result.Error is ActionError
         await Assert.Fail("stub — implementation depends on crypto module");
     }
 
     [Test]
     public async Task Hash_UnsupportedAlgorithm_ReturnsError()
     {
-        // Unknown algorithm → Data.Success == false with meaningful error key.
+        // Unknown algorithm → Data.FromError with meaningful error key.
+        // Provider throws NotSupportedException, handler catches and wraps.
         //
         // Arrange: create Hash action with Algorithm = "md5"
         // Act: Run()
-        // Assert: result.Success == false, result.Error.Key contains algorithm info
+        // Assert: result.Success == false, result.Error.Key indicates the problem
         await Assert.Fail("stub — implementation depends on crypto module");
     }
 
     [Test]
     public async Task Hash_ProviderThrows_ReturnsDataFail()
     {
-        // Provider that throws Exception → handler catches, returns Data.Fail().
+        // Provider that throws Exception → handler catches, returns Data.FromError().
         // Handler must never let exceptions propagate.
         //
-        // Arrange: register mock provider that throws InvalidOperationException
+        // Arrange: register mock ICryptoProvider that throws InvalidOperationException
         // Act: hash via action handler
         // Assert: result.Success == false, result.Error.Exception is InvalidOperationException
         await Assert.Fail("stub — implementation depends on crypto module");
@@ -121,7 +130,7 @@ public class HashActionTests : IDisposable
         // Hash via hash action, then verify via verify action → Data.Ok(true).
         //
         // Arrange: hash "hello" via Hash action, get HashedData
-        // Act: verify with same data and hash via Verify action
+        // Act: verify with same data and HashedData.Hash via Verify action
         // Assert: result.Success == true, result.Value == true
         await Assert.Fail("stub — implementation depends on crypto module");
     }
@@ -131,7 +140,7 @@ public class HashActionTests : IDisposable
     {
         // Correct data but wrong hash → Data.Ok(false), not an error.
         //
-        // Arrange: hash "hello", then verify "hello" against a different hash
+        // Arrange: hash "hello", then verify "hello" against a different hash string
         // Act: Verify action
         // Assert: result.Success == true, result.Value == false
         await Assert.Fail("stub — implementation depends on crypto module");
@@ -140,7 +149,7 @@ public class HashActionTests : IDisposable
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        // Non-hex garbage as hash → Data.Success == false (not a crash).
+        // Non-hex garbage as hash → Data.FromError (not a crash).
         //
         // Arrange: create Verify action with Hash = "not-a-valid-hex-string!!!"
         // Act: Run()
@@ -151,20 +160,21 @@ public class HashActionTests : IDisposable
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        // Null data → Data.Success == false, handler does not throw.
+        // Null data → Data.FromError(new ActionError(..., "ValidationError", 400)).
+        // Handler must not throw.
         //
         // Arrange: create Verify action with Data = null, Hash = "abc123"
         // Act: Run()
-        // Assert: result.Success == false, result.Error is not null
+        // Assert: result.Success == false, result.Error is ActionError
         await Assert.Fail("stub — implementation depends on crypto module");
     }
 
     [Test]
     public async Task Verify_ProviderThrows_ReturnsDataFail()
     {
-        // Provider that throws → handler catches, returns Data.Fail().
+        // Provider that throws → handler catches, returns Data.FromError().
         //
-        // Arrange: register mock provider that throws on Verify
+        // Arrange: register mock ICryptoProvider that throws on Verify
         // Act: verify via action handler
         // Assert: result.Success == false, result.Error.Exception is not null
         await Assert.Fail("stub — implementation depends on crypto module");
