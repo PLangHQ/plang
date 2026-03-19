@@ -117,16 +117,16 @@ public class HashActionTests
     }
 
     [Test]
-    public async Task Hash_ProviderThrows_ReturnsDataFail()
+    public async Task Hash_ProviderReturnsError_RelaysError()
     {
-        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
+        _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
 
         var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderError");
     }
 
     // --- Verify action ---
@@ -185,22 +185,21 @@ public class HashActionTests
     }
 
     [Test]
-    public async Task Verify_ProviderThrows_ReturnsDataFail()
+    public async Task Verify_ProviderReturnsError_RelaysError()
     {
-        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
+        _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
 
-        // Need a valid hex string so we get past the hex decode
         var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Exception).IsTypeOf<InvalidOperationException>();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderError");
     }
 
-    private class ThrowingCryptoProvider : ICryptoProvider
+    private class FailingCryptoProvider : ICryptoProvider
     {
-        public byte[] Hash(byte[] data, string algorithm) => throw new InvalidOperationException("Provider failure");
-        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => throw new InvalidOperationException("Provider failure");
+        public Data Hash(byte[] data, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }
 }

@@ -19,28 +19,20 @@ public partial class Hash : IContext
         if (Data == null)
             return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
 
-        try
-        {
-            var provider = ResolveProvider(Context);
-            var (bytes, format) = SerializeData(Data);
-            var hashBytes = provider.Hash(bytes, Algorithm);
-            var hex = FormatHash(hashBytes);
+        var provider = ResolveProvider(Context);
+        var (bytes, format) = SerializeData(Data);
+        var hashResult = provider.Hash(bytes, Algorithm);
+        if (!hashResult.Success)
+            return hashResult;
 
-            return Engine.Memory.Data.Ok(new HashedData
-            {
-                Algorithm = Algorithm.ToLowerInvariant(),
-                Format = format,
-                Hash = hex
-            });
-        }
-        catch (NotSupportedException ex)
+        var hex = FormatHash((byte[])hashResult.Value!);
+
+        return Engine.Memory.Data.Ok(new HashedData
         {
-            return Engine.Memory.Data.FromError(new ActionError(ex.Message, "UnsupportedAlgorithm", 400));
-        }
-        catch (Exception ex)
-        {
-            return Engine.Memory.Data.FromError(ActionError.FromException(ex, "CryptoError", 500));
-        }
+            Algorithm = Algorithm.ToLowerInvariant(),
+            Format = format,
+            Hash = hex
+        });
     }
 
     internal static (byte[] bytes, string format) SerializeData(object data)

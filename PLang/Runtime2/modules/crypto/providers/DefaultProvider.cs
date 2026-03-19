@@ -1,28 +1,29 @@
 using System.Security.Cryptography;
 using Nethereum.Util;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.crypto.providers;
 
 public class DefaultProvider : ICryptoProvider
 {
-    public byte[] Hash(byte[] data, string algorithm)
+    public Data Hash(byte[] data, string algorithm)
     {
         return algorithm.ToLowerInvariant() switch
         {
-            "keccak256" => new Sha3Keccack().CalculateHash(data),
-            "sha256" => SHA256.HashData(data),
-            _ => throw new NotSupportedException($"Algorithm '{algorithm}' is not supported")
+            "keccak256" => Data.Ok(new Sha3Keccack().CalculateHash(data)),
+            "sha256" => Data.Ok(SHA256.HashData(data)),
+            _ => Data.FromError(new ActionError($"Algorithm '{algorithm}' is not supported", "UnsupportedAlgorithm", 400))
         };
     }
 
-    public bool Verify(byte[] data, byte[] expectedHash, string algorithm)
+    public Data Verify(byte[] data, byte[] expectedHash, string algorithm)
     {
-        if (algorithm.ToLowerInvariant() == "keccak256" || algorithm.ToLowerInvariant() == "sha256")
-        {
-            var actual = Hash(data, algorithm);
-            return actual.AsSpan().SequenceEqual(expectedHash);
-        }
+        var hashResult = Hash(data, algorithm);
+        if (!hashResult.Success)
+            return hashResult;
 
-        throw new NotSupportedException($"Algorithm '{algorithm}' is not supported");
+        var actual = (byte[])hashResult.Value!;
+        return Data.Ok(actual.AsSpan().SequenceEqual(expectedHash));
     }
 }

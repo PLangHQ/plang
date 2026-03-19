@@ -81,13 +81,13 @@ public class ProviderResolutionTests
 
     private class MockCryptoProvider : ICryptoProvider
     {
-        public byte[] Hash(byte[] data, string algorithm) => new byte[32]; // all zeros
-        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => false;
+        public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]); // all zeros
+        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(false);
     }
 
     private class AlwaysTrueVerifier : ICryptoProvider
     {
-        public byte[] Hash(byte[] data, string algorithm) => new byte[32];
-        public bool Verify(byte[] data, byte[] expectedHash, string algorithm) => true;
+        public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]);
+        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(true);
     }
 }
