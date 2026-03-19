@@ -195,6 +195,50 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true" 
 
 ---
 
+## [Sensitive] Attribute — Two-Mode Serialization
+
+The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityVariable.PrivateKey`). It controls a two-mode serialization split:
+
+- **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
+- **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
+- **Code-level access**: Unaffected. `%MyIdentity.PrivateKey%` in PLang code resolves normally — the attribute only controls serialization.
+
+The filter is always-on — it's wired into both `JsonStreamSerializer`'s default options and `Data.Envelope`'s `_envelopeJsonOptions`. No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
+
+---
+
+## IdentityData — Lazy Resolution with Sync-Over-Async
+
+`IdentityData` (on `Actor.Identity`) lazily resolves the default identity on first property access. It uses sync-over-async (`GetAwaiter().GetResult()`) in the `Value` getter because:
+
+1. C# properties can't be `async`
+2. PLang runs sequentially per context with no `SynchronizationContext`
+3. SQLite I/O (via DataSource) is synchronous underneath
+
+The resolution chain: check for existing default → promote any non-archived identity → auto-create "default" with new Ed25519 keys. All through `IdentityVariable.GetOrCreateDefaultAsync()`, the single source of truth.
+
+Handlers call `Identity.Update(newDefault)` after changing the default to refresh the cached value. The `ResolveDefault()` method catches `InvalidOperationException` (save failure) and returns null — IdentityData handles null gracefully.
+
+---
+
+## %MyIdentity% — DynamicData Registration
+
+`%MyIdentity%` is registered on every actor's MemoryStack as a `DynamicData`:
+
+```csharp
+Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
+```
+
+This means:
+- It always points to the **System** actor's default identity (not the current actor's)
+- It re-evaluates on every access (DynamicData calls the lambda each time)
+- Changes via `setDefault`, `rename`, or auto-create are reflected immediately
+- `%MyIdentity%` in string context gives the public key (`IdentityVariable.ToString()`)
+- `%MyIdentity.PrivateKey%` navigates via dot-notation to the private key
+- `%MyIdentity.Name%`, `%MyIdentity.IsDefault%`, etc. all work via standard MemoryStack navigation
+
+---
+
 ## Condition Evaluation — Type Normalization
 
 `DefaultEvaluator.NormalizeTypes` handles the JSON numeric boxing problem for conditions:
