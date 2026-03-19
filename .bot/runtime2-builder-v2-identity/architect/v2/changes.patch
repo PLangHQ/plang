@@ -1,0 +1,523 @@
+diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
+new file mode 100644
+index 00000000..8de3a787
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
+@@ -0,0 +1,214 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.DataSource;
++using PLang.Runtime2.Engine.Errors;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class IdentityHandlerTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    // --- create ---
++
++    [Test]
++    public async Task Create_GeneratesValidEd25519KeyPair()
++    {
++        // Keys are non-null, base64-decodable, correct lengths (32 bytes public, 32 bytes private)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_DefaultFalse_IsNotDefault()
++    {
++        // SetAsDefault defaults to false, so identity is NOT default even if first
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_SetAsDefaultTrue_BecomesDefault()
++    {
++        // Explicitly setting SetAsDefault=true makes it default
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_SetAsDefaultTrue_ClearsPreviousDefault()
++    {
++        // Old default loses IsDefault when new one takes over
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_StoresInSystemDataSource()
++    {
++        // Retrievable via System.DataSource.Get("identity", name)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_DuplicateName_ReturnsError()
++    {
++        // Creating with a name that already exists (non-archived) should return error
++        // ARCHITECT QUESTION: what about creating with a name that exists but is archived? Re-create or error?
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Create_EmptyOrWhitespaceName_ReturnsError()
++    {
++        // Empty string or whitespace-only name should return error, not silently default
++        Assert.Fail("Not implemented");
++    }
++
++    // --- get ---
++
++    [Test]
++    public async Task Get_NonExistentName_ReturnsError()
++    {
++        // Get("nosuch") when that name doesn't exist should return Data.Fail()
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_NullName_NoDefaultExists_AutoCreates()
++    {
++        // All identities created with SetAsDefault=false — Get(null) should auto-create a default
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ByName_ReturnsMatchingIdentity()
++    {
++        // Finds identity by name
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_NullName_ReturnsDefaultIdentity()
++    {
++        // Returns the one with IsDefault=true
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_NoIdentitiesExist_AutoCreatesDefault()
++    {
++        // Creates "default" identity on first access when none exist
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ReturnsIdentityVariable_WithAllProperties()
++    {
++        // Name, PublicKey, PrivateKey, IsDefault, Created all populated
++        Assert.Fail("Not implemented");
++    }
++
++    // --- getAll ---
++
++    [Test]
++    public async Task GetAll_ReturnsOnlyNonArchived()
++    {
++        // Archived identities excluded from result
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task GetAll_AllArchived_ReturnsEmptyList()
++    {
++        // Empty result, not error
++        Assert.Fail("Not implemented");
++    }
++
++    // --- archive ---
++
++    [Test]
++    public async Task Archive_NonDefaultIdentity_SetsIsArchivedTrue()
++    {
++        // Non-default identity gets archived successfully
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Archive_DefaultIdentity_ReturnsError()
++    {
++        // Cannot archive the default identity — must set different default first
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Archive_NonExistentName_ReturnsError()
++    {
++        // Error path for missing identity
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Archive_AlreadyArchived_IsIdempotent()
++    {
++        // Archiving already-archived identity succeeds (idempotent)
++        Assert.Fail("Not implemented");
++    }
++
++    // --- setDefault ---
++
++    [Test]
++    public async Task SetDefault_SwitchesDefault_ClearsOldDefault()
++    {
++        // Only one default at a time — old default loses IsDefault
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task SetDefault_ArchivedOrMissing_ReturnsError()
++    {
++        // Can't set archived or non-existent identity as default
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task SetDefault_AlreadyDefault_IsIdempotent()
++    {
++        // Setting the current default as default again should succeed (no-op)
++        Assert.Fail("Not implemented");
++    }
++
++    // --- export ---
++
++    [Test]
++    public async Task Export_NonExistentName_ReturnsError()
++    {
++        // Export("nosuch") should return Data.Fail(), not throw
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Export_ReturnsPrivateKeyString()
++    {
++        // Returns the raw private key string, not the object
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs
+new file mode 100644
+index 00000000..c8b4de64
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs
+@@ -0,0 +1,81 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class IdentityVariableTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_idvar_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task ToString_ReturnsPublicKey()
++    {
++        // String context gives public key (not private key, not name)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_Name_ReturnsName()
++    {
++        // GetChild("Name") returns the identity name
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_PublicKey_ReturnsPublicKey()
++    {
++        // GetChild("PublicKey") returns the public key
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_Created_ReturnsCreated()
++    {
++        // GetChild("Created") returns the creation timestamp
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_IsArchived_ReturnsIsArchived()
++    {
++        // GetChild("IsArchived") returns the archived flag
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_IsDefault_ReturnsIsDefault()
++    {
++        // GetChild("IsDefault") returns the default flag
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task DotNavigation_PrivateKey_IsBlocked()
++    {
++        // GetChild("PrivateKey") should NOT return the private key via dot navigation
++        // ARCHITECT QUESTION: should this return null/error, or is [Sensitive] only for serialization?
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs b/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs
+new file mode 100644
+index 00000000..62a306ab
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs
+@@ -0,0 +1,66 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.identity;
++
++public class MyIdentityResolverTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_myid_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task MyIdentity_ResolvesOnFirstAccess_AutoCreates()
++    {
++        // memoryStack.Get("MyIdentity") returns IdentityVariable when none exist (auto-creates default)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task MyIdentity_DotNotation_Name()
++    {
++        // memoryStack.Get("MyIdentity.Name") returns the identity name
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task MyIdentity_DotNotation_PublicKey()
++    {
++        // memoryStack.Get("MyIdentity.PublicKey") returns the public key
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task MyIdentity_StringContext_ReturnsPublicKey()
++    {
++        // ToString() gives public key, just like IdentityVariable.ToString()
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task MyIdentity_UpdatedAfterSetDefault()
++    {
++        // After switching default identity, %MyIdentity% reflects new identity
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs b/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs
+new file mode 100644
+index 00000000..8309456b
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs
+@@ -0,0 +1,66 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Serializers;
++
++public class SensitivePropertyFilterTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_sensitive_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    [Test]
++    public async Task Sensitive_ExcludedFromJsonStreamSerializer()
++    {
++        // Property with [Sensitive] attribute is NOT present in JsonStreamSerializer output
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Sensitive_IncludedInRawJsonSerializer()
++    {
++        // Raw JsonSerializer.Serialize() includes [Sensitive] property (DataSource storage path)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Sensitive_NoOpOnTypesWithoutAttribute()
++    {
++        // Types without [Sensitive] properties serialize normally through both paths
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Sensitive_WorksAlongsideViewAttributes()
++    {
++        // [Sensitive] + [Store] or other view attributes coexist correctly
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Sensitive_IdentityVariable_PrivateKeyExcluded()
++    {
++        // End-to-end: serialize IdentityVariable, PrivateKey absent in output, other fields present
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal b/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal
+new file mode 100644
+index 00000000..bac77bcc
+--- /dev/null
++++ b/Tests/Runtime2/IdentityArchiveDefault/IdentityArchiveDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: try to archive the default identity, verify error is returned
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal b/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal
+new file mode 100644
+index 00000000..fb7d5bfa
+--- /dev/null
++++ b/Tests/Runtime2/IdentityArchiveNonDefault/IdentityArchiveNonDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create two identities, archive non-default, verify success and default unchanged
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal b/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal
+new file mode 100644
+index 00000000..00fc4a8f
+--- /dev/null
++++ b/Tests/Runtime2/IdentityAutoCreate/IdentityAutoCreate.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: access %MyIdentity% when no identities exist, verify auto-created default identity
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal b/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal
+new file mode 100644
+index 00000000..dfdba1fb
+--- /dev/null
++++ b/Tests/Runtime2/IdentityCreate/IdentityCreate.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create an identity and verify %MyIdentity% resolves to its public key
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal b/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal
+new file mode 100644
+index 00000000..ed300ce7
+--- /dev/null
++++ b/Tests/Runtime2/IdentityDotNavigation/IdentityDotNavigation.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: access %MyIdentity.Name% and %MyIdentity.PublicKey% via dot navigation
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityExport/IdentityExport.test.goal b/Tests/Runtime2/IdentityExport/IdentityExport.test.goal
+new file mode 100644
+index 00000000..5994f097
+--- /dev/null
++++ b/Tests/Runtime2/IdentityExport/IdentityExport.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: export private key and verify non-empty string returned
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal b/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal
+new file mode 100644
+index 00000000..f5b11955
+--- /dev/null
++++ b/Tests/Runtime2/IdentityGetByName/IdentityGetByName.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create a named identity, get it by name, verify Name and PublicKey properties
++- throw "not implemented"
+diff --git a/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal b/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal
+new file mode 100644
+index 00000000..f4c4d1bc
+--- /dev/null
++++ b/Tests/Runtime2/IdentitySwitchDefault/IdentitySwitchDefault.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: create two identities, switch default, verify %MyIdentity% reflects the new default
++- throw "not implemented"
