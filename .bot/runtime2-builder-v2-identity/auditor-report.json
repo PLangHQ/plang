@@ -1,0 +1,69 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-identity",
+  "timestamp": "2026-03-19T12:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Identity module is well-implemented with thorough test coverage. One major finding: GetOrCreateDefaultAsync throws through IdentityData.ResolveDefault() with no catch, meaning lazy %MyIdentity% resolution fails with an unhandled exception if SaveAsync fails. Codeanalyzer v3 noted this propagation but described it as 'natural' without flagging it as an unhandled path. Two minor cross-file contract gaps and one agreed security defense-in-depth item. Verdict: FAIL (one major).",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "partial — correctly found 8 findings across v1-v3, but v3 verdict described throw propagation through IdentityData as 'natural' without noting it's unhandled. The Get handler catches it, but IdentityData doesn't.",
+    "tester": "agree — thorough work, especially the v3 auto-create overwrite catch. Test suite is honest and well-structured.",
+    "security": "agree — correct threat model, accurate finding on Data.Envelope.Compress gap. User-sovereign model appropriately scopes the low-severity findings."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/identity/IdentityData.cs",
+      "line": 52,
+      "issue": "GetOrCreateDefaultAsync throws InvalidOperationException on save failure (types.cs:84,101). Get.Run() catches this (get.cs:33-36), but IdentityData.ResolveDefault() calls .GetAwaiter().GetResult() with NO try/catch. If SaveAsync fails during lazy property resolution (e.g. %MyIdentity% access in a step), the exception propagates unhandled through the property getter into the engine.",
+      "missed_by": "codeanalyzer",
+      "impact": "Any step accessing %MyIdentity% when auto-create/promotion save fails gets an unhandled InvalidOperationException instead of a graceful error. This crashes the step execution without an actionable error message.",
+      "suggestion": "Wrap the call in IdentityData.ResolveDefault() with try/catch(InvalidOperationException). On failure, return null — the IdentityData already handles null Value. Alternatively, make GetOrCreateDefaultAsync return Data instead of throwing, matching the 'behavior methods never throw' convention."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/identity/export.cs",
+      "line": 29,
+      "issue": "Export.Run(null) uses its own LoadAllAsync + Find(IsDefault) to locate the default identity, while Get.Run(null) uses GetOrCreateDefaultAsync which includes promotion logic. If identities exist but none are marked default, Get promotes the first non-archived one, but Export returns NotFound. The behaviors diverge on the same user concept ('my default identity').",
+      "missed_by": "none",
+      "impact": "User confusion: 'get my identity' succeeds but 'export my identity' fails in the same state. Low likelihood since most users create with SetAsDefault=true, but the inconsistency exists.",
+      "suggestion": "Either (a) have Export use GetOrCreateDefaultAsync for the null-name path (accepting that export can trigger promotion as a side effect), or (b) document this as intentional: export is read-only and won't promote. If (b), add a test for 'export with identities but no default returns NotFound'."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "foundation",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 21,
+      "issue": "Data.Envelope._envelopeJsonOptions does not include SensitivePropertyFilter. If IdentityVariable-bearing Data is Compress()'d in the future, private key leaks into the gzip payload.",
+      "missed_by": "none",
+      "impact": "Zero call sites today. Theoretical future leak if Compress() is wired into transport. Defense-in-depth fix is trivial.",
+      "suggestion": "Add TypeInfoResolver with SensitivePropertyFilter.Filter modifier to _envelopeJsonOptions. Agreed with security finding #3."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/identity/rename.cs",
+      "line": 39,
+      "issue": "If RemoveAsync fails after SaveAsync succeeds (line 35), both old and new name entries exist in DataSource. Retry fails because the new name triggers DuplicateName. The user is stuck without manual DataSource intervention.",
+      "missed_by": "none",
+      "impact": "Very low probability (SQLite remove rarely fails), but creates an unrecoverable state. No test exercises this.",
+      "suggestion": "Nit — document this as a known limitation. A full fix would require transactional DataSource support which doesn't exist yet."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/Runtime2/modules/identity/types.cs",
+      "line": 84,
+      "issue": "GetOrCreateDefaultAsync throws InvalidOperationException on failure — violates the 'behavior methods never throw' convention stated in CLAUDE.md. The Get handler catches it, but the convention says the method itself should return Data.",
+      "missed_by": "codeanalyzer",
+      "impact": "Style inconsistency. The method is static and returns IdentityVariable (not Data), so the throw was a pragmatic choice. But it creates the unhandled path in finding #1.",
+      "suggestion": "Consider changing the return type to Data or IdentityVariable? to avoid the throw. This would also fix finding #1."
+    }
+  ]
+}
