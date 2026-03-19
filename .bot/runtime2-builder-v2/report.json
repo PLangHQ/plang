@@ -26,6 +26,39 @@
         "health": "Umbrella branch created. Piece 1 (identity) branched and handed to test-designer. Piece 2 (signing) discussion starting.",
         "notes": "Piece branches: runtime2-builder-v2-identity (in progress with test-designer)"
       }
+    },
+    {
+      "id": "a7f8e9d0-crypto-signing-design",
+      "bot": "architect",
+      "timestamp_start": "2026-03-19T12:00:00Z",
+      "timestamp_end": "2026-03-19T13:00:00Z",
+      "intent": "Design pieces 2 (crypto) and 3 (signing), revise piece order and identity's key generation",
+      "before": {
+        "assumptions": "Piece 1 (identity) is implemented. Original plan had 8 pieces with signing as piece 2.",
+        "risk": "Low — design work, no code changes."
+      },
+      "plan": "Insert crypto module as piece 2 (hashing for signing). Redesign signing as piece 3 with swappable providers. Move key generation from identity to signing provider. Total pieces: 9.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Crypto module plan (piece 2) and signing module plan (piece 3). Key design decisions: signing is a module not engine service, provider swappable via settings (per-call → actor → engine default → Ed25519), hashing delegates to crypto module, identity becomes opaque key vault, contracts are pass-through consent strings."
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated summary with v2 progression"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Pieces 2-3 designed. Identity revision noted (key generation → signing provider). Ready for piece branches.",
+        "notes": "Piece 1 revision (opaque key vault) will be applied when piece 3 lands."
+      }
     }
   ]
 }
