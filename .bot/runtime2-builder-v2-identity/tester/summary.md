@@ -8,3 +8,6 @@ Coverage improved significantly (types.cs 52%→100%, IdentityData 88%→100%). 
 
 ## v3 — Deep Analysis After Coder v4
 All previous findings fixed. Deep deletion test revealed 1 major issue missed in v1/v2: `GetOrCreateDefaultAsync` can silently overwrite a user-created identity named "default" (data loss). The `Create` handler defaults `Name` to "default", making this a realistic scenario. Verdict: needs-fixes. See [v3/summary.md](v3/summary.md).
+
+## v4 — Final Verification After Coder v5
+Auto-create overwrite fixed with 3-step resolution (find default → promote existing → auto-create). New tests are honest. All 1649 C# tests pass. Verdict: **approved**. See [v4/summary.md](v4/summary.md).
