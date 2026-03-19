@@ -29,13 +29,13 @@
         {
           "paths": [
             "PLang/Runtime2/Engine/Providers/this.cs",
-            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
             "PLang/Runtime2/GlobalUsings.cs"
           ],
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Engine.Providers — type-keyed ConcurrentDictionary<Type, object> for pluggable module implementations. Solves Foundation Checklist item #4 (pluggable action implementations). PLang developers override defaults by loading DLLs that implement the same provider interface."
+          "context": "Engine.Providers — type-keyed ConcurrentDictionary<Type, object> for pluggable module implementations."
         },
         {
           "paths": [
@@ -46,20 +46,57 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Replaced 15 stub tests with real implementations. Added [Skip] to 4 bcrypt tests. All 26 active tests pass. Tests use Engine.Providers.Register<ICryptoProvider>() for mock injection."
+          "context": "Replaced 15 stub tests with real implementations. Added [Skip] to 4 bcrypt tests. All 26 active tests pass."
         },
         {
           "paths": ["Documentation/Runtime2/todos.md"],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Updated Foundation Checklist item #4 to DONE. Added todo for retiring Libraries as central action registry."
+          "context": "Updated Foundation Checklist item #4 to DONE."
         }
       ],
       "after": {
         "status": "complete",
         "health": "All 1675 tests pass, 4 bcrypt skipped",
-        "notes": "Design evolved during session: plan called for DataSource provider resolution, but DataSource serializes to JSON. Discussed with Ingi → MemoryStack → then designed Engine.Providers as the proper generic solution for pluggable module implementations. Todo added for retiring Libraries."
+        "notes": "Design evolved during session: plan called for DataSource provider resolution, but DataSource serializes to JSON. Discussed with Ingi -> MemoryStack -> then designed Engine.Providers as the proper generic solution for pluggable module implementations."
+      }
+    },
+    {
+      "id": "c7a9e3f1-4b82-4d6c-9e15-8f3a2d7b6c04",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-19T02:00:00Z",
+      "timestamp_end": null,
+      "intent": "Code analysis v1: OBP compliance, simplification, readability, behavioral reasoning for crypto module",
+      "before": {
+        "assumptions": "Crypto module is self-contained. Identity module changes (SensitivePropertyFilter, Actor.Identity, IdentityData) are from the identity branch and already reviewed there.",
+        "risk": "Low — reviewing new code, not modifying"
+      },
+      "plan": "5-pass analysis of crypto module files (hash.cs, verify.cs, types.cs, ICryptoProvider.cs, DefaultProvider.cs) + Engine.Providers + identity-related changes. Focus on OBP compliance, simplification opportunities, behavioral reasoning (esp. algorithm validation paths), and deletion tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs",
+            "PLang/Runtime2/modules/crypto/hash.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang/Runtime2/modules/crypto/types.cs",
+            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Context/Actor.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang/Runtime2/modules/identity/types.cs",
+            "PLang/Runtime2/modules/identity/IdentityData.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass analysis: OBP, simplification, readability, behavioral reasoning, deletion test. 4 findings (1 medium, 3 low). Main: DefaultProvider.Verify duplicates algorithm validation."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 1 medium finding (redundant algorithm validation), 3 low",
+        "notes": "Architecture is clean. OBP-compliant throughout. Engine.Providers well-designed. Recommend sending back to coder for minor fixes."
       }
     }
   ]
