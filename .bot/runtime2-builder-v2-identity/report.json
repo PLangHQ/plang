@@ -1,0 +1,38 @@
+{
+  "branch": "runtime2-builder-v2-identity",
+  "sessions": [
+    {
+      "id": "a1b2c3d4-identity-module-design",
+      "bot": "architect",
+      "timestamp_start": "2026-03-19T00:00:00Z",
+      "timestamp_end": "2026-03-19T00:00:00Z",
+      "intent": "Architect Piece 1: Identity Module for runtime2 builder v2",
+      "before": {
+        "assumptions": "Runtime2 has IDataSource, MemoryStack with lazy resolvers, module pattern with [Action] handlers. No identity module exists yet.",
+        "risk": "Low — identity is standalone, no dependencies on other new pieces."
+      },
+      "plan": "Identity module with 6 actions (create, get, getAll, archive, setDefault, export). IdentityVariable type with [Sensitive] on PrivateKey, ToString()=PublicKey. Storage via System.DataSource table 'identity'. Lazy %MyIdentity% resolver on System MemoryStack. Per-actor variables: %MyIdentity% (System), %Identity% (User), %ServiceIdentity% (Service). New [Sensitive] attribute + SensitivePropertyFilter for two-mode serialization. Ed25519 key generation via NSec, internal to module.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-identity/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full architecture plan for identity module, designed interactively with Ingi"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-identity/architect/v1/summary.md", ".bot/runtime2-builder-v2-identity/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summaries for handoff"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Plan approved, branch created, ready for test-designer",
+        "notes": "Key design decisions: per-actor identity (not shared), [Sensitive] attribute for two-mode serialization, System.DataSource storage, lazy auto-create on %MyIdentity% access"
+      }
+    }
+  ]
+}
