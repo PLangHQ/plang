@@ -72,7 +72,13 @@ public class IdentityHandlerTests
     public async Task Create_DuplicateName_ReturnsError()
     {
         // Creating with a name that already exists (non-archived) should return error
-        // ARCHITECT QUESTION: what about creating with a name that exists but is archived? Re-create or error?
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Create_DuplicateArchivedName_ReturnsError()
+    {
+        // Creating with a name that exists but is archived still errors — names are identities, not labels
         Assert.Fail("Not implemented");
     }
 
@@ -193,6 +199,66 @@ public class IdentityHandlerTests
     public async Task SetDefault_AlreadyDefault_IsIdempotent()
     {
         // Setting the current default as default again should succeed (no-op)
+        Assert.Fail("Not implemented");
+    }
+
+    // --- unarchive ---
+
+    [Test]
+    public async Task Unarchive_RestoresArchivedIdentity()
+    {
+        // IsArchived goes from true to false, identity accessible again
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Unarchive_NonExistentName_ReturnsError()
+    {
+        // Error path for missing identity
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Unarchive_NotArchived_IsIdempotent()
+    {
+        // Already active identity — no-op success
+        Assert.Fail("Not implemented");
+    }
+
+    // --- rename ---
+
+    [Test]
+    public async Task Rename_ChangesName_KeepsKeys()
+    {
+        // Same key pair, different name, old name gone from DataSource
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Rename_DuplicateNewName_ReturnsError()
+    {
+        // NewName already taken (including archived names) — error
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Rename_NonExistentName_ReturnsError()
+    {
+        // Source name doesn't exist — error
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Rename_DefaultIdentity_UpdatesMyIdentity()
+    {
+        // %MyIdentity% reflects new name after renaming default identity
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Rename_EmptyNewName_ReturnsError()
+    {
+        // Empty or whitespace NewName — validation error
         Assert.Fail("Not implemented");
     }
 

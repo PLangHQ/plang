@@ -6,16 +6,16 @@ Implementing test stubs for the identity module — Ed25519 key pair management 
 
 ## Files to Create
 
-### C# Test Files (40 tests)
+### C# Test Files (49 tests)
 
 | File | Tests | Purpose |
 |------|-------|---------|
-| `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs` | 24 | Handler CRUD: create, get, getAll, archive, setDefault, export + error paths |
-| `PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs` | 7 | Type behavior: ToString, dot navigation (all props), PrivateKey blocked |
+| `PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs` | 34 | Handler CRUD: create, get, getAll, archive, unarchive, rename, setDefault, export + error paths |
+| `PLang.Tests/Runtime2/Modules/identity/IdentityVariableTests.cs` | 7 | Type behavior: ToString, dot navigation (all props including PrivateKey) |
 | `PLang.Tests/Runtime2/Modules/identity/MyIdentityResolverTests.cs` | 5 | Lazy resolver: auto-create, dot notation, update after setDefault |
 | `PLang.Tests/Runtime2/Serializers/SensitivePropertyFilterTests.cs` | 5 | [Sensitive] attribute: excluded from output, included in storage |
 
-### PLang Test Files (8 tests)
+### PLang Test Files (10 tests)
 
 | Directory | Test | Purpose |
 |-----------|------|---------|
@@ -27,13 +27,16 @@ Implementing test stubs for the identity module — Ed25519 key pair management 
 | `Tests/Runtime2/IdentityAutoCreate/` | Auto-create | access %MyIdentity% when none exist |
 | `Tests/Runtime2/IdentityDotNavigation/` | Dot navigation | %MyIdentity.Name%, %MyIdentity.PublicKey% |
 | `Tests/Runtime2/IdentityExport/` | Export key | export private key, verify non-empty |
+| `Tests/Runtime2/IdentityUnarchive/` | Unarchive | archive then unarchive, verify accessible |
+| `Tests/Runtime2/IdentityRename/` | Rename | rename identity, verify old name gone, new name works |
 
-## Total: 48 tests
+## Total: 59 tests
 
-## Open Questions for Architect
+## Architect decisions (v2)
 
-1. **Create duplicate name (archived)**: Creating with a name that already exists should error. But what if that name is archived — should it re-create (unarchive/replace) or still error?
-2. **PrivateKey dot navigation**: Should `%MyIdentity.PrivateKey%` be blocked at the variable level (return null/error), or is `[Sensitive]` only a serialization concern? Test stub assumes blocked.
+1. **Duplicate name = always error** (even archived). Names are identities, not labels. Developer must unarchive or pick a new name.
+2. **[Sensitive] is serialization only** — `%MyIdentity.PrivateKey%` works via dot navigation. No access control at variable level.
+3. **Two new actions:** `unarchive` (restore archived identity) and `rename` (change name, keep keys).
 
 ## Pattern
 

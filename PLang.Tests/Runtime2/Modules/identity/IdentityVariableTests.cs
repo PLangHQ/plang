@@ -72,10 +72,9 @@ public class IdentityVariableTests
     }
 
     [Test]
-    public async Task DotNavigation_PrivateKey_IsBlocked()
+    public async Task DotNavigation_PrivateKey_ReturnsPrivateKey()
     {
-        // GetChild("PrivateKey") should NOT return the private key via dot navigation
-        // ARCHITECT QUESTION: should this return null/error, or is [Sensitive] only for serialization?
+        // GetChild("PrivateKey") returns the private key — [Sensitive] is serialization only, not access control
         Assert.Fail("Not implemented");
     }
 }
