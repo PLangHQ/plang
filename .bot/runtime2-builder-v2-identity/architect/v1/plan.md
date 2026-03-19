@@ -97,7 +97,7 @@ PLang/Runtime2/modules/identity/
 ├── create.cs           — generate key pair, store in DataSource
 ├── get.cs              — get by name or default, auto-create if none exist
 ├── getAll.cs           — list all non-archived identities
-├── archive.cs          — soft-delete, auto-promote next default
+├── archive.cs          — soft-delete (rejects default identity)
 ├── setDefault.cs       — switch which identity is current default
 ├── export.cs           — return private key (LLM-gated)
 ├── types.cs            — IdentityVariable class
@@ -109,12 +109,12 @@ PLang/Runtime2/modules/identity/
 
 **Parameters:**
 - `Name : string` — defaults to `"default"`
-- `SetAsDefault : bool` — defaults to `true` if it's the first identity, `false` otherwise
+- `SetAsDefault : bool` — defaults to `false`
 
 **Flow:**
 1. Generate Ed25519 key pair via NSec
 2. Build `IdentityVariable` (Name, PublicKey, PrivateKey, IsDefault, Created=now)
-3. If SetAsDefault or first identity: clear IsDefault on all others in DataSource, set this one as default
+3. If SetAsDefault: clear IsDefault on all others in DataSource, set this one as default
 4. Store in `System.DataSource.Set("identity", name, identityVariable)`
 5. If it became default: register/update `%MyIdentity%` on System MemoryStack
 6. Return `Data.Ok(identityVariable)`
@@ -218,9 +218,9 @@ internal static class KeyGenerator
 ## Test expectations
 
 ### C# unit tests (~15)
-- create: generates valid Ed25519 key pair, stores in DataSource, first identity becomes default
-- create: second identity with SetAsDefault=false doesn't change default
-- create: second identity with SetAsDefault=true changes default
+- create: generates valid Ed25519 key pair, stores in DataSource
+- create: with SetAsDefault=true sets as default, clears previous default
+- create: with SetAsDefault=false (default) does not set as default
 - get: returns identity by name
 - get: returns default when no name given
 - get: auto-creates "default" when none exist
