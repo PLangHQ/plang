@@ -85,7 +85,9 @@ public sealed class IdentityVariable
             IsArchived = false,
             Created = DateTime.UtcNow
         };
-        await def.SaveAsync(engine);
+        var saveResult = await def.SaveAsync(engine);
+        if (!saveResult.Success)
+            throw new InvalidOperationException($"Failed to save auto-created default identity: {saveResult.Error?.Message}");
         return def;
     }
 

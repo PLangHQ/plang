@@ -261,6 +261,39 @@
         "health": "Analysis complete. Verdict: FAIL (soft). 1 medium-severity regression in consolidated method.",
         "notes": "GetOrCreateDefaultAsync line 88 doesn't check SaveAsync result. Original Get.Run() did check it. Quick fix."
       }
+    },
+    {
+      "id": "a7b8c9d0-coder-v3",
+      "bot": "coder",
+      "timestamp_start": "2026-03-19T16:00:00Z",
+      "intent": "Fix GetOrCreateDefaultAsync SaveAsync result check (code analyzer v2 finding)",
+      "before": {
+        "assumptions": "Single medium-severity finding: SaveAsync result not checked in GetOrCreateDefaultAsync. Quick fix.",
+        "risk": "Low — small change, throw on save failure."
+      },
+      "plan": "Add SaveAsync result check in types.cs (throw InvalidOperationException on failure). Add try/catch in get.cs to convert to Data.FromError. IdentityData.cs unchanged — throw propagates naturally.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/identity/types.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Check SaveAsync result, throw on failure to prevent phantom identity"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/identity/get.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Catch InvalidOperationException from GetOrCreateDefaultAsync, return Data.FromError"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Fix applied. All 1647 tests pass.",
+        "notes": "Throw on save failure restores the error check that existed in v1. Both callers handle it correctly."
+      },
+      "timestamp_end": "2026-03-19T16:15:00Z"
     }
   ]
 }
