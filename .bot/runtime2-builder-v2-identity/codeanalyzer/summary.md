@@ -5,3 +5,6 @@
 
 ## v2 — Re-review of coder fixes
 All 7 v1 findings addressed correctly. One new medium-severity finding: `GetOrCreateDefaultAsync` doesn't check `SaveAsync` result (regression — original code did). Verdict: FAIL (soft). See [v2/summary.md](v2/summary.md).
+
+## v3 — Final verification
+SaveAsync check fix verified. Throw on failure in types.cs, catch in get.cs, propagates correctly through IdentityData. Verdict: PASS. See [v3/summary.md](v3/summary.md).
