@@ -40,6 +40,9 @@ global using SettingsScope = PLang.Runtime2.Engine.Settings.Scope;
 // Type system
 global using EngineTypes = PLang.Runtime2.Engine.Types.@this;
 
+// Providers subsystem
+global using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
+
 // Standalone concepts
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;

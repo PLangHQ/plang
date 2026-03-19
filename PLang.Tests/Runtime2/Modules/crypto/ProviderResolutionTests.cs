@@ -38,7 +38,7 @@ public class ProviderResolutionTests
     public async Task Hash_UsesProviderFromSettings_NotDefault()
     {
         var mock = new MockCryptoProvider();
-        Ctx.MemoryStack.Set("CryptoProvider", mock);
+        _engine.Providers.Register<ICryptoProvider>(mock);
 
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
         var result = await action.Run();
@@ -69,7 +69,7 @@ public class ProviderResolutionTests
     public async Task Verify_UsesProviderFromSettings()
     {
         var mock = new AlwaysTrueVerifier();
-        Ctx.MemoryStack.Set("CryptoProvider", mock);
+        _engine.Providers.Register<ICryptoProvider>(mock);
 
         // Even with garbage hash, mock returns true
         var action = new Verify { Context = Ctx, Data = "hello", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };

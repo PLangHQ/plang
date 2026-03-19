@@ -119,7 +119,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ProviderThrows_ReturnsDataFail()
     {
-        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
+        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
 
         var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
         var result = await action.Run();
@@ -187,7 +187,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_ProviderThrows_ReturnsDataFail()
     {
-        Ctx.MemoryStack.Set("CryptoProvider", new ThrowingCryptoProvider());
+        _engine.Providers.Register<ICryptoProvider>(new ThrowingCryptoProvider());
 
         // Need a valid hex string so we get past the hex decode
         var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
