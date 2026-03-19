@@ -1,43 +1,54 @@
-# Tester v2 — Crypto Module Re-review
+# Tester v2 — Full Re-analysis with Coverage
 
 ## What this is
 
-Fresh-eyes re-review of crypto module tests after coder fixed v1 findings.
+Complete re-analysis of crypto module and all branch changes with proper code coverage. Previous coverage runs crashed due to passing a directory path instead of a file path to `--coverage-output`.
 
 ## Test Run Results
 
 - **C# tests**: 1684 passed, 0 failed, 4 skipped (bcrypt deferred)
-- **PLang tests**: Still not runnable (crypto not registered with builder)
+- **PLang tests**: Not runnable (crypto not registered with builder)
+
+## Coverage Results
+
+Coverage now works correctly. Key numbers:
+
+| File | Coverage | Gap |
+|------|----------|-----|
+| `hash.cs` | 100% | — |
+| `verify.cs` | 100% line | **Misleading** — null Hash throws `ArgumentNullException` not caught by `FormatException` catch. Line coverage can't see this. |
+| `DefaultProvider.cs` | 100% | — |
+| `Engine/Providers/this.cs` | 100% | — |
+| `types.cs` (HashedData) | 75% | `ToString()` untested |
+| `identity/export.cs` | 82.4% | `InvalidOperationException` catch never hit |
+| `identity/get.cs` | 81.2% | `InvalidOperationException` catch never hit |
+| `identity/IdentityData.cs` | 88.5% | `ResolveDefault()` catch never hit |
+| `identity/types.cs` | 92% | Save-failure throws + Deserialize fallbacks never hit |
+
+## Findings
+
+### Finding 1 (Major): verify.cs — 100% line coverage hides unhandled exception
+
+`Convert.FromHexString(Hash)` on line 24 throws `ArgumentNullException` when Hash is null, but the catch on line 26 only handles `FormatException`. Coverage shows 100% because the line is hit with valid and invalid hex — but the null path is a different exception type that escapes uncaught.
+
+This is a **code bug** (violates never-throw contract), not just a test gap. And it's a textbook example of why line coverage alone is insufficient — you need branch/path analysis.
+
+### Finding 2 (Minor): Identity save-failure chain entirely untested
+
+`GetOrCreateDefaultAsync` has two `throw new InvalidOperationException(...)` paths (lines 84, 101) that propagate to catch blocks in `export.cs:32`, `get.cs:33`, and `IdentityData.cs:56`. The entire chain — throw → catch → `Data.FromError(ServiceError)` — has zero test coverage. If the error key were wrong or the catch were removed, nothing would catch it.
+
+### Finding 3 (Minor): Identity defensive code gaps
+
+`LoadAllAsync` error path (line 55) and `Deserialize` null fallback (line 143) never hit. These handle DataSource failures and data corruption — unlikely in normal operation.
+
+### Finding 4 (Minor): PLang tests still deferred
+
+6 .goal files can't be built until crypto is registered with the builder.
 
 ## v1 Findings — All Resolved
 
-1. **Engine.Providers** — ProviderRegistryTests.cs added: 9 tests covering all 5 public methods (Get, Register, Has, Remove, GetOrDefault). Tests use `IsSameReferenceAs` for identity verification. Register-overwrite semantics tested. Remove+Get round-trip tested. Clean.
-2. **JSON serialization anchor** — Test now computes a reference hash by manually doing `JsonSerializer.Serialize("hello")` → UTF8 bytes → DefaultProvider.Hash → hex, then compares to handler output. If serialization method changes, the hashes diverge → test fails. Resolved.
-3. **Algorithm override** — Test now hashes same input with keccak256 and sha256, asserts hashes differ + algorithm names are correct. If Algorithm were ignored, hashes would match → test fails. Resolved.
-
-## Fresh-Eyes Findings
-
-### Finding 1 (Major): Verify.Run() can throw unhandled ArgumentNullException
-
-`Verify.Hash` is `string` (non-nullable), but if the source generator or a .pr file provides null, `Convert.FromHexString(null!)` throws `ArgumentNullException` — NOT `FormatException`. The catch block (verify.cs:27) only catches `FormatException`. This violates the "behavior methods never throw" contract.
-
-No test covers this path. A test with `Hash = null!` would expose the exception.
-
-**Code**: verify.cs:24 — `hashBytes = Convert.FromHexString(Hash);`
-**Catch**: verify.cs:27 — `catch (FormatException)` — misses `ArgumentNullException`
-
-### Finding 2 (Minor): No test for empty-string Hash
-
-`Verify` with `Hash = ""` would call `Convert.FromHexString("")` → empty byte[] → provider.Verify compares 32-byte hash with 0-byte expected → returns false. This is technically correct behavior, but there's no test documenting this edge case. Minor because the behavior is correct.
-
-### Finding 3 (Minor): ProviderRegistryTests only use one type key
-
-All 9 tests register/get/remove `ICryptoProvider`. No test verifies type isolation — that registering `ICryptoProvider` doesn't interfere with a hypothetical `ITemplateProvider`. This is a `ConcurrentDictionary<Type, object>` — type isolation is guaranteed by the framework. But the test suite doesn't prove it. Minor because the risk is near zero.
-
-### Finding 4 (Minor): Verify doesn't normalize Algorithm case
-
-`Hash.Run()` stores `Algorithm.ToLowerInvariant()` in HashedData. `Verify.Run()` passes raw `Algorithm` to the provider. DefaultProvider handles this internally, but a custom provider might be case-sensitive. No test for mixed-case algorithm names (e.g., `Algorithm = "Keccak256"`). Minor because DefaultProvider normalizes.
+ProviderRegistryTests covers all 5 methods. Serialization test has known-value anchor. Algorithm override test verifies different hashes.
 
 ## Verdict: NEEDS-FIXES
 
-Finding 1 is a real bug — an unhandled exception path that violates the project's "never throw" contract. This is the exact kind of boundary-catch error the auditor has flagged as major on other modules. The fix is simple: widen the catch to include `ArgumentNullException`, or add a null check before `Convert.FromHexString`. But the test must exist to prove the fix works.
+Finding 1 is a code bug. The identity coverage gaps (findings 2-3) are identity module issues already reviewed on the parent branch, so they're informational here. The blocker is the verify.cs null Hash exception.
