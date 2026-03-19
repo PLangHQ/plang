@@ -4,15 +4,27 @@ using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Runtime2.modules.crypto;
 
+/// <summary>
+/// Verifies that data matches an expected hash. Re-hashes the data and compares byte-for-byte.
+/// Returns <c>Data.Ok(true)</c> on match, <c>Data.Ok(false)</c> on mismatch.
+/// </summary>
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {
+    /// <summary>The data to verify. Serialized the same way as <see cref="Hash.Data"/>.</summary>
     public partial object? Data { get; init; }
+
+    /// <summary>Expected hash as a hex string. Validated for hex format before comparison.</summary>
     public partial string Hash { get; init; }
 
+    /// <summary>Hash algorithm name. Must match the algorithm used to produce <see cref="Hash"/>.</summary>
     [Default("keccak256")]
     public partial string Algorithm { get; init; }
 
+    /// <summary>
+    /// Re-hashes <see cref="Data"/> and compares against <see cref="Hash"/>.
+    /// Returns <c>Data.Ok(bool)</c>, or <c>Data.FromError</c> on null input or invalid hex.
+    /// </summary>
     public async Task<Data> Run()
     {
         if (Data == null)

@@ -154,6 +154,49 @@
         "health": "PASS — 1 minor, 2 nits. No critical/major.",
         "notes": "All prior reviewers did solid work. No cross-file contract gaps found. DefaultProvider per-call allocation is the only actionable finding."
       }
+    },
+    {
+      "id": "e4f5a6b7-8c91-4d2e-b345-6f7a8b9c0d12",
+      "bot": "docs",
+      "timestamp_start": "2026-03-19T17:00:00Z",
+      "timestamp_end": "2026-03-19T17:30:00Z",
+      "intent": "Documentation pass for crypto module and Engine.Providers — final gate before merge",
+      "before": {
+        "assumptions": "All reviewers passed (codeanalyzer v2, tester v4, security v1, auditor v1). Code is stable.",
+        "risk": "Low — docs-only changes, no behavioral modifications."
+      },
+      "plan": "1. Add XML doc comments to all crypto module public members (5 files). 2. Update modules.md with crypto section. 3. Update good_to_know.md with Engine.Providers pattern. 4. Update README.md object graph. 5. Write CHANGELOG in result.md.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/crypto/hash.cs",
+            "PLang/Runtime2/modules/crypto/verify.cs",
+            "PLang/Runtime2/modules/crypto/types.cs",
+            "PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs",
+            "PLang/Runtime2/modules/crypto/providers/DefaultProvider.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "XML doc comments on all public members — class summaries, property descriptions, method contracts."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architecture docs: crypto module details, Engine.Providers pattern, object graph update."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 8 documentation gaps filled.",
+        "notes": "Ready to merge. No findings requiring coder or tester action."
+      }
     }
   ]
 }

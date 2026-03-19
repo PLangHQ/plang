@@ -5,6 +5,10 @@ using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.crypto.providers;
 
+/// <summary>
+/// Built-in crypto provider. Supports keccak256 (via Nethereum) and sha256 (via System.Security.Cryptography).
+/// Returns unsupported-algorithm errors as <c>Data.FromError</c> — never throws.
+/// </summary>
 public class DefaultProvider : ICryptoProvider
 {
     public Data Hash(byte[] data, string algorithm)
