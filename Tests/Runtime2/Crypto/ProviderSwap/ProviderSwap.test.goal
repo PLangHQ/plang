@@ -1,0 +1,6 @@
+Start
+/ Test: set crypto provider via settings, then hash — verifies builder recognizes the setting
+- set the crypto provider as sha256-only
+- set %data% = "hello world"
+- hash %data%, write to %hash%
+- assert %hash% is not empty, "hash with swapped provider should still work"
