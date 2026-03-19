@@ -11,3 +11,6 @@ Fixed regression from v2: `GetOrCreateDefaultAsync` now checks `SaveAsync` resul
 
 ## v4 — Fix Flaky Test + Weak Assertions
 Fixed flaky `Sensitive_IdentityVariable_PrivateKeyExcluded` (base64 `+` JSON escaping), added 2 missing `Error.Key` assertions. All 1647 tests pass. See [v4/summary.md](v4/summary.md).
+
+## v5 — Fix Auto-Create Overwrite
+Fixed data loss bug: `GetOrCreateDefaultAsync` now promotes existing non-archived identities to default instead of creating new ones that overwrite. Added 2 tests. All 1649 tests pass. See [v5/summary.md](v5/summary.md).

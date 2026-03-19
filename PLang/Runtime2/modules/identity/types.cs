@@ -74,7 +74,18 @@ public sealed class IdentityVariable
         var def = all.Find(i => i.IsDefault && !i.IsArchived);
         if (def != null) return def;
 
-        // Auto-create default identity
+        // Promote an existing non-archived identity (e.g. one named "default" without IsDefault=true)
+        var candidate = all.Find(i => !i.IsArchived);
+        if (candidate != null)
+        {
+            candidate.IsDefault = true;
+            var promoteResult = await candidate.SaveAsync(engine);
+            if (!promoteResult.Success)
+                throw new InvalidOperationException($"Failed to promote identity '{candidate.Name}' to default: {promoteResult.Error?.Message}");
+            return candidate;
+        }
+
+        // No identities at all — auto-create
         var (publicKey, privateKey) = KeyGenerator.GenerateEd25519();
         def = new IdentityVariable
         {

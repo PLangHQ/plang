@@ -160,22 +160,24 @@ public class IdentityHandlerTests
     }
 
     [Test]
-    public async Task Get_NullName_NoDefaultExists_AutoCreates()
+    public async Task Get_NullName_NoDefaultExists_PromotesExisting()
     {
         // Create two non-default identities
         var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = false };
-        await h1.Run();
+        var r1 = await h1.Run();
+        var originalKey = (r1.Value as IdentityVariable)!.PublicKey;
         var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = false };
         await h2.Run();
 
-        // Get(null) should auto-create a default
+        // Get(null) should promote the first non-archived identity as default
         var handler = new Get { Context = Ctx, Name = null };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
         var identity = result.Value as IdentityVariable;
         await Assert.That(identity!.IsDefault).IsTrue();
-        await Assert.That(identity.Name).IsEqualTo("default");
+        await Assert.That(identity.Name).IsEqualTo("a");
+        await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
     }
 
     [Test]
@@ -553,5 +555,41 @@ public class IdentityHandlerTests
         // %MyIdentity% should still be the default, not "other"
         var myIdentity = _engine.System.Identity.Value as IdentityVariable;
         await Assert.That(myIdentity!.Name).IsEqualTo("default");
+    }
+
+    // --- auto-create promotes existing identity instead of overwriting ---
+
+    [Test]
+    public async Task GetOrCreateDefault_ExistingNonDefault_PromotesInsteadOfOverwriting()
+    {
+        // Create an identity named "default" but NOT as the default
+        var create = new Create { Context = Ctx, Name = "default", SetAsDefault = false };
+        var createResult = await create.Run();
+        var originalKey = (createResult.Value as IdentityVariable)!.PublicKey;
+
+        // Now trigger auto-create by getting default (none marked as default yet)
+        var get = new Get { Context = Ctx, Name = null };
+        var getResult = await get.Run();
+        await Assert.That(getResult.Success).IsTrue();
+
+        var identity = getResult.Value as IdentityVariable;
+        // Should have promoted the existing "default", not created a new one
+        await Assert.That(identity!.Name).IsEqualTo("default");
+        await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
+        await Assert.That(identity.IsDefault).IsTrue();
+    }
+
+    // --- export with no default returns error ---
+
+    [Test]
+    public async Task Export_NullName_NoDefault_ReturnsError()
+    {
+        // No identities exist, but export doesn't auto-create — it just checks for an existing default
+        // First create a non-default, non-archived identity so LoadAll returns something but no default
+        // Actually, with zero identities the path is the same — no default found
+        var handler = new Export { Context = Ctx, Name = null };
+        var result = await handler.Run();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 }

@@ -412,6 +412,39 @@
         "health": "1 major new finding: GetOrCreateDefaultAsync overwrites existing 'default' identity.",
         "notes": "Data loss bug. Missed in v1/v2 because tests never combine Create(default, SetAsDefault=false) with auto-create."
       }
+    },
+    {
+      "id": "c3d4e5f6-coder-v5",
+      "bot": "coder",
+      "timestamp_start": "2026-03-19T20:00:00Z",
+      "intent": "Fix auto-create overwrite data loss bug (tester v3)",
+      "before": {
+        "assumptions": "GetOrCreateDefaultAsync overwrites existing 'default' identity. Fix: promote existing non-archived identity instead.",
+        "risk": "Medium — changes auto-create behavior, need to update existing test expectations."
+      },
+      "plan": "Add promotion step in GetOrCreateDefaultAsync between find-default and auto-create. Update test that expected auto-create to expect promotion. Add 2 new tests.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/identity/types.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Add promotion of existing non-archived identity before auto-create"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Update auto-create test, add overwrite prevention test, add export no-default test"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 1649 tests pass. Data loss bug fixed.",
+        "notes": "3-step resolution: find default → promote existing → auto-create. Only creates new identity when none exist."
+      },
+      "timestamp_end": "2026-03-19T20:15:00Z"
     }
   ]
 }
