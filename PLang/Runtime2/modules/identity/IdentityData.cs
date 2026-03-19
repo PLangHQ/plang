@@ -43,24 +43,12 @@ public class IdentityData : Data
         Value = identity;
     }
 
+    /// <remarks>
+    /// Sync-over-async is safe here: properties can't be async, and PLang runs sequentially
+    /// per context with no SynchronizationContext. SQLite I/O is synchronous under the hood.
+    /// </remarks>
     private IdentityVariable? ResolveDefault()
     {
-        var all = IdentityVariable.LoadAllAsync(_engine).GetAwaiter().GetResult();
-        var def = all.Find(i => i.IsDefault && !i.IsArchived);
-        if (def != null) return def;
-
-        // Auto-create default identity
-        var (pub, priv) = KeyGenerator.GenerateEd25519();
-        def = new IdentityVariable
-        {
-            Name = "default",
-            PublicKey = pub,
-            PrivateKey = priv,
-            IsDefault = true,
-            IsArchived = false,
-            Created = DateTime.UtcNow
-        };
-        def.SaveAsync(_engine).GetAwaiter().GetResult();
-        return def;
+        return IdentityVariable.GetOrCreateDefaultAsync(_engine).GetAwaiter().GetResult();
     }
 }

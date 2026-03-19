@@ -520,4 +520,36 @@ public class IdentityHandlerTests
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo(expectedKey);
     }
+
+    [Test]
+    public async Task Export_NullName_ReturnsDefaultPrivateKey()
+    {
+        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
+        var createResult = await create.Run();
+        var expectedKey = (createResult.Value as IdentityVariable)!.PrivateKey;
+
+        var handler = new Export { Context = Ctx, Name = null };
+        var result = await handler.Run();
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value as string).IsEqualTo(expectedKey);
+    }
+
+    // --- get by-name does NOT overwrite %MyIdentity% ---
+
+    [Test]
+    public async Task Get_ByName_DoesNotOverwriteMyIdentity()
+    {
+        var h1 = new Create { Context = Ctx, Name = "default", SetAsDefault = true };
+        await h1.Run();
+        var h2 = new Create { Context = Ctx, Name = "other", SetAsDefault = false };
+        await h2.Run();
+
+        // Fetch non-default by name
+        var getOther = new Get { Context = Ctx, Name = "other" };
+        await getOther.Run();
+
+        // %MyIdentity% should still be the default, not "other"
+        var myIdentity = _engine.System.Identity.Value as IdentityVariable;
+        await Assert.That(myIdentity!.Name).IsEqualTo("default");
+    }
 }

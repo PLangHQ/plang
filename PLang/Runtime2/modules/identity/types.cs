@@ -7,7 +7,7 @@ namespace PLang.Runtime2.modules.identity;
 /// Represents a PLang identity (Ed25519 key pair with metadata).
 /// OBP: persistence methods belong to the owner — LoadAsync/SaveAsync/RemoveAsync navigate to DataSource.
 /// </summary>
-public class IdentityVariable
+public sealed class IdentityVariable
 {
     private const string Table = "identity";
 
@@ -65,6 +65,31 @@ public class IdentityVariable
     }
 
     /// <summary>
+    /// Gets the default non-archived identity, or auto-creates one if none exist.
+    /// Single source of truth for default identity resolution — used by both Get handler and IdentityData.
+    /// </summary>
+    public static async Task<IdentityVariable> GetOrCreateDefaultAsync(Engine.@this engine)
+    {
+        var all = await LoadAllAsync(engine);
+        var def = all.Find(i => i.IsDefault && !i.IsArchived);
+        if (def != null) return def;
+
+        // Auto-create default identity
+        var (publicKey, privateKey) = KeyGenerator.GenerateEd25519();
+        def = new IdentityVariable
+        {
+            Name = "default",
+            PublicKey = publicKey,
+            PrivateKey = privateKey,
+            IsDefault = true,
+            IsArchived = false,
+            Created = DateTime.UtcNow
+        };
+        await def.SaveAsync(engine);
+        return def;
+    }
+
+    /// <summary>
     /// Saves this identity to System DataSource, keyed by Name.
     /// </summary>
     public async Task<Data> SaveAsync(Engine.@this engine)
@@ -96,21 +121,12 @@ public class IdentityVariable
                 PrivateKey = dict.TryGetValue("PrivateKey", out var prk) ? prk?.ToString() ?? "" : "",
                 IsDefault = dict.TryGetValue("IsDefault", out var d) && d is bool bd && bd,
                 IsArchived = dict.TryGetValue("IsArchived", out var a) && a is bool ba && ba,
-                Created = dict.TryGetValue("Created", out var c) && c is DateTime dt ? dt :
-                          dict.TryGetValue("Created", out var cs) && cs is string s && DateTime.TryParse(s, out var parsed) ? parsed :
-                          DateTime.UtcNow
+                Created = dict.TryGetValue("Created", out var c)
+                    ? (c is DateTime dt ? dt : c is string s && DateTime.TryParse(s, out var parsed) ? parsed : DateTime.UtcNow)
+                    : DateTime.UtcNow
             };
         }
 
-        // Try JSON round-trip for other object types
-        try
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(value);
-            return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json);
-        }
-        catch
-        {
-            return null;
-        }
+        return null;
     }
 }

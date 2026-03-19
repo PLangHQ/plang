@@ -28,13 +28,17 @@ public partial class Rename : IContext
         if (all.Exists(i => string.Equals(i.Name, NewName, StringComparison.OrdinalIgnoreCase)))
             return Data.FromError(new ActionError($"Identity '{NewName}' already exists", "DuplicateName", 409));
 
-        // Remove old entry, save with new name
-        var removeResult = await identity.RemoveAsync(Context.Engine);
-        if (!removeResult.Success) return removeResult;
-
+        // Save with new name first, then remove old entry.
+        // If save fails, old entry is untouched — no data loss.
+        var oldName = identity.Name;
         identity.Name = NewName;
         var saveResult = await identity.SaveAsync(Context.Engine);
         if (!saveResult.Success) return saveResult;
+
+        identity.Name = oldName;
+        var removeResult = await identity.RemoveAsync(Context.Engine);
+        identity.Name = NewName;
+        if (!removeResult.Success) return removeResult;
 
         if (identity.IsDefault)
             Context.Engine.System.Identity.Update(identity);
