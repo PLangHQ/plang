@@ -57,11 +57,13 @@ public class DefaultIdentityProvider : IIdentityProvider
         }
         else
         {
-            keyProvider = engine.Providers.Get<IKeyProvider>();
-            if (keyProvider == null)
+            var keyResult = engine.Providers.Get<IKeyProvider>();
+            if (keyResult.Success)
+                keyProvider = keyResult.Value;
+            else
             {
-                var signingProvider = engine.Providers.Get<ISigningProvider>();
-                keyProvider = signingProvider;
+                var sigResult = engine.Providers.Get<ISigningProvider>();
+                keyProvider = sigResult.Success ? sigResult.Value : null;
             }
             keyProvider ??= new Ed25519Provider();
         }
@@ -286,9 +288,15 @@ public class DefaultIdentityProvider : IIdentityProvider
         }
 
         // No identities at all — auto-create
-        IKeyProvider keyProvider = engine.Providers.Get<IKeyProvider>()
-            ?? (IKeyProvider?)engine.Providers.Get<ISigningProvider>()
-            ?? new Ed25519Provider();
+        var keyResult = engine.Providers.Get<IKeyProvider>();
+        IKeyProvider keyProvider;
+        if (keyResult.Success)
+            keyProvider = keyResult.Value!;
+        else
+        {
+            var sigResult = engine.Providers.Get<ISigningProvider>();
+            keyProvider = sigResult.Success ? sigResult.Value! : new Ed25519Provider();
+        }
 
         KeyPair keys;
         try

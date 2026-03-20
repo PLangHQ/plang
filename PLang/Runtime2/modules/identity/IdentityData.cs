@@ -50,8 +50,8 @@ public class IdentityData : Data
     /// </remarks>
     private IdentityVariable? ResolveDefault()
     {
-        var provider = _engine.Providers.Get<IIdentityProvider>();
-        if (provider is not DefaultIdentityProvider defaultProvider)
+        var providerResult = _engine.Providers.Get<IIdentityProvider>();
+        if (!providerResult.Success || providerResult.Value is not DefaultIdentityProvider defaultProvider)
             return null;
 
         // Use a minimal Get action to navigate through the provider

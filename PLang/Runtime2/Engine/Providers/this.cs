@@ -31,20 +31,20 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets the default provider for a type, or null if none registered.
+    /// Gets the default provider for a type. Returns Data with error if none registered.
     /// </summary>
-    public T? Get<T>() where T : class, IProvider
+    public Data<T> Get<T>() where T : class, IProvider
     {
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return null;
+            return Data<T>.FromError(new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         foreach (var kvp in typeDict)
         {
             if (kvp.Value.IsDefault)
-                return (T)kvp.Value;
+                return Data<T>.Ok((T)kvp.Value);
         }
 
-        return null;
+        return Data<T>.FromError(new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
     }
 
     /// <summary>
@@ -64,7 +64,8 @@ public sealed class @this
     /// </summary>
     public T GetOrDefault<T>(T defaultProvider) where T : class, IProvider
     {
-        return Get<T>() ?? defaultProvider;
+        var result = Get<T>();
+        return result.Success ? result.Value! : defaultProvider;
     }
 
     /// <summary>

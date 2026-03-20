@@ -106,17 +106,18 @@ public class NamedProviderRegistryTests
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
         var result = _engine.Providers.Get<ISigningProvider>();
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.IsDefault).IsTrue();
-        await Assert.That(result.Name).IsEqualTo("ed25519");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value!.IsDefault).IsTrue();
+        await Assert.That(result.Value.Name).IsEqualTo("ed25519");
     }
 
     [Test]
-    public async Task Get_NoneRegistered_ReturnsNull()
+    public async Task Get_NoneRegistered_ReturnsError()
     {
         // IKeyProvider has no built-in registration
         var result = _engine.Providers.Get<IKeyProvider>();
-        await Assert.That(result).IsNull();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
     [Test]

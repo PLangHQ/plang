@@ -31,10 +31,11 @@ public class ProviderRegistryTests
     }
 
     [Test]
-    public async Task Get_NoRegistration_ReturnsNull()
+    public async Task Get_NoRegistration_ReturnsError()
     {
         var result = _engine.Providers.Get<ICryptoProvider>();
-        await Assert.That(result).IsNull();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
     [Test]
@@ -44,7 +45,8 @@ public class ProviderRegistryTests
         _engine.Providers.Register<ICryptoProvider>(provider);
 
         var result = _engine.Providers.Get<ICryptoProvider>();
-        await Assert.That(result).IsSameReferenceAs(provider);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsSameReferenceAs(provider);
     }
 
     [Test]
