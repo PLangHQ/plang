@@ -54,8 +54,7 @@ public partial class load : IContext
 
             foreach (var iface in interfaces)
             {
-                var registerMethod = typeof(EngineProviders).GetMethod("Register")!.MakeGenericMethod(iface);
-                var result = (Data)registerMethod.Invoke(Context.Engine.Providers, new object[] { instance })!;
+                var result = Context.Engine.Providers.Register(iface, instance);
                 if (!result.Success) return result;
             }
 

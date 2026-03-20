@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules;
 using PLang.Runtime2.modules.identity;
 
 namespace PLang.Runtime2.Engine.Providers;
@@ -18,4 +19,5 @@ public interface IIdentityProvider : IProvider
     Task<Data> RenameAsync(Rename action);
     Task<Data> GetAllAsync(GetAll action);
     Task<Data> ExportAsync(Export action);
+    Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action);
 }

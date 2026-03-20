@@ -82,7 +82,7 @@ public class SigningSerializationTests
         var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider();
         var hashResult = cryptoProvider.Hash(data, "sha256");
         var hashBytes = (byte[])hashResult.Value!;
-        var base64Hash = PLang.Runtime2.modules.crypto.Hash.FormatHash(hashBytes);
+        var base64Hash = PLang.Runtime2.modules.crypto.HashedData.FormatHash(hashBytes);
 
         // Should be valid base64
         var decoded = Convert.FromBase64String(base64Hash);

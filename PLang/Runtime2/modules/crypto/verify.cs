@@ -46,7 +46,7 @@ public partial class Verify : IContext
         var providerResult = Context.Engine.Providers.Get<ICryptoProvider>();
         if (!providerResult.Success) return providerResult;
 
-        var (bytes, _) = crypto.Hash.SerializeData(Data);
+        var (bytes, _) = HashedData.SerializeData(Data);
         return providerResult.Value!.Verify(bytes, hashBytes, Algorithm);
     }
 }

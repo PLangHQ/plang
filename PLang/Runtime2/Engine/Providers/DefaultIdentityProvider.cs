@@ -47,19 +47,9 @@ public class DefaultIdentityProvider : IIdentityProvider
         if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase)))
             return Data.FromError(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
-        // Resolve key provider — name flows through, null gets default
-        var keyResult = engine.Providers.Get<IKeyProvider>(action.Provider);
-        if (!keyResult.Success) return keyResult;
-
-        KeyPair keys;
-        try
-        {
-            keys = keyResult.Value!.GenerateKeyPair();
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
-        }
+        var identityResult = GenerateIdentity(action, action.Name, action.SetAsDefault, action.Provider);
+        if (!identityResult.Success) return identityResult;
+        var identity = (IdentityVariable)identityResult.Value!;
 
         if (action.SetAsDefault)
         {
@@ -70,18 +60,6 @@ public class DefaultIdentityProvider : IIdentityProvider
                 if (!saveResult.Success) return saveResult;
             }
         }
-
-        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
-
-        var identity = new IdentityVariable
-        {
-            Name = action.Name,
-            PublicKey = keys.PublicKey,
-            PrivateKey = keys.PrivateKey,
-            IsDefault = action.SetAsDefault,
-            IsArchived = false,
-            Created = now
-        };
 
         var result = await SaveAsync(action, identity);
         if (!result.Success) return result;
@@ -252,7 +230,7 @@ public class DefaultIdentityProvider : IIdentityProvider
     /// <summary>
     /// Gets the default non-archived identity, or auto-creates one if none exist.
     /// </summary>
-    internal async Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action)
+    public async Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action)
     {
         var engine = action.Context.Engine;
         var all = await LoadAllAsync(action);
@@ -271,31 +249,10 @@ public class DefaultIdentityProvider : IIdentityProvider
         }
 
         // No identities at all — auto-create
-        var keyResult = engine.Providers.Get<IKeyProvider>();
-        if (!keyResult.Success)
-            return Data<IdentityVariable>.FromError(keyResult.Error!);
-
-        KeyPair keys;
-        try
-        {
-            keys = keyResult.Value!.GenerateKeyPair();
-        }
-        catch (Exception ex)
-        {
-            return Data<IdentityVariable>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
-        }
-
-        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
-
-        def = new IdentityVariable
-        {
-            Name = "default",
-            PublicKey = keys.PublicKey,
-            PrivateKey = keys.PrivateKey,
-            IsDefault = true,
-            IsArchived = false,
-            Created = now
-        };
+        var identityResult = GenerateIdentity(action, "default", true);
+        if (!identityResult.Success)
+            return Data<IdentityVariable>.FromError(identityResult.Error!);
+        def = (IdentityVariable)identityResult.Value!;
         var saveResult = await SaveAsync(action, def);
         if (!saveResult.Success)
             return Data<IdentityVariable>.FromError(saveResult.Error!);
@@ -314,27 +271,55 @@ public class DefaultIdentityProvider : IIdentityProvider
         return await dataSource.Remove(Table, identity.Name);
     }
 
+    /// <summary>
+    /// Generates a new identity with keys from the configured key provider.
+    /// Owns the full sequence: resolve provider → generate keys → build IdentityVariable.
+    /// </summary>
+    private Data GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
+    {
+        var engine = action.Context.Engine;
+        var keyResult = engine.Providers.Get<IKeyProvider>(providerName);
+        if (!keyResult.Success) return keyResult;
+
+        KeyPair keys;
+        try
+        {
+            keys = keyResult.Value!.GenerateKeyPair();
+        }
+        catch (Exception ex)
+        {
+            return Data.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
+        }
+
+        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
+
+        return Data.Ok(new IdentityVariable
+        {
+            Name = name,
+            PublicKey = keys.PublicKey,
+            PrivateKey = keys.PrivateKey,
+            IsDefault = isDefault,
+            IsArchived = false,
+            Created = now
+        });
+    }
+
     private static IdentityVariable? Deserialize(object? value)
     {
         if (value is IdentityVariable iv)
             return iv;
 
-        if (value is Dictionary<string, object?> dict)
+        if (value is Dictionary<string, object?> or System.Text.Json.JsonElement)
         {
-            return new IdentityVariable
+            try
             {
-                Name = dict.TryGetValue("Name", out var n) ? n?.ToString() ?? "" : "",
-                PublicKey = dict.TryGetValue("PublicKey", out var pk) ? pk?.ToString() ?? "" : "",
-                PrivateKey = dict.TryGetValue("PrivateKey", out var prk) ? prk?.ToString() ?? "" : "",
-                IsDefault = dict.TryGetValue("IsDefault", out var d) && d is bool bd && bd,
-                IsArchived = dict.TryGetValue("IsArchived", out var a) && a is bool ba && ba,
-                Created = dict.TryGetValue("Created", out var c)
-                    ? (c is DateTimeOffset dto ? dto
-                        : c is DateTime dt ? new DateTimeOffset(dt, TimeSpan.Zero)
-                        : c is string s && DateTimeOffset.TryParse(s, out var parsed) ? parsed
-                        : DateTimeOffset.UtcNow)
-                    : DateTimeOffset.UtcNow
-            };
+                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         return null;

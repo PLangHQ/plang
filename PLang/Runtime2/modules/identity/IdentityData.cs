@@ -51,12 +51,10 @@ public class IdentityData : Data
     private IdentityVariable? ResolveDefault()
     {
         var providerResult = _engine.Providers.Get<IIdentityProvider>();
-        if (!providerResult.Success || providerResult.Value is not DefaultIdentityProvider defaultProvider)
-            return null;
+        if (!providerResult.Success) return null;
 
-        // Use a minimal Get action to navigate through the provider
         var action = new Get { Context = _engine.Context };
-        var result = defaultProvider.GetOrCreateDefaultAsync(action).GetAwaiter().GetResult();
+        var result = providerResult.Value!.GetOrCreateDefaultAsync(action).GetAwaiter().GetResult();
         return result.Success ? result.Value : null;
     }
 }

@@ -48,13 +48,14 @@ public class SignedData
     // --- Signing (behavior owned by SignedData) ---
 
     /// <summary>
-    /// Signs this envelope using the given provider and private key.
-    /// Computes and stores the Signature field.
+    /// Signs this envelope using the given provider and identity.
+    /// Navigates the identity for public key (→ Identity field) and private key (→ signing).
     /// </summary>
-    public Data Sign(ISigningProvider provider, string privateKey)
+    public Data Sign(ISigningProvider provider, IdentityVariable identity)
     {
+        Identity = identity.PublicKey;
         var signingBytes = ToSigningBytes();
-        var signResult = provider.Sign(signingBytes, privateKey);
+        var signResult = provider.Sign(signingBytes, identity.PrivateKey);
         if (!signResult.Success) return signResult;
 
         Signature = Convert.ToBase64String((byte[])signResult.Value!);
@@ -97,13 +98,12 @@ public class SignedData
             Nonce = nonce,
             Created = now,
             Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
-            Identity = identity.Value!.PublicKey,
             Contracts = action.Contracts,
             Headers = action.Headers,
             HashedData = hash.Value!
         };
 
-        var signResult = signedData.Sign(providerResult.Value, identity.Value.PrivateKey);
+        var signResult = signedData.Sign(providerResult.Value, identity.Value!);
         if (!signResult.Success) return signResult;
 
         var result = Data.Ok(action.Data);
@@ -148,20 +148,9 @@ public class SignedData
         if (!nonceAdded)
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
-        // 6. Contract matching (contracts are optional — both null/empty is valid)
-        var hasRequired = action.Contracts != null && action.Contracts.Count > 0;
-        var hasSigned = Contracts != null && Contracts.Count > 0;
-
-        if (hasRequired != hasSigned)
+        // 6. Contract matching
+        if (!ContractsMatch(action.Contracts))
             return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
-
-        if (hasRequired)
-        {
-            var requiredSet = new HashSet<string>(action.Contracts!, StringComparer.OrdinalIgnoreCase);
-            var signedSet = new HashSet<string>(Contracts!, StringComparer.OrdinalIgnoreCase);
-            if (!requiredSet.SetEquals(signedSet))
-                return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
-        }
 
         // 7. Header matching (only checked if expected headers provided)
         if (action.Headers != null)
@@ -212,6 +201,25 @@ public class SignedData
 
         var signingBytes = ToSigningBytes();
         return provider.Verify(signingBytes, signatureBytes, Identity);
+    }
+
+    // --- Contract matching ---
+
+    /// <summary>
+    /// Checks whether this envelope's contracts match the required contracts.
+    /// Both null/empty is a match. Both present must be set-equal (case-insensitive).
+    /// </summary>
+    public bool ContractsMatch(List<string>? requiredContracts)
+    {
+        var hasRequired = requiredContracts != null && requiredContracts.Count > 0;
+        var hasSigned = Contracts != null && Contracts.Count > 0;
+
+        if (hasRequired != hasSigned) return false;
+        if (!hasRequired) return true;
+
+        var requiredSet = new HashSet<string>(requiredContracts!, StringComparer.OrdinalIgnoreCase);
+        var signedSet = new HashSet<string>(Contracts!, StringComparer.OrdinalIgnoreCase);
+        return requiredSet.SetEquals(signedSet);
     }
 
     // --- Serialization ---

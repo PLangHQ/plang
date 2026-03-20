@@ -137,6 +137,23 @@ public sealed class @this
     // --- Non-generic overloads (used by provider module to avoid reflection) ---
 
     /// <summary>
+    /// Registers a provider by runtime-resolved type. First registered for a type becomes default.
+    /// Returns error if name already exists for the same type.
+    /// </summary>
+    public Data Register(System.Type providerType, IProvider provider)
+    {
+        var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, IProvider>(StringComparer.OrdinalIgnoreCase));
+
+        if (!typeDict.TryAdd(provider.Name, provider))
+            return Data.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+
+        if (typeDict.Count == 1)
+            provider.IsDefault = true;
+
+        return Data.Ok(provider);
+    }
+
+    /// <summary>
     /// Lists all providers for a runtime-resolved type.
     /// </summary>
     public Data List(System.Type providerType)

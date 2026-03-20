@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.crypto.providers;
@@ -32,32 +30,16 @@ public partial class Hash : IContext
         var providerResult = Context.Engine.Providers.Get<ICryptoProvider>();
         if (!providerResult.Success) return providerResult;
 
-        var (bytes, format) = SerializeData(Data);
+        var (bytes, format) = HashedData.SerializeData(Data);
         var hashResult = providerResult.Value!.Hash(bytes, Algorithm);
         if (!hashResult.Success)
             return hashResult;
-
-        var hex = FormatHash((byte[])hashResult.Value!);
 
         return Engine.Memory.Data.Ok(new HashedData
         {
             Algorithm = Algorithm.ToLowerInvariant(),
             Format = format,
-            Hash = hex
+            Hash = HashedData.FormatHash((byte[])hashResult.Value!)
         });
-    }
-
-    internal static (byte[] bytes, string format) SerializeData(object data)
-    {
-        if (data is byte[] raw)
-            return (raw, "raw");
-
-        var json = JsonSerializer.Serialize(data);
-        return (Encoding.UTF8.GetBytes(json), "json");
-    }
-
-    internal static string FormatHash(byte[] hashBytes)
-    {
-        return Convert.ToBase64String(hashBytes);
     }
 }
