@@ -6,9 +6,8 @@ Cryptographic signing and verification. Produces `SignedData` objects (extends `
 
 This piece also includes:
 - Upgrading `Engine.Providers` to support named providers
-- Extending `library.load` to discover provider interfaces
+- Extending `library.load` to discover and register provider interfaces
 - Retrofitting `HashedData` (piece 2) to extend `Data`
-- `[PropertyOrder]` attribute for deterministic serialization
 - Moving key generation from identity to signing provider
 
 ---
@@ -32,6 +31,8 @@ Built-in `Ed25519Provider` registers at engine startup as default. No hardcoded 
 
 Same upgrade applies to `ICryptoProvider` — add `Name` property, register by name.
 
+**Provider name collision:** Registering a provider with a name that already exists for that interface returns `Data.FromError(ActionError(...))` with key `"ProviderExists"`. The PLang developer must explicitly remove the existing provider before registering a new one with the same name.
+
 ### library.load extension
 
 After loading a DLL, scan for types implementing `IProvider` (marker interface with `Name` property — all provider interfaces extend it). If found, instantiate via parameterless constructor and register on `Engine.Providers` with the provider's `Name`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
@@ -39,6 +40,15 @@ After loading a DLL, scan for types implementing `IProvider` (marker interface w
 Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
 
 **Provider interface hierarchy:** `IProvider` is the marker. `ISigningProvider : IProvider` and `ICryptoProvider : IProvider` extend it. `library.load` only scans for `IProvider` — no hardcoded list of specific interfaces.
+
+### library.remove extension
+
+New action: `remove` on the library module. Removes a previously registered provider by interface type and name.
+
+```plang
+- remove provider ed25519 from signing
+- load my-custom-ed25519.dll
+```
 
 PLang developer flow:
 ```plang
@@ -129,42 +139,43 @@ public class Ed25519Provider : ISigningProvider
 
 ---
 
-## Deterministic serialization: [PropertyOrder]
+## Deterministic serialization
 
-Class-level attribute that declares the full serialization order, including inherited properties by name.
+Uses built-in `[JsonPropertyOrder]` from System.Text.Json — no custom attribute or converter needed. This matches the runtime1 approach (`[JsonProperty(Order = N)]` in Newtonsoft.Json) and JavaScript's object literal property ordering.
+
+### Signing pattern (same as runtime1 and TypeScript)
+
+**Signing:**
+1. Build `SignedData` with `Signature = null`
+2. Serialize entire object to JSON (including `"signature": null`)
+3. Sign those bytes
+4. Set `Signature = base64(signedBytes)` on the object
+
+**Verification:**
+1. Extract signature string from `SignedData`
+2. Set `Signature = null`
+3. Re-serialize to JSON → verify against those bytes
+
+`Signature` is **included** in the JSON as `null`, not excluded. Both sides produce identical bytes because they serialize the same object structure with `Signature = null`.
+
+### Shared serializer options
+
+A single `JsonSerializerOptions` instance used for all signing serialization (sign and verify must use identical settings):
 
 ```csharp
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public sealed class PropertyOrderAttribute : Attribute
+private static readonly JsonSerializerOptions SigningOptions = new()
 {
-    public string[] Order { get; }
-    public PropertyOrderAttribute(params string[] order) => Order = order;
-}
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    DefaultIgnoreCondition = JsonIgnoreCondition.Never  // include nulls
+};
 ```
 
-Rules:
-- **Opt-in per class.** Only classes with `[PropertyOrder]` get deterministic ordering.
-- **Full contract.** Only listed properties are serialized, in that order. Unlisted properties are excluded.
-- **Base properties by name.** `"Type"` and `"Value"` refer to `Data` base properties — no attributes needed on the base class.
-- **No default on `Data` itself.** Subclasses that don't need ordering don't pay for it.
-- **Error on collision.** If a property name appears twice (subclass shadows base), throw at serialization time.
+**Cross-platform compatibility:** `UnsafeRelaxedJsonEscaping` prevents System.Text.Json from escaping non-ASCII characters (e.g., `é` → `\u00E9`), matching JavaScript's `JSON.stringify` behavior. This ensures identical bytes when signing in .NET and verifying in the browser (or vice versa).
 
-Enables streaming rejection: verifier reads `Type` first, checks provider exists, reads `Nonce`, checks replay — rejects before ever reading `Value` or `Signature`.
+**XSS safety:** The signing serialization is not rendered in HTML — it's byte input for cryptographic signing. When `SignedData` is later accessed for display in web contexts (future `%!Signature%` work), HTML escaping is applied at the **output boundary**, not at the crypto layer. Out of scope for this piece.
 
-### Recursive serialization
-
-The `[PropertyOrder]` custom JSON converter handles nested objects recursively. When serializing a property whose runtime value has `[PropertyOrder]` (e.g., `SignedData.Value` holding a `HashedData`), the converter applies that nested type's property order automatically. No polymorphic type discriminator needed — the attribute on the concrete type drives serialization.
-
-This means `Data.Value` stays `object?`. The serializer inspects the runtime value, not the declared type.
-
-### Implementation
-
-Implement as a custom `System.Text.Json.Serialization.JsonConverter<object>` (or a `JsonConverterFactory` that handles any type decorated with `[PropertyOrder]`). Register on the `JsonSerializerOptions` used for signing serialization. The converter:
-1. Reads `[PropertyOrder]` from the runtime type
-2. Writes properties in declared order via reflection
-3. For each property value, recurses — if that value's type also has `[PropertyOrder]`, applies it
-4. Skips properties not listed in the order (enforces the "full contract" rule)
-5. Throws on property name collision (shadow detection)
+**Date format:** System.Text.Json defaults to ISO 8601 for `DateTimeOffset`, which matches runtime1's `"yyyy-MM-dd'T'HH:mm:ss.fff'Z'"` format. Verify this produces identical output in tests.
 
 ---
 
@@ -173,41 +184,57 @@ Implement as a custom `System.Text.Json.Serialization.JsonConverter<object>` (or
 ### SignedData : Data
 
 ```csharp
-[PropertyOrder("Type", "Nonce", "Created", "Expires", "Contracts", "Headers", "Identity", "Value")]
 public class SignedData : Data
 {
+    [JsonPropertyOrder(1)]  // Data.Type is order 0 (or handled by base)
     public string Nonce { get; set; }                      // GUID string
+
+    [JsonPropertyOrder(2)]
     public DateTimeOffset Created { get; set; }
+
+    [JsonPropertyOrder(3)]
     public DateTimeOffset? Expires { get; set; }
+
+    [JsonPropertyOrder(4)]
     public List<string> Contracts { get; set; }            // ["C0"]
+
+    [JsonPropertyOrder(5)]
     public Dictionary<string, object>? Headers { get; set; }
+
+    [JsonPropertyOrder(6)]
     public string Identity { get; set; }                   // public key (base64)
-    public string Signature { get; set; }                  // signature (base64), NOT in PropertyOrder — serialized separately
+
+    [JsonPropertyOrder(7)]                                 // Data.Value (HashedData) is order 7
+    // Value inherited from Data
+
+    [JsonPropertyOrder(99)]
+    public string? Signature { get; set; }                 // null during signing, set after
 }
 ```
 
 - `Data.Type` = `"ed25519"` (algorithm name)
 - `Data.Value` = the `HashedData` (payload hash)
 
-Serialization order (what gets signed) optimized for early rejection:
+Property order optimized for early rejection during verification:
 1. Type → reject if provider not found
 2. Nonce → reject if replayed
 3. Created → reject if too old
 4. Expires → reject if expired
-5. Contracts → reject if missing required
+5. Contracts → reject if mismatch
 6. Headers → reject if mismatched
 7. Identity → needed for signature verify
 8. Value → re-hash and compare (expensive)
-
-`Signature` is NOT in the `[PropertyOrder]` — it's the output of signing the above 8 fields. Both signer and verifier serialize the same 8 fields, producing identical bytes. Signature is stored/transmitted alongside but outside the signed payload.
+9. Signature → `null` during sign/verify, populated after signing
 
 ### HashedData : Data (piece 2 retrofit)
 
 ```csharp
-[PropertyOrder("Type", "Format", "Hash")]
 public class HashedData : Data
 {
+    [JsonPropertyOrder(1)]
     public string Format { get; set; }  // "raw" (byte arrays) or "json" (everything else)
+
+    [JsonPropertyOrder(2)]
     public string Hash { get; set; }    // hex string
 }
 ```
@@ -243,14 +270,15 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
    - `Contracts` = provided or `["C0"]`
    - `Headers` = provided or null
    - `Identity` = public key (base64)
-5. Serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (Signature is not in PropertyOrder, so it's naturally excluded)
+   - `Signature` = null
+5. Serialize `SignedData` to JSON bytes using `SigningOptions` (Signature serializes as `null`)
 6. `provider.Sign(jsonBytes, privateKey)` → signature bytes
 7. Set `Signature` = base64 of signature bytes
 8. Return the `SignedData`
 
 **Two-step hashing clarification:**
 - Step 3 hashes the *payload* (the developer's data) → produces `HashedData`
-- Step 5-6 signs the *entire envelope* (SignedData JSON minus Signature) → produces the cryptographic signature
+- Step 5-6 signs the *entire envelope* (SignedData JSON with Signature=null) → produces the cryptographic signature
 - These are two different operations: the hash proves the payload, the signature proves the envelope
 
 **PLang usage:**
@@ -273,10 +301,10 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
 3. Check `Created` is not older than `TimeoutSeconds`
 4. Check `Expires` has not passed (if present)
 5. Check nonce hasn't been used (`Engine.Cache`, key: `signing_nonce_{nonce}`, duration: `TimeoutSeconds`)
-6. Check contracts: if required contracts provided, **all** must be present in signed data's contract list
+6. Check contracts: if required contracts provided, must **exactly match** signed data's contract list (order-independent set equality). Contracts are part of the signed payload — any mismatch means a different agreement was signed.
 7. Check headers: if expected headers provided, must match signed headers
-8. Re-hash original data via crypto module → compare hash to `SignedData.Value.Hash` (navigate `Value` as `HashedData` or read `.hash` from JsonElement if deserialized from JSON)
-9. Verify cryptographic signature: re-serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (excluding `Signature`), call `provider.Verify(bytes, signature, publicKey)`. **Note:** The `[PropertyOrder]` converter guarantees byte-identical output for the same data, so re-serialization on the verify side produces the same bytes the signer signed.
+8. Re-hash original data via crypto module → compare hash to `SignedData.Value.Hash` (Value is always `HashedData`)
+9. Verify cryptographic signature: extract `Signature`, set `Signature = null`, re-serialize `SignedData` to JSON bytes using `SigningOptions`, call `provider.Verify(bytes, signatureBytes, publicKey)`
 10. Return `Data.Ok(true)` or `Data.FromError(ActionError(...))` with specific error key for each failure reason
 
 **PLang usage:**
@@ -299,11 +327,9 @@ On verify: check if nonce exists in cache → yes = reject (replay), no = store 
 
 ## Contracts
 
-Pass-through `List<string>`, defaults to `["C0"]`. On verify, if the verifier requires contracts, **all required must be present** in the signed data's contract list. The signing module assigns no meaning to contract values — they're opaque strings.
+Pass-through `List<string>`, defaults to `["C0"]`. On verify, if the verifier requires contracts, they must **exactly match** the signed data's contract list (order-independent set equality). Contracts are part of the signed JSON — different contracts produce different bytes, so signature verification would also fail. The logical check catches mismatches early before the expensive crypto verification.
 
-### Header serialization order
-
-`Headers` dictionary keys are sorted using `StringComparer.Ordinal` (byte-order, culture-invariant) for deterministic serialization. This is a cryptographic requirement — culture-dependent sorting would produce different bytes on different machines.
+The signing module assigns no meaning to contract values — they're opaque strings.
 
 ---
 
@@ -322,9 +348,6 @@ Key generation moves from `identity/KeyGenerator.cs` to `ISigningProvider.Genera
 ```
 PLang/Runtime2/Engine/Providers/
 ├── IProvider.cs                     — marker interface (Name), all providers extend this
-PLang/Runtime2/Engine/Serialization/
-├── PropertyOrderAttribute.cs        — [PropertyOrder] attribute
-├── PropertyOrderConverter.cs        — JsonConverterFactory for deterministic serialization
 PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
@@ -348,15 +371,14 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name property) — all providers extend this |
 | `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Signing provider interface (extends IProvider) |
 | `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
-| `PLang/Runtime2/Engine/Serialization/PropertyOrderAttribute.cs` | [PropertyOrder] attribute for deterministic serialization |
-| `PLang/Runtime2/Engine/Serialization/PropertyOrderConverter.cs` | JsonConverterFactory for [PropertyOrder] serialization |
 
 ## Files to modify
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Providers/this.cs` | Upgrade to named provider registry |
+| `PLang/Runtime2/Engine/Providers/this.cs` | Upgrade to named provider registry. Error on duplicate name (`"ProviderExists"`) |
 | `PLang/Runtime2/modules/library/load.cs` | Discover and register provider interfaces from loaded DLLs |
+| `PLang/Runtime2/modules/library/remove.cs` | New action: remove a registered provider by interface type and name |
 | `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to signing provider |
 | `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
 | `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data. **Breaking change:** current `HashedData` is a standalone POCO with `Algorithm`, `Format`, `Hash`. New: extends `Data`, uses `Data.Type` instead of `Algorithm`, keeps `Format`. Update all consumers: `hash.cs` (currently returns `Data.Ok(HashedData {...})` — now returns the `HashedData` directly since it *is* a `Data`), `verify.cs` (reads `Algorithm` → reads `Type`) |
@@ -364,7 +386,7 @@ PLang/Runtime2/modules/signing/
 
 ## Test expectations
 
-### C# unit tests (~22)
+### C# unit tests (~20)
 
 **sign handler:**
 - produces valid SignedData with correct Type, Nonce, Created, Identity
@@ -383,8 +405,7 @@ PLang/Runtime2/modules/signing/
 - old signature (past TimeoutSeconds) returns false
 - reused nonce returns false
 - second different nonce succeeds (not false positive)
-- missing required contract returns false (strict matching)
-- superset contracts pass (signed has more than required)
+- contract mismatch returns false (exact match required)
 - mismatched headers returns false
 - wrong data hash returns false
 - unknown provider returns ProviderNotFound error
@@ -392,18 +413,15 @@ PLang/Runtime2/modules/signing/
 **named provider registry:**
 - stores and retrieves multiple providers per interface
 - default provider returned when no name specified
-- duplicate name overwrites previous registration
+- duplicate name returns ProviderExists error
 
-**PropertyOrder serializer:**
-- serializes in declared order
-- nested [PropertyOrder] types serialized recursively
-- unlisted properties excluded
-- property name collision throws
+**serialization roundtrip:**
+- serialize with Signature=null → sign → deserialize → set Signature=null → re-serialize produces identical bytes
 
 ### PLang tests (~8)
 - Sign object, verify succeeds
 - Sign with contracts, verify with matching contracts
-- Sign with contracts, verify with missing contract fails
+- Sign with contracts, verify with mismatched contracts fails
 - Sign with TTL, verify after expiry fails
 - Sign and verify with headers
 - Verify tampered data fails
@@ -415,11 +433,14 @@ PLang/Runtime2/modules/signing/
 ## Definition of done
 
 - `sign` action produces valid `SignedData` (extends `Data`) with Ed25519 signature
-- `verify` checks timestamp, expiry, nonce, contracts (strict), headers, data hash, and cryptographic signature
+- `verify` checks timestamp, expiry, nonce, contracts (exact match), headers, data hash, and cryptographic signature
+- Signing uses null-signature pattern: Signature=null during serialization, set after signing (matches runtime1 and TypeScript)
+- Serialization uses `[JsonPropertyOrder]` (built-in System.Text.Json), shared `JsonSerializerOptions` with camelCase + `UnsafeRelaxedJsonEscaping` for cross-platform byte compatibility
 - Signing provider resolved from settings, verification resolved from message Type
 - Unknown provider on verify returns specific `ProviderNotFound` error
-- `Engine.Providers` supports named registration (multiple providers per interface)
+- `Engine.Providers` supports named registration (multiple providers per interface), errors on duplicate name
 - `library.load` discovers and registers provider interfaces from DLLs
+- `library.remove` allows unregistering a provider by name
 - Key generation moved from identity to `ISigningProvider.GenerateKeyPair()`
 - `HashedData` retrofitted to extend `Data`
 - Settings via `ISettings` — context-scoped, actor-aware, not persisted
