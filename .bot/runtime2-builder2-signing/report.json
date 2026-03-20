@@ -45,6 +45,21 @@
         { "paths": ["PLang/Runtime2/Engine/Providers/IKeyProvider.cs", "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs", "PLang/Runtime2/Engine/Providers/this.cs", "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs"], "type": "review", "category": "code", "confidence": "high", "context": "All 4 fixes verified: Data<KeyPair>, generic delegation, ResolveIdentityAsync, narrowed catch. No new issues." }
       ],
       "after": { "status": "complete", "health": "PASS — all findings resolved", "notes": "Verdict: pass. Ready for tester." }
+    },
+    {
+      "id": "d4e5f6g7-auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-20T23:50:00Z",
+      "timestamp_end": "2026-03-21T00:30:00Z",
+      "intent": "Full security + correctness + coverage audit of signing/provider/identity modules",
+      "before": { "assumptions": "Codeanalyzer v2 passed. Deep audit for security issues, thread safety, coverage gaps.", "risk": "Signing module handles cryptographic operations — security bugs have high impact." },
+      "plan": "Three parallel analyses: signing security deep-dive, provider/identity correctness, test coverage gap analysis with deletion tests",
+      "actions": [
+        { "paths": ["PLang/Runtime2/modules/signing/SignedData.cs", "PLang/Runtime2/modules/signing/verify.cs", "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs"], "type": "review", "category": "security", "confidence": "high", "context": "4 critical: future-timestamp bypass, nonce replay, thread-unsafe ToSigningBytes, arbitrary code exec" },
+        { "paths": ["PLang/Runtime2/Engine/Providers/this.cs", "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs", "PLang/Runtime2/modules/provider/load.cs"], "type": "review", "category": "code", "confidence": "high", "context": "5 high: NPE in verify, unprotected casts, empty nonce, TOCTOU in Register, rename orphan" },
+        { "paths": ["PLang.Tests/Runtime2/Modules/signing/", "PLang.Tests/Runtime2/Modules/provider/", "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"], "type": "review", "category": "tests", "confidence": "high", "context": "15 coverage gaps: 6 security-critical untested guards, 3 major untested features, 6 moderate/minor" }
+      ],
+      "after": { "status": "complete", "health": "FAIL — 4 critical, 5 high, 8 medium + 15 coverage gaps", "notes": "Verdict: fail. Send back to coder. Fix order in auditor/v1/result.md." }
     }
   ]
 }

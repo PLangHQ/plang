@@ -1,0 +1,24 @@
+{
+  "branch": "runtime2-builder2-signing",
+  "bot": "auditor",
+  "version": 1,
+  "verdict": "fail",
+  "findings": {
+    "critical": 4,
+    "high": 5,
+    "medium": 8,
+    "coverage_gaps": 15
+  },
+  "top_issues": [
+    { "id": 2, "severity": "critical", "title": "Future Created timestamp bypasses expiry forever", "file": "SignedData.cs:136-138" },
+    { "id": 4, "severity": "critical", "title": "Arbitrary code execution via provider.load", "file": "load.cs:26-27" },
+    { "id": 1, "severity": "critical", "title": "Thread-unsafe ToSigningBytes mutates then restores Signature", "file": "SignedData.cs:241-252" },
+    { "id": 3, "severity": "critical", "title": "Nonce replay after cache eviction", "file": "SignedData.cs:145-149" },
+    { "id": 5, "severity": "high", "title": "NPE in verify.Run() when Data property is null", "file": "verify.cs:28" },
+    { "id": 6, "severity": "high", "title": "Unprotected casts throw instead of returning Data errors", "file": "SignedData.cs:91-92,123" },
+    { "id": 7, "severity": "high", "title": "Empty nonce accepted at verify time", "file": "SignedData.cs:92,145" },
+    { "id": 8, "severity": "high", "title": "TOCTOU race in Register first-is-default logic", "file": "Providers/this.cs:110-114" },
+    { "id": 9, "severity": "high", "title": "Rename leaves orphan on partial failure", "file": "DefaultIdentityProvider.cs:147-156" }
+  ],
+  "details": "auditor/v1/result.md"
+}
