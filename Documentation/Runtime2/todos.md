@@ -378,6 +378,20 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 
 ---
 
+## Investigate ModuleView<T> — Settings Should Expose Properties Directly
+**Date:** 2026-03-20
+**Context:** During signing module review. `engine.Settings.For<SigningSettings>(context)` returns `ModuleView<SigningSettings>`, which only exposes `Resolve<TValue>("PropertyName", default)`. You can't do `signingSettings.Provider` — you have to do `signingSettings.Resolve("Provider", "ed25519")`. This feels magic-y and the defaults on `SigningSettings` are effectively dead code (never instantiated).
+
+**Problem:** `ModuleView<T>` knows `T` has properties with defaults, but ignores them. The caller must repeat the default value in every `Resolve()` call. If `SigningSettings.Provider` has a default of `"ed25519"`, why does the caller also pass `"ed25519"` to `Resolve`?
+
+**Investigate:**
+- Can `ModuleView<T>` instantiate `T` and use its property defaults as fallbacks?
+- Can it expose `T`'s properties directly (e.g., via source generator or dynamic proxy)?
+- Or should `For<T>()` return `T` itself, hydrated from the scope chain?
+- Goal: `signingSettings.Provider` instead of `signingSettings.Resolve("Provider", "ed25519")`
+
+---
+
 ## LLM Rewrites Literal Values in Assertions
 **Date:** 2026-03-07
 **Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".

@@ -78,13 +78,12 @@ public class SignedData
         if (!providerResult.Success) return providerResult;
 
         // Get identity
-        var identityResult = await IdentityVariable.GetOrCreateDefaultAsync(engine);
-        if (!identityResult.Success) return identityResult;
+        var identity = await engine.RunAction<identity.Get, IdentityVariable>(new identity.Get(), action.Context);
+        if (!identity.Success) return identity;
 
         // Hash the data
-        var hashAction = new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256", Context = action.Context };
-        var hashResult = await hashAction.Run();
-        if (!hashResult.Success) return hashResult;
+        var hash = await engine.RunAction<Hash, HashedData>(new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256" }, action.Context);
+        if (!hash.Success) return hash;
 
         var now = DateTimeOffset.UtcNow;
 
@@ -95,13 +94,13 @@ public class SignedData
             Nonce = Guid.NewGuid().ToString("N"),
             Created = now,
             Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
-            Identity = identityResult.Value!.PublicKey,
+            Identity = identity.Value!.PublicKey,
             Contracts = action.Contracts,
             Headers = action.Headers,
-            HashedData = (HashedData)hashResult.Value!
+            HashedData = hash.Value!
         };
 
-        var signResult = signedData.Sign(providerResult.Value, identityResult.Value.PrivateKey);
+        var signResult = signedData.Sign(providerResult.Value, identity.Value.PrivateKey);
         if (!signResult.Success) return signResult;
 
         var result = Data.Ok(action.Data);
@@ -196,12 +195,9 @@ public class SignedData
 
         if (originalData != null)
         {
-            var rehashAction = new Hash { Data = originalData, Algorithm = HashedData!.Algorithm, Context = engine.Context };
-            var rehashResult = await rehashAction.Run();
-            if (!rehashResult.Success) return rehashResult;
-
-            var rehashed = (HashedData)rehashResult.Value!;
-            if (!string.Equals(rehashed.Hash, HashedData.Hash, StringComparison.Ordinal))
+            var rehash = await engine.RunAction<Hash, HashedData>(new Hash { Data = originalData, Algorithm = HashedData!.Algorithm }, engine.Context);
+            if (!rehash.Success) return rehash;
+            if (!string.Equals(rehash.Value!.Hash, HashedData.Hash, StringComparison.Ordinal))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 

@@ -227,6 +227,19 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
+    /// Runs a module action through the same code-generated execution path as steps.
+    /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.
+    /// Usage: var hash = await engine.RunAction&lt;Hash, HashedData&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
+    /// </summary>
+    public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, PLangContext context)
+        where TAction : ICodeGenerated
+    {
+        var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), this, context);
+        if (!result.Success) return Data<TResult>.FromError(result.Error!);
+        return Data<TResult>.Ok((TResult)result.Value!);
+    }
+
+    /// <summary>
     /// Runs a goal via a strongly-typed GoalCall. Resolves %var% in Name, tries PrPath first, falls back to name lookup.
     /// </summary>
     public async Task<Data> RunGoalAsync(GoalCall goalCall, PLangContext? context = null, CancellationToken cancellationToken = default)
