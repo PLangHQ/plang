@@ -77,8 +77,9 @@ public class VerifyActionTests
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
         await Assert.That(result.Success).IsTrue();
+        // Verified is cached after explicit verify
         await Assert.That(signed.Signature!.Verified).IsNotNull();
-        await Assert.That(signed.Signature!.Verified!.Success).IsTrue();
+        await Assert.That(signed.Signature.Verified!.Success).IsTrue();
     }
 
     #endregion
@@ -174,8 +175,8 @@ public class VerifyActionTests
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
-        // Will fail at signature verification since hash is part of the signed payload
-        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+        // Re-hashing the original data detects the tampered hash
+        await Assert.That(result.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 
     [Test]
@@ -307,10 +308,9 @@ public class VerifyActionTests
     public async Task Verify_LazyAccess_TriggersVerificationWithoutExplicitStep()
     {
         var signed = await SignHelper("test");
-        signed.Signature!.AttachEngine(_engine);
 
-        // Access Verified directly without calling verify action
-        var verified = signed.Signature.Verified;
+        // GetVerifiedAsync triggers verification without calling verify action
+        var verified = await signed.Signature!.GetVerifiedAsync();
         await Assert.That(verified).IsNotNull();
         await Assert.That(verified!.Success).IsTrue();
     }
@@ -319,10 +319,9 @@ public class VerifyActionTests
     public async Task Verify_LazyAccess_CachesResult_SecondAccessSameObject()
     {
         var signed = await SignHelper("test");
-        signed.Signature!.AttachEngine(_engine);
 
-        var first = signed.Signature.Verified;
-        var second = signed.Signature.Verified;
+        var first = await signed.Signature!.GetVerifiedAsync();
+        var second = await signed.Signature.GetVerifiedAsync();
 
         await Assert.That(first).IsNotNull();
         await Assert.That(second).IsNotNull();
@@ -335,9 +334,8 @@ public class VerifyActionTests
     {
         // Sign with C1, lazy verify uses C0 → mismatch
         var signed = await SignHelper("test", contracts: new List<string> { "C1" });
-        signed.Signature!.AttachEngine(_engine);
 
-        var verified = signed.Signature.Verified;
+        var verified = await signed.Signature!.GetVerifiedAsync();
         await Assert.That(verified).IsNotNull();
         await Assert.That(verified!.Success).IsFalse();
         await Assert.That(verified.Error!.Key).IsEqualTo("ContractMismatch");
@@ -347,16 +345,15 @@ public class VerifyActionTests
     public async Task Verify_ExplicitThenLazy_ExplicitResultPreserved()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0", "C1" });
-        signed.Signature!.AttachEngine(_engine);
 
         // Explicit verify with matching contracts
         var explicit_ = await VerifyHelper(signed, contracts: new List<string> { "C0", "C1" });
         await Assert.That(explicit_.Success).IsTrue();
 
-        // Lazy access should return the cached explicit result
-        var lazy = signed.Signature.Verified;
-        await Assert.That(lazy).IsNotNull();
-        await Assert.That(lazy!.Success).IsTrue();
+        // Cached result from explicit verify — Verified returns it synchronously
+        var cached = signed.Signature!.Verified;
+        await Assert.That(cached).IsNotNull();
+        await Assert.That(cached!.Success).IsTrue();
     }
 
     #endregion

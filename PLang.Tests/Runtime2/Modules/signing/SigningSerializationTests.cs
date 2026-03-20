@@ -108,8 +108,8 @@ public class SigningSerializationTests
     [Test]
     public async Task SignedData_Verified_ExcludedFromJson()
     {
+        // Verified is [JsonIgnore] — verify by checking it's not in the serialized output
         var sd = CreateTestSignedData();
-        sd.SetVerified(Data.Ok(true));
 
         var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
         await Assert.That(json).DoesNotContain("\"verified\"");
@@ -124,18 +124,14 @@ public class SigningSerializationTests
         sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "not-valid-base64!!!" };
         sd.Signature = Convert.ToBase64String(new byte[64]);
 
-        // Wrap in Data for verify
-        var data = Data.Ok("test");
-        data.Signature = sd;
-
         // Verify should fail (hash mismatch at minimum) but not throw
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ser_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
             var engine = new PLang.Runtime2.Engine.@this(tempDir);
-            var result = await PLang.Runtime2.modules.signing.verify.VerifyCore(
-                sd, new List<string> { "C0" }, null, null, engine);
+            sd._engine = engine;
+            var result = await sd.VerifyAsync(new List<string> { "C0" }, null, null);
             await Assert.That(result.Success).IsFalse();
             await engine.DisposeAsync();
         }

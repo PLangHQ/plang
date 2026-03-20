@@ -1,86 +1,288 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.crypto;
+using PLang.Runtime2.modules.identity;
 
 namespace PLang.Runtime2.modules.signing;
 
 /// <summary>
-/// The signed data envelope. All fields are serialized in a deterministic order for signature verification.
-/// The null-signature pattern: Signature is set to null during serialization of the signing payload,
-/// then populated after signing.
+/// The signed data envelope. Owns creation (signing) and verification.
+/// All fields are serialized in a deterministic order for signature verification.
 /// </summary>
 public class SignedData
 {
-    [JsonPropertyOrder(1)]
-    public string Type { get; set; } = "signature";
+    [JsonPropertyOrder(1), JsonInclude]
+    public string Type { get; internal set; } = "signature";
 
-    [JsonPropertyOrder(2)]
-    public string Algorithm { get; set; } = "ed25519";
+    [JsonPropertyOrder(2), JsonInclude]
+    public string Algorithm { get; internal set; } = "ed25519";
 
-    [JsonPropertyOrder(3)]
-    public string Nonce { get; set; } = "";
+    [JsonPropertyOrder(3), JsonInclude]
+    public string Nonce { get; internal set; } = "";
 
-    [JsonPropertyOrder(4)]
-    public DateTimeOffset Created { get; set; }
+    [JsonPropertyOrder(4), JsonInclude]
+    public DateTimeOffset Created { get; internal set; }
 
-    [JsonPropertyOrder(5)]
-    public DateTimeOffset? Expires { get; set; }
+    [JsonPropertyOrder(5), JsonInclude]
+    public DateTimeOffset? Expires { get; internal set; }
 
-    [JsonPropertyOrder(6)]
-    public string Identity { get; set; } = "";
+    [JsonPropertyOrder(6), JsonInclude]
+    public string Identity { get; internal set; } = "";
 
-    [JsonPropertyOrder(7)]
-    public List<string>? Contracts { get; set; }
+    [JsonPropertyOrder(7), JsonInclude]
+    public List<string>? Contracts { get; internal set; }
 
-    [JsonPropertyOrder(8)]
-    public Dictionary<string, object>? Headers { get; set; }
+    [JsonPropertyOrder(8), JsonInclude]
+    public Dictionary<string, object>? Headers { get; internal set; }
 
-    [JsonPropertyOrder(9)]
-    public HashedData HashedData { get; set; } = new();
+    [JsonPropertyOrder(9), JsonInclude]
+    public HashedData HashedData { get; internal set; } = new();
 
-    [JsonPropertyOrder(10)]
-    public string? Signature { get; set; }
+    [JsonPropertyOrder(10), JsonInclude]
+    public string? Signature { get; internal set; }
 
-    /// <summary>
-    /// Verification result. [JsonIgnore] to prevent leaking into the signed payload.
-    /// Lazy verification: accessing this property triggers verification if _engine is set.
-    /// </summary>
     [JsonIgnore]
-    public Data? Verified
-    {
-        get
-        {
-            if (_verified != null) return _verified;
-            if (_engine == null) return null;
-
-            // Lazy verification: uses default contracts ["C0"] and no headers
-            _verified = verify.VerifyCore(this, new List<string> { "C0" }, null, null, _engine).GetAwaiter().GetResult();
-            return _verified;
-        }
-    }
-
     private Data? _verified;
 
     [JsonIgnore]
     internal Engine.@this? _engine;
 
+    // --- Creation (behavior owned by SignedData) ---
+
     /// <summary>
-    /// Sets the verification result explicitly (from the verify action).
+    /// Creates a signed envelope. Resolves provider, hashes data, signs, returns populated SignedData.
     /// </summary>
-    internal void SetVerified(Data result)
+    internal static async Task<Data> CreateAsync(
+        object? data, Engine.@this engine,
+        List<string>? contracts = null, Dictionary<string, object>? headers = null,
+        int? expiresInMs = null, string? providerName = null)
     {
+        var effectiveContracts = contracts ?? new List<string> { "C0" };
+        if (effectiveContracts.Count == 0)
+            return Data.FromError(new ActionError("At least one contract is required", "ValidationError", 400));
+
+        // Resolve signing provider
+        ISigningProvider? signingProvider;
+        if (!string.IsNullOrEmpty(providerName))
+        {
+            signingProvider = engine.Providers.Get<ISigningProvider>(providerName);
+            if (signingProvider == null)
+                return Data.FromError(new ActionError($"Signing provider '{providerName}' not found", "ProviderNotFound", 404));
+        }
+        else
+        {
+            signingProvider = engine.Providers.Get<ISigningProvider>() ?? new Ed25519Provider();
+        }
+
+        // Get identity
+        IdentityVariable identity;
+        try
+        {
+            identity = await IdentityVariable.GetOrCreateDefaultAsync(engine);
+        }
+        catch (Exception ex)
+        {
+            return Data.FromError(ActionError.FromException(ex, "IdentityError", 500));
+        }
+
+        // Hash the data
+        var (bytes, format) = Hash.SerializeData(data ?? new object());
+        var cryptoProvider = engine.Providers.Get<crypto.providers.ICryptoProvider>()
+            ?? new crypto.providers.DefaultProvider();
+        var hashResult = cryptoProvider.Hash(bytes, "sha256");
+        if (!hashResult.Success) return hashResult;
+
+        var now = DateTimeOffset.UtcNow;
+
+        var signedData = new SignedData
+        {
+            Type = "signature",
+            Algorithm = signingProvider.Name,
+            Nonce = Guid.NewGuid().ToString("N"),
+            Created = now,
+            Expires = expiresInMs.HasValue ? now.AddMilliseconds(expiresInMs.Value) : null,
+            Identity = identity.PublicKey,
+            Contracts = effectiveContracts,
+            Headers = headers,
+            HashedData = new HashedData
+            {
+                Algorithm = "sha256",
+                Format = format,
+                Hash = Hash.FormatHash((byte[])hashResult.Value!)
+            },
+            _engine = engine
+        };
+
+        // Sign: serialize with null Signature, then populate
+        var signingBytes = signedData.ToSigningBytes();
+
+        byte[] signatureBytes;
+        try
+        {
+            signatureBytes = signingProvider.Sign(signingBytes, identity.PrivateKey);
+        }
+        catch (Exception ex)
+        {
+            return Data.FromError(ActionError.FromException(ex, "SigningError", 500));
+        }
+
+        signedData.Signature = Convert.ToBase64String(signatureBytes);
+        return Data.Ok(signedData);
+    }
+
+    // --- Verification (behavior owned by SignedData) ---
+
+    /// <summary>
+    /// Verifies this signed envelope. Checks in order:
+    /// InvalidType → ProviderNotFound → TimedOut → Expired → NonceReplay →
+    /// ContractMismatch → HeaderMismatch → DataHashMismatch → SignatureInvalid.
+    /// When originalData is provided, re-hashes to verify data integrity.
+    /// </summary>
+    public async Task<Data> VerifyAsync(
+        List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
+        long? timeoutMs, object? originalData = null)
+    {
+        if (_engine == null)
+            return Data.FromError(new ActionError("No engine attached — cannot verify", "VerifyError", 500));
+
+        var result = await VerifyInternalAsync(requiredContracts, expectedHeaders, timeoutMs, originalData);
         _verified = result;
+        return result;
     }
 
     /// <summary>
-    /// Attaches the engine reference for lazy verification.
+    /// Lazy verification with default contracts ["C0"]. Async — no sync-over-async.
+    /// Returns cached result on subsequent calls.
     /// </summary>
-    internal void AttachEngine(Engine.@this engine)
+    public async Task<Data?> GetVerifiedAsync()
     {
-        _engine = engine;
+        if (_verified != null) return _verified;
+        if (_engine == null) return null;
+
+        _verified = await VerifyInternalAsync(new List<string> { "C0" }, null, null, null);
+        return _verified;
     }
+
+    /// <summary>
+    /// Returns the cached verification result without triggering verification.
+    /// Null if not yet verified.
+    /// </summary>
+    [JsonIgnore]
+    public Data? Verified => _verified;
+
+    private async Task<Data> VerifyInternalAsync(
+        List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
+        long? timeoutMs, object? originalData)
+    {
+        // 1. Type check
+        if (Type != "signature")
+            return Data.FromError(new ActionError($"Invalid signed data type: '{Type}'", "InvalidType", 400));
+
+        // 2. Provider resolution from Algorithm field
+        var provider = _engine!.Providers.Get<ISigningProvider>(Algorithm);
+        if (provider == null && Algorithm == "ed25519")
+            provider = new Ed25519Provider();
+        if (provider == null)
+            return Data.FromError(new ActionError($"Signing provider '{Algorithm}' not found", "ProviderNotFound", 404));
+
+        // 3. Timeout check (Created too old)
+        var effectiveTimeout = timeoutMs ?? 300_000; // 5 minutes default
+        var age = DateTimeOffset.UtcNow - Created;
+        if (age.TotalMilliseconds > effectiveTimeout)
+            return Data.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+
+        // 4. Expiry check
+        if (Expires.HasValue && DateTimeOffset.UtcNow > Expires.Value)
+            return Data.FromError(new ActionError("Signature has expired", "Expired", 400));
+
+        // 5. Nonce replay check
+        var nonceCacheKey = $"nonce:{Nonce}";
+        var cacheSeconds = (long)Math.Ceiling(effectiveTimeout / 1000.0);
+        var cacheSettings = new CacheSettings { DurationSeconds = cacheSeconds };
+        var nonceAdded = await _engine.Cache.TryAddAsync(nonceCacheKey, true, cacheSettings);
+        if (!nonceAdded)
+            return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+
+        // 6. Contract matching
+        if (requiredContracts == null || requiredContracts.Count == 0)
+            return Data.FromError(new ActionError("Required contracts must be specified", "ContractMismatch", 400));
+
+        if (Contracts == null || Contracts.Count == 0)
+            return Data.FromError(new ActionError("Signed data has no contracts", "ContractMismatch", 400));
+
+        var requiredSet = new HashSet<string>(requiredContracts, StringComparer.OrdinalIgnoreCase);
+        var signedSet = new HashSet<string>(Contracts, StringComparer.OrdinalIgnoreCase);
+        if (!requiredSet.SetEquals(signedSet))
+            return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+
+        // 7. Header matching (only checked if expected headers provided)
+        if (expectedHeaders != null)
+        {
+            if (Headers == null)
+                return Data.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
+
+            foreach (var kvp in expectedHeaders)
+            {
+                if (!Headers.TryGetValue(kvp.Key, out var signedValue) ||
+                    !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
+                    return Data.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+            }
+        }
+
+        // 8. Data hash verification — re-hash original data if provided
+        if (string.IsNullOrEmpty(HashedData?.Hash))
+            return Data.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
+
+        if (originalData != null)
+        {
+            var (bytes, _) = Hash.SerializeData(originalData);
+            var cryptoProvider = _engine.Providers.Get<crypto.providers.ICryptoProvider>()
+                ?? new crypto.providers.DefaultProvider();
+            var rehashResult = cryptoProvider.Hash(bytes, HashedData!.Algorithm);
+            if (!rehashResult.Success) return rehashResult;
+
+            var expectedHash = Hash.FormatHash((byte[])rehashResult.Value!);
+            if (!string.Equals(expectedHash, HashedData.Hash, StringComparison.Ordinal))
+                return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+        }
+
+        // 9. Signature verification
+        if (string.IsNullOrEmpty(Signature))
+            return Data.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
+
+        byte[] signatureBytes;
+        try
+        {
+            signatureBytes = Convert.FromBase64String(Signature);
+        }
+        catch (FormatException)
+        {
+            return Data.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400));
+        }
+
+        var signingBytes = ToSigningBytes();
+
+        bool isValid;
+        try
+        {
+            isValid = provider.Verify(signingBytes, signatureBytes, Identity);
+        }
+        catch (Exception ex)
+        {
+            return Data.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
+        }
+
+        if (!isValid)
+            return Data.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+
+        return Data.Ok(true);
+    }
+
+    // --- Serialization ---
 
     /// <summary>
     /// Deterministic serialization options for signing.

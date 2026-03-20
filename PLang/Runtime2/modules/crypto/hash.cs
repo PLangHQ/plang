@@ -8,7 +8,7 @@ namespace PLang.Runtime2.modules.crypto;
 
 /// <summary>
 /// Hashes arbitrary data using a pluggable crypto provider.
-/// Returns <see cref="HashedData"/> with the hex-encoded hash, algorithm, and serialization format.
+/// Returns <see cref="HashedData"/> with the base64-encoded hash, algorithm, and serialization format.
 /// </summary>
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext

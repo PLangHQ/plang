@@ -95,11 +95,13 @@ public sealed class @this
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        // Clear old default
-        foreach (var kvp in typeDict)
-            kvp.Value.IsDefault = false;
-
+        // Set new default first, then clear old — avoids window where Get<T>() returns null
         newDefault.IsDefault = true;
+        foreach (var kvp in typeDict)
+        {
+            if (kvp.Value != newDefault)
+                kvp.Value.IsDefault = false;
+        }
         return Data.Ok();
     }
 
