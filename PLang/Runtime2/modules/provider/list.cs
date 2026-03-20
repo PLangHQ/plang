@@ -1,6 +1,4 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.provider;
 
@@ -16,18 +14,12 @@ public partial class list : IContext
     public async Task<Data> Run()
     {
         if (string.IsNullOrEmpty(Type))
-        {
-            // List all providers across all types
             return Data.Ok(Context.Engine.Providers.List());
-        }
 
-        var providerType = remove.ResolveProviderType(Type);
+        var providerType = Context.Engine.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.FromError(new Engine.Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
-        var listMethod = typeof(EngineProviders).GetMethod("List", System.Type.EmptyTypes)!;
-        var genericList = listMethod.MakeGenericMethod(providerType);
-        var result = genericList.Invoke(Context.Engine.Providers, null);
-        return Data.Ok(result);
+        return Context.Engine.Providers.List(providerType);
     }
 }

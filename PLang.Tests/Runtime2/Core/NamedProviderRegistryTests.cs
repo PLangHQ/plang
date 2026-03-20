@@ -3,6 +3,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
+using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -101,7 +102,7 @@ public class NamedProviderRegistryTests
     #region Get
 
     [Test]
-    public async Task Get_DefaultProvider_ReturnsIsDefaultTrue()
+    public async Task Get_DefaultCryptoProvider_ReturnsIsDefaultTrue()
     {
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
@@ -114,8 +115,9 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task Get_NoneRegistered_ReturnsError()
     {
-        // IKeyProvider has no built-in registration
-        var result = _engine.Providers.Get<IKeyProvider>();
+        // Use a bare registry with no built-in registrations
+        var bare = new EngineProviders();
+        var result = bare.Get<IKeyProvider>();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
@@ -133,7 +135,7 @@ public class NamedProviderRegistryTests
     #region Remove
 
     [Test]
-    public async Task Remove_NonDefaultProvider_Succeeds()
+    public async Task Remove_NonDefaultCryptoProvider_Succeeds()
     {
         _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("second"));
 
@@ -148,7 +150,7 @@ public class NamedProviderRegistryTests
     }
 
     [Test]
-    public async Task Remove_DefaultProvider_ReturnsCannotRemoveDefaultError()
+    public async Task Remove_DefaultCryptoProvider_ReturnsCannotRemoveDefaultError()
     {
         var result = _engine.Providers.Remove<ISigningProvider>("ed25519");
         await Assert.That(result.Success).IsFalse();
@@ -208,11 +210,9 @@ public class NamedProviderRegistryTests
     [Test]
     public async Task List_AllInterfaces_ReturnsProvidersAcrossTypes()
     {
-        _engine.Providers.Register<PLang.Runtime2.modules.crypto.providers.ICryptoProvider>(
-            new PLang.Runtime2.modules.crypto.providers.DefaultProvider());
-
+        // Engine registers ISigningProvider, IKeyProvider, IIdentityProvider, ICryptoProvider at startup
         var all = _engine.Providers.List();
-        await Assert.That(all.Count).IsGreaterThanOrEqualTo(2); // ed25519 + crypto
+        await Assert.That(all.Count).IsGreaterThanOrEqualTo(4);
     }
 
     #endregion

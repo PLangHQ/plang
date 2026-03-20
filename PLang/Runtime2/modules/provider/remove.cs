@@ -1,6 +1,4 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.provider;
 
@@ -16,27 +14,10 @@ public partial class remove : IContext
 
     public async Task<Data> Run()
     {
-        if (string.IsNullOrEmpty(Name))
-            return Data.FromError(new ActionError("Provider name is required", "ValidationError", 400));
-
-        // Default to ISigningProvider if no type specified
-        var providerType = ResolveProviderType(Type);
+        var providerType = Context.Engine.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.FromError(new Engine.Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
-        var removeMethod = typeof(EngineProviders).GetMethod("Remove")!.MakeGenericMethod(providerType);
-        return (Data)removeMethod.Invoke(Context.Engine.Providers, new object[] { Name })!;
-    }
-
-    internal static System.Type? ResolveProviderType(string? typeName)
-    {
-        return typeName?.ToLowerInvariant() switch
-        {
-            "signing" or "isigningprovider" => typeof(ISigningProvider),
-            "key" or "ikeyprovider" => typeof(IKeyProvider),
-            "crypto" or "icryptoprovider" => typeof(PLang.Runtime2.modules.crypto.providers.ICryptoProvider),
-            null or "" => typeof(ISigningProvider),
-            _ => null
-        };
+        return Context.Engine.Providers.Remove(providerType, Name);
     }
 }

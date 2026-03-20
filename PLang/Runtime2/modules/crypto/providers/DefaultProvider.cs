@@ -9,7 +9,7 @@ namespace PLang.Runtime2.modules.crypto.providers;
 /// Built-in crypto provider. Supports keccak256 (via Nethereum) and sha256 (via System.Security.Cryptography).
 /// Returns unsupported-algorithm errors as <c>Data.FromError</c> — never throws.
 /// </summary>
-public class DefaultProvider : ICryptoProvider
+public class DefaultCryptoProvider : ICryptoProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }

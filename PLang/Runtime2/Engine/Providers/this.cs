@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Runtime2.Engine.Providers;
 
@@ -131,5 +132,79 @@ public sealed class @this
     public bool Has<T>() where T : class, IProvider
     {
         return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
+    }
+
+    // --- Non-generic overloads (used by provider module to avoid reflection) ---
+
+    /// <summary>
+    /// Lists all providers for a runtime-resolved type.
+    /// </summary>
+    public Data List(System.Type providerType)
+    {
+        if (!_providers.TryGetValue(providerType, out var typeDict))
+            return Data.Ok(Array.Empty<IProvider>());
+
+        return Data.Ok(typeDict.Values.ToList());
+    }
+
+    /// <summary>
+    /// Removes a named provider by runtime-resolved type.
+    /// </summary>
+    public Data Remove(System.Type providerType, string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return Data.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+
+        if (!_providers.TryGetValue(providerType, out var typeDict))
+            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (!typeDict.TryGetValue(name, out var provider))
+            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (provider.IsDefault)
+            return Data.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+
+        typeDict.TryRemove(name, out _);
+        return Data.Ok();
+    }
+
+    /// <summary>
+    /// Sets a named provider as default by runtime-resolved type.
+    /// </summary>
+    public Data SetDefault(System.Type providerType, string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return Data.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+
+        if (!_providers.TryGetValue(providerType, out var typeDict))
+            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        if (!typeDict.TryGetValue(name, out var newDefault))
+            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+
+        newDefault.IsDefault = true;
+        foreach (var kvp in typeDict)
+        {
+            if (kvp.Value != newDefault)
+                kvp.Value.IsDefault = false;
+        }
+        return Data.Ok();
+    }
+
+    /// <summary>
+    /// Resolves a PLang provider type name to its CLR type.
+    /// Owns the mapping — callers don't need to know interface types.
+    /// </summary>
+    public System.Type? ResolveType(string? typeName)
+    {
+        return typeName?.ToLowerInvariant() switch
+        {
+            "signing" or "isigningprovider" => typeof(ISigningProvider),
+            "key" or "ikeyprovider" => typeof(IKeyProvider),
+            "identity" or "iidentityprovider" => typeof(IIdentityProvider),
+            "crypto" or "icryptoprovider" => typeof(ICryptoProvider),
+            null or "" => typeof(ISigningProvider),
+            _ => null
+        };
     }
 }

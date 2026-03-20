@@ -79,7 +79,7 @@ public class SigningSerializationTests
 
         // Hash some data using the crypto module's FormatHash
         var data = System.Text.Encoding.UTF8.GetBytes("test data");
-        var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultProvider();
+        var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider();
         var hashResult = cryptoProvider.Hash(data, "sha256");
         var hashBytes = (byte[])hashResult.Value!;
         var base64Hash = PLang.Runtime2.modules.crypto.Hash.FormatHash(hashBytes);

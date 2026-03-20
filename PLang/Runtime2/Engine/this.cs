@@ -223,8 +223,11 @@ public sealed class @this : IAsyncDisposable
         Channels = new EngineChannels(this);
 
         // Register built-in providers
-        Providers.Register<ISigningProvider>(new Ed25519Provider());
+        var ed25519 = new Ed25519Provider();
+        Providers.Register<ISigningProvider>(ed25519);
+        Providers.Register<IKeyProvider>(ed25519);
         Providers.Register<IIdentityProvider>(new DefaultIdentityProvider());
+        Providers.Register<modules.crypto.providers.ICryptoProvider>(new modules.crypto.providers.DefaultCryptoProvider());
     }
 
     /// <summary>

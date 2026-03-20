@@ -194,9 +194,7 @@ public class ProviderModuleTests
     [Test]
     public async Task List_FilteredByType_ReturnsOnlyMatchingInterface()
     {
-        // ed25519 already registered at startup
-        _engine.Providers.Register<ICryptoProvider>(new DefaultProvider());
-
+        // Engine registers ICryptoProvider at startup, ISigningProvider separately
         var signingProviders = _engine.Providers.List<ISigningProvider>();
         await Assert.That(signingProviders.Count).IsEqualTo(1); // only ed25519
         await Assert.That(signingProviders[0].Name).IsEqualTo("ed25519");

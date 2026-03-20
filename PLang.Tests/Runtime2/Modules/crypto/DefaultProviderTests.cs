@@ -2,9 +2,9 @@ using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Tests.Runtime2.Modules.crypto;
 
-public class DefaultProviderTests
+public class DefaultCryptoProviderTests
 {
-    private readonly DefaultProvider _provider = new();
+    private readonly DefaultCryptoProvider _provider = new();
 
     // --- Hash: Keccak256 ---
 

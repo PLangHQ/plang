@@ -29,9 +29,11 @@ public partial class Hash : IContext
         if (Data == null)
             return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
 
-        var provider = ResolveProvider(Context);
+        var providerResult = Context.Engine.Providers.Get<ICryptoProvider>();
+        if (!providerResult.Success) return providerResult;
+
         var (bytes, format) = SerializeData(Data);
-        var hashResult = provider.Hash(bytes, Algorithm);
+        var hashResult = providerResult.Value!.Hash(bytes, Algorithm);
         if (!hashResult.Success)
             return hashResult;
 
@@ -57,16 +59,5 @@ public partial class Hash : IContext
     internal static string FormatHash(byte[] hashBytes)
     {
         return Convert.ToBase64String(hashBytes);
-    }
-
-    internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.Context.PLangContext context)
-    {
-        return ResolveProvider(context.Engine);
-    }
-
-    internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.@this engine)
-    {
-        var result = engine.Providers.Get<ICryptoProvider>();
-        return result.Success ? result.Value! : new DefaultProvider();
     }
 }

@@ -23,7 +23,7 @@ public partial class load : IContext
         Assembly assembly;
         try
         {
-            var fullPath = System.IO.Path.GetFullPath(Path, Context.Engine.AbsolutePath);
+            var fullPath = Context.Engine.FileSystem.Path.GetFullPath(Path, Context.Engine.AbsolutePath);
             assembly = Assembly.LoadFrom(fullPath);
         }
         catch (Exception ex)

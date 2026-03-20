@@ -39,6 +39,7 @@ public class ProviderResolutionTests
     {
         var mock = new MockCryptoProvider();
         _engine.Providers.Register<ICryptoProvider>(mock);
+        _engine.Providers.SetDefault<ICryptoProvider>("mock");
 
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
         var result = await action.Run();
@@ -53,14 +54,14 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // Fresh engine, no crypto settings — should use DefaultProvider
+        // Fresh engine, no crypto settings — should use DefaultCryptoProvider
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var hashed = result.Value as HashedData;
         await Assert.That(hashed).IsNotNull();
-        // Should not be all zeros (DefaultProvider produces real keccak256)
+        // Should not be all zeros (DefaultCryptoProvider produces real keccak256)
         await Assert.That(hashed!.Hash).IsNotEqualTo(Convert.ToBase64String(new byte[32]));
         // Base64 of 32 bytes = 44 chars
         await Assert.That(hashed.Hash.Length).IsEqualTo(44);
@@ -71,6 +72,7 @@ public class ProviderResolutionTests
     {
         var mock = new AlwaysTrueVerifier();
         _engine.Providers.Register<ICryptoProvider>(mock);
+        _engine.Providers.SetDefault<ICryptoProvider>("always-true");
 
         // Even with garbage hash, mock returns true
         var action = new Verify { Context = Ctx, Data = "hello", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };

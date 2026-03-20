@@ -49,19 +49,12 @@ public class DefaultIdentityProvider : IIdentityProvider
 
         // Resolve key provider — name flows through, null gets default
         var keyResult = engine.Providers.Get<IKeyProvider>(action.Provider);
-        IKeyProvider keyProvider;
-        if (keyResult.Success)
-            keyProvider = keyResult.Value!;
-        else
-        {
-            var sigResult = engine.Providers.Get<ISigningProvider>();
-            keyProvider = sigResult.Success ? sigResult.Value! : new Ed25519Provider();
-        }
+        if (!keyResult.Success) return keyResult;
 
         KeyPair keys;
         try
         {
-            keys = keyProvider.GenerateKeyPair();
+            keys = keyResult.Value!.GenerateKeyPair();
         }
         catch (Exception ex)
         {
@@ -279,19 +272,13 @@ public class DefaultIdentityProvider : IIdentityProvider
 
         // No identities at all — auto-create
         var keyResult = engine.Providers.Get<IKeyProvider>();
-        IKeyProvider keyProvider;
-        if (keyResult.Success)
-            keyProvider = keyResult.Value!;
-        else
-        {
-            var sigResult = engine.Providers.Get<ISigningProvider>();
-            keyProvider = sigResult.Success ? sigResult.Value! : new Ed25519Provider();
-        }
+        if (!keyResult.Success)
+            return Data<IdentityVariable>.FromError(keyResult.Error!);
 
         KeyPair keys;
         try
         {
-            keys = keyProvider.GenerateKeyPair();
+            keys = keyResult.Value!.GenerateKeyPair();
         }
         catch (Exception ex)
         {

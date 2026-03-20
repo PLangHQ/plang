@@ -259,7 +259,7 @@ public class SignActionTests
         // Register a key provider that throws to simulate identity creation failure
         var throwingProvider = new ThrowingKeyProvider();
         _engine.Providers.Register<IKeyProvider>(throwingProvider);
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
+        _engine.Providers.SetDefault<IKeyProvider>("throwing-key");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();

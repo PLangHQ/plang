@@ -42,6 +42,7 @@ public class IdentityKeyProviderTests
     {
         var mockProvider = new MockKeyProvider("mock-pub-key", "mock-priv-key");
         _engine.Providers.Register<IKeyProvider>(mockProvider);
+        _engine.Providers.SetDefault<IKeyProvider>("mock");
 
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
@@ -75,6 +76,7 @@ public class IdentityKeyProviderTests
     {
         var throwingProvider = new ThrowingKeyProvider();
         _engine.Providers.Register<IKeyProvider>(throwingProvider);
+        _engine.Providers.SetDefault<IKeyProvider>("throwing");
 
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
@@ -88,6 +90,7 @@ public class IdentityKeyProviderTests
     {
         var mockProvider = new MockKeyProvider("stored-pub", "stored-priv");
         _engine.Providers.Register<IKeyProvider>(mockProvider);
+        _engine.Providers.SetDefault<IKeyProvider>("mock");
 
         var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = true };
         var result = await action.Run();
@@ -105,9 +108,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_WithProviderParam_UsesNamedProvider()
     {
-        // Register default Ed25519 and a mock
-        var ed25519 = new Ed25519Provider();
-        _engine.Providers.Register<IKeyProvider>(ed25519);
+        // Ed25519 already registered as default IKeyProvider at engine startup
         var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
         _engine.Providers.Register<IKeyProvider>(mock);
 

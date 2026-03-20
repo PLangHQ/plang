@@ -43,8 +43,10 @@ public partial class Verify : IContext
             return Engine.Memory.Data.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400));
         }
 
-        var provider = crypto.Hash.ResolveProvider(Context);
+        var providerResult = Context.Engine.Providers.Get<ICryptoProvider>();
+        if (!providerResult.Success) return providerResult;
+
         var (bytes, _) = crypto.Hash.SerializeData(Data);
-        return provider.Verify(bytes, hashBytes, Algorithm);
+        return providerResult.Value!.Verify(bytes, hashBytes, Algorithm);
     }
 }

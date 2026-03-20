@@ -56,9 +56,9 @@ public class HashActionTests
     {
         // Known value: JsonSerializer.Serialize("hello") = "\"hello\""
         // keccak256 of UTF8 bytes of "\"hello\"" is a fixed value.
-        // Compute reference: hash the JSON-serialized form directly via DefaultProvider.
+        // Compute reference: hash the JSON-serialized form directly via DefaultCryptoProvider.
         var jsonBytes = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize("hello"));
-        var refHash = new PLang.Runtime2.modules.crypto.providers.DefaultProvider().Hash(jsonBytes, "keccak256");
+        var refHash = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider().Hash(jsonBytes, "keccak256");
         var expectedBase64 = Convert.ToBase64String((byte[])refHash.Value!);
 
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
@@ -128,6 +128,7 @@ public class HashActionTests
     public async Task Hash_ProviderReturnsError_RelaysError()
     {
         _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
+        _engine.Providers.SetDefault<ICryptoProvider>("failing");
 
         var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
         var result = await action.Run();
@@ -207,6 +208,7 @@ public class HashActionTests
     public async Task Verify_ProviderReturnsError_RelaysError()
     {
         _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
+        _engine.Providers.SetDefault<ICryptoProvider>("failing");
 
         var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();

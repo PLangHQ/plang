@@ -1,6 +1,4 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.provider;
 
@@ -16,14 +14,10 @@ public partial class setDefault : IContext
 
     public async Task<Data> Run()
     {
-        if (string.IsNullOrEmpty(Name))
-            return Data.FromError(new ActionError("Provider name is required", "ValidationError", 400));
-
-        var providerType = remove.ResolveProviderType(Type);
+        var providerType = Context.Engine.Providers.ResolveType(Type);
         if (providerType == null)
-            return Data.FromError(new ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
+            return Data.FromError(new Engine.Errors.ActionError($"Unknown provider type '{Type}'", "UnknownType", 400));
 
-        var setDefaultMethod = typeof(EngineProviders).GetMethod("SetDefault")!.MakeGenericMethod(providerType);
-        return (Data)setDefaultMethod.Invoke(Context.Engine.Providers, new object[] { Name })!;
+        return Context.Engine.Providers.SetDefault(providerType, Name);
     }
 }
