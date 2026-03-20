@@ -42,7 +42,7 @@ public class VerifyActionTests
     // Helper: Sign data and return the SignedData object.
     // Implementation will create identity + sign handler inline.
     // private async Task<SignedData> SignHelper(object data, List<string>? contracts = null,
-    //     int? expiresInSeconds = null, Dictionary<string, object>? headers = null) { ... }
+    //     int? expiresInMs = null, Dictionary<string, object>? headers = null) { ... }
 
     #region Happy Path
 
@@ -88,7 +88,7 @@ public class VerifyActionTests
     {
         // Expires in past → "Expired".
         //
-        // Arrange: sign with ExpiresInSeconds=1, wait >1 second
+        // Arrange: sign with ExpiresInMs=50, wait >50ms
         // Act: verify
         // Assert: result.Error.Key == "Expired"
         await Assert.Fail("stub — implementation depends on signing module");
@@ -97,10 +97,10 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_TimedOut_Error()
     {
-        // Created older than TimeoutSeconds → "TimedOut".
+        // Created older than TimeoutMs → "TimedOut".
         //
         // Arrange: sign data, tamper Created to distant past
-        // Act: verify with TimeoutSeconds that the created time exceeds
+        // Act: verify with TimeoutMs that the created time exceeds
         // Assert: result.Error.Key == "TimedOut"
         await Assert.Fail("stub — implementation depends on signing module");
     }
@@ -178,11 +178,11 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ContractsRequired_NullReturnsError()
     {
-        // Contracts always required on verify — null contracts → error.
+        // Contracts always required on verify — null contracts → "ContractMismatch".
         //
         // Arrange: sign data
         // Act: verify with null contracts
-        // Assert: result.Success == false (contracts are required)
+        // Assert: result.Success == false, result.Error.Key == "ContractMismatch"
         await Assert.Fail("stub — implementation depends on signing module");
     }
 
@@ -250,10 +250,10 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_CreatedJustWithinTimeout_Succeeds()
     {
-        // Boundary: TimeoutSeconds - 1s → OK.
+        // Boundary: TimeoutMs minus a small margin → OK.
         //
         // Arrange: sign data, Created is just within the timeout window
-        // Act: verify with TimeoutSeconds that barely accepts it
+        // Act: verify with TimeoutMs that barely accepts it
         // Assert: result.Success == true
         await Assert.Fail("stub — implementation depends on signing module");
     }
@@ -269,7 +269,7 @@ public class VerifyActionTests
         //
         // Arrange: sign data with default contracts
         // Act: verify with Contracts = new List<string>() (empty)
-        // Assert: result.Success == false (contracts are required, empty not allowed)
+        // Assert: result.Success == false, result.Error.Key == "ContractMismatch"
         await Assert.Fail("stub — implementation depends on signing module");
     }
 
@@ -334,6 +334,52 @@ public class VerifyActionTests
         // Arrange: create identity, sign two different Data objects (each gets unique nonce)
         // Act: verify first, then verify second
         // Assert: both succeed (different nonces don't interfere)
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Explicit Re-verify
+
+    [Test]
+    public async Task Verify_ExplicitTwice_SecondResultOverwritesFirst()
+    {
+        // Second explicit verify overwrites first result — no caching between explicit calls.
+        //
+        // Arrange: create identity, sign data with contracts ["C0"]
+        // Act: verify with contracts ["C0"] (succeeds), then verify again with contracts ["C1"] (fails)
+        // Assert: first Verified.Success == true, second Verified.Success == false,
+        //         signedData.Verified reflects the second (most recent) result
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Tampered Contracts on SignedData
+
+    [Test]
+    public async Task Verify_SignedDataContractsNull_ReturnsError()
+    {
+        // SignedData with null Contracts (tampered) → error during verify.
+        //
+        // Arrange: sign data, then tamper SignedData.Contracts = null
+        // Act: verify with contracts ["C0"]
+        // Assert: result.Success == false, error indicates missing contracts on signed data
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Header Direction Mismatch
+
+    [Test]
+    public async Task Verify_NoSignedHeaders_ExpectsHeaders_ReturnsHeaderMismatch()
+    {
+        // Signed without headers, verify expects headers → "HeaderMismatch".
+        //
+        // Arrange: sign data WITHOUT headers (Headers = null on SignedData)
+        // Act: verify with expected headers { "method": "GET" }
+        // Assert: result.Error.Key == "HeaderMismatch"
         await Assert.Fail("stub — implementation depends on signing module");
     }
 

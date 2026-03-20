@@ -104,11 +104,11 @@ public class SignActionTests
     [Test]
     public async Task Sign_TTL_SetsExpires()
     {
-        // ExpiresInSeconds=300 → Expires ≈ Created + 300s.
+        // ExpiresInMs=5000 → Expires ≈ Created + 5000ms.
         //
-        // Arrange: create identity, sign with ExpiresInSeconds = 300
+        // Arrange: create identity, sign with ExpiresInMs = 5000
         // Act: Run()
-        // Assert: signedData.Expires is approximately signedData.Created + 300 seconds
+        // Assert: signedData.Expires is approximately signedData.Created + 5000 milliseconds
         await Assert.Fail("stub — implementation depends on signing module");
     }
 
@@ -188,6 +188,21 @@ public class SignActionTests
         // Arrange: create identity
         // Act: sign with Provider = "unknown"
         // Assert: result.Error.Key == "ProviderNotFound"
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Empty Contracts
+
+    [Test]
+    public async Task Sign_EmptyContracts_ReturnsError()
+    {
+        // Empty contracts [] should be rejected — at least one contract required.
+        //
+        // Arrange: create identity, sign with Contracts = new List<string>() (empty)
+        // Act: Run()
+        // Assert: result.Success == false, error indicates contracts required
         await Assert.Fail("stub — implementation depends on signing module");
     }
 

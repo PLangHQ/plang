@@ -7,7 +7,7 @@ namespace PLang.Tests.Runtime2.Core;
 
 /// <summary>
 /// Tests the upgraded Engine.Providers named registry.
-/// Instantiate Providers directly — no engine needed for most tests.
+/// Uses PLangEngine since the registry is an engine subsystem.
 /// </summary>
 public class NamedProviderRegistryTests
 {

@@ -3,8 +3,8 @@ Start
 - create identity testSigner
 - set %data% = { "payload": "old" }
 - sign %data%
-- set signing timeout to 1
-- wait for 2000 ms
+- set signing timeout to 50
+- wait for 60 ms
 - verify %data% with contracts ['C0'], on error call HandleTimedOut
 - assert %timedOut% is true, "signature older than timeout should fail"
 

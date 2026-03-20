@@ -159,18 +159,18 @@ Context-scoped via existing `Engine.Settings` infrastructure. Not DataSource (no
 public partial class Settings : ISettings
 {
     public string Provider { get; set; } = "ed25519";
-    public int TimeoutSeconds { get; set; } = 300;
+    public int TimeoutMs { get; set; } = 300_000;
 }
 ```
 
 - `Provider` — algorithm name, matched against `Engine.Providers` at runtime
-- `TimeoutSeconds` — **verifier's setting**. Controls max signature age and nonce cache duration on the verifying side. The signer sets `Created` and optionally `Expires`; the verifier checks against its own `TimeoutSeconds` (whichever is stricter wins).
+- `TimeoutMs` — **verifier's setting**. Controls max signature age and nonce cache duration on the verifying side. The signer sets `Created` and optionally `Expires`; the verifier checks against its own `TimeoutMs` (whichever is stricter wins).
 
 Resolution: context scope → parent scope → engine defaults → class defaults.
 
 PLang developer modifies individual properties:
 ```plang
-- set signing timeout to 600
+- set signing timeout to 600000
 - set signing provider to ecdsa-p256
 ```
 
@@ -314,7 +314,7 @@ public class SignedData
     public List<string> Contracts { get; set; }      // ["C0"]
 
     [JsonPropertyOrder(7)]
-    public Dictionary<string, string>? Headers { get; set; }
+    public Dictionary<string, object>? Headers { get; set; }
 
     [JsonPropertyOrder(8)]
     public string Identity { get; set; }             // public key (base64)
@@ -337,7 +337,7 @@ public class SignedData
 - `Type` = `"signature"` — identifies this as a signing envelope
 - `Algorithm` = `"ed25519"` — the signing algorithm / provider name. Used by verification to find the right provider.
 - `HashedData` = the `HashedData` POCO (payload hash, base64-encoded). `HashedData.Type` = `"hash"`
-- `Headers` = `Dictionary<string, string>?` — simple string-to-string (e.g., method, url). No complex object values.
+- `Headers` = `Dictionary<string, object>?` — string-to-object (e.g., method, url, status code). Values can be any JSON-serializable type.
 - `Verified` = verification result as `Data?`. `[JsonIgnore]` — never serialized, local to the receiver. Public setter — PLang developers can read and write it (e.g., `%data.Signature.Verified%`).
 
 Property order optimized for early rejection during verification:
@@ -377,8 +377,8 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 **Parameters:**
 - `Data : Data` — the Data object to sign (handler sets `data.Signature`)
 - `Contracts : List<string>?` — defaults to `["C0"]`
-- `ExpiresInSeconds : int?` — optional TTL
-- `Headers : Dictionary<string, string>?` — optional signed headers (e.g., method, url). String values only.
+- `ExpiresInMs : int?` — optional TTL
+- `Headers : Dictionary<string, object>?` — optional signed headers (e.g., method, url, status code). Values can be any JSON-serializable type.
 - `Provider : string?` — per-call override (e.g., `"ecdsa-p256"`)
 
 **Flow:**
@@ -410,7 +410,7 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 **PLang usage:**
 ```plang
 - sign %data%
-- sign %data% with contracts ['C0', 'C1'], expires in 300 seconds
+- sign %data% with contracts ['C0', 'C1'], expires in 300000 ms
 - sign %data% with contracts ['C0'], headers %headers%, provider ecdsa-p256
 ```
 
@@ -419,17 +419,17 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 **Parameters:**
 - `Data : Data` — the Data object to verify (reads `data.Signature`, sets `data.Signature.Verified`)
 - `Contracts : List<string>` — **required**. Expected contracts must be provided.
-- `Headers : Dictionary<string, string>?` — expected headers to match
+- `Headers : Dictionary<string, object>?` — expected headers to match
 
 **No separate `OriginalData` parameter.** The Data IS the payload — true OBP. The signature lives on the Data object (`data.Signature`), and the Data's own serialized form (with `Signature` excluded via `[JsonIgnore]`) is the payload that was hashed during signing. The verify handler re-serializes the Data using `SigningOptions`, re-hashes, and compares to `SignedData.HashedData.Hash`. No need to pass the original data separately — the object carries everything.
 
 **Flow:**
 1. Read `data.Signature` — if null, return `Data.FromError(ActionError(...))` with key `"NoSignature"`
 2. Read `SignedData.Algorithm` → `engine.Providers.Get<ISigningProvider>(algorithm)`. If not found → error with key `"ProviderNotFound"`
-3. Read `TimeoutSeconds` from verifier's settings
-4. Check `Created` is not older than `TimeoutSeconds`
+3. Read `TimeoutMs` from verifier's settings
+4. Check `Created` is not older than `TimeoutMs`
 5. Check `Expires` has not passed (if present)
-6. Check nonce hasn't been used (via `engine.Cache.TryAddAsync`, duration: `TimeoutSeconds`)
+6. Check nonce hasn't been used (via `engine.Cache.TryAddAsync`, duration: `TimeoutMs`)
 7. **Check contracts** — always required. Compare each contract individually against signed data's contract list (order-independent set equality). Each mismatch returns a specific error with key `"ContractMismatch"` identifying which contract failed. No signature verification if contracts don't match — fail early.
 8. Check headers: if expected headers provided, must match signed headers
 9. Re-serialize Data using `SigningOptions` (`Signature` excluded via `[JsonIgnore]`) → re-hash via crypto module → compare hash to `SignedData.HashedData.Hash` (base64). Mismatch → error with key `"DataHashMismatch"`
@@ -437,7 +437,7 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 11. Set `data.Signature.Verified = result` — `Data.Ok(true)` on success, `Data.FromError(ActionError(...))` with specific error key on failure
 12. Return the `Data`
 
-**Error keys:** `"NoSignature"`, `"ProviderNotFound"`, `"Expired"`, `"TimedOut"` (past TimeoutSeconds), `"NonceReplay"`, `"ContractMismatch"`, `"HeaderMismatch"`, `"DataHashMismatch"`, `"SignatureInvalid"`
+**Error keys:** `"NoSignature"`, `"ProviderNotFound"`, `"Expired"`, `"TimedOut"` (past TimeoutMs), `"NonceReplay"`, `"ContractMismatch"`, `"HeaderMismatch"`, `"DataHashMismatch"`, `"SignatureInvalid"`
 
 **PLang usage:**
 ```plang
@@ -469,7 +469,7 @@ Task<bool> TryAddAsync(string key, object value, CacheSettings settings, Cancell
 
 **Verify handler usage:**
 ```csharp
-var settings = new CacheSettings { DurationSeconds = timeoutSeconds, Sliding = false };
+var settings = new CacheSettings { DurationMs = timeoutMs, Sliding = false };
 bool isFresh = await engine.Cache.TryAddAsync($"nonce:{nonce}", true, settings, ct);
 if (!isFresh) return Data.FromError(new ActionError("Nonce already used", "NonceReplay", 409));
 ```
@@ -521,7 +521,7 @@ PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
 ├── SignedData.cs                    — standalone POCO (Algorithm, HashedData, Headers, Verified)
-├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
+├── Settings.cs                      — ISettings: Provider, TimeoutMs
 ```
 
 ---
@@ -533,7 +533,7 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler — builds SignedData, sets `data.Signature` |
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler — checks all fields, sets `data.Signature.Verified` |
 | `PLang/Runtime2/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, public setter) |
-| `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutSeconds |
+| `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutMs |
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
 | `PLang/Runtime2/Engine/Providers/IKeyProvider.cs` | Key generation interface (extends IProvider) |
 | `PLang/Runtime2/Engine/Providers/KeyPair.cs` | `record KeyPair(string PublicKey, string PrivateKey)` — named return type for `GenerateKeyPair()` |
@@ -582,7 +582,7 @@ PLang/Runtime2/modules/signing/
 **verify handler:**
 - valid signature sets `Verified = Data.Ok(true)`
 - expired signature sets `Verified` with error key `"Expired"`
-- old signature (past TimeoutSeconds) sets `Verified` with error key `"TimedOut"`
+- old signature (past TimeoutMs) sets `Verified` with error key `"TimedOut"`
 - reused nonce sets `Verified` with error key `"NonceReplay"` (via `Engine.Cache.TryAddAsync`)
 - second different nonce succeeds (not false positive)
 - contract mismatch returns specific `"ContractMismatch"` error identifying which contract
@@ -655,7 +655,7 @@ PLang/Runtime2/modules/signing/
 - `library.load` unchanged — stays focused on compiled action handlers
 - Key generation moved from identity to `IKeyProvider.GenerateKeyPair()`. Identity creation accepts optional provider name parameter, defaults to default `IKeyProvider`
 - Nonce replay prevention via `ICache.TryAddAsync` (new method on existing cache interface). Atomic add-if-not-exists — `MemoryStepCache` uses `MemoryCache.AddOrGetExisting`, Redis uses `SETNX`. Nonce keys prefixed `nonce:` to avoid step cache collisions. Entries self-evict via absolute expiration.
-- `TimeoutSeconds` is the **verifier's** setting — controls max signature age and nonce cache duration
+- `TimeoutMs` is the **verifier's** setting — controls max signature age and nonce cache duration
 - Settings via `ISettings` — context-scoped, actor-aware, not persisted
-- Headers as `Dictionary<string, string>?` — string values only, no complex objects
+- Headers as `Dictionary<string, object>?` — string values only, no complex objects
 - C# and PLang tests pass
