@@ -5,13 +5,13 @@
       "id": "a1b2c3d4-obp-fix-session",
       "bot": "coder",
       "timestamp_start": "2026-03-20T21:00:00Z",
-      "timestamp_end": "2026-03-20T21:45:00Z",
-      "intent": "Fix all 7 OBP violations across signing/crypto/identity/provider modules",
+      "timestamp_end": "2026-03-20T22:00:00Z",
+      "intent": "Fix 7 OBP violations + rename identity.getAll to identity.list",
       "before": {
         "assumptions": "All 7 violations identified in prior analysis are real and fixable without breaking existing tests. The interfaces may need new methods.",
         "risk": "Interface changes cascade to all implementations. Only DefaultIdentityProvider exists."
       },
-      "plan": "Fix 7 OBP violations: (1) IdentityData hardcodes DefaultIdentityProvider - add GetOrCreateDefaultAsync to IIdentityProvider, (2) SignedData decomposes IdentityVariable - Sign takes identity object, (3) Duplicated key-gen in DefaultIdentityProvider - extract GenerateIdentity, (4) Manual Deserialize mapper - use JSON round-trip, (5) Static helpers on Hash action - move to HashedData, (6) Reflection in load.cs - add non-generic Register, (7) Inline contract matching - extract ContractsMatch method.",
+      "plan": "Fix 7 OBP violations: (1) IdentityData hardcodes DefaultIdentityProvider - add GetOrCreateDefaultAsync to IIdentityProvider, (2) SignedData decomposes IdentityVariable - Sign takes identity object, (3) Duplicated key-gen in DefaultIdentityProvider - extract GenerateIdentity, (4) Manual Deserialize mapper - use JSON round-trip, (5) Static helpers on Hash action - move to HashedData, (6) Reflection in load.cs - add non-generic Register, (7) Inline contract matching - extract ContractsMatch method. Then rename identity.getAll → identity.list for naming consistency.",
       "actions": [
         {
           "paths": ["PLang/Runtime2/Engine/Providers/this.cs", "PLang/Runtime2/modules/provider/load.cs"],
@@ -47,12 +47,19 @@
           "category": "test",
           "confidence": "high",
           "context": "Updated test reference from Hash.FormatHash to HashedData.FormatHash"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/identity/list.cs", "PLang/Runtime2/Engine/Providers/IIdentityProvider.cs", "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs", "PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs", "PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "Renamed identity.getAll → identity.list: file, class, action name, interface method, tests"
         }
       ],
       "after": {
         "status": "complete",
         "health": "All 1795 tests pass, 0 failures",
-        "notes": "10 files changed. All fixes follow OBP patterns: behavior on owner, navigate not decompose, interface not concrete type."
+        "notes": "7 OBP fixes + 1 naming consistency rename. Ready for code analyzer review."
       }
     }
   ]

@@ -1559,7 +1559,7 @@ index 00000000..305f8284
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs
 new file mode 100644
-index 00000000..dc7a459b
+index 00000000..b1bc1893
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs
 @@ -0,0 +1,400 @@
@@ -1845,7 +1845,7 @@ index 00000000..dc7a459b
 +    {
 +        SwapDataSource(_engine.System, new FailingGetAllDataSource());
 +
-+        var handler = new GetAll { Context = Ctx };
++        var handler = new list { Context = Ctx };
 +        var result = await handler.Run();
 +        await Assert.That(result.Success).IsTrue();
 +        var list = result.Value as List<IdentityVariable>;
@@ -1880,7 +1880,7 @@ index 00000000..dc7a459b
 +        // Store an unrecognizable value directly in DataSource
 +        await ds.Set("identity", "garbage", "just a string");
 +
-+        var handler = new GetAll { Context = Ctx };
++        var handler = new list { Context = Ctx };
 +        var result = await handler.Run();
 +        await Assert.That(result.Success).IsTrue();
 +
@@ -1965,7 +1965,7 @@ index 00000000..dc7a459b
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
 new file mode 100644
-index 00000000..183aecfd
+index 00000000..095cc23a
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/identity/IdentityHandlerTests.cs
 @@ -0,0 +1,605 @@
@@ -2227,7 +2227,7 @@ index 00000000..183aecfd
 +        var archiveH = new Archive { Context = Ctx, Name = "archived" };
 +        await archiveH.Run();
 +
-+        var handler = new GetAll { Context = Ctx };
++        var handler = new list { Context = Ctx };
 +        var result = await handler.Run();
 +        await Assert.That(result.Success).IsTrue();
 +
@@ -2245,7 +2245,7 @@ index 00000000..183aecfd
 +        var archiveH = new Archive { Context = Ctx, Name = "only" };
 +        await archiveH.Run();
 +
-+        var handler = new GetAll { Context = Ctx };
++        var handler = new list { Context = Ctx };
 +        var result = await handler.Run();
 +        await Assert.That(result.Success).IsTrue();
 +
@@ -4892,7 +4892,7 @@ index b51c27c1..331cef9b 100644
  
 diff --git a/PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs b/PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs
 new file mode 100644
-index 00000000..69a41990
+index 00000000..04c6d22a
 --- /dev/null
 +++ b/PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs
 @@ -0,0 +1,327 @@
@@ -5067,7 +5067,7 @@ index 00000000..69a41990
 +        return Data.Ok(identity);
 +    }
 +
-+    public async Task<Data> GetAllAsync(GetAll action)
++    public async Task<Data> ListAsync(list action)
 +    {
 +        var all = await LoadAllAsync(action);
 +        var active = all.Where(i => !i.IsArchived).ToList();
@@ -5303,7 +5303,7 @@ index 00000000..0f779a88
 +}
 diff --git a/PLang/Runtime2/Engine/Providers/IIdentityProvider.cs b/PLang/Runtime2/Engine/Providers/IIdentityProvider.cs
 new file mode 100644
-index 00000000..b9ab9e40
+index 00000000..23bbc12b
 --- /dev/null
 +++ b/PLang/Runtime2/Engine/Providers/IIdentityProvider.cs
 @@ -0,0 +1,23 @@
@@ -5326,7 +5326,7 @@ index 00000000..b9ab9e40
 +    Task<Data> UnarchiveAsync(Unarchive action);
 +    Task<Data> SetDefaultAsync(SetDefault action);
 +    Task<Data> RenameAsync(Rename action);
-+    Task<Data> GetAllAsync(GetAll action);
++    Task<Data> ListAsync(list action);
 +    Task<Data> ExportAsync(Export action);
 +    Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action);
 +}
@@ -6135,11 +6135,11 @@ index 00000000..d18a2fde
 +        return await provider.Value!.GetAsync(this);
 +    }
 +}
-diff --git a/PLang/Runtime2/modules/identity/getAll.cs b/PLang/Runtime2/modules/identity/getAll.cs
+diff --git a/PLang/Runtime2/modules/identity/list.cs b/PLang/Runtime2/modules/identity/list.cs
 new file mode 100644
-index 00000000..62f7b910
+index 00000000..bc842002
 --- /dev/null
-+++ b/PLang/Runtime2/modules/identity/getAll.cs
++++ b/PLang/Runtime2/modules/identity/list.cs
 @@ -0,0 +1,19 @@
 +using PLang.Runtime2.Engine.Memory;
 +using PLang.Runtime2.Engine.Providers;
@@ -6148,16 +6148,16 @@ index 00000000..62f7b910
 +
 +/// <summary>
 +/// Lists all non-archived identities.
-+/// PLang: get all identities, write to %identities%
++/// PLang: get identities, write to %identities%
 +/// </summary>
-+[Action("getAll")]
-+public partial class GetAll : IContext
++[Action("list")]
++public partial class list : IContext
 +{
 +    public async Task<Data> Run()
 +    {
 +        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
 +        if (!provider.Success) return provider;
-+        return await provider.Value!.GetAllAsync(this);
++        return await provider.Value!.ListAsync(this);
 +    }
 +}
 diff --git a/PLang/Runtime2/modules/identity/rename.cs b/PLang/Runtime2/modules/identity/rename.cs
