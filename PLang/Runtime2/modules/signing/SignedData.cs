@@ -115,30 +115,15 @@ public class SignedData
 
     /// <summary>
     /// Verifies this signed envelope from a verify action record. Navigates the action
-    /// for contracts, headers, timeoutMs, and original data. Engine provided by caller.
+    /// for contracts, headers, timeoutMs, and original data.
     /// </summary>
     public async Task<Data> VerifyAsync(verify action)
     {
         var engine = action.Context.Engine;
+        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
         var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
         var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
-        return await VerifyInternalAsync(engine, action.Contracts, action.Headers, effectiveTimeout, action.Data?.Value);
-    }
 
-    /// <summary>
-    /// Verifies with explicit parameters. Used by tests and ad-hoc verification.
-    /// </summary>
-    public async Task<Data> VerifyAsync(Engine.@this engine,
-        List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
-        long? timeoutMs, object? originalData = null)
-    {
-        return await VerifyInternalAsync(engine, requiredContracts, expectedHeaders, timeoutMs, originalData);
-    }
-
-    private async Task<Data> VerifyInternalAsync(Engine.@this engine,
-        List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
-        long? timeoutMs, object? originalData)
-    {
         // 1. Type check
         if (Type != "signature")
             return Data.FromError(new ActionError($"Invalid signed data type: '{Type}'", "InvalidType", 400));
@@ -148,13 +133,12 @@ public class SignedData
         if (!providerResult.Success) return providerResult;
 
         // 3. Timeout check (Created too old)
-        var effectiveTimeout = timeoutMs ?? 300_000; // 5 minutes default
-        var age = DateTimeOffset.UtcNow - Created;
+        var age = now - Created;
         if (age.TotalMilliseconds > effectiveTimeout)
             return Data.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
 
         // 4. Expiry check
-        if (Expires.HasValue && DateTimeOffset.UtcNow > Expires.Value)
+        if (Expires.HasValue && now > Expires.Value)
             return Data.FromError(new ActionError("Signature has expired", "Expired", 400));
 
         // 5. Nonce replay check
@@ -165,7 +149,7 @@ public class SignedData
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 6. Contract matching (contracts are optional — both null/empty is valid)
-        var hasRequired = requiredContracts != null && requiredContracts.Count > 0;
+        var hasRequired = action.Contracts != null && action.Contracts.Count > 0;
         var hasSigned = Contracts != null && Contracts.Count > 0;
 
         if (hasRequired != hasSigned)
@@ -173,19 +157,19 @@ public class SignedData
 
         if (hasRequired)
         {
-            var requiredSet = new HashSet<string>(requiredContracts!, StringComparer.OrdinalIgnoreCase);
+            var requiredSet = new HashSet<string>(action.Contracts!, StringComparer.OrdinalIgnoreCase);
             var signedSet = new HashSet<string>(Contracts!, StringComparer.OrdinalIgnoreCase);
             if (!requiredSet.SetEquals(signedSet))
                 return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
         }
 
         // 7. Header matching (only checked if expected headers provided)
-        if (expectedHeaders != null)
+        if (action.Headers != null)
         {
             if (Headers == null)
                 return Data.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
-            foreach (var kvp in expectedHeaders)
+            foreach (var kvp in action.Headers)
             {
                 if (!Headers.TryGetValue(kvp.Key, out var signedValue) ||
                     !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
@@ -197,33 +181,37 @@ public class SignedData
         if (string.IsNullOrEmpty(HashedData?.Hash))
             return Data.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
-        if (originalData != null)
+        if (action.Data?.Value != null)
         {
-            var rehash = await engine.RunAction<Hash, HashedData>(new Hash { Data = originalData, Algorithm = HashedData!.Algorithm }, engine.Context);
+            var rehash = await engine.RunAction<Hash, HashedData>(
+                new Hash { Data = action.Data.Value, Algorithm = HashedData!.Algorithm }, action.Context);
             if (!rehash.Success) return rehash;
             if (!string.Equals(rehash.Value!.Hash, HashedData.Hash, StringComparison.Ordinal))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 
         // 9. Signature verification
+        var verifyResult = Verify(providerResult.Value!);
+        if (!verifyResult.Success) return verifyResult;
+
+        return Data.Ok(true);
+    }
+
+    /// <summary>
+    /// Verifies the cryptographic signature on this envelope.
+    /// Mirrors Sign() — SignedData owns both sides.
+    /// </summary>
+    public Data Verify(ISigningProvider provider)
+    {
         if (string.IsNullOrEmpty(Signature))
             return Data.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         byte[] signatureBytes;
-        try
-        {
-            signatureBytes = Convert.FromBase64String(Signature);
-        }
-        catch (FormatException)
-        {
-            return Data.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400));
-        }
+        try { signatureBytes = Convert.FromBase64String(Signature); }
+        catch (FormatException) { return Data.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
 
         var signingBytes = ToSigningBytes();
-        var verifyResult = providerResult.Value!.Verify(signingBytes, signatureBytes, Identity);
-        if (!verifyResult.Success) return verifyResult;
-
-        return Data.Ok(true);
+        return provider.Verify(signingBytes, signatureBytes, Identity);
     }
 
     // --- Serialization ---

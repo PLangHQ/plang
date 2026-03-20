@@ -124,6 +124,7 @@ public class SigningSerializationTests
         var sd = CreateTestSignedData();
         sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "not-valid-base64!!!" };
         sd.Signature = Convert.ToBase64String(new byte[64]);
+        sd.Contracts = new List<string> { "C0" };
 
         // Verify should fail (hash mismatch at minimum) but not throw
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ser_" + Guid.NewGuid().ToString("N")[..8]);
@@ -131,7 +132,16 @@ public class SigningSerializationTests
         try
         {
             var engine = new PLang.Runtime2.Engine.@this(tempDir);
-            var result = await sd.VerifyAsync(engine, new List<string> { "C0" }, null, null);
+            var signedData = Data.Ok("test");
+            signedData.Signature = sd;
+
+            var action = new verify
+            {
+                Context = engine.Context,
+                Data = signedData,
+                Contracts = new List<string> { "C0" }
+            };
+            var result = await sd.VerifyAsync(action);
             await Assert.That(result.Success).IsFalse();
             await engine.DisposeAsync();
         }
