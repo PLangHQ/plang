@@ -98,4 +98,15 @@ public class SigningSerializationTests
         // Assert: JSON does not contain "verified" key
         await Assert.Fail("stub — implementation depends on signing module");
     }
+
+    [Test]
+    public async Task HashedData_InvalidBase64_VerifyRejects()
+    {
+        // Invalid base64 in HashedData.Hash must be caught during verification.
+        //
+        // Arrange: create SignedData with HashedData.Hash = "not-valid-base64!!!"
+        // Act: attempt to verify
+        // Assert: error returned (FormatException caught, not thrown)
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
 }

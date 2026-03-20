@@ -324,6 +324,21 @@ public class VerifyActionTests
 
     #endregion
 
+    #region Different Nonce Succeeds
+
+    [Test]
+    public async Task Verify_SecondDifferentNonce_Succeeds()
+    {
+        // Two different signed messages (different nonces) both verify — no false positive.
+        //
+        // Arrange: create identity, sign two different Data objects (each gets unique nonce)
+        // Act: verify first, then verify second
+        // Assert: both succeed (different nonces don't interfere)
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
     #region Error Handling
 
     [Test]

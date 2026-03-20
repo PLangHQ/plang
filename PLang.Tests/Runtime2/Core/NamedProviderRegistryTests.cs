@@ -232,5 +232,27 @@ public class NamedProviderRegistryTests
         await Assert.Fail("stub — implementation depends on NamedProviderRegistry");
     }
 
+    [Test]
+    public async Task SubEngine_LocalOverlay_ClearedOnPoolReturn()
+    {
+        // On pool return, sub-engine's local overlay is cleared.
+        //
+        // Arrange: Register "ed25519" on parent, sub-engine registers "mock" locally
+        // Act: return sub-engine to pool (clear local overlay)
+        // Assert: sub-engine no longer sees "mock", still sees parent's "ed25519"
+        await Assert.Fail("stub — implementation depends on NamedProviderRegistry");
+    }
+
+    [Test]
+    public async Task SubEngine_FallsBackToParent_WhenLocalOverlayLacksProvider()
+    {
+        // Sub-engine has local providers, but falls back to parent for a different one.
+        //
+        // Arrange: Register "ed25519" on parent, sub-engine registers "mock" locally (different name)
+        // Act: sub-engine Get<ISigningProvider>("ed25519") — not in local overlay
+        // Assert: returns parent's "ed25519" provider (fallback works even with local overlay present)
+        await Assert.Fail("stub — implementation depends on NamedProviderRegistry");
+    }
+
     #endregion
 }

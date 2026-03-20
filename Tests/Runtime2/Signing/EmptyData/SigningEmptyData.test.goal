@@ -1,0 +1,7 @@
+Start
+/ Test: sign empty/minimal data, verify succeeds
+- create identity testSigner
+- set %data% = {}
+- sign %data%
+- verify %data% with contracts ['C0']
+- assert %data.Signature.Verified.Success% is true, "empty data should sign and verify"
