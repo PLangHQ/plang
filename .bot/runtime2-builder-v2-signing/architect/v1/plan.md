@@ -7,7 +7,7 @@ Cryptographic signing and verification. Produces `SignedData` objects (extends `
 This piece also includes:
 - Upgrading `Engine.Providers` to support named providers with OBP identity
 - Extending `library.load` to discover and register provider interfaces
-- Adding a `remove` action on the provider registry (not library module)
+- Adding a `remove` action on `Engine.Providers` (provider concern, not library)
 - Moving key generation from identity to signing provider
 - Dedicated `NonceStore` for replay prevention (not step cache)
 
@@ -52,9 +52,9 @@ After loading a DLL, scan for types implementing `IProvider` (marker interface �
 
 Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
 
-### Provider removal
+### Provider removal (on Engine.Providers)
 
-Provider removal is a **provider concern**, not a library concern. Lives on the provider registry, not the library module.
+Provider removal is a **provider concern**. The `Engine.Providers` registry exposes `Remove<T>(string name)` which removes a provider from the list by name. PLang surface: handled as a `provider` action, not a `library` action.
 
 ```plang
 - remove provider ed25519 from signing
@@ -186,7 +186,7 @@ private static readonly JsonSerializerOptions SigningOptions = new()
 
 **Cross-platform compatibility:** `UnsafeRelaxedJsonEscaping` prevents System.Text.Json from escaping non-ASCII characters (e.g., `é` → `\u00E9`), matching JavaScript's `JSON.stringify` behavior. This ensures identical bytes when signing in .NET and verifying in the browser (or vice versa).
 
-**XSS safety:** The signing serialization uses `UnsafeRelaxedJsonEscaping` for byte-identical crypto input. When `SignedData` properties are accessed for display in web contexts, proper HTML escaping must be applied at the output boundary. `SignedData` should override output rendering to apply safe escaping — this is part of this piece, not deferred.
+**XSS safety:** `SigningOptions` with `UnsafeRelaxedJsonEscaping` is only used internally for sign/verify byte computation. It is never used for output rendering. When `SignedData` goes through `output/write` or any other output path, it uses the standard serializer. The unsafe escaping never leaks to output — no special handling needed.
 
 **Date format:** System.Text.Json defaults to ISO 8601 for `DateTimeOffset`, which matches runtime1's `"yyyy-MM-dd'T'HH:mm:ss.fff'Z'"` format. Verify this produces identical output in tests.
 
@@ -218,7 +218,7 @@ public class SignedData : Data
     public string Identity { get; set; }                   // public key (base64)
 
     [JsonPropertyOrder(7)]
-    public HashedData Hash { get; set; }                   // payload hash (POCO)
+    public HashedData HashedData { get; set; }             // payload hash (POCO)
 
     [JsonPropertyOrder(99)]
     public string? Signature { get; set; }                 // null during signing, set after
@@ -226,7 +226,7 @@ public class SignedData : Data
 ```
 
 - `Data.Type` = `"ed25519"` (algorithm name — intentionally polymorphic, not a PLang type descriptor)
-- `Hash` = the `HashedData` POCO (payload hash)
+- `HashedData` = the `HashedData` POCO (payload hash)
 
 Property order optimized for early rejection during verification:
 1. Type → reject if provider not found
@@ -236,12 +236,12 @@ Property order optimized for early rejection during verification:
 5. Contracts → reject if mismatch
 6. Headers → reject if mismatched
 7. Identity → needed for signature verify
-8. Hash → re-hash and compare (expensive)
+8. HashedData → re-hash and compare (expensive)
 9. Signature → `null` during sign/verify, populated after signing
 
 ### HashedData (unchanged — stays as POCO)
 
-No modification to `modules/crypto/types.cs`. `HashedData` remains a standalone POCO with `Algorithm`, `Format`, `Hash`. Referenced by `SignedData.Hash` as a property, not via `Data.Value` inheritance.
+No modification to `modules/crypto/types.cs`. `HashedData` remains a standalone POCO with `Algorithm`, `Format`, `Hash`. Referenced by `SignedData.HashedData` as a property, not via `Data.Value` inheritance.
 
 ---
 
@@ -262,7 +262,7 @@ No modification to `modules/crypto/types.cs`. `HashedData` remains a standalone 
 3. Hash payload via crypto module → `HashedData` (with `Algorithm`, `Format`, `Hash`)
 4. Build `SignedData`:
    - `Type` = provider name (e.g., `"ed25519"`)
-   - `Hash` = the `HashedData` POCO
+   - `HashedData` = the `HashedData` POCO
    - `Nonce` = GUID
    - `Created` = now
    - `Expires` = now + TTL (if provided)
@@ -302,7 +302,7 @@ No modification to `modules/crypto/types.cs`. `HashedData` remains a standalone 
 5. Check nonce hasn't been used (via `NonceStore`, key: nonce value, duration: `TimeoutSeconds`)
 6. Check contracts: if required contracts provided, must **exactly match** signed data's contract list (order-independent set equality). Contracts are part of the signed payload — any mismatch means a different agreement was signed.
 7. Check headers: if expected headers provided, must match signed headers
-8. Re-hash original data via crypto module → compare hash to `SignedData.Hash.Hash`
+8. Re-hash original data via crypto module → compare hash to `SignedData.HashedData.Hash`
 9. Verify cryptographic signature: extract `Signature`, set `Signature = null`, re-serialize `SignedData` to JSON bytes using `SigningOptions`, call `provider.Verify(bytes, signatureBytes, publicKey)`
 10. Return `Data.Ok(true)` or `Data.FromError(ActionError(...))` with specific error key for each failure reason
 
@@ -360,7 +360,7 @@ PLang/Runtime2/Engine/Providers/
 PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
-├── SignedData.cs                    — SignedData : Data (Hash property is HashedData POCO)
+├── SignedData.cs                    — SignedData : Data (HashedData property is HashedData POCO)
 ├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
 ├── NonceStore.cs                    — INonceStore + MemoryNonceStore
 ├── providers/
@@ -376,7 +376,7 @@ PLang/Runtime2/modules/signing/
 |------|---------|
 | `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler |
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler |
-| `PLang/Runtime2/modules/signing/SignedData.cs` | SignedData : Data (with `Hash` property typed `HashedData`) |
+| `PLang/Runtime2/modules/signing/SignedData.cs` | SignedData : Data (with `HashedData` property typed `HashedData`) |
 | `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings) |
 | `PLang/Runtime2/modules/signing/NonceStore.cs` | INonceStore interface + MemoryNonceStore default |
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
@@ -400,7 +400,7 @@ PLang/Runtime2/modules/signing/
 **sign handler:**
 - produces valid SignedData with correct Type, Nonce, Created, Identity
 - signature is cryptographically valid (verify roundtrip)
-- Hash is HashedData with correct hash
+- HashedData is HashedData POCO with correct hash
 - contracts default to ["C0"]
 - custom contracts are included
 - TTL sets Expires correctly
@@ -452,8 +452,7 @@ PLang/Runtime2/modules/signing/
 - `verify` checks timestamp, expiry, nonce, contracts (exact match), headers, data hash, and cryptographic signature
 - Signing uses null-signature pattern: Signature=null during serialization, set after signing (matches runtime1 and TypeScript)
 - Serialization uses `[JsonPropertyOrder]` (built-in System.Text.Json), shared `JsonSerializerOptions` with camelCase + `UnsafeRelaxedJsonEscaping` for cross-platform byte compatibility
-- `SignedData.Hash` is a `HashedData` POCO property — `HashedData` is NOT retrofitted to extend `Data`
-- `SignedData` applies safe HTML escaping when properties are accessed for output rendering
+- `SignedData.HashedData` is a `HashedData` POCO property — `HashedData` is NOT retrofitted to extend `Data`
 - Signing provider resolved from settings, verification resolved from message Type
 - Unknown provider on verify returns specific `ProviderNotFound` error
 - `Engine.Providers` upgraded to list-based registry: `List<IProvider>` per type, provider owns `Name` and `IsDefault` (OBP — same pattern as `IdentityVariable.IsDefault`)
