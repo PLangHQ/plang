@@ -197,7 +197,7 @@ public interface IKeyProvider : IProvider
 // In Engine/Providers/KeyPair.cs
 public record KeyPair(string PublicKey, string PrivateKey);
 
-// In modules/signing/providers/ISigningProvider.cs
+// In Engine/Providers/ISigningProvider.cs
 public interface ISigningProvider : IKeyProvider
 {
     byte[] Sign(byte[] data, string privateKey);
@@ -510,6 +510,7 @@ PLang/Runtime2/Engine/Providers/
 ├── IProvider.cs                     — marker interface (Name, IsDefault), all providers extend this
 ├── IKeyProvider.cs                  — key generation interface (extends IProvider)
 ├── KeyPair.cs                       — record KeyPair(string PublicKey, string PrivateKey)
+├── ISigningProvider.cs               — signing provider interface (extends IKeyProvider) — engine-level so Ed25519Provider can implement it without module dependency
 ├── Ed25519Provider.cs               — default Ed25519 provider (ISigningProvider) — engine-level, not signing-module-dependent
 PLang/Runtime2/modules/provider/
 ├── load.cs                          — load DLL, scan for IProvider, register on Engine.Providers
@@ -521,8 +522,6 @@ PLang/Runtime2/modules/signing/
 ├── verify.cs                        — verify action handler
 ├── SignedData.cs                    — standalone POCO (Algorithm, HashedData, Headers, Verified)
 ├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
-├── providers/
-│   └── ISigningProvider.cs          — signing provider interface (extends IKeyProvider)
 ```
 
 ---
@@ -538,7 +537,7 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
 | `PLang/Runtime2/Engine/Providers/IKeyProvider.cs` | Key generation interface (extends IProvider) |
 | `PLang/Runtime2/Engine/Providers/KeyPair.cs` | `record KeyPair(string PublicKey, string PrivateKey)` — named return type for `GenerateKeyPair()` |
-| `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Signing provider interface (extends IKeyProvider) |
+| `PLang/Runtime2/Engine/Providers/ISigningProvider.cs` | Signing provider interface (extends IKeyProvider) — engine-level so providers don't depend on signing module |
 | `PLang/Runtime2/Engine/Providers/Ed25519Provider.cs` | Default Ed25519 provider (engine-level — identity needs `IKeyProvider` without depending on signing module) |
 | `PLang/Runtime2/modules/provider/load.cs` | Load DLL, discover IProvider types, register on Engine.Providers |
 | `PLang/Runtime2/modules/provider/remove.cs` | Remove provider by name (error if default) |
