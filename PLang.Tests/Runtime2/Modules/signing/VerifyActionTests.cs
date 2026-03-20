@@ -339,17 +339,17 @@ public class VerifyActionTests
 
     #endregion
 
-    #region Explicit Re-verify
+    #region Tampered Type Field
 
     [Test]
-    public async Task Verify_ExplicitTwice_SecondResultOverwritesFirst()
+    public async Task Verify_TamperedType_ReturnsError()
     {
-        // Second explicit verify overwrites first result — no caching between explicit calls.
+        // SignedData.Type tampered from "signature" to something else → early rejection.
+        // Type is checked first in the verify chain per architect spec.
         //
-        // Arrange: create identity, sign data with contracts ["C0"]
-        // Act: verify with contracts ["C0"] (succeeds), then verify again with contracts ["C1"] (fails)
-        // Assert: first Verified.Success == true, second Verified.Success == false,
-        //         signedData.Verified reflects the second (most recent) result
+        // Arrange: create identity, sign data, then tamper signedData.Type = "hash"
+        // Act: verify
+        // Assert: result.Success == false, error indicates invalid type
         await Assert.Fail("stub — implementation depends on signing module");
     }
 

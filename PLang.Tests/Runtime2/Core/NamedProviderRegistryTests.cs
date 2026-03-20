@@ -206,6 +206,17 @@ public class NamedProviderRegistryTests
         await Assert.Fail("stub — implementation depends on NamedProviderRegistry");
     }
 
+    [Test]
+    public async Task List_AllInterfaces_ReturnsProvidersAcrossTypes()
+    {
+        // List() (untyped) returns providers across all interface types.
+        //
+        // Arrange: Register ISigningProvider "ed25519" and ICryptoProvider "keccak256"
+        // Act: List() — all providers
+        // Assert: count >= 2, both names present, different interface types
+        await Assert.Fail("stub — implementation depends on NamedProviderRegistry");
+    }
+
     #endregion
 
     #region Sub-engine scope

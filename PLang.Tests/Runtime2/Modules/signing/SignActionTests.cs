@@ -73,6 +73,19 @@ public class SignActionTests
 
     #endregion
 
+    [Test]
+    public async Task Sign_Created_IsApproximatelyNow()
+    {
+        // SignedData.Created should be approximately DateTimeOffset.UtcNow.
+        //
+        // Arrange: create identity, capture time before signing
+        // Act: sign data
+        // Assert: signedData.Created is within 5 seconds of captured time
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
     #region Contracts
 
     [Test]
