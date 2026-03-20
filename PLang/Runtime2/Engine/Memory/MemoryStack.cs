@@ -29,8 +29,8 @@ public class MemoryStack
     public MemoryStack()
     {
         // Register system variables
-        Put(new DynamicData("Now", () => DateTime.Now, Type.DateTime));
-        Put(new DynamicData("NowUtc", () => DateTime.UtcNow, Type.DateTime));
+        Put(new DynamicData("Now", () => DateTimeOffset.Now, Type.DateTime));
+        Put(new DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Type.DateTime));
         Put(new DynamicData("GUID", () => Guid.NewGuid(), Type.FromName("guid")));
     }
 

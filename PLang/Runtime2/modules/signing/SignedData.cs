@@ -68,8 +68,10 @@ public class SignedData
     /// data, contracts, headers, TTL, and provider name. Returns the final Data with
     /// Signature attached — ready to return from the handler.
     /// </summary>
-    internal static async Task<Data> CreateAsync(sign action, Engine.@this engine)
+    internal static async Task<Data> CreateAsync(sign action)
     {
+        var engine = action.Context.Engine;
+
         // Resolve signing provider: action param → settings → registry
         var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
         var providerName = action.Provider ?? signingSettings.Resolve("Provider", "ed25519");
@@ -85,13 +87,14 @@ public class SignedData
         var hash = await engine.RunAction<Hash, HashedData>(new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
+        var nonce = action.Context.MemoryStack.GetValue("GUID")!.ToString()!;
 
         var signedData = new SignedData
         {
             Type = "signature",
             Algorithm = providerResult.Value!.Name,
-            Nonce = Guid.NewGuid().ToString("N"),
+            Nonce = nonce,
             Created = now,
             Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
             Identity = identity.Value!.PublicKey,
@@ -114,8 +117,9 @@ public class SignedData
     /// Verifies this signed envelope from a verify action record. Navigates the action
     /// for contracts, headers, timeoutMs, and original data. Engine provided by caller.
     /// </summary>
-    public async Task<Data> VerifyAsync(verify action, Engine.@this engine)
+    public async Task<Data> VerifyAsync(verify action)
     {
+        var engine = action.Context.Engine;
         var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
         var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
         return await VerifyInternalAsync(engine, action.Contracts, action.Headers, effectiveTimeout, action.Data?.Value);

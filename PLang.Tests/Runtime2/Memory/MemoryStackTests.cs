@@ -28,8 +28,8 @@ public class MemoryStackTests
         await Task.Delay(10);
         var value2 = nowObj.Value;
 
-        await Assert.That(value1).IsTypeOf<DateTime>();
-        await Assert.That(value2).IsTypeOf<DateTime>();
+        await Assert.That(value1).IsTypeOf<DateTimeOffset>();
+        await Assert.That(value2).IsTypeOf<DateTimeOffset>();
     }
 
     [Test]

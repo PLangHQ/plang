@@ -196,7 +196,7 @@ public class ContextVariableTests
         // Now is a DynamicData registered by MemoryStack constructor
         var nowValue = ms.GetValue("Now");
         await Assert.That(nowValue).IsNotNull();
-        await Assert.That(nowValue).IsTypeOf<DateTime>();
+        await Assert.That(nowValue).IsTypeOf<DateTimeOffset>();
 
         // !goal is a DynamicData registered by RegisterContextVariables
         var context = _engine.Context;
