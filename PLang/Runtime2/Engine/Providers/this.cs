@@ -48,14 +48,15 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets a provider by name, or null if not found.
+    /// Gets a provider by name. Returns Data with error if not found.
     /// </summary>
-    public T? Get<T>(string name) where T : class, IProvider
+    public Data<T> Get<T>(string name) where T : class, IProvider
     {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return null;
+        if (!_providers.TryGetValue(typeof(T), out var typeDict) ||
+            !typeDict.TryGetValue(name, out var provider))
+            return Data<T>.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
 
-        return typeDict.TryGetValue(name, out var provider) ? (T)provider : null;
+        return Data<T>.Ok((T)provider);
     }
 
     /// <summary>

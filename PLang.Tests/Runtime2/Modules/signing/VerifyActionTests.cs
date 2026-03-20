@@ -73,7 +73,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ValidSignature_ReturnsSuccess()
     {
-        var signed = await SignHelper("hello");
+        var signed = await SignHelper("hello", contracts: new List<string> { "C0" });
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
         await Assert.That(result.Success).IsTrue();
@@ -96,7 +96,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_UnknownAlgorithm_Error()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         signed.Signature!.Algorithm = "unknown-algo";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -107,7 +107,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_Expired_Error()
     {
-        var signed = await SignHelper("test", expiresInMs: 50);
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expiresInMs: 50);
         await Task.Delay(100);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -118,7 +118,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_TimedOut_Error()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Tamper Created to distant past
         signed.Signature!.Created = DateTimeOffset.UtcNow.AddHours(-1);
 
@@ -130,7 +130,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_NonceReplay_Error()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // First verify — succeeds and caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(first.Success).IsTrue();
@@ -154,7 +154,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_HeaderMismatch_Error()
     {
-        var signed = await SignHelper("test", headers: new Dictionary<string, object> { { "method", "POST" } });
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, headers: new Dictionary<string, object> { { "method", "POST" } });
 
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C0" },
@@ -166,7 +166,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_DataHashMismatch_Error()
     {
-        var signed = await SignHelper(new { amount = 100 });
+        var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
         signed.Signature!.HashedData.Hash = Convert.ToBase64String(new byte[32]);
 
@@ -178,7 +178,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_SignatureInvalid_Error()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Flip first byte of signature
         var sigBytes = Convert.FromBase64String(signed.Signature!.Signature!);
         sigBytes[0] ^= 0xFF;
@@ -203,13 +203,12 @@ public class VerifyActionTests
     }
 
     [Test]
-    public async Task Verify_ContractsRequired_NullReturnsError()
+    public async Task Verify_NullContracts_BothNull_Succeeds()
     {
         var signed = await SignHelper("test");
 
         var result = await VerifyHelper(signed, contracts: null);
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
+        await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
@@ -228,7 +227,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ResolvesProviderFromAlgorithm_NotSettings()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         await Assert.That(signed.Signature!.Algorithm).IsEqualTo("ed25519");
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -242,7 +241,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_NoExpectedHeaders_SkipsCheck()
     {
-        var signed = await SignHelper("test", headers: new Dictionary<string, object> { { "method", "POST" } });
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, headers: new Dictionary<string, object> { { "method", "POST" } });
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, headers: null);
         await Assert.That(result.Success).IsTrue();
@@ -255,7 +254,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_FreshNonce_StoredInCache()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var nonce = signed.Signature!.Nonce;
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -273,7 +272,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_CreatedJustWithinTimeout_Succeeds()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 60_000);
         await Assert.That(result.Success).IsTrue();
     }
@@ -283,10 +282,19 @@ public class VerifyActionTests
     #region Empty Contracts
 
     [Test]
-    public async Task Verify_EmptyContractsList_ReturnsError()
+    public async Task Verify_EmptyContractsList_BothEmpty_Succeeds()
+    {
+        var signed = await SignHelper("test", contracts: new List<string>());
+        var result = await VerifyHelper(signed, contracts: new List<string>());
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task Verify_RequiredContracts_SignedHasNone_ReturnsError()
     {
         var signed = await SignHelper("test");
-        var result = await VerifyHelper(signed, contracts: new List<string>());
+        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
@@ -299,8 +307,8 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_SecondDifferentNonce_Succeeds()
     {
-        var signed1 = await SignHelper("hello");
-        var signed2 = await SignHelper("world");
+        var signed1 = await SignHelper("hello", contracts: new List<string> { "C0" });
+        var signed2 = await SignHelper("world", contracts: new List<string> { "C0" });
 
         var result1 = await VerifyHelper(signed1, contracts: new List<string> { "C0" });
         var result2 = await VerifyHelper(signed2, contracts: new List<string> { "C0" });
@@ -316,7 +324,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_TamperedType_ReturnsError()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         signed.Signature!.Type = "hash";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -329,9 +337,9 @@ public class VerifyActionTests
     #region Tampered Contracts on SignedData
 
     [Test]
-    public async Task Verify_SignedDataContractsNull_ReturnsError()
+    public async Task Verify_SignedDataContractsNull_RequiredNotNull_ReturnsError()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         signed.Signature!.Contracts = null;
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -346,7 +354,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_NoSignedHeaders_ExpectsHeaders_ReturnsHeaderMismatch()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
 
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C0" },
@@ -362,7 +370,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ExpiredAndNonceReplay_ReturnsExpiredNotNonceReplay()
     {
-        var signed = await SignHelper("test", expiresInMs: 50);
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expiresInMs: 50);
         // First verify — caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         // Might succeed or already expired
@@ -396,7 +404,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ProviderThrows_ReturnsDataFromError()
     {
-        var signed = await SignHelper("test");
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Register a throwing provider and point the signed data at it
         var throwing = new ThrowingProvider();
         _engine.Providers.Register<ISigningProvider>(throwing);
@@ -413,7 +421,7 @@ public class VerifyActionTests
         public string Name => "throwing";
         public bool IsDefault { get; set; }
         public KeyPair GenerateKeyPair() => throw new InvalidOperationException("fail");
-        public byte[] Sign(byte[] data, string privateKey) => throw new InvalidOperationException("fail");
-        public bool Verify(byte[] data, byte[] signature, string publicKey) => throw new InvalidOperationException("Verify failed");
+        public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
+        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
     }
 }

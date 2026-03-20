@@ -46,26 +46,19 @@ public class IdentityErrorPathTests
     // --- GetOrCreateDefaultAsync: auto-create save failure ---
 
     [Test]
-    public async Task GetOrCreateDefault_AutoCreateSaveFails_ThrowsInvalidOperationException()
+    public async Task GetOrCreateDefault_AutoCreateSaveFails_ReturnsError()
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
-        try
-        {
-            await IdentityVariable.GetOrCreateDefaultAsync(_engine);
-            // Should not reach here
-            Assert.Fail("Expected InvalidOperationException");
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Assert.That(ex.Message).Contains("Failed to save auto-created default identity");
-        }
+        var result = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
     [Test]
-    public async Task GetOrCreateDefault_PromoteSaveFails_ThrowsInvalidOperationException()
+    public async Task GetOrCreateDefault_PromoteSaveFails_ReturnsError()
     {
         // Create a non-default, non-archived identity first (using real DataSource)
         var create = new Create { Context = Ctx, Name = "candidate", SetAsDefault = false };
@@ -76,23 +69,17 @@ public class IdentityErrorPathTests
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
-        try
-        {
-            await IdentityVariable.GetOrCreateDefaultAsync(_engine);
-            Assert.Fail("Expected InvalidOperationException");
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Assert.That(ex.Message).Contains("Failed to promote identity 'candidate' to default");
-        }
+        var result = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
     // --- Handler catch blocks for InvalidOperationException ---
 
     [Test]
-    public async Task Get_NullName_SaveFails_ReturnsSaveError()
+    public async Task Get_NullName_SaveFails_ReturnsError()
     {
-        // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which throws
+        // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
@@ -101,15 +88,13 @@ public class IdentityErrorPathTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("SaveError");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(500);
-        await Assert.That(result.Error.Message).Contains("Failed to save");
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
     [Test]
-    public async Task Export_NullName_SaveFails_ReturnsSaveError()
+    public async Task Export_NullName_SaveFails_ReturnsError()
     {
-        // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which throws
+        // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
@@ -118,9 +103,7 @@ public class IdentityErrorPathTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("SaveError");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(500);
-        await Assert.That(result.Error.Message).Contains("Failed to save");
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
     [Test]

@@ -82,7 +82,7 @@ public class ProviderRegistryTests
 
         var removed = _engine.Providers.Remove<ICryptoProvider>("second");
         await Assert.That(removed.Success).IsTrue();
-        await Assert.That(_engine.Providers.Get<ICryptoProvider>("second")).IsNull();
+        await Assert.That(_engine.Providers.Get<ICryptoProvider>("second").Success).IsFalse();
     }
 
     [Test]

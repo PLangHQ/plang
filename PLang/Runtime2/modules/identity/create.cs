@@ -34,9 +34,9 @@ public partial class Create : IContext
         IKeyProvider? keyProvider;
         if (!string.IsNullOrEmpty(Provider))
         {
-            keyProvider = Context.Engine.Providers.Get<IKeyProvider>(Provider);
-            if (keyProvider == null)
-                return Data.FromError(new ActionError($"Key provider '{Provider}' not found", "ProviderNotFound", 404));
+            var providerResult = Context.Engine.Providers.Get<IKeyProvider>(Provider);
+            if (!providerResult.Success) return providerResult;
+            keyProvider = providerResult.Value;
         }
         else
         {

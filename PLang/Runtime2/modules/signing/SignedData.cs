@@ -45,7 +45,23 @@ public class SignedData
     [JsonPropertyOrder(10), JsonInclude]
     public string? Signature { get; internal set; }
 
-    // --- Creation (behavior owned by SignedData) ---
+    // --- Signing (behavior owned by SignedData) ---
+
+    /// <summary>
+    /// Signs this envelope using the given provider and private key.
+    /// Computes and stores the Signature field.
+    /// </summary>
+    public Data Sign(ISigningProvider provider, string privateKey)
+    {
+        var signingBytes = ToSigningBytes();
+        var signResult = provider.Sign(signingBytes, privateKey);
+        if (!signResult.Success) return signResult;
+
+        Signature = Convert.ToBase64String((byte[])signResult.Value!);
+        return Data.Ok(this);
+    }
+
+    // --- Creation ---
 
     /// <summary>
     /// Creates a signed envelope from a sign action record. Navigates the action for
@@ -54,36 +70,20 @@ public class SignedData
     /// </summary>
     internal static async Task<Data> CreateAsync(sign action, Engine.@this engine)
     {
-        var effectiveContracts = action.Contracts ?? new List<string> { "C0" };
-        if (effectiveContracts.Count == 0)
-            return Data.FromError(new ActionError("At least one contract is required", "ValidationError", 400));
+        // Resolve signing provider: action param → settings → registry
+        var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
+        var providerName = action.Provider ?? signingSettings.Resolve("Provider", "ed25519");
 
-        // Resolve signing provider: action param → settings → registry default
-        var settings = engine.Settings.For<Settings>(action.Context);
-        var providerName = action.Provider ?? settings.Resolve("provider", "ed25519");
-
-        var signingProvider = engine.Providers.Get<ISigningProvider>(providerName);
-        if (signingProvider == null && providerName == "ed25519")
-            signingProvider = new Ed25519Provider();
-        if (signingProvider == null)
-            return Data.FromError(new ActionError($"Signing provider '{providerName}' not found", "ProviderNotFound", 404));
+        var providerResult = engine.Providers.Get<ISigningProvider>(providerName);
+        if (!providerResult.Success) return providerResult;
 
         // Get identity
-        IdentityVariable identity;
-        try
-        {
-            identity = await IdentityVariable.GetOrCreateDefaultAsync(engine);
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(ActionError.FromException(ex, "IdentityError", 500));
-        }
+        var identityResult = await IdentityVariable.GetOrCreateDefaultAsync(engine);
+        if (!identityResult.Success) return identityResult;
 
         // Hash the data
-        var data = action.Data ?? new object();
-        var (bytes, format) = Hash.SerializeData(data);
-        var cryptoProvider = Hash.ResolveProvider(engine);
-        var hashResult = cryptoProvider.Hash(bytes, "sha256");
+        var hashAction = new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256", Context = action.Context };
+        var hashResult = await hashAction.Run();
         if (!hashResult.Success) return hashResult;
 
         var now = DateTimeOffset.UtcNow;
@@ -91,37 +91,19 @@ public class SignedData
         var signedData = new SignedData
         {
             Type = "signature",
-            Algorithm = signingProvider.Name,
+            Algorithm = providerResult.Value!.Name,
             Nonce = Guid.NewGuid().ToString("N"),
             Created = now,
             Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
-            Identity = identity.PublicKey,
-            Contracts = effectiveContracts,
+            Identity = identityResult.Value!.PublicKey,
+            Contracts = action.Contracts,
             Headers = action.Headers,
-            HashedData = new HashedData
-            {
-                Algorithm = "sha256",
-                Format = format,
-                Hash = Hash.FormatHash((byte[])hashResult.Value!)
-            }
+            HashedData = (HashedData)hashResult.Value!
         };
 
-        // Sign: serialize with null Signature, then populate
-        var signingBytes = signedData.ToSigningBytes();
+        var signResult = signedData.Sign(providerResult.Value, identityResult.Value.PrivateKey);
+        if (!signResult.Success) return signResult;
 
-        byte[] signatureBytes;
-        try
-        {
-            signatureBytes = signingProvider.Sign(signingBytes, identity.PrivateKey);
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(ActionError.FromException(ex, "SigningError", 500));
-        }
-
-        signedData.Signature = Convert.ToBase64String(signatureBytes);
-
-        // Return the final composed result — handler relays directly
         var result = Data.Ok(action.Data);
         result.Signature = signedData;
         return result;
@@ -135,8 +117,8 @@ public class SignedData
     /// </summary>
     public async Task<Data> VerifyAsync(verify action, Engine.@this engine)
     {
-        var settings = engine.Settings.For<Settings>(action.Context);
-        var effectiveTimeout = action.TimeoutMs ?? settings.Resolve<long>("timeoutMs", 300_000);
+        var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
+        var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
         return await VerifyInternalAsync(engine, action.Contracts, action.Headers, effectiveTimeout, action.Data?.Value);
     }
 
@@ -159,11 +141,8 @@ public class SignedData
             return Data.FromError(new ActionError($"Invalid signed data type: '{Type}'", "InvalidType", 400));
 
         // 2. Provider resolution from Algorithm field
-        var provider = engine.Providers.Get<ISigningProvider>(Algorithm);
-        if (provider == null && Algorithm == "ed25519")
-            provider = new Ed25519Provider();
-        if (provider == null)
-            return Data.FromError(new ActionError($"Signing provider '{Algorithm}' not found", "ProviderNotFound", 404));
+        var providerResult = engine.Providers.Get<ISigningProvider>(Algorithm);
+        if (!providerResult.Success) return providerResult;
 
         // 3. Timeout check (Created too old)
         var effectiveTimeout = timeoutMs ?? 300_000; // 5 minutes default
@@ -182,17 +161,20 @@ public class SignedData
         if (!nonceAdded)
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
-        // 6. Contract matching
-        if (requiredContracts == null || requiredContracts.Count == 0)
-            return Data.FromError(new ActionError("Required contracts must be specified", "ContractMismatch", 400));
+        // 6. Contract matching (contracts are optional — both null/empty is valid)
+        var hasRequired = requiredContracts != null && requiredContracts.Count > 0;
+        var hasSigned = Contracts != null && Contracts.Count > 0;
 
-        if (Contracts == null || Contracts.Count == 0)
-            return Data.FromError(new ActionError("Signed data has no contracts", "ContractMismatch", 400));
-
-        var requiredSet = new HashSet<string>(requiredContracts, StringComparer.OrdinalIgnoreCase);
-        var signedSet = new HashSet<string>(Contracts, StringComparer.OrdinalIgnoreCase);
-        if (!requiredSet.SetEquals(signedSet))
+        if (hasRequired != hasSigned)
             return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+
+        if (hasRequired)
+        {
+            var requiredSet = new HashSet<string>(requiredContracts!, StringComparer.OrdinalIgnoreCase);
+            var signedSet = new HashSet<string>(Contracts!, StringComparer.OrdinalIgnoreCase);
+            if (!requiredSet.SetEquals(signedSet))
+                return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+        }
 
         // 7. Header matching (only checked if expected headers provided)
         if (expectedHeaders != null)
@@ -214,13 +196,12 @@ public class SignedData
 
         if (originalData != null)
         {
-            var (bytes, _) = Hash.SerializeData(originalData);
-            var cryptoProvider = Hash.ResolveProvider(engine);
-            var rehashResult = cryptoProvider.Hash(bytes, HashedData!.Algorithm);
+            var rehashAction = new Hash { Data = originalData, Algorithm = HashedData!.Algorithm, Context = engine.Context };
+            var rehashResult = await rehashAction.Run();
             if (!rehashResult.Success) return rehashResult;
 
-            var expectedHash = Hash.FormatHash((byte[])rehashResult.Value!);
-            if (!string.Equals(expectedHash, HashedData.Hash, StringComparison.Ordinal))
+            var rehashed = (HashedData)rehashResult.Value!;
+            if (!string.Equals(rehashed.Hash, HashedData.Hash, StringComparison.Ordinal))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 
@@ -239,19 +220,8 @@ public class SignedData
         }
 
         var signingBytes = ToSigningBytes();
-
-        bool isValid;
-        try
-        {
-            isValid = provider.Verify(signingBytes, signatureBytes, Identity);
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
-        }
-
-        if (!isValid)
-            return Data.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+        var verifyResult = providerResult.Value!.Verify(signingBytes, signatureBytes, Identity);
+        if (!verifyResult.Success) return verifyResult;
 
         return Data.Ok(true);
     }

@@ -88,8 +88,8 @@ public class SignActionTests
     public async Task Sign_Identity_MatchesPublicKey()
     {
         // Create identity first to capture public key
-        var identity = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
-        var publicKey = identity.PublicKey;
+        var identityResult = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        var publicKey = identityResult.Value!.PublicKey;
 
         var result = await SignData("test data");
 
@@ -119,14 +119,12 @@ public class SignActionTests
     #region Contracts
 
     [Test]
-    public async Task Sign_DefaultContracts_IsC0()
+    public async Task Sign_NoContracts_ContractsIsNull()
     {
         var result = await SignData("test");
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Signature!.Contracts).IsNotNull();
-        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(1);
-        await Assert.That(result.Signature!.Contracts![0]).IsEqualTo("C0");
+        await Assert.That(result.Signature!.Contracts).IsNull();
     }
 
     [Test]
@@ -209,8 +207,9 @@ public class SignActionTests
         var signingBytes = sd.ToSigningBytes();
 
         var provider = new Ed25519Provider();
-        var isValid = provider.Verify(signingBytes, sigBytes, sd.Identity);
-        await Assert.That(isValid).IsTrue();
+        var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
+        await Assert.That(verifyResult.Success).IsTrue();
+        await Assert.That((bool)verifyResult.Value!).IsTrue();
     }
 
     #endregion
@@ -242,10 +241,12 @@ public class SignActionTests
     #region Empty Contracts
 
     [Test]
-    public async Task Sign_EmptyContracts_ReturnsError()
+    public async Task Sign_EmptyContracts_Succeeds()
     {
         var result = await SignData("test", contracts: new List<string>());
-        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Contracts).IsNotNull();
+        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(0);
     }
 
     #endregion
@@ -289,8 +290,8 @@ public class SignActionTests
         public MockSigningProvider(string name) { Name = name; }
 
         public KeyPair GenerateKeyPair() => new Ed25519Provider().GenerateKeyPair();
-        public byte[] Sign(byte[] data, string privateKey) { SignCalled = true; return new byte[64]; }
-        public bool Verify(byte[] data, byte[] signature, string publicKey) => true;
+        public Data Sign(byte[] data, string privateKey) { SignCalled = true; return Data.Ok(new byte[64]); }
+        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
     }
 
     private class ThrowingSigningProvider : ISigningProvider
@@ -298,8 +299,8 @@ public class SignActionTests
         public string Name => "throwing";
         public bool IsDefault { get; set; }
         public KeyPair GenerateKeyPair() => throw new InvalidOperationException("fail");
-        public byte[] Sign(byte[] data, string privateKey) => throw new InvalidOperationException("Sign failed");
-        public bool Verify(byte[] data, byte[] signature, string publicKey) => throw new InvalidOperationException("Verify failed");
+        public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
+        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
     }
 
     private class ThrowingKeyProvider : IKeyProvider

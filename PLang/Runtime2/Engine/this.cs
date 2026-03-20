@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.DataSource;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using System.Globalization;
@@ -220,6 +221,9 @@ public sealed class @this : IAsyncDisposable
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new EngineChannels(this);
+
+        // Register built-in providers
+        Providers.Register<ISigningProvider>(new Ed25519Provider());
     }
 
     /// <summary>

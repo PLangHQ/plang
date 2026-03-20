@@ -25,16 +25,10 @@ public partial class Get : IContext
         }
 
         // Get default identity — auto-create if none exist
-        IdentityVariable def;
-        try
-        {
-            def = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "SaveError", 500));
-        }
-        Context.Engine.System.Identity.Update(def);
-        return Data.Ok(def);
+        var defResult = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
+        if (!defResult.Success) return defResult;
+
+        Context.Engine.System.Identity.Update(defResult.Value);
+        return Data.Ok(defResult.Value);
     }
 }

@@ -48,8 +48,8 @@ public class ProviderModuleTests
 
         await Assert.That(result.Success).IsTrue();
         var retrieved = _engine.Providers.Get<ISigningProvider>("mock");
-        await Assert.That(retrieved).IsNotNull();
-        await Assert.That(retrieved!.Name).IsEqualTo("mock");
+        await Assert.That(retrieved.Success).IsTrue();
+        await Assert.That(retrieved.Value!.Name).IsEqualTo("mock");
     }
 
     [Test]
@@ -96,18 +96,17 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_engine.Providers.Get<ISigningProvider>("second")).IsNull();
+        await Assert.That(_engine.Providers.Get<ISigningProvider>("second").Success).IsFalse();
     }
 
     [Test]
     public async Task Remove_Default_ReturnsError()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("only"));
-
+        // ed25519 is registered as default at engine startup
         var action = new PLang.Runtime2.modules.provider.remove
         {
             Context = Ctx,
-            Name = "only",
+            Name = "ed25519",
             Type = "signing"
         };
         var result = await action.Run();
@@ -186,19 +185,20 @@ public class ProviderModuleTests
         _engine.Providers.Register<ISigningProvider>(second);
 
         var providers = _engine.Providers.List<ISigningProvider>();
-        await Assert.That(providers.Count).IsEqualTo(2);
-        await Assert.That(first.IsDefault).IsTrue();
+        await Assert.That(providers.Count).IsEqualTo(3); // ed25519 (built-in) + first + second
+        // ed25519 is default from engine startup
+        await Assert.That(first.IsDefault).IsFalse();
         await Assert.That(second.IsDefault).IsFalse();
     }
 
     [Test]
     public async Task List_FilteredByType_ReturnsOnlyMatchingInterface()
     {
-        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("ed25519"));
+        // ed25519 already registered at startup
         _engine.Providers.Register<ICryptoProvider>(new DefaultProvider());
 
         var signingProviders = _engine.Providers.List<ISigningProvider>();
-        await Assert.That(signingProviders.Count).IsEqualTo(1);
+        await Assert.That(signingProviders.Count).IsEqualTo(1); // only ed25519
         await Assert.That(signingProviders[0].Name).IsEqualTo("ed25519");
     }
 
@@ -212,7 +212,7 @@ public class ProviderModuleTests
         public MockSigningProvider(string name) { Name = name; }
 
         public KeyPair GenerateKeyPair() => new("mockPub", "mockPriv");
-        public byte[] Sign(byte[] data, string privateKey) => new byte[64];
-        public bool Verify(byte[] data, byte[] signature, string publicKey) => true;
+        public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
+        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
     }
 }

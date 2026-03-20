@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 
@@ -69,11 +70,11 @@ public sealed class IdentityVariable
     /// Gets the default non-archived identity, or auto-creates one if none exist.
     /// Single source of truth for default identity resolution — used by both Get handler and IdentityData.
     /// </summary>
-    public static async Task<IdentityVariable> GetOrCreateDefaultAsync(Engine.@this engine)
+    public static async Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(Engine.@this engine)
     {
         var all = await LoadAllAsync(engine);
         var def = all.Find(i => i.IsDefault && !i.IsArchived);
-        if (def != null) return def;
+        if (def != null) return Data<IdentityVariable>.Ok(def);
 
         // Promote an existing non-archived identity (e.g. one named "default" without IsDefault=true)
         var candidate = all.Find(i => !i.IsArchived);
@@ -82,15 +83,24 @@ public sealed class IdentityVariable
             candidate.IsDefault = true;
             var promoteResult = await candidate.SaveAsync(engine);
             if (!promoteResult.Success)
-                throw new InvalidOperationException($"Failed to promote identity '{candidate.Name}' to default: {promoteResult.Error?.Message}");
-            return candidate;
+                return Data<IdentityVariable>.FromError(promoteResult.Error!);
+            return Data<IdentityVariable>.Ok(candidate);
         }
 
         // No identities at all — auto-create
         IKeyProvider keyProvider = engine.Providers.Get<IKeyProvider>()
             ?? (IKeyProvider?)engine.Providers.Get<ISigningProvider>()
             ?? new Ed25519Provider();
-        var keys = keyProvider.GenerateKeyPair();
+
+        KeyPair keys;
+        try
+        {
+            keys = keyProvider.GenerateKeyPair();
+        }
+        catch (Exception ex)
+        {
+            return Data<IdentityVariable>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
+        }
         def = new IdentityVariable
         {
             Name = "default",
@@ -102,8 +112,8 @@ public sealed class IdentityVariable
         };
         var saveResult = await def.SaveAsync(engine);
         if (!saveResult.Success)
-            throw new InvalidOperationException($"Failed to save auto-created default identity: {saveResult.Error?.Message}");
-        return def;
+            return Data<IdentityVariable>.FromError(saveResult.Error!);
+        return Data<IdentityVariable>.Ok(def);
     }
 
     /// <summary>

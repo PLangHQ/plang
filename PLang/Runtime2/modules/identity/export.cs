@@ -25,16 +25,11 @@ public partial class Export : IContext
         }
         else
         {
-            try
-            {
-                identity = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Data.FromError(new ServiceError(ex.Message, "SaveError", 500));
-            }
+            var defResult = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
+            if (!defResult.Success) return defResult;
+            identity = defResult.Value;
         }
 
-        return Data.Ok(identity.PrivateKey);
+        return Data.Ok(identity!.PrivateKey);
     }
 }

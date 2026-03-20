@@ -1,3 +1,5 @@
+using PLang.Runtime2.Engine.Memory;
+
 namespace PLang.Runtime2.Engine.Providers;
 
 /// <summary>
@@ -5,6 +7,6 @@ namespace PLang.Runtime2.Engine.Providers;
 /// </summary>
 public interface ISigningProvider : IKeyProvider
 {
-    byte[] Sign(byte[] data, string privateKey);
-    bool Verify(byte[] data, byte[] signature, string publicKey);
+    Data Sign(byte[] data, string privateKey);
+    Data Verify(byte[] data, byte[] signature, string publicKey);
 }
