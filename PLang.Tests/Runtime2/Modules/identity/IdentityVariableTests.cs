@@ -37,7 +37,7 @@ public class IdentityVariableTests
         PrivateKey = "dGVzdHByaXZhdGVrZXk=",
         IsDefault = true,
         IsArchived = false,
-        Created = new DateTime(2026, 1, 15, 10, 30, 0, DateTimeKind.Utc)
+        Created = new DateTimeOffset(2026, 1, 15, 10, 30, 0, TimeSpan.Zero)
     };
 
     [Test]
@@ -74,7 +74,7 @@ public class IdentityVariableTests
         var data = new Data("identity", identity);
         var child = data.GetChild("Created");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsTypeOf<DateTime>();
+        await Assert.That(child!.Value).IsTypeOf<DateTimeOffset>();
     }
 
     [Test]

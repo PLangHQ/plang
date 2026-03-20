@@ -9,12 +9,12 @@ using PLangEngine = PLang.Runtime2.Engine.@this;
 namespace PLang.Tests.Runtime2.Modules.identity;
 
 /// <summary>
-/// Tests for identity module error paths identified by tester v2 and v3:
-/// - GetOrCreateDefaultAsync promote/auto-create save failures
+/// Tests for identity module error paths:
+/// - GetOrCreateDefaultAsync promote/auto-create save failures (via Get action)
 /// - Handler catch blocks (export.cs, get.cs, IdentityData.cs)
 /// - Handler save/remove failures (create, setDefault, rename, archive, unarchive)
-/// - LoadAllAsync when DataSource.GetAll fails
-/// - Deserialize with unrecognized value types
+/// - LoadAllAsync when DataSource.GetAll fails (via GetAll action)
+/// - Deserialize with unrecognized value types (via Get action)
 /// </summary>
 public class IdentityErrorPathTests
 {
@@ -43,7 +43,7 @@ public class IdentityErrorPathTests
 
     private PLangContext Ctx => _engine.System.Context;
 
-    // --- GetOrCreateDefaultAsync: auto-create save failure ---
+    // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 
     [Test]
     public async Task GetOrCreateDefault_AutoCreateSaveFails_ReturnsError()
@@ -52,7 +52,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
-        var result = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -69,12 +69,12 @@ public class IdentityErrorPathTests
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.DataSource));
 
-        var result = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
-    // --- Handler catch blocks for InvalidOperationException ---
+    // --- Handler catch blocks for save failures ---
 
     [Test]
     public async Task Get_NullName_SaveFails_ReturnsError()
@@ -116,7 +116,7 @@ public class IdentityErrorPathTests
         // Create a fresh IdentityData that hasn't resolved yet
         var identityData = new IdentityData(_engine);
 
-        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync throws InvalidOperationException
+        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync fails
         // → caught by IdentityData.ResolveDefault() → returns null (this IS the contract)
         var value = identityData.Value;
         await Assert.That(value).IsNull();
@@ -273,55 +273,56 @@ public class IdentityErrorPathTests
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
-    // --- LoadAllAsync when DataSource.GetAll fails ---
+    // --- LoadAllAsync when DataSource.GetAll fails (via GetAll action) ---
 
     [Test]
-    public async Task LoadAllAsync_DataSourceFails_ReturnsEmptyList()
+    public async Task GetAll_DataSourceFails_ReturnsEmptyList()
     {
         SwapDataSource(_engine.System, new FailingGetAllDataSource());
 
-        var result = await IdentityVariable.LoadAllAsync(_engine);
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result.Count).IsEqualTo(0);
+        var handler = new GetAll { Context = Ctx };
+        var result = await handler.Run();
+        await Assert.That(result.Success).IsTrue();
+        var list = result.Value as List<IdentityVariable>;
+        await Assert.That(list).IsNotNull();
+        await Assert.That(list!.Count).IsEqualTo(0);
     }
 
-    // --- Deserialize with unrecognized value type ---
+    // --- Deserialize with unrecognized value type (via Get action) ---
 
     [Test]
-    public async Task LoadAsync_UnrecognizedValueType_ReturnsNull()
+    public async Task Get_UnrecognizedValueType_ReturnsNotFound()
     {
         // Store a raw integer in the identity table — Deserialize won't recognize it
         var ds = _engine.System.DataSource;
         await ds.Set("identity", "weird", 42);
 
-        var result = await IdentityVariable.LoadAsync(_engine, "weird");
-        await Assert.That(result).IsNull();
+        var result = await new Get { Context = Ctx, Name = "weird" }.Run();
+        // Provider's LoadAsync returns null for unrecognized types → Get returns NotFound
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]
-    public async Task LoadAllAsync_MixedValues_SkipsUnrecognized()
+    public async Task GetAll_MixedValues_SkipsUnrecognized()
     {
         var ds = _engine.System.DataSource;
 
-        // Store a valid identity
-        var identity = new IdentityVariable
-        {
-            Name = "valid",
-            PublicKey = "dGVzdA==",
-            PrivateKey = "dGVzdA==",
-            IsDefault = true,
-            IsArchived = false,
-            Created = DateTime.UtcNow
-        };
-        await identity.SaveAsync(_engine);
+        // Store a valid identity via Create action
+        var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = true };
+        await create.Run();
 
-        // Store an unrecognizable value
+        // Store an unrecognizable value directly in DataSource
         await ds.Set("identity", "garbage", "just a string");
 
-        var all = await IdentityVariable.LoadAllAsync(_engine);
+        var handler = new GetAll { Context = Ctx };
+        var result = await handler.Run();
+        await Assert.That(result.Success).IsTrue();
+
+        var list = result.Value as List<IdentityVariable>;
         // Should contain the valid identity but skip the garbage
-        await Assert.That(all.Count).IsEqualTo(1);
-        await Assert.That(all[0].Name).IsEqualTo("valid");
+        await Assert.That(list!.Count).IsEqualTo(1);
+        await Assert.That(list[0].Name).IsEqualTo("valid");
     }
 
     // --- Helpers ---
@@ -339,7 +340,6 @@ public class IdentityErrorPathTests
 
     /// <summary>
     /// DataSource wrapper that delegates all operations except Set, which always fails.
-    /// Used to trigger save-failure paths in GetOrCreateDefaultAsync.
     /// </summary>
     private class FailingSaveDataSource : IDataSource
     {
@@ -355,12 +355,11 @@ public class IdentityErrorPathTests
         public Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
         public Task<Data> Exists(string table, string key) => _inner.Exists(table, key);
         public Task<Data> Tables() => _inner.Tables();
-        public void Dispose() { } // Don't dispose inner — test cleanup handles it
+        public void Dispose() { }
     }
 
     /// <summary>
     /// DataSource wrapper that delegates all operations except Remove, which always fails.
-    /// Used to trigger remove-failure path in rename handler.
     /// </summary>
     private class FailingRemoveDataSource : IDataSource
     {
@@ -381,7 +380,6 @@ public class IdentityErrorPathTests
 
     /// <summary>
     /// DataSource where GetAll always returns an error.
-    /// Used to test LoadAllAsync error path.
     /// </summary>
     private class FailingGetAllDataSource : IDataSource
     {

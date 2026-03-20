@@ -93,8 +93,10 @@ public class IdentityKeyProviderTests
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
 
-        // Load it back
-        var loaded = await IdentityVariable.LoadAsync(_engine, "stored-test");
+        // Load it back via Get action
+        var getResult = await new Get { Context = Ctx, Name = "stored-test" }.Run();
+        await Assert.That(getResult.Success).IsTrue();
+        var loaded = getResult.Value as IdentityVariable;
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.PublicKey).IsEqualTo("stored-pub");
         await Assert.That(loaded.PrivateKey).IsEqualTo("stored-priv");

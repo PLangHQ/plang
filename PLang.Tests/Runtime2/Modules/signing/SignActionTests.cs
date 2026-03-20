@@ -88,8 +88,8 @@ public class SignActionTests
     public async Task Sign_Identity_MatchesPublicKey()
     {
         // Create identity first to capture public key
-        var identityResult = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
-        var publicKey = identityResult.Value!.PublicKey;
+        var identityResult = await new Get { Context = Ctx, Name = null }.Run();
+        var publicKey = (identityResult.Value as IdentityVariable)!.PublicKey;
 
         var result = await SignData("test data");
 
@@ -269,7 +269,7 @@ public class SignActionTests
     public async Task Sign_ProviderThrows_ReturnsDataFromError()
     {
         // Ensure identity exists first
-        await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        await new Get { Context = Ctx, Name = null }.Run();
 
         var throwing = new ThrowingSigningProvider();
         _engine.Providers.Register<ISigningProvider>(throwing);

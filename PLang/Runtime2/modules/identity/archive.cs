@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.identity;
 
@@ -15,22 +16,9 @@ public partial class Archive : IContext
 
     public async Task<Data> Run()
     {
-        var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
-        if (identity == null)
-            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
-
-        if (identity.IsDefault)
-            return Data.FromError(new ActionError(
-                "Cannot archive the default identity. Set a different default first.",
-                "CannotArchiveDefault", 400));
-
-        if (identity.IsArchived)
-            return Data.Ok();
-
-        identity.IsArchived = true;
-        var result = await identity.SaveAsync(Context.Engine);
-        if (!result.Success) return result;
-
-        return Data.Ok();
+        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
+        if (provider == null)
+            return Data.FromError(new ActionError("No identity provider registered", "NoProvider", 500));
+        return await provider.ArchiveAsync(this);
     }
 }

@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.identity;
 
@@ -15,21 +16,9 @@ public partial class Export : IContext
 
     public async Task<Data> Run()
     {
-        IdentityVariable? identity;
-
-        if (Name != null)
-        {
-            identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
-            if (identity == null)
-                return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
-        }
-        else
-        {
-            var defResult = await IdentityVariable.GetOrCreateDefaultAsync(Context.Engine);
-            if (!defResult.Success) return defResult;
-            identity = defResult.Value;
-        }
-
-        return Data.Ok(identity!.PrivateKey);
+        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
+        if (provider == null)
+            return Data.FromError(new ActionError("No identity provider registered", "NoProvider", 500));
+        return await provider.ExportAsync(this);
     }
 }

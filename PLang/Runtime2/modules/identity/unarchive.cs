@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.identity;
 
@@ -15,17 +16,9 @@ public partial class Unarchive : IContext
 
     public async Task<Data> Run()
     {
-        var identity = await IdentityVariable.LoadAsync(Context.Engine, Name);
-        if (identity == null)
-            return Data.FromError(new ActionError($"Identity '{Name}' not found", "NotFound", 404));
-
-        if (!identity.IsArchived)
-            return Data.Ok(identity);
-
-        identity.IsArchived = false;
-        var result = await identity.SaveAsync(Context.Engine);
-        if (!result.Success) return result;
-
-        return Data.Ok(identity);
+        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
+        if (provider == null)
+            return Data.FromError(new ActionError("No identity provider registered", "NoProvider", 500));
+        return await provider.UnarchiveAsync(this);
     }
 }

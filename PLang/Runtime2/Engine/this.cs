@@ -224,6 +224,7 @@ public sealed class @this : IAsyncDisposable
 
         // Register built-in providers
         Providers.Register<ISigningProvider>(new Ed25519Provider());
+        Providers.Register<IIdentityProvider>(new DefaultIdentityProvider());
     }
 
     /// <summary>

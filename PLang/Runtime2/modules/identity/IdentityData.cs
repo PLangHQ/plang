@@ -1,9 +1,10 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.identity;
 
 /// <summary>
-/// Data subclass that lazily resolves the default identity from System DataSource.
+/// Data subclass that lazily resolves the default identity via IIdentityProvider.
 /// Lives on Actor as a property. Handlers call Update() after changing the default.
 /// Auto-creates a "default" identity if none exist on first access.
 /// </summary>
@@ -49,7 +50,13 @@ public class IdentityData : Data
     /// </remarks>
     private IdentityVariable? ResolveDefault()
     {
-        var result = IdentityVariable.GetOrCreateDefaultAsync(_engine).GetAwaiter().GetResult();
+        var provider = _engine.Providers.Get<IIdentityProvider>();
+        if (provider is not DefaultIdentityProvider defaultProvider)
+            return null;
+
+        // Use a minimal Get action to navigate through the provider
+        var action = new Get { Context = _engine.Context };
+        var result = defaultProvider.GetOrCreateDefaultAsync(action).GetAwaiter().GetResult();
         return result.Success ? result.Value : null;
     }
 }
