@@ -34,9 +34,11 @@ Same upgrade applies to `ICryptoProvider` — add `Name` property, register by n
 
 ### library.load extension
 
-After loading a DLL, scan for known provider interfaces (`ISigningProvider`, `ICryptoProvider`). If found, instantiate via parameterless constructor and register on `Engine.Providers` with the provider's `Name`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
+After loading a DLL, scan for types implementing `IProvider` (marker interface with `Name` property — all provider interfaces extend it). If found, instantiate via parameterless constructor and register on `Engine.Providers` with the provider's `Name`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
 
 Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
+
+**Provider interface hierarchy:** `IProvider` is the marker. `ISigningProvider : IProvider` and `ICryptoProvider : IProvider` extend it. `library.load` only scans for `IProvider` — no hardcoded list of specific interfaces.
 
 PLang developer flow:
 ```plang
@@ -78,9 +80,15 @@ Each step only changes the property it touches.
 ## Provider interface
 
 ```csharp
-public interface ISigningProvider
+// In Engine/Providers/IProvider.cs
+public interface IProvider
 {
-    string Name { get; }  // "ed25519", "ecdsa-p256"
+    string Name { get; }
+}
+
+// In modules/signing/providers/ISigningProvider.cs
+public interface ISigningProvider : IProvider
+{
     (string publicKey, string privateKey) GenerateKeyPair();
     byte[] Sign(byte[] data, string privateKey);
     bool Verify(byte[] data, byte[] signature, string publicKey);
@@ -165,7 +173,7 @@ Implement as a custom `System.Text.Json.Serialization.JsonConverter<object>` (or
 ### SignedData : Data
 
 ```csharp
-[PropertyOrder("Type", "Nonce", "Created", "Expires", "Contracts", "Headers", "Identity", "Value", "Signature")]
+[PropertyOrder("Type", "Nonce", "Created", "Expires", "Contracts", "Headers", "Identity", "Value")]
 public class SignedData : Data
 {
     public string Nonce { get; set; }                      // GUID string
@@ -174,14 +182,14 @@ public class SignedData : Data
     public List<string> Contracts { get; set; }            // ["C0"]
     public Dictionary<string, object>? Headers { get; set; }
     public string Identity { get; set; }                   // public key (base64)
-    public string Signature { get; set; }                  // signature (base64)
+    public string Signature { get; set; }                  // signature (base64), NOT in PropertyOrder — serialized separately
 }
 ```
 
 - `Data.Type` = `"ed25519"` (algorithm name)
 - `Data.Value` = the `HashedData` (payload hash)
 
-Serialization order optimized for early rejection:
+Serialization order (what gets signed) optimized for early rejection:
 1. Type → reject if provider not found
 2. Nonce → reject if replayed
 3. Created → reject if too old
@@ -190,21 +198,24 @@ Serialization order optimized for early rejection:
 6. Headers → reject if mismatched
 7. Identity → needed for signature verify
 8. Value → re-hash and compare (expensive)
-9. Signature → crypto verify (most expensive, runs last)
+
+`Signature` is NOT in the `[PropertyOrder]` — it's the output of signing the above 8 fields. Both signer and verifier serialize the same 8 fields, producing identical bytes. Signature is stored/transmitted alongside but outside the signed payload.
 
 ### HashedData : Data (piece 2 retrofit)
 
 ```csharp
-[PropertyOrder("Type", "Hash")]
+[PropertyOrder("Type", "Format", "Hash")]
 public class HashedData : Data
 {
-    public string Hash { get; set; }  // hex string
+    public string Format { get; set; }  // "raw" (byte arrays) or "json" (everything else)
+    public string Hash { get; set; }    // hex string
 }
 ```
 
 - `Data.Type` = `"keccak256"` (algorithm name)
+- `Format` records how the input was serialized before hashing — required for verification (verifier must serialize the same way to reproduce the hash)
 
-Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
+Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`. Drops `Algorithm` (replaced by `Data.Type`), keeps `Format`.
 
 ---
 
@@ -232,7 +243,7 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
    - `Contracts` = provided or `["C0"]`
    - `Headers` = provided or null
    - `Identity` = public key (base64)
-5. Serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (excludes `Signature` — it's not listed in the signing payload order, or use a separate order list without it)
+5. Serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (Signature is not in PropertyOrder, so it's naturally excluded)
 6. `provider.Sign(jsonBytes, privateKey)` → signature bytes
 7. Set `Signature` = base64 of signature bytes
 8. Return the `SignedData`
@@ -282,11 +293,17 @@ Uses `Engine.Cache` (already exists). Key: `signing_nonce_{nonce}`. Duration: `T
 
 On verify: check if nonce exists in cache → yes = reject (replay), no = store with expiry.
 
+**Known limitation:** `MemoryStepCache` is per-engine-instance (new `MemoryCache` per instance with unique GUID). If Engine is pooled, nonce replay protection doesn't work across requests. Tracked in todos — the fix is to make the cache app-level shared, but that's out of scope for this piece.
+
 ---
 
 ## Contracts
 
 Pass-through `List<string>`, defaults to `["C0"]`. On verify, if the verifier requires contracts, **all required must be present** in the signed data's contract list. The signing module assigns no meaning to contract values — they're opaque strings.
+
+### Header serialization order
+
+`Headers` dictionary keys are sorted using `StringComparer.Ordinal` (byte-order, culture-invariant) for deterministic serialization. This is a cryptographic requirement — culture-dependent sorting would produce different bytes on different machines.
 
 ---
 
@@ -303,12 +320,18 @@ Key generation moves from `identity/KeyGenerator.cs` to `ISigningProvider.Genera
 ## Module structure
 
 ```
+PLang/Runtime2/Engine/Providers/
+├── IProvider.cs                     — marker interface (Name), all providers extend this
+PLang/Runtime2/Engine/Serialization/
+├── PropertyOrderAttribute.cs        — [PropertyOrder] attribute
+├── PropertyOrderConverter.cs        — JsonConverterFactory for deterministic serialization
 PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
+├── SignedData.cs                    — SignedData : Data
 ├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
 ├── providers/
-│   ├── ISigningProvider.cs          — provider interface
+│   ├── ISigningProvider.cs          — signing provider interface (extends IProvider)
 │   └── Ed25519Provider.cs           — default Ed25519 via NSec
 ```
 
@@ -322,10 +345,11 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler |
 | `PLang/Runtime2/modules/signing/SignedData.cs` | SignedData : Data |
 | `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings) |
-| `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Provider interface |
+| `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name property) — all providers extend this |
+| `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Signing provider interface (extends IProvider) |
 | `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
-| `PLang/Runtime2/modules/PropertyOrderAttribute.cs` | [PropertyOrder] attribute for deterministic serialization |
-| `PLang/Runtime2/modules/PropertyOrderConverter.cs` | JsonConverterFactory for [PropertyOrder] serialization |
+| `PLang/Runtime2/Engine/Serialization/PropertyOrderAttribute.cs` | [PropertyOrder] attribute for deterministic serialization |
+| `PLang/Runtime2/Engine/Serialization/PropertyOrderConverter.cs` | JsonConverterFactory for [PropertyOrder] serialization |
 
 ## Files to modify
 
@@ -335,8 +359,8 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/library/load.cs` | Discover and register provider interfaces from loaded DLLs |
 | `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to signing provider |
 | `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
-| `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data. **Breaking change:** current `HashedData` is a standalone POCO with `Algorithm`, `Format`, `Hash`. New: extends `Data`, uses `Data.Type` instead of `Algorithm`, drops `Format`. Update all consumers: `hash.cs` (currently returns `Data.Ok(HashedData {...})` — now returns the `HashedData` directly since it *is* a `Data`), `verify.cs` (reads `Algorithm` → reads `Type`) |
-| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Add Name property |
+| `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data. **Breaking change:** current `HashedData` is a standalone POCO with `Algorithm`, `Format`, `Hash`. New: extends `Data`, uses `Data.Type` instead of `Algorithm`, keeps `Format`. Update all consumers: `hash.cs` (currently returns `Data.Ok(HashedData {...})` — now returns the `HashedData` directly since it *is* a `Data`), `verify.cs` (reads `Algorithm` → reads `Type`) |
+| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Extend `IProvider` (adds `Name` property), register by name |
 
 ## Test expectations
 

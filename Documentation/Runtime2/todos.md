@@ -340,6 +340,14 @@ Target audiences:
 
 ---
 
+## MemoryStepCache is Per-Instance — Nonce Replay Broken
+**Date:** 2026-03-20
+**Context:** Signing module architect plan review. `MemoryStepCache` creates a new `MemoryCache` per instance (`Guid.NewGuid()`). If Engine is pooled (one per request), each request gets its own cache, so nonce replay detection won't work across requests.
+
+**Fix:** `ICache` for nonce replay (and likely other cross-request concerns) needs a shared/static backing store, or the cache instance needs to be shared across engine instances within the same app. Check whether `Engine.Cache` is the right level — might need an app-level cache separate from per-engine step caching.
+
+---
+
 ## LLM Rewrites Literal Values in Assertions
 **Date:** 2026-03-07
 **Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".
