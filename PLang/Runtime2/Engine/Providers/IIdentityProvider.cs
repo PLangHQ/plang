@@ -17,7 +17,7 @@ public interface IIdentityProvider : IProvider
     Task<Data> UnarchiveAsync(Unarchive action);
     Task<Data> SetDefaultAsync(SetDefault action);
     Task<Data> RenameAsync(Rename action);
-    Task<Data> GetAllAsync(GetAll action);
+    Task<Data> ListAsync(list action);
     Task<Data> ExportAsync(Export action);
     Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action);
 }

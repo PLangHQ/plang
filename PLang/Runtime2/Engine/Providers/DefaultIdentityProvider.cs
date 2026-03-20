@@ -169,7 +169,7 @@ public class DefaultIdentityProvider : IIdentityProvider
         return Data.Ok(identity);
     }
 
-    public async Task<Data> GetAllAsync(GetAll action)
+    public async Task<Data> ListAsync(list action)
     {
         var all = await LoadAllAsync(action);
         var active = all.Where(i => !i.IsArchived).ToList();

@@ -280,7 +280,7 @@ public class IdentityErrorPathTests
     {
         SwapDataSource(_engine.System, new FailingGetAllDataSource());
 
-        var handler = new GetAll { Context = Ctx };
+        var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
         var list = result.Value as List<IdentityVariable>;
@@ -315,7 +315,7 @@ public class IdentityErrorPathTests
         // Store an unrecognizable value directly in DataSource
         await ds.Set("identity", "garbage", "just a string");
 
-        var handler = new GetAll { Context = Ctx };
+        var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 

@@ -256,7 +256,7 @@ public class IdentityHandlerTests
         var archiveH = new Archive { Context = Ctx, Name = "archived" };
         await archiveH.Run();
 
-        var handler = new GetAll { Context = Ctx };
+        var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
@@ -274,7 +274,7 @@ public class IdentityHandlerTests
         var archiveH = new Archive { Context = Ctx, Name = "only" };
         await archiveH.Run();
 
-        var handler = new GetAll { Context = Ctx };
+        var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
