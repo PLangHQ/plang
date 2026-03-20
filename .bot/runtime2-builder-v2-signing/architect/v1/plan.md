@@ -236,7 +236,7 @@ public class Ed25519Provider : ISigningProvider
 
 Uses built-in `[JsonPropertyOrder]` from System.Text.Json — no custom attribute or converter needed. This matches the runtime1 approach (`[JsonProperty(Order = N)]` in Newtonsoft.Json) and JavaScript's object literal property ordering.
 
-**Reference implementation:** Follow the signing process from runtime1 (`PLang/Services/SigningService/PLangSigningService.cs`) for the serialization pattern — specifically `JsonSerializeSignedMessageToBytes` which serializes with `NullValueHandling.Include`, camelCase, and date format `"yyyy-MM-dd'T'HH:mm:ss.fff'Z'"`. The runtime2 implementation uses System.Text.Json instead of Newtonsoft.Json but must produce byte-identical output for cross-platform verification.
+**Reference implementation:** Follow the signing process from runtime1 (`PLang/Services/SigningService/PLangSigningService.cs`) for the serialization pattern — specifically `JsonSerializeSignedMessageToBytes` which serializes with `NullValueHandling.Include` and camelCase. The runtime2 implementation uses System.Text.Json instead of Newtonsoft.Json.
 
 ### Signing pattern (same as runtime1)
 
@@ -270,7 +270,7 @@ private static readonly JsonSerializerOptions SigningOptions = new()
 
 **XSS safety:** `SigningOptions` with `UnsafeRelaxedJsonEscaping` is only used internally for sign/verify byte computation. It is never used for output rendering. When `SignedData` goes through `output/write` or any other output path, it uses the standard serializer. The unsafe escaping never leaks to output — no special handling needed.
 
-**Date format:** System.Text.Json defaults to ISO 8601 for `DateTimeOffset`, which matches runtime1's `"yyyy-MM-dd'T'HH:mm:ss.fff'Z'"` format. Verify this produces identical output in tests.
+**Date format:** Use standard ISO 8601 — System.Text.Json's default for `DateTimeOffset`. This is the universal standard that JavaScript's `Date.toISOString()` also produces. No custom format string needed. Runtime1 used a custom format string; runtime2 uses the standard.
 
 **Data payload serialization:** When hashing the Data's payload (step 3 of the sign flow), use the same `SigningOptions` for cross-platform consistency. The payload hash must be reproducible by any verifier regardless of platform.
 
@@ -318,7 +318,7 @@ public class SignedData
     /// Data.FromError(...) = failed with specific reason (key: "Expired", "NonceReplay", etc.)
     /// </summary>
     [JsonIgnore]
-    public Data? Verified { get; internal set; }
+    public Data? Verified { get; set; }
 }
 ```
 
@@ -326,7 +326,7 @@ public class SignedData
 - `Algorithm` = `"ed25519"` — the signing algorithm / provider name. Used by verification to find the right provider.
 - `HashedData` = the `HashedData` POCO (payload hash, base64-encoded). `HashedData.Type` = `"hash"`
 - `Headers` = `Dictionary<string, string>?` — simple string-to-string (e.g., method, url). No complex object values.
-- `Verified` = verification result as `Data?`. `[JsonIgnore]` — never serialized, local to the receiver. `internal set` — only the verify handler sets this.
+- `Verified` = verification result as `Data?`. `[JsonIgnore]` — never serialized, local to the receiver. Public setter — PLang developers can read and write it (e.g., `%data.Signature.Verified%`).
 
 Property order optimized for early rejection during verification:
 1. Type → confirm it's a signature
@@ -533,7 +533,7 @@ PLang/Runtime2/modules/signing/
 |------|---------|
 | `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler — builds SignedData, sets `data.Signature` |
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler — checks all fields, sets `data.Signature.Verified` |
-| `PLang/Runtime2/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, `internal set`) |
+| `PLang/Runtime2/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, public setter) |
 | `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutSeconds |
 | `PLang/Runtime2/modules/signing/NonceStore.cs` | INonceStore interface + MemoryNonceStore (atomic, MemoryCache-backed, shared across engine pool) |
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
@@ -629,7 +629,7 @@ PLang/Runtime2/modules/signing/
 - `sign` action builds `SignedData` POCO and sets it on `data.Signature`. `SignedData` is a standalone POCO, **not** a `Data` subclass
 - `Data.Signature` changed from `byte[]?` to `SignedData?` in `Data.Envelope.cs`. `Data.Verified` and `Data.SetVerified()` removed — verification state lives on `SignedData.Verified` as `Data?`
 - `SignedData.Type` = `"signature"`, `HashedData.Type` = `"hash"` — distinct type identifiers
-- `SignedData.Verified` = `Data?` with `[JsonIgnore]` and `internal set` — `Data.Ok(true)` for success, `Data.FromError(...)` with specific error key for each failure reason
+- `SignedData.Verified` = `Data?` with `[JsonIgnore]` and public setter — `Data.Ok(true)` for success, `Data.FromError(...)` with specific error key for each failure reason. PLang developers can access via `%data.Signature.Verified%`
 - `verify` checks timestamp, expiry, nonce (atomic), contracts (exact match with per-contract error), data hash, and cryptographic signature. Sets `data.Signature.Verified` with result.
 - **Contracts always required on verify** — verifier must declare expected contracts, each checked individually for early rejection
 - Signing uses null-signature pattern: Signature=null during serialization, set after signing (matches runtime1)
