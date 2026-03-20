@@ -385,6 +385,35 @@ public class VerifyActionTests
 
     #endregion
 
+    #region Verify Check Order
+
+    [Test]
+    public async Task Verify_ExpiredAndNonceReplay_ReturnsExpiredNotNonceReplay()
+    {
+        // When data has BOTH expired timestamp AND replayed nonce, error should be "Expired"
+        // because Expires is checked before NonceReplay in the verify chain.
+        //
+        // Arrange: create identity, sign with short TTL (50ms), verify once (caches nonce),
+        //          wait for expiry
+        // Act: verify same data again (both expired AND nonce replayed)
+        // Assert: result.Error.Key == "Expired" (not "NonceReplay")
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    [Test]
+    public async Task Verify_TimedOutAndContractMismatch_ReturnsTimedOutNotContractMismatch()
+    {
+        // When data is both timed out AND has wrong contracts, error should be "TimedOut"
+        // because Created/TimeoutMs is checked before contracts in the verify chain.
+        //
+        // Arrange: create identity, sign with contracts ["C0"], tamper Created to distant past
+        // Act: verify with contracts ["C1"] and a short TimeoutMs
+        // Assert: result.Error.Key == "TimedOut" (not "ContractMismatch")
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
     #region Error Handling
 
     [Test]

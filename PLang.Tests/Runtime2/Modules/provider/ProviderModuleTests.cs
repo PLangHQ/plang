@@ -123,6 +123,17 @@ public class ProviderModuleTests
         await Assert.Fail("stub — implementation depends on provider module");
     }
 
+    [Test]
+    public async Task SetDefault_UnknownName_ReturnsError()
+    {
+        // Non-existent name → "ProviderNotFound".
+        //
+        // Arrange: load "first" provider
+        // Act: setDefault "unknown"
+        // Assert: result.Error.Key == "ProviderNotFound"
+        await Assert.Fail("stub — implementation depends on provider module");
+    }
+
     #endregion
 
     #region List
@@ -135,6 +146,17 @@ public class ProviderModuleTests
         // Arrange: load "first" and "second"
         // Act: list
         // Assert: 2 entries, first has IsDefault=true, second has IsDefault=false
+        await Assert.Fail("stub — implementation depends on provider module");
+    }
+
+    [Test]
+    public async Task List_FilteredByType_ReturnsOnlyMatchingInterface()
+    {
+        // Filter by interface type → only providers of that type returned.
+        //
+        // Arrange: load ISigningProvider "ed25519" and ICryptoProvider "keccak256"
+        // Act: list signing providers (filtered by ISigningProvider)
+        // Assert: count == 1, only "ed25519" returned
         await Assert.Fail("stub — implementation depends on provider module");
     }
 
