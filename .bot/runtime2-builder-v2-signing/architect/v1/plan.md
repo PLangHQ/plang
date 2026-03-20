@@ -22,17 +22,19 @@ Current `Engine.Providers` stores one instance per interface type. Needs to supp
 ```csharp
 engine.Providers.Register<ISigningProvider>("ed25519", instance)
 engine.Providers.Get<ISigningProvider>("ecdsa-p256")       // by name
-engine.Providers.Get<ISigningProvider>()                   // default (first registered)
+engine.Providers.Get<ISigningProvider>()                   // default
 engine.Providers.GetOrDefault<ISigningProvider>("ed25519") // by name with fallback
 ```
 
-Built-in `Ed25519Provider` registers at engine startup. No hardcoded fallbacks in module code.
+**Default provider:** The first provider registered for an interface becomes the default. Tracked explicitly via a separate `_defaults` dictionary (not insertion-order dependent). `Register` accepts an optional `isDefault` flag; the first registration auto-defaults if none is set.
+
+Built-in `Ed25519Provider` registers at engine startup as default. No hardcoded fallbacks in module code.
 
 Same upgrade applies to `ICryptoProvider` — add `Name` property, register by name.
 
 ### library.load extension
 
-After loading a DLL, scan for known provider interfaces (`ISigningProvider`, `ICryptoProvider`). If found, instantiate and register on `Engine.Providers` with the provider's `Name`.
+After loading a DLL, scan for known provider interfaces (`ISigningProvider`, `ICryptoProvider`). If found, instantiate via parameterless constructor and register on `Engine.Providers` with the provider's `Name`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
 
 Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
 
@@ -115,7 +117,7 @@ public class Ed25519Provider : ISigningProvider
 
 **Signing** resolves from settings: read provider name → `engine.Providers.Get<ISigningProvider>(name)`.
 
-**Verification** resolves from the message: read `SignedData.Type` → `engine.Providers.Get<ISigningProvider>(type)`. If provider not found, return `Data.Fail()` with key `"ProviderNotFound"` and message indicating which algorithm is missing and that the developer needs to load the appropriate DLL.
+**Verification** resolves from the message: read `SignedData.Type` → `engine.Providers.Get<ISigningProvider>(type)`. If provider not found, return `Data.FromError(ActionError(...))` with key `"ProviderNotFound"` and message indicating which algorithm is missing and that the developer needs to load the appropriate DLL.
 
 ---
 
@@ -140,6 +142,21 @@ Rules:
 - **Error on collision.** If a property name appears twice (subclass shadows base), throw at serialization time.
 
 Enables streaming rejection: verifier reads `Type` first, checks provider exists, reads `Nonce`, checks replay — rejects before ever reading `Value` or `Signature`.
+
+### Recursive serialization
+
+The `[PropertyOrder]` custom JSON converter handles nested objects recursively. When serializing a property whose runtime value has `[PropertyOrder]` (e.g., `SignedData.Value` holding a `HashedData`), the converter applies that nested type's property order automatically. No polymorphic type discriminator needed — the attribute on the concrete type drives serialization.
+
+This means `Data.Value` stays `object?`. The serializer inspects the runtime value, not the declared type.
+
+### Implementation
+
+Implement as a custom `System.Text.Json.Serialization.JsonConverter<object>` (or a `JsonConverterFactory` that handles any type decorated with `[PropertyOrder]`). Register on the `JsonSerializerOptions` used for signing serialization. The converter:
+1. Reads `[PropertyOrder]` from the runtime type
+2. Writes properties in declared order via reflection
+3. For each property value, recurses — if that value's type also has `[PropertyOrder]`, applies it
+4. Skips properties not listed in the order (enforces the "full contract" rule)
+5. Throws on property name collision (shadow detection)
 
 ---
 
@@ -215,7 +232,7 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
    - `Contracts` = provided or `["C0"]`
    - `Headers` = provided or null
    - `Identity` = public key (base64)
-5. Serialize `SignedData` to JSON bytes (excluding `Signature` property)
+5. Serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (excludes `Signature` — it's not listed in the signing payload order, or use a separate order list without it)
 6. `provider.Sign(jsonBytes, privateKey)` → signature bytes
 7. Set `Signature` = base64 of signature bytes
 8. Return the `SignedData`
@@ -240,16 +257,16 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
 - `Headers : Dictionary<string, object>?` — expected headers to match
 
 **Flow:**
-1. Read `SignedData.Type` → `engine.Providers.Get<ISigningProvider>(type)`. If not found → `Data.Fail("ProviderNotFound", ...)`
+1. Read `SignedData.Type` → `engine.Providers.Get<ISigningProvider>(type)`. If not found → `Data.FromError(ActionError(...))` with key `"ProviderNotFound"`
 2. Read `TimeoutSeconds` from settings
 3. Check `Created` is not older than `TimeoutSeconds`
 4. Check `Expires` has not passed (if present)
 5. Check nonce hasn't been used (`Engine.Cache`, key: `signing_nonce_{nonce}`, duration: `TimeoutSeconds`)
 6. Check contracts: if required contracts provided, **all** must be present in signed data's contract list
 7. Check headers: if expected headers provided, must match signed headers
-8. Re-hash original data via crypto module → compare hash to `SignedData.Value.Hash`
-9. Verify cryptographic signature: serialize `SignedData` to JSON (without `Signature`), call `provider.Verify(bytes, signature, publicKey)`
-10. Return `Data.Ok(true)` or `Data.Fail()` with specific error key for each failure reason
+8. Re-hash original data via crypto module → compare hash to `SignedData.Value.Hash` (navigate `Value` as `HashedData` or read `.hash` from JsonElement if deserialized from JSON)
+9. Verify cryptographic signature: re-serialize `SignedData` to JSON bytes using `[PropertyOrder]` converter (excluding `Signature`), call `provider.Verify(bytes, signature, publicKey)`. **Note:** The `[PropertyOrder]` converter guarantees byte-identical output for the same data, so re-serialization on the verify side produces the same bytes the signer signed.
+10. Return `Data.Ok(true)` or `Data.FromError(ActionError(...))` with specific error key for each failure reason
 
 **PLang usage:**
 ```plang
@@ -308,6 +325,7 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Provider interface |
 | `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
 | `PLang/Runtime2/modules/PropertyOrderAttribute.cs` | [PropertyOrder] attribute for deterministic serialization |
+| `PLang/Runtime2/modules/PropertyOrderConverter.cs` | JsonConverterFactory for [PropertyOrder] serialization |
 
 ## Files to modify
 
@@ -317,36 +335,55 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/library/load.cs` | Discover and register provider interfaces from loaded DLLs |
 | `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to signing provider |
 | `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
-| `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data |
+| `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data. **Breaking change:** current `HashedData` is a standalone POCO with `Algorithm`, `Format`, `Hash`. New: extends `Data`, uses `Data.Type` instead of `Algorithm`, drops `Format`. Update all consumers: `hash.cs` (currently returns `Data.Ok(HashedData {...})` — now returns the `HashedData` directly since it *is* a `Data`), `verify.cs` (reads `Algorithm` → reads `Type`) |
 | `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Add Name property |
 
 ## Test expectations
 
-### C# unit tests (~16)
-- sign: produces valid SignedData with correct Type, Nonce, Created, Identity
-- sign: signature is cryptographically valid (verify roundtrip)
-- sign: Value is HashedData with correct hash
-- sign: contracts default to ["C0"]
-- sign: custom contracts are included
-- sign: TTL sets Expires correctly
-- sign: headers are included
-- sign: per-call provider override works
-- verify: valid signature returns true
-- verify: expired signature returns false
-- verify: old signature (past TimeoutSeconds) returns false
-- verify: reused nonce returns false
-- verify: missing required contract returns false (strict matching)
-- verify: mismatched headers returns false
-- verify: wrong data hash returns false
-- verify: unknown provider returns ProviderNotFound error
-- provider: named registry stores and retrieves multiple providers
+### C# unit tests (~22)
 
-### PLang tests (~6)
+**sign handler:**
+- produces valid SignedData with correct Type, Nonce, Created, Identity
+- signature is cryptographically valid (verify roundtrip)
+- Value is HashedData with correct hash
+- contracts default to ["C0"]
+- custom contracts are included
+- TTL sets Expires correctly
+- no TTL leaves Expires null
+- headers are included
+- per-call provider override works
+
+**verify handler:**
+- valid signature returns true
+- expired signature returns false
+- old signature (past TimeoutSeconds) returns false
+- reused nonce returns false
+- second different nonce succeeds (not false positive)
+- missing required contract returns false (strict matching)
+- superset contracts pass (signed has more than required)
+- mismatched headers returns false
+- wrong data hash returns false
+- unknown provider returns ProviderNotFound error
+
+**named provider registry:**
+- stores and retrieves multiple providers per interface
+- default provider returned when no name specified
+- duplicate name overwrites previous registration
+
+**PropertyOrder serializer:**
+- serializes in declared order
+- nested [PropertyOrder] types serialized recursively
+- unlisted properties excluded
+- property name collision throws
+
+### PLang tests (~8)
 - Sign object, verify succeeds
 - Sign with contracts, verify with matching contracts
+- Sign with contracts, verify with missing contract fails
 - Sign with TTL, verify after expiry fails
 - Sign and verify with headers
 - Verify tampered data fails
+- Verify replayed nonce fails
 - Provider swap via settings
 
 ---
