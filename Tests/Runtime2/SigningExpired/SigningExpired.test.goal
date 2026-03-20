@@ -1,0 +1,11 @@
+Start
+/ Test: sign with 1 second TTL, wait, verify fails as expired
+- create identity testSigner
+- set %data% = { "payload": "expiring" }
+- sign %data%, expires in 1 seconds
+- wait for 2000 ms
+- verify %data% with contracts ['C0'], on error call HandleExpired
+- assert %expired% is true, "expired signature should fail verification"
+
+HandleExpired
+- set %expired% = true

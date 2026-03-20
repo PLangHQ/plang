@@ -1,0 +1,8 @@
+Start
+/ Test: set signing provider via settings, sign still works
+- create identity testSigner
+- set the signing provider as ed25519
+- set %data% = { "payload": "swapped" }
+- sign %data%
+- verify %data% with contracts ['C0']
+- assert %data.Signature.Verified.Success% is true, "sign with explicit provider setting should verify"

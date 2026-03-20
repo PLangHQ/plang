@@ -1,0 +1,12 @@
+Start
+/ Test: verify same signed data twice, second fails as nonce replay
+- create identity testSigner
+- set %data% = { "payload": "once" }
+- sign %data%
+- verify %data% with contracts ['C0']
+- assert %data.Signature.Verified.Success% is true, "first verify should succeed"
+- verify %data% with contracts ['C0'], on error call HandleReplay
+- assert %replayed% is true, "second verify with same nonce should fail"
+
+HandleReplay
+- set %replayed% = true

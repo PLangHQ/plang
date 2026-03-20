@@ -1,0 +1,9 @@
+Start
+/ Test: access SignedData properties via dot navigation
+- create identity testSigner
+- set %data% = { "payload": "nav" }
+- sign %data%
+- assert %data.Signature.Algorithm% equals 'ed25519', "algorithm should be ed25519"
+- assert %data.Signature.Type% equals 'signature', "type should be signature"
+- assert %data.Signature.Identity% is not empty, "identity should be public key"
+- assert %data.Signature.Nonce% is not empty, "nonce should be present"
