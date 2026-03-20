@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All 4 findings resolved: IKeyProvider returns Data<KeyPair>, generic delegates to non-generic, ResolveIdentityAsync extracted, catch narrowed to JsonException. No new issues." }
