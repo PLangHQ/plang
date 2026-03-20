@@ -328,14 +328,14 @@ Target audiences:
 
 ---
 
-## Retire Libraries as Central Action Registry
-**Date:** 2026-03-19
-**Context:** During crypto module / Providers implementation. Libraries currently serves two roles: (1) central registry for source-generated action handlers (ICodeGenerated), and (2) external DLL loading. With Providers handling pluggable module implementations, Libraries' role narrows to just compiled action dispatch.
+## Rename Libraries — Better Name for Action Registry
+**Date:** 2026-03-19 (updated 2026-03-20)
+**Context:** During crypto module / Providers implementation. With providers moving to a separate `provider` module, Libraries' role is clearer: it's the registry for compiled action handlers (ICodeGenerated). The name "library" is misleading — it implies a broader concept than "compiled step dispatch."
 
 **What to do:**
+- Find a better name. Candidates: `compiled`, `assembly`, `actions`, `handlers`? The thing stores compiled C# action handlers and resolves module+action to a handler type.
 - Move compiled action handlers (ICodeGenerated) to per-module storage instead of central flat registry.
 - Re-evaluate `IAction` interface — source-generated handlers use `ICodeGenerated` + `IContext` + `Run()`. The `IAction.ExecuteAsync` bridge may be unnecessary.
-- External DLL loading (`library.load`) should register into per-module structure or into Providers.
 - Libraries' "walk the list, first match wins" resolution might move to per-module resolution.
 
 ---
@@ -345,6 +345,16 @@ Target audiences:
 **Context:** Signing module architect plan review. `MemoryStepCache` creates a new `MemoryCache` per instance (`Guid.NewGuid()`). If Engine is pooled (one per request), each request gets its own cache, so nonce replay detection won't work across requests.
 
 **Fix:** `ICache` for nonce replay (and likely other cross-request concerns) needs a shared/static backing store, or the cache instance needs to be shared across engine instances within the same app. Check whether `Engine.Cache` is the right level — might need an app-level cache separate from per-engine step caching.
+
+---
+
+## Rename `library` Module
+**Date:** 2026-03-20
+**Context:** During signing module review. `library.load` currently loads DLLs and discovers compiled action handlers (ICodeGenerated). With providers moving to a separate `provider` module, `library` only handles compiled steps — the name is misleading.
+
+**Question:** What should it be called? `compiled`? `assembly`? `steps`? The module loads external .dll files containing PLang step implementations. "Library" implies a broader concept.
+
+**Related:** "Retire Libraries as Central Action Registry" todo (2026-03-19) — these two may converge.
 
 ---
 
