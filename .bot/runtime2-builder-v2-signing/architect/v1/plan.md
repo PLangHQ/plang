@@ -37,6 +37,8 @@ engine.Providers.Get<ISigningProvider>()                      // find where IsDe
 engine.Providers.Get<ISigningProvider>("ecdsa-p256")          // O(1) lookup by name
 engine.Providers.SetDefault<ISigningProvider>("ecdsa-p256")   // clears IsDefault on all, sets on named
 engine.Providers.Remove<ISigningProvider>("ed25519")          // remove by name
+engine.Providers.List<ISigningProvider>()                     // all providers for interface
+engine.Providers.List()                                       // all providers across all interfaces
 ```
 
 **Why `ConcurrentDictionary<string, IProvider>` (not `ConcurrentBag`):** Provider operations are name lookups, default queries, and removals — all read-heavy. `ConcurrentBag` doesn't support lookup or removal. The inner dictionary gives O(1) name lookup. Provider registration is rare; reads dominate.
@@ -64,6 +66,7 @@ modules/provider/
 ├── load.cs        — load DLL, scan for IProvider implementors, register on Engine.Providers
 ├── remove.cs      — remove provider by name (error if default)
 ├── setDefault.cs  — change default provider for an interface type
+├── list.cs        — list registered providers (optionally filtered by interface type)
 ```
 
 **`provider/load`:** Loads a DLL, scans for types implementing `IProvider` (marker interface — all provider interfaces extend it). If found, instantiate via parameterless constructor and register on `Engine.Providers`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
@@ -72,11 +75,15 @@ modules/provider/
 
 **`provider/setDefault`:** Delegates to `Engine.Providers.SetDefault<T>(name)`. Returns error `"ProviderNotFound"` if name doesn't exist.
 
+**`provider/list`:** Lists registered providers. Optionally filtered by interface type. Returns a `Data` with value as `List<ProviderInfo>` where `ProviderInfo` includes Name, IsDefault, and interface types. Useful for debugging and discovery.
+
 **PLang surface:**
 ```plang
 - load provider my-crypto.dll
 - set signing provider to ecdsa-p256
 - remove signing provider ed25519
+- list providers
+- list signing providers
 ```
 
 Or load-then-swap:
@@ -508,6 +515,7 @@ PLang/Runtime2/modules/provider/
 ├── load.cs                          — load DLL, scan for IProvider, register on Engine.Providers
 ├── remove.cs                        — remove provider by name (error if default)
 ├── setDefault.cs                    — change default provider for an interface type
+├── list.cs                          — list registered providers, optionally filtered by interface type
 PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
@@ -535,6 +543,7 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/provider/load.cs` | Load DLL, discover IProvider types, register on Engine.Providers |
 | `PLang/Runtime2/modules/provider/remove.cs` | Remove provider by name (error if default) |
 | `PLang/Runtime2/modules/provider/setDefault.cs` | Change default provider for interface type |
+| `PLang/Runtime2/modules/provider/list.cs` | List registered providers, optionally filtered by interface type |
 
 ## Files to modify
 
@@ -596,6 +605,7 @@ PLang/Runtime2/modules/signing/
 - sub-engine sees parent providers
 - sub-engine local registration doesn't affect parent
 - sub-engine local overlay cleared on pool return
+- sub-engine `Get` falls back to parent when local overlay doesn't have the provider
 
 **ICache.TryAddAsync:**
 - returns true for fresh key
