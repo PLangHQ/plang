@@ -47,25 +47,15 @@ public class DefaultIdentityProvider : IIdentityProvider
         if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase)))
             return Data.FromError(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
-        // Resolve key provider
-        IKeyProvider? keyProvider;
-        if (!string.IsNullOrEmpty(action.Provider))
-        {
-            var providerResult = engine.Providers.Get<IKeyProvider>(action.Provider);
-            if (!providerResult.Success) return providerResult;
-            keyProvider = providerResult.Value;
-        }
+        // Resolve key provider — name flows through, null gets default
+        var keyResult = engine.Providers.Get<IKeyProvider>(action.Provider);
+        IKeyProvider keyProvider;
+        if (keyResult.Success)
+            keyProvider = keyResult.Value!;
         else
         {
-            var keyResult = engine.Providers.Get<IKeyProvider>();
-            if (keyResult.Success)
-                keyProvider = keyResult.Value;
-            else
-            {
-                var sigResult = engine.Providers.Get<ISigningProvider>();
-                keyProvider = sigResult.Success ? sigResult.Value : null;
-            }
-            keyProvider ??= new Ed25519Provider();
+            var sigResult = engine.Providers.Get<ISigningProvider>();
+            keyProvider = sigResult.Success ? sigResult.Value! : new Ed25519Provider();
         }
 
         KeyPair keys;

@@ -31,12 +31,20 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets the default provider for a type. Returns Data with error if none registered.
+    /// Gets a provider by name, or the default if name is null/empty.
+    /// Returns Data with error if not found.
     /// </summary>
-    public Data<T> Get<T>() where T : class, IProvider
+    public Data<T> Get<T>(string? name = null) where T : class, IProvider
     {
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
             return Data<T>.FromError(new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            if (!typeDict.TryGetValue(name, out var provider))
+                return Data<T>.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
+            return Data<T>.Ok((T)provider);
+        }
 
         foreach (var kvp in typeDict)
         {
@@ -45,18 +53,6 @@ public sealed class @this
         }
 
         return Data<T>.FromError(new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
-    }
-
-    /// <summary>
-    /// Gets a provider by name. Returns Data with error if not found.
-    /// </summary>
-    public Data<T> Get<T>(string name) where T : class, IProvider
-    {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict) ||
-            !typeDict.TryGetValue(name, out var provider))
-            return Data<T>.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
-
-        return Data<T>.Ok((T)provider);
     }
 
     /// <summary>
