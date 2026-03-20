@@ -61,6 +61,41 @@
         "health": "All 1795 tests pass, 0 failures",
         "notes": "7 OBP fixes + 1 naming consistency rename. Ready for code analyzer review."
       }
+    },
+    {
+      "id": "b2c3d4e5-code-analysis-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-20T22:30:00Z",
+      "timestamp_end": "2026-03-20T23:15:00Z",
+      "intent": "Full 5-pass code analysis of signing/crypto/identity/provider modules",
+      "before": {
+        "assumptions": "Coder fixed 7 OBP violations. Analyzing the full module set for remaining issues across OBP compliance, simplification, readability, behavioral reasoning, and deletion tests.",
+        "risk": "Large surface area — 4 modules, ~30 files of new code. Previous branches had issues with provider return types (throwing vs Data) and actor context mismatches."
+      },
+      "plan": "5-pass analysis of ~30 files: (1) OBP compliance check on all providers, handlers, and engine modifications, (2) Simplification scan for dead abstractions, duplication, over-parameterization, (3) Readability — naming, method length, flow clarity, (4) Behavioral reasoning — trace data origins, type surfaces, silent failures, (5) Deletion test — every code path: if deleted, would a test fail?",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/IKeyProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/modules/provider/list.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "8 findings: IKeyProvider throws instead of returning Data (high), EngineProviders duplication (medium), DefaultIdentityProvider resolve duplication (medium), bare catch in Deserialize (medium), 4 low-severity readability items"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 2 high, 2 medium, 4 low findings",
+        "notes": "Verdict: fail. Primary issue is IKeyProvider.GenerateKeyPair() returning KeyPair instead of Data — same pattern Ingi flagged on crypto branch. Send back to coder."
+      }
     }
   ]
 }
