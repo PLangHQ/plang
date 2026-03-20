@@ -103,7 +103,7 @@ Response:
     {"index": 3, "needsDetail": true, "actions": [{"module": "crypto", "action": "sign", "return": [{"name": "\%signature\%"}]}, {"module": "crypto", "action": "verify", "return": [{"name": "\%isValid\%"}]}]},
     {"index": 4, "errors": [{"key": "ambiguousStep", "message": "could be db.select or http.get"}], "actions": []},
     {"index": 5, "actions": [{"module": "http", "action": "get", "parameters": [{"name": "url", "value": "\%apiUrl\%", "type": "string"}], "return": [{"name": "\%result\%"}], "warnings": [{"key": "missingVariable", "message": "\%apiUrl\% not set in previous steps"}]}]},
-    {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationSeconds": 300}},
+    {"index": 6, "actions": [{"module": "file", "action": "read", "parameters": [{"name": "path", "value": "config.json", "type": "string"}], "return": [{"name": "\%config\%"}]}], "cache": {"durationMs": 300000}},
     {"index": 7, "actions": [{"module": "error", "action": "throw", "parameters": [{"name": "message", "value": "something went wrong", "type": "string"}]}], "onError": {"ignoreError": true}},
     {"index": 8, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "ProcessData", "type": "goal.call"}]}], "onError": {"goal": {"name": "HandleError"}}},
     {"index": 9, "actions": [{"module": "goal", "action": "call", "parameters": [{"name": "goalName", "value": "LoadData", "type": "goal.call"}]}], "onError": {"retryCount": 3, "retryOverMs": 5000}},

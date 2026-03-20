@@ -45,12 +45,6 @@ public class SignedData
     [JsonPropertyOrder(10), JsonInclude]
     public string? Signature { get; internal set; }
 
-    [JsonIgnore]
-    private Data? _verified;
-
-    [JsonIgnore]
-    internal Engine.@this? _engine;
-
     // --- Creation (behavior owned by SignedData) ---
 
     /// <summary>
@@ -64,18 +58,15 @@ public class SignedData
         if (effectiveContracts.Count == 0)
             return Data.FromError(new ActionError("At least one contract is required", "ValidationError", 400));
 
-        // Resolve signing provider
-        ISigningProvider? signingProvider;
-        if (!string.IsNullOrEmpty(action.Provider))
-        {
-            signingProvider = engine.Providers.Get<ISigningProvider>(action.Provider);
-            if (signingProvider == null)
-                return Data.FromError(new ActionError($"Signing provider '{action.Provider}' not found", "ProviderNotFound", 404));
-        }
-        else
-        {
-            signingProvider = engine.Providers.Get<ISigningProvider>() ?? new Ed25519Provider();
-        }
+        // Resolve signing provider: action param → settings → registry default
+        var settings = engine.Settings.For<Settings>(action.Context);
+        var providerName = action.Provider ?? settings.Resolve("provider", "ed25519");
+
+        var signingProvider = engine.Providers.Get<ISigningProvider>(providerName);
+        if (signingProvider == null && providerName == "ed25519")
+            signingProvider = new Ed25519Provider();
+        if (signingProvider == null)
+            return Data.FromError(new ActionError($"Signing provider '{providerName}' not found", "ProviderNotFound", 404));
 
         // Get identity
         IdentityVariable identity;
@@ -112,8 +103,7 @@ public class SignedData
                 Algorithm = "sha256",
                 Format = format,
                 Hash = Hash.FormatHash((byte[])hashResult.Value!)
-            },
-            _engine = engine
+            }
         };
 
         // Sign: serialize with null Signature, then populate
@@ -141,55 +131,26 @@ public class SignedData
 
     /// <summary>
     /// Verifies this signed envelope from a verify action record. Navigates the action
-    /// for contracts, headers, timeoutMs, and original data (from action.Data.Value).
+    /// for contracts, headers, timeoutMs, and original data. Engine provided by caller.
     /// </summary>
-    public async Task<Data> VerifyAsync(verify action)
+    public async Task<Data> VerifyAsync(verify action, Engine.@this engine)
     {
-        if (_engine == null)
-            return Data.FromError(new ActionError("No engine attached — cannot verify", "VerifyError", 500));
-
-        var result = await VerifyInternalAsync(action.Contracts, action.Headers, action.TimeoutMs, action.Data?.Value);
-        _verified = result;
-        return result;
+        var settings = engine.Settings.For<Settings>(action.Context);
+        var effectiveTimeout = action.TimeoutMs ?? settings.Resolve<long>("timeoutMs", 300_000);
+        return await VerifyInternalAsync(engine, action.Contracts, action.Headers, effectiveTimeout, action.Data?.Value);
     }
 
     /// <summary>
-    /// Verifies with explicit parameters. Used by tests and ad-hoc verification
-    /// when no action record is available.
+    /// Verifies with explicit parameters. Used by tests and ad-hoc verification.
     /// </summary>
-    public async Task<Data> VerifyAsync(
+    public async Task<Data> VerifyAsync(Engine.@this engine,
         List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
         long? timeoutMs, object? originalData = null)
     {
-        if (_engine == null)
-            return Data.FromError(new ActionError("No engine attached — cannot verify", "VerifyError", 500));
-
-        var result = await VerifyInternalAsync(requiredContracts, expectedHeaders, timeoutMs, originalData);
-        _verified = result;
-        return result;
+        return await VerifyInternalAsync(engine, requiredContracts, expectedHeaders, timeoutMs, originalData);
     }
 
-    /// <summary>
-    /// Lazy verification with default contracts ["C0"]. Async — no sync-over-async.
-    /// Returns cached result on subsequent calls.
-    /// </summary>
-    public async Task<Data?> GetVerifiedAsync()
-    {
-        if (_verified != null) return _verified;
-        if (_engine == null) return null;
-
-        _verified = await VerifyInternalAsync(new List<string> { "C0" }, null, null, null);
-        return _verified;
-    }
-
-    /// <summary>
-    /// Returns the cached verification result without triggering verification.
-    /// Null if not yet verified.
-    /// </summary>
-    [JsonIgnore]
-    public Data? Verified => _verified;
-
-    private async Task<Data> VerifyInternalAsync(
+    private async Task<Data> VerifyInternalAsync(Engine.@this engine,
         List<string>? requiredContracts, Dictionary<string, object>? expectedHeaders,
         long? timeoutMs, object? originalData)
     {
@@ -198,7 +159,7 @@ public class SignedData
             return Data.FromError(new ActionError($"Invalid signed data type: '{Type}'", "InvalidType", 400));
 
         // 2. Provider resolution from Algorithm field
-        var provider = _engine!.Providers.Get<ISigningProvider>(Algorithm);
+        var provider = engine.Providers.Get<ISigningProvider>(Algorithm);
         if (provider == null && Algorithm == "ed25519")
             provider = new Ed25519Provider();
         if (provider == null)
@@ -216,9 +177,8 @@ public class SignedData
 
         // 5. Nonce replay check
         var nonceCacheKey = $"nonce:{Nonce}";
-        var cacheSeconds = (long)Math.Ceiling(effectiveTimeout / 1000.0);
-        var cacheSettings = new CacheSettings { DurationSeconds = cacheSeconds };
-        var nonceAdded = await _engine.Cache.TryAddAsync(nonceCacheKey, true, cacheSettings);
+        var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
+        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, true, cacheSettings);
         if (!nonceAdded)
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
@@ -255,7 +215,7 @@ public class SignedData
         if (originalData != null)
         {
             var (bytes, _) = Hash.SerializeData(originalData);
-            var cryptoProvider = Hash.ResolveProvider(_engine);
+            var cryptoProvider = Hash.ResolveProvider(engine);
             var rehashResult = cryptoProvider.Hash(bytes, HashedData!.Algorithm);
             if (!rehashResult.Success) return rehashResult;
 

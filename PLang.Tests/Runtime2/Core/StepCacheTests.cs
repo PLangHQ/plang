@@ -41,7 +41,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "url", "https://example.com" } },
             returnVarName: "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "TestGoal", Path = "TestGoal" };
 
         using var context = engine.CreateContext();
@@ -95,7 +95,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "id", "123" } },
             returnVarName: "data",
-            cache: new CacheSettings { DurationSeconds = 600 });
+            cache: new CacheSettings { DurationMs = 600_000 });
         step.Goal = new Goal { Name = "CacheGoal", Path = "CacheGoal" };
 
         using var context = engine.CreateContext();
@@ -124,7 +124,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "compute",
             new Dictionary<string, object?>(),
             returnVarName: "number",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "TypeGoal", Path = "TypeGoal" };
 
         using var context = engine.CreateContext();
@@ -160,7 +160,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "flaky",
             new Dictionary<string, object?>(),
             returnVarName: "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "ErrorGoal", Path = "ErrorGoal" };
 
         using var context = engine.CreateContext();
@@ -191,14 +191,14 @@ public class StepCacheTests
         var step0 = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
             returnVarName: "val",
-            cache: new CacheSettings { DurationSeconds = 300 },
+            cache: new CacheSettings { DurationMs = 300_000 },
             index: 0);
         step0.Goal = new Goal { Name = "Goal", Path = "Goal" };
 
         var step1 = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
             returnVarName: "val",
-            cache: new CacheSettings { DurationSeconds = 300 },
+            cache: new CacheSettings { DurationMs = 300_000 },
             index: 1);
         step1.Goal = new Goal { Name = "Goal", Path = "Goal" };
 
@@ -224,7 +224,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
             returnVarName: "result",
-            cache: new CacheSettings { DurationSeconds = 300, Key = "user:%userId%" });
+            cache: new CacheSettings { DurationMs = 300_000, Key = "user:%userId%" });
         step.Goal = new Goal { Name = "Goal", Path = "Goal" };
 
         using var context = engine.CreateContext();
@@ -270,7 +270,7 @@ public class StepCacheTests
             }
         };
 
-        await cache.SetAsync("key1", entry, new CacheSettings { DurationSeconds = 300 });
+        await cache.SetAsync("key1", entry, new CacheSettings { DurationMs = 300_000 });
         var result = await cache.GetAsync("key1");
 
         await Assert.That(result).IsNotNull();
@@ -284,7 +284,7 @@ public class StepCacheTests
     public async Task MemoryStepCache_RemoveAsync_DeletesEntry()
     {
         var cache = new MemoryStepCache();
-        await cache.SetAsync("key1", "value", new CacheSettings { DurationSeconds = 300 });
+        await cache.SetAsync("key1", "value", new CacheSettings { DurationMs = 300_000 });
 
         await cache.RemoveAsync("key1");
         var result = await cache.GetAsync("key1");
@@ -326,7 +326,7 @@ public class StepCacheTests
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
             returnVarName: "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "Goal", Path = "Goal" };
 
         using var context = engine.CreateContext();
@@ -377,10 +377,10 @@ public class StepCacheTests
     {
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
 
         await Assert.That(step.StepCache).IsNotNull();
-        await Assert.That(step.StepCache!.Settings.DurationSeconds).IsEqualTo(300);
+        await Assert.That(step.StepCache!.Settings.DurationMs).IsEqualTo(300_000);
     }
 
     [Test]
@@ -388,7 +388,7 @@ public class StepCacheTests
     {
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
 
         var first = step.StepCache;
         var second = step.StepCache;
@@ -410,7 +410,7 @@ public class StepCacheTests
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "HitEventGoal", Path = "HitEventGoal" };
 
         int hitCount = 0;
@@ -439,7 +439,7 @@ public class StepCacheTests
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "MissEventGoal", Path = "MissEventGoal" };
 
         int missCount = 0;
@@ -468,7 +468,7 @@ public class StepCacheTests
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
-            cache: new CacheSettings { DurationSeconds = 300 });
+            cache: new CacheSettings { DurationMs = 300_000 });
         step.Goal = new Goal { Name = "BothEventsGoal", Path = "BothEventsGoal" };
 
         int hitCount = 0;
@@ -499,7 +499,7 @@ public class StepCacheTests
     public async Task MemoryStepCache_SlidingExpiration_SetsCorrectly()
     {
         var cache = new MemoryStepCache();
-        var settings = new CacheSettings { DurationSeconds = 60, Sliding = true };
+        var settings = new CacheSettings { DurationMs = 60_000, Sliding = true };
 
         await cache.SetAsync("sliding-key", "value", settings);
         var result = await cache.GetAsync("sliding-key");
@@ -511,7 +511,7 @@ public class StepCacheTests
     public async Task MemoryStepCache_AbsoluteExpiration_SetsCorrectly()
     {
         var cache = new MemoryStepCache();
-        var settings = new CacheSettings { DurationSeconds = 60, Sliding = false };
+        var settings = new CacheSettings { DurationMs = 60_000, Sliding = false };
 
         await cache.SetAsync("absolute-key", "value", settings);
         var result = await cache.GetAsync("absolute-key");

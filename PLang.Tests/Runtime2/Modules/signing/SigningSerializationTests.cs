@@ -130,8 +130,7 @@ public class SigningSerializationTests
         try
         {
             var engine = new PLang.Runtime2.Engine.@this(tempDir);
-            sd._engine = engine;
-            var result = await sd.VerifyAsync(new List<string> { "C0" }, null, null);
+            var result = await sd.VerifyAsync(engine, new List<string> { "C0" }, null, null);
             await Assert.That(result.Success).IsFalse();
             await engine.DisposeAsync();
         }

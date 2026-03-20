@@ -6,9 +6,9 @@ namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
 public sealed class CacheSettings
 {
     /// <summary>
-    /// How long to cache the result in seconds.
+    /// How long to cache the result in milliseconds.
     /// </summary>
-    public long DurationSeconds { get; init; }
+    public long DurationMs { get; init; }
 
     /// <summary>
     /// Whether this is a sliding expiration (resets on access).

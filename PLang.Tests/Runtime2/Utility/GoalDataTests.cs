@@ -188,7 +188,7 @@ public class GoalSerializationTests
                     Text = "step",
                     Cache = new CacheSettings
                     {
-                        DurationSeconds = 600,
+                        DurationMs = 600_000,
                         Sliding = true,
                         Key = "cache1",
                         Location = "memory"
@@ -201,7 +201,7 @@ public class GoalSerializationTests
         var deserialized = JsonSerializer.Deserialize<Goal>(json, JsonOptions)!;
 
         var cache = deserialized.Steps[0].Cache!;
-        await Assert.That(cache.DurationSeconds).IsEqualTo(600);
+        await Assert.That(cache.DurationMs).IsEqualTo(600_000);
         await Assert.That(cache.Sliding).IsTrue();
         await Assert.That(cache.Key).IsEqualTo("cache1");
         await Assert.That(cache.Location).IsEqualTo("memory");

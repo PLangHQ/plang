@@ -9,8 +9,8 @@ namespace PLang.Tests.Runtime2.Core;
 /// </summary>
 public class CacheTryAddTests
 {
-    private static CacheSettings MakeSettings(long durationSeconds = 300)
-        => new() { DurationSeconds = durationSeconds, Sliding = false };
+    private static CacheSettings MakeSettings(long durationMs = 300_000)
+        => new() { DurationMs = durationMs, Sliding = false };
 
     [Test]
     public async Task TryAddAsync_NewKey_ReturnsTrue()
@@ -52,7 +52,7 @@ public class CacheTryAddTests
     public async Task TryAddAsync_AfterExpiry_ReturnsTrue()
     {
         var cache = new MemoryStepCache();
-        var settings = MakeSettings(durationSeconds: 1);
+        var settings = MakeSettings(durationMs: 1000);
 
         var first = await cache.TryAddAsync("nonce-1", "value", settings);
         await Assert.That(first).IsTrue();

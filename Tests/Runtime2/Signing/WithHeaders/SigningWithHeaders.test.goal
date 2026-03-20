@@ -4,5 +4,5 @@ Start
 - set %data% = { "body": "content" }
 - set %headers% = { "method": "POST", "url": "/api/send" }
 - sign %data% with headers %headers%
-- verify %data% with contracts ['C0'] and headers %headers%
-- assert %data.Signature.Verified.Success% is true, "matching headers should verify"
+- verify %data% with contracts ['C0'] and headers %headers%, write to %verifyResult%
+- assert %verifyResult.Success% is true, "matching headers should verify"

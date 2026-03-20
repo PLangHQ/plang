@@ -3,8 +3,8 @@ Start
 - create identity testSigner
 - set %data% = { "payload": "once" }
 - sign %data%
-- verify %data% with contracts ['C0']
-- assert %data.Signature.Verified.Success% is true, "first verify should succeed"
+- verify %data% with contracts ['C0'], write to %verifyResult%
+- assert %verifyResult.Success% is true, "first verify should succeed"
 - verify %data% with contracts ['C0'], on error call HandleReplay
 - assert %replayed% is true, "second verify with same nonce should fail"
 

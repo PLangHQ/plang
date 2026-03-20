@@ -17,9 +17,9 @@ public sealed class MemoryStepCache : ICache
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)
-            policy.SlidingExpiration = TimeSpan.FromSeconds(settings.DurationSeconds);
+            policy.SlidingExpiration = TimeSpan.FromMilliseconds(settings.DurationMs);
         else
-            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(settings.DurationSeconds);
+            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);
 
         _cache.Set(key, value, policy);
         return Task.CompletedTask;
@@ -35,9 +35,9 @@ public sealed class MemoryStepCache : ICache
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)
-            policy.SlidingExpiration = TimeSpan.FromSeconds(settings.DurationSeconds);
+            policy.SlidingExpiration = TimeSpan.FromMilliseconds(settings.DurationMs);
         else
-            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(settings.DurationSeconds);
+            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(settings.DurationMs);
 
         // AddOrGetExisting returns null if the key didn't exist (meaning it was added)
         var existing = _cache.AddOrGetExisting(key, value, policy);

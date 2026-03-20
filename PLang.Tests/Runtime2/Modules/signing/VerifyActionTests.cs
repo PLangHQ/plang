@@ -11,7 +11,7 @@ namespace PLang.Tests.Runtime2.Modules.signing;
 
 /// <summary>
 /// Tests the verify action handler. All 9 error keys covered.
-/// Verify checks in order: NoSignature → ProviderNotFound → TimedOut → Expired → NonceReplay → ContractMismatch → HeaderMismatch → DataHashMismatch → SignatureInvalid
+/// Verify checks in order: InvalidType → ProviderNotFound → TimedOut → Expired → NonceReplay → ContractMismatch → HeaderMismatch → DataHashMismatch → SignatureInvalid
 /// </summary>
 public class VerifyActionTests
 {
@@ -71,15 +71,12 @@ public class VerifyActionTests
     #region Happy Path
 
     [Test]
-    public async Task Verify_ValidSignature_SetsVerifiedOk()
+    public async Task Verify_ValidSignature_ReturnsSuccess()
     {
         var signed = await SignHelper("hello");
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
         await Assert.That(result.Success).IsTrue();
-        // Verified is cached after explicit verify
-        await Assert.That(signed.Signature!.Verified).IsNotNull();
-        await Assert.That(signed.Signature.Verified!.Success).IsTrue();
     }
 
     #endregion
@@ -175,7 +172,6 @@ public class VerifyActionTests
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
-        // Re-hashing the original data detects the tampered hash
         await Assert.That(result.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 
@@ -232,8 +228,6 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ResolvesProviderFromAlgorithm_NotSettings()
     {
-        // Register a mock as default — but sign uses ed25519
-        // Verify should use Algorithm from SignedData, not the default provider
         var signed = await SignHelper("test");
         await Assert.That(signed.Signature!.Algorithm).IsEqualTo("ed25519");
 
@@ -250,7 +244,6 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test", headers: new Dictionary<string, object> { { "method", "POST" } });
 
-        // Verify with null expected headers — should skip header check
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, headers: null);
         await Assert.That(result.Success).IsTrue();
     }
@@ -281,7 +274,6 @@ public class VerifyActionTests
     public async Task Verify_CreatedJustWithinTimeout_Succeeds()
     {
         var signed = await SignHelper("test");
-        // Created is now, timeout is generous — should pass
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 60_000);
         await Assert.That(result.Success).IsTrue();
     }
@@ -298,62 +290,6 @@ public class VerifyActionTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
-    }
-
-    #endregion
-
-    #region Lazy Verification (DESIGN-1)
-
-    [Test]
-    public async Task Verify_LazyAccess_TriggersVerificationWithoutExplicitStep()
-    {
-        var signed = await SignHelper("test");
-
-        // GetVerifiedAsync triggers verification without calling verify action
-        var verified = await signed.Signature!.GetVerifiedAsync();
-        await Assert.That(verified).IsNotNull();
-        await Assert.That(verified!.Success).IsTrue();
-    }
-
-    [Test]
-    public async Task Verify_LazyAccess_CachesResult_SecondAccessSameObject()
-    {
-        var signed = await SignHelper("test");
-
-        var first = await signed.Signature!.GetVerifiedAsync();
-        var second = await signed.Signature.GetVerifiedAsync();
-
-        await Assert.That(first).IsNotNull();
-        await Assert.That(second).IsNotNull();
-        // Same object reference — cached
-        await Assert.That(first).IsSameReferenceAs(second);
-    }
-
-    [Test]
-    public async Task Verify_LazyAccess_UsesDefaultContractsC0()
-    {
-        // Sign with C1, lazy verify uses C0 → mismatch
-        var signed = await SignHelper("test", contracts: new List<string> { "C1" });
-
-        var verified = await signed.Signature!.GetVerifiedAsync();
-        await Assert.That(verified).IsNotNull();
-        await Assert.That(verified!.Success).IsFalse();
-        await Assert.That(verified.Error!.Key).IsEqualTo("ContractMismatch");
-    }
-
-    [Test]
-    public async Task Verify_ExplicitThenLazy_ExplicitResultPreserved()
-    {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0", "C1" });
-
-        // Explicit verify with matching contracts
-        var explicit_ = await VerifyHelper(signed, contracts: new List<string> { "C0", "C1" });
-        await Assert.That(explicit_.Success).IsTrue();
-
-        // Cached result from explicit verify — Verified returns it synchronously
-        var cached = signed.Signature!.Verified;
-        await Assert.That(cached).IsNotNull();
-        await Assert.That(cached!.Success).IsTrue();
     }
 
     #endregion
@@ -411,7 +347,6 @@ public class VerifyActionTests
     public async Task Verify_NoSignedHeaders_ExpectsHeaders_ReturnsHeaderMismatch()
     {
         var signed = await SignHelper("test");
-        // No headers on signed data
 
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C0" },

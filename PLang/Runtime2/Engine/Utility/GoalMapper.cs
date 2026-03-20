@@ -141,7 +141,7 @@ public static class GoalMapper
 
         return new CacheSettings
         {
-            DurationSeconds = oldCache.TimeInMilliseconds / 1000,
+            DurationMs = oldCache.TimeInMilliseconds,
             Sliding = oldCache.CachingType == 0, // 0 = Sliding, 1 = Absolute
             Key = oldCache.CacheKey,
             Location = oldCache.Location

@@ -10,8 +10,8 @@ Start
 / Now sign with explicit provider param — same provider but exercises the override path
 - set %data2% = { "payload": "explicit" }
 - sign %data2%, provider ed25519
-- verify %data2% with contracts ['C0']
-- assert %data2.Signature.Verified.Success% is true, "explicit provider param should verify"
+- verify %data2% with contracts ['C0'], write to %verifyResult%
+- assert %verifyResult.Success% is true, "explicit provider param should verify"
 - assert %data2.Signature.Algorithm% equals 'ed25519', "algorithm should reflect provider used"
 / Test that setting a non-existent provider fails
 - set %data3% = { "payload": "bad" }

@@ -3,5 +3,5 @@ Start
 - create identity testSigner
 - set %data% = {}
 - sign %data%
-- verify %data% with contracts ['C0']
-- assert %data.Signature.Verified.Success% is true, "empty data should sign and verify"
+- verify %data% with contracts ['C0'], write to %verifyResult%
+- assert %verifyResult.Success% is true, "empty data should sign and verify"

@@ -3,5 +3,5 @@ Start
 - create identity testSigner
 - set %data% = { "payload": 42 }
 - sign %data% with contracts ['C0', 'C1']
-- verify %data% with contracts ['C0', 'C1']
-- assert %data.Signature.Verified.Success% is true, "matching custom contracts should verify"
+- verify %data% with contracts ['C0', 'C1'], write to %verifyResult%
+- assert %verifyResult.Success% is true, "matching custom contracts should verify"

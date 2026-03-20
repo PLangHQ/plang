@@ -25,8 +25,8 @@ public partial class verify : IContext
     public async Task<Data> Run()
     {
         if (Data?.Signature == null)
-            return Engine.Memory.Data.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+            return Data.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
-        return await Data.Signature.VerifyAsync(this);
+        return await Data.Signature.VerifyAsync(this, Context.Engine);
     }
 }
