@@ -5,58 +5,69 @@
 Cryptographic signing and verification. Produces `SignedData` objects (extends `Data`) containing a signature, nonce, timestamp, hashed data, and contracts. Depends on identity (key pairs) and crypto (hashing).
 
 This piece also includes:
-- Upgrading `Engine.Providers` to support named providers
+- Upgrading `Engine.Providers` to support named providers with OBP identity
 - Extending `library.load` to discover and register provider interfaces
-- Retrofitting `HashedData` (piece 2) to extend `Data`
+- Adding a `remove` action on the provider registry (not library module)
 - Moving key generation from identity to signing provider
+- Dedicated `NonceStore` for replay prevention (not step cache)
+
+**Not included:** `HashedData` stays as-is (POCO). No retrofit to extend `Data`.
 
 ---
 
 ## Infrastructure changes
 
-### Engine.Providers: named provider registry
+### Engine.Providers: named provider registry (OBP)
 
-Current `Engine.Providers` stores one instance per interface type. Needs to support multiple implementations per interface, keyed by name.
+Current `Engine.Providers` stores one instance per interface type. Needs to support multiple implementations per interface.
+
+**OBP design:** The provider owns its identity. `IProvider` has `Name` and `IsDefault`. The registry is a collection — it holds providers, doesn't manage their names or default status. Same pattern as `IdentityVariable.IsDefault`.
 
 ```csharp
-engine.Providers.Register<ISigningProvider>("ed25519", instance)
-engine.Providers.Get<ISigningProvider>("ecdsa-p256")       // by name
-engine.Providers.Get<ISigningProvider>()                   // default
-engine.Providers.GetOrDefault<ISigningProvider>("ed25519") // by name with fallback
+// Internal storage
+private readonly ConcurrentDictionary<Type, List<IProvider>> _providers = new();
 ```
 
-**Default provider:** The first provider registered for an interface becomes the default. Tracked explicitly via a separate `_defaults` dictionary (not insertion-order dependent). `Register` accepts an optional `isDefault` flag; the first registration auto-defaults if none is set.
+```csharp
+engine.Providers.Register<ISigningProvider>(instance)    // add to list, first one gets IsDefault=true
+engine.Providers.Get<ISigningProvider>()                  // find where IsDefault == true
+engine.Providers.Get<ISigningProvider>("ecdsa-p256")      // find where Name matches
+engine.Providers.Remove<ISigningProvider>("ed25519")      // remove from list by name
+```
 
-Built-in `Ed25519Provider` registers at engine startup as default. No hardcoded fallbacks in module code.
+**Default management:**
+- First provider registered for an interface gets `IsDefault = true` automatically (e.g., OnStart event registers Ed25519)
+- PLang developer can change default: `set myprovider.dll as default` → clears `IsDefault` on siblings, sets on target (same pattern as identity)
+- Provider name collision: registering a provider with a name that already exists for that interface returns `Data.FromError(ActionError(...))` with key `"ProviderExists"`
 
-Same upgrade applies to `ICryptoProvider` — add `Name` property, register by name.
+Built-in `Ed25519Provider` registers at engine startup (via OnStart event) as default. No hardcoded fallbacks in module code.
 
-**Provider name collision:** Registering a provider with a name that already exists for that interface returns `Data.FromError(ActionError(...))` with key `"ProviderExists"`. The PLang developer must explicitly remove the existing provider before registering a new one with the same name.
-
-### library.load extension
-
-After loading a DLL, scan for types implementing `IProvider` (marker interface with `Name` property — all provider interfaces extend it). If found, instantiate via parameterless constructor and register on `Engine.Providers` with the provider's `Name`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
-
-Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
+Same upgrade applies to `ICryptoProvider` — add `Name` and `IsDefault` properties via `IProvider`, register by name.
 
 **Provider interface hierarchy:** `IProvider` is the marker. `ISigningProvider : IProvider` and `ICryptoProvider : IProvider` extend it. `library.load` only scans for `IProvider` — no hardcoded list of specific interfaces.
 
-### library.remove extension
+### library.load extension
 
-New action: `remove` on the library module. Removes a previously registered provider by interface type and name.
+After loading a DLL, scan for types implementing `IProvider` (marker interface — all provider interfaces extend it). If found, instantiate via parameterless constructor and register on `Engine.Providers`. Provider classes **must** have a parameterless constructor — if not found, return `Data.FromError(ActionError(...))` with key `"ProviderConstructor"` explaining the constraint.
+
+Build validation: scan DLL, error if it doesn't implement any known provider interface or action handler.
+
+### Provider removal
+
+Provider removal is a **provider concern**, not a library concern. Lives on the provider registry, not the library module.
 
 ```plang
 - remove provider ed25519 from signing
 - load my-custom-ed25519.dll
 ```
 
-PLang developer flow:
+Or load-then-swap:
 ```plang
 - load my.dll
 - set signing provider to ecdsa-p256
 ```
 
-Step 1 loads the DLL and registers the provider. Step 2 tells the signing module which provider to use. If step 2 is never called, the default (ed25519) is used.
+Step 1 loads the DLL and registers the provider. Step 2 tells the signing module which provider to use via settings.
 
 ---
 
@@ -94,6 +105,7 @@ Each step only changes the property it touches.
 public interface IProvider
 {
     string Name { get; }
+    bool IsDefault { get; set; }
 }
 
 // In modules/signing/providers/ISigningProvider.cs
@@ -111,6 +123,7 @@ public interface ISigningProvider : IProvider
 public class Ed25519Provider : ISigningProvider
 {
     public string Name => "ed25519";
+    public bool IsDefault { get; set; }
 
     public (string publicKey, string privateKey) GenerateKeyPair()
     {
@@ -173,7 +186,7 @@ private static readonly JsonSerializerOptions SigningOptions = new()
 
 **Cross-platform compatibility:** `UnsafeRelaxedJsonEscaping` prevents System.Text.Json from escaping non-ASCII characters (e.g., `é` → `\u00E9`), matching JavaScript's `JSON.stringify` behavior. This ensures identical bytes when signing in .NET and verifying in the browser (or vice versa).
 
-**XSS safety:** The signing serialization is not rendered in HTML — it's byte input for cryptographic signing. When `SignedData` is later accessed for display in web contexts (future `%!Signature%` work), HTML escaping is applied at the **output boundary**, not at the crypto layer. Out of scope for this piece.
+**XSS safety:** The signing serialization uses `UnsafeRelaxedJsonEscaping` for byte-identical crypto input. When `SignedData` properties are accessed for display in web contexts, proper HTML escaping must be applied at the output boundary. `SignedData` should override output rendering to apply safe escaping — this is part of this piece, not deferred.
 
 **Date format:** System.Text.Json defaults to ISO 8601 for `DateTimeOffset`, which matches runtime1's `"yyyy-MM-dd'T'HH:mm:ss.fff'Z'"` format. Verify this produces identical output in tests.
 
@@ -204,16 +217,16 @@ public class SignedData : Data
     [JsonPropertyOrder(6)]
     public string Identity { get; set; }                   // public key (base64)
 
-    [JsonPropertyOrder(7)]                                 // Data.Value (HashedData) is order 7
-    // Value inherited from Data
+    [JsonPropertyOrder(7)]
+    public HashedData Hash { get; set; }                   // payload hash (POCO)
 
     [JsonPropertyOrder(99)]
     public string? Signature { get; set; }                 // null during signing, set after
 }
 ```
 
-- `Data.Type` = `"ed25519"` (algorithm name)
-- `Data.Value` = the `HashedData` (payload hash)
+- `Data.Type` = `"ed25519"` (algorithm name — intentionally polymorphic, not a PLang type descriptor)
+- `Hash` = the `HashedData` POCO (payload hash)
 
 Property order optimized for early rejection during verification:
 1. Type → reject if provider not found
@@ -223,26 +236,12 @@ Property order optimized for early rejection during verification:
 5. Contracts → reject if mismatch
 6. Headers → reject if mismatched
 7. Identity → needed for signature verify
-8. Value → re-hash and compare (expensive)
+8. Hash → re-hash and compare (expensive)
 9. Signature → `null` during sign/verify, populated after signing
 
-### HashedData : Data (piece 2 retrofit)
+### HashedData (unchanged — stays as POCO)
 
-```csharp
-public class HashedData : Data
-{
-    [JsonPropertyOrder(1)]
-    public string Format { get; set; }  // "raw" (byte arrays) or "json" (everything else)
-
-    [JsonPropertyOrder(2)]
-    public string Hash { get; set; }    // hex string
-}
-```
-
-- `Data.Type` = `"keccak256"` (algorithm name)
-- `Format` records how the input was serialized before hashing — required for verification (verifier must serialize the same way to reproduce the hash)
-
-Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`. Drops `Algorithm` (replaced by `Data.Type`), keeps `Format`.
+No modification to `modules/crypto/types.cs`. `HashedData` remains a standalone POCO with `Algorithm`, `Format`, `Hash`. Referenced by `SignedData.Hash` as a property, not via `Data.Value` inheritance.
 
 ---
 
@@ -260,10 +259,10 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
 **Flow:**
 1. Resolve signing provider: per-call param → settings → default
 2. Get current identity's private key (navigate: context → engine → identity)
-3. Hash payload via crypto module → `HashedData` (with `Type` = algorithm, `Hash` = hex)
+3. Hash payload via crypto module → `HashedData` (with `Algorithm`, `Format`, `Hash`)
 4. Build `SignedData`:
    - `Type` = provider name (e.g., `"ed25519"`)
-   - `Value` = the `HashedData`
+   - `Hash` = the `HashedData` POCO
    - `Nonce` = GUID
    - `Created` = now
    - `Expires` = now + TTL (if provided)
@@ -300,10 +299,10 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
 2. Read `TimeoutSeconds` from settings
 3. Check `Created` is not older than `TimeoutSeconds`
 4. Check `Expires` has not passed (if present)
-5. Check nonce hasn't been used (`Engine.Cache`, key: `signing_nonce_{nonce}`, duration: `TimeoutSeconds`)
+5. Check nonce hasn't been used (via `NonceStore`, key: nonce value, duration: `TimeoutSeconds`)
 6. Check contracts: if required contracts provided, must **exactly match** signed data's contract list (order-independent set equality). Contracts are part of the signed payload — any mismatch means a different agreement was signed.
 7. Check headers: if expected headers provided, must match signed headers
-8. Re-hash original data via crypto module → compare hash to `SignedData.Value.Hash` (Value is always `HashedData`)
+8. Re-hash original data via crypto module → compare hash to `SignedData.Hash.Hash`
 9. Verify cryptographic signature: extract `Signature`, set `Signature = null`, re-serialize `SignedData` to JSON bytes using `SigningOptions`, call `provider.Verify(bytes, signatureBytes, publicKey)`
 10. Return `Data.Ok(true)` or `Data.FromError(ActionError(...))` with specific error key for each failure reason
 
@@ -317,11 +316,21 @@ Replaces the current standalone `HashedData` class in `modules/crypto/types.cs`.
 
 ## Nonce replay prevention
 
-Uses `Engine.Cache` (already exists). Key: `signing_nonce_{nonce}`. Duration: `TimeoutSeconds` from settings.
+Dedicated `NonceStore` behind an interface — not the step cache. Nonce tracking is a security boundary, not a performance optimization. Mixing it into `Engine.Cache` (which is for step result caching) muddies both concerns.
 
-On verify: check if nonce exists in cache → yes = reject (replay), no = store with expiry.
+```csharp
+public interface INonceStore
+{
+    Task<bool> HasBeenUsedAsync(string nonce, CancellationToken ct = default);
+    Task MarkUsedAsync(string nonce, TimeSpan expiry, CancellationToken ct = default);
+}
+```
 
-**Known limitation:** `MemoryStepCache` is per-engine-instance (new `MemoryCache` per instance with unique GUID). If Engine is pooled, nonce replay protection doesn't work across requests. Tracked in todos — the fix is to make the cache app-level shared, but that's out of scope for this piece.
+Default implementation: `MemoryNonceStore` backed by `MemoryCache` with sliding expiration.
+
+On verify: check if nonce exists → yes = reject (replay), no = store with expiry (`TimeoutSeconds`).
+
+**Known limitation:** `MemoryNonceStore` is per-engine-instance. If Engine is pooled, nonce replay protection doesn't work across requests. Tracked in todos — the fix is to make the store app-level shared, but that's out of scope for this piece.
 
 ---
 
@@ -347,12 +356,13 @@ Key generation moves from `identity/KeyGenerator.cs` to `ISigningProvider.Genera
 
 ```
 PLang/Runtime2/Engine/Providers/
-├── IProvider.cs                     — marker interface (Name), all providers extend this
+├── IProvider.cs                     — marker interface (Name, IsDefault), all providers extend this
 PLang/Runtime2/modules/signing/
 ├── sign.cs                          — sign action handler
 ├── verify.cs                        — verify action handler
-├── SignedData.cs                    — SignedData : Data
+├── SignedData.cs                    — SignedData : Data (Hash property is HashedData POCO)
 ├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
+├── NonceStore.cs                    — INonceStore + MemoryNonceStore
 ├── providers/
 │   ├── ISigningProvider.cs          — signing provider interface (extends IProvider)
 │   └── Ed25519Provider.cs           — default Ed25519 via NSec
@@ -366,9 +376,10 @@ PLang/Runtime2/modules/signing/
 |------|---------|
 | `PLang/Runtime2/modules/signing/sign.cs` | Sign action handler |
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler |
-| `PLang/Runtime2/modules/signing/SignedData.cs` | SignedData : Data |
+| `PLang/Runtime2/modules/signing/SignedData.cs` | SignedData : Data (with `Hash` property typed `HashedData`) |
 | `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings) |
-| `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name property) — all providers extend this |
+| `PLang/Runtime2/modules/signing/NonceStore.cs` | INonceStore interface + MemoryNonceStore default |
+| `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
 | `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Signing provider interface (extends IProvider) |
 | `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
 
@@ -376,28 +387,27 @@ PLang/Runtime2/modules/signing/
 
 | File | Change |
 |------|--------|
-| `PLang/Runtime2/Engine/Providers/this.cs` | Upgrade to named provider registry. Error on duplicate name (`"ProviderExists"`) |
+| `PLang/Runtime2/Engine/Providers/this.cs` | Upgrade to list-based named provider registry. `List<IProvider>` per type. Provider owns `Name` and `IsDefault`. Error on duplicate name (`"ProviderExists"`) |
 | `PLang/Runtime2/modules/library/load.cs` | Discover and register provider interfaces from loaded DLLs |
-| `PLang/Runtime2/modules/library/remove.cs` | New action: remove a registered provider by interface type and name |
 | `PLang/Runtime2/modules/identity/create.cs` | Delegate key generation to signing provider |
 | `PLang/Runtime2/modules/identity/KeyGenerator.cs` | Remove (moved to Ed25519Provider) |
-| `PLang/Runtime2/modules/crypto/types.cs` | Retrofit HashedData to extend Data. **Breaking change:** current `HashedData` is a standalone POCO with `Algorithm`, `Format`, `Hash`. New: extends `Data`, uses `Data.Type` instead of `Algorithm`, keeps `Format`. Update all consumers: `hash.cs` (currently returns `Data.Ok(HashedData {...})` — now returns the `HashedData` directly since it *is* a `Data`), `verify.cs` (reads `Algorithm` → reads `Type`) |
-| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Extend `IProvider` (adds `Name` property), register by name |
+| `PLang/Runtime2/modules/crypto/providers/ICryptoProvider.cs` | Extend `IProvider` (adds `Name` and `IsDefault` properties) |
 
 ## Test expectations
 
-### C# unit tests (~20)
+### C# unit tests (~22)
 
 **sign handler:**
 - produces valid SignedData with correct Type, Nonce, Created, Identity
 - signature is cryptographically valid (verify roundtrip)
-- Value is HashedData with correct hash
+- Hash is HashedData with correct hash
 - contracts default to ["C0"]
 - custom contracts are included
 - TTL sets Expires correctly
 - no TTL leaves Expires null
 - headers are included
 - per-call provider override works
+- sign with missing identity returns error
 
 **verify handler:**
 - valid signature returns true
@@ -409,16 +419,18 @@ PLang/Runtime2/modules/signing/
 - mismatched headers returns false
 - wrong data hash returns false
 - unknown provider returns ProviderNotFound error
+- corrupted signature bytes returns false
 
 **named provider registry:**
 - stores and retrieves multiple providers per interface
-- default provider returned when no name specified
+- default provider (IsDefault) returned when no name specified
+- change default clears previous default (same as identity pattern)
 - duplicate name returns ProviderExists error
 
 **serialization roundtrip:**
 - serialize with Signature=null → sign → deserialize → set Signature=null → re-serialize produces identical bytes
 
-### PLang tests (~8)
+### PLang tests (~12)
 - Sign object, verify succeeds
 - Sign with contracts, verify with matching contracts
 - Sign with contracts, verify with mismatched contracts fails
@@ -427,6 +439,10 @@ PLang/Runtime2/modules/signing/
 - Verify tampered data fails
 - Verify replayed nonce fails
 - Provider swap via settings
+- Sign with missing identity (no identity created) fails
+- Sign with empty data
+- Verify with corrupted signature fails
+- Sign, verify, then verify same nonce again (replay) fails
 
 ---
 
@@ -436,13 +452,15 @@ PLang/Runtime2/modules/signing/
 - `verify` checks timestamp, expiry, nonce, contracts (exact match), headers, data hash, and cryptographic signature
 - Signing uses null-signature pattern: Signature=null during serialization, set after signing (matches runtime1 and TypeScript)
 - Serialization uses `[JsonPropertyOrder]` (built-in System.Text.Json), shared `JsonSerializerOptions` with camelCase + `UnsafeRelaxedJsonEscaping` for cross-platform byte compatibility
+- `SignedData.Hash` is a `HashedData` POCO property — `HashedData` is NOT retrofitted to extend `Data`
+- `SignedData` applies safe HTML escaping when properties are accessed for output rendering
 - Signing provider resolved from settings, verification resolved from message Type
 - Unknown provider on verify returns specific `ProviderNotFound` error
-- `Engine.Providers` supports named registration (multiple providers per interface), errors on duplicate name
+- `Engine.Providers` upgraded to list-based registry: `List<IProvider>` per type, provider owns `Name` and `IsDefault` (OBP — same pattern as `IdentityVariable.IsDefault`)
 - `library.load` discovers and registers provider interfaces from DLLs
-- `library.remove` allows unregistering a provider by name
+- Provider removal is a provider concern (on the registry), not a library concern
 - Key generation moved from identity to `ISigningProvider.GenerateKeyPair()`
-- `HashedData` retrofitted to extend `Data`
+- Dedicated `NonceStore` for replay prevention (not step cache)
 - Settings via `ISettings` — context-scoped, actor-aware, not persisted
 - Single `TimeoutSeconds` for both nonce cache and max signature age
 - C# and PLang tests pass
