@@ -3,7 +3,7 @@ using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
-namespace PLang.Tests.Runtime2.Modules.signing;
+namespace PLang.Tests.Runtime2.Modules.provider;
 
 /// <summary>
 /// Tests the provider module actions (load, remove, setDefault, list).

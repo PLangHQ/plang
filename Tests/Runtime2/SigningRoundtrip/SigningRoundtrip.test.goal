@@ -3,5 +3,5 @@ Start
 - create identity testSigner
 - set %data% = { "message": "hello world" }
 - sign %data%
-- verify %data% with contracts ['C0'], write to %result%
+- verify %data% with contracts ['C0']
 - assert %data.Signature.Verified.Success% is true, "valid signature should verify"
