@@ -6,20 +6,20 @@
   "status": "stubs-committed",
   "test_stubs": {
     "csharp": {
-      "total": 85,
+      "total": 91,
       "files": [
         { "file": "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs", "tests": 16, "status": "stub", "covers": "Engine.Providers named registry — register, get, remove, setDefault, list, sub-engine inheritance" },
         { "file": "PLang.Tests/Runtime2/Core/CacheTryAddTests.cs", "tests": 5, "status": "stub", "covers": "ICache.TryAddAsync atomic semantics for nonce replay prevention" },
         { "file": "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs", "tests": 12, "status": "stub", "covers": "Ed25519Provider — key generation, sign, verify at provider level" },
         { "file": "PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs", "tests": 14, "status": "stub", "covers": "Sign action handler — field population, contracts, TTL, headers, crypto validity, provider override, errors" },
-        { "file": "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs", "tests": 18, "status": "stub", "covers": "Verify action handler — all 9 error keys, contracts, provider resolution, headers, nonce cache, boundaries" },
-        { "file": "PLang.Tests/Runtime2/Modules/signing/SigningSerializationTests.cs", "tests": 7, "status": "stub", "covers": "Deterministic JSON serialization — null-signature pattern, camelCase, stable bytes, base64, round-trip" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs", "tests": 23, "status": "stub", "covers": "Verify action handler — all 9 error keys, contracts, provider resolution, headers, nonce cache, boundaries, empty contracts, lazy verification (DESIGN-1)" },
+        { "file": "PLang.Tests/Runtime2/Modules/signing/SigningSerializationTests.cs", "tests": 8, "status": "stub", "covers": "Deterministic JSON serialization — null-signature pattern, camelCase, stable bytes, base64, round-trip, Verified JsonIgnore exclusion" },
         { "file": "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs", "tests": 8, "status": "stub", "covers": "Provider module actions — load, remove, setDefault, list" },
         { "file": "PLang.Tests/Runtime2/Modules/signing/IdentityKeyProviderTests.cs", "tests": 5, "status": "stub", "covers": "Identity create delegates to IKeyProvider — mock provider, default Ed25519, error paths" }
       ]
     },
     "plang": {
-      "total": 14,
+      "total": 15,
       "files": [
         { "file": "Tests/Runtime2/SigningRoundtrip/SigningRoundtrip.test.goal", "tests": "sign + verify round-trip with contracts" },
         { "file": "Tests/Runtime2/SigningCustomContracts/SigningCustomContracts.test.goal", "tests": "sign/verify with custom contracts ['C0','C1']" },
@@ -32,7 +32,8 @@
         { "file": "Tests/Runtime2/SigningWithHeaders/SigningWithHeaders.test.goal", "tests": "sign with headers, verify with matching headers" },
         { "file": "Tests/Runtime2/SigningHeaderMismatch/SigningHeaderMismatch.test.goal", "tests": "sign with POST header, verify expects GET, fails" },
         { "file": "Tests/Runtime2/SigningDotNavigation/SigningDotNavigation.test.goal", "tests": "access SignedData properties via %data.Signature.Algorithm% etc." },
-        { "file": "Tests/Runtime2/SigningProviderSwap/SigningProviderSwap.test.goal", "tests": "set signing provider via settings, sign+verify still works" },
+        { "file": "Tests/Runtime2/SigningLazyVerification/SigningLazyVerification.test.goal", "tests": "access %data.Signature.Verified% without explicit verify step — DESIGN-1 lazy verification" },
+        { "file": "Tests/Runtime2/SigningProviderSwap/SigningProviderSwap.test.goal", "tests": "set signing provider via settings + provider param, verify algorithm field reflects provider" },
         { "file": "Tests/Runtime2/SigningNoIdentity/SigningNoIdentity.test.goal", "tests": "sign without identity, should error" },
         { "file": "Tests/Runtime2/SigningVerifyUnsigned/SigningVerifyUnsigned.test.goal", "tests": "verify data that was never signed, should error" }
       ]
@@ -67,5 +68,5 @@
     "Verify action's core logic must be reusable by the lazy .Verified getter"
   ],
   "verdict": "stubs-ready",
-  "summary": "85 C# test stubs + 14 PLang test goals committed for signing module (piece 3). All 9 verify error keys covered. Provider registry, cache atomics, serialization, identity key delegation all have dedicated test files. CRITICAL: implement lazy verification on SignedData.Verified — accessing the property must trigger verification without an explicit verify step. The verify action and lazy getter share the same underlying logic."
+  "summary": "91 C# test stubs + 15 PLang test goals committed for signing module (piece 3). All 9 verify error keys covered. Provider registry, cache atomics, serialization, identity key delegation all have dedicated test files. CRITICAL: implement lazy verification on SignedData.Verified — accessing the property must trigger verification without an explicit verify step. The verify action and lazy getter share the same underlying logic. Lazy verification covered by 4 C# tests + 1 PLang test. Verified JsonIgnore exclusion tested. Empty contracts list rejection tested."
 }

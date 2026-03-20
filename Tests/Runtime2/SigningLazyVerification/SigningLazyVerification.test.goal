@@ -1,0 +1,7 @@
+Start
+/ Test: accessing %data.Signature.Verified% triggers verification without explicit verify step
+- create identity testSigner
+- set %data% = { "message": "lazy check" }
+- sign %data%
+/ No explicit verify step — accessing .Verified must auto-verify with default contracts ['C0']
+- assert %data.Signature.Verified.Success% is true, "lazy verification should auto-verify on property access"

@@ -9,7 +9,7 @@ namespace PLang.Tests.Runtime2.Modules.signing;
 /// Tests the verify action handler. All 9 error keys covered.
 /// Uses PLangEngine. Helper signs data first for verification tests.
 ///
-/// Verify checks in order: Type → Algorithm → Nonce → Created → Expires → Contracts → Headers → HashedData → Signature
+/// Verify checks in order: NoSignature → ProviderNotFound → TimedOut → Expired → NonceReplay → ContractMismatch → HeaderMismatch → DataHashMismatch → SignatureInvalid
 /// Each check has a specific error key for early rejection.
 /// </summary>
 public class VerifyActionTests
@@ -255,6 +255,70 @@ public class VerifyActionTests
         // Arrange: sign data, Created is just within the timeout window
         // Act: verify with TimeoutSeconds that barely accepts it
         // Assert: result.Success == true
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Empty Contracts
+
+    [Test]
+    public async Task Verify_EmptyContractsList_ReturnsError()
+    {
+        // Empty list [] is invalid — contracts are required on verify.
+        //
+        // Arrange: sign data with default contracts
+        // Act: verify with Contracts = new List<string>() (empty)
+        // Assert: result.Success == false (contracts are required, empty not allowed)
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    #endregion
+
+    #region Lazy Verification (DESIGN-1)
+
+    [Test]
+    public async Task Verify_LazyAccess_TriggersVerificationWithoutExplicitStep()
+    {
+        // Accessing SignedData.Verified without calling verify action must auto-verify.
+        // Lazy path uses default contracts ['C0'] and no headers.
+        //
+        // Arrange: create identity, sign data (default contracts ['C0'])
+        // Act: access signedData.Verified directly — do NOT call verify action
+        // Assert: Verified is not null, Verified.Success == true
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    [Test]
+    public async Task Verify_LazyAccess_CachesResult_SecondAccessSameObject()
+    {
+        // First access triggers verification, second access returns cached result.
+        //
+        // Arrange: create identity, sign data
+        // Act: access signedData.Verified twice
+        // Assert: both return same result, verification logic only ran once
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    [Test]
+    public async Task Verify_LazyAccess_UsesDefaultContractsC0()
+    {
+        // Lazy path uses ['C0']. If signed with ['C1'], lazy verify fails with ContractMismatch.
+        //
+        // Arrange: create identity, sign data with contracts ['C1']
+        // Act: access signedData.Verified directly (lazy path uses ['C0'])
+        // Assert: Verified.Success == false, error key == "ContractMismatch"
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
+
+    [Test]
+    public async Task Verify_ExplicitThenLazy_ExplicitResultPreserved()
+    {
+        // Explicit verify sets Verified. Subsequent lazy access returns cached result, not re-verify.
+        //
+        // Arrange: create identity, sign data with ['C0','C1']
+        // Act: explicitly verify with contracts ['C0','C1'] (succeeds), then access .Verified again
+        // Assert: Verified.Success == true (explicit result preserved, not overwritten by lazy)
         await Assert.Fail("stub — implementation depends on signing module");
     }
 

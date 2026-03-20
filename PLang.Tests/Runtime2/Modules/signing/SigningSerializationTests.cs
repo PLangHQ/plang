@@ -86,4 +86,16 @@ public class SigningSerializationTests
         // Assert: Convert.FromBase64String(Signature) succeeds, decoded length == 64 (Ed25519)
         await Assert.Fail("stub — implementation depends on signing module");
     }
+
+    [Test]
+    public async Task SignedData_Verified_ExcludedFromJson()
+    {
+        // SignedData.Verified is [JsonIgnore] — must NOT appear in serialized JSON.
+        // If Verified leaked into the envelope, it would break signature verification.
+        //
+        // Arrange: create SignedData, set Verified = Data.Ok(true)
+        // Act: serialize to JSON string using SigningOptions
+        // Assert: JSON does not contain "verified" key
+        await Assert.Fail("stub — implementation depends on signing module");
+    }
 }
