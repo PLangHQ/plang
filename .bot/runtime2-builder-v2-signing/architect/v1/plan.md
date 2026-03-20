@@ -8,7 +8,7 @@ This piece also includes:
 - Upgrading `Engine.Providers` to support named providers with OBP identity
 - New `provider` module for provider lifecycle (load DLL, remove, set default)
 - Moving key generation from identity to key provider (`IKeyProvider`)
-- Dedicated `NonceStore` for replay prevention (not step cache), shared across engine pool
+- `ICache.TryAddAsync` for atomic nonce replay prevention (works with any cache backend — memory, Redis, etc.)
 - Changing `HashedData.Hash` encoding from hex to base64 (breaking change — consistency with all other binary fields)
 - Removing `Data.Verified` / `Data.SetVerified()` from `Data.Envelope.cs` — verification state moves to `SignedData.Verified`
 
@@ -182,8 +182,11 @@ public interface IProvider
 // In Engine/Providers/IKeyProvider.cs
 public interface IKeyProvider : IProvider
 {
-    (string publicKey, string privateKey) GenerateKeyPair();
+    KeyPair GenerateKeyPair();
 }
+
+// In Engine/Providers/KeyPair.cs
+public record KeyPair(string PublicKey, string PrivateKey);
 
 // In modules/signing/providers/ISigningProvider.cs
 public interface ISigningProvider : IKeyProvider
@@ -193,7 +196,7 @@ public interface ISigningProvider : IKeyProvider
 }
 ```
 
-**`GenerateKeyPair()` returns a tuple** — simple, internal-only. The provider handles its own key material (e.g., ECDSA extracts curve parameters from the key at verify time, same as runtime1). Identity stores `PublicKey`/`PrivateKey` as base64 strings — no extra material needed at the identity level.
+**`GenerateKeyPair()` returns a `KeyPair` record** — named properties prevent public/private key mixups. The provider handles its own key material (e.g., ECDSA extracts curve parameters from the key at verify time, same as runtime1). Identity stores `PublicKey`/`PrivateKey` as base64 strings — no extra material needed at the identity level.
 
 **`IKeyProvider` decouples identity from signing.** Identity creation navigates to `IKeyProvider` — it doesn't know or care whether the provider is for signing or encryption. When encryption providers arrive later (`IEncryptionProvider : IKeyProvider`), identity creation works out of the box.
 
@@ -205,7 +208,7 @@ public class Ed25519Provider : ISigningProvider
     public string Name => "ed25519";
     public bool IsDefault { get; set; }
 
-    public (string publicKey, string privateKey) GenerateKeyPair()
+    public KeyPair GenerateKeyPair()
     {
         var algorithm = SignatureAlgorithm.Ed25519;
         using var key = Key.Create(algorithm, new KeyCreationParameters
@@ -214,7 +217,7 @@ public class Ed25519Provider : ISigningProvider
         });
         var pub = Convert.ToBase64String(key.Export(KeyBlobFormat.RawPublicKey));
         var priv = Convert.ToBase64String(key.Export(KeyBlobFormat.RawPrivateKey));
-        return (pub, priv);
+        return new KeyPair(pub, priv);
     }
 
     public byte[] Sign(byte[] data, string privateKey) { /* NSec sign */ }
@@ -406,9 +409,10 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 
 **Parameters:**
 - `Data : Data` — the Data object to verify (reads `data.Signature`, sets `data.Signature.Verified`)
-- `OriginalData : object?` — original payload for hash comparison (optional — if not provided, skip hash check)
 - `Contracts : List<string>` — **required**. Expected contracts must be provided.
 - `Headers : Dictionary<string, string>?` — expected headers to match
+
+**No separate `OriginalData` parameter.** The Data IS the payload — true OBP. The signature lives on the Data object (`data.Signature`), and the Data's own serialized form (with `Signature` excluded via `[JsonIgnore]`) is the payload that was hashed during signing. The verify handler re-serializes the Data using `SigningOptions`, re-hashes, and compares to `SignedData.HashedData.Hash`. No need to pass the original data separately — the object carries everything.
 
 **Flow:**
 1. Read `data.Signature` — if null, return `Data.FromError(ActionError(...))` with key `"NoSignature"`
@@ -416,10 +420,10 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 3. Read `TimeoutSeconds` from verifier's settings
 4. Check `Created` is not older than `TimeoutSeconds`
 5. Check `Expires` has not passed (if present)
-6. Check nonce hasn't been used (via `NonceStore.TryMarkUsedAsync`, duration: `TimeoutSeconds`)
+6. Check nonce hasn't been used (via `engine.Cache.TryAddAsync`, duration: `TimeoutSeconds`)
 7. **Check contracts** — always required. Compare each contract individually against signed data's contract list (order-independent set equality). Each mismatch returns a specific error with key `"ContractMismatch"` identifying which contract failed. No signature verification if contracts don't match — fail early.
 8. Check headers: if expected headers provided, must match signed headers
-9. If `OriginalData` provided: re-hash via crypto module → compare hash to `SignedData.HashedData.Hash` (base64)
+9. Re-serialize Data using `SigningOptions` (`Signature` excluded via `[JsonIgnore]`) → re-hash via crypto module → compare hash to `SignedData.HashedData.Hash` (base64). Mismatch → error with key `"DataHashMismatch"`
 10. Verify cryptographic signature: extract `Signature`, set `Signature = null`, re-serialize `SignedData` to JSON bytes using `SigningOptions`, call `provider.Verify(bytes, signatureBytes, publicKey)`
 11. Set `data.Signature.Verified = result` — `Data.Ok(true)` on success, `Data.FromError(ActionError(...))` with specific error key on failure
 12. Return the `Data`
@@ -429,8 +433,7 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 **PLang usage:**
 ```plang
 - verify %request% with contracts ['C0']
-- verify %request% with data %originalData% and contracts ['C0']
-- verify %request% with data %originalData% and contracts ['C0'] and headers %expectedHeaders%
+- verify %request% with contracts ['C0'] and headers %expectedHeaders%
 - if %request.Signature.Verified.Success% is false, throw error %request.Signature.Verified.Error%
 ```
 
@@ -438,44 +441,31 @@ No structural change to `modules/crypto/types.cs`. `HashedData` remains a standa
 
 ## Nonce replay prevention
 
-Dedicated `NonceStore` behind an interface — not the step cache. Nonce tracking is a security boundary, not a performance optimization. Mixing it into `Engine.Cache` (which is for step result caching) muddies both concerns.
+Nonce tracking uses `Engine.Cache` via a new `TryAddAsync` method on `ICache`. This ensures nonce replay prevention works with any cache backend — in-memory for single-server, Redis for multi-server. No dedicated `NonceStore` class needed.
+
+### ICache.TryAddAsync (new method)
 
 ```csharp
-public interface INonceStore
-{
-    /// <summary>
-    /// Atomically checks and marks a nonce as used.
-    /// Returns true if the nonce was fresh (now marked used).
-    /// Returns false if the nonce was already used (replay attack).
-    /// </summary>
-    Task<bool> TryMarkUsedAsync(string nonce, TimeSpan expiry, CancellationToken ct = default);
-}
+// Added to ICache interface
+/// <summary>
+/// Atomically adds a value if the key does not exist.
+/// Returns true if added (key was fresh), false if already existed.
+/// </summary>
+Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default);
 ```
 
-**Single atomic operation** — no separate check-then-mark that could race between threads. `MemoryNonceStore` implements via `MemoryCache.GetOrCreate`:
+**Backend implementations:**
+- **MemoryStepCache**: uses `MemoryCache.AddOrGetExisting` (atomic — returns null if key was fresh, existing value if not)
+- **Redis**: uses `SETNX` (atomic set-if-not-exists)
 
+**Verify handler usage:**
 ```csharp
-public class MemoryNonceStore : INonceStore
-{
-    private readonly MemoryCache _cache = new(new MemoryCacheOptions());
-
-    public Task<bool> TryMarkUsedAsync(string nonce, TimeSpan expiry, CancellationToken ct)
-    {
-        bool isFresh = false;
-        _cache.GetOrCreate(nonce, entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = expiry;
-            isFresh = true;
-            return true;
-        });
-        return Task.FromResult(isFresh);
-    }
-}
+var settings = new CacheSettings { DurationSeconds = timeoutSeconds, Sliding = false };
+bool isFresh = await engine.Cache.TryAddAsync($"nonce:{nonce}", true, settings, ct);
+if (!isFresh) return Data.FromError(new ActionError("Nonce already used", "NonceReplay", 409));
 ```
 
-Entries self-evict via `AbsoluteExpirationRelativeToNow` — no manual cleanup timer needed. Cache doesn't grow unbounded.
-
-**Shared across engine pool:** The `NonceStore` belongs to the top-level engine and is shared across all pooled sub-engines. This is not a singleton — a future `create new engine` would get its own independent `NonceStore`, and its sub-engines would share that. Same ownership pattern as other engine-level resources.
+The nonce key is prefixed with `nonce:` to avoid collisions with step cache keys. Entries self-evict via absolute expiration — no manual cleanup needed.
 
 ---
 
@@ -510,6 +500,8 @@ Default uses the default `IKeyProvider` (which is Ed25519 unless changed). Optio
 PLang/Runtime2/Engine/Providers/
 ├── IProvider.cs                     — marker interface (Name, IsDefault), all providers extend this
 ├── IKeyProvider.cs                  — key generation interface (extends IProvider)
+├── KeyPair.cs                       — record KeyPair(string PublicKey, string PrivateKey)
+├── Ed25519Provider.cs               — default Ed25519 provider (ISigningProvider) — engine-level, not signing-module-dependent
 PLang/Runtime2/modules/provider/
 ├── load.cs                          — load DLL, scan for IProvider, register on Engine.Providers
 ├── remove.cs                        — remove provider by name (error if default)
@@ -519,10 +511,8 @@ PLang/Runtime2/modules/signing/
 ├── verify.cs                        — verify action handler
 ├── SignedData.cs                    — standalone POCO (Algorithm, HashedData, Headers, Verified)
 ├── Settings.cs                      — ISettings: Provider, TimeoutSeconds
-├── NonceStore.cs                    — INonceStore + MemoryNonceStore (atomic TryMarkUsedAsync)
 ├── providers/
-│   ├── ISigningProvider.cs          — signing provider interface (extends IKeyProvider)
-│   └── Ed25519Provider.cs           — default Ed25519 via NSec
+│   └── ISigningProvider.cs          — signing provider interface (extends IKeyProvider)
 ```
 
 ---
@@ -535,11 +525,11 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/signing/verify.cs` | Verify action handler — checks all fields, sets `data.Signature.Verified` |
 | `PLang/Runtime2/modules/signing/SignedData.cs` | Standalone POCO with Algorithm, Headers, HashedData, Verified (`Data?`, `[JsonIgnore]`, public setter) |
 | `PLang/Runtime2/modules/signing/Settings.cs` | Module settings (ISettings): Provider, TimeoutSeconds |
-| `PLang/Runtime2/modules/signing/NonceStore.cs` | INonceStore interface + MemoryNonceStore (atomic, MemoryCache-backed, shared across engine pool) |
 | `PLang/Runtime2/Engine/Providers/IProvider.cs` | Marker interface (Name, IsDefault) — all providers extend this |
 | `PLang/Runtime2/Engine/Providers/IKeyProvider.cs` | Key generation interface (extends IProvider) |
+| `PLang/Runtime2/Engine/Providers/KeyPair.cs` | `record KeyPair(string PublicKey, string PrivateKey)` — named return type for `GenerateKeyPair()` |
 | `PLang/Runtime2/modules/signing/providers/ISigningProvider.cs` | Signing provider interface (extends IKeyProvider) |
-| `PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs` | Default Ed25519 provider |
+| `PLang/Runtime2/Engine/Providers/Ed25519Provider.cs` | Default Ed25519 provider (engine-level — identity needs `IKeyProvider` without depending on signing module) |
 | `PLang/Runtime2/modules/provider/load.cs` | Load DLL, discover IProvider types, register on Engine.Providers |
 | `PLang/Runtime2/modules/provider/remove.cs` | Remove provider by name (error if default) |
 | `PLang/Runtime2/modules/provider/setDefault.cs` | Change default provider for interface type |
@@ -556,6 +546,8 @@ PLang/Runtime2/modules/signing/
 | `PLang/Runtime2/modules/crypto/types.cs` | `HashedData.Hash` doc: hex → base64. `HashedData.Type` = `"hash"` |
 | `PLang/Runtime2/modules/crypto/hash.cs` | `FormatHash`: `ToHexString` → `ToBase64String` |
 | `PLang/Runtime2/modules/crypto/verify.cs` | `FromHexString` → `FromBase64String`, error message updated |
+| `PLang/Runtime2/Engine/Cache/this.cs` | Add `TryAddAsync` to `ICache` interface — atomic add-if-not-exists for nonce replay prevention |
+| `PLang/Runtime2/Engine/Cache/MemoryStepCache.cs` | Implement `TryAddAsync` via `MemoryCache.AddOrGetExisting` (atomic) |
 
 **Not modified:** `modules/library/load.cs` — stays focused on compiled action handlers. Provider discovery is in the new `provider/load` module.
 
@@ -581,12 +573,12 @@ PLang/Runtime2/modules/signing/
 - valid signature sets `Verified = Data.Ok(true)`
 - expired signature sets `Verified` with error key `"Expired"`
 - old signature (past TimeoutSeconds) sets `Verified` with error key `"TimedOut"`
-- reused nonce sets `Verified` with error key `"NonceReplay"`
+- reused nonce sets `Verified` with error key `"NonceReplay"` (via `Engine.Cache.TryAddAsync`)
 - second different nonce succeeds (not false positive)
 - contract mismatch returns specific `"ContractMismatch"` error identifying which contract
 - missing contracts parameter returns error
 - mismatched headers returns `"HeaderMismatch"` error
-- wrong data hash returns `"DataHashMismatch"` error
+- tampered Data payload returns `"DataHashMismatch"` error
 - unknown provider returns `"ProviderNotFound"` error
 - corrupted signature bytes returns `"SignatureInvalid"` error
 - data with no signature returns `"NoSignature"` error
@@ -599,6 +591,11 @@ PLang/Runtime2/modules/signing/
 - duplicate name returns ProviderExists error
 - remove default provider returns CannotRemoveDefault error
 - remove non-default provider succeeds
+
+**ICache.TryAddAsync:**
+- returns true for fresh key
+- returns false for existing key (atomic rejection)
+- entry expires after absolute duration
 
 **serialization roundtrip:**
 - serialize with Signature=null → sign → deserialize → set Signature=null → re-serialize produces identical bytes
@@ -614,7 +611,7 @@ PLang/Runtime2/modules/signing/
 - Sign with contracts, verify with mismatched contracts fails
 - Sign with TTL, verify after expiry fails
 - Sign and verify with headers
-- Verify tampered data fails
+- Verify Data with tampered payload fails (DataHashMismatch)
 - Verify replayed nonce fails
 - Provider swap via settings
 - Sign with missing identity (no identity created) fails
@@ -630,7 +627,7 @@ PLang/Runtime2/modules/signing/
 - `Data.Signature` changed from `byte[]?` to `SignedData?` in `Data.Envelope.cs`. `Data.Verified` and `Data.SetVerified()` removed — verification state lives on `SignedData.Verified` as `Data?`
 - `SignedData.Type` = `"signature"`, `HashedData.Type` = `"hash"` — distinct type identifiers
 - `SignedData.Verified` = `Data?` with `[JsonIgnore]` and public setter — `Data.Ok(true)` for success, `Data.FromError(...)` with specific error key for each failure reason. PLang developers can access via `%data.Signature.Verified%`
-- `verify` checks timestamp, expiry, nonce (atomic), contracts (exact match with per-contract error), data hash, and cryptographic signature. Sets `data.Signature.Verified` with result.
+- `verify` checks timestamp, expiry, nonce (atomic via `Engine.Cache.TryAddAsync`), contracts (exact match with per-contract error), data hash (re-serializes the Data itself — no separate OriginalData param), and cryptographic signature. Sets `data.Signature.Verified` with result.
 - **Contracts always required on verify** — verifier must declare expected contracts, each checked individually for early rejection
 - Signing uses null-signature pattern: Signature=null during serialization, set after signing (matches runtime1)
 - Serialization uses `[JsonPropertyOrder]` (built-in System.Text.Json), shared `JsonSerializerOptions` with camelCase + `UnsafeRelaxedJsonEscaping` for cross-platform byte compatibility. Follow runtime1 `PLangSigningService.JsonSerializeSignedMessageToBytes` pattern.
@@ -639,11 +636,11 @@ PLang/Runtime2/modules/signing/
 - Signing provider resolved from settings, verification resolved from `SignedData.Algorithm`
 - Unknown provider on verify returns specific `ProviderNotFound` error
 - `Engine.Providers` upgraded to `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>` registry: O(1) name lookups, provider owns `Name` and `IsDefault` (OBP). Registry enforces default constraint via `SetDefault<T>(name)`. Error on removing default (`"CannotRemoveDefault"`)
-- `IKeyProvider : IProvider` with `GenerateKeyPair()` returning `(string publicKey, string privateKey)` — decouples identity from signing. `ISigningProvider : IKeyProvider`
+- `IKeyProvider : IProvider` with `GenerateKeyPair()` returning `KeyPair` record (`string PublicKey, string PrivateKey`) — decouples identity from signing. `ISigningProvider : IKeyProvider`
 - New `modules/provider/` module with `load`, `remove`, `setDefault` actions — provider lifecycle separate from library and signing
 - `library.load` unchanged — stays focused on compiled action handlers
 - Key generation moved from identity to `IKeyProvider.GenerateKeyPair()`. Identity creation accepts optional provider name parameter, defaults to default `IKeyProvider`
-- `NonceStore` with atomic `TryMarkUsedAsync` — single check-and-mark operation, no race condition. `MemoryCache`-backed with absolute expiration (self-evicting, no manual cleanup). Shared across engine pool.
+- Nonce replay prevention via `ICache.TryAddAsync` (new method on existing cache interface). Atomic add-if-not-exists — `MemoryStepCache` uses `MemoryCache.AddOrGetExisting`, Redis uses `SETNX`. Nonce keys prefixed `nonce:` to avoid step cache collisions. Entries self-evict via absolute expiration.
 - `TimeoutSeconds` is the **verifier's** setting — controls max signature age and nonce cache duration
 - Settings via `ISettings` — context-scoped, actor-aware, not persisted
 - Headers as `Dictionary<string, string>?` — string values only, no complex objects
