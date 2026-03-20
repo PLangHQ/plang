@@ -135,13 +135,13 @@ public class IdentityKeyProviderTests
             _privKey = privKey;
         }
 
-        public KeyPair GenerateKeyPair() => new(_pubKey, _privKey);
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.Ok(new KeyPair(_pubKey, _privKey));
     }
 
     private class ThrowingKeyProvider : IKeyProvider
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("Key generation failed");
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

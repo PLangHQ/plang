@@ -420,7 +420,7 @@ public class VerifyActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("fail");
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
     }

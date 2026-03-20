@@ -18,22 +18,14 @@ public class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Data> GetAsync(Get action)
     {
-        var engine = action.Context.Engine;
+        var result = await ResolveIdentityAsync(action, action.Name);
+        if (!result.Success) return result;
 
-        if (action.Name != null)
-        {
-            var identity = await LoadAsync(action, action.Name);
-            if (identity == null)
-                return Data.FromError(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
+        // Refresh cached %MyIdentity% when resolving the default
+        if (action.Name == null)
+            action.Context.Engine.System.Identity.Update(result.Value);
 
-            return Data.Ok(identity);
-        }
-
-        var defResult = await GetOrCreateDefaultAsync(action);
-        if (!defResult.Success) return defResult;
-
-        engine.System.Identity.Update(defResult.Value);
-        return Data.Ok(defResult.Value);
+        return Data.Ok(result.Value);
     }
 
     public async Task<Data> CreateAsync(Create action)
@@ -178,25 +170,31 @@ public class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Data> ExportAsync(Export action)
     {
-        IdentityVariable? identity;
+        var result = await ResolveIdentityAsync(action, action.Name);
+        if (!result.Success) return result;
 
-        if (action.Name != null)
-        {
-            identity = await LoadAsync(action, action.Name);
-            if (identity == null)
-                return Data.FromError(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
-        }
-        else
-        {
-            var defResult = await GetOrCreateDefaultAsync(action);
-            if (!defResult.Success) return defResult;
-            identity = defResult.Value;
-        }
-
-        return Data.Ok(identity!.PrivateKey);
+        return Data.Ok(result.Value!.PrivateKey);
     }
 
-    // --- Internal persistence helpers ---
+    // --- Internal helpers ---
+
+    /// <summary>
+    /// Resolves an identity by name, or gets/creates the default if name is null.
+    /// </summary>
+    private async Task<Data<IdentityVariable>> ResolveIdentityAsync(IContext action, string? name)
+    {
+        if (name != null)
+        {
+            var identity = await LoadAsync(action, name);
+            if (identity == null)
+                return Data<IdentityVariable>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
+            return Data<IdentityVariable>.Ok(identity);
+        }
+
+        return await GetOrCreateDefaultAsync(action);
+    }
+
+    // --- Persistence helpers ---
 
     internal async Task<IdentityVariable?> LoadAsync(IContext action, string name)
     {
@@ -281,23 +279,16 @@ public class DefaultIdentityProvider : IIdentityProvider
         var keyResult = engine.Providers.Get<IKeyProvider>(providerName);
         if (!keyResult.Success) return keyResult;
 
-        KeyPair keys;
-        try
-        {
-            keys = keyResult.Value!.GenerateKeyPair();
-        }
-        catch (Exception ex)
-        {
-            return Data.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
-        }
+        var keysResult = keyResult.Value!.GenerateKeyPair();
+        if (!keysResult.Success) return keysResult;
 
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
 
         return Data.Ok(new IdentityVariable
         {
             Name = name,
-            PublicKey = keys.PublicKey,
-            PrivateKey = keys.PrivateKey,
+            PublicKey = keysResult.Value!.PublicKey,
+            PrivateKey = keysResult.Value.PrivateKey,
             IsDefault = isDefault,
             IsArchived = false,
             Created = now
@@ -316,7 +307,7 @@ public class DefaultIdentityProvider : IIdentityProvider
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
                 return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json);
             }
-            catch
+            catch (System.Text.Json.JsonException)
             {
                 return null;
             }

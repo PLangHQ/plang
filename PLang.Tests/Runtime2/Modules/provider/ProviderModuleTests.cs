@@ -209,7 +209,7 @@ public class ProviderModuleTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public KeyPair GenerateKeyPair() => new("mockPub", "mockPriv");
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
     }

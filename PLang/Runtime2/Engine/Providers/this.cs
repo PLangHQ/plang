@@ -8,32 +8,23 @@ namespace PLang.Runtime2.Engine.Providers;
 /// <summary>
 /// Named provider registry. Each provider interface type can have multiple named implementations.
 /// First registered becomes default. Thread-safe via ConcurrentDictionary.
+/// Generic methods delegate to non-generic — single source of truth for all logic.
 /// </summary>
 public sealed class @this
 {
     private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, IProvider>> _providers = new();
 
+    // --- Generic convenience methods (delegate to non-generic) ---
+
     /// <summary>
     /// Registers a named provider. First registered for a type becomes default.
-    /// Returns error if name already exists for the same type.
     /// </summary>
     public Data Register<T>(T provider) where T : class, IProvider
-    {
-        var typeDict = _providers.GetOrAdd(typeof(T), _ => new ConcurrentDictionary<string, IProvider>(StringComparer.OrdinalIgnoreCase));
-
-        if (!typeDict.TryAdd(provider.Name, provider))
-            return Data.FromError(new ActionError($"Provider '{provider.Name}' already registered for {typeof(T).Name}", "ProviderExists", 409));
-
-        // First registered = auto-default
-        if (typeDict.Count == 1)
-            provider.IsDefault = true;
-
-        return Data.Ok(provider);
-    }
+        => Register(typeof(T), provider);
 
     /// <summary>
     /// Gets a provider by name, or the default if name is null/empty.
-    /// Returns Data with error if not found.
+    /// Returns typed Data&lt;T&gt; with error if not found.
     /// </summary>
     public Data<T> Get<T>(string? name = null) where T : class, IProvider
     {
@@ -69,40 +60,13 @@ public sealed class @this
     /// Removes a provider by name. Cannot remove the default.
     /// </summary>
     public Data Remove<T>(string name) where T : class, IProvider
-    {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (!typeDict.TryGetValue(name, out var provider))
-            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (provider.IsDefault)
-            return Data.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
-
-        typeDict.TryRemove(name, out _);
-        return Data.Ok();
-    }
+        => Remove(typeof(T), name);
 
     /// <summary>
     /// Sets a named provider as the default for its type.
     /// </summary>
     public Data SetDefault<T>(string name) where T : class, IProvider
-    {
-        if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        if (!typeDict.TryGetValue(name, out var newDefault))
-            return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
-
-        // Set new default first, then clear old — avoids window where Get<T>() returns null
-        newDefault.IsDefault = true;
-        foreach (var kvp in typeDict)
-        {
-            if (kvp.Value != newDefault)
-                kvp.Value.IsDefault = false;
-        }
-        return Data.Ok();
-    }
+        => SetDefault(typeof(T), name);
 
     /// <summary>
     /// Lists all providers for a specific type.
@@ -134,11 +98,10 @@ public sealed class @this
         return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
     }
 
-    // --- Non-generic overloads (used by provider module to avoid reflection) ---
+    // --- Non-generic methods (single source of truth) ---
 
     /// <summary>
     /// Registers a provider by runtime-resolved type. First registered for a type becomes default.
-    /// Returns error if name already exists for the same type.
     /// </summary>
     public Data Register(System.Type providerType, IProvider provider)
     {
@@ -165,7 +128,7 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Removes a named provider by runtime-resolved type.
+    /// Removes a named provider by runtime-resolved type. Cannot remove the default.
     /// </summary>
     public Data Remove(System.Type providerType, string name)
     {
@@ -199,6 +162,7 @@ public sealed class @this
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Data.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
+        // Set new default first, then clear old — avoids window where Get<T>() returns null
         newDefault.IsDefault = true;
         foreach (var kvp in typeDict)
         {

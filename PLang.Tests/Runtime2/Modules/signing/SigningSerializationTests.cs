@@ -75,7 +75,7 @@ public class SigningSerializationTests
     public async Task HashedData_Hash_IsBase64_NotHex()
     {
         var provider = new Ed25519Provider();
-        var keys = provider.GenerateKeyPair();
+        var keys = provider.GenerateKeyPair().Value!;
 
         // Hash some data using the crypto module's FormatHash
         var data = System.Text.Encoding.UTF8.GetBytes("test data");
@@ -95,7 +95,7 @@ public class SigningSerializationTests
     public async Task SignedData_Signature_IsBase64()
     {
         var provider = new Ed25519Provider();
-        var keys = provider.GenerateKeyPair();
+        var keys = provider.GenerateKeyPair().Value!;
 
         var data = System.Text.Encoding.UTF8.GetBytes("test");
         var sigResult = provider.Sign(data, keys.PrivateKey);

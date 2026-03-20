@@ -12,22 +12,29 @@ public class Ed25519Provider : ISigningProvider
     public string Name => "ed25519";
     public bool IsDefault { get; set; }
 
-    public KeyPair GenerateKeyPair()
+    public Data<KeyPair> GenerateKeyPair()
     {
-        var algorithm = SignatureAlgorithm.Ed25519;
-
-        using var key = Key.Create(algorithm, new KeyCreationParameters
+        try
         {
-            ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-        });
+            var algorithm = SignatureAlgorithm.Ed25519;
 
-        var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
-        var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
+            using var key = Key.Create(algorithm, new KeyCreationParameters
+            {
+                ExportPolicy = KeyExportPolicies.AllowPlaintextExport
+            });
 
-        return new KeyPair(
-            Convert.ToBase64String(publicKeyBytes),
-            Convert.ToBase64String(privateKeyBytes)
-        );
+            var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
+            var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
+
+            return Data<KeyPair>.Ok(new KeyPair(
+                Convert.ToBase64String(publicKeyBytes),
+                Convert.ToBase64String(privateKeyBytes)
+            ));
+        }
+        catch (Exception ex)
+        {
+            return Data<KeyPair>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
+        }
     }
 
     public Data Sign(byte[] data, string privateKeyBase64)

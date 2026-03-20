@@ -289,7 +289,7 @@ public class SignActionTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public KeyPair GenerateKeyPair() => new Ed25519Provider().GenerateKeyPair();
+        public Data<KeyPair> GenerateKeyPair() => new Ed25519Provider().GenerateKeyPair();
         public Data Sign(byte[] data, string privateKey) { SignCalled = true; return Data.Ok(new byte[64]); }
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
     }
@@ -298,7 +298,7 @@ public class SignActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
-        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("fail");
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
     }
@@ -307,6 +307,6 @@ public class SignActionTests
     {
         public string Name => "throwing-key";
         public bool IsDefault { get; set; }
-        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("Key gen failed");
+        public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }
