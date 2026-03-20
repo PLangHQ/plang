@@ -14,7 +14,7 @@ public partial class Verify : IContext
     /// <summary>The data to verify. Serialized the same way as <see cref="Hash.Data"/>.</summary>
     public partial object? Data { get; init; }
 
-    /// <summary>Expected hash as a hex string. Validated for hex format before comparison.</summary>
+    /// <summary>Expected hash as a base64 string. Validated for base64 format before comparison.</summary>
     public partial string Hash { get; init; }
 
     /// <summary>Hash algorithm name. Must match the algorithm used to produce <see cref="Hash"/>.</summary>
@@ -23,7 +23,7 @@ public partial class Verify : IContext
 
     /// <summary>
     /// Re-hashes <see cref="Data"/> and compares against <see cref="Hash"/>.
-    /// Returns <c>Data.Ok(bool)</c>, or <c>Data.FromError</c> on null input or invalid hex.
+    /// Returns <c>Data.Ok(bool)</c>, or <c>Data.FromError</c> on null input or invalid base64.
     /// </summary>
     public async Task<Data> Run()
     {
@@ -36,11 +36,11 @@ public partial class Verify : IContext
         byte[] hashBytes;
         try
         {
-            hashBytes = Convert.FromHexString(Hash);
+            hashBytes = Convert.FromBase64String(Hash);
         }
         catch (FormatException)
         {
-            return Engine.Memory.Data.FromError(new ActionError("Hash string is not valid hexadecimal", "InvalidHash", 400));
+            return Engine.Memory.Data.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400));
         }
 
         var provider = crypto.Hash.ResolveProvider(Context);

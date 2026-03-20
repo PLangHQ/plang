@@ -33,25 +33,11 @@ public partial class Data
     };
 
     /// <summary>
-    /// Cryptographic signature of the serialized payload.
-    /// Only populated when Data is wrapped for transport (Out view).
+    /// Cryptographic signature of the data. Contains a SignedData object when signed.
     /// </summary>
     [JsonIgnore]
     [Out]
-    public byte[]? Signature { get; set; }
-
-    /// <summary>
-    /// Verification result after receiving signed Data.
-    /// true = signature verified, false = verification failed, null = unsigned/not checked.
-    /// Private set — only SetVerified() (called by crypto verification) can change this.
-    /// </summary>
-    [JsonIgnore]
-    public bool? Verified { get; private set; }
-
-    /// <summary>
-    /// Sets the verification result. Must only be called by crypto verification logic.
-    /// </summary>
-    internal void SetVerified(bool value) => Verified = value;
+    public PLang.Runtime2.modules.signing.SignedData? Signature { get; set; }
 
     // --- Outbound pipeline: Wrap → Compress → Encrypt ---
 

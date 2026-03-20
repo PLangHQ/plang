@@ -1,13 +1,17 @@
+using System.Text.Json;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.crypto;
+using PLang.Runtime2.modules.identity;
+using PLang.Runtime2.modules.signing;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.signing;
 
 /// <summary>
-/// Tests the sign action handler. Uses PLangEngine setup.
-/// Identity auto-created via engine for signing operations.
+/// Tests the sign action handler.
 /// </summary>
 public class SignActionTests
 {
@@ -36,39 +40,61 @@ public class SignActionTests
 
     private PLangContext Ctx => _engine.System.Context;
 
+    private async Task<Data> SignData(object? data, List<string>? contracts = null,
+        int? expiresInMs = null, Dictionary<string, object>? headers = null, string? provider = null)
+    {
+        var action = new sign
+        {
+            Context = Ctx,
+            Data = data,
+            Contracts = contracts,
+            ExpiresInMs = expiresInMs,
+            Headers = headers,
+            Provider = provider
+        };
+        return await action.Run();
+    }
+
     #region Happy Path & Field Population
 
     [Test]
     public async Task Sign_HappyPath_AllFieldsPopulated()
     {
-        // SignedData has Type, Algorithm, Nonce, Created, Identity, HashedData, Signature all non-null.
-        //
-        // Arrange: create identity, create Sign handler with Data = { "message": "hello" }
-        // Act: Run()
-        // Assert: result.Success, all SignedData fields populated
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData(new { message = "hello" });
+
+        await Assert.That(result.Success).IsTrue();
+        var sd = result.Signature;
+        await Assert.That(sd).IsNotNull();
+        await Assert.That(sd!.Type).IsNotEmpty();
+        await Assert.That(sd.Algorithm).IsNotEmpty();
+        await Assert.That(sd.Nonce).IsNotEmpty();
+        await Assert.That(sd.Identity).IsNotEmpty();
+        await Assert.That(sd.HashedData).IsNotNull();
+        await Assert.That(sd.Signature).IsNotNull();
     }
 
     [Test]
     public async Task Sign_Type_IsSignature_Algorithm_IsEd25519()
     {
-        // Type="signature", Algorithm="ed25519".
-        //
-        // Arrange: create identity, sign data
-        // Act: Run()
-        // Assert: signedData.Type == "signature", signedData.Algorithm == "ed25519"
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData(new { message = "hello" });
+
+        await Assert.That(result.Success).IsTrue();
+        var sd = result.Signature!;
+        await Assert.That(sd.Type).IsEqualTo("signature");
+        await Assert.That(sd.Algorithm).IsEqualTo("ed25519");
     }
 
     [Test]
     public async Task Sign_Identity_MatchesPublicKey()
     {
-        // SignedData.Identity == engine identity's public key.
-        //
-        // Arrange: create identity, capture public key
-        // Act: sign data
-        // Assert: signedData.Identity == publicKey
-        await Assert.Fail("stub — implementation depends on signing module");
+        // Create identity first to capture public key
+        var identity = await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+        var publicKey = identity.PublicKey;
+
+        var result = await SignData("test data");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Identity).IsEqualTo(publicKey);
     }
 
     #endregion
@@ -78,12 +104,14 @@ public class SignActionTests
     [Test]
     public async Task Sign_Created_IsApproximatelyNow()
     {
-        // SignedData.Created should be approximately DateTimeOffset.UtcNow.
-        //
-        // Arrange: create identity, capture time before signing
-        // Act: sign data
-        // Assert: signedData.Created is within 5 seconds of captured time
-        await Assert.Fail("stub — implementation depends on signing module");
+        var before = DateTimeOffset.UtcNow;
+        var result = await SignData("test");
+        var after = DateTimeOffset.UtcNow;
+
+        await Assert.That(result.Success).IsTrue();
+        var created = result.Signature!.Created;
+        await Assert.That(created >= before.AddSeconds(-1)).IsTrue();
+        await Assert.That(created <= after.AddSeconds(1)).IsTrue();
     }
 
     #endregion
@@ -93,23 +121,23 @@ public class SignActionTests
     [Test]
     public async Task Sign_DefaultContracts_IsC0()
     {
-        // No contracts → ["C0"].
-        //
-        // Arrange: create identity, sign without specifying contracts
-        // Act: Run()
-        // Assert: signedData.Contracts is ["C0"]
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Contracts).IsNotNull();
+        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(1);
+        await Assert.That(result.Signature!.Contracts![0]).IsEqualTo("C0");
     }
 
     [Test]
     public async Task Sign_CustomContracts()
     {
-        // Pass ["C0","C1"] → both present.
-        //
-        // Arrange: create identity, sign with Contracts = ["C0", "C1"]
-        // Act: Run()
-        // Assert: signedData.Contracts contains both "C0" and "C1"
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test", contracts: new List<string> { "C0", "C1" });
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(2);
+        await Assert.That(result.Signature!.Contracts).Contains("C0");
+        await Assert.That(result.Signature!.Contracts).Contains("C1");
     }
 
     #endregion
@@ -119,23 +147,23 @@ public class SignActionTests
     [Test]
     public async Task Sign_TTL_SetsExpires()
     {
-        // ExpiresInMs=5000 → Expires ≈ Created + 5000ms.
-        //
-        // Arrange: create identity, sign with ExpiresInMs = 5000
-        // Act: Run()
-        // Assert: signedData.Expires is approximately signedData.Created + 5000 milliseconds
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test", expiresInMs: 5000);
+
+        await Assert.That(result.Success).IsTrue();
+        var sd = result.Signature!;
+        await Assert.That(sd.Expires).IsNotNull();
+        var diff = (sd.Expires!.Value - sd.Created).TotalMilliseconds;
+        await Assert.That(diff).IsGreaterThanOrEqualTo(4900);
+        await Assert.That(diff).IsLessThanOrEqualTo(5100);
     }
 
     [Test]
     public async Task Sign_NoTTL_ExpiresIsNull()
     {
-        // No TTL → null.
-        //
-        // Arrange: create identity, sign without TTL
-        // Act: Run()
-        // Assert: signedData.Expires is null
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Expires).IsNull();
     }
 
     #endregion
@@ -145,24 +173,25 @@ public class SignActionTests
     [Test]
     public async Task Sign_Headers_IncludedWhenProvided()
     {
-        // Dict passed → present in SignedData; not passed → null.
-        //
-        // Arrange: create identity, sign with Headers = { "method": "POST" }
-        // Act: Run()
-        // Assert: signedData.Headers["method"] == "POST"
-        await Assert.Fail("stub — implementation depends on signing module");
+        var headers = new Dictionary<string, object> { { "method", "POST" } };
+        var result = await SignData("test", headers: headers);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Headers).IsNotNull();
+        await Assert.That(result.Signature!.Headers!["method"].ToString()).IsEqualTo("POST");
     }
 
     [Test]
     public async Task Sign_HashedData_Base64Encoding()
     {
-        // HashedData.Hash is valid base64, HashedData.Type="hash".
-        //
-        // Arrange: create identity, sign data
-        // Act: Run()
-        // Assert: Convert.FromBase64String(signedData.HashedData.Hash) succeeds,
-        //         signedData.HashedData.Type == "hash"
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test");
+
+        await Assert.That(result.Success).IsTrue();
+        var hd = result.Signature!.HashedData;
+        await Assert.That(hd).IsNotNull();
+        // Should be valid base64
+        var decoded = Convert.FromBase64String(hd.Hash);
+        await Assert.That(decoded.Length).IsGreaterThan(0);
     }
 
     #endregion
@@ -172,12 +201,16 @@ public class SignActionTests
     [Test]
     public async Task Sign_Signature_CryptographicallyValid()
     {
-        // Verify via Ed25519Provider against reconstructed JSON.
-        //
-        // Arrange: create identity, sign data
-        // Act: reconstruct JSON bytes with Signature=null, verify with Ed25519Provider
-        // Assert: Ed25519Provider.Verify returns true
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test");
+        await Assert.That(result.Success).IsTrue();
+
+        var sd = result.Signature!;
+        var sigBytes = Convert.FromBase64String(sd.Signature!);
+        var signingBytes = sd.ToSigningBytes();
+
+        var provider = new Ed25519Provider();
+        var isValid = provider.Verify(signingBytes, sigBytes, sd.Identity);
+        await Assert.That(isValid).IsTrue();
     }
 
     #endregion
@@ -187,23 +220,21 @@ public class SignActionTests
     [Test]
     public async Task Sign_ProviderOverride_UsesNamedProvider()
     {
-        // Provider="mock" → mock called.
-        //
-        // Arrange: register MockSigningProvider named "mock", create identity
-        // Act: sign with Provider = "mock"
-        // Assert: mock provider's Sign was invoked (check via marker output)
-        await Assert.Fail("stub — implementation depends on signing module");
+        var mock = new MockSigningProvider("mock");
+        _engine.Providers.Register<ISigningProvider>(mock);
+
+        var result = await SignData("test", provider: "mock");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Signature!.Algorithm).IsEqualTo("mock");
+        await Assert.That(mock.SignCalled).IsTrue();
     }
 
     [Test]
     public async Task Sign_ProviderOverride_Unknown_ReturnsError()
     {
-        // Provider="unknown" → "ProviderNotFound" error.
-        //
-        // Arrange: create identity
-        // Act: sign with Provider = "unknown"
-        // Assert: result.Error.Key == "ProviderNotFound"
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test", provider: "unknown");
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
     #endregion
@@ -213,12 +244,8 @@ public class SignActionTests
     [Test]
     public async Task Sign_EmptyContracts_ReturnsError()
     {
-        // Empty contracts [] should be rejected — at least one contract required.
-        //
-        // Arrange: create identity, sign with Contracts = new List<string>() (empty)
-        // Act: Run()
-        // Assert: result.Success == false, error indicates contracts required
-        await Assert.Fail("stub — implementation depends on signing module");
+        var result = await SignData("test", contracts: new List<string>());
+        await Assert.That(result.Success).IsFalse();
     }
 
     #endregion
@@ -228,25 +255,57 @@ public class SignActionTests
     [Test]
     public async Task Sign_MissingIdentity_ReturnsError()
     {
-        // No identity → error.
-        //
-        // Arrange: fresh engine, do NOT create identity
-        //          (need to prevent auto-create for this test — implementation detail TBD)
-        // Act: sign data
-        // Assert: result.Success == false, error indicates missing identity
-        await Assert.Fail("stub — implementation depends on signing module");
+        // Register a key provider that throws to simulate identity creation failure
+        var throwingProvider = new ThrowingKeyProvider();
+        _engine.Providers.Register<IKeyProvider>(throwingProvider);
+        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("mock"));
+
+        var result = await SignData("test");
+        await Assert.That(result.Success).IsFalse();
     }
 
     [Test]
     public async Task Sign_ProviderThrows_ReturnsDataFromError()
     {
-        // Mock throws → Data.FromError().
-        //
-        // Arrange: register ThrowingMockProvider, create identity
-        // Act: sign data
-        // Assert: result.Success == false, result.Error.Exception is not null
-        await Assert.Fail("stub — implementation depends on signing module");
+        // Ensure identity exists first
+        await IdentityVariable.GetOrCreateDefaultAsync(_engine);
+
+        var throwing = new ThrowingSigningProvider();
+        _engine.Providers.Register<ISigningProvider>(throwing);
+
+        var result = await SignData("test", provider: "throwing");
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
     }
 
     #endregion
+
+    private class MockSigningProvider : ISigningProvider
+    {
+        public string Name { get; }
+        public bool IsDefault { get; set; }
+        public bool SignCalled { get; private set; }
+
+        public MockSigningProvider(string name) { Name = name; }
+
+        public KeyPair GenerateKeyPair() => new Ed25519Provider().GenerateKeyPair();
+        public byte[] Sign(byte[] data, string privateKey) { SignCalled = true; return new byte[64]; }
+        public bool Verify(byte[] data, byte[] signature, string publicKey) => true;
+    }
+
+    private class ThrowingSigningProvider : ISigningProvider
+    {
+        public string Name => "throwing";
+        public bool IsDefault { get; set; }
+        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("fail");
+        public byte[] Sign(byte[] data, string privateKey) => throw new InvalidOperationException("Sign failed");
+        public bool Verify(byte[] data, byte[] signature, string publicKey) => throw new InvalidOperationException("Verify failed");
+    }
+
+    private class ThrowingKeyProvider : IKeyProvider
+    {
+        public string Name => "throwing-key";
+        public bool IsDefault { get; set; }
+        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("Key gen failed");
+    }
 }

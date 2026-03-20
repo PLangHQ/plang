@@ -9,4 +9,10 @@ public interface ICache
     Task<object?> GetAsync(string key, CancellationToken ct = default);
     Task SetAsync(string key, object value, CacheSettings settings, CancellationToken ct = default);
     Task RemoveAsync(string key, CancellationToken ct = default);
+
+    /// <summary>
+    /// Atomic add-if-absent. Returns true if the key was added (new), false if it already existed.
+    /// Used for nonce replay prevention.
+    /// </summary>
+    Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default);
 }

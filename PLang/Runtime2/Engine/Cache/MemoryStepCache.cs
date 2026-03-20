@@ -30,4 +30,17 @@ public sealed class MemoryStepCache : ICache
         _cache.Remove(key);
         return Task.CompletedTask;
     }
+
+    public Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+    {
+        var policy = new CacheItemPolicy();
+        if (settings.Sliding)
+            policy.SlidingExpiration = TimeSpan.FromSeconds(settings.DurationSeconds);
+        else
+            policy.AbsoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(settings.DurationSeconds);
+
+        // AddOrGetExisting returns null if the key didn't exist (meaning it was added)
+        var existing = _cache.AddOrGetExisting(key, value, policy);
+        return Task.FromResult(existing == null);
+    }
 }

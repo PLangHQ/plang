@@ -12,7 +12,7 @@ public class HashedData
     /// <summary>How the input was serialized before hashing: "raw" for byte arrays, "json" for everything else.</summary>
     public string Format { get; set; } = "";
 
-    /// <summary>The hex-encoded hash (lowercase).</summary>
+    /// <summary>The base64-encoded hash.</summary>
     public string Hash { get; set; } = "";
 
     /// <inheritdoc />

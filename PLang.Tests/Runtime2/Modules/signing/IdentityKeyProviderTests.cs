@@ -1,6 +1,7 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.identity;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
@@ -8,8 +9,6 @@ namespace PLang.Tests.Runtime2.Modules.signing;
 
 /// <summary>
 /// Tests identity create delegation to IKeyProvider.
-/// When identity module creates keys, it delegates to the signing provider's
-/// IKeyProvider interface instead of using internal KeyGenerator directly.
 /// </summary>
 public class IdentityKeyProviderTests
 {
@@ -41,55 +40,105 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_UsesKeyProviderFromRegistry()
     {
-        // Mock IKeyProvider → identity gets mock's keys.
-        //
-        // Arrange: register MockKeyProvider that returns known keys
-        // Act: create identity
-        // Assert: identity.PublicKey == mock's known public key
-        await Assert.Fail("stub — implementation depends on IKeyProvider delegation");
+        var mockProvider = new MockKeyProvider("mock-pub-key", "mock-priv-key");
+        _engine.Providers.Register<IKeyProvider>(mockProvider);
+
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var identity = result.Value as IdentityVariable;
+        await Assert.That(identity).IsNotNull();
+        await Assert.That(identity!.PublicKey).IsEqualTo("mock-pub-key");
+        await Assert.That(identity.PrivateKey).IsEqualTo("mock-priv-key");
     }
 
     [Test]
     public async Task Create_DefaultEd25519_WhenNoOverride()
     {
-        // No override → Ed25519 used (default behavior).
-        //
-        // Arrange: fresh engine, no provider override
-        // Act: create identity
-        // Assert: keys are valid Ed25519 (32 bytes each)
-        await Assert.Fail("stub — implementation depends on IKeyProvider delegation");
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var identity = result.Value as IdentityVariable;
+        await Assert.That(identity).IsNotNull();
+
+        // Ed25519 keys are 32 bytes each
+        var pubBytes = Convert.FromBase64String(identity!.PublicKey);
+        var privBytes = Convert.FromBase64String(identity.PrivateKey);
+        await Assert.That(pubBytes.Length).IsEqualTo(32);
+        await Assert.That(privBytes.Length).IsEqualTo(32);
     }
 
     [Test]
     public async Task Create_KeyProvider_Throws_ReturnsError()
     {
-        // Provider throws → Data.FromError().
-        //
-        // Arrange: register ThrowingMockProvider as IKeyProvider
-        // Act: create identity
-        // Assert: result.Success == false, result.Error is not null
-        await Assert.Fail("stub — implementation depends on IKeyProvider delegation");
+        var throwingProvider = new ThrowingKeyProvider();
+        _engine.Providers.Register<IKeyProvider>(throwingProvider);
+
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
     }
 
     [Test]
     public async Task Create_StoresKeysFromProvider()
     {
-        // Mock returns known keys → stored exactly.
-        //
-        // Arrange: register MockKeyProvider with specific public/private keys
-        // Act: create identity
-        // Assert: loaded identity has exact keys from mock
-        await Assert.Fail("stub — implementation depends on IKeyProvider delegation");
+        var mockProvider = new MockKeyProvider("stored-pub", "stored-priv");
+        _engine.Providers.Register<IKeyProvider>(mockProvider);
+
+        var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = true };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsTrue();
+
+        // Load it back
+        var loaded = await IdentityVariable.LoadAsync(_engine, "stored-test");
+        await Assert.That(loaded).IsNotNull();
+        await Assert.That(loaded!.PublicKey).IsEqualTo("stored-pub");
+        await Assert.That(loaded.PrivateKey).IsEqualTo("stored-priv");
     }
 
     [Test]
     public async Task Create_WithProviderParam_UsesNamedProvider()
     {
-        // provider="mock" → mock called.
-        //
-        // Arrange: register "mock" IKeyProvider and default Ed25519
-        // Act: create identity with provider="mock"
-        // Assert: identity keys match mock's output, not Ed25519
-        await Assert.Fail("stub — implementation depends on IKeyProvider delegation");
+        // Register default Ed25519 and a mock
+        var ed25519 = new Ed25519Provider();
+        _engine.Providers.Register<IKeyProvider>(ed25519);
+        var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
+        _engine.Providers.Register<IKeyProvider>(mock);
+
+        var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = true, Provider = "mock" };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var identity = result.Value as IdentityVariable;
+        await Assert.That(identity!.PublicKey).IsEqualTo("named-pub");
+    }
+
+    private class MockKeyProvider : IKeyProvider
+    {
+        private readonly string _pubKey;
+        private readonly string _privKey;
+
+        public string ProviderName { get; set; } = "mock";
+        public string Name => ProviderName;
+        public bool IsDefault { get; set; }
+
+        public MockKeyProvider(string pubKey, string privKey)
+        {
+            _pubKey = pubKey;
+            _privKey = privKey;
+        }
+
+        public KeyPair GenerateKeyPair() => new(_pubKey, _privKey);
+    }
+
+    private class ThrowingKeyProvider : IKeyProvider
+    {
+        public string Name => "throwing";
+        public bool IsDefault { get; set; }
+        public KeyPair GenerateKeyPair() => throw new InvalidOperationException("Key generation failed");
     }
 }

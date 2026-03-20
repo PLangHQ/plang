@@ -358,6 +358,26 @@ Target audiences:
 
 ---
 
+## Sub-Engine Provider Scope Chain
+**Date:** 2026-03-20
+**Context:** Signing module implementation. Sub-engines don't exist yet — providers are resolved from a single flat registry on Engine.Providers. When sub-engines are added, each needs a local overlay that falls back to the parent's providers.
+
+**What to do:**
+- Add parent ref to Providers registry (`_parent: Providers?`)
+- Get<T>(name) checks local first, then walks parent chain
+- Local overlay cleared when engine returned to pool
+- Register on local overlay doesn't affect parent
+
+**4 skipped tests waiting for this:**
+- `SubEngine_InheritsParentProviders`
+- `SubEngine_LocalOverlay_DoesNotAffectParent`
+- `SubEngine_LocalOverlay_ClearedOnPoolReturn`
+- `SubEngine_FallsBackToParent_WhenLocalOverlayLacksProvider`
+
+In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
+
+---
+
 ## LLM Rewrites Literal Values in Assertions
 **Date:** 2026-03-07
 **Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".

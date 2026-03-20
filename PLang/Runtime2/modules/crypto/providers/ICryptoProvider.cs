@@ -1,4 +1,5 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.crypto.providers;
 
@@ -6,7 +7,7 @@ namespace PLang.Runtime2.modules.crypto.providers;
 /// Pluggable crypto provider interface. Registered via <c>Engine.Providers</c>.
 /// PLang developers can replace the default implementation by loading a DLL that implements this interface.
 /// </summary>
-public interface ICryptoProvider
+public interface ICryptoProvider : IProvider
 {
     /// <summary>
     /// Hashes raw bytes with the named algorithm.

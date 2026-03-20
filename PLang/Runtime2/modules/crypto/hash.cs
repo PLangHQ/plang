@@ -56,11 +56,11 @@ public partial class Hash : IContext
 
     internal static string FormatHash(byte[] hashBytes)
     {
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
+        return Convert.ToBase64String(hashBytes);
     }
 
     internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.Context.PLangContext context)
     {
-        return context.Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider());
+        return context.Engine.Providers.Get<ICryptoProvider>() ?? new DefaultProvider();
     }
 }

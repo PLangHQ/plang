@@ -46,8 +46,8 @@ public class ProviderResolutionTests
         await Assert.That(result.Success).IsTrue();
         var hashed = result.Value as HashedData;
         await Assert.That(hashed).IsNotNull();
-        // Mock returns all-zero bytes → hex is all zeros
-        await Assert.That(hashed!.Hash).IsEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
+        // Mock returns all-zero bytes → base64 of 32 zero bytes
+        await Assert.That(hashed!.Hash).IsEqualTo(Convert.ToBase64String(new byte[32]));
     }
 
     [Test]
@@ -61,8 +61,9 @@ public class ProviderResolutionTests
         var hashed = result.Value as HashedData;
         await Assert.That(hashed).IsNotNull();
         // Should not be all zeros (DefaultProvider produces real keccak256)
-        await Assert.That(hashed!.Hash).IsNotEqualTo("0000000000000000000000000000000000000000000000000000000000000000");
-        await Assert.That(hashed.Hash.Length).IsEqualTo(64);
+        await Assert.That(hashed!.Hash).IsNotEqualTo(Convert.ToBase64String(new byte[32]));
+        // Base64 of 32 bytes = 44 chars
+        await Assert.That(hashed.Hash.Length).IsEqualTo(44);
     }
 
     [Test]
@@ -72,7 +73,7 @@ public class ProviderResolutionTests
         _engine.Providers.Register<ICryptoProvider>(mock);
 
         // Even with garbage hash, mock returns true
-        var action = new Verify { Context = Ctx, Data = "hello", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
+        var action = new Verify { Context = Ctx, Data = "hello", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -81,12 +82,16 @@ public class ProviderResolutionTests
 
     private class MockCryptoProvider : ICryptoProvider
     {
+        public string Name => "mock";
+        public bool IsDefault { get; set; }
         public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]); // all zeros
         public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(false);
     }
 
     private class AlwaysTrueVerifier : ICryptoProvider
     {
+        public string Name => "always-true";
+        public bool IsDefault { get; set; }
         public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]);
         public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(true);
     }

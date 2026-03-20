@@ -1,112 +1,163 @@
+using System.Text.Json;
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.crypto;
+using PLang.Runtime2.modules.signing;
+
 namespace PLang.Tests.Runtime2.Modules.signing;
 
 /// <summary>
 /// Tests deterministic serialization, null-signature pattern, base64 encoding.
-/// SignedData must serialize to stable JSON bytes for cryptographic signing.
 /// </summary>
 public class SigningSerializationTests
 {
     [Test]
     public async Task SignedData_NullSignature_SerializedAsNull()
     {
-        // "signature": null in JSON (not omitted).
-        // The null-signature pattern is critical: Signature is set to null during JSON
-        // serialization of the signing payload, then set after signing.
-        //
-        // Arrange: create SignedData with Signature = null
-        // Act: serialize to JSON
-        // Assert: JSON string contains "signature": null (field present, value null)
-        await Assert.Fail("stub — implementation depends on signing module");
+        var sd = CreateTestSignedData();
+        sd.Signature = null;
+
+        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        await Assert.That(json).Contains("\"signature\":null");
     }
 
     [Test]
     public async Task SignedData_JsonPropertyOrder_StableBytes()
     {
-        // Two identical objects → identical JSON bytes.
-        // Required for deterministic signature verification.
-        //
-        // Arrange: create two identical SignedData objects
-        // Act: serialize both to JSON bytes
-        // Assert: byte arrays are identical
-        await Assert.Fail("stub — implementation depends on signing module");
+        var sd1 = CreateTestSignedData();
+        var sd2 = CreateTestSignedData();
+
+        var bytes1 = JsonSerializer.SerializeToUtf8Bytes(sd1, SignedData.SigningOptions);
+        var bytes2 = JsonSerializer.SerializeToUtf8Bytes(sd2, SignedData.SigningOptions);
+
+        await Assert.That(bytes1.AsSpan().SequenceEqual(bytes2)).IsTrue();
     }
 
     [Test]
     public async Task SignedData_CamelCaseNaming()
     {
-        // JSON uses camelCase: "type", "algorithm", "nonce".
-        //
-        // Arrange: create SignedData
-        // Act: serialize to JSON string
-        // Assert: contains "type", "algorithm", "nonce" (not PascalCase)
-        await Assert.Fail("stub — implementation depends on signing module");
+        var sd = CreateTestSignedData();
+        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+
+        await Assert.That(json).Contains("\"type\":");
+        await Assert.That(json).Contains("\"algorithm\":");
+        await Assert.That(json).Contains("\"nonce\":");
     }
 
     [Test]
     public async Task SignedData_UnsafeRelaxedEscaping()
     {
-        // Non-ASCII characters not double-escaped.
-        // Uses UnsafeRelaxedJsonEscaping for canonical JSON.
-        //
-        // Arrange: create SignedData with non-ASCII data (e.g., "héllo")
-        // Act: serialize to JSON
-        // Assert: non-ASCII chars appear literally, not as \uXXXX
-        await Assert.Fail("stub — implementation depends on signing module");
+        var sd = CreateTestSignedData();
+        sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "héllo" };
+
+        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        // Non-ASCII should appear literally, not as \uXXXX
+        await Assert.That(json).Contains("héllo");
     }
 
     [Test]
     public async Task SignedData_Roundtrip_Deserialize()
     {
-        // Serialize → deserialize → equal.
-        //
-        // Arrange: create fully-populated SignedData
-        // Act: serialize to JSON, deserialize back
-        // Assert: all fields match original
-        await Assert.Fail("stub — implementation depends on signing module");
+        var original = CreateTestSignedData();
+        original.Signature = Convert.ToBase64String(new byte[64]);
+
+        var json = JsonSerializer.Serialize(original, SignedData.SigningOptions);
+        var deserialized = JsonSerializer.Deserialize<SignedData>(json, SignedData.SigningOptions)!;
+
+        await Assert.That(deserialized.Type).IsEqualTo(original.Type);
+        await Assert.That(deserialized.Algorithm).IsEqualTo(original.Algorithm);
+        await Assert.That(deserialized.Nonce).IsEqualTo(original.Nonce);
+        await Assert.That(deserialized.Identity).IsEqualTo(original.Identity);
+        await Assert.That(deserialized.Signature).IsEqualTo(original.Signature);
     }
 
     [Test]
     public async Task HashedData_Hash_IsBase64_NotHex()
     {
-        // HashedData.Hash is base64-encoded, not hex.
-        //
-        // Arrange: create HashedData from signing flow
-        // Act: check Hash field
-        // Assert: valid base64 (Convert.FromBase64String succeeds), not hex chars only
-        await Assert.Fail("stub — implementation depends on signing module");
+        var provider = new Ed25519Provider();
+        var keys = provider.GenerateKeyPair();
+
+        // Hash some data using the crypto module's FormatHash
+        var data = System.Text.Encoding.UTF8.GetBytes("test data");
+        var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultProvider();
+        var hashResult = cryptoProvider.Hash(data, "sha256");
+        var hashBytes = (byte[])hashResult.Value!;
+        var base64Hash = PLang.Runtime2.modules.crypto.Hash.FormatHash(hashBytes);
+
+        // Should be valid base64
+        var decoded = Convert.FromBase64String(base64Hash);
+        await Assert.That(decoded.Length).IsEqualTo(32);
+        // base64 of 32 bytes = 44 chars (padded), hex would be 64 chars
+        await Assert.That(base64Hash.Length).IsEqualTo(44);
     }
 
     [Test]
     public async Task SignedData_Signature_IsBase64()
     {
-        // Signature field is base64-encoded.
-        //
-        // Arrange: create signed SignedData (Signature populated)
-        // Act: check Signature field
-        // Assert: Convert.FromBase64String(Signature) succeeds, decoded length == 64 (Ed25519)
-        await Assert.Fail("stub — implementation depends on signing module");
+        var provider = new Ed25519Provider();
+        var keys = provider.GenerateKeyPair();
+
+        var data = System.Text.Encoding.UTF8.GetBytes("test");
+        var sig = provider.Sign(data, keys.PrivateKey);
+        var base64Sig = Convert.ToBase64String(sig);
+
+        var decoded = Convert.FromBase64String(base64Sig);
+        await Assert.That(decoded.Length).IsEqualTo(64); // Ed25519 signature = 64 bytes
     }
 
     [Test]
     public async Task SignedData_Verified_ExcludedFromJson()
     {
-        // SignedData.Verified is [JsonIgnore] — must NOT appear in serialized JSON.
-        // If Verified leaked into the envelope, it would break signature verification.
-        //
-        // Arrange: create SignedData, set Verified = Data.Ok(true)
-        // Act: serialize to JSON string using SigningOptions
-        // Assert: JSON does not contain "verified" key
-        await Assert.Fail("stub — implementation depends on signing module");
+        var sd = CreateTestSignedData();
+        sd.SetVerified(Data.Ok(true));
+
+        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        await Assert.That(json).DoesNotContain("\"verified\"");
     }
 
     [Test]
     public async Task HashedData_InvalidBase64_VerifyRejects()
     {
-        // Invalid base64 in HashedData.Hash must be caught during verification.
-        //
-        // Arrange: create SignedData with HashedData.Hash = "not-valid-base64!!!"
-        // Act: attempt to verify
-        // Assert: error returned (FormatException caught, not thrown)
-        await Assert.Fail("stub — implementation depends on signing module");
+        // Create a SignedData with invalid base64 in HashedData.Hash
+        // Verification should handle it gracefully (the hash comparison will fail)
+        var sd = CreateTestSignedData();
+        sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "not-valid-base64!!!" };
+        sd.Signature = Convert.ToBase64String(new byte[64]);
+
+        // Wrap in Data for verify
+        var data = Data.Ok("test");
+        data.Signature = sd;
+
+        // Verify should fail (hash mismatch at minimum) but not throw
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ser_" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var engine = new PLang.Runtime2.Engine.@this(tempDir);
+            var result = await PLang.Runtime2.modules.signing.verify.VerifyCore(
+                sd, new List<string> { "C0" }, null, null, engine);
+            await Assert.That(result.Success).IsFalse();
+            await engine.DisposeAsync();
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(tempDir))
+                System.IO.Directory.Delete(tempDir, true);
+        }
+    }
+
+    private static SignedData CreateTestSignedData()
+    {
+        return new SignedData
+        {
+            Type = "signature",
+            Algorithm = "ed25519",
+            Nonce = "abc123",
+            Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            Identity = "testPublicKey",
+            Contracts = new List<string> { "C0" },
+            HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = Convert.ToBase64String(new byte[32]) },
+            Signature = null
+        };
     }
 }

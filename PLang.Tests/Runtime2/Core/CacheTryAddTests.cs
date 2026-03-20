@@ -1,3 +1,6 @@
+using PLang.Runtime2.Engine.Cache;
+using PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
+
 namespace PLang.Tests.Runtime2.Core;
 
 /// <summary>
@@ -6,58 +9,73 @@ namespace PLang.Tests.Runtime2.Core;
 /// </summary>
 public class CacheTryAddTests
 {
+    private static CacheSettings MakeSettings(long durationSeconds = 300)
+        => new() { DurationSeconds = durationSeconds, Sliding = false };
+
     [Test]
     public async Task TryAddAsync_NewKey_ReturnsTrue()
     {
-        // First add → true.
-        //
-        // Arrange: new MemoryStepCache()
-        // Act: TryAddAsync("nonce-1", "value", settings)
-        // Assert: result == true
-        await Assert.Fail("stub — implementation depends on ICache.TryAddAsync");
+        var cache = new MemoryStepCache();
+
+        var result = await cache.TryAddAsync("nonce-1", "value", MakeSettings());
+
+        await Assert.That(result).IsTrue();
     }
 
     [Test]
     public async Task TryAddAsync_ExistingKey_ReturnsFalse()
     {
-        // Second add with same key → false.
-        //
-        // Arrange: new MemoryStepCache(), TryAddAsync("nonce-1", ...)
-        // Act: TryAddAsync("nonce-1", ...) again
-        // Assert: first == true, second == false
-        await Assert.Fail("stub — implementation depends on ICache.TryAddAsync");
+        var cache = new MemoryStepCache();
+        var settings = MakeSettings();
+
+        var first = await cache.TryAddAsync("nonce-1", "value1", settings);
+        var second = await cache.TryAddAsync("nonce-1", "value2", settings);
+
+        await Assert.That(first).IsTrue();
+        await Assert.That(second).IsFalse();
     }
 
     [Test]
     public async Task TryAddAsync_DifferentKeys_BothTrue()
     {
-        // Two different keys → both true.
-        //
-        // Arrange: new MemoryStepCache()
-        // Act: TryAddAsync("nonce-1"), TryAddAsync("nonce-2")
-        // Assert: both return true
-        await Assert.Fail("stub — implementation depends on ICache.TryAddAsync");
+        var cache = new MemoryStepCache();
+        var settings = MakeSettings();
+
+        var result1 = await cache.TryAddAsync("nonce-1", "value1", settings);
+        var result2 = await cache.TryAddAsync("nonce-2", "value2", settings);
+
+        await Assert.That(result1).IsTrue();
+        await Assert.That(result2).IsTrue();
     }
 
     [Test]
     public async Task TryAddAsync_AfterExpiry_ReturnsTrue()
     {
-        // Short TTL, wait, re-add → true.
-        //
-        // Arrange: TryAddAsync with 1-second TTL
-        // Act: wait ~1.5 seconds, TryAddAsync same key
-        // Assert: second call returns true (entry expired)
-        await Assert.Fail("stub — implementation depends on ICache.TryAddAsync");
+        var cache = new MemoryStepCache();
+        var settings = MakeSettings(durationSeconds: 1);
+
+        var first = await cache.TryAddAsync("nonce-1", "value", settings);
+        await Assert.That(first).IsTrue();
+
+        await Task.Delay(1500);
+
+        var second = await cache.TryAddAsync("nonce-1", "value", settings);
+        await Assert.That(second).IsTrue();
     }
 
     [Test]
     public async Task TryAddAsync_ConcurrentCalls_OnlyOneSucceeds()
     {
-        // Parallel same key → exactly one true.
-        //
-        // Arrange: new MemoryStepCache()
-        // Act: fire N parallel TryAddAsync("same-key", ...) tasks
-        // Assert: exactly one returns true, rest return false
-        await Assert.Fail("stub — implementation depends on ICache.TryAddAsync");
+        var cache = new MemoryStepCache();
+        var settings = MakeSettings();
+
+        var tasks = Enumerable.Range(0, 10)
+            .Select(_ => cache.TryAddAsync("same-key", "value", settings))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        var trueCount = results.Count(r => r);
+        await Assert.That(trueCount).IsEqualTo(1);
     }
 }

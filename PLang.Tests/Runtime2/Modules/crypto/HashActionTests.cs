@@ -48,7 +48,7 @@ public class HashActionTests
         await Assert.That(hashed!.Algorithm).IsEqualTo("keccak256");
         await Assert.That(hashed.Format).IsEqualTo("json");
         await Assert.That(hashed.Hash).IsNotEmpty();
-        await Assert.That(hashed.Hash.Length).IsEqualTo(64); // 32 bytes = 64 hex chars
+        await Assert.That(hashed.Hash.Length).IsEqualTo(44); // 32 bytes = 44 base64 chars
     }
 
     [Test]
@@ -59,7 +59,7 @@ public class HashActionTests
         // Compute reference: hash the JSON-serialized form directly via DefaultProvider.
         var jsonBytes = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize("hello"));
         var refHash = new PLang.Runtime2.modules.crypto.providers.DefaultProvider().Hash(jsonBytes, "keccak256");
-        var expectedHex = Convert.ToHexString((byte[])refHash.Value!).ToLowerInvariant();
+        var expectedBase64 = Convert.ToBase64String((byte[])refHash.Value!);
 
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
         var result = await action.Run();
@@ -67,7 +67,7 @@ public class HashActionTests
         await Assert.That(result.Success).IsTrue();
         var hashed = (result.Value as HashedData)!;
         await Assert.That(hashed.Format).IsEqualTo("json");
-        await Assert.That(hashed.Hash).IsEqualTo(expectedHex);
+        await Assert.That(hashed.Hash).IsEqualTo(expectedBase64);
     }
 
     [Test]
@@ -172,7 +172,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = "not-a-valid-hex-string!!!", Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = "not-a-valid-base64!!!", Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -208,7 +208,7 @@ public class HashActionTests
     {
         _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
 
-        var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = "0000000000000000000000000000000000000000000000000000000000000000", Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -218,6 +218,8 @@ public class HashActionTests
 
     private class FailingCryptoProvider : ICryptoProvider
     {
+        public string Name => "failing";
+        public bool IsDefault { get; set; }
         public Data Hash(byte[] data, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
         public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }

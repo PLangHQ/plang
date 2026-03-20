@@ -11,6 +11,9 @@ namespace PLang.Runtime2.modules.crypto.providers;
 /// </summary>
 public class DefaultProvider : ICryptoProvider
 {
+    public string Name => "default";
+    public bool IsDefault { get; set; }
+
     public Data Hash(byte[] data, string algorithm)
     {
         return algorithm.ToLowerInvariant() switch

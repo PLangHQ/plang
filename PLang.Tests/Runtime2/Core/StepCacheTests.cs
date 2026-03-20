@@ -628,6 +628,14 @@ public class StepCacheTests
             _store.Remove(key);
             return Task.CompletedTask;
         }
+
+        public Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+        {
+            if (_store.ContainsKey(key))
+                return Task.FromResult(false);
+            _store[key] = value;
+            return Task.FromResult(true);
+        }
     }
 
     #endregion

@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 
 namespace PLang.Runtime2.modules.identity;
 
@@ -86,12 +87,15 @@ public sealed class IdentityVariable
         }
 
         // No identities at all — auto-create
-        var (publicKey, privateKey) = KeyGenerator.GenerateEd25519();
+        IKeyProvider keyProvider = engine.Providers.Get<IKeyProvider>()
+            ?? (IKeyProvider?)engine.Providers.Get<ISigningProvider>()
+            ?? new Ed25519Provider();
+        var keys = keyProvider.GenerateKeyPair();
         def = new IdentityVariable
         {
             Name = "default",
-            PublicKey = publicKey,
-            PrivateKey = privateKey,
+            PublicKey = keys.PublicKey,
+            PrivateKey = keys.PrivateKey,
             IsDefault = true,
             IsArchived = false,
             Created = DateTime.UtcNow

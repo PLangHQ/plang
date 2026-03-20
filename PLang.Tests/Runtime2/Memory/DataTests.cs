@@ -586,47 +586,12 @@ public class DataTests
     public async Task Signature_CanBeSet()
     {
         var data = new Data("test", "hello");
-        var sig = new byte[] { 1, 2, 3, 4 };
+        var sig = new PLang.Runtime2.modules.signing.SignedData { Type = "signature", Nonce = "test" };
 
         data.Signature = sig;
 
-        await Assert.That(data.Signature).IsEqualTo(sig);
-    }
-
-    [Test]
-    public async Task Verified_DefaultsToNull()
-    {
-        var data = new Data("test", "hello");
-
-        await Assert.That(data.Verified).IsNull();
-    }
-
-    [Test]
-    public async Task Verified_SetVerified_True()
-    {
-        var data = new Data("test", "hello");
-
-        data.SetVerified(true);
-
-        await Assert.That(data.Verified).IsEqualTo(true);
-    }
-
-    [Test]
-    public async Task Verified_SetVerified_False()
-    {
-        var data = new Data("test", "hello");
-
-        data.SetVerified(false);
-
-        await Assert.That(data.Verified).IsEqualTo(false);
-    }
-
-    [Test]
-    public async Task Verified_DefaultIsNull()
-    {
-        var data = new Data("test", "hello");
-
-        await Assert.That(data.Verified).IsNull();
+        await Assert.That(data.Signature).IsNotNull();
+        await Assert.That(data.Signature!.Nonce).IsEqualTo("test");
     }
 
     [Test]
