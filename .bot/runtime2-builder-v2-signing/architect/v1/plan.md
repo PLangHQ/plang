@@ -53,6 +53,8 @@ Same upgrade applies to `ICryptoProvider` — add `Name` and `IsDefault` propert
 
 **Provider interface hierarchy:** `IProvider` is the marker. `IKeyProvider : IProvider` adds `GenerateKeyPair()`. `ISigningProvider : IKeyProvider` and `ICryptoProvider : IProvider` extend from there. Provider discovery scans for `IProvider` — no hardcoded list of specific interfaces.
 
+**Sub-engine inheritance (scope chain):** Sub-engines hold a reference to the parent's provider registry, plus their own local overlay. `Get` checks local first, falls back to parent — same pattern as MemoryStack. `Register` on a sub-engine adds to the local overlay only. On pool return, the local overlay is cleared. Parent providers are never copied — always accessed by reference.
+
 ### Provider module (new)
 
 Provider lifecycle is a separate concern from both `library` (compiled action handlers) and `signing` (sign/verify). New `modules/provider/` module with three actions:
@@ -591,6 +593,9 @@ PLang/Runtime2/modules/signing/
 - duplicate name returns ProviderExists error
 - remove default provider returns CannotRemoveDefault error
 - remove non-default provider succeeds
+- sub-engine sees parent providers
+- sub-engine local registration doesn't affect parent
+- sub-engine local overlay cleared on pool return
 
 **ICache.TryAddAsync:**
 - returns true for fresh key
@@ -635,7 +640,7 @@ PLang/Runtime2/modules/signing/
 - All binary fields use base64 encoding (keys, signatures, hashes) — `HashedData.Hash` changed from hex to base64 (breaking change)
 - Signing provider resolved from settings, verification resolved from `SignedData.Algorithm`
 - Unknown provider on verify returns specific `ProviderNotFound` error
-- `Engine.Providers` upgraded to `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>` registry: O(1) name lookups, provider owns `Name` and `IsDefault` (OBP). Registry enforces default constraint via `SetDefault<T>(name)`. Error on removing default (`"CannotRemoveDefault"`)
+- `Engine.Providers` upgraded to `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>` registry: O(1) name lookups, provider owns `Name` and `IsDefault` (OBP). Registry enforces default constraint via `SetDefault<T>(name)`. Error on removing default (`"CannotRemoveDefault"`). Sub-engines inherit parent providers by reference + local overlay; local overlay cleared on pool return
 - `IKeyProvider : IProvider` with `GenerateKeyPair()` returning `KeyPair` record (`string PublicKey, string PrivateKey`) — decouples identity from signing. `ISigningProvider : IKeyProvider`
 - New `modules/provider/` module with `load`, `remove`, `setDefault` actions — provider lifecycle separate from library and signing
 - `library.load` unchanged — stays focused on compiled action handlers
