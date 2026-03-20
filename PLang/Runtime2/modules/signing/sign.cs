@@ -25,12 +25,5 @@ public partial class sign : IContext
     public partial int? ExpiresInMs { get; init; }
 
     public async Task<Data> Run()
-    {
-        var created = await SignedData.CreateAsync(Data, Context.Engine, Contracts, Headers, ExpiresInMs, Provider);
-        if (!created.Success) return created;
-
-        var result = Engine.Memory.Data.Ok(Data);
-        result.Signature = (SignedData)created.Value!;
-        return result;
-    }
+        => await SignedData.CreateAsync(this, Context.Engine);
 }

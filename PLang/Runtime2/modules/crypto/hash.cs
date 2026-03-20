@@ -61,6 +61,11 @@ public partial class Hash : IContext
 
     internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.Context.PLangContext context)
     {
-        return context.Engine.Providers.Get<ICryptoProvider>() ?? new DefaultProvider();
+        return ResolveProvider(context.Engine);
+    }
+
+    internal static ICryptoProvider ResolveProvider(PLang.Runtime2.Engine.@this engine)
+    {
+        return engine.Providers.Get<ICryptoProvider>() ?? new DefaultProvider();
     }
 }
