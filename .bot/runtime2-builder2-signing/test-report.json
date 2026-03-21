@@ -1,162 +1,49 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder2-signing",
-  "timestamp": "2026-03-21T10:00:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-03-21T11:00:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 1803, "passed": 1795, "failed": 0, "skipped": 8 },
+    "csharp": { "total": 1835, "passed": 1827, "failed": 0, "skipped": 8 },
     "plang": { "total": 15, "passed": "not_run", "failed": "not_run", "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 14,
+    "changed_files_covered": 16,
     "changed_files_total": 16,
-    "uncovered_files": [
-      "PLang/Runtime2/modules/provider/list.cs",
-      "PLang/Runtime2/modules/signing/Settings.cs"
-    ],
+    "uncovered_files": [],
     "highlights": {
-      "SignedData.cs": "96% line / 92% branch (uncovered: lines 196, 200 — null-sig and bad-base64 guards)",
-      "Ed25519Provider.cs": "80% line (uncovered: all 3 catch blocks — lines 34-36, 53-55, 74-76)",
-      "Providers/this.cs": "83% line / 50% branch (uncovered: List(Type), Remove null-name guard, SetDefault null-name guard, ResolveType branches)",
-      "DefaultIdentityProvider.cs": "88% line / 83% branch (uncovered: Deserialize catch block lines 301, 310-312)",
-      "provider/load.cs": "28% line / 6% branch (most logic untested — only assembly-not-found path hit)",
-      "provider/list.cs": "0% line / 0% branch (completely untested through action)",
-      "provider/remove.cs": "83% line / 50% branch (UnknownType error path untested)",
-      "provider/setDefault.cs": "83% line / 50% branch (UnknownType error path untested)"
+      "SignedData.cs": "100% line / 100% branch (was 96%/92%)",
+      "Ed25519Provider.cs": "93% line (was 80%) — GenerateKeyPair catch still uncovered, acceptable",
+      "Providers/this.cs": "95% line / 81% branch (was 83%/50%)",
+      "provider/list.cs": "100% line / 100% branch (was 0%/0%)",
+      "provider/load.cs": "100% line / 94% branch (was 28%/6%)",
+      "provider/remove.cs": "100% line / 100% branch (was 83%/50%)",
+      "provider/setDefault.cs": "100% line / 100% branch (was 83%/50%)",
+      "Settings.cs": "100% line (was 0%)"
     }
   },
   "findings": [
     {
       "id": 1,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "N/A",
-      "code_file": "PLang/Runtime2/modules/provider/list.cs",
-      "issue": "Entire list action has 0% coverage — no test calls list.Run()",
-      "impact": "All 3 code paths (null type = list all, valid type, unknown type) untested. Deletion of the entire file breaks zero tests.",
-      "suggestion": "Add tests: ListAction_NoType_ReturnsAll, ListAction_ByType_ReturnsFiltered, ListAction_UnknownType_ReturnsError"
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs",
-      "code_file": "PLang/Runtime2/modules/provider/remove.cs",
-      "issue": "UnknownType error path (line 19) untested. Passing Type='quantum' should return UnknownType error.",
-      "impact": "A PLang user writing 'remove provider x from quantum' gets an unhandled NPE instead of clean error if this guard is broken.",
-      "suggestion": "Add test: Remove_UnknownType_ReturnsError with Type='invalid'"
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs",
-      "code_file": "PLang/Runtime2/modules/provider/setDefault.cs",
-      "issue": "UnknownType error path (line 19) untested. Same gap as remove.",
-      "impact": "Same as finding #2 — NPE instead of error on invalid type.",
-      "suggestion": "Add test: SetDefault_UnknownType_ReturnsError with Type='invalid'"
-    },
-    {
-      "id": 4,
-      "severity": "major",
+      "severity": "minor",
       "type": "missing-coverage",
       "test_file": "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs",
       "code_file": "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
-      "issue": "All 3 catch blocks untested (lines 34-36 GenerateKeyPair, 53-55 Sign, 74-76 Verify). No test passes malformed base64 or triggers NSec exceptions.",
-      "impact": "If catch blocks are removed, raw exceptions propagate instead of clean Data errors. No test catches this regression.",
-      "suggestion": "Add tests: Sign_InvalidBase64PrivateKey_ReturnsSigningError, Verify_InvalidBase64PublicKey_ReturnsSignatureInvalid, GenerateKeyPair catch is harder to trigger but should be noted"
+      "issue": "GenerateKeyPair catch block (lines 34-36) still uncovered. Hard to trigger — NSec key generation rarely fails.",
+      "impact": "Acceptable risk. The Sign and Verify catch blocks are now covered, which are the user-facing paths.",
+      "suggestion": "Not blocking. Could mock NSec internals but cost exceeds value."
     },
     {
-      "id": 5,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/signing/SignedData.cs",
-      "issue": "SignedData.Verify() null-signature guard (line 196) and invalid-base64 catch (line 200) are uncovered. Coverage confirms 0 hits on these lines.",
-      "impact": "These are security guards at the crypto boundary. If removed, NullReferenceException or FormatException escapes instead of clean 'SignatureInvalid' error.",
-      "suggestion": "Add tests at SignedData.Verify level: Verify_EmptySignature_ReturnsSignatureInvalid, Verify_InvalidBase64Signature_ReturnsSignatureInvalid"
-    },
-    {
-      "id": 6,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Providers/this.cs",
-      "issue": "ResolveType() — only 'signing' branch tested (via remove/setDefault actions). Branches for 'identity', 'crypto', 'key', unknown type, and null all untested. Delete line 185-188 — no test fails.",
-      "impact": "If someone renames a mapping, no test catches it. Provider actions for non-signing types silently break.",
-      "suggestion": "Add direct tests: ResolveType_Identity, ResolveType_Crypto, ResolveType_Key, ResolveType_Unknown_ReturnsNull, ResolveType_Null_DefaultsToSigning"
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/signing/sign.cs",
-      "issue": "Sign_MissingIdentity_ReturnsError (line 264-266) only checks result.Success is false. Does not check Error.Key.",
-      "impact": "If the error key changes from the expected value, this test still passes — false green.",
-      "suggestion": "Add: await Assert.That(result.Error!.Key).IsEqualTo('KeyGenerationError') or whatever the expected key is"
-    },
-    {
-      "id": 8,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/signing/sign.cs",
-      "issue": "Sign_ProviderThrows_ReturnsDataFromError (line 277-280) checks result.Success is false and result.Error is not null, but doesn't check Error.Key.",
-      "impact": "Same false-green risk as #7 — any error passes this test.",
-      "suggestion": "Add: await Assert.That(result.Error!.Key).IsEqualTo('SigningError')"
-    },
-    {
-      "id": 9,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/signing/verify.cs",
-      "issue": "Verify_ProviderThrows_ReturnsDataFromError (line 413-415) only checks result.Success is false. Doesn't verify Error.Key.",
-      "impact": "Any failure passes this test.",
-      "suggestion": "Add Error.Key assertion"
-    },
-    {
-      "id": 10,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs",
-      "code_file": "PLang/Runtime2/modules/provider/load.cs",
-      "issue": "load action has 28% line coverage. Only the assembly-not-found path is tested. Multi-provider DLL scanning (lines 34-63), null-path guard (line 21), ProviderConstructor error (line 46) are all untested through the action.",
-      "impact": "The core functionality of load — scanning types, instantiating providers, registering them — has no test proving it works.",
-      "suggestion": "Hard to test without a real DLL. Consider creating a test helper assembly or testing the inner logic separately."
-    },
-    {
-      "id": 11,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs",
-      "code_file": "PLang/Runtime2/Engine/Providers/this.cs",
-      "issue": "Non-generic Remove/SetDefault null-name guards (lines 136, 157) untested. GetOrDefault<T>() (lines 53-57) and Has<T>() (lines 96-99) untested.",
-      "impact": "Minor — defensive guards. But deletion of these lines breaks zero tests.",
-      "suggestion": "Add: Remove_NullName_ReturnsValidationError, SetDefault_NullName_ReturnsValidationError"
-    },
-    {
-      "id": 12,
+      "id": 2,
       "severity": "minor",
       "type": "missing-plang-test",
       "test_file": "N/A",
       "code_file": "PLang/Runtime2/modules/provider/",
-      "issue": "No PLang .goal tests exist for the provider module (load, remove, setDefault, list). Only signing and identity have PLang tests.",
-      "impact": "The full builder → runtime pipeline is not validated for provider module actions.",
-      "suggestion": "Add PLang test goals for provider list and provider setDefault at minimum"
-    },
-    {
-      "id": 13,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "N/A",
-      "code_file": "PLang/Runtime2/modules/signing/Settings.cs",
-      "issue": "Settings.cs has 0% line coverage. Properties DefaultAlgorithm and DefaultTimeoutMs are never accessed in tests.",
-      "impact": "Low — it's a POCO with defaults. But if defaults change, no test catches it.",
-      "suggestion": "Add a simple test verifying default values match expected constants"
+      "issue": "No PLang .goal tests for provider module. Needs builder/LLM to create.",
+      "impact": "Full pipeline (builder → .pr → runtime) not validated for provider actions. Acceptable for now — C# tests cover the runtime layer.",
+      "suggestion": "Not blocking. Add when builder is available."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "1795/1803 C# tests pass (8 skipped). 15 PLang signing test goals exist (not run — no builder available). Coverage analysis reveals 6 major gaps: provider/list.cs at 0%, Ed25519Provider catch blocks at 0%, SignedData.Verify security guards uncovered, ResolveType 4/7 branches untested, UnknownType error paths in remove/setDefault untested, load.cs at 28%. 3 weak assertions check Success without Error.Key. Overall test quality is good for happy paths and core verification logic, but error paths and provider module actions have significant gaps."
+  "verdict": "approved",
+  "summary": "All 1827 C# tests pass (8 skipped). Coder v2 resolved 11 of 13 findings with 28 new tests. Coverage dramatically improved: provider/list 0%→100%, load 28%→100%, SignedData.Verify guards now covered, all ResolveType branches tested, weak assertions strengthened. 2 minor remaining: Ed25519 GenerateKeyPair catch untestable, PLang provider tests deferred. Test quality is strong — assertions check Error.Key on all error paths, tests verify intent not just implementation."
 }

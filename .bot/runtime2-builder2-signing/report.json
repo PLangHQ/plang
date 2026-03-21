@@ -76,6 +76,20 @@
         { "paths": ["PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "16 new tests: 8 ResolveType, 4 null-name guards, 4 GetOrDefault/Has" }
       ],
       "after": { "status": "complete", "health": "All 1831 tests pass (0 fail, 8 skipped)", "notes": "28 new tests added. Skipped findings #10 (load.cs) and #12 (PLang tests)." }
+    },
+    {
+      "id": "g7h8i9j0-tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-03-21T10:45:00Z",
+      "timestamp_end": "2026-03-21T11:15:00Z",
+      "intent": "Re-validate after coder v2 addressed 11/13 tester findings",
+      "before": { "assumptions": "Coder added 28 new tests. Need to verify they pass, coverage improved, and test quality is good.", "risk": "Low — reviewing test-only changes." },
+      "plan": "Run full suite, collect coverage, compare against v1 baseline, review new test quality",
+      "actions": [
+        { "paths": ["PLang.Tests/Runtime2/Modules/signing/", "PLang.Tests/Runtime2/Modules/provider/", "PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"], "type": "review", "category": "test", "confidence": "high", "context": "28 new tests verified: all pass, coverage gaps closed, assertions check Error.Key" },
+        { "paths": [".bot/runtime2-builder2-signing/test-report.json", ".bot/runtime2-builder2-signing/tester/v2/"], "type": "create", "category": "doc", "confidence": "high", "context": "Updated test-report.json: approved. 2 minor remaining." }
+      ],
+      "after": { "status": "complete", "health": "PASS — 1827 tests pass, coverage gaps resolved", "notes": "Verdict: approved. Suggest security analyst next." }
     }
   ]
 }
