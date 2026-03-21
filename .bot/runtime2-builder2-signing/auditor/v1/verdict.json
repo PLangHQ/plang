@@ -1,4 +1,4 @@
 {
-  "status": "pass",
-  "summary": "PASS — 1 minor, 2 nits, no cross-file contract gaps that break correctness. Previous reviewers covered their domains well."
+  "status": "fail",
+  "summary": "FAIL — 1 critical (IdentityData silently swallows errors), 2 nits. Send back to coder to surface the error on IdentityData.Error instead of returning null."
 }

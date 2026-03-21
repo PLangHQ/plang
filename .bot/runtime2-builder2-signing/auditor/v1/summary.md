@@ -13,7 +13,7 @@ Reviewed all production code across 30+ files, traced cross-file contracts, ran 
 
 ### Findings (1 minor, 2 nits)
 
-1. **Minor** — `IdentityData.ResolveDefault()` silently swallows all errors (provider failure, DataSource corruption, key generation failure) and returns null. The `%MyIdentity%` variable becomes silently null with no diagnostic trail. This is a design note for when diagnostics are added, not a blocking issue.
+1. **Critical** — `IdentityData.ResolveDefault()` silently swallows all errors (provider failure, DataSource corruption, key generation failure) and returns null. The `%MyIdentity%` variable becomes silently null with no diagnostic trail. IdentityData already inherits `Data.Error` — the error should be stored there, not discarded. Needs a fix + test.
 
 2. **Nit** — `NowUtc` MemoryStack variable cast without null check in `SignedData.CreateAsync` and `DefaultIdentityProvider.GenerateIdentity`. Safe because MemoryStack always registers it, but fragile in theory.
 
@@ -32,4 +32,4 @@ Reviewed all production code across 30+ files, traced cross-file contracts, ran 
 - **Provider pattern**: Clean separation — interfaces in Engine/Providers, defaults registered in Engine constructor, overridable via `provider.load`.
 
 ## Verdict
-**PASS** — Ready for docs bot.
+**FAIL** — Send back to coder. IdentityData must surface errors via Data.Error, not swallow them.
