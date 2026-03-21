@@ -48,13 +48,19 @@ public class IdentityData : Data
     /// Sync-over-async is safe here: properties can't be async, and PLang runs sequentially
     /// per context with no SynchronizationContext. SQLite I/O is synchronous under the hood.
     /// </remarks>
-    private IdentityVariable? ResolveDefault()
+    private IdentityVariable ResolveDefault()
     {
         var providerResult = _engine.Providers.Get<IIdentityProvider>();
-        if (!providerResult.Success) return null;
+        if (!providerResult.Success)
+            throw new InvalidOperationException(
+                $"Identity resolution failed: no identity provider registered. {providerResult.Error?.Message}");
 
         var action = new Get { Context = _engine.Context };
         var result = providerResult.Value!.GetOrCreateDefaultAsync(action).GetAwaiter().GetResult();
-        return result.Success ? result.Value : null;
+        if (!result.Success)
+            throw new InvalidOperationException(
+                $"Identity resolution failed: {result.Error?.Key} — {result.Error?.Message}");
+
+        return result.Value!;
     }
 }

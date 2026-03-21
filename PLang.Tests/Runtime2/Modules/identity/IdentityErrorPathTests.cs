@@ -107,7 +107,7 @@ public class IdentityErrorPathTests
     }
 
     [Test]
-    public async Task IdentityData_ResolveDefault_SaveFails_ReturnsNull()
+    public async Task IdentityData_ResolveDefault_SaveFails_Throws()
     {
         // Swap to failing save before IdentityData resolves
         SwapDataSource(_engine.System, new FailingSaveDataSource(
@@ -116,10 +116,17 @@ public class IdentityErrorPathTests
         // Create a fresh IdentityData that hasn't resolved yet
         var identityData = new IdentityData(_engine);
 
-        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync fails
-        // → caught by IdentityData.ResolveDefault() → returns null (this IS the contract)
-        var value = identityData.Value;
-        await Assert.That(value).IsNull();
+        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync fails → throws
+        try
+        {
+            _ = identityData.Value;
+            Assert.Fail("Expected InvalidOperationException");
+        }
+        catch (InvalidOperationException ex)
+        {
+            await Assert.That(ex.Message).Contains("Identity resolution failed");
+            await Assert.That(ex.Message).Contains("IOError");
+        }
     }
 
     // --- Handler save/remove failure paths ---
