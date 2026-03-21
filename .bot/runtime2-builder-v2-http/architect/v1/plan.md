@@ -167,6 +167,7 @@ public partial class upload : IContext
 **PLang usage:**
 ```plang
 - upload files/photo.jpg to https://api.example.com/images, write to %result%
+- set %formData% to { "file": "@files/photo.jpg", "description": "My photo" }
 - upload %formData% to https://api.example.com/submit, write to %result%
 - upload files/large.zip to https://api.example.com/upload, call ShowProgress
 ```
