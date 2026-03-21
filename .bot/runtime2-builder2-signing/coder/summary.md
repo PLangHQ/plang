@@ -1,3 +1,5 @@
 # Coder Summary — runtime2-builder2-signing
 
 **v1**: Fixed 7 OBP violations across signing/crypto/identity/provider modules. Key changes: IdentityData uses interface not concrete type, SignedData.Sign takes IdentityVariable not decomposed strings, extracted GenerateIdentity to eliminate duplication, moved SerializeData/FormatHash to HashedData (owner), added non-generic Register to eliminate reflection in load.cs, extracted ContractsMatch method, replaced manual Deserialize with JSON round-trip. Also renamed `identity.getAll` → `identity.list` for naming consistency. All 1795 tests pass. See [v1/summary.md](v1/summary.md).
+
+**v2**: Addressed 11 of 13 tester findings. Added 28 new tests covering: provider/list action (0%→covered), UnknownType error paths in remove/setDefault, Ed25519Provider catch blocks (invalid base64), SignedData.Verify security guards (null/empty/bad-base64 signature), ResolveType all 7 branches, null-name validation guards, GetOrDefault/Has methods, SigningSettings defaults. Strengthened 3 weak assertions with Error.Key checks. 1831 tests pass. See [v2/summary.md](v2/summary.md).

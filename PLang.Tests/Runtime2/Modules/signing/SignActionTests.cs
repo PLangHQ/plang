@@ -263,6 +263,7 @@ public class SignActionTests
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("KeyGenerationError");
     }
 
     [Test]
@@ -276,7 +277,7 @@ public class SignActionTests
 
         var result = await SignData("test", provider: "throwing");
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
     }
 
     #endregion

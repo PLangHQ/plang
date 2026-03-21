@@ -59,6 +59,23 @@
         { "paths": [".bot/runtime2-builder2-signing/test-report.json", ".bot/runtime2-builder2-signing/tester/v1/"], "type": "create", "category": "doc", "confidence": "high", "context": "Wrote test-report.json with 13 findings and coverage data" }
       ],
       "after": { "status": "complete", "health": "FAIL — 6 major gaps, 3 weak assertions", "notes": "Verdict: needs-fixes. Send back to coder for error-path tests." }
+    },
+    {
+      "id": "f6g7h8i9-coder-v2",
+      "bot": "coder",
+      "timestamp_start": "2026-03-21T10:30:00Z",
+      "timestamp_end": "2026-03-21T11:00:00Z",
+      "intent": "Fix 11 of 13 tester findings: add error-path tests, strengthen assertions, cover untested code",
+      "before": { "assumptions": "Tester found 13 issues. 11 are fixable via new tests. 2 skipped (load.cs needs real DLL, PLang tests need builder).", "risk": "Low — only adding tests, no production code changes." },
+      "plan": "Add 28 new tests: provider/list action coverage, UnknownType error paths, Ed25519 catch blocks, SignedData.Verify guards, ResolveType all branches, null-name guards, GetOrDefault/Has, SigningSettings defaults. Strengthen 3 weak assertions.",
+      "actions": [
+        { "paths": ["PLang.Tests/Runtime2/Modules/provider/ProviderModuleTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "6 new tests: 3 list action, 1 remove UnknownType, 1 setDefault UnknownType" },
+        { "paths": ["PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "4 new tests: invalid base64 sign/verify, SigningSettings defaults" },
+        { "paths": ["PLang.Tests/Runtime2/Modules/signing/SignActionTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "Strengthened 2 weak assertions with Error.Key checks" },
+        { "paths": ["PLang.Tests/Runtime2/Modules/signing/VerifyActionTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "4 new SignedData.Verify tests, 1 strengthened assertion" },
+        { "paths": ["PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "16 new tests: 8 ResolveType, 4 null-name guards, 4 GetOrDefault/Has" }
+      ],
+      "after": { "status": "complete", "health": "All 1831 tests pass (0 fail, 8 skipped)", "notes": "28 new tests added. Skipped findings #10 (load.cs) and #12 (PLang tests)." }
     }
   ]
 }

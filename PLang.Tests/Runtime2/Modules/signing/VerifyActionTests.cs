@@ -412,6 +412,65 @@ public class VerifyActionTests
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+    }
+
+    #endregion
+
+    #region SignedData.Verify Direct Tests
+
+    [Test]
+    public async Task SignedDataVerify_EmptySignature_ReturnsSignatureInvalid()
+    {
+        var sd = new SignedData
+        {
+            Type = "signature",
+            Algorithm = "ed25519",
+            Identity = "somekey",
+            Signature = null
+        };
+
+        var provider = new Ed25519Provider();
+        var result = sd.Verify(provider);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+    }
+
+    [Test]
+    public async Task SignedDataVerify_EmptyStringSignature_ReturnsSignatureInvalid()
+    {
+        var sd = new SignedData
+        {
+            Type = "signature",
+            Algorithm = "ed25519",
+            Identity = "somekey",
+            Signature = ""
+        };
+
+        var provider = new Ed25519Provider();
+        var result = sd.Verify(provider);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+    }
+
+    [Test]
+    public async Task SignedDataVerify_InvalidBase64Signature_ReturnsSignatureInvalid()
+    {
+        var sd = new SignedData
+        {
+            Type = "signature",
+            Algorithm = "ed25519",
+            Identity = "somekey",
+            Signature = "not-valid-base64!!!"
+        };
+
+        var provider = new Ed25519Provider();
+        var result = sd.Verify(provider);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
     #endregion

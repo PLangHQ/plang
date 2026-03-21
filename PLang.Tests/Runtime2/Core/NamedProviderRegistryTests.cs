@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.crypto.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
 
@@ -213,6 +214,135 @@ public class NamedProviderRegistryTests
         // Engine registers ISigningProvider, IKeyProvider, IIdentityProvider, ICryptoProvider at startup
         var all = _engine.Providers.List();
         await Assert.That(all.Count).IsGreaterThanOrEqualTo(4);
+    }
+
+    #endregion
+
+    #region ResolveType
+
+    [Test]
+    public async Task ResolveType_Signing_ReturnsISigningProvider()
+    {
+        var result = _engine.Providers.ResolveType("signing");
+        await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_Identity_ReturnsIIdentityProvider()
+    {
+        var result = _engine.Providers.ResolveType("identity");
+        await Assert.That(result).IsEqualTo(typeof(IIdentityProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_Crypto_ReturnsICryptoProvider()
+    {
+        var result = _engine.Providers.ResolveType("crypto");
+        await Assert.That(result).IsEqualTo(typeof(ICryptoProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_Key_ReturnsIKeyProvider()
+    {
+        var result = _engine.Providers.ResolveType("key");
+        await Assert.That(result).IsEqualTo(typeof(IKeyProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_Unknown_ReturnsNull()
+    {
+        var result = _engine.Providers.ResolveType("quantum");
+        await Assert.That(result).IsNull();
+    }
+
+    [Test]
+    public async Task ResolveType_Null_DefaultsToSigning()
+    {
+        var result = _engine.Providers.ResolveType(null);
+        await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_Empty_DefaultsToSigning()
+    {
+        var result = _engine.Providers.ResolveType("");
+        await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
+    }
+
+    [Test]
+    public async Task ResolveType_CaseInsensitive()
+    {
+        var result = _engine.Providers.ResolveType("SIGNING");
+        await Assert.That(result).IsEqualTo(typeof(ISigningProvider));
+    }
+
+    #endregion
+
+    #region Null Name Guards
+
+    [Test]
+    public async Task Remove_NullName_ReturnsValidationError()
+    {
+        var result = _engine.Providers.Remove<ISigningProvider>(null!);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+    }
+
+    [Test]
+    public async Task Remove_EmptyName_ReturnsValidationError()
+    {
+        var result = _engine.Providers.Remove<ISigningProvider>("");
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+    }
+
+    [Test]
+    public async Task SetDefault_NullName_ReturnsValidationError()
+    {
+        var result = _engine.Providers.SetDefault<ISigningProvider>(null!);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+    }
+
+    [Test]
+    public async Task SetDefault_EmptyName_ReturnsValidationError()
+    {
+        var result = _engine.Providers.SetDefault<ISigningProvider>("");
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+    }
+
+    #endregion
+
+    #region GetOrDefault and Has
+
+    [Test]
+    public async Task GetOrDefault_WhenRegistered_ReturnsRegistered()
+    {
+        var result = _engine.Providers.GetOrDefault<ISigningProvider>(new MockSigningProvider("fallback"));
+        await Assert.That(result.Name).IsEqualTo("ed25519");
+    }
+
+    [Test]
+    public async Task GetOrDefault_WhenNoneRegistered_ReturnsFallback()
+    {
+        var bare = new EngineProviders();
+        var fallback = new MockSigningProvider("fallback");
+        var result = bare.GetOrDefault<ISigningProvider>(fallback);
+        await Assert.That(result).IsSameReferenceAs(fallback);
+    }
+
+    [Test]
+    public async Task Has_WhenRegistered_ReturnsTrue()
+    {
+        await Assert.That(_engine.Providers.Has<ISigningProvider>()).IsTrue();
+    }
+
+    [Test]
+    public async Task Has_WhenNoneRegistered_ReturnsFalse()
+    {
+        var bare = new EngineProviders();
+        await Assert.That(bare.Has<ISigningProvider>()).IsFalse();
     }
 
     #endregion

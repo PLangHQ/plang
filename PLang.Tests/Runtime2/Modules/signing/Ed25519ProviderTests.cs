@@ -1,6 +1,7 @@
 using System.Text;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.signing;
 
 namespace PLang.Tests.Runtime2.Modules.signing;
 
@@ -103,6 +104,16 @@ public class Ed25519ProviderTests
         await Assert.That(sig1.SequenceEqual(sig2)).IsFalse();
     }
 
+    [Test]
+    public async Task Sign_InvalidBase64PrivateKey_ReturnsSigningError()
+    {
+        var data = Encoding.UTF8.GetBytes("hello");
+        var result = _provider.Sign(data, "not-valid-base64!!!");
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
+    }
+
     #endregion
 
     #region Verify
@@ -160,6 +171,36 @@ public class Ed25519ProviderTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+    }
+
+    [Test]
+    public async Task Verify_InvalidBase64PublicKey_ReturnsSignatureInvalid()
+    {
+        var data = Encoding.UTF8.GetBytes("hello");
+        var signature = new byte[64];
+
+        var result = _provider.Verify(data, signature, "not-valid-base64!!!");
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
+    }
+
+    #endregion
+
+    #region SigningSettings Defaults
+
+    [Test]
+    public async Task SigningSettings_DefaultProvider_IsEd25519()
+    {
+        var settings = new SigningSettings();
+        await Assert.That(settings.Provider).IsEqualTo("ed25519");
+    }
+
+    [Test]
+    public async Task SigningSettings_DefaultTimeoutMs_Is300000()
+    {
+        var settings = new SigningSettings();
+        await Assert.That(settings.TimeoutMs).IsEqualTo(300_000L);
     }
 
     #endregion

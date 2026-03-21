@@ -130,6 +130,21 @@ public class ProviderModuleTests
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
+    [Test]
+    public async Task Remove_UnknownType_ReturnsError()
+    {
+        var action = new PLang.Runtime2.modules.provider.remove
+        {
+            Context = Ctx,
+            Name = "anything",
+            Type = "invalid"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+    }
+
     #endregion
 
     #region SetDefault
@@ -172,6 +187,21 @@ public class ProviderModuleTests
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
+    [Test]
+    public async Task SetDefault_UnknownType_ReturnsError()
+    {
+        var action = new PLang.Runtime2.modules.provider.setDefault
+        {
+            Context = Ctx,
+            Name = "anything",
+            Type = "invalid"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
+    }
+
     #endregion
 
     #region List
@@ -198,6 +228,53 @@ public class ProviderModuleTests
         var signingProviders = _engine.Providers.List<ISigningProvider>();
         await Assert.That(signingProviders.Count).IsEqualTo(1); // only ed25519
         await Assert.That(signingProviders[0].Name).IsEqualTo("ed25519");
+    }
+
+    [Test]
+    public async Task ListAction_NoType_ReturnsAll()
+    {
+        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
+
+        var action = new PLang.Runtime2.modules.provider.list
+        {
+            Context = Ctx,
+            Type = null
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Returns all providers across all types
+        var providers = (IReadOnlyList<IProvider>)result.Value!;
+        await Assert.That(providers.Count).IsGreaterThanOrEqualTo(2);
+    }
+
+    [Test]
+    public async Task ListAction_ByType_ReturnsFiltered()
+    {
+        _engine.Providers.Register<ISigningProvider>(new MockSigningProvider("extra"));
+
+        var action = new PLang.Runtime2.modules.provider.list
+        {
+            Context = Ctx,
+            Type = "signing"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task ListAction_UnknownType_ReturnsError()
+    {
+        var action = new PLang.Runtime2.modules.provider.list
+        {
+            Context = Ctx,
+            Type = "quantum"
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
 
     #endregion
