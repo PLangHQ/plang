@@ -47,8 +47,8 @@
       "after": { "status": "complete", "health": "PASS — all findings resolved", "notes": "Verdict: pass. Ready for tester." }
     },
     {
-      "id": "d4e5f6g7-tester-v1",
-      "bot": "tester",
+      "id": "d4e5f6g7-auditor-v1",
+      "bot": "auditor",
       "timestamp_start": "2026-03-20T23:50:00Z",
       "timestamp_end": "2026-03-21T00:30:00Z",
       "intent": "Full security + correctness + coverage audit of signing/provider/identity modules",

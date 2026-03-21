@@ -1,6 +1,6 @@
 {
   "branch": "runtime2-builder2-signing",
-  "bot": "tester",
+  "bot": "auditor",
   "version": 1,
   "verdict": "fail",
   "findings": {
@@ -20,5 +20,5 @@
     { "id": 8, "severity": "high", "title": "TOCTOU race in Register first-is-default logic", "file": "Providers/this.cs:110-114" },
     { "id": 9, "severity": "high", "title": "Rename leaves orphan on partial failure", "file": "DefaultIdentityProvider.cs:147-156" }
   ],
-  "details": "tester/v1/result.md"
+  "details": "auditor/v1/result.md"
 }
