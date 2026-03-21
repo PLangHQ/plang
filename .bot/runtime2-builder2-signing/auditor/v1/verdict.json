@@ -1,1 +1,0 @@
-{ "status": "fail", "summary": "4 critical, 5 high, 8 medium findings. Future-timestamp expiry bypass, NPE in verify, arbitrary code exec via provider.load, thread-unsafe signing bytes. 15 coverage gaps including 6 security-critical untested guards." }
