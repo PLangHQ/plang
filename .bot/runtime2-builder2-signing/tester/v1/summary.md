@@ -1,4 +1,4 @@
-# Auditor v1 — Summary
+# Tester v1 — Summary
 
 ## What this is
 Full security + correctness + coverage audit of the signing module, provider registry, identity refactor, and provider module.

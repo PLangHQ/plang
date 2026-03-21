@@ -1,6 +1,6 @@
-# Audit Report — runtime2-builder2-signing v1
+# Tester Report — runtime2-builder2-signing v1
 
-Full security + correctness + coverage audit of signing module, provider registry, identity refactor, and provider module.
+Full security + correctness + coverage analysis of signing module, provider registry, identity refactor, and provider module.
 
 ---
 
