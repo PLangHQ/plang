@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical/high findings. 3 medium (Data.Signature setter, nonce single-process, carry-forward Decompress gap). Signing pipeline is cryptographically sound." }

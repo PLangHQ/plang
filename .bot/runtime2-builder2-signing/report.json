@@ -90,6 +90,23 @@
         { "paths": [".bot/runtime2-builder2-signing/test-report.json", ".bot/runtime2-builder2-signing/tester/v2/"], "type": "create", "category": "doc", "confidence": "high", "context": "Updated test-report.json: approved. 2 minor remaining." }
       ],
       "after": { "status": "complete", "health": "PASS — 1827 tests pass, coverage gaps resolved", "notes": "Verdict: approved. Suggest security analyst next." }
+    },
+    {
+      "id": "h8i9j0k1-security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-21T11:30:00Z",
+      "timestamp_end": "2026-03-21T12:00:00Z",
+      "intent": "Full security audit of signing/crypto/identity/provider modules",
+      "before": { "assumptions": "Code analyzer passed v2, tester passed v2 with 1827 tests. Analyzing security posture under PLang's user-sovereign threat model.", "risk": "Crypto modules are security-critical. Incorrect severity ratings could either block good code or pass vulnerable code." },
+      "plan": "Blue team: map 6 attack surfaces. Red team: 8 findings with exploit sketches. Align all findings to user-sovereign threat model. Carry-forward check against previous branches.",
+      "actions": [
+        { "paths": ["PLang/Runtime2/modules/signing/SignedData.cs", "PLang/Runtime2/modules/signing/sign.cs", "PLang/Runtime2/modules/signing/verify.cs"], "type": "review", "category": "code", "confidence": "high", "context": "9-step verification pipeline, ToSigningBytes mutation pattern, nonce replay, contract matching" },
+        { "paths": ["PLang/Runtime2/Engine/Providers/Ed25519Provider.cs", "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs", "PLang/Runtime2/Engine/Providers/this.cs"], "type": "review", "category": "code", "confidence": "high", "context": "Crypto implementation, identity persistence, provider registry thread safety" },
+        { "paths": ["PLang/Runtime2/modules/provider/load.cs"], "type": "review", "category": "code", "confidence": "high", "context": "Assembly.LoadFrom RCE assessment — by design under user-sovereign model" },
+        { "paths": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs", "PLang/Runtime2/Engine/Cache/MemoryStepCache.cs"], "type": "review", "category": "code", "confidence": "high", "context": "Signature property setter, nonce cache, carry-forward Decompress exception gap" },
+        { "paths": [".bot/runtime2-builder2-signing/security-report.json", ".bot/runtime2-builder2-signing/security/v1/"], "type": "create", "category": "doc", "confidence": "high", "context": "8 findings: 0 critical, 0 high, 3 medium, 5 low. Verdict: PASS." }
+      ],
+      "after": { "status": "complete", "health": "PASS — no critical/high open findings", "notes": "Signing pipeline cryptographically sound. Recommend auditor next." }
     }
   ]
 }
