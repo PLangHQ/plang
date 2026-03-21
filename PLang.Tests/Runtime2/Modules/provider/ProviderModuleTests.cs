@@ -38,6 +38,13 @@ public class ProviderModuleTests
 
     private PLangContext Ctx => _engine.System.Context;
 
+    // Fixture DLL paths — built by companion projects under TestFixtures/
+    private static readonly string FixtureBase = System.IO.Path.GetFullPath(
+        System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "TestFixtures"));
+
+    private static string FixtureDll(string project) =>
+        System.IO.Path.Combine(FixtureBase, project, "bin", "Debug", "net10.0", $"{project}.dll");
+
     #region Load
 
     [Test]
@@ -63,9 +70,8 @@ public class ProviderModuleTests
     }
 
     [Test]
-    public async Task Load_NoParameterlessCtor_ReturnsError()
+    public async Task Load_NonExistentDll_ReturnsLoadError()
     {
-        // The load action itself handles the ctor check. Test it via the action.
         var action = new PLang.Runtime2.modules.provider.load
         {
             Context = Ctx,
@@ -73,8 +79,87 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        // Should fail since the DLL doesn't exist
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("LoadError");
+    }
+
+    [Test]
+    public async Task Load_NullPath_ReturnsValidationError()
+    {
+        var action = new PLang.Runtime2.modules.provider.load
+        {
+            Context = Ctx,
+            Path = null
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+    }
+
+    [Test]
+    public async Task LoadAction_ValidDll_RegistersProvider()
+    {
+        var dllPath = FixtureDll("TestProvider");
+        if (!System.IO.File.Exists(dllPath))
+        {
+            Assert.Fail($"Fixture DLL not found: {dllPath}. Build TestProvider project first.");
+            return;
+        }
+
+        var action = new PLang.Runtime2.modules.provider.load
+        {
+            Context = Ctx,
+            Path = dllPath
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var loaded = _engine.Providers.Get<ISigningProvider>("test-signing");
+        await Assert.That(loaded.Success).IsTrue();
+        await Assert.That(loaded.Value!.Name).IsEqualTo("test-signing");
+    }
+
+    [Test]
+    public async Task LoadAction_EmptyDll_ReturnsNoProviders()
+    {
+        var dllPath = FixtureDll("EmptyProvider");
+        if (!System.IO.File.Exists(dllPath))
+        {
+            Assert.Fail($"Fixture DLL not found: {dllPath}. Build EmptyProvider project first.");
+            return;
+        }
+
+        var action = new PLang.Runtime2.modules.provider.load
+        {
+            Context = Ctx,
+            Path = dllPath
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NoProviders");
+    }
+
+    [Test]
+    public async Task LoadAction_NoCtorDll_ReturnsProviderConstructorError()
+    {
+        var dllPath = FixtureDll("NoCtorProvider");
+        if (!System.IO.File.Exists(dllPath))
+        {
+            Assert.Fail($"Fixture DLL not found: {dllPath}. Build NoCtorProvider project first.");
+            return;
+        }
+
+        var action = new PLang.Runtime2.modules.provider.load
+        {
+            Context = Ctx,
+            Path = dllPath
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ProviderConstructor");
     }
 
     #endregion
