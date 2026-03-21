@@ -9,6 +9,7 @@ namespace PLang.Runtime2.modules.provider;
 [Action("list", Cacheable = false)]
 public partial class list : IContext
 {
+    /// <summary>Optional provider type filter (e.g., "signing", "crypto", "identity", "key"). Omit to list all.</summary>
     public partial string? Type { get; init; }
 
     public async Task<Data> Run()

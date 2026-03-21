@@ -12,6 +12,7 @@ public class Ed25519Provider : ISigningProvider
     public string Name => "ed25519";
     public bool IsDefault { get; set; }
 
+    /// <summary>Generates an Ed25519 key pair. Returns base64-encoded public and private keys.</summary>
     public Data<KeyPair> GenerateKeyPair()
     {
         try
@@ -37,6 +38,7 @@ public class Ed25519Provider : ISigningProvider
         }
     }
 
+    /// <summary>Signs data with an Ed25519 private key. Returns raw signature bytes.</summary>
     public Data Sign(byte[] data, string privateKeyBase64)
     {
         try
@@ -56,6 +58,7 @@ public class Ed25519Provider : ISigningProvider
         }
     }
 
+    /// <summary>Verifies an Ed25519 signature. Returns Data.Ok(true) on success, error on failure.</summary>
     public Data Verify(byte[] data, byte[] signature, string publicKeyBase64)
     {
         try

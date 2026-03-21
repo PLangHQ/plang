@@ -405,6 +405,53 @@
         "health": "PASS \u2014 1 minor, 2 nits",
         "notes": "All prior reviewers agreed with. No critical/major cross-file issues. Suggest docs bot next."
       }
+    },
+    {
+      "id": "d1e2f3a4-docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-03-21T16:00:00Z",
+      "timestamp_end": "2026-03-21T16:45:00Z",
+      "intent": "Document signing module, provider module, and supporting infrastructure",
+      "before": {
+        "assumptions": "All reviewers passed (auditor v2, tester v2, security v1). Code is stable. Documentation gaps exist for new signing/provider modules.",
+        "risk": "Low — documentation-only changes. Risk is stale docs if code changes again."
+      },
+      "plan": "Add XML docs to 12 files (23 gaps), add signing + provider sections to modules.md, add signing architecture to good_to_know.md, fix identity.getAll → identity.list in modules.md and README.md, write CHANGELOG.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/identity/types.cs",
+            "PLang/Runtime2/Engine/Providers/ISigningProvider.cs",
+            "PLang/Runtime2/Engine/Providers/IIdentityProvider.cs",
+            "PLang/Runtime2/Engine/Providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/modules/provider/remove.cs",
+            "PLang/Runtime2/modules/provider/setDefault.cs",
+            "PLang/Runtime2/modules/provider/list.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 23 XML doc comments across 9 source files"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added signing + provider module sections, signing architecture, fixed identity.getAll → identity.list, updated file tree"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 23 gaps filled, 2 minor flagged for tester (PLang examples)",
+        "notes": "Verdict: PASS. Code is ready to merge."
+      }
     }
   ]
 }

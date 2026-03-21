@@ -9,7 +9,10 @@ namespace PLang.Runtime2.modules.provider;
 [Action("remove", Cacheable = false)]
 public partial class remove : IContext
 {
+    /// <summary>Name of the provider to remove.</summary>
     public partial string Name { get; init; }
+
+    /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
     public partial string? Type { get; init; }
 
     public async Task<Data> Run()

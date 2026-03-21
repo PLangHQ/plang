@@ -9,7 +9,10 @@ namespace PLang.Runtime2.modules.provider;
 [Action("setDefault", Cacheable = false)]
 public partial class setDefault : IContext
 {
+    /// <summary>Name of the provider to set as default.</summary>
     public partial string Name { get; init; }
+
+    /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
     public partial string? Type { get; init; }
 
     public async Task<Data> Run()

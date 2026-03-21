@@ -196,6 +196,7 @@ public class DefaultIdentityProvider : IIdentityProvider
 
     // --- Persistence helpers ---
 
+    /// <summary>Loads a single identity by name from the System DataSource. Returns null if not found.</summary>
     internal async Task<IdentityVariable?> LoadAsync(IContext action, string name)
     {
         var dataSource = action.Context.Engine.System.DataSource;
@@ -207,6 +208,7 @@ public class DefaultIdentityProvider : IIdentityProvider
         return Deserialize(result.Value);
     }
 
+    /// <summary>Loads all identities (including archived) from the System DataSource.</summary>
     internal async Task<List<IdentityVariable>> LoadAllAsync(IContext action)
     {
         var dataSource = action.Context.Engine.System.DataSource;
@@ -257,12 +259,14 @@ public class DefaultIdentityProvider : IIdentityProvider
         return Data<IdentityVariable>.Ok(def);
     }
 
+    /// <summary>Persists an identity to the System DataSource using its Name as key.</summary>
     private async Task<Data> SaveAsync(IContext action, IdentityVariable identity)
     {
         var dataSource = action.Context.Engine.System.DataSource;
         return await dataSource.Set(Table, identity.Name, identity);
     }
 
+    /// <summary>Removes an identity from the System DataSource by name.</summary>
     private async Task<Data> RemoveAsync(IContext action, IdentityVariable identity)
     {
         var dataSource = action.Context.Engine.System.DataSource;
@@ -295,6 +299,7 @@ public class DefaultIdentityProvider : IIdentityProvider
         });
     }
 
+    /// <summary>Deserializes a DataSource value to IdentityVariable. Returns null on failure.</summary>
     private static IdentityVariable? Deserialize(object? value)
     {
         if (value is IdentityVariable iv)

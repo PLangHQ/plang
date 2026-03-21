@@ -241,32 +241,42 @@ This means:
 
 ## Engine.Providers — Pluggable Module Implementations
 
-`Engine.Providers` (`PLang.Runtime2.Engine.Providers.@this`) is a type-keyed `ConcurrentDictionary<Type, object>` that lets modules define swappable implementation interfaces. Each module:
+`Engine.Providers` (`PLang.Runtime2.Engine.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
 
-1. Defines a provider interface (e.g., `ICryptoProvider`)
-2. Ships a default implementation (e.g., `DefaultProvider`)
-3. Resolves at runtime via `Engine.Providers.GetOrDefault<ICryptoProvider>(new DefaultProvider())`
+Each module:
+1. Defines a provider interface (e.g., `ICryptoProvider`, `ISigningProvider`)
+2. Ships a default implementation (e.g., `DefaultProvider`, `Ed25519Provider`)
+3. Resolves at runtime via `Engine.Providers.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
 
-PLang developers override by loading a DLL that implements the interface and registering it:
+PLang developers override by loading a DLL that implements the interface:
 ```
-set crypto provider my-crypto.dll
+load provider 'my-crypto.dll'
 ```
-→ `engine.Providers.Register<ICryptoProvider>(loadedInstance)`
+→ `provider.load` discovers all `IProvider` implementations, registers each for its derived interfaces.
 
 **Design decisions:**
-- **Type-keyed, not string-keyed** — compile-time safety, no typo bugs. Each interface maps to exactly one registered provider.
-- **Thread-safe** — `ConcurrentDictionary` allows concurrent reads and writes from multiple contexts.
+- **Type-keyed + name-keyed** — each provider interface can have multiple named implementations (e.g., "ed25519" and "rsa" both implementing `ISigningProvider`).
+- **First-registered-is-default** — no explicit default-setting needed for the common case.
+- **Thread-safe** — `ConcurrentDictionary` for both levels. `SetDefault` sets the new default first, then clears old — avoids a window where `Get<T>()` finds no default.
 - **No audit trail for replacement** — by design. Provider swapping is a user-sovereign operation. The security review accepted this.
-- **DefaultProvider is allocated per-call** in `Hash.ResolveProvider`. Auditor flagged this as minor (could be a static singleton). Accepted as-is since crypto providers are expected to be stateless.
+- **Generic methods delegate to non-generic** — single source of truth for all logic. Non-generic methods use `System.Type` for runtime-resolved types (needed by `provider.load` which discovers types via reflection).
 
 **API:**
-- `Register<T>(T provider)` — registers or replaces
-- `Get<T>()` — returns provider or null
-- `GetOrDefault<T>(T default)` — returns provider or fallback
-- `Has<T>()` — check if registered
-- `Remove<T>()` — unregister
+- `Register<T>(T provider)` — registers by name. First for a type becomes default. Returns error if name already taken.
+- `Get<T>(name?)` — by name, or returns default if name is null/empty. Returns `Data<T>` with error if not found.
+- `GetOrDefault<T>(T fallback)` — returns default provider or the provided fallback instance.
+- `SetDefault<T>(name)` — changes which provider is the default for type T.
+- `Remove<T>(name)` — unregisters by name. Cannot remove the default.
+- `List<T>()` / `List()` — lists providers for a type or all providers.
+- `Has<T>()` — checks if any provider is registered for type T.
+- `ResolveType(typeName)` — maps PLang type names ("signing", "crypto", "identity", "key") to CLR interfaces.
 
-The pattern is generic — any future module (e.g., signing, encryption, storage) can define its own provider interface and follow the same pattern.
+**Provider interfaces:**
+- `IProvider` — base: `Name`, `IsDefault`
+- `IKeyProvider : IProvider` — `GenerateKeyPair()` → `Data<KeyPair>`
+- `ISigningProvider : IKeyProvider` — `Sign(bytes, privateKey)`, `Verify(bytes, signature, publicKey)`
+- `ICryptoProvider : IProvider` — `Hash(bytes, algorithm)`, `VerifyHash(bytes, hash, algorithm)`
+- `IIdentityProvider : IProvider` — full CRUD for identity management
 
 ---
 
@@ -279,6 +289,26 @@ The pattern is generic — any future module (e.g., signing, encryption, storage
 3. **Unknown numeric type** → falls back to `decimal` (the widest), not `byte`
 
 This prevents `InvalidCastException` when comparing `int` vs `long` (a common JSON deserialization mismatch). The `ContainsElement` helper applies the same normalization per-element for collection `contains`/`in` checks.
+
+---
+
+## Signing Module — Architecture
+
+The signing module (`signing.sign`, `signing.verify`) creates and verifies signed data envelopes. Key design decisions:
+
+**SignedData owns everything.** `SignedData.CreateAsync(sign action)` orchestrates signing, `SignedData.VerifyAsync(verify action)` orchestrates verification. Handlers are one-line delegates — all logic lives on the envelope itself (OBP: behavior on the owner).
+
+**Deterministic serialization.** `JsonPropertyOrder` on every field ensures identical byte output for signing and verification. `ToSigningBytes()` nulls the Signature field before serializing (save-mutate-restore pattern) — safe because PLang executes steps sequentially per context.
+
+**9-step verification.** Type → provider → timeout → expiry → nonce replay → contracts → headers → data hash → cryptographic signature. Each step returns a specific error key (e.g., `TimedOut`, `NonceReplay`, `ContractMismatch`) so PLang developers can handle specific failures.
+
+**Nonce replay protection.** Uses `ICache.TryAddAsync` with a TTL matching the signature timeout. Atomic — first use succeeds, replays fail. Single-process only; distributed deployments need a shared ICache implementation (Redis).
+
+**Provider resolution chain.** Three levels: (1) explicit `Provider` parameter on the sign action, (2) `SigningSettings.Provider` from module settings, (3) registry default. Verification resolves the provider from the envelope's `Algorithm` field — no override needed.
+
+**Contracts.** Lightweight agreement mechanism. Signer attaches contract identifiers (e.g., `["C0"]`), verifier checks they match. Both null/empty = match. Both present = case-insensitive set equality.
+
+**Integration with Data.** `Data.Signature` holds the `SignedData` envelope (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature.
 
 ---
 

@@ -12,7 +12,10 @@ namespace PLang.Runtime2.modules.provider;
 [Action("load", Cacheable = false)]
 public partial class load : IContext
 {
+    /// <summary>Path to the DLL to load (relative to engine root or absolute).</summary>
     public partial string? Path { get; init; }
+
+    /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial string? Name { get; init; }
 
     public async Task<Data> Run()

@@ -272,16 +272,30 @@ PLang/Runtime2/
     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
     ├── goal/   loop/   list/   math/   convert/
     ├── identity/
-    │   ├── types.cs       IdentityVariable — Ed25519 key pair with OBP persistence
+    │   ├── types.cs       IdentityVariable — Ed25519 key pair entity
     │   ├── IdentityData.cs Lazy-resolving Data subclass on Actor.Identity
-    │   ├── KeyGenerator.cs Ed25519 key generation via NSec
     │   ├── create.cs      identity.create — new identity with key pair
     │   ├── get.cs         identity.get — by name or default (auto-create)
-    │   ├── getAll.cs      identity.getAll — list non-archived
+    │   ├── list.cs        identity.list — list non-archived
     │   ├── archive.cs     identity.archive — soft-delete
     │   ├── unarchive.cs   identity.unarchive — restore
     │   ├── rename.cs      identity.rename — atomic rename
     │   ├── setDefault.cs  identity.setDefault — switch default
     │   └── export.cs      identity.export — private key export
+    ├── crypto/
+    │   ├── hash.cs        crypto.hash — hash data with pluggable provider
+    │   ├── verify.cs      crypto.verify — verify hash
+    │   ├── types.cs       HashedData — hash result with algorithm and format
+    │   └── providers/     ICryptoProvider, DefaultProvider (keccak256, sha256)
+    ├── signing/
+    │   ├── sign.cs        signing.sign — sign data envelope
+    │   ├── verify.cs      signing.verify — 9-step verification
+    │   ├── SignedData.cs   Signed envelope — owns signing and verification
+    │   └── Settings.cs    SigningSettings — provider name, timeout
+    ├── provider/
+    │   ├── load.cs        provider.load — load DLL, register providers
+    │   ├── remove.cs      provider.remove — unregister by name
+    │   ├── setDefault.cs  provider.setDefault — change default
+    │   └── list.cs        provider.list — list registered providers
     ├── assert/   mock/   error/   library/
 ```

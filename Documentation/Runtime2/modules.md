@@ -246,8 +246,10 @@ public static class TypeMapping
 | `file` | `save`, `read`, `copy`, `move`, `delete`, `exists`, `list` | File operations |
 | `output` | `write` | Console/channel output |
 | `condition` | `if`, `compare` | Conditional branching and comparison |
-| `identity` | `create`, `get`, `getAll`, `archive`, `unarchive`, `rename`, `setDefault`, `export` | Ed25519 identity management |
+| `identity` | `create`, `get`, `list`, `archive`, `unarchive`, `rename`, `setDefault`, `export` | Ed25519 identity management |
 | `crypto` | `hash`, `verify` | Cryptographic hashing and verification |
+| `signing` | `sign`, `verify` | Data signing and signature verification |
+| `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
 | `library` | `load` | Load external DLL libraries |
 
 ### condition module — Details
@@ -280,7 +282,7 @@ The identity module manages Ed25519 key pairs stored in the System actor's DataS
 |--------|-----------|----------|
 | `create` | `Name` (default: "default"), `SetAsDefault` (default: false) | Creates identity with Ed25519 key pair. Validates name uniqueness (case-insensitive, includes archived). |
 | `get` | `Name` (optional) | By name: returns identity or 404. No name: returns default, auto-creates if needed. |
-| `getAll` | — | Lists all non-archived identities. |
+| `list` | — | Lists all non-archived identities. |
 | `archive` | `Name` | Soft-deletes. Cannot archive the default — set a different default first. Idempotent. |
 | `unarchive` | `Name` | Restores archived identity. Idempotent. |
 | `rename` | `Name`, `NewName` | Atomic rename: save-new-first, then remove-old (no data loss on failure). Updates `%MyIdentity%` if default. |
@@ -309,6 +311,76 @@ The crypto module provides hashing and verification with pluggable algorithm pro
 **Default algorithms**: Keccak256 (via Nethereum `Sha3Keccack`) and SHA256 (via `System.Security.Cryptography`). Unsupported algorithms return `Data.FromError("UnsupportedAlgorithm", 400)`.
 
 Both actions are `Cacheable = false`. Both return `Data` — errors use `ActionError` (validation: null data, invalid hex) or provider-level errors (unsupported algorithm). Providers return `Data`, never throw.
+
+### signing module — Details
+
+The signing module creates and verifies signed data envelopes using Ed25519 (or any pluggable `ISigningProvider`). The core logic lives in `SignedData` — handlers are thin delegates.
+
+**Core type — `SignedData`**: The signed envelope with deterministic JSON serialization (`JsonPropertyOrder` on every field). Contains: Type, Algorithm, Nonce, Created, Expires, Identity (signer's public key), Contracts, Headers, HashedData, and Signature (base64). Owns both `Sign()` and `VerifyAsync()`.
+
+**Signing pipeline** (`SignedData.CreateAsync`):
+1. Resolve signing provider: action parameter → `SigningSettings.Provider` → registry default
+2. Get the signer's identity via `engine.RunAction<identity.Get>`
+3. Hash the data via `engine.RunAction<Hash>` (keccak256)
+4. Build `SignedData` envelope with nonce (from `%GUID%`), timestamps, contracts, headers
+5. Sign the envelope bytes via provider
+6. Attach `SignedData` to the result `Data.Signature`
+
+**Verification pipeline** (`SignedData.VerifyAsync`) — 9-step check:
+1. Type check ("signature")
+2. Provider resolution from Algorithm field
+3. Timeout check (age > configured timeout)
+4. Expiry check (Expires in the past)
+5. Nonce replay check via `ICache.TryAddAsync` (single-process protection)
+6. Contract matching (case-insensitive set equality)
+7. Header matching (if expected headers provided)
+8. Data hash verification (re-hash original data and compare)
+9. Cryptographic signature verification via provider
+
+**Contract matching**: Both null/empty = match. Both present = case-insensitive set equality. One present, one absent = mismatch.
+
+**Deterministic serialization**: `ToSigningBytes()` temporarily nulls the Signature field, serializes to JSON with `CamelCase` naming and relaxed escaping, then restores Signature. This ensures Sign and Verify operate on identical bytes.
+
+**Settings — `SigningSettings`**: `Provider` (default: "ed25519"), `TimeoutMs` (default: 300000 / 5 minutes).
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `sign` | `Data` (required), `Provider` (optional override), `Contracts` (default: `["C0"]`), `Headers` (optional), `ExpiresInMs` (optional TTL) | Signs data. Returns Data with `.Signature` attached. |
+| `verify` | `Data` (required, must have `.Signature`), `Contracts` (optional), `Headers` (optional), `TimeoutMs` (optional override) | Runs 9-step verification. Returns `Data.Ok(true)` on success, error with specific key on failure. |
+
+**Error keys**: `NoSignature`, `InvalidType`, `ProviderNotFound`, `TimedOut`, `Expired`, `NonceReplay`, `ContractMismatch`, `HeaderMismatch`, `DataHashMismatch`, `SignatureInvalid`.
+
+Both actions are `Cacheable = false`. All return `Data` — never throw.
+
+### provider module — Details
+
+The provider module manages the `Engine.Providers` registry — a type-keyed `ConcurrentDictionary` that holds named, swappable implementations for module interfaces (`ISigningProvider`, `ICryptoProvider`, `IIdentityProvider`, `IKeyProvider`).
+
+**How providers work**: Modules define a provider interface (e.g., `ISigningProvider`), ship a default implementation (e.g., `Ed25519Provider`), and resolve at runtime via `Engine.Providers.Get<T>()`. PLang developers can load external DLLs to swap implementations.
+
+**Type name mapping** (`Providers.ResolveType`): Maps PLang type names to CLR interfaces:
+- `"signing"` / `"isigningprovider"` → `ISigningProvider`
+- `"key"` / `"ikeyprovider"` → `IKeyProvider`
+- `"identity"` / `"iidentityprovider"` → `IIdentityProvider`
+- `"crypto"` / `"icryptoprovider"` → `ICryptoProvider`
+- `null` / `""` → `ISigningProvider` (default)
+
+**First-registered-is-default**: The first provider registered for a type automatically becomes the default. `SetDefault` changes which provider `Get<T>()` returns when no name is specified.
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `load` | `Path` (required, DLL path), `Name` (optional) | Loads DLL via `Assembly.LoadFrom`, discovers all `IProvider` implementations, registers each for its derived interfaces. |
+| `remove` | `Name` (required), `Type` (optional type filter) | Removes a named provider. Cannot remove the default — set another default first. |
+| `setDefault` | `Name` (required), `Type` (optional type filter) | Sets a named provider as the default for its type. |
+| `list` | `Type` (optional type filter) | Lists registered providers. No type = all providers. |
+
+**Error keys**: `ValidationError`, `LoadError`, `NoProviders`, `ProviderConstructor`, `ProviderExists`, `ProviderNotFound`, `CannotRemoveDefault`, `UnknownType`.
+
+All actions are `Cacheable = false`. All return `Data` — never throw.
 
 ## Relationships
 
