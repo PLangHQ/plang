@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "6 major coverage gaps (provider/list 0%, Ed25519 catch blocks 0%, SignedData.Verify guards uncovered, ResolveType 4/7 branches untested, UnknownType errors untested, load.cs 28%), 3 weak assertions missing Error.Key checks, no PLang tests for provider module." }
