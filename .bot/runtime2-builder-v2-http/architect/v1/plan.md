@@ -19,11 +19,13 @@ Core HTTP action. Handles all HTTP methods, response parsing, signing, and strea
 **Parameters:**
 
 ```csharp
+public enum HttpMethod { GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, QUERY }
+
 [Action("request")]
 public partial class request : IContext
 {
     public partial string Url { get; init; }
-    public partial string Method { get; init; }                    // default "GET"
+    public partial HttpMethod Method { get; init; }                // default GET
     public partial object? Body { get; init; }
     public partial Dictionary<string, object>? Headers { get; init; }
     public partial string ContentType { get; init; }               // default "application/json"
@@ -147,24 +149,26 @@ Uploads file content — binary file, base64, or multipart form data. The action
 **Parameters:**
 
 ```csharp
+public enum ContentAs { File, Base64, Form, Text }
+
 [Action("upload")]
 public partial class upload : IContext
 {
     public partial string Url { get; init; }
     public partial object Content { get; init; }                   // file path, base64 string, or form fields dict
-    public partial string Method { get; init; }                    // default "POST"
+    public partial HttpMethod Method { get; init; }                // default POST
     public partial Dictionary<string, object>? Headers { get; init; }
     public partial string Encoding { get; init; }                  // default "utf-8"
     public partial int TimeoutInSec { get; init; }                 // default 30
     public partial bool Unsigned { get; init; }                    // default false
     public partial sign? SignOptions { get; init; }                // optional signing overrides
-    public partial string? As { get; init; }                       // explicit content hint: "file", "base64", "form", "text" — overrides auto-detection
+    public partial ContentAs? As { get; init; }                    // explicit content hint — overrides auto-detection. Null = auto-detect.
     public partial GoalCall? OnProgress { get; init; }             // progress callback, 500ms interval
 }
 ```
 
 **Content resolution:**
-- If `As` is set, use it directly: `"file"` → `StreamContent`, `"base64"` → decode to `StreamContent`, `"form"` → `MultipartFormDataContent`, `"text"` → `StringContent`
+- If `As` is set, use it directly: `File` → `StreamContent`, `Base64` → decode to `StreamContent`, `Form` → `MultipartFormDataContent`, `Text` → `StringContent`
 - If `As` is null (default), auto-detect by inspecting the runtime value:
   - **Dictionary/object** → `MultipartFormDataContent` (fields with `@` prefix are file references, e.g., `"file": "@files/photo.jpg"` — same as runtime1 convention)
   - **String that is a valid file path** (file exists on disk) → `StreamContent` with `application/octet-stream`
@@ -220,7 +224,7 @@ public class Config : ISettings
 
 **Resolution order:** per-step parameter → config scope chain (`engine.Settings.For<Config>(context)`) → class default.
 
-**`FollowRedirects` / `MaxRedirects`**: These affect the `SocketsHttpHandler` on the `DefaultHttpProvider`. The configure handler resolves the full `Config` and calls `provider.Configure(config)` — the provider reads what it needs (OBP style). The provider lazily creates its `HttpClient` on first request using these values. If config changes `FollowRedirects` or `MaxRedirects` after the first request, the provider returns an error — these are handler-level settings that can't change mid-lifecycle.
+**`FollowRedirects` / `MaxRedirects`**: These affect the `SocketsHttpHandler` on the `DefaultHttpProvider`. The configure handler resolves the full `Config` and calls `provider.Configure(config)` — the provider receives `ISettings` and casts to what it needs (OBP style). The provider lazily creates its `HttpClient` on first request using these values. If config changes `FollowRedirects` or `MaxRedirects` after the first request, the provider returns an error — these are handler-level settings that can't change mid-lifecycle.
 
 **`BaseUrl`**: When set, relative URLs on `request`/`download`/`upload` are resolved against it. `get /users` → `https://api.example.com/v2/users`.
 
@@ -259,7 +263,7 @@ When `OnStream` is set, the response is read as a stream rather than buffered.
 - Each chunk is a `Data` object (signed), deserialized per content type (see application/plang Protocol)
 - Signature must be valid — error if verification fails
 - `SignedData.Identity` from the response → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
-- The `Data.Value` → `context.MemoryStack.Set("!data", dataValue)`
+- The full `Data` object → `context.MemoryStack.Set("!data", data)` — developer navigates into it (`%!data.Value%`, `%!data.Properties%`, etc.)
 
 **Developer access:**
 ```plang
@@ -343,7 +347,7 @@ Follows the existing provider pattern (`IProvider` → `engine.Providers`). The 
 public interface IHttpProvider : IProvider
 {
     Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
-    void Configure(Config config);
+    Data Configure(ISettings config);
 }
 ```
 
@@ -369,15 +373,18 @@ public sealed class DefaultHttpProvider : IHttpProvider
     }
 
     /// <summary>
-    /// Receives the full Config object — provider reads what it needs (OBP style).
+    /// Receives ISettings — provider casts to what it needs (OBP style).
     /// Handler-level settings (FollowRedirects, MaxRedirects) are locked after first request.
     /// </summary>
-    public void Configure(Config config)
+    public Data Configure(ISettings settings)
     {
+        if (settings is not Config config)
+            return Data.Fail("InvalidConfig", "Expected HTTP Config");
         if (_client != null && (config.FollowRedirects != _followRedirects || config.MaxRedirects != _maxRedirects))
-            throw new InvalidOperationException("Cannot change FollowRedirects/MaxRedirects after first HTTP request");
+            return Data.Fail("ConfigLocked", "Cannot change FollowRedirects/MaxRedirects after first HTTP request");
         _followRedirects = config.FollowRedirects;
         _maxRedirects = config.MaxRedirects;
+        return Data.Ok();
     }
 
     private HttpClient CreateClient() => new(new SocketsHttpHandler
@@ -404,7 +411,7 @@ PLang/Runtime2/modules/http/
 ├── upload.cs            — upload action handler
 ├── configure.cs         — configuration action (scope chain)
 ├── Config.cs            — ISettings implementation with defaults
-├── types.cs             — TransferProgress type
+├── types.cs             — HttpMethod enum, ContentAs enum, TransferProgress type
 PLang/Runtime2/Engine/Providers/
 ├── IHttpProvider.cs     — HTTP provider interface
 ├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
@@ -445,8 +452,8 @@ PLang/Runtime2/Engine/Providers/
 - File path content → binary upload
 - Dictionary content → multipart form data
 - Base64 content → decoded binary upload
-- As="file" forces file upload even for ambiguous content
-- As="text" forces string body even if content looks like a file path
+- As=File forces file upload even for ambiguous content
+- As=Text forces string body even if content looks like a file path
 
 **configure:**
 - Config values resolve through scope chain (goal scope → engine default → class default)
@@ -487,13 +494,13 @@ PLang/Runtime2/Engine/Providers/
 
 - `request` action handles all HTTP methods with JSON/XML/text/binary response parsing
 - `download` action downloads files with three-state existence handling (error/overwrite/skip)
-- `upload` action handles binary files, base64, and multipart form data. `As` parameter allows explicit content hint (`"file"`, `"base64"`, `"form"`, `"text"`) to override auto-detection.
+- `upload` action handles binary files, base64, and multipart form data. `ContentAs?` enum parameter (`File`, `Base64`, `Form`, `Text`) allows explicit content hint to override auto-detection. Null = auto-detect.
 - Request signing on by default via `engine.RunAction<sign, SignedData>(...)` (signing module resolves identity from system actor context)
 - `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
 - `Accept: application/plang` added automatically on signed requests
 - `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!ServiceIdentity", ...)` (scoped — doesn't overwrite developer variables)
 - Unsigned request receiving `application/plang` response returns error — unsigned `application/plang` is never allowed
-- `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`. `IHttpProvider.Configure(Config)` receives the full config object (OBP style).
+- `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`. `IHttpProvider.Configure(ISettings)` — provider receives `ISettings`, casts to what it needs. Returns `Data` (never throws).
 - `OnStream` callback works for streaming responses (SSE, chunked, application/plang — newline-delimited JSON)
 - `OnProgress` callback works for download/upload at 500ms intervals (TransferProgress object as `%!data%`)
 - URL auto-prefix (`https://`) when no protocol specified
