@@ -2,9 +2,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Settings;
+using PLang.Runtime2.modules.signing;
 using EngineType = PLang.Runtime2.Engine.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
 
@@ -12,8 +15,7 @@ namespace PLang.Runtime2.modules.http.providers;
 
 /// <summary>
 /// Default HTTP provider. Owns all HTTP behavior — actions delegate to this via `this`.
-/// Lazily creates HttpClient on first request. Uses HttpHelper public utilities for shared logic.
-/// Swappable: custom providers can reimplement from scratch or reuse HttpHelper.
+/// Lazily creates HttpClient on first request. Swappable via engine.Providers.
 /// </summary>
 public sealed class DefaultHttpProvider : IHttpProvider
 {
@@ -21,33 +23,31 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public bool IsDefault { get; set; }
 
     private HttpClient? _client;
-    private bool _followRedirects = true;
-    private int _maxRedirects = 10;
 
     // --- IHttpProvider: action-level methods ---
 
-    public async Task<Data> SendAsync(request action)
+    public Task<Data> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
         var config = engine.Settings.For<Config>(action.Context);
 
-        var resolvedUnsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var resolvedTimeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var resolvedContentType = action.ContentType ?? config.Resolve("ContentType", "application/json");
-        var resolvedEncoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
+        var contentType = action.ContentType ?? config.Resolve("ContentType", "application/json");
+        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = HttpHelper.ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = HttpHelper.MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers, config);
 
         // Build body
         HttpContent? httpContent = null;
         string? bodyString = null;
         if (action.Body != null)
         {
-            if (resolvedContentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+            if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
                 && action.Body is Dictionary<string, object> formDict)
             {
                 var formValues = new Dictionary<string, string>();
@@ -58,62 +58,53 @@ public sealed class DefaultHttpProvider : IHttpProvider
             else
             {
                 bodyString = action.Body is string s ? s : JsonSerializer.Serialize(action.Body);
-                var encoding = System.Text.Encoding.GetEncoding(resolvedEncoding);
-                httpContent = new StringContent(bodyString, encoding, resolvedContentType);
+                var enc = Encoding.GetEncoding(encoding);
+                httpContent = new StringContent(bodyString, enc, contentType);
             }
         }
 
-        var httpMethod = HttpHelper.ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
-        HttpHelper.ApplyHeaders(requestMessage, headers);
+        ApplyHeaders(requestMessage, headers);
 
-        try
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        if (signResult != null)
         {
-            var signResult = await HttpHelper.SignRequestAsync(
-                engine, action.Context, resolvedUnsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
-            if (signResult != null)
-            {
-                if (!signResult.Success) return signResult;
-                HttpHelper.ApplySignature(requestMessage, signResult);
-            }
-
-            var completionOption = action.OnStream != null
-                ? HttpCompletionOption.ResponseHeadersRead
-                : HttpCompletionOption.ResponseContentRead;
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(resolvedTimeout));
-
-            var response = await SendHttpAsync(requestMessage, completionOption, cts.Token);
-
-            if (action.OnStream != null)
-            {
-                return await HttpHelper.HandleStreamingAsync(
-                    response, requestMessage, action.OnStream, action.StreamAs,
-                    resolvedUnsigned, engine, action.Context, cts.Token);
-            }
-
-            return await HttpHelper.ParseResponseAsync(response, requestMessage, resolvedUnsigned, engine, action.Context);
+            if (!signResult.Success) return signResult;
+            ApplySignature(requestMessage, signResult);
         }
-        catch (TaskCanceledException)
+
+        var completionOption = action.OnStream != null
+            ? HttpCompletionOption.ResponseHeadersRead
+            : HttpCompletionOption.ResponseContentRead;
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.Engine.ShutdownToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
+
+        if (action.OnStream != null)
         {
-            return Data.FromError(new ServiceError("Request timed out", "Timeout", 408));
+            return await HandleStreamingAsync(
+                response, requestMessage, action.OnStream, action.StreamAs,
+                unsigned, engine, action.Context, cts.Token);
         }
-        catch (HttpRequestException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "HttpError", (int)(ex.StatusCode ?? 0)));
-        }
-    }
 
-    public async Task<Data> DownloadAsync(download action)
+        using (response)
+        {
+            return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context);
+        }
+    });
+
+    public Task<Data> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
         var config = engine.Settings.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
-        var resolvedUnsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var resolvedTimeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var urlResult = HttpHelper.ResolveUrl(action.Url, config);
+        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
+        var urlResult = ResolveUrl(action.Url, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
@@ -134,128 +125,97 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
         }
 
-        var headers = HttpHelper.MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers, config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
-        HttpHelper.ApplyHeaders(requestMessage, headers);
+        ApplyHeaders(requestMessage, headers);
 
-        try
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, null, resolvedUrl, "GET");
+        if (signResult != null)
         {
-            var signResult = await HttpHelper.SignRequestAsync(
-                engine, action.Context, resolvedUnsigned, action.SignOptions, null, resolvedUrl, "GET");
-            if (signResult != null)
-            {
-                if (!signResult.Success) return signResult;
-                HttpHelper.ApplySignature(requestMessage, signResult);
-            }
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(resolvedTimeout));
-
-            var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorBody = "";
-                try { errorBody = await response.Content.ReadAsStringAsync(cts.Token); }
-                catch { /* best effort */ }
-                var err = Data.FromError(new ServiceError(
-                    $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
-                    "HttpError", (int)response.StatusCode));
-                HttpHelper.BuildProperties(err, requestMessage, response);
-                return err;
-            }
-
-            var dir = fs.Path.GetDirectoryName(savePath);
-            if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
-                fs.Directory.CreateDirectory(dir);
-
-            var totalBytes = response.Content.Headers.ContentLength;
-            using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
-            using var fileStream = fs.File.Create(savePath);
-
-            await HttpHelper.StreamWithProgressAsync(
-                responseStream, fileStream, totalBytes, action.OnProgress, engine, action.Context, cts.Token);
-
-            return Data.Ok(action.SaveTo);
+            if (!signResult.Success) return signResult;
+            ApplySignature(requestMessage, signResult);
         }
-        catch (TaskCanceledException)
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, config, cts.Token);
+
+        if (!response.IsSuccessStatusCode)
         {
-            return Data.FromError(new ServiceError("Download timed out", "Timeout", 408));
+            var errorBody = "";
+            try { errorBody = await response.Content.ReadAsStringAsync(cts.Token); }
+            catch { /* best effort */ }
+            var err = Data.FromError(new ServiceError(
+                $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+                "HttpError", (int)response.StatusCode));
+            BuildProperties(err, requestMessage, response);
+            return err;
         }
-        catch (HttpRequestException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "HttpError", (int)(ex.StatusCode ?? 0)));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
-        }
-    }
 
-    public async Task<Data> UploadAsync(upload action)
+        var dir = fs.Path.GetDirectoryName(savePath);
+        if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
+            fs.Directory.CreateDirectory(dir);
+
+        var totalBytes = response.Content.Headers.ContentLength;
+        using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
+        using var fileStream = fs.File.Create(savePath);
+
+        var progressVarName = ResolveCallbackVarName(action.OnProgress, "!data");
+        await StreamWithProgressAsync(
+            responseStream, fileStream, totalBytes, action.OnProgress, progressVarName, engine, action.Context, cts.Token);
+
+        return Data.Ok(action.SaveTo);
+    });
+
+    public Task<Data> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
         var config = engine.Settings.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
-        var resolvedUnsigned = action.Unsigned || config.Resolve("Unsigned", false);
-        var resolvedTimeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
-        var resolvedEncoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
+        var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
+        var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
+        var encoding = action.Encoding ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = HttpHelper.ResolveUrl(action.Url, config);
+        var urlResult = ResolveUrl(action.Url, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = HttpHelper.MergeHeaders(action.Headers, config);
+        var headers = MergeHeaders(action.Headers, config);
 
         HttpContent httpContent;
         try
         {
-            httpContent = await ResolveUploadContentAsync(action, fs, resolvedEncoding);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+            httpContent = await ResolveUploadContentAsync(action, fs, encoding);
         }
         catch (FormatException ex)
         {
             return Data.FromError(new ServiceError(ex.Message, "InvalidContent", 400));
         }
 
-        var httpMethod = HttpHelper.ToSystemMethod(action.Method);
+        var httpMethod = ToSystemMethod(action.Method);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
-        HttpHelper.ApplyHeaders(requestMessage, headers);
+        ApplyHeaders(requestMessage, headers);
 
-        try
+        string? bodyString = null;
+        if (httpContent is StringContent sc)
+            bodyString = await sc.ReadAsStringAsync();
+
+        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
+        if (signResult != null)
         {
-            string? bodyString = null;
-            if (httpContent is StringContent sc)
-                bodyString = await sc.ReadAsStringAsync();
-
-            var signResult = await HttpHelper.SignRequestAsync(
-                engine, action.Context, resolvedUnsigned, action.SignOptions, bodyString, resolvedUrl, httpMethod.Method);
-            if (signResult != null)
-            {
-                if (!signResult.Success) return signResult;
-                HttpHelper.ApplySignature(requestMessage, signResult);
-            }
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(resolvedTimeout));
-
-            var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, cts.Token);
-
-            return await HttpHelper.ParseResponseAsync(response, requestMessage, resolvedUnsigned, engine, action.Context);
+            if (!signResult.Success) return signResult;
+            ApplySignature(requestMessage, signResult);
         }
-        catch (TaskCanceledException)
-        {
-            return Data.FromError(new ServiceError("Upload timed out", "Timeout", 408));
-        }
-        catch (HttpRequestException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "HttpError", (int)(ex.StatusCode ?? 0)));
-        }
-    }
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(engine.ShutdownToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
+
+        return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context);
+    });
 
     public Data Configure(configure action)
     {
@@ -279,33 +239,44 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (action.MaxRedirects.HasValue)
             engine.Settings.Set("http.MaxRedirects", action.MaxRedirects.Value, action.Context, isDefault);
 
-        // Apply handler-level settings
-        if (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue)
-        {
-            var config = new Config
-            {
-                FollowRedirects = action.FollowRedirects ?? _followRedirects,
-                MaxRedirects = action.MaxRedirects ?? _maxRedirects
-            };
-
-            if (_client != null && (config.FollowRedirects != _followRedirects || config.MaxRedirects != _maxRedirects))
-                return Data.FromError(new ServiceError(
-                    "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
-                    "ConfigLocked", 409));
-
-            _followRedirects = config.FollowRedirects;
-            _maxRedirects = config.MaxRedirects;
-        }
+        // Redirect config can't change after first request (SocketsHttpHandler is immutable)
+        if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
+            return Data.FromError(new ServiceError(
+                "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
+                "ConfigLocked", 409));
 
         return Data.Ok();
+    }
+
+    // --- Unified error handling ---
+
+    private async Task<Data> ExecuteHttpAsync(Func<Task<Data>> operation)
+    {
+        try
+        {
+            return await operation();
+        }
+        catch (TaskCanceledException)
+        {
+            return Data.FromError(new ServiceError("Request timed out", "Timeout", 408));
+        }
+        catch (HttpRequestException ex)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "HttpError", (int)(ex.StatusCode ?? 0)));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     // --- Internal HTTP transport ---
 
     private Task<HttpResponseMessage> SendHttpAsync(
-        HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken ct)
+        HttpRequestMessage request, HttpCompletionOption completionOption,
+        ModuleView<Config> config, CancellationToken ct)
     {
-        _client ??= CreateClient();
+        _client ??= CreateClient(config);
         return _client.SendAsync(request, completionOption, ct);
     }
 
@@ -315,12 +286,581 @@ public sealed class DefaultHttpProvider : IHttpProvider
         _client = null;
     }
 
-    private HttpClient CreateClient() => new(new SocketsHttpHandler
+    private static HttpClient CreateClient(ModuleView<Config> config) => new(new SocketsHttpHandler
     {
         PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-        AllowAutoRedirect = _followRedirects,
-        MaxAutomaticRedirections = _maxRedirects
+        AllowAutoRedirect = config.Resolve("FollowRedirects", true),
+        MaxAutomaticRedirections = config.Resolve("MaxRedirects", 10)
     });
+
+    // --- Signing ---
+
+    /// <summary>
+    /// Signs a request via engine.RunAction&lt;sign&gt;().
+    /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
+    /// </summary>
+    private static async Task<Data?> SignRequestAsync(
+        PLangContext context,
+        bool unsigned,
+        signing.sign? signOptions,
+        string? bodyContent,
+        string url,
+        string method)
+    {
+        if (unsigned) return null;
+
+        var httpSign = new signing.sign
+        {
+            Context = context,
+            Data = bodyContent ?? "",
+            Headers = new Dictionary<string, object>
+            {
+                ["url"] = url,
+                ["method"] = method
+            },
+            Contracts = signOptions?.Contracts,
+            ExpiresInMs = signOptions?.ExpiresInMs,
+            Provider = signOptions?.Provider
+        };
+
+        return await context.Engine.RunAction<signing.sign>(httpSign, context);
+    }
+
+    private static void ApplySignature(HttpRequestMessage request, Data signResult)
+    {
+        var signatureJson = JsonSerializer.Serialize(signResult.Signature, SignedData.SigningOptions);
+        request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
+    }
+
+    // --- Header helpers ---
+
+    private static Dictionary<string, string> MergeHeaders(
+        Dictionary<string, object>? stepHeaders,
+        ModuleView<Config> config)
+    {
+        var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var defaults = config.Resolve<Dictionary<string, object>?>("DefaultHeaders", null);
+        if (defaults != null)
+        {
+            foreach (var kvp in defaults)
+                merged[kvp.Key] = kvp.Value?.ToString() ?? "";
+        }
+
+        if (stepHeaders != null)
+        {
+            foreach (var kvp in stepHeaders)
+                merged[kvp.Key] = kvp.Value?.ToString() ?? "";
+        }
+
+        return merged;
+    }
+
+    private static void ApplyHeaders(HttpRequestMessage request, Dictionary<string, string> headers)
+    {
+        foreach (var kvp in headers)
+        {
+            if (IsContentHeader(kvp.Key))
+                request.Content?.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+            else
+                request.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+        }
+    }
+
+    private static bool IsContentHeader(string name) =>
+        name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Encoding", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Language", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Disposition", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Range", StringComparison.OrdinalIgnoreCase);
+
+    // --- URL resolution ---
+
+    private static Data<string> ResolveUrl(string url, ModuleView<Config> config)
+    {
+        var baseUrl = config.Resolve<string?>("BaseUrl", null);
+
+        if (url.StartsWith('/'))
+        {
+            if (string.IsNullOrEmpty(baseUrl))
+                return Data<string>.FromError(new ServiceError(
+                    "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
+                    "NoBaseUrl", 400));
+
+            baseUrl = baseUrl.TrimEnd('/');
+            return Data<string>.Ok(baseUrl + url);
+        }
+
+        if (!url.Contains("://"))
+            url = "https://" + url;
+
+        return Data<string>.Ok(url);
+    }
+
+    // --- Response parsing ---
+
+    private static async Task<Data> ParseResponseAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        bool unsigned,
+        EngineType engine,
+        PLangContext context)
+    {
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+        var statusCode = (int)response.StatusCode;
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = "";
+            try { errorBody = await response.Content.ReadAsStringAsync(); }
+            catch { /* best effort */ }
+
+            var errorData = Data.FromError(new ServiceError(
+                $"{statusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+                "HttpError", statusCode));
+
+            if (!unsigned && !string.IsNullOrEmpty(errorBody))
+            {
+                try { await TryExtractSignedErrorIdentity(errorBody, engine, context); }
+                catch { /* best effort — don't mask the original error */ }
+            }
+
+            BuildProperties(errorData, request, response);
+            return errorData;
+        }
+
+        // application/plang response
+        if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
+        {
+            if (unsigned)
+            {
+                var err = Data.FromError(new ServiceError(
+                    "Unsigned request received application/plang response — this is not allowed",
+                    "UnsignedPlang", 403));
+                BuildProperties(err, request, response);
+                return err;
+            }
+
+            return await ParsePlangResponseAsync(response, request, engine, context);
+        }
+
+        // JSON response
+        if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            object? parsed;
+            try
+            {
+                parsed = JsonSerializer.Deserialize<object>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (JsonException)
+            {
+                parsed = json;
+            }
+            var result = Data.Ok(parsed);
+            BuildProperties(result, request, response);
+            return result;
+        }
+
+        // XML response
+        if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
+        {
+            var xml = await response.Content.ReadAsStringAsync();
+            var result = Data.Ok(xml, Engine.Memory.Type.FromMime("application/xml"));
+            BuildProperties(result, request, response);
+            return result;
+        }
+
+        // Text response
+        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = await response.Content.ReadAsStringAsync();
+            var result = Data.Ok(text);
+            BuildProperties(result, request, response);
+            return result;
+        }
+
+        // Binary response
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var binaryResult = Data.Ok(bytes);
+        BuildProperties(binaryResult, request, response);
+        return binaryResult;
+    }
+
+    private static async Task<Data> ParsePlangResponseAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        EngineType engine,
+        PLangContext context)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+
+        SignedData? signedData;
+        try
+        {
+            signedData = JsonSerializer.Deserialize<SignedData>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (JsonException ex)
+        {
+            var err = Data.FromError(new ServiceError(
+                $"Failed to deserialize application/plang response: {ex.Message}",
+                "PlangDeserializeError", 400));
+            BuildProperties(err, request, response);
+            return err;
+        }
+
+        if (signedData == null)
+        {
+            var err = Data.FromError(new ServiceError(
+                "application/plang response deserialized to null",
+                "PlangDeserializeError", 400));
+            BuildProperties(err, request, response);
+            return err;
+        }
+
+        var verifyData = new Data("");
+        verifyData.Signature = signedData;
+
+        var verifyAction = new signing.verify
+        {
+            Context = context,
+            Data = verifyData
+        };
+
+        var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+        if (!verifyResult.Success)
+        {
+            BuildProperties(verifyResult, request, response);
+            return verifyResult;
+        }
+
+        context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+
+        var result = Data.Ok(signedData);
+        result.Signature = signedData;
+        BuildProperties(result, request, response);
+        return result;
+    }
+
+    private static async Task TryExtractSignedErrorIdentity(
+        string errorBody, EngineType engine, PLangContext context)
+    {
+        using var doc = JsonDocument.Parse(errorBody);
+        if (!doc.RootElement.TryGetProperty("signature", out var sigElement))
+            return;
+
+        var signedData = JsonSerializer.Deserialize<SignedData>(sigElement.GetRawText(),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (signedData == null) return;
+
+        var verifyData = new Data("");
+        verifyData.Signature = signedData;
+
+        var verifyAction = new signing.verify
+        {
+            Context = context,
+            Data = verifyData
+        };
+
+        var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+        if (verifyResult.Success)
+            context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+    }
+
+    // --- Response metadata ---
+
+    private static void BuildProperties(Data data, HttpRequestMessage request, HttpResponseMessage response)
+    {
+        var props = data.Properties;
+
+        props.Add(new Data("Url", request.RequestUri?.ToString()));
+        props.Add(new Data("Method", request.Method.Method));
+
+        var reqHeaders = new Dictionary<string, string>();
+        foreach (var h in request.Headers)
+            reqHeaders[h.Key] = string.Join(", ", h.Value);
+        props.Add(new Data("RequestHeaders", reqHeaders));
+
+        if (request.Content != null)
+        {
+            props.Add(new Data("ContentType", request.Content.Headers.ContentType?.ToString()));
+            props.Add(new Data("ContentLength", request.Content.Headers.ContentLength));
+        }
+
+        props.Add(new Data("StatusCode", (int)response.StatusCode));
+        props.Add(new Data("Status", response.ReasonPhrase));
+        props.Add(new Data("IsSuccess", response.IsSuccessStatusCode));
+
+        var respHeaders = new Dictionary<string, string>();
+        foreach (var h in response.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
+        props.Add(new Data("Headers", respHeaders));
+
+        var contentHeaders = new Dictionary<string, string>();
+        foreach (var h in response.Content.Headers)
+            contentHeaders[h.Key] = string.Join(", ", h.Value);
+        props.Add(new Data("ContentHeaders", contentHeaders));
+
+        if (response.Content.Headers.ContentType?.CharSet != null)
+            props.Add(new Data("Charset", response.Content.Headers.ContentType.CharSet));
+    }
+
+    // --- Streaming ---
+
+    private static async Task<Data> HandleStreamingAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        GoalCall onStream,
+        StreamFormat? streamAs,
+        bool unsigned,
+        EngineType engine,
+        PLangContext context,
+        CancellationToken ct)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            using (response)
+            {
+                var errorBody = "";
+                try { errorBody = await response.Content.ReadAsStringAsync(ct); }
+                catch { /* best effort */ }
+                var err = Data.FromError(new ServiceError(
+                    $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+                    "HttpError", (int)response.StatusCode));
+                BuildProperties(err, request, response);
+                return err;
+            }
+        }
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+        var format = streamAs ?? DetectStreamFormat(contentType);
+
+        var isPlang = contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase);
+        if (isPlang && unsigned)
+        {
+            using (response)
+            {
+                var err = Data.FromError(new ServiceError(
+                    "Unsigned request received application/plang streaming response — this is not allowed",
+                    "UnsignedPlang", 403));
+                BuildProperties(err, request, response);
+                return err;
+            }
+        }
+
+        var dataVarName = ResolveCallbackVarName(onStream, "!data");
+
+        using (response)
+        {
+            using var stream = await response.Content.ReadAsStreamAsync(ct);
+
+            switch (format)
+            {
+                case StreamFormat.Bytes:
+                    await StreamBytesAsync(stream, dataVarName, onStream, engine, context, ct);
+                    break;
+
+                case StreamFormat.SSE:
+                    await StreamSSEAsync(stream, dataVarName, onStream, engine, context, ct);
+                    break;
+
+                default:
+                    if (isPlang)
+                        await StreamPlangAsync(stream, dataVarName, onStream, engine, context, ct);
+                    else
+                        await StreamLinesAsync(stream, dataVarName, onStream, engine, context, ct);
+                    break;
+            }
+
+            var result = Data.Ok();
+            BuildProperties(result, request, response);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the variable name for a callback GoalCall from its parameters.
+    /// If a parameter maps to a %var%, use that name. Otherwise use the fallback.
+    /// </summary>
+    private static string ResolveCallbackVarName(GoalCall? goalCall, string fallback)
+    {
+        if (goalCall?.Parameters == null) return fallback;
+
+        foreach (var p in goalCall.Parameters)
+        {
+            if (p.Value is string s && s.StartsWith('%') && s.EndsWith('%'))
+                return s.Trim('%');
+        }
+
+        return fallback;
+    }
+
+    private static StreamFormat DetectStreamFormat(string contentType)
+    {
+        if (contentType.Equals("text/event-stream", StringComparison.OrdinalIgnoreCase))
+            return StreamFormat.SSE;
+        return StreamFormat.Line;
+    }
+
+    private static async Task StreamLinesAsync(
+        Stream stream, string varName, GoalCall onStream,
+        EngineType engine, PLangContext context, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
+            if (string.IsNullOrEmpty(line)) continue;
+
+            context.MemoryStack.Set(varName, line);
+            await engine.RunGoalAsync(onStream, context, ct);
+        }
+    }
+
+    private static async Task StreamSSEAsync(
+        Stream stream, string varName, GoalCall onStream,
+        EngineType engine, PLangContext context, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var dataBuffer = new StringBuilder();
+
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null)
+            {
+                if (dataBuffer.Length > 0)
+                {
+                    context.MemoryStack.Set(varName, dataBuffer.ToString());
+                    await engine.RunGoalAsync(onStream, context, ct);
+                }
+                break;
+            }
+
+            if (line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                var data = line.Length > 5 ? line[5..].TrimStart() : "";
+                if (dataBuffer.Length > 0) dataBuffer.Append('\n');
+                dataBuffer.Append(data);
+            }
+            else if (line.Length == 0 && dataBuffer.Length > 0)
+            {
+                context.MemoryStack.Set(varName, dataBuffer.ToString());
+                await engine.RunGoalAsync(onStream, context, ct);
+                dataBuffer.Clear();
+            }
+        }
+    }
+
+    private static async Task StreamBytesAsync(
+        Stream stream, string varName, GoalCall onStream,
+        EngineType engine, PLangContext context, CancellationToken ct)
+    {
+        var buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            var chunk = new byte[bytesRead];
+            System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
+
+            context.MemoryStack.Set(varName, chunk);
+            await engine.RunGoalAsync(onStream, context, ct);
+        }
+    }
+
+    private static async Task StreamPlangAsync(
+        Stream stream, string varName, GoalCall onStream,
+        EngineType engine, PLangContext context, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
+            if (string.IsNullOrEmpty(line)) continue;
+
+            var signedData = JsonSerializer.Deserialize<SignedData>(line, jsonOptions);
+            if (signedData == null) continue;
+
+            var verifyData = new Data("");
+            verifyData.Signature = signedData;
+
+            var verifyAction = new signing.verify
+            {
+                Context = context,
+                Data = verifyData
+            };
+
+            var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+            if (!verifyResult.Success)
+            {
+                context.MemoryStack.Set(varName, verifyResult);
+                await engine.RunGoalAsync(onStream, context, ct);
+                continue;
+            }
+
+            context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+
+            var chunkData = Data.Ok(signedData);
+            chunkData.Signature = signedData;
+            context.MemoryStack.Set(varName, chunkData);
+            await engine.RunGoalAsync(onStream, context, ct);
+        }
+    }
+
+    // --- Progress reporting ---
+
+    private static async Task<long> StreamWithProgressAsync(
+        Stream source,
+        Stream destination,
+        long? totalBytes,
+        GoalCall? onProgress,
+        string progressVarName,
+        EngineType engine,
+        PLangContext context,
+        CancellationToken ct)
+    {
+        var buffer = new byte[8192];
+        long bytesTransferred = 0;
+        var lastReport = DateTimeOffset.UtcNow;
+
+        int bytesRead;
+        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            await destination.WriteAsync(buffer, 0, bytesRead, ct);
+            bytesTransferred += bytesRead;
+
+            if (onProgress != null)
+            {
+                var now = DateTimeOffset.UtcNow;
+                if ((now - lastReport).TotalMilliseconds >= 500)
+                {
+                    lastReport = now;
+                    var progress = new TransferProgress
+                    {
+                        BytesTransferred = bytesTransferred,
+                        TotalBytes = totalBytes,
+                        Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
+                    };
+                    context.MemoryStack.Set(progressVarName, progress);
+                    await engine.RunGoalAsync(onProgress, context, ct);
+                }
+            }
+        }
+
+        return bytesTransferred;
+    }
 
     // --- Upload content resolution ---
 
@@ -336,8 +876,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 ContentAs.Form => await CreateFormContentAsync(fs, action.Content),
                 ContentAs.Text => new StringContent(
                     action.Content is string s ? s : JsonSerializer.Serialize(action.Content),
-                    System.Text.Encoding.GetEncoding(encoding)),
-                _ => new StringContent(action.Content.ToString()!, System.Text.Encoding.GetEncoding(encoding))
+                    Encoding.GetEncoding(encoding)),
+                _ => new StringContent(action.Content.ToString()!, Encoding.GetEncoding(encoding))
             };
         }
 
@@ -354,12 +894,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (fs.File.Exists(path))
                 return await CreateFileContentAsync(fs, path);
 
-            return new StringContent(str, System.Text.Encoding.GetEncoding(encoding));
+            return new StringContent(str, Encoding.GetEncoding(encoding));
         }
 
         return new StringContent(
             JsonSerializer.Serialize(action.Content),
-            System.Text.Encoding.GetEncoding(encoding),
+            Encoding.GetEncoding(encoding),
             "application/json");
     }
 
@@ -416,4 +956,19 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         return form;
     }
+
+    // --- Static utilities ---
+
+    private static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
+    {
+        HttpMethod.GET => SysHttpMethod.Get,
+        HttpMethod.POST => SysHttpMethod.Post,
+        HttpMethod.PUT => SysHttpMethod.Put,
+        HttpMethod.DELETE => SysHttpMethod.Delete,
+        HttpMethod.PATCH => SysHttpMethod.Patch,
+        HttpMethod.HEAD => SysHttpMethod.Head,
+        HttpMethod.OPTIONS => SysHttpMethod.Options,
+        HttpMethod.QUERY => new SysHttpMethod("QUERY"),
+        _ => SysHttpMethod.Get
+    };
 }

@@ -5,7 +5,7 @@ namespace PLang.Runtime2.modules.http.providers;
 
 /// <summary>
 /// HTTP provider interface. Actions pass themselves — provider owns all behavior.
-/// Swappable via engine.Providers. Custom implementations can use HttpHelper utilities.
+/// Swappable via engine.Providers.
 /// </summary>
 public interface IHttpProvider : IProvider, IDisposable
 {

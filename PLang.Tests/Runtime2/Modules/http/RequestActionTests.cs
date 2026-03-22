@@ -279,9 +279,9 @@ public class RequestActionTests
         // Provider should return error for relative URL with no BaseUrl
         _mock.OnSend = async action =>
         {
-            var config = action.Context.Engine.Settings.For<Config>(action.Context);
-            var urlResult = HttpHelper.ResolveUrl(action.Url, config);
-            return urlResult; // will be an error
+            return Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
+                "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
+                "NoBaseUrl", 400));
         };
 
         var action = new request
