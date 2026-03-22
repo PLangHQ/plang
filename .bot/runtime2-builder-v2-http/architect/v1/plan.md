@@ -70,7 +70,8 @@ public partial class request : IContext
 6. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
 7. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
-   - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!Service.Identity%` via `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
+   - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
+   - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
    - If `application/json` → deserialize JSON
    - If XML → convert to JSON (same as runtime1)
    - If binary (non-text) → return raw bytes
@@ -157,15 +158,18 @@ public partial class upload : IContext
     public partial int TimeoutInSec { get; init; }                 // default 30
     public partial bool Unsigned { get; init; }                    // default false
     public partial sign? SignOptions { get; init; }                // optional signing overrides
+    public partial string? As { get; init; }                       // explicit content hint: "file", "base64", "form", "text" — overrides auto-detection
     public partial GoalCall? OnProgress { get; init; }             // progress callback, 500ms interval
 }
 ```
 
-**Content resolution (runtime detection — handler inspects the value at runtime):**
-- **Dictionary/object** → `MultipartFormDataContent` (fields with `@` prefix are file references, e.g., `"file": "@files/photo.jpg"` — same as runtime1 convention)
-- **String that is a valid file path** (file exists on disk) → `StreamContent` with `application/octet-stream`
-- **String that is valid base64** → decode to `MemoryStream` → `StreamContent`
-- **Other string** → `StringContent` (treated as raw body)
+**Content resolution:**
+- If `As` is set, use it directly: `"file"` → `StreamContent`, `"base64"` → decode to `StreamContent`, `"form"` → `MultipartFormDataContent`, `"text"` → `StringContent`
+- If `As` is null (default), auto-detect by inspecting the runtime value:
+  - **Dictionary/object** → `MultipartFormDataContent` (fields with `@` prefix are file references, e.g., `"file": "@files/photo.jpg"` — same as runtime1 convention)
+  - **String that is a valid file path** (file exists on disk) → `StreamContent` with `application/octet-stream`
+  - **String that is valid base64** → decode to `MemoryStream` → `StreamContent`
+  - **Other string** → `StringContent` (treated as raw body)
 
 **PLang usage:**
 ```plang
@@ -173,6 +177,8 @@ public partial class upload : IContext
 - set %formData% to { "file": "@files/photo.jpg", "description": "My photo" }
 - upload %formData% to https://api.example.com/submit, write to %result%
 - upload files/large.zip to https://api.example.com/upload, call ShowProgress
+- upload %data% to https://api.example.com/raw, as text, write to %result%
+- upload %encoded% to https://api.example.com/binary, as base64, write to %result%
 ```
 
 ### configure
@@ -214,7 +220,7 @@ public class Config : ISettings
 
 **Resolution order:** per-step parameter → config scope chain (`engine.Settings.For<Config>(context)`) → class default.
 
-**`FollowRedirects` / `MaxRedirects`**: These affect the `SocketsHttpHandler` on the `DefaultHttpProvider`. The provider lazily creates its `HttpClient` on first request, reading these config values at that point. If config changes `FollowRedirects` or `MaxRedirects` after the first request, the handler returns an error — these are handler-level settings that can't change mid-lifecycle.
+**`FollowRedirects` / `MaxRedirects`**: These affect the `SocketsHttpHandler` on the `DefaultHttpProvider`. The configure handler resolves the full `Config` and calls `provider.Configure(config)` — the provider reads what it needs (OBP style). The provider lazily creates its `HttpClient` on first request using these values. If config changes `FollowRedirects` or `MaxRedirects` after the first request, the provider returns an error — these are handler-level settings that can't change mid-lifecycle.
 
 **`BaseUrl`**: When set, relative URLs on `request`/`download`/`upload` are resolved against it. `get /users` → `https://api.example.com/v2/users`.
 
@@ -248,10 +254,11 @@ When `OnStream` is set, the response is read as a stream rather than buffered.
 - For each data chunk, set `%!data%` via `context.MemoryStack.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
 - Call `engine.RunGoalAsync(OnStream, Context, ...)`
 
-**For `application/plang` responses:**
+**For `application/plang` responses (newline-delimited JSON):**
+- Wire format: one JSON `Data` object per line (`\n` delimited). Read stream line-by-line; each non-empty line is a complete JSON `Data` object.
 - Each chunk is a `Data` object (signed), deserialized per content type (see application/plang Protocol)
 - Signature must be valid — error if verification fails
-- `SignedData.Identity` from the response → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
+- `SignedData.Identity` from the response → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
 - The `Data.Value` → `context.MemoryStack.Set("!data", dataValue)`
 
 **Developer access:**
@@ -295,12 +302,12 @@ ShowProgress
 PLang-native content type for PLang-to-PLang communication.
 
 - **Content-Type:** `application/plang` — defaults to JSON serialization. Explicit variants: `application/plang+json`, `application/plang+protobuf` (future). When no suffix, treat as JSON.
-- **Accept header:** `application/plang` — automatically added when `Unsigned = false` (default), alongside any other accept types. Accepts any serialization the server chooses.
+- **Accept header:** `application/plang` — automatically added when `Unsigned = false` (default), alongside any other accept types. Accepts any serialization the server chooses. **Never added on unsigned requests** — unsigned `application/plang` is not allowed. If an unsigned request receives an `application/plang` response, return an error. Security is non-negotiable.
 - **Response parsing:** check content type — `application/plang` or `application/plang+json` → JSON deserialize. Future: `application/plang+protobuf` → protobuf. Missing suffix = JSON.
 - **Response handling:** body is a `Data` object containing `SignedData`
 - **Signature validation:** signature MUST be valid — if verification fails, return error. No silent pass.
-- **Identity:** `SignedData.Identity` from the response → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)` — the service proves who it is. Scoped variable, does not overwrite developer's `%Service%`.
-- **Streaming:** `application/plang` responses can stream multiple `Data` objects — each delivered via `OnStream`. Each chunk's signature must be valid.
+- **Identity:** `SignedData.Identity` from the response → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)` — the service proves who it is. Scoped variable, does not overwrite developer's `%Service%`.
+- **Streaming:** `application/plang` responses can stream multiple `Data` objects via newline-delimited JSON (`\n` separated) — each line is a complete JSON `Data` object delivered via `OnStream`. Each chunk's signature must be valid.
 
 ---
 
@@ -319,11 +326,11 @@ When `Unsigned = false` (default):
 
 On `application/plang` responses:
 - Verify signature — MUST be valid, error if not
-- `context.MemoryStack.Set("!Service.Identity", signedData.Identity)` (scoped variable — does not overwrite developer's `%Service%`)
+- `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)` (scoped variable — does not overwrite developer's `%Service%`)
 
 On signed error responses (same as runtime1):
 - Check for `signature` field in error JSON
-- Verify signature → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
+- Verify signature → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
 
 ---
 
@@ -336,6 +343,7 @@ Follows the existing provider pattern (`IProvider` → `engine.Providers`). The 
 public interface IHttpProvider : IProvider
 {
     Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
+    void Configure(Config config);
 }
 ```
 
@@ -360,12 +368,16 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return _client.SendAsync(request, completionOption, cancellationToken);
     }
 
-    public void Configure(bool followRedirects, int maxRedirects)
+    /// <summary>
+    /// Receives the full Config object — provider reads what it needs (OBP style).
+    /// Handler-level settings (FollowRedirects, MaxRedirects) are locked after first request.
+    /// </summary>
+    public void Configure(Config config)
     {
-        if (_client != null && (followRedirects != _followRedirects || maxRedirects != _maxRedirects))
+        if (_client != null && (config.FollowRedirects != _followRedirects || config.MaxRedirects != _maxRedirects))
             throw new InvalidOperationException("Cannot change FollowRedirects/MaxRedirects after first HTTP request");
-        _followRedirects = followRedirects;
-        _maxRedirects = maxRedirects;
+        _followRedirects = config.FollowRedirects;
+        _maxRedirects = config.MaxRedirects;
     }
 
     private HttpClient CreateClient() => new(new SocketsHttpHandler
@@ -413,8 +425,9 @@ PLang/Runtime2/Engine/Providers/
 - SignOptions overrides signing defaults (ExpiresInMs, Contracts)
 - URL auto-prefix adds https://
 - application/json response is deserialized
-- application/plang response extracts Data and sets %!Service.Identity%
+- application/plang response extracts Data and sets %!ServiceIdentity%
 - application/plang response with invalid signature returns error
+- Unsigned request receiving application/plang response returns error
 - XML response converted to JSON
 - Binary response returned as bytes
 - Error response returns Data.Fail with status code
@@ -432,6 +445,8 @@ PLang/Runtime2/Engine/Providers/
 - File path content → binary upload
 - Dictionary content → multipart form data
 - Base64 content → decoded binary upload
+- As="file" forces file upload even for ambiguous content
+- As="text" forces string body even if content looks like a file path
 
 **configure:**
 - Config values resolve through scope chain (goal scope → engine default → class default)
@@ -472,13 +487,14 @@ PLang/Runtime2/Engine/Providers/
 
 - `request` action handles all HTTP methods with JSON/XML/text/binary response parsing
 - `download` action downloads files with three-state existence handling (error/overwrite/skip)
-- `upload` action handles binary files, base64, and multipart form data
+- `upload` action handles binary files, base64, and multipart form data. `As` parameter allows explicit content hint (`"file"`, `"base64"`, `"form"`, `"text"`) to override auto-detection.
 - Request signing on by default via `engine.RunAction<sign, SignedData>(...)` (signing module resolves identity from system actor context)
 - `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
 - `Accept: application/plang` added automatically on signed requests
-- `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!Service.Identity", ...)` (scoped — doesn't overwrite developer variables)
-- `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`
-- `OnStream` callback works for streaming responses (SSE, chunked, application/plang)
+- `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!ServiceIdentity", ...)` (scoped — doesn't overwrite developer variables)
+- Unsigned request receiving `application/plang` response returns error — unsigned `application/plang` is never allowed
+- `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`. `IHttpProvider.Configure(Config)` receives the full config object (OBP style).
+- `OnStream` callback works for streaming responses (SSE, chunked, application/plang — newline-delimited JSON)
 - `OnProgress` callback works for download/upload at 500ms intervals (TransferProgress object as `%!data%`)
 - URL auto-prefix (`https://`) when no protocol specified
 - Response metadata on `Data.Properties` (request + response details)
