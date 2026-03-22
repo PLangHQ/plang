@@ -70,4 +70,18 @@ public class UploadActionTests
         // As=Text forces StringContent even if content looks like a valid file path
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task Upload_OnProgress_CallsGoalWithTransferProgress()
+    {
+        // OnProgress set → goal called every 500ms with TransferProgress during upload
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Upload_ErrorStatusCode_ReturnsDataFail()
+    {
+        // Server returns 500 → Data.Fail with status code, reason phrase, and response body
+        Assert.Fail("Not implemented");
+    }
 }

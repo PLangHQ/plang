@@ -110,6 +110,27 @@ public class RequestActionTests
 
     #endregion
 
+    [Test]
+    public async Task Post_NullBody_SendsRequestWithNoContent()
+    {
+        // POST with null body → HttpRequestMessage.Content is null, no content headers
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Get_RelativeUrlNoBaseUrl_ReturnsError()
+    {
+        // Relative URL "/users" with no BaseUrl configured → Data.Fail (cannot resolve)
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Get_ApplicationPlangJsonVariant_DeserializesAsPlang()
+    {
+        // Response with content-type "application/plang+json" treated same as "application/plang"
+        Assert.Fail("Not implemented");
+    }
+
     #region Batch 2: Signing Integration
 
     [Test]
@@ -156,6 +177,13 @@ public class RequestActionTests
 
     #endregion
 
+    [Test]
+    public async Task Get_SignedErrorResponse_ExtractsIdentityFromSignatureField()
+    {
+        // Error JSON with "signature" field → verify signature, set %!ServiceIdentity% even on error
+        Assert.Fail("Not implemented");
+    }
+
     #region Batch 3: Streaming
 
     [Test]
@@ -190,6 +218,31 @@ public class RequestActionTests
     public async Task Get_OnStreamCompletes_ReturnsDataOkWithProperties()
     {
         // After streaming completes, returns Data.Ok() with StatusCode/Headers but no body value
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Get_OnStreamApplicationPlang_EachChunkSignatureVerified()
+    {
+        // application/plang streaming: each NDJSON line is a Data object, each signature must be valid
+        Assert.Fail("Not implemented");
+    }
+
+    #endregion
+
+    #region Timeout
+
+    [Test]
+    public async Task Get_TimeoutExpires_ReturnsDataFail()
+    {
+        // Request exceeds TimeoutInSec → Data.Fail with timeout error
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Get_OnStreamTimeout_AppliesToInitialResponseOnly()
+    {
+        // With OnStream set, timeout applies to initial response (ResponseHeadersRead), not stream reading
         Assert.Fail("Not implemented");
     }
 

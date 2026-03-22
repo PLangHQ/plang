@@ -77,4 +77,18 @@ public class DownloadActionTests
         // 404 response → Data.Fail with status code, no file created on disk
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task Download_OnProgress_CallsGoalWithTransferProgress()
+    {
+        // OnProgress set → goal called every 500ms with TransferProgress (BytesTransferred, TotalBytes, Percentage)
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Download_OnProgress_NullTotalBytes_WhenNoContentLength()
+    {
+        // Server sends no Content-Length header → TransferProgress.TotalBytes is null, Percentage is null
+        Assert.Fail("Not implemented");
+    }
 }

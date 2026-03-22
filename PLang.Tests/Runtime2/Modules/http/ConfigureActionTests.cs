@@ -70,4 +70,18 @@ public class ConfigureActionTests
         // Changing FollowRedirects after first HTTP request → Data.Fail("ConfigLocked")
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task Configure_DefaultTrue_SetsEngineLevel()
+    {
+        // Default=true → config persists across goals within execution (engine-level scope)
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Configure_DefaultFalse_ScopedToGoal()
+    {
+        // Default=false (default) → config scoped to current goal, not visible in other goals
+        Assert.Fail("Not implemented");
+    }
 }
