@@ -77,7 +77,7 @@ public partial class request : IContext
 7. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` — if `OnStream` is set, use `HttpCompletionOption.ResponseHeadersRead` (timeout applies to initial response only); otherwise use `ResponseContentRead` (timeout applies to full response)
 8. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
-   - If not success status code → return `Data.Fail` with status code, reason phrase, and response body (best-effort read). Properties still populated (StatusCode, Headers, etc.).
+   - If not success status code → return `Data.FromError` with status code, reason phrase, and response body (best-effort read). Properties still populated (StatusCode, Headers, etc.).
    - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
    - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
    - If `application/json` → deserialize JSON
@@ -146,7 +146,7 @@ public partial class download : IContext
 2. Check file existence via `IPLangFileSystem` against `IfExists` (Error → fail, Overwrite → continue, Skip → return path)
 3. If `Unsigned = false` → sign via `engine.RunAction<sign>(...)` with `SignOptions` overrides if provided
 4. Send request via provider
-5. If not success status code → return `Data.Fail` with status code and reason phrase
+5. If not success status code → return `Data.FromError` with status code and reason phrase
 6. Stream response to file via `IPLangFileSystem` (sandboxed file access), creating parent directories as needed
 7. If `OnProgress` → call goal every 500ms with progress data
 8. Return `Data.Ok(filePath)`
@@ -203,7 +203,7 @@ public partial class upload : IContext
 6. Build `HttpRequestMessage` with method, headers, resolved content
 7. Send via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
 8. If `OnProgress` → report progress every 500ms via callback
-9. If not success status code → return `Data.Fail` with status code, reason phrase, and response body
+9. If not success status code → return `Data.FromError` with status code, reason phrase, and response body
 10. Parse response — same rules as request including `application/plang`:
     - If `application/plang` and `Unsigned = true` → return error
     - If `application/plang` → verify signature, set `%!ServiceIdentity%`
@@ -417,9 +417,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Data Configure(ISettings settings)
     {
         if (settings is not Config config)
-            return Data.Fail("InvalidConfig", "Expected HTTP Config");
+            return Data.FromError("InvalidConfig", "Expected HTTP Config");
         if (_client != null && (config.FollowRedirects != _followRedirects || config.MaxRedirects != _maxRedirects))
-            return Data.Fail("ConfigLocked", "Cannot change FollowRedirects/MaxRedirects after first HTTP request");
+            return Data.FromError("ConfigLocked", "Cannot change FollowRedirects/MaxRedirects after first HTTP request");
         _followRedirects = config.FollowRedirects;
         _maxRedirects = config.MaxRedirects;
         return Data.Ok();
@@ -486,7 +486,7 @@ PLang/Runtime2/Engine/Providers/
 - Unsigned request receiving application/plang response returns error
 - XML response converted to JSON
 - Binary response returned as bytes
-- Error response returns Data.Fail with status code
+- Error response returns Data.FromError with status code
 - Form URL encoding works with application/x-www-form-urlencoded
 - OnStream calls goal per chunk (Line format)
 - OnStream with StreamAs=SSE parses SSE events
@@ -500,7 +500,7 @@ PLang/Runtime2/Engine/Providers/
 - IfExists=Overwrite, file exists → replaced
 - IfExists=Skip, file exists → returns path, no download
 - Parent directories created automatically
-- Error status code (404, 500) returns Data.Fail, no file created
+- Error status code (404, 500) returns Data.FromError, no file created
 
 **upload:**
 - File path content → binary upload
