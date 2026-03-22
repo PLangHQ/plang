@@ -77,6 +77,7 @@ public partial class request : IContext
 7. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` — if `OnStream` is set, use `HttpCompletionOption.ResponseHeadersRead` (timeout applies to initial response only); otherwise use `ResponseContentRead` (timeout applies to full response)
 8. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
+   - If not success status code → return `Data.Fail` with status code, reason phrase, and response body (best-effort read). Properties still populated (StatusCode, Headers, etc.).
    - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
    - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
    - If `application/json` → deserialize JSON
@@ -144,9 +145,11 @@ public partial class download : IContext
 1. Resolve URL (https:// prefix)
 2. Check file existence against `IfExists` (Error → fail, Overwrite → continue, Skip → return path)
 3. If `Unsigned = false` → sign via `engine.RunAction<sign>(...)` with `SignOptions` overrides if provided
-4. Stream response to file, creating parent directories as needed
-5. If `OnProgress` → call goal every 500ms with progress data
-6. Return `Data.Ok(filePath)`
+4. Send request via provider
+5. If not success status code → return `Data.Fail` with status code and reason phrase
+6. Stream response to file, creating parent directories as needed
+7. If `OnProgress` → call goal every 500ms with progress data
+8. Return `Data.Ok(filePath)`
 
 ### upload
 
@@ -190,6 +193,19 @@ public partial class upload : IContext
 - upload %data% to https://api.example.com/raw, as text, write to %result%
 - upload %encoded% to https://api.example.com/binary, as base64, write to %result%
 ```
+
+**Flow:**
+1. Resolve config via `engine.Settings.For<Config>(context)` — per-step parameters override config values
+2. Resolve URL — if relative and `BaseUrl` is set, combine. Auto-prefix `https://` if no protocol.
+3. Build headers (merge `DefaultHeaders` + per-step headers, per-step wins)
+4. Resolve content — if `As` is set, use it directly; otherwise auto-detect (see Content resolution above)
+5. If `Unsigned = false` → sign via `engine.RunAction<sign, SignedData>(...)` with content hash as `Data`
+6. Build `HttpRequestMessage` with method, headers, resolved content
+7. Send via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
+8. If `OnProgress` → report progress every 500ms via callback
+9. If not success status code → return `Data.Fail` with status code, reason phrase, and response body
+10. Parse response (same as request: JSON, XML, text, binary)
+11. Return `Data` with response value and properties
 
 ### configure
 
@@ -469,6 +485,7 @@ PLang/Runtime2/Engine/Providers/
 - IfExists=Overwrite, file exists → replaced
 - IfExists=Skip, file exists → returns path, no download
 - Parent directories created automatically
+- Error status code (404, 500) returns Data.Fail, no file created
 
 **upload:**
 - File path content → binary upload
@@ -489,7 +506,7 @@ PLang/Runtime2/Engine/Providers/
 - GET request, verify response data and status code
 - POST with JSON body, verify response
 - Download file, verify file exists
-- Download with SkipIfExists, verify no re-download
+- Download with IfExists=Skip, verify no re-download
 - Upload file, verify response
 - Signed request includes X-Signature header
 - Unsigned request, no X-Signature
