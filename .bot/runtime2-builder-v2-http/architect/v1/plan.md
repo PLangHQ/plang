@@ -93,8 +93,8 @@ Request:
   - Url              — final URL after resolution and https:// prefix
   - Method
   - Headers          — including X-Signature if signed
-  - Body             — serialized body sent
   - ContentType
+  - ContentLength    — body size in bytes (metadata only, not the body itself)
   - Encoding
 
 Response:
@@ -181,8 +181,8 @@ public partial class upload : IContext
 - If `As` is null (default), auto-detect by inspecting the runtime value:
   - **Dictionary/object** → `MultipartFormDataContent` (fields with `@` prefix are file references, e.g., `"file": "@files/photo.jpg"` — same as runtime1 convention)
   - **String that is a valid file path** (file exists on disk) → `StreamContent` with `application/octet-stream`
-  - **String that is valid base64** → decode to `MemoryStream` → `StreamContent`
   - **Other string** → `StringContent` (treated as raw body)
+  - Base64 is NOT auto-detected — use `As = Base64` explicitly. Too many normal strings are valid base64.
 
 **PLang usage:**
 ```plang
@@ -320,11 +320,11 @@ Called every 500ms during file transfer. The progress data is set as `%!data%` i
 
 **Progress object:**
 ```csharp
-public class TransferProgress
+public record TransferProgress
 {
-    public long BytesTransferred { get; set; }
-    public long? TotalBytes { get; set; }         // null if Content-Length not provided
-    public double? Percentage { get; set; }       // null if TotalBytes unknown
+    public long BytesTransferred { get; init; }
+    public long? TotalBytes { get; init; }         // null if Content-Length not provided
+    public double? Percentage { get; init; }       // null if TotalBytes unknown
 }
 ```
 
@@ -381,7 +381,7 @@ Follows the existing provider pattern (`IProvider` → `engine.Providers`). The 
 
 **`IHttpProvider`** (in `PLang/Runtime2/Engine/Providers/`):
 ```csharp
-public interface IHttpProvider : IProvider
+public interface IHttpProvider : IProvider, IDisposable
 {
     Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
     Data Configure(ISettings config);
@@ -402,6 +402,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// <summary>
     /// Lazily creates HttpClient on first request. Reads FollowRedirects/MaxRedirects
     /// from config at creation time. Error if these change after first request.
+    /// HttpClient lives for the Engine's lifetime — disposed when Engine is disposed/returned to pool.
     /// </summary>
     public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
     {
@@ -422,6 +423,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
         _followRedirects = config.FollowRedirects;
         _maxRedirects = config.MaxRedirects;
         return Data.Ok();
+    }
+
+    /// <summary>
+    /// Disposes HttpClient and its underlying SocketsHttpHandler.
+    /// Called when Engine is disposed/returned to pool. Preserves connection
+    /// pooling across steps within a single execution scope.
+    /// </summary>
+    public void Dispose()
+    {
+        _client?.Dispose();
+        _client = null;
     }
 
     private HttpClient CreateClient() => new(new SocketsHttpHandler
