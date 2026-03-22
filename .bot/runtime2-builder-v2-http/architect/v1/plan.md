@@ -20,6 +20,7 @@ Core HTTP action. Handles all HTTP methods, response parsing, signing, and strea
 
 ```csharp
 public enum HttpMethod { GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, QUERY }
+public enum StreamFormat { Line, SSE, Bytes }
 
 [Action("request")]
 public partial class request : IContext
@@ -34,6 +35,7 @@ public partial class request : IContext
     public partial bool Unsigned { get; init; }                    // default false — request is signed unless developer says "unsigned"
     public partial sign? SignOptions { get; init; }                // optional signing overrides — uses the sign action record directly
     public partial GoalCall? OnStream { get; init; }               // goal called per data chunk
+    public partial StreamFormat? StreamAs { get; init; }           // explicit stream format — overrides auto-detection. Null = auto-detect from content type.
 }
 ```
 
@@ -51,6 +53,8 @@ public partial class request : IContext
 - delete https://api.example.com/users/1, write to %result%
 - get https://api.example.com/stream, call ProcessChunk
 - get https://api.example.com/stream, call ProcessChunk data=%event%
+- get https://api.example.com/events, call ProcessChunk, stream as sse
+- get https://api.example.com/feed, call ProcessChunk, stream as bytes
 - post https://api.example.com/chat, %prompt%, unsigned, write to %response%
 - post https://api.example.com/data, %body%, sign expires in 600 seconds, write to %result%
 - post https://api.example.com/data, %body%, sign with contracts ['C0', 'C1'], write to %result%
@@ -70,7 +74,7 @@ public partial class request : IContext
    - Set `X-Signature` header from returned `SignedData`
    - Add `Accept: application/plang` to accept headers (alongside existing accept)
 6. Build `HttpRequestMessage` with method, headers, serialized body
-7. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
+7. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` — if `OnStream` is set, use `HttpCompletionOption.ResponseHeadersRead` (timeout applies to initial response only); otherwise use `ResponseContentRead` (timeout applies to full response)
 8. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
    - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
@@ -253,30 +257,42 @@ public class Config : ISettings
 
 ### OnStream (request)
 
-When `OnStream` is set, the response is read as a stream rather than buffered.
+When `OnStream` is set, the response is read as a stream rather than buffered. Uses `HttpCompletionOption.ResponseHeadersRead` — timeout applies only to the initial response, not the stream reading.
 
-**For regular HTTP (SSE, chunked JSON, OpenAI-style streaming):**
-- Read response stream line-by-line or chunk-by-chunk
-- For each data chunk, set `%!data%` via `context.MemoryStack.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
+**Stream format selection:**
+
+`StreamAs` parameter (explicit) overrides auto-detection. When null, format is chosen by response content type:
+
+| Content Type | StreamFormat | Behavior |
+|---|---|---|
+| `application/plang` | *(always NDJSON — not configurable, this is protocol)* | Each `\n`-delimited line → deserialize as `Data` object, verify signature, set `%!ServiceIdentity%`. `%!data%` = full `Data` object. |
+| `text/event-stream` | `SSE` | Parse SSE format (`data:` fields, `\n\n` event boundaries). `%!data%` = event `data` field value (string). |
+| Everything else | `Line` | Read `\n`-delimited lines. `%!data%` = line content (string). Covers NDJSON, OpenAI-style, most JSON streaming APIs. |
+
+Developer can override with `StreamAs`:
+- `StreamFormat.Line` — force line-by-line even if content type is unknown
+- `StreamFormat.SSE` — force SSE parsing even if server doesn't set `text/event-stream`
+- `StreamFormat.Bytes` — raw byte chunks as they arrive from transport. `%!data%` = byte array.
+
+**For each chunk:**
+- Set `%!data%` via `context.MemoryStack.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
 - Call `engine.RunGoalAsync(OnStream, Context, ...)`
 
-**For `application/plang` responses (newline-delimited JSON):**
-- Wire format: one JSON `Data` object per line (`\n` delimited). Read stream line-by-line; each non-empty line is a complete JSON `Data` object.
-- Each chunk is a `Data` object (signed), deserialized per content type (see application/plang Protocol)
-- Signature must be valid — error if verification fails
-- `SignedData.Identity` from the response → `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
-- The full `Data` object → `context.MemoryStack.Set("!data", data)` — developer navigates into it (`%!data.Value%`, `%!data.Properties%`, etc.)
+**Return value:** After streaming completes, `request` returns `Data.Ok()` with response properties (StatusCode, Headers, etc.) but no body value — the body was delivered via callbacks.
 
 **Developer access:**
 ```plang
 - get https://api.example.com/stream, call ProcessChunk
-  / %!data% is set automatically
+  / %!data% is set automatically, format auto-detected
 
 - get https://api.example.com/stream, call ProcessChunk data=%event%
   / %event% is set to the chunk data
 
-- get https://api.example.com/stream, call ProcessChunk data=%event% userId=%id%
-  / %event% is chunk data, %id% comes from existing variable
+- get https://api.example.com/events, call ProcessChunk, stream as sse
+  / force SSE parsing
+
+- get https://api.example.com/feed, call ProcessChunk, stream as bytes
+  / raw byte chunks
 ```
 
 ### OnProgress (download/upload)
@@ -413,7 +429,7 @@ PLang/Runtime2/modules/http/
 ├── upload.cs            — upload action handler
 ├── configure.cs         — configuration action (scope chain)
 ├── Config.cs            — ISettings implementation with defaults
-├── types.cs             — HttpMethod, ContentAs, FileExists enums, TransferProgress type
+├── types.cs             — HttpMethod, StreamFormat, ContentAs, FileExists enums, TransferProgress type
 PLang/Runtime2/Engine/Providers/
 ├── IHttpProvider.cs     — HTTP provider interface
 ├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
@@ -423,7 +439,7 @@ PLang/Runtime2/Engine/Providers/
 
 ## Test Expectations
 
-### C# unit tests (~25)
+### C# unit tests (~29)
 
 **request:**
 - GET returns JSON response with correct Data.Properties
@@ -441,7 +457,11 @@ PLang/Runtime2/Engine/Providers/
 - Binary response returned as bytes
 - Error response returns Data.Fail with status code
 - Form URL encoding works with application/x-www-form-urlencoded
-- OnStream calls goal per chunk
+- OnStream calls goal per chunk (Line format)
+- OnStream with StreamAs=SSE parses SSE events
+- OnStream with StreamAs=Bytes delivers raw byte chunks
+- OnStream auto-detects SSE from text/event-stream content type
+- OnStream returns Data.Ok() with response properties after streaming completes
 
 **download:**
 - File downloaded to correct path
@@ -503,7 +523,7 @@ PLang/Runtime2/Engine/Providers/
 - `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!ServiceIdentity", ...)` (scoped — doesn't overwrite developer variables)
 - Unsigned request receiving `application/plang` response returns error — unsigned `application/plang` is never allowed
 - `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`. `IHttpProvider.Configure(ISettings)` — provider receives `ISettings`, casts to what it needs. Returns `Data` (never throws).
-- `OnStream` callback works for streaming responses (SSE, chunked, application/plang — newline-delimited JSON)
+- `OnStream` callback works for streaming responses with `StreamFormat` enum (`Line`, `SSE`, `Bytes`). Auto-detects from content type when `StreamAs` is null. `application/plang` always uses NDJSON (not configurable). Timeout applies to initial response only (`ResponseHeadersRead`). Returns `Data.Ok()` with response properties after streaming completes.
 - `OnProgress` callback works for download/upload at 500ms intervals (TransferProgress object as `%!data%`)
 - URL auto-prefix (`https://`) when no protocol specified
 - Response metadata on `Data.Properties` (request + response details)
