@@ -23,11 +23,11 @@ public class RequestActionTests
     }
 
     [After(Test)]
-    public void Cleanup()
+    public async Task Cleanup()
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await _engine.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -88,7 +88,7 @@ public class RequestActionTests
     }
 
     [Test]
-    public async Task Get_ErrorStatusCode_ReturnsDataFail()
+    public async Task Get_ErrorStatusCode_ReturnsDataFromError()
     {
         // 404/500 response returns Data.FromError with StatusCode, reason phrase, and response body
         Assert.Fail("Not implemented");
@@ -233,7 +233,7 @@ public class RequestActionTests
     #region Timeout
 
     [Test]
-    public async Task Get_TimeoutExpires_ReturnsDataFail()
+    public async Task Get_TimeoutExpires_ReturnsDataFromError()
     {
         // Request exceeds TimeoutInSec → Data.FromError with timeout error
         Assert.Fail("Not implemented");

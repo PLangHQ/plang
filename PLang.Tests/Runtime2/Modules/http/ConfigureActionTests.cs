@@ -23,11 +23,11 @@ public class ConfigureActionTests
     }
 
     [After(Test)]
-    public void Cleanup()
+    public async Task Cleanup()
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await _engine.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }

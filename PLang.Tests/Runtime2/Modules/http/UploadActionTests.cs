@@ -23,11 +23,11 @@ public class UploadActionTests
     }
 
     [After(Test)]
-    public void Cleanup()
+    public async Task Cleanup()
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await _engine.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -79,7 +79,7 @@ public class UploadActionTests
     }
 
     [Test]
-    public async Task Upload_ErrorStatusCode_ReturnsDataFail()
+    public async Task Upload_ErrorStatusCode_ReturnsDataFromError()
     {
         // Server returns 500 → Data.FromError with status code, reason phrase, and response body
         Assert.Fail("Not implemented");

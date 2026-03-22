@@ -23,11 +23,11 @@ public class DownloadActionTests
     }
 
     [After(Test)]
-    public void Cleanup()
+    public async Task Cleanup()
     {
         try
         {
-            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            await _engine.DisposeAsync();
             if (System.IO.Directory.Exists(_tempDir))
                 System.IO.Directory.Delete(_tempDir, true);
         }
@@ -44,7 +44,7 @@ public class DownloadActionTests
     }
 
     [Test]
-    public async Task Download_FileExistsError_ReturnsDataFail()
+    public async Task Download_FileExistsError_ReturnsDataFromError()
     {
         // IfExists=Error (default), file already exists → Data.FromError
         Assert.Fail("Not implemented");

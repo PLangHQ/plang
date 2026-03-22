@@ -461,7 +461,7 @@ PLang/Runtime2/modules/http/
 ├── configure.cs         — configuration action (scope chain)
 ├── Config.cs            — ISettings implementation with defaults
 ├── types.cs             — HttpMethod, StreamFormat, ContentAs, FileExists enums, TransferProgress type
-PLang/Runtime2/Engine/Providers/
+PLang/Runtime2/modules/http/providers/
 ├── IHttpProvider.cs     — HTTP provider interface
 ├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
 ```
@@ -541,8 +541,8 @@ PLang/Runtime2/Engine/Providers/
 | `PLang/Runtime2/modules/http/configure.cs` | Configuration action (scope chain) |
 | `PLang/Runtime2/modules/http/Config.cs` | ISettings implementation with defaults |
 | `PLang/Runtime2/modules/http/types.cs` | TransferProgress type |
-| `PLang/Runtime2/Engine/Providers/IHttpProvider.cs` | HTTP provider interface |
-| `PLang/Runtime2/Engine/Providers/DefaultHttpProvider.cs` | Default implementation (SocketsHttpHandler) |
+| `PLang/Runtime2/modules/http/providers/IHttpProvider.cs` | HTTP provider interface |
+| `PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs` | Default implementation (SocketsHttpHandler) |
 
 ## Definition of Done
 
