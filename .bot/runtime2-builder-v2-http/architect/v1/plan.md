@@ -61,7 +61,7 @@ public partial class request : IContext
 4. If `Unsigned = false` (resolved — per-step or config):
    - If `SignOptions` provided, use it as the `sign` action and fill in `Data` (body hash) and `Headers` (url, method)
    - If `SignOptions` is null, construct a new `sign` action with defaults and fill in `Data` and `Headers`
-   - Run via `engine.RunAction<sign>(signAction, context)` — signing module resolves identity from system actor
+   - Run via `engine.RunAction<sign, SignedData>(signAction, context)` — signing module resolves identity from system actor
    - Set `X-Signature` header from returned `SignedData`
    - Add `Accept: application/plang` to accept headers (alongside existing accept)
 5. If `Body != null`:
@@ -70,7 +70,7 @@ public partial class request : IContext
 6. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
 7. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
-   - If `application/plang` response → deserialize as `Data` object, validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!Service.Identity%`
+   - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!Service.Identity%` via `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
    - If `application/json` → deserialize JSON
    - If XML → convert to JSON (same as runtime1)
    - If binary (non-text) → return raw bytes
@@ -245,14 +245,14 @@ When `OnStream` is set, the response is read as a stream rather than buffered.
 
 **For regular HTTP (SSE, chunked JSON, OpenAI-style streaming):**
 - Read response stream line-by-line or chunk-by-chunk
-- For each data chunk, set `%!data%` (or custom name from `GoalCall.Parameters`) on memory stack
+- For each data chunk, set `%!data%` via `context.MemoryStack.Set("!data", chunk)` (or custom name from `GoalCall.Parameters`)
 - Call `engine.RunGoalAsync(OnStream, Context, ...)`
 
 **For `application/plang` responses:**
-- Each chunk is a `Data` object (signed)
+- Each chunk is a `Data` object (signed), deserialized per content type (see application/plang Protocol)
 - Signature must be valid — error if verification fails
-- `SignedData.Identity` from the response → `%!Service.Identity%`
-- The `Data.Value` becomes `%!data%` in the called goal
+- `SignedData.Identity` from the response → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
+- The `Data.Value` → `context.MemoryStack.Set("!data", dataValue)`
 
 **Developer access:**
 ```plang
@@ -294,35 +294,36 @@ ShowProgress
 
 PLang-native content type for PLang-to-PLang communication.
 
-- **Content-Type:** `application/plang` (default serialization is JSON, but pluggable)
-- **Accept header:** automatically added when `Unsigned = false` (default) — alongside any other accept types
+- **Content-Type:** `application/plang` — defaults to JSON serialization. Explicit variants: `application/plang+json`, `application/plang+protobuf` (future). When no suffix, treat as JSON.
+- **Accept header:** `application/plang` — automatically added when `Unsigned = false` (default), alongside any other accept types. Accepts any serialization the server chooses.
+- **Response parsing:** check content type — `application/plang` or `application/plang+json` → JSON deserialize. Future: `application/plang+protobuf` → protobuf. Missing suffix = JSON.
 - **Response handling:** body is a `Data` object containing `SignedData`
 - **Signature validation:** signature MUST be valid — if verification fails, return error. No silent pass.
-- **Identity:** `SignedData.Identity` from the response becomes `%!Service.Identity%` — the service proves who it is
+- **Identity:** `SignedData.Identity` from the response → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)` — the service proves who it is. Scoped variable, does not overwrite developer's `%Service%`.
 - **Streaming:** `application/plang` responses can stream multiple `Data` objects — each delivered via `OnStream`. Each chunk's signature must be valid.
 
 ---
 
 ## Signing Integration
 
-Signing is performed via `engine.RunAction<sign>(...)` — the HTTP module calls the signing module directly. The signing module resolves the current identity from the system actor context.
+Signing is performed via `engine.RunAction<sign, SignedData>(...)` — the HTTP module calls the signing module directly. The signing module resolves the current identity from the system actor context.
 
 When `Unsigned = false` (default):
 1. Use `SignOptions` if provided, otherwise construct a new `sign` action
 2. Fill in the HTTP-specific fields:
    - `Data`: request body (hashed)
    - `Headers`: `{ "url": requestPath, "method": httpMethod }`
-3. Run via `engine.RunAction<sign>(signAction, context)`
-3. Set `X-Signature` request header from the returned `SignedData`
-4. Add `Accept: application/plang` to accept headers
+3. Run via `engine.RunAction<sign, SignedData>(signAction, context)`
+4. Set `X-Signature` request header from the returned `SignedData`
+5. Add `Accept: application/plang` to accept headers
 
 On `application/plang` responses:
 - Verify signature — MUST be valid, error if not
-- `SignedData.Identity` → `%!Service.Identity%` (scoped variable — does not overwrite developer's `%Service%`)
+- `context.MemoryStack.Set("!Service.Identity", signedData.Identity)` (scoped variable — does not overwrite developer's `%Service%`)
 
 On signed error responses (same as runtime1):
 - Check for `signature` field in error JSON
-- Verify signature → set `%!Service.Identity%`
+- Verify signature → `context.MemoryStack.Set("!Service.Identity", signedData.Identity)`
 
 ---
 
@@ -376,7 +377,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
 }
 ```
 
-**Registration:** `engine.Providers.Register<IHttpProvider>(new DefaultHttpProvider())` at engine startup. Add `"http" or "ihttpprovider"` to `ResolveType()`.
+**Registration:**
+- Engine constructor: `Providers.Register<IHttpProvider>(new DefaultHttpProvider())`
+- Add to `Providers.ResolveType()`: `"http" or "ihttpprovider" => typeof(IHttpProvider)` (same pattern as signing/identity/crypto)
 
 ---
 
@@ -470,10 +473,10 @@ PLang/Runtime2/Engine/Providers/
 - `request` action handles all HTTP methods with JSON/XML/text/binary response parsing
 - `download` action downloads files with three-state existence handling (error/overwrite/skip)
 - `upload` action handles binary files, base64, and multipart form data
-- Request signing on by default via `engine.RunAction<sign>(...)` (signing module resolves identity from system actor context)
+- Request signing on by default via `engine.RunAction<sign, SignedData>(...)` (signing module resolves identity from system actor context)
 - `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
 - `Accept: application/plang` added automatically on signed requests
-- `application/plang` responses parsed as `Data` objects, signature must be valid (error if not), `SignedData.Identity` → `%!Service.Identity%` (scoped — doesn't overwrite developer variables)
+- `application/plang` responses parsed as `Data` objects (default JSON, extensible to `+protobuf`), signature must be valid (error if not), `SignedData.Identity` → `context.MemoryStack.Set("!Service.Identity", ...)` (scoped — doesn't overwrite developer variables)
 - `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`
 - `OnStream` callback works for streaming responses (SSE, chunked, application/plang)
 - `OnProgress` callback works for download/upload at 500ms intervals (TransferProgress object as `%!data%`)
