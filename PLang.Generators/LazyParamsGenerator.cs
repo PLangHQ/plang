@@ -89,7 +89,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     if (arg.Value is string strVal)
                         defaultValue = "\"" + strVal.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
                     else if (arg.Value != null)
-                        defaultValue = arg.Value.ToString()!.ToLowerInvariant();
+                    {
+                        // Enum defaults need an explicit cast: (EnumType)intValue
+                        if (prop.Type.TypeKind == TypeKind.Enum)
+                            defaultValue = $"({prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){arg.Value}";
+                        else
+                            defaultValue = arg.Value.ToString()!.ToLowerInvariant();
+                    }
                 }
 
                 // Read [VariableName] attribute if present

@@ -1,3 +1,8 @@
 Start
-/ Test: configure base URL, then use relative path on request
-- throw "not implemented"
+/ Test: Configure base URL, then relative path request
+- configure http, base url https://httpbin.org
+- get /get, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'Relative URL with base URL worked'
+- if %response.StatusCode% equals 200 then
+    - write out 'Status code is 200'

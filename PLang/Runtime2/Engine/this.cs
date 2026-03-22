@@ -228,6 +228,7 @@ public sealed class @this : IAsyncDisposable
         Providers.Register<IKeyProvider>(ed25519);
         Providers.Register<IIdentityProvider>(new DefaultIdentityProvider());
         Providers.Register<modules.crypto.providers.ICryptoProvider>(new modules.crypto.providers.DefaultCryptoProvider());
+        Providers.Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
     }
 
     /// <summary>
@@ -241,6 +242,16 @@ public sealed class @this : IAsyncDisposable
         var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), this, context);
         if (!result.Success) return Data<TResult>.FromError(result.Error!);
         return Data<TResult>.Ok((TResult)result.Value!);
+    }
+
+    /// <summary>
+    /// Runs a module action and returns the raw Data result (preserves Signature, Properties, etc.).
+    /// Use when the result convention puts data on properties other than Value (e.g., sign puts SignedData on Signature).
+    /// </summary>
+    public async Task<Data> RunAction<TAction>(TAction action, PLangContext context)
+        where TAction : ICodeGenerated
+    {
+        return await action.CodeGeneratedExecuteAsync(new List<Data>(), this, context);
     }
 
     /// <summary>

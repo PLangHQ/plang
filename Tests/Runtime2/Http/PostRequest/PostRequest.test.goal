@@ -1,3 +1,8 @@
 Start
-/ Test: POST with JSON body returns response
-- throw "not implemented"
+/ Test: POST with JSON body, verify response
+- set %body% to { "name": "Alice", "age": 30 }
+- post https://httpbin.org/post, %body%, unsigned, write to %response%
+- if %response% is not empty then
+    - write out 'POST request returned data'
+- if %response.StatusCode% equals 200 then
+    - write out 'Status code is 200'

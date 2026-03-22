@@ -184,6 +184,7 @@ public sealed class @this
             "key" or "ikeyprovider" => typeof(IKeyProvider),
             "identity" or "iidentityprovider" => typeof(IIdentityProvider),
             "crypto" or "icryptoprovider" => typeof(ICryptoProvider),
+            "http" or "ihttpprovider" => typeof(modules.http.providers.IHttpProvider),
             null or "" => typeof(ISigningProvider),
             _ => null
         };
