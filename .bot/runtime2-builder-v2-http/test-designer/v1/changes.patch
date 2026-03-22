@@ -1,0 +1,589 @@
+diff --git a/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs b/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs
+new file mode 100644
+index 00000000..3d873b65
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs
+@@ -0,0 +1,73 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.http;
++
++/// <summary>
++/// Tests the configure action handler — scope chain, BaseUrl, header merging, redirect locking.
++/// </summary>
++public class ConfigureActionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_http_cfg_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    [Test]
++    public async Task Configure_SetsTimeoutOnScopeChain()
++    {
++        // Config values stored via engine.Settings, retrievable via Settings.For<Config>(context)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Configure_PerStepOverridesConfig()
++    {
++        // Per-step TimeoutInSec on request overrides configured value
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Configure_BaseUrlCombinesWithRelative()
++    {
++        // BaseUrl "https://api.example.com/v2" + request URL "/users" → "https://api.example.com/v2/users"
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Configure_DefaultHeadersMergePerStepWins()
++    {
++        // DefaultHeaders merged with per-step headers, per-step wins on conflict
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Configure_FollowRedirectsErrorAfterFirstRequest()
++    {
++        // Changing FollowRedirects after first HTTP request → Data.Fail("ConfigLocked")
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs b/PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs
+new file mode 100644
+index 00000000..e622e4fe
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs
+@@ -0,0 +1,37 @@
++using PLang.Runtime2.Engine.Providers;
++
++namespace PLang.Tests.Runtime2.Modules.http;
++
++/// <summary>
++/// Tests DefaultHttpProvider lifecycle — lazy client creation, configuration, disposal.
++/// </summary>
++public class DefaultHttpProviderTests
++{
++    [Test]
++    public async Task Provider_LazyCreatesHttpClient_OnFirstSend()
++    {
++        // HttpClient not created until first SendAsync call
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Provider_Configure_AcceptsValidConfig()
++    {
++        // Configure with valid Config returns Data.Ok()
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Provider_Configure_RejectsNonConfigSettings()
++    {
++        // Configure with wrong ISettings type → Data.Fail("InvalidConfig")
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Provider_Dispose_CleansUpHttpClient()
++    {
++        // Dispose nulls internal client, subsequent sends would create new client
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs b/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs
+new file mode 100644
+index 00000000..816c3bd3
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs
+@@ -0,0 +1,80 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.http;
++
++/// <summary>
++/// Tests the download action handler — file saving, existence checks, error handling.
++/// </summary>
++public class DownloadActionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_http_dl_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    [Test]
++    public async Task Download_HappyPath_SavesFileAndReturnsPath()
++    {
++        // Downloads response body to correct path via IPLangFileSystem, returns Data.Ok(filePath)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_FileExistsError_ReturnsDataFail()
++    {
++        // IfExists=Error (default), file already exists → Data.Fail
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_FileExistsOverwrite_ReplacesFile()
++    {
++        // IfExists=Overwrite, file already exists → downloads and replaces content
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_FileExistsSkip_ReturnsPathNoDownload()
++    {
++        // IfExists=Skip, file already exists → returns path immediately, no HTTP call made
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_CreatesParentDirectories()
++    {
++        // SaveTo path with missing parent dirs → directories created automatically
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_ErrorStatusCode_ReturnsFailNoFile()
++    {
++        // 404 response → Data.Fail with status code, no file created on disk
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs b/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs
+new file mode 100644
+index 00000000..f7473770
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs
+@@ -0,0 +1,197 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.http;
++
++/// <summary>
++/// Tests the request action handler — response parsing, signing integration, and streaming.
++/// </summary>
++public class RequestActionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_http_req_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    #region Batch 1: Happy Path & Response Parsing
++
++    [Test]
++    public async Task Get_JsonResponse_DeserializesAndSetsProperties()
++    {
++        // GET returns JSON body, Data.Value is deserialized object, Properties has StatusCode=200, IsSuccess=true
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Post_WithBody_SendsCorrectContentTypeAndEncoding()
++    {
++        // POST sends body as StringContent with application/json and utf-8
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_CustomHeaders_SentOnRequest()
++    {
++        // Custom headers dict merged into HttpRequestMessage headers
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_NoProtocol_AutoPrefixesHttps()
++    {
++        // URL "api.example.com/x" becomes "https://api.example.com/x"
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_XmlResponse_ConvertedToJson()
++    {
++        // XML content-type response is converted to JSON object
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_BinaryResponse_ReturnedAsBytes()
++    {
++        // Non-text content-type (e.g., application/octet-stream) returns raw byte array
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_TextResponse_ReturnedAsString()
++    {
++        // text/plain response returns string value
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ErrorStatusCode_ReturnsDataFail()
++    {
++        // 404/500 response returns Data.Fail with StatusCode, reason phrase, and response body
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Post_FormUrlEncoded_SendsFormContent()
++    {
++        // ContentType=application/x-www-form-urlencoded creates FormUrlEncodedContent from body
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ResponseProperties_IncludeRequestAndResponseMetadata()
++    {
++        // Data.Properties contains Url, Method, StatusCode, Status, Headers, IsSuccess, ContentHeaders
++        Assert.Fail("Not implemented");
++    }
++
++    #endregion
++
++    #region Batch 2: Signing Integration
++
++    [Test]
++    public async Task Get_SignedByDefault_AddsXSignatureAndAcceptPlang()
++    {
++        // Unsigned=false (default), X-Signature header present, Accept includes application/plang
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_UnsignedTrue_NoSigningNoAcceptPlang()
++    {
++        // Unsigned=true skips signing entirely — no X-Signature, no Accept: application/plang
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Post_SignOptionsOverride_UsesCustomExpiry()
++    {
++        // SignOptions with ExpiresInMs=600000 passes through to signing module
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ApplicationPlangResponse_ExtractsDataAndSetsServiceIdentity()
++    {
++        // application/plang response deserializes as Data, verifies signature, sets %!ServiceIdentity%
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ApplicationPlangInvalidSignature_ReturnsError()
++    {
++        // application/plang response with bad signature returns Data.Fail
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_UnsignedReceivesApplicationPlang_ReturnsError()
++    {
++        // Unsigned=true request gets application/plang response → error (security rule)
++        Assert.Fail("Not implemented");
++    }
++
++    #endregion
++
++    #region Batch 3: Streaming
++
++    [Test]
++    public async Task Get_OnStreamLine_CallsGoalPerLine()
++    {
++        // OnStream set, line-delimited response calls goal for each \n-delimited chunk
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_OnStreamSSE_ParsesSSEEvents()
++    {
++        // StreamAs=SSE parses "data:" fields and \n\n event boundaries
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_OnStreamBytes_DeliversRawChunks()
++    {
++        // StreamAs=Bytes delivers byte[] chunks as they arrive
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_OnStreamAutoDetectSSE_FromContentType()
++    {
++        // text/event-stream content type auto-selects SSE format without explicit StreamAs
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_OnStreamCompletes_ReturnsDataOkWithProperties()
++    {
++        // After streaming completes, returns Data.Ok() with StatusCode/Headers but no body value
++        Assert.Fail("Not implemented");
++    }
++
++    #endregion
++}
+diff --git a/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs b/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs
+new file mode 100644
+index 00000000..17712b92
+--- /dev/null
++++ b/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs
+@@ -0,0 +1,73 @@
++using PLang.Runtime2.Engine.Context;
++using PLang.Runtime2.Engine.Memory;
++using PLang.Runtime2.Engine.Providers;
++using PLangEngine = PLang.Runtime2.Engine.@this;
++
++namespace PLang.Tests.Runtime2.Modules.http;
++
++/// <summary>
++/// Tests the upload action handler — content resolution, multipart, base64, forced content types.
++/// </summary>
++public class UploadActionTests
++{
++    private string _tempDir = null!;
++    private PLangEngine _engine = null!;
++
++    [Before(Test)]
++    public void Setup()
++    {
++        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
++            "plang_test_http_ul_" + Guid.NewGuid().ToString("N")[..8]);
++        System.IO.Directory.CreateDirectory(_tempDir);
++        _engine = new PLangEngine(_tempDir);
++    }
++
++    [After(Test)]
++    public void Cleanup()
++    {
++        try
++        {
++            _engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
++            if (System.IO.Directory.Exists(_tempDir))
++                System.IO.Directory.Delete(_tempDir, true);
++        }
++        catch { /* best effort cleanup */ }
++    }
++
++    private PLangContext Ctx => _engine.System.Context;
++
++    [Test]
++    public async Task Upload_FilePath_SendsBinaryStreamContent()
++    {
++        // File path content → StreamContent with application/octet-stream
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_DictionaryContent_SendsMultipartFormData()
++    {
++        // Dictionary with @file refs → MultipartFormDataContent with file streams
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_AsBase64_DecodesAndSendsBinary()
++    {
++        // As=Base64, base64 string → decoded bytes as StreamContent
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_AsFile_ForcesFileEvenForAmbiguous()
++    {
++        // As=File forces StreamContent regardless of content shape (e.g., dict that looks like form data)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_AsText_ForcesStringBody()
++    {
++        // As=Text forces StringContent even if content looks like a valid file path
++        Assert.Fail("Not implemented");
++    }
++}
+diff --git a/Tests/Runtime2/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal b/Tests/Runtime2/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal
+new file mode 100644
+index 00000000..9d6940bd
+--- /dev/null
++++ b/Tests/Runtime2/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: configure base URL, then use relative path on request
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/ConfigHeaders/ConfigHeaders.test.goal b/Tests/Runtime2/Http/ConfigHeaders/ConfigHeaders.test.goal
+new file mode 100644
+index 00000000..b4626a7f
+--- /dev/null
++++ b/Tests/Runtime2/Http/ConfigHeaders/ConfigHeaders.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: configure default headers, verify they are included in requests
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/DownloadFile/DownloadFile.test.goal b/Tests/Runtime2/Http/DownloadFile/DownloadFile.test.goal
+new file mode 100644
+index 00000000..c4203a6a
+--- /dev/null
++++ b/Tests/Runtime2/Http/DownloadFile/DownloadFile.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: download file to disk, verify file exists after download
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/DownloadSkip/DownloadSkip.test.goal b/Tests/Runtime2/Http/DownloadSkip/DownloadSkip.test.goal
+new file mode 100644
+index 00000000..e6c6d166
+--- /dev/null
++++ b/Tests/Runtime2/Http/DownloadSkip/DownloadSkip.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: download with skip-if-exists does not re-download existing file
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/GetRequest/GetRequest.test.goal b/Tests/Runtime2/Http/GetRequest/GetRequest.test.goal
+new file mode 100644
+index 00000000..2652a9eb
+--- /dev/null
++++ b/Tests/Runtime2/Http/GetRequest/GetRequest.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: GET request returns response data and status code
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/PostRequest/PostRequest.test.goal b/Tests/Runtime2/Http/PostRequest/PostRequest.test.goal
+new file mode 100644
+index 00000000..17051353
+--- /dev/null
++++ b/Tests/Runtime2/Http/PostRequest/PostRequest.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: POST with JSON body returns response
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/SignedRequest/SignedRequest.test.goal b/Tests/Runtime2/Http/SignedRequest/SignedRequest.test.goal
+new file mode 100644
+index 00000000..9e5d7748
+--- /dev/null
++++ b/Tests/Runtime2/Http/SignedRequest/SignedRequest.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: signed request includes X-Signature header
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/StreamCallback/ProcessChunk.goal b/Tests/Runtime2/Http/StreamCallback/ProcessChunk.goal
+new file mode 100644
+index 00000000..64db66ec
+--- /dev/null
++++ b/Tests/Runtime2/Http/StreamCallback/ProcessChunk.goal
+@@ -0,0 +1,3 @@
++ProcessChunk
++/ Supporting goal: receives streaming chunk data via %!data%
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/StreamCallback/StreamCallback.test.goal b/Tests/Runtime2/Http/StreamCallback/StreamCallback.test.goal
+new file mode 100644
+index 00000000..e913ded4
+--- /dev/null
++++ b/Tests/Runtime2/Http/StreamCallback/StreamCallback.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: streaming response calls OnStream goal per chunk
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/UnsignedRequest/UnsignedRequest.test.goal b/Tests/Runtime2/Http/UnsignedRequest/UnsignedRequest.test.goal
+new file mode 100644
+index 00000000..56d502fe
+--- /dev/null
++++ b/Tests/Runtime2/Http/UnsignedRequest/UnsignedRequest.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: unsigned request has no X-Signature header
++- throw "not implemented"
+diff --git a/Tests/Runtime2/Http/UploadFile/UploadFile.test.goal b/Tests/Runtime2/Http/UploadFile/UploadFile.test.goal
+new file mode 100644
+index 00000000..fd410db7
+--- /dev/null
++++ b/Tests/Runtime2/Http/UploadFile/UploadFile.test.goal
+@@ -0,0 +1,3 @@
++Start
++/ Test: upload file content, verify response
++- throw "not implemented"
