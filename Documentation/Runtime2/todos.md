@@ -392,6 +392,36 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 
 ---
 
+## MemoryStack Belongs on Engine, Not Actor
+**Date:** 2026-03-22
+**Context:** HTTP module design — discussing where `%!Service.Identity%` should be set. Realized: PLang code always runs in User actor context. Variables are always set on User's memory stack. System and Service actors never run PLang steps, so they never need their own MemoryStack.
+
+**Current state:** Each Actor creates a `PLangContext` which creates a `MemoryStack`. System and Service get memory stacks that are never used by PLang code. The only things registered on them (`SettingsData`, `MyIdentity`) are never read from those actors' stacks. `Engine.MemoryStack` already aliases `User.Context.MemoryStack`.
+
+**Question:** Should MemoryStack live on Engine directly (since there's only one that matters — User's)? Or does PLangContext still own it, but System/Service actors skip creating one? Also: can one actor's code path ever accidentally write to another actor's stack? Current isolation says no, but worth verifying as module composition grows.
+
+---
+
+## Rename engine.Settings to engine.Config
+**Date:** 2026-03-22
+**Context:** During HTTP module design. Discovered naming confusion: `engine.Settings` is the in-memory scope chain (runtime config), while `modules/settings` is persistent db storage. They do different things but share a name.
+
+**What to rename:**
+- `engine.Settings` → `engine.Config`
+- `SettingsScope` → `ConfigScope`
+- `engine.Settings.For<T>(context)` → `engine.Config.For<T>(context)`
+- `engine.Settings.Set(key, value, context)` → `engine.Config.Set(key, value, context)`
+- `engine.Settings.Defaults` → `engine.Config.Defaults`
+- `ModuleView<T>` stays (it's generic enough)
+- `ISettings` interface → `IConfig`? Or keep `ISettings` since modules implement it?
+
+**Does NOT change:**
+- `modules/settings/` (persistent db key-value store) — stays as "settings"
+- `%Settings.ApiKey%` — stays, this is the persistent store
+- `SettingsData` bridge on MemoryStack — stays, it bridges to the persistent store
+
+---
+
 ## LLM Rewrites Literal Values in Assertions
 **Date:** 2026-03-07
 **Context:** CacheDynamicKey test asserts `%result2% equals "content1"` (intentionally — documenting that cache returns stale data). The builder LLM changed the Expected value to `"content2"` because it "knows better".

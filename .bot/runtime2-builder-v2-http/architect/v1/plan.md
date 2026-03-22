@@ -30,7 +30,7 @@ public partial class request : IContext
     public partial string Encoding { get; init; }                  // default "utf-8"
     public partial int TimeoutInSec { get; init; }                 // default 30
     public partial bool Unsigned { get; init; }                    // default false — request is signed unless developer says "unsigned"
-    public partial sign? SignOptions { get; init; }                // optional signing overrides (ExpiresInMs, Contracts, etc.)
+    public partial sign? SignOptions { get; init; }                // optional signing overrides — uses the sign action record directly
     public partial GoalCall? OnStream { get; init; }               // goal called per data chunk
 }
 ```
@@ -38,8 +38,8 @@ public partial class request : IContext
 **Signing parameter design:**
 - `Unsigned = false` (default) → request is signed. LLM doesn't touch this unless developer explicitly says "unsigned" or "do not sign".
 - `Unsigned = true` → no signing. Named so the LLM's natural "not mentioned = false" gives us signed-by-default.
-- `SignOptions` → optional `sign` record (from `PLang.Runtime2.modules.signing.sign`) for overriding signing defaults (e.g., `ExpiresInMs`, `Contracts`, `Provider`). Only relevant when `Unsigned = false`.
-- This pattern (bool + options object from composing module) is reusable: e.g., future `encrypt? EncryptOptions` on file write.
+- `SignOptions` → the `sign` action record from `PLang.Runtime2.modules.signing.sign`. Action records are the type system — no need for a separate options record. The LLM maps developer overrides (`ExpiresInMs`, `Contracts`, `Provider`) onto it. The HTTP handler fills in internal fields (`Data`, `Headers`) and runs via `engine.RunAction<sign>(...)`. Only relevant when `Unsigned = false`.
+- This pattern (bool + action record) is reusable: e.g., future `encrypt? EncryptOptions` on file write.
 
 **PLang usage:**
 ```plang
@@ -55,25 +55,27 @@ public partial class request : IContext
 ```
 
 **Flow:**
-1. Resolve URL — auto-prefix `https://` if no protocol
-2. Build `HttpRequestMessage` with method, headers, body
-3. If `Unsigned = false` (default):
-   - Sign request via identity module on system actor context
-   - Use `SignOptions` if provided, otherwise sign with defaults
-   - Produces `X-Signature` header with `SignedData`
+1. Resolve config via `engine.Settings.For<Config>(context)` — per-step parameters override config values
+2. Resolve URL — if relative and `BaseUrl` is set, combine. Auto-prefix `https://` if no protocol.
+3. Build `HttpRequestMessage` with method, headers (merge `DefaultHeaders` + per-step headers, per-step wins), body
+4. If `Unsigned = false` (resolved — per-step or config):
+   - If `SignOptions` provided, use it as the `sign` action and fill in `Data` (body hash) and `Headers` (url, method)
+   - If `SignOptions` is null, construct a new `sign` action with defaults and fill in `Data` and `Headers`
+   - Run via `engine.RunAction<sign>(signAction, context)` — signing module resolves identity from system actor
+   - Set `X-Signature` header from returned `SignedData`
    - Add `Accept: application/plang` to accept headers (alongside existing accept)
-4. If `Body != null`:
+5. If `Body != null`:
    - `application/x-www-form-urlencoded` → `FormUrlEncodedContent`
-   - Otherwise → `StringContent` with encoding and content type
-5. Send request via `IHttpClientFactory`
-6. Handle response:
+   - Otherwise → `StringContent` with resolved encoding and content type
+6. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
+7. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
-   - If `application/plang` response → deserialize as `Data` object, validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%Service.Identity%`
+   - If `application/plang` response → deserialize as `Data` object, validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!Service.Identity%`
    - If `application/json` → deserialize JSON
    - If XML → convert to JSON (same as runtime1)
    - If binary (non-text) → return raw bytes
    - If text → charset-detect and return string
-7. Return `Data` with response value and properties
+8. Return `Data` with response value and properties
 
 **Response `Data.Properties`:**
 
@@ -132,7 +134,7 @@ public partial class download : IContext
 **Flow:**
 1. Resolve URL (https:// prefix)
 2. Check file existence against Overwrite/SkipIfExists
-3. If `Unsigned = false` → sign request via identity module (system actor), with `SignOptions` if provided
+3. If `Unsigned = false` → sign via `engine.RunAction<sign>(...)` with `SignOptions` overrides if provided
 4. Stream response to file, creating parent directories as needed
 5. If `OnProgress` → call goal every 500ms with progress data
 6. Return `Data.Ok(filePath)`
@@ -159,10 +161,11 @@ public partial class upload : IContext
 }
 ```
 
-**Content resolution:**
-- File path string → `StreamContent` with `application/octet-stream`
-- Base64 string → decode to `MemoryStream` → `StreamContent`
-- Dictionary/object → `MultipartFormDataContent` (fields with `@` prefix are file references, same as runtime1 convention)
+**Content resolution (runtime detection — handler inspects the value at runtime):**
+- **Dictionary/object** → `MultipartFormDataContent` (fields with `@` prefix are file references, e.g., `"file": "@files/photo.jpg"` — same as runtime1 convention)
+- **String that is a valid file path** (file exists on disk) → `StreamContent` with `application/octet-stream`
+- **String that is valid base64** → decode to `MemoryStream` → `StreamContent`
+- **Other string** → `StringContent` (treated as raw body)
 
 **PLang usage:**
 ```plang
@@ -170,6 +173,66 @@ public partial class upload : IContext
 - set %formData% to { "file": "@files/photo.jpg", "description": "My photo" }
 - upload %formData% to https://api.example.com/submit, write to %result%
 - upload files/large.zip to https://api.example.com/upload, call ShowProgress
+```
+
+### configure
+
+Sets HTTP module configuration on the in-memory scope chain. Per-step parameters on `request`/`download`/`upload` override config values. Config values override class defaults.
+
+**Parameters:**
+
+```csharp
+[Action("configure", Cacheable = false)]
+public partial class configure : IContext
+{
+    public partial int? TimeoutInSec { get; init; }
+    public partial string? BaseUrl { get; init; }
+    public partial Dictionary<string, object>? DefaultHeaders { get; init; }
+    public partial string? ContentType { get; init; }
+    public partial string? Encoding { get; init; }
+    public partial bool? Unsigned { get; init; }
+    public partial bool? FollowRedirects { get; init; }
+    public partial int? MaxRedirects { get; init; }
+    public partial bool Default { get; init; }           // false = goal scope, true = engine-level default
+}
+```
+
+**Config class** (implements `ISettings`, defined in `Config.cs`):
+```csharp
+public class Config : ISettings
+{
+    public int TimeoutInSec { get; set; } = 30;
+    public string? BaseUrl { get; set; }
+    public Dictionary<string, object>? DefaultHeaders { get; set; }
+    public string ContentType { get; set; } = "application/json";
+    public string Encoding { get; set; } = "utf-8";
+    public bool Unsigned { get; set; } = false;
+    public bool FollowRedirects { get; set; } = true;
+    public int MaxRedirects { get; set; } = 10;
+}
+```
+
+**Resolution order:** per-step parameter → config scope chain (`engine.Settings.For<Config>(context)`) → class default.
+
+**`FollowRedirects` / `MaxRedirects`**: These affect the `SocketsHttpHandler` on the `DefaultHttpProvider`. The provider lazily creates its `HttpClient` on first request, reading these config values at that point. If config changes `FollowRedirects` or `MaxRedirects` after the first request, the handler returns an error — these are handler-level settings that can't change mid-lifecycle.
+
+**`BaseUrl`**: When set, relative URLs on `request`/`download`/`upload` are resolved against it. `get /users` → `https://api.example.com/v2/users`.
+
+**`DefaultHeaders`**: Merged with per-step headers. Per-step headers win on conflict.
+
+**PLang usage:**
+```plang
+/ Set multiple config values in one step
+- configure http, base url https://api.example.com/v2, timeout 60, unsigned
+
+/ Set default headers
+- configure http, default headers {'Authorization': 'Bearer %token%', 'X-App': 'myapp'}
+
+/ Set as engine-level default (persists across goals within execution)
+- configure http as default, timeout 120
+
+/ Per-step still overrides config
+- get /users, timeout 10, write to %users%
 ```
 
 ---
@@ -188,7 +251,7 @@ When `OnStream` is set, the response is read as a stream rather than buffered.
 **For `application/plang` responses:**
 - Each chunk is a `Data` object (signed)
 - Signature must be valid — error if verification fails
-- `SignedData.Identity` from the response → `%Service.Identity%`
+- `SignedData.Identity` from the response → `%!Service.Identity%`
 - The `Data.Value` becomes `%!data%` in the called goal
 
 **Developer access:**
@@ -235,34 +298,85 @@ PLang-native content type for PLang-to-PLang communication.
 - **Accept header:** automatically added when `Unsigned = false` (default) — alongside any other accept types
 - **Response handling:** body is a `Data` object containing `SignedData`
 - **Signature validation:** signature MUST be valid — if verification fails, return error. No silent pass.
-- **Identity:** `SignedData.Identity` from the response becomes `%Service.Identity%` — the service proves who it is
+- **Identity:** `SignedData.Identity` from the response becomes `%!Service.Identity%` — the service proves who it is
 - **Streaming:** `application/plang` responses can stream multiple `Data` objects — each delivered via `OnStream`. Each chunk's signature must be valid.
 
 ---
 
 ## Signing Integration
 
-Signing is performed via the **identity module on the system actor context**. The HTTP module does not call the signing module directly — identity owns "signing as me."
+Signing is performed via `engine.RunAction<sign>(...)` — the HTTP module calls the signing module directly. The signing module resolves the current identity from the system actor context.
 
 When `Unsigned = false` (default):
-1. Get current identity via identity module (system actor)
-2. Build `SignedData` with:
-   - `Headers`: `{ "url": requestPath, "method": httpMethod }`
+1. Use `SignOptions` if provided, otherwise construct a new `sign` action
+2. Fill in the HTTP-specific fields:
    - `Data`: request body (hashed)
-   - `Contracts`: `["C0"]` (or from `SignOptions.Contracts` if provided)
-   - `ExpiresInMs`: from `SignOptions.ExpiresInMs` if provided
-   - `Provider`: from `SignOptions.Provider` if provided
-3. Serialize `SignedData` to JSON
-4. Set `X-Signature` request header
-5. Add `Accept: application/plang` to accept headers
+   - `Headers`: `{ "url": requestPath, "method": httpMethod }`
+3. Run via `engine.RunAction<sign>(signAction, context)`
+3. Set `X-Signature` request header from the returned `SignedData`
+4. Add `Accept: application/plang` to accept headers
 
 On `application/plang` responses:
 - Verify signature — MUST be valid, error if not
-- `SignedData.Identity` → `%Service.Identity%`
+- `SignedData.Identity` → `%!Service.Identity%` (scoped variable — does not overwrite developer's `%Service%`)
 
 On signed error responses (same as runtime1):
 - Check for `signature` field in error JSON
-- Verify signature → set `%Service.Identity%`
+- Verify signature → set `%!Service.Identity%`
+
+---
+
+## HTTP Provider
+
+Follows the existing provider pattern (`IProvider` → `engine.Providers`). The HTTP module resolves its provider via `engine.Providers.Get<IHttpProvider>()`. Tests and developers can swap implementations.
+
+**`IHttpProvider`** (in `PLang/Runtime2/Engine/Providers/`):
+```csharp
+public interface IHttpProvider : IProvider
+{
+    Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken);
+}
+```
+
+**`DefaultHttpProvider`** (in `PLang/Runtime2/Engine/Providers/`):
+```csharp
+public sealed class DefaultHttpProvider : IHttpProvider
+{
+    public string Name => "default";
+    public bool IsDefault { get; set; }
+
+    private HttpClient? _client;
+    private bool _followRedirects = true;
+    private int _maxRedirects = 10;
+
+    /// <summary>
+    /// Lazily creates HttpClient on first request. Reads FollowRedirects/MaxRedirects
+    /// from config at creation time. Error if these change after first request.
+    /// </summary>
+    public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
+    {
+        _client ??= CreateClient();
+        return _client.SendAsync(request, completionOption, cancellationToken);
+    }
+
+    public void Configure(bool followRedirects, int maxRedirects)
+    {
+        if (_client != null && (followRedirects != _followRedirects || maxRedirects != _maxRedirects))
+            throw new InvalidOperationException("Cannot change FollowRedirects/MaxRedirects after first HTTP request");
+        _followRedirects = followRedirects;
+        _maxRedirects = maxRedirects;
+    }
+
+    private HttpClient CreateClient() => new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        AllowAutoRedirect = _followRedirects,
+        MaxAutomaticRedirections = _maxRedirects
+    });
+}
+```
+
+**Registration:** `engine.Providers.Register<IHttpProvider>(new DefaultHttpProvider())` at engine startup. Add `"http" or "ihttpprovider"` to `ResolveType()`.
 
 ---
 
@@ -273,14 +387,19 @@ PLang/Runtime2/modules/http/
 ├── request.cs           — request action handler
 ├── download.cs          — download action handler
 ├── upload.cs            — upload action handler
+├── configure.cs         — configuration action (scope chain)
+├── Config.cs            — ISettings implementation with defaults
 ├── types.cs             — TransferProgress type
+PLang/Runtime2/Engine/Providers/
+├── IHttpProvider.cs     — HTTP provider interface
+├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
 ```
 
 ---
 
 ## Test Expectations
 
-### C# unit tests (~20)
+### C# unit tests (~25)
 
 **request:**
 - GET returns JSON response with correct Data.Properties
@@ -291,7 +410,7 @@ PLang/Runtime2/modules/http/
 - SignOptions overrides signing defaults (ExpiresInMs, Contracts)
 - URL auto-prefix adds https://
 - application/json response is deserialized
-- application/plang response extracts Data and sets Service.Identity
+- application/plang response extracts Data and sets %!Service.Identity%
 - application/plang response with invalid signature returns error
 - XML response converted to JSON
 - Binary response returned as bytes
@@ -311,7 +430,14 @@ PLang/Runtime2/modules/http/
 - Dictionary content → multipart form data
 - Base64 content → decoded binary upload
 
-### PLang tests (~8)
+**configure:**
+- Config values resolve through scope chain (goal scope → engine default → class default)
+- Per-step parameter overrides config value
+- BaseUrl combines with relative URL
+- DefaultHeaders merge with per-step headers (per-step wins)
+- FollowRedirects/MaxRedirects error if changed after first request
+
+### PLang tests (~10)
 
 - GET request, verify response data and status code
 - POST with JSON body, verify response
@@ -321,6 +447,8 @@ PLang/Runtime2/modules/http/
 - Signed request includes X-Signature header
 - Unsigned request, no X-Signature
 - Stream response with OnStream callback
+- Configure base URL, then relative path request
+- Configure default headers, verify they're sent
 
 ---
 
@@ -331,19 +459,29 @@ PLang/Runtime2/modules/http/
 | `PLang/Runtime2/modules/http/request.cs` | Request action handler |
 | `PLang/Runtime2/modules/http/download.cs` | Download action handler |
 | `PLang/Runtime2/modules/http/upload.cs` | Upload action handler |
+| `PLang/Runtime2/modules/http/configure.cs` | Configuration action (scope chain) |
+| `PLang/Runtime2/modules/http/Config.cs` | ISettings implementation with defaults |
 | `PLang/Runtime2/modules/http/types.cs` | TransferProgress type |
+| `PLang/Runtime2/Engine/Providers/IHttpProvider.cs` | HTTP provider interface |
+| `PLang/Runtime2/Engine/Providers/DefaultHttpProvider.cs` | Default implementation (SocketsHttpHandler) |
 
 ## Definition of Done
 
 - `request` action handles all HTTP methods with JSON/XML/text/binary response parsing
 - `download` action downloads files with three-state existence handling (error/overwrite/skip)
 - `upload` action handles binary files, base64, and multipart form data
-- Request signing on by default via identity module (system actor context)
-- `Unsigned` parameter for opt-out, `SignOptions` for signing configuration overrides
+- Request signing on by default via `engine.RunAction<sign>(...)` (signing module resolves identity from system actor context)
+- `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
 - `Accept: application/plang` added automatically on signed requests
-- `application/plang` responses parsed as `Data` objects, signature must be valid (error if not), `SignedData.Identity` → `%Service.Identity%`
+- `application/plang` responses parsed as `Data` objects, signature must be valid (error if not), `SignedData.Identity` → `%!Service.Identity%` (scoped — doesn't overwrite developer variables)
+- `IHttpProvider` + `DefaultHttpProvider` (SocketsHttpHandler) — follows existing provider pattern, swappable via `engine.Providers`
 - `OnStream` callback works for streaming responses (SSE, chunked, application/plang)
 - `OnProgress` callback works for download/upload at 500ms intervals (TransferProgress object as `%!data%`)
 - URL auto-prefix (`https://`) when no protocol specified
 - Response metadata on `Data.Properties` (request + response details)
+- `configure` action sets config on scope chain — goal scope or engine default
+- Config resolution: per-step parameter → scope chain → class default
+- `BaseUrl` combines with relative URLs
+- `DefaultHeaders` merge with per-step headers
+- `FollowRedirects`/`MaxRedirects` applied at provider level on first request, error if changed after
 - C# and PLang tests pass
