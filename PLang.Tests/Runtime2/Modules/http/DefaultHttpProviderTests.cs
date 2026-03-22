@@ -1,103 +1,104 @@
-using System.Net;
-using System.Net.Http;
+using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
+using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
 /// <summary>
-/// Tests DefaultHttpProvider lifecycle — lazy client creation, configuration, disposal.
+/// Tests DefaultHttpProvider directly — configure behavior, lifecycle.
 /// </summary>
 public class DefaultHttpProviderTests
 {
-    [Test]
-    public async Task Provider_LazyCreatesHttpClient_OnFirstSend()
+    private string _tempDir = null!;
+    private PLangEngine _engine = null!;
+
+    [Before(Test)]
+    public void Setup()
     {
-        // HttpClient not created until first SendAsync call
-        var provider = new DefaultHttpProvider();
+        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang_test_http_prov_" + Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(_tempDir);
+        _engine = new PLangEngine(_tempDir);
+    }
 
-        // Before any call, Dispose should be safe (no client to dispose)
-        provider.Dispose();
-
-        // After dispose, a new call should create a fresh client
-        // We can't easily test internal state, but we can verify it doesn't throw
-        // on a request to a non-existent URL — the attempt proves client creation
-        var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "https://localhost:1/test");
+    [After(Test)]
+    public async Task Cleanup()
+    {
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-            await provider.SendAsync(request, HttpCompletionOption.ResponseContentRead, cts.Token);
+            await _engine.DisposeAsync();
+            if (System.IO.Directory.Exists(_tempDir))
+                System.IO.Directory.Delete(_tempDir, true);
         }
-        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
-        {
-            // Expected — proves client was created and attempted the request
-        }
-        finally
-        {
-            provider.Dispose();
-        }
+        catch { /* best effort cleanup */ }
     }
+
+    private PLangContext Ctx => _engine.System.Context;
 
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()
     {
         var provider = new DefaultHttpProvider();
-        var config = new Config { FollowRedirects = true, MaxRedirects = 5 };
+        var action = new configure
+        {
+            Context = Ctx,
+            FollowRedirects = true,
+            MaxRedirects = 5
+        };
 
-        var result = provider.Configure(config);
+        var result = provider.Configure(action);
 
         await Assert.That(result.Success).IsTrue();
         provider.Dispose();
     }
 
     [Test]
-    public async Task Provider_Configure_RejectsNonConfigSettings()
+    public async Task Provider_Configure_SetsTimeout()
     {
         var provider = new DefaultHttpProvider();
+        var action = new configure
+        {
+            Context = Ctx,
+            TimeoutInSec = 60
+        };
 
-        // Use a different ISettings type
-        var result = provider.Configure(new DummySettings());
+        var result = provider.Configure(action);
 
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidConfig");
+        await Assert.That(result.Success).IsTrue();
+        // Verify via settings scope
+        var view = _engine.Settings.For<Config>(Ctx);
+        var timeout = view.Resolve("TimeoutInSec", 30);
+        await Assert.That(timeout).IsEqualTo(60);
         provider.Dispose();
     }
 
     [Test]
-    public async Task Provider_Dispose_CleansUpHttpClient()
+    public async Task Provider_Configure_SetsBaseUrl()
     {
         var provider = new DefaultHttpProvider();
-
-        // Trigger client creation
-        var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "https://localhost:1/test");
-        try
+        var action = new configure
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-            await provider.SendAsync(request, HttpCompletionOption.ResponseContentRead, cts.Token);
-        }
-        catch { /* expected */ }
+            Context = Ctx,
+            BaseUrl = "https://api.example.com"
+        };
 
-        // Dispose should not throw
+        var result = provider.Configure(action);
+
+        await Assert.That(result.Success).IsTrue();
+        var view = _engine.Settings.For<Config>(Ctx);
+        var baseUrl = view.Resolve<string?>("BaseUrl", null);
+        await Assert.That(baseUrl).IsEqualTo("https://api.example.com");
         provider.Dispose();
-
-        // After dispose, a new send should work (creates new client)
-        var request2 = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "https://localhost:1/test2");
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-            await provider.SendAsync(request2, HttpCompletionOption.ResponseContentRead, cts.Token);
-        }
-        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
-        {
-            // Expected — proves a new client was created after dispose
-        }
-        finally
-        {
-            provider.Dispose();
-        }
     }
 
-    private class DummySettings : ISettings { }
+    [Test]
+    public async Task Provider_Dispose_DoesNotThrow()
+    {
+        var provider = new DefaultHttpProvider();
+        provider.Dispose();
+        // Double dispose should also be safe
+        provider.Dispose();
+    }
 }

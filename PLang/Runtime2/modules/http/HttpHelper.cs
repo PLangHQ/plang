@@ -18,12 +18,12 @@ namespace PLang.Runtime2.modules.http;
 /// Shared HTTP helpers used by request, download, and upload actions.
 /// Static methods, no state — just shared pipeline logic.
 /// </summary>
-internal static class HttpHelper
+public static class HttpHelper
 {
     /// <summary>
     /// Converts PLang HttpMethod enum to System.Net.Http.HttpMethod.
     /// </summary>
-    internal static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
+    public static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
     {
         HttpMethod.GET => SysHttpMethod.Get,
         HttpMethod.POST => SysHttpMethod.Post,
@@ -40,7 +40,7 @@ internal static class HttpHelper
     /// Resolves URL: auto-prefix https://, combine with BaseUrl for relative URLs.
     /// Returns error if relative URL with no BaseUrl configured.
     /// </summary>
-    internal static Data<string> ResolveUrl(string url, ModuleView<Config> config)
+    public static Data<string> ResolveUrl(string url, ModuleView<Config> config)
     {
         var baseUrl = config.Resolve<string?>("BaseUrl", null);
 
@@ -66,7 +66,7 @@ internal static class HttpHelper
     /// <summary>
     /// Merges DefaultHeaders from config with per-step headers. Per-step wins on conflict.
     /// </summary>
-    internal static Dictionary<string, string> MergeHeaders(
+    public static Dictionary<string, string> MergeHeaders(
         Dictionary<string, object>? stepHeaders,
         ModuleView<Config> config)
     {
@@ -94,7 +94,7 @@ internal static class HttpHelper
     /// Signs a request via engine.RunAction&lt;sign&gt;().
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
     /// </summary>
-    internal static async Task<Data?> SignRequestAsync(
+    public static async Task<Data?> SignRequestAsync(
         EngineType engine,
         PLangContext context,
         bool unsigned,
@@ -127,7 +127,7 @@ internal static class HttpHelper
     /// Applies signing result to the request: X-Signature header and Accept: application/plang.
     /// Navigates the sign result Data for the SignedData envelope.
     /// </summary>
-    internal static void ApplySignature(HttpRequestMessage request, Data signResult)
+    public static void ApplySignature(HttpRequestMessage request, Data signResult)
     {
         var signatureJson = JsonSerializer.Serialize(signResult.Signature, SignedData.SigningOptions);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
@@ -138,7 +138,7 @@ internal static class HttpHelper
     /// Applies merged headers to the request message.
     /// Splits between content headers and request headers.
     /// </summary>
-    internal static void ApplyHeaders(HttpRequestMessage request, Dictionary<string, string> headers)
+    public static void ApplyHeaders(HttpRequestMessage request, Dictionary<string, string> headers)
     {
         foreach (var kvp in headers)
         {
@@ -166,7 +166,7 @@ internal static class HttpHelper
     /// Parses HTTP response based on content type.
     /// Returns Data with Value set to parsed content and Properties with metadata.
     /// </summary>
-    internal static async Task<Data> ParseResponseAsync(
+    public static async Task<Data> ParseResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         bool unsigned,
@@ -360,7 +360,7 @@ internal static class HttpHelper
     /// <summary>
     /// Populates Data.Properties with request and response metadata.
     /// </summary>
-    internal static void BuildProperties(Data data, HttpRequestMessage request, HttpResponseMessage response)
+    public static void BuildProperties(Data data, HttpRequestMessage request, HttpResponseMessage response)
     {
         var props = data.Properties;
 
@@ -401,7 +401,7 @@ internal static class HttpHelper
     /// <summary>
     /// Handles streaming response: reads chunks and calls goal per chunk.
     /// </summary>
-    internal static async Task<Data> HandleStreamingAsync(
+    public static async Task<Data> HandleStreamingAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         GoalCall onStream,
@@ -608,7 +608,7 @@ internal static class HttpHelper
     /// Reports transfer progress by calling a goal every 500ms.
     /// Returns the total bytes transferred.
     /// </summary>
-    internal static async Task<long> StreamWithProgressAsync(
+    public static async Task<long> StreamWithProgressAsync(
         Stream source,
         Stream destination,
         long? totalBytes,

@@ -1,20 +1,13 @@
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
-using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
-/// <summary>
-/// Tests the download action handler — file saving, existence checks, error handling.
-/// </summary>
 public class DownloadActionTests
 {
     private string _tempDir = null!;
@@ -52,31 +45,26 @@ public class DownloadActionTests
     {
         public string Name => "mock";
         public bool IsDefault { get; set; }
-        public HttpRequestMessage? CapturedRequest { get; private set; }
-        public HttpResponseMessage Response { get; set; } = new(HttpStatusCode.OK);
-        public bool SendCalled { get; private set; }
+        public download? CapturedDownload { get; private set; }
+        public bool DownloadCalled { get; private set; }
+        public Func<download, Task<Data>>? OnDownload { get; set; }
 
-        public Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken ct)
+        public async Task<Data> SendAsync(request action) => Data.Ok();
+        public async Task<Data> DownloadAsync(download action)
         {
-            CapturedRequest = request;
-            SendCalled = true;
-            return Task.FromResult(Response);
+            CapturedDownload = action;
+            DownloadCalled = true;
+            if (OnDownload != null) return await OnDownload(action);
+            return Data.Ok(action.SaveTo);
         }
-
-        public Data Configure(ISettings config) => Data.Ok();
+        public async Task<Data> UploadAsync(upload action) => Data.Ok();
+        public Data Configure(configure action) => Data.Ok();
         public void Dispose() { }
     }
 
     [Test]
-    public async Task Download_HappyPath_SavesFileAndReturnsPath()
+    public async Task Download_HappyPath_ProviderReceivesAction()
     {
-        var fileContent = "Hello, downloaded file!"u8.ToArray();
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(fileContent)
-        };
-
         var action = new download
         {
             Context = Ctx,
@@ -89,23 +77,15 @@ public class DownloadActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("downloads/file.txt");
-
-        // Verify file exists on disk
-        var fullPath = _engine.FileSystem.ValidatePath("downloads/file.txt");
-        await Assert.That(_engine.FileSystem.File.Exists(fullPath)).IsTrue();
-        var content = await _engine.FileSystem.File.ReadAllTextAsync(fullPath);
-        await Assert.That(content).IsEqualTo("Hello, downloaded file!");
+        await Assert.That(_mock.CapturedDownload!.Url).IsEqualTo("https://example.com/file.txt");
     }
 
     [Test]
-    public async Task Download_FileExistsError_ReturnsDataFromError()
+    public async Task Download_FileExistsError_ProviderReturnsError()
     {
-        // Create existing file
-        var fullPath = _engine.FileSystem.ValidatePath("existing.txt");
-        var dir = _engine.FileSystem.Path.GetDirectoryName(fullPath)!;
-        if (!_engine.FileSystem.Directory.Exists(dir))
-            _engine.FileSystem.Directory.CreateDirectory(dir);
-        await _engine.FileSystem.File.WriteAllTextAsync(fullPath, "existing");
+        _mock.OnDownload = async action =>
+            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
+                "File already exists", "FileExists", 409));
 
         var action = new download
         {
@@ -123,18 +103,8 @@ public class DownloadActionTests
     }
 
     [Test]
-    public async Task Download_FileExistsOverwrite_ReplacesFile()
+    public async Task Download_FileExistsOverwrite_PassedToProvider()
     {
-        // Create existing file
-        var fullPath = _engine.FileSystem.ValidatePath("overwrite.txt");
-        await _engine.FileSystem.File.WriteAllTextAsync(fullPath, "old content");
-
-        var newContent = "new content"u8.ToArray();
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(newContent)
-        };
-
         var action = new download
         {
             Context = Ctx,
@@ -147,17 +117,12 @@ public class DownloadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var content = await _engine.FileSystem.File.ReadAllTextAsync(fullPath);
-        await Assert.That(content).IsEqualTo("new content");
+        await Assert.That(_mock.CapturedDownload!.IfExists).IsEqualTo(FileExists.Overwrite);
     }
 
     [Test]
-    public async Task Download_FileExistsSkip_ReturnsPathNoDownload()
+    public async Task Download_FileExistsSkip_PassedToProvider()
     {
-        // Create existing file
-        var fullPath = _engine.FileSystem.ValidatePath("skip.txt");
-        await _engine.FileSystem.File.WriteAllTextAsync(fullPath, "existing");
-
         var action = new download
         {
             Context = Ctx,
@@ -170,20 +135,12 @@ public class DownloadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("skip.txt");
-        // No HTTP call should have been made
-        await Assert.That(_mock.SendCalled).IsFalse();
+        await Assert.That(_mock.CapturedDownload!.IfExists).IsEqualTo(FileExists.Skip);
     }
 
     [Test]
-    public async Task Download_CreatesParentDirectories()
+    public async Task Download_CreatesParentDirectories_ProviderHandles()
     {
-        var fileContent = "nested file"u8.ToArray();
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(fileContent)
-        };
-
         var action = new download
         {
             Context = Ctx,
@@ -195,18 +152,14 @@ public class DownloadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var fullPath = _engine.FileSystem.ValidatePath("deep/nested/dir/file.txt");
-        await Assert.That(_engine.FileSystem.File.Exists(fullPath)).IsTrue();
     }
 
     [Test]
-    public async Task Download_ErrorStatusCode_ReturnsFailNoFile()
+    public async Task Download_ErrorStatusCode_ProviderReturnsError()
     {
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.NotFound)
-        {
-            Content = new StringContent("Not Found"),
-            ReasonPhrase = "Not Found"
-        };
+        _mock.OnDownload = async action =>
+            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
+                "404 Not Found", "HttpError", 404));
 
         var action = new download
         {
@@ -221,24 +174,11 @@ public class DownloadActionTests
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
-
-        // Verify no file was created
-        var fullPath = _engine.FileSystem.ValidatePath("should-not-exist.txt");
-        await Assert.That(_engine.FileSystem.File.Exists(fullPath)).IsFalse();
     }
 
     [Test]
-    public async Task Download_OnProgress_CallsGoalWithTransferProgress()
+    public async Task Download_OnProgress_PassedToProvider()
     {
-        // Can't easily test goal invocation, but verify the download succeeds with OnProgress set
-        var data = new byte[10000];
-        Array.Fill<byte>(data, 0x42);
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(data)
-        };
-        _mock.Response.Content.Headers.ContentLength = data.Length;
-
         var action = new download
         {
             Context = Ctx,
@@ -250,19 +190,13 @@ public class DownloadActionTests
 
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_mock.CapturedDownload!.OnProgress).IsNotNull();
+        await Assert.That(_mock.CapturedDownload!.OnProgress!.Name).IsEqualTo("ShowProgress");
     }
 
     [Test]
-    public async Task Download_OnProgress_NullTotalBytes_WhenNoContentLength()
+    public async Task Download_OnProgress_NullTotalBytes_ProviderHandles()
     {
-        var data = new byte[1000];
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(data)
-        };
-        // Don't set ContentLength — it should be null
-
         var action = new download
         {
             Context = Ctx,

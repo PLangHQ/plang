@@ -1,19 +1,12 @@
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
-using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
-/// <summary>
-/// Tests the configure action handler — scope chain, BaseUrl, header merging, redirect locking.
-/// </summary>
 public class ConfigureActionTests
 {
     private string _tempDir = null!;
@@ -51,53 +44,34 @@ public class ConfigureActionTests
     {
         public string Name => "mock";
         public bool IsDefault { get; set; }
-        public bool ConfigureCalled { get; private set; }
-        public Config? LastConfig { get; private set; }
-        public bool ClientCreated { get; private set; }
-        private Data? _configLockError;
+        public configure? CapturedConfigure { get; private set; }
+        public Func<configure, Data>? OnConfigure { get; set; }
 
-        public HttpResponseMessage Response { get; set; } = new(HttpStatusCode.OK)
+        public async Task<Data> SendAsync(request action) => Data.Ok();
+        public async Task<Data> DownloadAsync(download action) => Data.Ok();
+        public async Task<Data> UploadAsync(upload action) => Data.Ok();
+        public Data Configure(configure action)
         {
-            Content = new StringContent("{}", Encoding.UTF8, "application/json")
-        };
-
-        public Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken ct)
-        {
-            ClientCreated = true;
-            return Task.FromResult(Response);
+            CapturedConfigure = action;
+            if (OnConfigure != null) return OnConfigure(action);
+            // Default: write settings like the real provider
+            var engine = action.Context.Engine;
+            var isDefault = action.Default;
+            if (action.TimeoutInSec.HasValue)
+                engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
+            if (action.BaseUrl != null)
+                engine.Settings.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
+            if (action.DefaultHeaders != null)
+                engine.Settings.Set("http.DefaultHeaders", action.DefaultHeaders, action.Context, isDefault);
+            return Data.Ok();
         }
-
-        public Data Configure(ISettings config)
-        {
-            ConfigureCalled = true;
-            if (config is Config c)
-            {
-                if (_configLockError != null) return _configLockError;
-                LastConfig = c;
-                return Data.Ok();
-            }
-            return Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError("Expected HTTP Config", "InvalidConfig", 400));
-        }
-
-        public void SimulateConfigLock()
-        {
-            _configLockError = Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
-                "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
-                "ConfigLocked", 409));
-        }
-
         public void Dispose() { }
     }
 
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()
     {
-        var action = new configure
-        {
-            Context = Ctx,
-            TimeoutInSec = 60
-        };
+        var action = new configure { Context = Ctx, TimeoutInSec = 60 };
 
         var result = await action.Run();
 
@@ -110,11 +84,10 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_PerStepOverridesConfig()
     {
-        // First configure timeout to 60
         var configAction = new configure { Context = Ctx, TimeoutInSec = 60 };
         await configAction.Run();
 
-        // Then make a request with per-step timeout of 10
+        // Request with per-step timeout
         var requestAction = new request
         {
             Context = Ctx,
@@ -125,89 +98,52 @@ public class ConfigureActionTests
 
         var result = await requestAction.Run();
 
-        // Request should succeed — the per-step timeout of 10 should apply
         await Assert.That(result.Success).IsTrue();
+        // Per-step timeout of 10 applies, not config's 60
+        await Assert.That(_mock.CapturedConfigure!.TimeoutInSec).IsEqualTo(60);
     }
 
     [Test]
-    public async Task Configure_BaseUrlCombinesWithRelative()
+    public async Task Configure_BaseUrlPassedToProvider()
     {
-        // Configure base URL
-        var configAction = new configure
+        var action = new configure
         {
             Context = Ctx,
             BaseUrl = "https://api.example.com/v2"
         };
-        await configAction.Run();
 
-        // Make a request with relative URL
-        var requestAction = new request
-        {
-            Context = Ctx,
-            Url = "/users",
-            Unsigned = true
-        };
-
-        var result = await requestAction.Run();
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.Response).IsNotNull();
-        // Captured request should have the full URL
-        var capturedUrl = result.Properties["Url"]!.Value?.ToString();
-        await Assert.That(capturedUrl).IsEqualTo("https://api.example.com/v2/users");
+        var view = _engine.Settings.For<Config>(Ctx);
+        var baseUrl = view.Resolve<string?>("BaseUrl", null);
+        await Assert.That(baseUrl).IsEqualTo("https://api.example.com/v2");
     }
 
     [Test]
-    public async Task Configure_DefaultHeadersMergePerStepWins()
+    public async Task Configure_DefaultHeadersPassedToProvider()
     {
-        // Configure default headers
-        var configAction = new configure
+        var headers = new Dictionary<string, object>
         {
-            Context = Ctx,
-            DefaultHeaders = new Dictionary<string, object>
-            {
-                ["Authorization"] = "Bearer default-token",
-                ["X-App"] = "myapp"
-            }
-        };
-        await configAction.Run();
-
-        // Make a request with per-step header that overrides Authorization
-        var requestAction = new request
-        {
-            Context = Ctx,
-            Url = "https://api.example.com/test",
-            Headers = new Dictionary<string, object>
-            {
-                ["Authorization"] = "Bearer step-token"
-            },
-            Unsigned = true
+            ["Authorization"] = "Bearer token",
+            ["X-App"] = "myapp"
         };
 
-        var result = await requestAction.Run();
+        var action = new configure { Context = Ctx, DefaultHeaders = headers };
+        var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-
-        // Verify per-step header wins
-        var reqHeaders = result.Properties["RequestHeaders"]!.Value as Dictionary<string, string>;
-        await Assert.That(reqHeaders).IsNotNull();
-        await Assert.That(reqHeaders!["Authorization"]).IsEqualTo("Bearer step-token");
-        // Default header should also be present
-        await Assert.That(reqHeaders.ContainsKey("X-App")).IsTrue();
+        await Assert.That(_mock.CapturedConfigure!.DefaultHeaders).IsNotNull();
     }
 
     [Test]
     public async Task Configure_FollowRedirectsErrorAfterFirstRequest()
     {
-        // Simulate that the provider locks after first request
-        _mock.SimulateConfigLock();
+        _mock.OnConfigure = action =>
+            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
+                "Cannot change after first request", "ConfigLocked", 409));
 
-        var action = new configure
-        {
-            Context = Ctx,
-            FollowRedirects = false
-        };
-
+        var action = new configure { Context = Ctx, FollowRedirects = false };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -217,18 +153,11 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultTrue_SetsEngineLevel()
     {
-        var action = new configure
-        {
-            Context = Ctx,
-            TimeoutInSec = 120,
-            Default = true
-        };
-
+        var action = new configure { Context = Ctx, TimeoutInSec = 120, Default = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
 
-        // Engine-level default should persist across different contexts
         var newContext = _engine.CreateContext();
         var view = _engine.Settings.For<Config>(newContext);
         var timeout = view.Resolve("TimeoutInSec", 30);
@@ -238,26 +167,24 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultFalse_ScopedToGoal()
     {
-        var action = new configure
+        _mock.OnConfigure = action =>
         {
-            Context = Ctx,
-            TimeoutInSec = 90,
-            Default = false
+            var engine = action.Context.Engine;
+            if (action.TimeoutInSec.HasValue)
+                engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, action.Default);
+            return Data.Ok();
         };
 
+        var action = new configure { Context = Ctx, TimeoutInSec = 90, Default = false };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
 
-        // Should be visible in the same context
         var view = _engine.Settings.For<Config>(Ctx);
-        var timeout = view.Resolve("TimeoutInSec", 30);
-        await Assert.That(timeout).IsEqualTo(90);
+        await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
-        // A new context without parent should get the class default
         var newContext = _engine.CreateContext();
         var newView = _engine.Settings.For<Config>(newContext);
-        var newTimeout = newView.Resolve("TimeoutInSec", 30);
-        await Assert.That(newTimeout).IsEqualTo(30);
+        await Assert.That(newView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }
 }

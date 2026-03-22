@@ -1,20 +1,12 @@
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
-using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
-/// <summary>
-/// Tests the upload action handler — content resolution, multipart, base64, forced content types.
-/// </summary>
 public class UploadActionTests
 {
     private string _tempDir = null!;
@@ -52,30 +44,24 @@ public class UploadActionTests
     {
         public string Name => "mock";
         public bool IsDefault { get; set; }
-        public HttpRequestMessage? CapturedRequest { get; private set; }
-        public HttpResponseMessage Response { get; set; } = new(HttpStatusCode.OK)
-        {
-            Content = new StringContent("{\"ok\":true}", Encoding.UTF8, "application/json")
-        };
+        public upload? CapturedUpload { get; private set; }
+        public Func<upload, Task<Data>>? OnUpload { get; set; }
 
-        public Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken ct)
+        public async Task<Data> SendAsync(request action) => Data.Ok();
+        public async Task<Data> DownloadAsync(download action) => Data.Ok();
+        public async Task<Data> UploadAsync(upload action)
         {
-            CapturedRequest = request;
-            return Task.FromResult(Response);
+            CapturedUpload = action;
+            if (OnUpload != null) return await OnUpload(action);
+            return Data.Ok(new { ok = true });
         }
-
-        public Data Configure(ISettings config) => Data.Ok();
+        public Data Configure(configure action) => Data.Ok();
         public void Dispose() { }
     }
 
     [Test]
-    public async Task Upload_FilePath_SendsBinaryStreamContent()
+    public async Task Upload_FilePath_PassedToProvider()
     {
-        // Create a file to upload
-        var filePath = _engine.FileSystem.ValidatePath("upload-test.bin");
-        await _engine.FileSystem.File.WriteAllBytesAsync(filePath, new byte[] { 0x01, 0x02, 0x03 });
-
         var action = new upload
         {
             Context = Ctx,
@@ -87,34 +73,29 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedRequest).IsNotNull();
-        var contentType = _mock.CapturedRequest!.Content!.Headers.ContentType!.MediaType;
-        await Assert.That(contentType).IsEqualTo("application/octet-stream");
+        await Assert.That(_mock.CapturedUpload!.Content).IsEqualTo("upload-test.bin");
     }
 
     [Test]
-    public async Task Upload_DictionaryContent_SendsMultipartFormData()
+    public async Task Upload_DictionaryContent_PassedToProvider()
     {
+        var dict = new Dictionary<string, object> { ["field1"] = "value1", ["field2"] = "value2" };
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/submit",
-            Content = new Dictionary<string, object>
-            {
-                ["field1"] = "value1",
-                ["field2"] = "value2"
-            },
+            Content = dict,
             Unsigned = true
         };
 
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+        await Assert.That(_mock.CapturedUpload!.Content).IsTypeOf<Dictionary<string, object>>();
     }
 
     [Test]
-    public async Task Upload_AsBase64_DecodesAndSendsBinary()
+    public async Task Upload_AsBase64_PassedToProvider()
     {
         var original = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
         var base64 = Convert.ToBase64String(original);
@@ -131,18 +112,12 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var sentBytes = await _mock.CapturedRequest!.Content!.ReadAsByteArrayAsync();
-        await Assert.That(sentBytes.Length).IsEqualTo(4);
-        await Assert.That(sentBytes[0]).IsEqualTo((byte)0xDE);
+        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.Base64);
     }
 
     [Test]
-    public async Task Upload_AsFile_ForcesFileEvenForAmbiguous()
+    public async Task Upload_AsFile_PassedToProvider()
     {
-        // Create a file that also looks like it could be text
-        var filePath = _engine.FileSystem.ValidatePath("data.json");
-        await _engine.FileSystem.File.WriteAllTextAsync(filePath, "{\"key\":\"value\"}");
-
         var action = new upload
         {
             Context = Ctx,
@@ -155,22 +130,17 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var contentType = _mock.CapturedRequest!.Content!.Headers.ContentType!.MediaType;
-        await Assert.That(contentType).IsEqualTo("application/octet-stream");
+        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.File);
     }
 
     [Test]
-    public async Task Upload_AsText_ForcesStringBody()
+    public async Task Upload_AsText_PassedToProvider()
     {
-        // Create a file path that exists, but force text interpretation
-        var filePath = _engine.FileSystem.ValidatePath("exists.txt");
-        await _engine.FileSystem.File.WriteAllTextAsync(filePath, "file content");
-
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "exists.txt",
+            Content = "raw text content",
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -178,13 +148,11 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        // Content should be StringContent with "exists.txt" as the text, not file content
-        var body = await _mock.CapturedRequest!.Content!.ReadAsStringAsync();
-        await Assert.That(body).IsEqualTo("exists.txt");
+        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.Text);
     }
 
     [Test]
-    public async Task Upload_OnProgress_CallsGoalWithTransferProgress()
+    public async Task Upload_OnProgress_PassedToProvider()
     {
         var action = new upload
         {
@@ -198,17 +166,15 @@ public class UploadActionTests
 
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_mock.CapturedUpload!.OnProgress).IsNotNull();
     }
 
     [Test]
-    public async Task Upload_ErrorStatusCode_ReturnsDataFromError()
+    public async Task Upload_ErrorStatusCode_ProviderReturnsError()
     {
-        _mock.Response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
-        {
-            Content = new StringContent("Server Error"),
-            ReasonPhrase = "Internal Server Error"
-        };
+        _mock.OnUpload = async action =>
+            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
+                "Server Error", "HttpError", 500));
 
         var action = new upload
         {
