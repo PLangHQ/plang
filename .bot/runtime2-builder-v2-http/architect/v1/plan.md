@@ -143,11 +143,11 @@ public partial class download : IContext
 
 **Flow:**
 1. Resolve URL (https:// prefix)
-2. Check file existence against `IfExists` (Error → fail, Overwrite → continue, Skip → return path)
+2. Check file existence via `IPLangFileSystem` against `IfExists` (Error → fail, Overwrite → continue, Skip → return path)
 3. If `Unsigned = false` → sign via `engine.RunAction<sign>(...)` with `SignOptions` overrides if provided
 4. Send request via provider
 5. If not success status code → return `Data.Fail` with status code and reason phrase
-6. Stream response to file, creating parent directories as needed
+6. Stream response to file via `IPLangFileSystem` (sandboxed file access), creating parent directories as needed
 7. If `OnProgress` → call goal every 500ms with progress data
 8. Return `Data.Ok(filePath)`
 
@@ -204,7 +204,10 @@ public partial class upload : IContext
 7. Send via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
 8. If `OnProgress` → report progress every 500ms via callback
 9. If not success status code → return `Data.Fail` with status code, reason phrase, and response body
-10. Parse response (same as request: JSON, XML, text, binary)
+10. Parse response — same rules as request including `application/plang`:
+    - If `application/plang` and `Unsigned = true` → return error
+    - If `application/plang` → verify signature, set `%!ServiceIdentity%`
+    - Otherwise: JSON, XML, text, binary parsing
 11. Return `Data` with response value and properties
 
 ### configure
