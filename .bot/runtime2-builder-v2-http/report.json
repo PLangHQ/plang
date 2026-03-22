@@ -11,7 +11,7 @@
         "assumptions": "Architect plan v1 approved. Existing test patterns from signing/crypto/identity modules provide templates.",
         "risk": "HTTP module has many interaction points (signing, providers, streaming, file I/O)."
       },
-      "plan": "51 tests across 7 batches (41 C#, 10 PLang). Writing all test stubs with Assert.Fail/throw placeholders.",
+      "plan": "62 tests across 8 batches (52 C#, 10 PLang). Initial 51 from architect spec + 11 independent gap-coverage tests.",
       "actions": [
         {
           "paths": [
@@ -44,12 +44,24 @@
           "category": "test",
           "confidence": "high",
           "context": "10 PLang test goals + 1 supporting goal"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "11 gap-coverage tests: timeout, OnProgress, null body, signed errors, application/plang+json, relative URL without BaseUrl, configure scope"
         }
       ],
       "after": {
-        "status": "Complete — 51 test stubs written",
+        "status": "Complete — 62 test stubs written (52 C# + 10 PLang)",
         "health": "Ready for coder bot",
-        "notes": "All stubs use Assert.Fail or throw placeholders. Coder implements HTTP module to make them pass."
+        "notes": "Initial 51 tests from architect spec, then 11 gap-coverage tests added independently (timeout, progress callbacks, signed errors, scope, edge cases). All stubs use Assert.Fail or throw placeholders."
       }
     }
   ]
