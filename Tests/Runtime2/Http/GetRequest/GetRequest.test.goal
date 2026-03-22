@@ -1,0 +1,3 @@
+Start
+/ Test: GET request returns response data and status code
+- throw "not implemented"

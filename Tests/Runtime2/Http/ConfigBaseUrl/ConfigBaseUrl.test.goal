@@ -1,0 +1,3 @@
+Start
+/ Test: configure base URL, then use relative path on request
+- throw "not implemented"
