@@ -59,18 +59,19 @@ public partial class request : IContext
 **Flow:**
 1. Resolve config via `engine.Settings.For<Config>(context)` — per-step parameters override config values
 2. Resolve URL — if relative and `BaseUrl` is set, combine. Auto-prefix `https://` if no protocol.
-3. Build `HttpRequestMessage` with method, headers (merge `DefaultHeaders` + per-step headers, per-step wins), body
-4. If `Unsigned = false` (resolved — per-step or config):
-   - If `SignOptions` provided, use it as the `sign` action and fill in `Data` (body hash) and `Headers` (url, method)
+3. Build headers (merge `DefaultHeaders` + per-step headers, per-step wins)
+4. Serialize body — if `Body != null`:
+   - `application/x-www-form-urlencoded` → `FormUrlEncodedContent`
+   - Otherwise → `StringContent` with resolved encoding and content type
+5. If `Unsigned = false` (resolved — per-step or config):
+   - If `SignOptions` provided, use it as the `sign` action and fill in `Data` (hash of serialized body) and `Headers` (url, method)
    - If `SignOptions` is null, construct a new `sign` action with defaults and fill in `Data` and `Headers`
    - Run via `engine.RunAction<sign, SignedData>(signAction, context)` — signing module resolves identity from system actor
    - Set `X-Signature` header from returned `SignedData`
    - Add `Accept: application/plang` to accept headers (alongside existing accept)
-5. If `Body != null`:
-   - `application/x-www-form-urlencoded` → `FormUrlEncodedContent`
-   - Otherwise → `StringContent` with resolved encoding and content type
-6. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
-7. Handle response:
+6. Build `HttpRequestMessage` with method, headers, serialized body
+7. Send request via `engine.Providers.Get<IHttpProvider>().SendAsync(...)` with resolved timeout
+8. Handle response:
    - If `OnStream` is set → read chunks, call goal per chunk (see Streaming section)
    - If `application/plang` response and `Unsigned = true` → return error (unsigned `application/plang` is not allowed)
    - If `application/plang` response → deserialize as `Data` object (see application/plang Protocol), validate signature (must be valid — error if not), extract `SignedData.Identity` → set `%!ServiceIdentity%` via `context.MemoryStack.Set("!ServiceIdentity", signedData.Identity)`
@@ -78,7 +79,7 @@ public partial class request : IContext
    - If XML → convert to JSON (same as runtime1)
    - If binary (non-text) → return raw bytes
    - If text → charset-detect and return string
-8. Return `Data` with response value and properties
+9. Return `Data` with response value and properties
 
 **Response `Data.Properties`:**
 
@@ -107,13 +108,14 @@ Downloads a file from a URL. Three-state file handling: error (default), overwri
 **Parameters:**
 
 ```csharp
+public enum FileExists { Error, Overwrite, Skip }
+
 [Action("download")]
 public partial class download : IContext
 {
     public partial string Url { get; init; }
     public partial string SaveTo { get; init; }
-    public partial bool Overwrite { get; init; }                   // default false
-    public partial bool SkipIfExists { get; init; }                // default false
+    public partial FileExists IfExists { get; init; }              // default Error
     public partial Dictionary<string, object>? Headers { get; init; }
     public partial int TimeoutInSec { get; init; }                 // default 30
     public partial bool Unsigned { get; init; }                    // default false
@@ -123,9 +125,9 @@ public partial class download : IContext
 ```
 
 **File existence logic:**
-- `Overwrite = false, SkipIfExists = false` (default) → error if file exists
-- `Overwrite = true` → replace existing file
-- `SkipIfExists = true` → return path silently, no download
+- `IfExists = Error` (default) → error if file exists
+- `IfExists = Overwrite` → replace existing file
+- `IfExists = Skip` → return path silently, no download
 
 **PLang usage:**
 ```plang
@@ -136,7 +138,7 @@ public partial class download : IContext
 
 **Flow:**
 1. Resolve URL (https:// prefix)
-2. Check file existence against Overwrite/SkipIfExists
+2. Check file existence against `IfExists` (Error → fail, Overwrite → continue, Skip → return path)
 3. If `Unsigned = false` → sign via `engine.RunAction<sign>(...)` with `SignOptions` overrides if provided
 4. Stream response to file, creating parent directories as needed
 5. If `OnProgress` → call goal every 500ms with progress data
@@ -411,7 +413,7 @@ PLang/Runtime2/modules/http/
 ├── upload.cs            — upload action handler
 ├── configure.cs         — configuration action (scope chain)
 ├── Config.cs            — ISettings implementation with defaults
-├── types.cs             — HttpMethod enum, ContentAs enum, TransferProgress type
+├── types.cs             — HttpMethod, ContentAs, FileExists enums, TransferProgress type
 PLang/Runtime2/Engine/Providers/
 ├── IHttpProvider.cs     — HTTP provider interface
 ├── DefaultHttpProvider.cs — default implementation (lazy HttpClient, SocketsHttpHandler)
@@ -443,9 +445,9 @@ PLang/Runtime2/Engine/Providers/
 
 **download:**
 - File downloaded to correct path
-- Overwrite=false, file exists → error
-- Overwrite=true, file exists → replaced
-- SkipIfExists=true, file exists → returns path, no download
+- IfExists=Error (default), file exists → error
+- IfExists=Overwrite, file exists → replaced
+- IfExists=Skip, file exists → returns path, no download
 - Parent directories created automatically
 
 **upload:**
@@ -493,7 +495,7 @@ PLang/Runtime2/Engine/Providers/
 ## Definition of Done
 
 - `request` action handles all HTTP methods with JSON/XML/text/binary response parsing
-- `download` action downloads files with three-state existence handling (error/overwrite/skip)
+- `download` action downloads files with `FileExists` enum (`Error`, `Overwrite`, `Skip`) for existence handling
 - `upload` action handles binary files, base64, and multipart form data. `ContentAs?` enum parameter (`File`, `Base64`, `Form`, `Text`) allows explicit content hint to override auto-detection. Null = auto-detect.
 - Request signing on by default via `engine.RunAction<sign, SignedData>(...)` (signing module resolves identity from system actor context)
 - `Unsigned` parameter for opt-out, `sign?` action record for signing configuration overrides
