@@ -46,7 +46,7 @@ public class DownloadActionTests
     [Test]
     public async Task Download_FileExistsError_ReturnsDataFail()
     {
-        // IfExists=Error (default), file already exists → Data.Fail
+        // IfExists=Error (default), file already exists → Data.FromError
         Assert.Fail("Not implemented");
     }
 
@@ -74,7 +74,7 @@ public class DownloadActionTests
     [Test]
     public async Task Download_ErrorStatusCode_ReturnsFailNoFile()
     {
-        // 404 response → Data.Fail with status code, no file created on disk
+        // 404 response → Data.FromError with status code, no file created on disk
         Assert.Fail("Not implemented");
     }
 

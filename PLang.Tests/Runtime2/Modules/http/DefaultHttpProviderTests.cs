@@ -24,7 +24,7 @@ public class DefaultHttpProviderTests
     [Test]
     public async Task Provider_Configure_RejectsNonConfigSettings()
     {
-        // Configure with wrong ISettings type → Data.Fail("InvalidConfig")
+        // Configure with wrong ISettings type → Data.FromError(ServiceError("InvalidConfig"))
         Assert.Fail("Not implemented");
     }
 

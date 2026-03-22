@@ -67,7 +67,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_FollowRedirectsErrorAfterFirstRequest()
     {
-        // Changing FollowRedirects after first HTTP request → Data.Fail("ConfigLocked")
+        // Changing FollowRedirects after first HTTP request → Data.FromError(ServiceError("ConfigLocked"))
         Assert.Fail("Not implemented");
     }
 

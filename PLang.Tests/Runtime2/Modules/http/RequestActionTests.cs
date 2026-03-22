@@ -90,7 +90,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_ErrorStatusCode_ReturnsDataFail()
     {
-        // 404/500 response returns Data.Fail with StatusCode, reason phrase, and response body
+        // 404/500 response returns Data.FromError with StatusCode, reason phrase, and response body
         Assert.Fail("Not implemented");
     }
 
@@ -120,7 +120,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_RelativeUrlNoBaseUrl_ReturnsError()
     {
-        // Relative URL "/users" with no BaseUrl configured → Data.Fail (cannot resolve)
+        // Relative URL "/users" with no BaseUrl configured → Data.FromError (cannot resolve)
         Assert.Fail("Not implemented");
     }
 
@@ -164,7 +164,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_ApplicationPlangInvalidSignature_ReturnsError()
     {
-        // application/plang response with bad signature returns Data.Fail
+        // application/plang response with bad signature returns Data.FromError
         Assert.Fail("Not implemented");
     }
 
@@ -235,7 +235,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_TimeoutExpires_ReturnsDataFail()
     {
-        // Request exceeds TimeoutInSec → Data.Fail with timeout error
+        // Request exceeds TimeoutInSec → Data.FromError with timeout error
         Assert.Fail("Not implemented");
     }
 
