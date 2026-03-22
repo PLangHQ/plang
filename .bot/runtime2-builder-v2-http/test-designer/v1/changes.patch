@@ -1,9 +1,9 @@
 diff --git a/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs b/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs
 new file mode 100644
-index 00000000..3d873b65
+index 00000000..46bc1b92
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,87 @@
 +using PLang.Runtime2.Engine.Context;
 +using PLang.Runtime2.Engine.Memory;
 +using PLang.Runtime2.Engine.Providers;
@@ -76,6 +76,20 @@ index 00000000..3d873b65
 +        // Changing FollowRedirects after first HTTP request → Data.Fail("ConfigLocked")
 +        Assert.Fail("Not implemented");
 +    }
++
++    [Test]
++    public async Task Configure_DefaultTrue_SetsEngineLevel()
++    {
++        // Default=true → config persists across goals within execution (engine-level scope)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Configure_DefaultFalse_ScopedToGoal()
++    {
++        // Default=false (default) → config scoped to current goal, not visible in other goals
++        Assert.Fail("Not implemented");
++    }
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs b/PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs
 new file mode 100644
@@ -122,10 +136,10 @@ index 00000000..e622e4fe
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs b/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs
 new file mode 100644
-index 00000000..816c3bd3
+index 00000000..f54f05a0
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,94 @@
 +using PLang.Runtime2.Engine.Context;
 +using PLang.Runtime2.Engine.Memory;
 +using PLang.Runtime2.Engine.Providers;
@@ -205,13 +219,27 @@ index 00000000..816c3bd3
 +        // 404 response → Data.Fail with status code, no file created on disk
 +        Assert.Fail("Not implemented");
 +    }
++
++    [Test]
++    public async Task Download_OnProgress_CallsGoalWithTransferProgress()
++    {
++        // OnProgress set → goal called every 500ms with TransferProgress (BytesTransferred, TotalBytes, Percentage)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Download_OnProgress_NullTotalBytes_WhenNoContentLength()
++    {
++        // Server sends no Content-Length header → TransferProgress.TotalBytes is null, Percentage is null
++        Assert.Fail("Not implemented");
++    }
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs b/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs
 new file mode 100644
-index 00000000..f7473770
+index 00000000..cebb0274
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs
-@@ -0,0 +1,197 @@
+@@ -0,0 +1,250 @@
 +using PLang.Runtime2.Engine.Context;
 +using PLang.Runtime2.Engine.Memory;
 +using PLang.Runtime2.Engine.Providers;
@@ -324,6 +352,27 @@ index 00000000..f7473770
 +
 +    #endregion
 +
++    [Test]
++    public async Task Post_NullBody_SendsRequestWithNoContent()
++    {
++        // POST with null body → HttpRequestMessage.Content is null, no content headers
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_RelativeUrlNoBaseUrl_ReturnsError()
++    {
++        // Relative URL "/users" with no BaseUrl configured → Data.Fail (cannot resolve)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_ApplicationPlangJsonVariant_DeserializesAsPlang()
++    {
++        // Response with content-type "application/plang+json" treated same as "application/plang"
++        Assert.Fail("Not implemented");
++    }
++
 +    #region Batch 2: Signing Integration
 +
 +    [Test]
@@ -370,6 +419,13 @@ index 00000000..f7473770
 +
 +    #endregion
 +
++    [Test]
++    public async Task Get_SignedErrorResponse_ExtractsIdentityFromSignatureField()
++    {
++        // Error JSON with "signature" field → verify signature, set %!ServiceIdentity% even on error
++        Assert.Fail("Not implemented");
++    }
++
 +    #region Batch 3: Streaming
 +
 +    [Test]
@@ -407,14 +463,39 @@ index 00000000..f7473770
 +        Assert.Fail("Not implemented");
 +    }
 +
++    [Test]
++    public async Task Get_OnStreamApplicationPlang_EachChunkSignatureVerified()
++    {
++        // application/plang streaming: each NDJSON line is a Data object, each signature must be valid
++        Assert.Fail("Not implemented");
++    }
++
++    #endregion
++
++    #region Timeout
++
++    [Test]
++    public async Task Get_TimeoutExpires_ReturnsDataFail()
++    {
++        // Request exceeds TimeoutInSec → Data.Fail with timeout error
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Get_OnStreamTimeout_AppliesToInitialResponseOnly()
++    {
++        // With OnStream set, timeout applies to initial response (ResponseHeadersRead), not stream reading
++        Assert.Fail("Not implemented");
++    }
++
 +    #endregion
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs b/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs
 new file mode 100644
-index 00000000..17712b92
+index 00000000..087ed9de
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,87 @@
 +using PLang.Runtime2.Engine.Context;
 +using PLang.Runtime2.Engine.Memory;
 +using PLang.Runtime2.Engine.Providers;
@@ -485,6 +566,20 @@ index 00000000..17712b92
 +    public async Task Upload_AsText_ForcesStringBody()
 +    {
 +        // As=Text forces StringContent even if content looks like a valid file path
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_OnProgress_CallsGoalWithTransferProgress()
++    {
++        // OnProgress set → goal called every 500ms with TransferProgress during upload
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Upload_ErrorStatusCode_ReturnsDataFail()
++    {
++        // Server returns 500 → Data.Fail with status code, reason phrase, and response body
 +        Assert.Fail("Not implemented");
 +    }
 +}
