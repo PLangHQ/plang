@@ -36,6 +36,7 @@ public partial class Data
     /// Cryptographic signature of the data. Contains a SignedData object when signed.
     /// </summary>
     [JsonIgnore]
+    [In]
     [Out]
     public PLang.Runtime2.modules.signing.SignedData? Signature { get; set; }
 

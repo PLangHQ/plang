@@ -102,7 +102,6 @@ public partial class Data
 
     [JsonIgnore]
     [LlmIgnore]
-    [Out]
     public Properties Properties { get; set; }
 
     [JsonConstructor]

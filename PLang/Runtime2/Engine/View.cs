@@ -10,7 +10,8 @@ public enum View
     Store,
     LlmBuilder,
     Debug,
-    Out
+    Out,
+    In
 }
 
 [AttributeUsage(AttributeTargets.Property)]
@@ -26,11 +27,18 @@ public sealed class DebugAttribute : Attribute { }
 public sealed class DefaultAttribute : Attribute { }
 
 /// <summary>
-/// Marks properties that should only be serialized when Data leaves the system (transport/wire view).
-/// Used for envelope metadata like Signature and Properties with transport-specific data.
+/// Marks properties that should be serialized when Data leaves the system (transport/wire outbound).
+/// Used for envelope metadata like Signature.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class OutAttribute : Attribute { }
+
+/// <summary>
+/// Marks properties that should be deserialized when Data arrives from the wire (transport inbound).
+/// Used for envelope metadata like Signature that needs to round-trip.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class InAttribute : Attribute { }
 
 /// <summary>
 /// Marks properties that contain sensitive data (e.g., private keys).

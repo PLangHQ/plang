@@ -604,12 +604,21 @@ public class DataTests
     }
 
     [Test]
-    public async Task Properties_HasOutAttribute()
+    public async Task Properties_HasNoOutAttribute()
     {
         var prop = typeof(Data).GetProperty(nameof(Data.Properties));
 
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
+        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNull();
+    }
+
+    [Test]
+    public async Task Signature_HasInAttribute()
+    {
+        var prop = typeof(Data).GetProperty(nameof(Data.Signature));
+
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.GetCustomAttribute<InAttribute>()).IsNotNull();
     }
 
     [Test]

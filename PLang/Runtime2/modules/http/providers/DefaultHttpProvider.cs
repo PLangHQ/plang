@@ -2,6 +2,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals.Goal;
@@ -23,6 +26,21 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public bool IsDefault { get; set; }
 
     private HttpClient? _client;
+
+    /// <summary>
+    /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
+    /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
+    /// </summary>
+    private static readonly JsonSerializerOptions _transportInOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { TransportPropertyFilter.ForInbound }
+        }
+    };
 
     // --- IHttpProvider: action-level methods ---
 
@@ -143,13 +161,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorBody = "";
-            try { errorBody = await response.Content.ReadAsStringAsync(cts.Token); }
-            catch { /* best effort */ }
-            var err = Data.FromError(new ServiceError(
-                $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
-                "HttpError", (int)response.StatusCode));
-            BuildProperties(err, requestMessage, response);
+            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, cts.Token);
             return err;
         }
 
@@ -413,13 +425,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorBody = "";
-            try { errorBody = await response.Content.ReadAsStringAsync(); }
-            catch { /* best effort */ }
-
-            var errorData = Data.FromError(new ServiceError(
-                $"{statusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
-                "HttpError", statusCode));
+            var (errorData, errorBody) = await ReadErrorResponseAsync(response, request);
 
             if (!unsigned && !string.IsNullOrEmpty(errorBody))
             {
@@ -427,7 +433,6 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 catch { /* best effort — don't mask the original error */ }
             }
 
-            BuildProperties(errorData, request, response);
             return errorData;
         }
 
@@ -492,6 +497,10 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return binaryResult;
     }
 
+    /// <summary>
+    /// Parses application/plang response: deserialize as Data (with Signature via [In]),
+    /// verify signature, set %!ServiceIdentity%.
+    /// </summary>
     private static async Task<Data> ParsePlangResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
@@ -500,13 +509,10 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         var body = await response.Content.ReadAsStringAsync();
 
-        SignedData? signedData;
+        Data? data;
         try
         {
-            signedData = JsonSerializer.Deserialize<SignedData>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            data = JsonSerializer.Deserialize<Data>(body, _transportInOptions);
         }
         catch (JsonException ex)
         {
@@ -517,7 +523,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return err;
         }
 
-        if (signedData == null)
+        if (data == null)
         {
             var err = Data.FromError(new ServiceError(
                 "application/plang response deserialized to null",
@@ -526,13 +532,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return err;
         }
 
-        var verifyData = new Data("");
-        verifyData.Signature = signedData;
-
+        // Data.Signature is populated from the wire via [In] — pass straight to verify
         var verifyAction = new signing.verify
         {
             Context = context,
-            Data = verifyData
+            Data = data
         };
 
         var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
@@ -542,17 +546,34 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return verifyResult;
         }
 
-        context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+        context.MemoryStack.Set("!ServiceIdentity", data.Signature?.Identity);
 
-        var result = Data.Ok(signedData);
-        result.Signature = signedData;
-        BuildProperties(result, request, response);
-        return result;
+        BuildProperties(data, request, response);
+        return data;
     }
 
+    /// <summary>
+    /// Tries to extract identity from a signed error response body.
+    /// The error body may be a Data with Signature, or have a "signature" field.
+    /// </summary>
     private static async Task TryExtractSignedErrorIdentity(
         string errorBody, EngineType engine, PLangContext context)
     {
+        // Try deserializing as Data with transport options (may have Signature via [In])
+        Data? data = null;
+        try { data = JsonSerializer.Deserialize<Data>(errorBody, _transportInOptions); }
+        catch { /* not valid Data JSON — try legacy format below */ }
+
+        if (data?.Signature != null)
+        {
+            var verifyAction = new signing.verify { Context = context, Data = data };
+            var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
+            if (verifyResult.Success)
+                context.MemoryStack.Set("!ServiceIdentity", data.Signature.Identity);
+            return;
+        }
+
+        // Legacy: look for a "signature" field in arbitrary JSON
         using var doc = JsonDocument.Parse(errorBody);
         if (!doc.RootElement.TryGetProperty("signature", out var sigElement))
             return;
@@ -561,18 +582,30 @@ public sealed class DefaultHttpProvider : IHttpProvider
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         if (signedData == null) return;
 
-        var verifyData = new Data("");
-        verifyData.Signature = signedData;
+        var legacyData = new Data("");
+        legacyData.Signature = signedData;
 
-        var verifyAction = new signing.verify
-        {
-            Context = context,
-            Data = verifyData
-        };
-
-        var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
-        if (verifyResult.Success)
+        var legacyVerify = new signing.verify { Context = context, Data = legacyData };
+        var legacyResult = await engine.RunAction<signing.verify>(legacyVerify, context);
+        if (legacyResult.Success)
             context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+    }
+
+    /// <summary>
+    /// Reads an error HTTP response and builds a Data error with properties.
+    /// Returns the error Data and the raw error body (for signed error extraction).
+    /// </summary>
+    private static async Task<(Data Error, string Body)> ReadErrorResponseAsync(
+        HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
+    {
+        var errorBody = "";
+        try { errorBody = await response.Content.ReadAsStringAsync(ct); }
+        catch { /* best effort */ }
+        var err = Data.FromError(new ServiceError(
+            $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+            "HttpError", (int)response.StatusCode));
+        BuildProperties(err, request, response);
+        return (err, errorBody);
     }
 
     // --- Response metadata ---
@@ -629,13 +662,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             using (response)
             {
-                var errorBody = "";
-                try { errorBody = await response.Content.ReadAsStringAsync(ct); }
-                catch { /* best effort */ }
-                var err = Data.FromError(new ServiceError(
-                    $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
-                    "HttpError", (int)response.StatusCode));
-                BuildProperties(err, request, response);
+                var (err, _) = await ReadErrorResponseAsync(response, request, ct);
                 return err;
             }
         }
@@ -722,7 +749,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (string.IsNullOrEmpty(line)) continue;
 
             context.MemoryStack.Set(varName, line);
-            await engine.RunGoalAsync(onStream, context, ct);
+            var result = await engine.RunGoalAsync(onStream, context, ct);
+            if (!result.Success)
+                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
         }
     }
 
@@ -741,7 +770,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 if (dataBuffer.Length > 0)
                 {
                     context.MemoryStack.Set(varName, dataBuffer.ToString());
-                    await engine.RunGoalAsync(onStream, context, ct);
+                    var result = await engine.RunGoalAsync(onStream, context, ct);
+                    if (!result.Success)
+                        await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
                 }
                 break;
             }
@@ -755,7 +786,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
                 context.MemoryStack.Set(varName, dataBuffer.ToString());
-                await engine.RunGoalAsync(onStream, context, ct);
+                var result = await engine.RunGoalAsync(onStream, context, ct);
+                if (!result.Success)
+                    await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
                 dataBuffer.Clear();
             }
         }
@@ -773,7 +806,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
             System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
 
             context.MemoryStack.Set(varName, chunk);
-            await engine.RunGoalAsync(onStream, context, ct);
+            var result = await engine.RunGoalAsync(onStream, context, ct);
+            if (!result.Success)
+                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
         }
     }
 
@@ -782,7 +817,6 @@ public sealed class DefaultHttpProvider : IHttpProvider
         EngineType engine, PLangContext context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
-        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         while (!ct.IsCancellationRequested)
         {
@@ -790,32 +824,33 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            var signedData = JsonSerializer.Deserialize<SignedData>(line, jsonOptions);
-            if (signedData == null) continue;
+            // Each NDJSON line is a Data object with Signature populated via [In]
+            var data = JsonSerializer.Deserialize<Data>(line, _transportInOptions);
+            if (data == null) continue;
 
-            var verifyData = new Data("");
-            verifyData.Signature = signedData;
-
+            // Verify signature — pass Data straight to verify
             var verifyAction = new signing.verify
             {
                 Context = context,
-                Data = verifyData
+                Data = data
             };
 
             var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
             if (!verifyResult.Success)
             {
                 context.MemoryStack.Set(varName, verifyResult);
-                await engine.RunGoalAsync(onStream, context, ct);
+                var goalResult = await engine.RunGoalAsync(onStream, context, ct);
+                if (!goalResult.Success)
+                    await engine.Channels.WriteAsync(EngineChannels.StdErr, goalResult.Error);
                 continue;
             }
 
-            context.MemoryStack.Set("!ServiceIdentity", signedData.Identity);
+            context.MemoryStack.Set("!ServiceIdentity", data.Signature?.Identity);
+            context.MemoryStack.Set(varName, data);
 
-            var chunkData = Data.Ok(signedData);
-            chunkData.Signature = signedData;
-            context.MemoryStack.Set(varName, chunkData);
-            await engine.RunGoalAsync(onStream, context, ct);
+            var result = await engine.RunGoalAsync(onStream, context, ct);
+            if (!result.Success)
+                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
         }
     }
 
@@ -854,7 +889,9 @@ public sealed class DefaultHttpProvider : IHttpProvider
                         Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
                     };
                     context.MemoryStack.Set(progressVarName, progress);
-                    await engine.RunGoalAsync(onProgress, context, ct);
+                    var result = await engine.RunGoalAsync(onProgress, context, ct);
+                    if (!result.Success)
+                        await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
                 }
             }
         }
