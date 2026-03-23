@@ -59,6 +59,32 @@
         "health": "Pieces 2-3 designed. Identity revision noted (key generation → signing provider). Ready for piece branches.",
         "notes": "Piece 1 revision (opaque key vault) will be applied when piece 3 lands."
       }
+    },
+    {
+      "id": "c8d9e0f1-pieces-2-3-complete",
+      "bot": "multiple",
+      "timestamp_start": "2026-03-19T14:00:00Z",
+      "timestamp_end": "2026-03-23T00:00:00Z",
+      "intent": "Implement pieces 2 (crypto) and 3 (signing), including identity revision",
+      "before": {
+        "assumptions": "Pieces 2-3 designed in v2/plan.md. Identity module implemented but needs key generation moved to signing provider.",
+        "risk": "Medium — new modules, provider interfaces, cross-module dependencies."
+      },
+      "plan": "Build crypto module (hash/verify with Keccak256+SHA256), signing module (sign/verify with Ed25519, nonce replay, contracts), revise identity to delegate key generation to signing provider.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/crypto/", "PLang/Runtime2/modules/signing/", "PLang/Runtime2/Engine/Providers/"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full crypto module (hash, verify, DefaultCryptoProvider), signing module (sign, verify, SignedData, Settings), providers (ISigningProvider, Ed25519Provider, IKeyProvider, KeyPair)"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Pieces 1-3 fully implemented and audited. Security v1 PASS (0 critical, 0 high). OBP compliance verified (7 violations fixed). Documentation complete.",
+        "notes": "Key commits: 238c3548 (OBP fixes), 976ab160 (security audit), 826cddfa (IdentityData throw fix), 4d5d262f (auditor PASS). Piece 4 (HTTP) is next."
+      }
     }
   ]
 }

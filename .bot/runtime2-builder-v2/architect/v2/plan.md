@@ -5,15 +5,16 @@
 Crypto module added as piece 2 (signing needs it for hashing). Everything after shifts by one.
 
 ```
-Piece 1: identity          ← DONE (branch: runtime2-builder-v2-identity)
-Piece 2: crypto            ← NEW — hashing (Keccak256, SHA256, Bcrypt)
-Piece 3: signing           ← was piece 2, depends on identity + crypto
-Piece 4: http              ← depends on signing
-Piece 5: template          ← standalone
-Piece 6: llm               ← depends on http
-Piece 7: error extensions  ← engine-level
-Piece 8: build module      ← depends on all above
-Piece 9: builder v2 integration
+Piece 1: identity          ← DONE
+Piece 2: crypto            ← DONE — hashing (Keccak256, SHA256)
+Piece 3: signing           ← DONE — Ed25519, nonce replay, contracts
+Piece 4: http              ← IN PROGRESS, depends on signing
+Piece 5: cleanup           ← review and clean up pieces 1-4
+Piece 6: template          ← standalone
+Piece 7: llm               ← depends on http
+Piece 8: error extensions  ← engine-level
+Piece 9: build module      ← depends on all above
+Piece 10: builder v2 integration
 ```
 
 ## Revision to Piece 1: Identity becomes opaque key vault
