@@ -299,7 +299,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             totalRead += bytesRead;
             if (totalRead > maxBytes)
                 throw new InvalidOperationException(
-                    $"Response body exceeds maximum size of {maxBytes / (1024 * 1024)}MB");
+                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
         }
 
@@ -325,7 +325,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             totalRead += bytesRead;
             if (totalRead > maxBytes)
                 throw new InvalidOperationException(
-                    $"Response body exceeds maximum size of {maxBytes / (1024 * 1024)}MB");
+                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
             limited.Write(buffer, 0, bytesRead);
         }
 
@@ -1066,6 +1066,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
     }
 
     // --- Static utilities ---
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        >= 1024 * 1024 => $"{bytes / (1024 * 1024)}MB",
+        >= 1024 => $"{bytes / 1024}KB",
+        _ => $"{bytes} bytes"
+    };
 
     private static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
     {

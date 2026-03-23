@@ -230,6 +230,13 @@ public class UploadActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+        // Verify field names are present in the multipart form
+        var multipart = (MultipartFormDataContent)_handler.LastRequest!.Content!;
+        var parts = multipart.ToList();
+        await Assert.That(parts.Count).IsEqualTo(2);
+        var names = parts.Select(p => p.Headers.ContentDisposition!.Name).OrderBy(n => n).ToList();
+        await Assert.That(names).Contains("name");
+        await Assert.That(names).Contains("age");
     }
 
     [Test]
@@ -248,6 +255,12 @@ public class UploadActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+        // Verify field name and value
+        var multipart = (MultipartFormDataContent)_handler.LastRequest!.Content!;
+        var part = multipart.First();
+        await Assert.That(part.Headers.ContentDisposition!.Name).IsEqualTo("field1");
+        var value = await part.ReadAsStringAsync();
+        await Assert.That(value).IsEqualTo("value1");
     }
 
     [Test]

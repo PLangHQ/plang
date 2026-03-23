@@ -259,3 +259,14 @@ When a PLang test fails at runtime:
 - Tracks `AssertionError` failures via an AfterStep event binding
 - Non-assertion errors (runtime crashes) are reported as test errors
 - Exit code 0 = all pass, 1 = any failure
+
+---
+
+## Known Weak Assertions (HTTP Module)
+
+The following tests have weak assertions that the auditor flagged. They pass but don't fully verify the code path. Strengthen when revisiting HTTP tests:
+
+1. **`Stream_Plang_InvalidSignature_SetsErrorOnMemoryStack`** — only checks `!data` is not null. Should verify it's an error Data with a signature-related key. Hard to assert precisely because the streaming callback (goal not found) interacts with the verification error flow.
+2. **`Get_PlangResponseInvalidSignature_ReturnsError`** — checks `Error.Key` is not empty but doesn't assert a specific key. The key depends on how the signing module reports the error (could be `SignatureInvalid`, `InvalidType`, etc. depending on which verification step fails first on a bogus signature).
+
+These are tracked as technical debt, not blocking issues. The non-streaming signing tests (`Get_Signed_XSignatureIsValidJson`, `Get_SignedPlangResponse_SetsServiceIdentity`) have strong assertions and cover the happy path thoroughly.

@@ -571,8 +571,12 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.MemoryStack.Get("!data");
-        await Assert.That(lastValue).IsNotNull();
+        var lastData = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastData).IsNotNull();
+        // Verify byte content was delivered (last chunk contains the input bytes)
+        await Assert.That(lastData!.Value).IsTypeOf<byte[]>();
+        var chunk = (byte[])lastData.Value!;
+        await Assert.That(chunk.Length).IsGreaterThan(0);
     }
 
     [Test]
@@ -687,10 +691,10 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        // Verify !ServiceIdentity was set from the signed stream
+        // Verify !ServiceIdentity was set and matches the signing key
         var identity = Ctx.MemoryStack.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
-        await Assert.That(identity!.ToString()).IsNotEmpty();
+        await Assert.That(identity!.ToString()).IsEqualTo(signResult2.Signature!.Identity);
     }
 
     [Test]
@@ -727,7 +731,9 @@ public class RequestActionTests
 
         // Stream completes (errors are per-line, not fatal)
         await Assert.That(result.Success).IsTrue();
-        // The last value set on MemoryStack should be the verification error
+        // NOTE: Weak assertion — verifying exact MemoryStack state after failed plang stream
+        // verification + failed goal callback is complex. The non-streaming test
+        // (Get_PlangResponseInvalidSignature_ReturnsError) covers the verification error path.
         var lastValue = Ctx.MemoryStack.Get("!data");
         await Assert.That(lastValue).IsNotNull();
     }
@@ -798,6 +804,11 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_handler.LastRequest!.Headers.Contains("X-Signature")).IsTrue();
+        // Verify X-Signature deserializes to a valid SignedData
+        var sigHeader = _handler.LastRequest!.Headers.GetValues("X-Signature").First();
+        var signedData = JsonSerializer.Deserialize<SignedData>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        await Assert.That(signedData).IsNotNull();
+        await Assert.That(signedData!.Identity).IsNotEmpty();
         // Accept header includes application/plang
         var acceptValues = _handler.LastRequest!.Headers.Accept.Select(a => a.MediaType).ToList();
         await Assert.That(acceptValues).Contains("application/plang");
@@ -859,7 +870,8 @@ public class RequestActionTests
         await Assert.That(result.Success).IsTrue();
         var identity = Ctx.MemoryStack.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
-        await Assert.That(identity!.ToString()).IsNotEmpty();
+        // Identity should match the signing key used (same as the one in the signed response)
+        await Assert.That(identity!.ToString()).IsEqualTo(signResult.Signature!.Identity);
     }
 
     [Test]
@@ -897,6 +909,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsNotEmpty();
     }
 
     #endregion
