@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 using PLang.Runtime2.Engine.Errors;
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 
 namespace PLang.Runtime2.Engine.CallStack;
 
@@ -37,16 +38,16 @@ public sealed class @this
     /// <summary>
     /// Pushes a new frame onto the call stack.
     /// </summary>
-    public CallFrame Push(string goalName, string? goalPath = null)
+    public CallFrame Push(Goal goal)
     {
         if (!IsEnabled)
-            return new CallFrame(goalName, goalPath);
+            return new CallFrame(goal);
 
         if (_frames.Count >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
         var parent = Current;
-        var frame = new CallFrame(goalName, goalPath, parent);
+        var frame = new CallFrame(goal, parent);
         _frames.Push(frame);
         return frame;
     }
@@ -85,7 +86,7 @@ public sealed class @this
         if (frame != null)
         {
             frame.Step = step;
-            frame.RecordStep(step.Index, step.Text);
+            frame.RecordStep(step);
         }
     }
 
@@ -175,7 +176,7 @@ public sealed class @this
     /// </summary>
     public bool ContainsGoal(string goalName)
     {
-        return _frames.Any(f => f.GoalName.Equals(goalName, StringComparison.OrdinalIgnoreCase));
+        return _frames.Any(f => f.Goal.Name.Equals(goalName, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -194,19 +195,7 @@ public sealed class @this
     {
         return new SerializableCallStack
         {
-            Frames = _frames.Select(f => new SerializableCallFrame
-            {
-                Id = f.Id,
-                GoalName = f.GoalName,
-                GoalPath = f.GoalPath,
-                Phase = f.Phase.ToString(),
-                CurrentStepIndex = f.Step?.Index ?? -1,
-                CurrentStepText = f.Step?.Text,
-                StartedAt = f.StartedAt,
-                Duration = f.Duration,
-                Depth = f.Depth,
-                HasErrors = f.Errors.Count > 0
-            }).ToList(),
+            Frames = _frames.Select(f => f.ToSerializable()).ToList(),
             Depth = Depth,
             StackTrace = GetStackTrace()
         };

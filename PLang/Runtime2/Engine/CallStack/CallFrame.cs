@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using PLang.Runtime2.Engine.Errors;
+using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 
 namespace PLang.Runtime2.Engine.CallStack;
 
@@ -32,14 +33,9 @@ public sealed class CallFrame : IAsyncDisposable
     public string Id { get; }
 
     /// <summary>
-    /// The goal being executed.
+    /// The goal being executed. Stored as object reference (OBP rule #3).
     /// </summary>
-    public string GoalName { get; }
-
-    /// <summary>
-    /// Path to the goal file.
-    /// </summary>
-    public string? GoalPath { get; }
+    public Goal Goal { get; }
 
     /// <summary>
     /// Current execution phase.
@@ -81,11 +77,10 @@ public sealed class CallFrame : IAsyncDisposable
     /// </summary>
     public int Indent { get; }
 
-    public CallFrame(string goalName, string? goalPath = null, CallFrame? parent = null)
+    public CallFrame(Goal goal, CallFrame? parent = null)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
-        GoalName = goalName;
-        GoalPath = goalPath;
+        Goal = goal;
         Parent = parent;
         Phase = ExecutionPhase.None;
         StartedAt = DateTime.UtcNow;
@@ -101,17 +96,12 @@ public sealed class CallFrame : IAsyncDisposable
     /// <summary>
     /// Records that a step has been executed.
     /// </summary>
-    public void RecordStep(int index, string text)
+    public void RecordStep(Step step)
     {
         if (_executedSteps.Count >= MaxStepsPerFrame)
             return;
 
-        _executedSteps.Add(new ExecutedStep
-        {
-            Index = index,
-            Text = text,
-            StartedAt = DateTime.UtcNow
-        });
+        _executedSteps.Add(new ExecutedStep(step));
     }
 
     /// <summary>
@@ -178,11 +168,11 @@ public sealed class CallFrame : IAsyncDisposable
     /// </summary>
     public string GetStackTrace()
     {
-        var trace = $"  at {GoalName}";
+        var trace = $"  at {Goal.Name}";
         if (Step != null)
             trace += $" (step {Step.Index + 1})";
-        if (!string.IsNullOrEmpty(GoalPath))
-            trace += $" in {GoalPath}";
+        if (!string.IsNullOrEmpty(Goal.Path))
+            trace += $" in {Goal.Path}";
         trace += $" [{Duration.TotalMilliseconds:F1}ms]";
         return trace;
     }
@@ -214,7 +204,21 @@ public sealed class CallFrame : IAsyncDisposable
         _disposables.Clear();
     }
 
-    public override string ToString() => $"[{Id}] {GoalName} - {Phase}";
+    public SerializableCallFrame ToSerializable() => new()
+    {
+        Id = Id,
+        GoalName = Goal.Name,
+        GoalPath = Goal.Path,
+        Phase = Phase.ToString(),
+        CurrentStepIndex = Step?.Index ?? -1,
+        CurrentStepText = Step?.Text,
+        StartedAt = StartedAt,
+        Duration = Duration,
+        Depth = Depth,
+        HasErrors = Errors.Count > 0
+    };
+
+    public override string ToString() => $"[{Id}] {Goal.Name} - {Phase}";
 
     public const int MaxStepsPerFrame = 100_000;
 }

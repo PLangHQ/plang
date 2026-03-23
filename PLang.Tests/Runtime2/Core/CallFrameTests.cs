@@ -6,25 +6,28 @@ namespace PLang.Tests.Runtime2.Core;
 public class CallFrameTests
 {
     [Test]
-    public async Task Constructor_SetsGoalName()
+    public async Task Constructor_SetsGoal()
     {
-        var frame = new CallFrame("TestGoal");
+        var goal = new Goal { Name = "TestGoal" };
+        var frame = new CallFrame(goal);
 
-        await Assert.That(frame.GoalName).IsEqualTo("TestGoal");
+        await Assert.That(frame.Goal).IsEqualTo(goal);
+        await Assert.That(frame.Goal.Name).IsEqualTo("TestGoal");
     }
 
     [Test]
-    public async Task Constructor_SetsGoalPath()
+    public async Task Constructor_SetsGoalWithPath()
     {
-        var frame = new CallFrame("TestGoal", "/path/to/goal.pr");
+        var goal = new Goal { Name = "TestGoal", Path = "/path/to/goal.pr" };
+        var frame = new CallFrame(goal);
 
-        await Assert.That(frame.GoalPath).IsEqualTo("/path/to/goal.pr");
+        await Assert.That(frame.Goal.Path).IsEqualTo("/path/to/goal.pr");
     }
 
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.Id).IsNotNull();
         await Assert.That(frame.Id.Length).IsEqualTo(8);
@@ -35,7 +38,7 @@ public class CallFrameTests
     {
         var before = DateTime.UtcNow;
 
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         var after = DateTime.UtcNow;
         await Assert.That(frame.StartedAt).IsGreaterThanOrEqualTo(before);
@@ -45,7 +48,7 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_DefaultsPhaseToNone()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.Phase).IsEqualTo(ExecutionPhase.None);
     }
@@ -53,7 +56,7 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_DefaultsStepToNull()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.Step).IsNull();
     }
@@ -61,8 +64,8 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_SetsParent()
     {
-        var parent = new CallFrame("ParentGoal");
-        var child = new CallFrame("ChildGoal", parent: parent);
+        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
+        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
 
         await Assert.That(child.Parent).IsEqualTo(parent);
     }
@@ -70,8 +73,8 @@ public class CallFrameTests
     [Test]
     public async Task Constructor_SetsIndent()
     {
-        var parent = new CallFrame("ParentGoal");
-        var child = new CallFrame("ChildGoal", parent: parent);
+        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
+        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
 
         await Assert.That(parent.Indent).IsEqualTo(0);
         await Assert.That(child.Indent).IsEqualTo(1);
@@ -80,7 +83,7 @@ public class CallFrameTests
     [Test]
     public async Task CompletedAt_DefaultsToNull()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.CompletedAt).IsNull();
     }
@@ -88,7 +91,7 @@ public class CallFrameTests
     [Test]
     public async Task Errors_DefaultsToEmpty()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.Errors.Count).IsEqualTo(0);
     }
@@ -96,7 +99,7 @@ public class CallFrameTests
     [Test]
     public async Task Phase_CanBeSet()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         frame.Phase = ExecutionPhase.ExecutingGoal;
 
@@ -106,7 +109,7 @@ public class CallFrameTests
     [Test]
     public async Task Step_CanBeSet()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         var step = new Step { Index = 5, Text = "call http endpoint", LineNumber = 6 };
 
         frame.Step = step;
@@ -119,7 +122,7 @@ public class CallFrameTests
     [Test]
     public async Task EventId_CanBeSet()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         frame.EventId = "event123";
 
@@ -129,7 +132,7 @@ public class CallFrameTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         await Task.Delay(10);
 
         var duration = frame.Duration;
@@ -140,13 +143,14 @@ public class CallFrameTests
     [Test]
     public async Task RecordStep_AddsStep()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        var step = new Step { Index = 0, Text = "first step" };
 
-        frame.RecordStep(0, "first step");
+        frame.RecordStep(step);
 
         await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(1);
-        await Assert.That(frame.ExecutedSteps[0].Index).IsEqualTo(0);
-        await Assert.That(frame.ExecutedSteps[0].Text).IsEqualTo("first step");
+        await Assert.That(frame.ExecutedSteps[0].Step.Index).IsEqualTo(0);
+        await Assert.That(frame.ExecutedSteps[0].Step.Text).IsEqualTo("first step");
     }
 
     [Test]
@@ -154,8 +158,8 @@ public class CallFrameTests
     {
         var before = DateTime.UtcNow;
 
-        var frame = new CallFrame("TestGoal");
-        frame.RecordStep(0, "step");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         var after = DateTime.UtcNow;
         await Assert.That(frame.ExecutedSteps[0].StartedAt).IsGreaterThanOrEqualTo(before);
@@ -165,11 +169,11 @@ public class CallFrameTests
     [Test]
     public async Task RecordStep_RespectsMaxStepsLimit()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         for (int i = 0; i <= CallFrame.MaxStepsPerFrame; i++)
         {
-            frame.RecordStep(i, $"step {i}");
+            frame.RecordStep(new Step { Index = i, Text = $"step {i}" });
         }
 
         await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(CallFrame.MaxStepsPerFrame);
@@ -178,8 +182,8 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_SetsCompletedAt()
     {
-        var frame = new CallFrame("TestGoal");
-        frame.RecordStep(0, "step");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         frame.CompleteCurrentStep();
 
@@ -189,8 +193,8 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_SetsDuration()
     {
-        var frame = new CallFrame("TestGoal");
-        frame.RecordStep(0, "step");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        frame.RecordStep(new Step { Index = 0, Text = "step" });
         await Task.Delay(10);
 
         frame.CompleteCurrentStep();
@@ -202,8 +206,8 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_WithExplicitDuration_UsesDuration()
     {
-        var frame = new CallFrame("TestGoal");
-        frame.RecordStep(0, "step");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
+        frame.RecordStep(new Step { Index = 0, Text = "step" });
 
         frame.CompleteCurrentStep(TimeSpan.FromMilliseconds(100));
 
@@ -213,7 +217,7 @@ public class CallFrameTests
     [Test]
     public async Task CompleteCurrentStep_NoSteps_DoesNotThrow()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         frame.CompleteCurrentStep();
 
@@ -223,7 +227,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsCompletedAt()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         frame.Complete();
 
@@ -233,7 +237,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsPhaseToNone_WhenNoErrors()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         frame.Complete();
 
@@ -243,7 +247,7 @@ public class CallFrameTests
     [Test]
     public async Task Complete_SetsPhaseToError_WhenHasErrors()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         frame.AddError(new Error("Test error"));
 
         frame.Complete();
@@ -254,7 +258,7 @@ public class CallFrameTests
     [Test]
     public async Task AddError_AddsToErrorsList()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         var error = new Error("Test error");
 
         frame.AddError(error);
@@ -266,7 +270,7 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsFalse_WhenNoEventId()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.IsInEvent).IsFalse();
     }
@@ -274,7 +278,7 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsTrue_WhenHasEventId()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         frame.EventId = "event123";
 
         await Assert.That(frame.IsInEvent).IsTrue();
@@ -283,9 +287,9 @@ public class CallFrameTests
     [Test]
     public async Task IsInEvent_ReturnsTrue_WhenParentIsInEvent()
     {
-        var parent = new CallFrame("ParentGoal");
+        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
         parent.EventId = "event123";
-        var child = new CallFrame("ChildGoal", parent: parent);
+        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
 
         await Assert.That(child.IsInEvent).IsTrue();
     }
@@ -293,7 +297,7 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsZero_WhenNoParent()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         await Assert.That(frame.Depth).IsEqualTo(0);
     }
@@ -301,8 +305,8 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsOne_WhenHasParent()
     {
-        var parent = new CallFrame("ParentGoal");
-        var child = new CallFrame("ChildGoal", parent: parent);
+        var parent = new CallFrame(new Goal { Name = "ParentGoal" });
+        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
 
         await Assert.That(child.Depth).IsEqualTo(1);
     }
@@ -310,9 +314,9 @@ public class CallFrameTests
     [Test]
     public async Task Depth_ReturnsTwoForGrandchild()
     {
-        var grandparent = new CallFrame("GrandparentGoal");
-        var parent = new CallFrame("ParentGoal", parent: grandparent);
-        var child = new CallFrame("ChildGoal", parent: parent);
+        var grandparent = new CallFrame(new Goal { Name = "GrandparentGoal" });
+        var parent = new CallFrame(new Goal { Name = "ParentGoal" }, parent: grandparent);
+        var child = new CallFrame(new Goal { Name = "ChildGoal" }, parent: parent);
 
         await Assert.That(child.Depth).IsEqualTo(2);
     }
@@ -320,7 +324,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesGoalName()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
 
         var trace = frame.GetStackTrace();
 
@@ -330,7 +334,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesStepIndex()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         frame.Step = new Step { Index = 5, Text = "test step", LineNumber = 6 };
 
         var trace = frame.GetStackTrace();
@@ -341,7 +345,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesGoalPath()
     {
-        var frame = new CallFrame("TestGoal", "/path/to/goal.pr");
+        var frame = new CallFrame(new Goal { Name = "TestGoal", Path = "/path/to/goal.pr" });
 
         var trace = frame.GetStackTrace();
 
@@ -351,7 +355,7 @@ public class CallFrameTests
     [Test]
     public async Task GetStackTrace_IncludesDuration()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         await Task.Delay(10);
 
         var trace = frame.GetStackTrace();
@@ -362,7 +366,7 @@ public class CallFrameTests
     [Test]
     public async Task ToString_ReturnsFormattedString()
     {
-        var frame = new CallFrame("TestGoal");
+        var frame = new CallFrame(new Goal { Name = "TestGoal" });
         frame.Phase = ExecutionPhase.ExecutingStep;
 
         var str = frame.ToString();
@@ -376,38 +380,35 @@ public class CallFrameTests
 public class ExecutedStepTests
 {
     [Test]
-    public async Task Properties_CanBeInitialized()
+    public async Task Properties_StoresStepReference()
     {
-        var step = new ExecutedStep
-        {
-            Index = 5,
-            Text = "test step",
-            StartedAt = DateTime.UtcNow
-        };
+        var step = new Step { Index = 5, Text = "test step" };
+        var executed = new ExecutedStep(step);
 
-        await Assert.That(step.Index).IsEqualTo(5);
-        await Assert.That(step.Text).IsEqualTo("test step");
-        await Assert.That(step.StartedAt).IsNotEqualTo(default(DateTime));
+        await Assert.That(executed.Step).IsEqualTo(step);
+        await Assert.That(executed.Step.Index).IsEqualTo(5);
+        await Assert.That(executed.Step.Text).IsEqualTo("test step");
+        await Assert.That(executed.StartedAt).IsNotEqualTo(default(DateTime));
     }
 
     [Test]
     public async Task CompletedAt_CanBeSet()
     {
-        var step = new ExecutedStep { Index = 0, Text = "step" };
+        var executed = new ExecutedStep(new Step { Index = 0, Text = "step" });
 
-        step.CompletedAt = DateTime.UtcNow;
+        executed.CompletedAt = DateTime.UtcNow;
 
-        await Assert.That(step.CompletedAt).IsNotNull();
+        await Assert.That(executed.CompletedAt).IsNotNull();
     }
 
     [Test]
     public async Task Duration_CanBeSet()
     {
-        var step = new ExecutedStep { Index = 0, Text = "step" };
+        var executed = new ExecutedStep(new Step { Index = 0, Text = "step" });
 
-        step.Duration = TimeSpan.FromMilliseconds(100);
+        executed.Duration = TimeSpan.FromMilliseconds(100);
 
-        await Assert.That(step.Duration).IsNotNull();
-        await Assert.That(step.Duration!.Value.TotalMilliseconds).IsEqualTo(100);
+        await Assert.That(executed.Duration).IsNotNull();
+        await Assert.That(executed.Duration!.Value.TotalMilliseconds).IsEqualTo(100);
     }
 }

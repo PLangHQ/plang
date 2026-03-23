@@ -50,7 +50,7 @@ public sealed partial class @this
         if (!beforeResult) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        context.CallStack?.Push(Name, Path);
+        context.CallStack?.Push(this);
 
         try
         {

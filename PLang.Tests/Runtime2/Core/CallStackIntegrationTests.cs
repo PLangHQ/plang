@@ -141,10 +141,10 @@ public class CallStackIntegrationTests
 
         await Assert.That(callStack.Depth).IsEqualTo(0);
 
-        callStack.Push("Goal1");
+        callStack.Push(new Goal { Name = "Goal1" });
         await Assert.That(callStack.Depth).IsEqualTo(1);
 
-        callStack.Push("Goal2");
+        callStack.Push(new Goal { Name = "Goal2" });
         await Assert.That(callStack.Depth).IsEqualTo(2);
     }
 
@@ -152,8 +152,8 @@ public class CallStackIntegrationTests
     public async Task CallStack_Pop_DecreasesDepth()
     {
         var callStack = new CallStack();
-        callStack.Push("Goal1");
-        callStack.Push("Goal2");
+        callStack.Push(new Goal { Name = "Goal1" });
+        callStack.Push(new Goal { Name = "Goal2" });
 
         await callStack.PopAsync();
         await Assert.That(callStack.Depth).IsEqualTo(1);
@@ -166,23 +166,23 @@ public class CallStackIntegrationTests
     public async Task CallStack_RecordStep_TracksInCurrentFrame()
     {
         var callStack = new CallStack();
-        callStack.Push("TestGoal");
+        callStack.Push(new Goal { Name = "TestGoal" });
 
         callStack.RecordStep(new Step { Index = 0, Text = "step one" });
         callStack.RecordStep(new Step { Index = 1, Text = "step two" });
 
         var frame = callStack.Current!;
         await Assert.That(frame.ExecutedSteps.Count).IsEqualTo(2);
-        await Assert.That(frame.ExecutedSteps[0].Text).IsEqualTo("step one");
-        await Assert.That(frame.ExecutedSteps[1].Text).IsEqualTo("step two");
+        await Assert.That(frame.ExecutedSteps[0].Step.Text).IsEqualTo("step one");
+        await Assert.That(frame.ExecutedSteps[1].Step.Text).IsEqualTo("step two");
     }
 
     [Test]
     public async Task CallStack_ContainsGoal_FindsActiveGoal()
     {
         var callStack = new CallStack();
-        callStack.Push("Goal1");
-        callStack.Push("Goal2");
+        callStack.Push(new Goal { Name = "Goal1" });
+        callStack.Push(new Goal { Name = "Goal2" });
 
         await Assert.That(callStack.ContainsGoal("Goal1")).IsTrue();
         await Assert.That(callStack.ContainsGoal("Goal2")).IsTrue();

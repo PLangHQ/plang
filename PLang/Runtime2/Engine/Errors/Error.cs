@@ -162,7 +162,7 @@ public class Error : IError
             foreach (var frame in error.CallFrames)
             {
                 var stepInfo = frame.Step != null ? $":{frame.Step.LineNumber}" : "";
-                sb.AppendLine($"{indent}    {frame.GoalName} - {frame.GoalPath}{stepInfo}");
+                sb.AppendLine($"{indent}    {frame.Goal.Name} - {frame.Goal.Path}{stepInfo}");
             }
         }
 

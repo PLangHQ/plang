@@ -441,7 +441,7 @@ public class EngineTests
         var step = MakeStep("variable", "clear", index: 5, text: "test step");
 
         using var context = engine.CreateContext();
-        context.CallStack!.Push("TestGoal");
+        context.CallStack!.Push(new Goal { Name = "TestGoal" });
         await step.RunAsync(engine, context);
 
         await Assert.That(context.CallStack.Current!.Step).IsNotNull();
