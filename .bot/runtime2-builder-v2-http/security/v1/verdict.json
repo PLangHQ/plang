@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "0 critical, 0 high, 2 medium, 5 low findings. Trust boundary (Ed25519 signatures) holds. Medium findings are hardening opportunities (response size limit, ToSigningBytes thread safety), not exploitable in normal flow."
+}

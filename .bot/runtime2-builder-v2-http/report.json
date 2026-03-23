@@ -440,14 +440,22 @@
       "plan": "Run tests, collect coverage, analyze test quality with false-green hunting, write test-report.json",
       "actions": [
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs", "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs", "PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "All 54 HTTP tests use MockHttpProvider replacing real provider. Tests verify action delegation, not provider logic. 5 specific false greens identified."
         },
         {
-          "paths": [".bot/runtime2-builder-v2-http/test-report.json"],
+          "paths": [
+            ".bot/runtime2-builder-v2-http/test-report.json"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -455,7 +463,7 @@
         }
       ],
       "after": {
-        "status": "Complete — verdict FAIL",
+        "status": "Complete \u2014 verdict FAIL",
         "health": "DefaultHttpProvider at 5.7% coverage. Send back to coder.",
         "notes": "Root cause: tests mock at IHttpProvider level instead of HttpMessageHandler level. Fix: TestableHttpProvider subclass with injected mock handler."
       }
@@ -473,14 +481,21 @@
       "plan": "Pull coder fix, run tests + coverage, verify v2 findings resolved, fresh-eye analysis of all test files",
       "actions": [
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs", "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "All tests rewritten correctly with MockHttpMessageHandler. Coverage 5.7% → 88.3%. V2 critical/major findings resolved. 7 minor findings remain."
+          "context": "All tests rewritten correctly with MockHttpMessageHandler. Coverage 5.7% \u2192 88.3%. V2 critical/major findings resolved. 7 minor findings remain."
         },
         {
-          "paths": [".bot/runtime2-builder-v2-http/test-report.json"],
+          "paths": [
+            ".bot/runtime2-builder-v2-http/test-report.json"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -488,7 +503,7 @@
         }
       ],
       "after": {
-        "status": "Complete — verdict FAIL (revised from initial PASS)",
+        "status": "Complete \u2014 verdict FAIL (revised from initial PASS)",
         "health": "3 false greens remain + form upload at 0%. Send back to coder.",
         "notes": "Initially approved but revised after self-challenge. 3 tests pass even if code is broken (auto-detect, JSON parsing, upload response). CreateFormContentAsync at 0% is a real user feature. Coverage improvement is real but assertions need strengthening."
       }
@@ -506,21 +521,27 @@
       "plan": "Add 25 tests: exception mapping (3), streaming (7), header merging (2), signed requests (4), form upload (4), config override (1). All use existing MockHttpMessageHandler pattern.",
       "actions": [
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
           "context": "Added 19 tests: exception mapping (HttpRequestException/IOException/FormatException), streaming (lines/SSE/bytes/error/custom-var/unsigned-plang), header merging (default+step/content-routing), signing (X-Signature header/valid JSON/plang response/invalid signature)"
         },
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Added 4 tests: dict auto-detect form, explicit form, @file reference with filename, auto-detect object→JSON"
+          "context": "Added 4 tests: dict auto-detect form, explicit form, @file reference with filename, auto-detect object\u2192JSON"
         },
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -528,7 +549,7 @@
         }
       ],
       "after": {
-        "status": "Complete — 25 new tests, 59 HTTP total, all pass",
+        "status": "Complete \u2014 25 new tests, 59 HTTP total, all pass",
         "health": "1915 pass, 8 skipped, 3 failures (pre-existing DLL fixtures)",
         "notes": "Signing tests confirmed Ed25519Provider auto-registers and X-Signature roundtrip works. Streaming tests verified MemoryStack receives streamed data despite callback goal not found."
       }
@@ -546,14 +567,20 @@
       "plan": "Run tests + coverage, verify all v3-revised findings resolved, fresh-eye analysis of 25 new tests",
       "actions": [
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs", "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "All 7 v3-revised findings resolved. 25 new tests are well-designed: strong assertions, behavioral verification, real signing integration. Coverage 95.9% line, 78.7% branch."
         },
         {
-          "paths": [".bot/runtime2-builder-v2-http/test-report.json"],
+          "paths": [
+            ".bot/runtime2-builder-v2-http/test-report.json"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -561,9 +588,93 @@
         }
       ],
       "after": {
-        "status": "Complete — verdict PASS",
+        "status": "Complete \u2014 verdict PASS",
         "health": "95.9% provider coverage, 59 HTTP tests, all honest. Ready for security.",
         "notes": "3 minor non-blocking: StreamWithProgressAsync 44.4%, TryExtractSignedErrorIdentity 0%, one weak Error.Key assertion."
+      }
+    },
+    {
+      "id": "sec-001",
+      "bot": "security",
+      "timestamp_start": "2026-03-23T20:00:00Z",
+      "timestamp_end": "2026-03-23T20:45:00Z",
+      "intent": "Security audit of HTTP module, provider system, crypto/signing, transport serialization",
+      "before": {
+        "assumptions": "HTTP module is new code on this branch. Provider registry, signing, crypto, identity modules exist from prior branches. Test coverage is at 95.9% per tester report.",
+        "risk": "HTTP module handles external untrusted data (responses, headers, streaming). Signing integration is the trust boundary. Provider loading via Assembly.LoadFrom is by-design but worth documenting."
+      },
+      "plan": "Blue team + red team audit of HTTP module, provider registry, crypto/signing, transport serialization. 6 attack surface areas, 9 findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/Runtime2/modules/http/request.cs",
+            "PLang/Runtime2/modules/http/download.cs",
+            "PLang/Runtime2/modules/http/upload.cs",
+            "PLang/Runtime2/modules/http/configure.cs",
+            "PLang/Runtime2/modules/http/Config.cs",
+            "PLang/Runtime2/modules/http/types.cs",
+            "PLang/Runtime2/modules/http/providers/IHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full HTTP module security review \u2014 response parsing, streaming, signing integration, upload content resolution"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/modules/signing/sign.cs",
+            "PLang/Runtime2/modules/signing/verify.cs",
+            "PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/Runtime2/modules/signing/Config.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Signing/verification pipeline audit \u2014 9-step VerifyAsync, ToSigningBytes, nonce replay, crypto"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/modules/provider/load.cs",
+            "PLang/Runtime2/Engine/Config/this.cs",
+            "PLang/Runtime2/Engine/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Provider registry, config scope chain, engine provider registration"
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/SensitivePropertyFilter.cs",
+            "PLang/Runtime2/Engine/View.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Transport serialization \u2014 [In]/[Out]/[Sensitive] attribute system"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-http/security-report.json",
+            ".bot/runtime2-builder-v2-http/security/v1/verdict.json",
+            ".bot/runtime2-builder-v2-http/security/v1/summary.md",
+            ".bot/runtime2-builder-v2-http/security/v1/plan.md",
+            ".bot/runtime2-builder-v2-http/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security audit deliverables \u2014 report, verdict, summaries"
+        }
+      ],
+      "after": {
+        "status": "Complete \u2014 PASS verdict",
+        "health": "0 critical, 0 high, 2 medium, 5 low. Trust boundary holds.",
+        "notes": "Medium findings: (1) no response body size limit, (2) ToSigningBytes thread safety. Both are hardening opportunities, not exploitable in normal flow."
       }
     }
   ]
