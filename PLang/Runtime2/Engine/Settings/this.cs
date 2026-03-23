@@ -75,6 +75,38 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Applies non-null properties from a source object to the settings scope.
+    /// Matches source properties against TConfig property names, writes with module prefix.
+    /// Replaces manual if-null-set chains in provider Configure methods.
+    /// </summary>
+    public void Apply<TConfig>(object source, PLangContext context, bool isDefault = false)
+        where TConfig : ISettings, new()
+    {
+        var prefix = ResolvePrefix<TConfig>();
+        var configProps = typeof(TConfig).GetProperties()
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var prop in source.GetType().GetProperties())
+        {
+            if (!configProps.Contains(prop.Name)) continue;
+
+            var value = prop.GetValue(source);
+            if (value == null) continue;
+
+            // For nullable value types, HasValue is already checked by the null check above
+            Set($"{prefix}.{prop.Name}", value, context, isDefault);
+        }
+    }
+
+    private static string ResolvePrefix<TConfig>()
+    {
+        var fullName = typeof(TConfig).Namespace ?? "";
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+    }
+
+    /// <summary>
     /// Writes a setting value to the appropriate scope.
     /// If isDefault is true, writes to engine Defaults. Otherwise writes to the context's goal scope.
     /// </summary>

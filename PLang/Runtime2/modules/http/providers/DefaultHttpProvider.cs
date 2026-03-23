@@ -228,32 +228,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     public Data Configure(configure action)
     {
-        var engine = action.Context.Engine;
-        var isDefault = action.Default;
-
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
         if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
             return Data.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        if (action.TimeoutInSec.HasValue)
-            engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
-        if (action.BaseUrl != null)
-            engine.Settings.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
-        if (action.DefaultHeaders != null)
-            engine.Settings.Set("http.DefaultHeaders", action.DefaultHeaders, action.Context, isDefault);
-        if (action.ContentType != null)
-            engine.Settings.Set("http.ContentType", action.ContentType, action.Context, isDefault);
-        if (action.Encoding != null)
-            engine.Settings.Set("http.Encoding", action.Encoding, action.Context, isDefault);
-        if (action.Unsigned.HasValue)
-            engine.Settings.Set("http.Unsigned", action.Unsigned.Value, action.Context, isDefault);
-        if (action.FollowRedirects.HasValue)
-            engine.Settings.Set("http.FollowRedirects", action.FollowRedirects.Value, action.Context, isDefault);
-        if (action.MaxRedirects.HasValue)
-            engine.Settings.Set("http.MaxRedirects", action.MaxRedirects.Value, action.Context, isDefault);
-
+        action.Context.Engine.Settings.Apply<Config>(action, action.Context, action.Default);
         return Data.Ok();
     }
 
