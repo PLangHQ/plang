@@ -50,7 +50,7 @@ public sealed class Actor : IAsyncDisposable
     /// Resolves an actor by name using the engine.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static Actor? Resolve(string name, Engine.@this engine) => engine.GetActor(name).Actor;
+    public static Actor? Resolve(string name, PLangContext context) => context.Engine.GetActor(name).Actor;
 
     /// <summary>
     /// Valid values for LLM action summaries.

@@ -102,14 +102,15 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isVariableName = prop.GetAttributes().Any(a =>
                     a.AttributeClass?.Name == "VariableNameAttribute");
 
-                // Check if type has static Resolve(string, Engine) method
+                // Check if type has static Resolve(string, PLangContext) method
                 var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
                     && namedType.GetMembers("Resolve")
                         .OfType<IMethodSymbol>()
                         .Any(m => m.IsStatic
                             && m.Parameters.Length == 2
                             && m.Parameters[0].Type.SpecialType == SpecialType.System_String
-                            && m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine");
+                            && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine"
+                                || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine.Context"));
 
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
@@ -187,11 +188,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
             string resolveExpr;
             if (prop.IsEngineResolvable)
             {
-                // Engine-resolvable types: resolve raw string then call Type.Resolve(string, Engine)
+                // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
                 if (prop.DefaultValue != null)
                     rawStr = $"({rawStr} ?? {prop.DefaultValue})";
-                resolveExpr = $"{prop.TypeName}.Resolve({rawStr}, __engine!)!";
+                resolveExpr = $"{prop.TypeName}.Resolve({rawStr}, Context)!";
             }
             else if (prop.IsVariableName)
             {

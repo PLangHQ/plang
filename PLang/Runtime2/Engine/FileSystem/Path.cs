@@ -1,14 +1,17 @@
 using PLang.Interfaces;
 using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Utility;
+using PLangContext = PLang.Runtime2.Engine.Context.PLangContext;
 
-namespace PLang.Runtime2.Engine.Memory;
+namespace PLang.Runtime2.Engine.FileSystem;
 
 /// <summary>
 /// Rich path wrapper for PLang action parameters.
 /// Resolves raw path strings into absolute paths with navigable properties.
-/// The source generator detects Resolve(string, Engine) and auto-wraps string parameters.
+/// Relative paths resolve against the goal's folder, not the engine root.
+/// The source generator detects Resolve(string, PLangContext) and auto-wraps string parameters.
 /// </summary>
 public sealed class Path
 {
@@ -23,23 +26,48 @@ public sealed class Path
     private string? _fileNameWithoutExtension;
     private string? _directory;
 
-    public Path(string rawPath, Engine.@this engine)
+    /// <summary>
+    /// Internal constructor for absolute paths (e.g., ResolveDestination).
+    /// No goal-relative resolution needed — path is already resolved.
+    /// </summary>
+    private Path(string absolutePath, Engine.@this engine)
     {
-        ArgumentNullException.ThrowIfNull(rawPath);
-        ArgumentNullException.ThrowIfNull(engine);
-
-        _rawPath = rawPath;
+        _rawPath = absolutePath;
         _engine = engine;
         _fs = engine.FileSystem;
+        _absolutePath = _fs.ValidatePath(absolutePath);
+    }
+
+    public Path(string rawPath, PLangContext context)
+    {
+        ArgumentNullException.ThrowIfNull(rawPath);
+        ArgumentNullException.ThrowIfNull(context);
+
+        _rawPath = rawPath;
+        _engine = context.Engine;
+        _fs = _engine.FileSystem;
+
+        // Relative paths resolve against the goal's folder
+        if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
+        {
+            var goalPath = context.Goal?.Path;
+            if (!string.IsNullOrEmpty(goalPath))
+            {
+                var goalDir = _fs.Path.GetDirectoryName(goalPath);
+                if (!string.IsNullOrEmpty(goalDir))
+                    rawPath = _fs.Path.Combine(goalDir, rawPath);
+            }
+        }
+
         _absolutePath = _fs.ValidatePath(rawPath);
     }
 
     /// <summary>
-    /// Engine-resolvable convention — source generator detects this static method
-    /// and generates: Path.Resolve(__Resolve&lt;string&gt;("path"), __engine!)
+    /// Context-resolvable convention — source generator detects this static method
+    /// and generates: Path.Resolve(__Resolve&lt;string&gt;("path"), Context)
     /// </summary>
-    public static Path Resolve(string rawPath, Engine.@this engine)
-        => new Path(rawPath, engine);
+    public static Path Resolve(string rawPath, PLangContext context)
+        => new Path(rawPath, context);
 
     /// <summary>The raw path string as provided (before resolution)</summary>
     public string Raw => _rawPath;

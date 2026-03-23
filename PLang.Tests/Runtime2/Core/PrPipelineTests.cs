@@ -131,15 +131,14 @@ public class PrPipelineTests
     }
 
     [Test]
-    public async Task FilePaths_RelativeResolvesAgainstRoot_NotGoalFolder()
+    public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
         engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
-        // A goal in /sub/ tries to read "subdata.txt" (relative)
-        // This resolves to {root}/subdata.txt, NOT {root}/sub/subdata.txt
-        // The goal must use "sub/subdata.txt" or "/sub/subdata.txt" instead
+        // A goal in /sub/ reads "subdata.txt" (relative)
+        // This resolves to {root}/sub/subdata.txt — relative to goal folder
         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
         {
             Name = "SubRelative",
@@ -168,9 +167,9 @@ public class PrPipelineTests
         using var context = engine.CreateContext();
         var result = await engine.RunGoalAsync(goal, context);
 
-        // File not found — relative resolves to {root}/subdata.txt, not {root}/sub/subdata.txt
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.MemoryStack.GetValue("content")!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]

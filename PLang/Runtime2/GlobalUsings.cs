@@ -30,8 +30,8 @@ global using Serializers = PLang.Runtime2.Engine.Channels.Serializers.@this;
 global using SerializeOptions = PLang.Runtime2.Engine.Channels.Serializers.SerializeOptions;
 global using DeserializeOptions = PLang.Runtime2.Engine.Channels.Serializers.DeserializeOptions;
 
-// Memory types
-global using PLangPath = PLang.Runtime2.Engine.Memory.Path;
+// FileSystem types
+global using PLangPath = PLang.Runtime2.Engine.FileSystem.Path;
 
 // Config subsystem
 global using EngineConfig = PLang.Runtime2.Engine.Config.@this;
