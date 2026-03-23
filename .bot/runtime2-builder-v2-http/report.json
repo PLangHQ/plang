@@ -290,6 +290,46 @@
         "health": "No code changes — design only",
         "notes": "Implementation deferred. Not blocking HTTP module completion."
       }
+    },
+    {
+      "id": "test-designer-002",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-23T10:00:00Z",
+      "timestamp_end": "2026-03-23T10:30:00Z",
+      "intent": "Add tests for TransportPropertyFilter and Settings.Apply — caught bug in filter",
+      "before": {
+        "assumptions": "TransportPropertyFilter and Settings.Apply had zero test coverage. Both are new components from coder-003.",
+        "risk": "TransportPropertyFilter is security-critical — Data.Signature must round-trip for application/plang. Settings.Apply uses reflection to write scope chain."
+      },
+      "plan": "7 TransportPropertyFilter tests + 8 Settings.Apply tests.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Serializers/TransportPropertyFilterTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "7 tests: inbound deserialization, outbound serialization, roundtrip, null signature, default JSON exclusion, no-op on plain types"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Engine/Settings/SettingsApplyTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "8 tests: non-null writes, null skipping, config-only properties, isDefault scope, nullable value types, dictionaries, multi-call merge"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs"],
+          "type": "modify",
+          "category": "bugfix",
+          "confidence": "high",
+          "context": "BUG FIX: CreateJsonPropertyInfo + Properties.Add does NOT override [JsonIgnore] in System.Text.Json. Fixed by removing existing hidden entries before re-adding with fresh Get/Set delegates. Data.Signature was silently never deserializing from application/plang responses."
+        }
+      ],
+      "after": {
+        "status": "Complete — 15 tests added, 1 bug fixed",
+        "health": "1891 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
+        "notes": "TransportPropertyFilter was broken since creation — Data.Signature never deserialized from wire. All application/plang response handling (ParsePlangResponseAsync, StreamPlangAsync) was silently getting null Signature. Fixed and verified via roundtrip test."
+      }
     }
   ]
 }
