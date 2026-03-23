@@ -11,7 +11,7 @@
           "module": "file",
           "action": "read",
           "parameters": [
-            { "name": "path", "value": "/testdata.txt" }
+            { "name": "path", "value": "testdata.txt" }
           ],
           "return": [
             { "name": "content" }

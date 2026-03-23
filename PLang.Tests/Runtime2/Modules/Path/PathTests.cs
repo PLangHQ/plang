@@ -37,7 +37,7 @@ public class PathTests : IDisposable
     public async Task Absolute_ResolvesRelativePath()
     {
         var p = new PLangPath("config.json", _engine);
-        var expected = _fs.Path.GetFullPath("config.json");
+        var expected = _fs.Path.Combine(_tempDir, "config.json");
         await Assert.That(p.Absolute).IsEqualTo(expected);
     }
 

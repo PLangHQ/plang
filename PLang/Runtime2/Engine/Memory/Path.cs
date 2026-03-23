@@ -31,7 +31,7 @@ public sealed class Path
         _rawPath = rawPath;
         _engine = engine;
         _fs = engine.FileSystem;
-        _absolutePath = _fs.Path.GetFullPath(rawPath);
+        _absolutePath = _fs.ValidatePath(rawPath);
     }
 
     /// <summary>
