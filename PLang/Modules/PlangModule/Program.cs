@@ -233,7 +233,81 @@ namespace PLang.Modules.PlangModule
 			// Resolve PrPath for goalcall parameters
 			ResolveGoalCallPaths(actions);
 
+			// Fill build-time defaults for determinism
+			foreach (var action in actions)
+				FillDefaults(action, libraries);
+
 			return (true, null);
+		}
+
+		private static void FillDefaults(R2Action action, EngineLibraries libraries)
+		{
+			var actionType = libraries.GetActionType(action.Module, action.ActionName);
+			if (actionType == null) return;
+
+			var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			if (action.Parameters != null)
+			{
+				foreach (var p in action.Parameters)
+					paramNames.Add(p.Name);
+			}
+
+			// Determine defaults source: IConfigure<TConfig> → TConfig instance, else → [Default] attributes
+			var configType = GetConfigureType(actionType);
+			action.Defaults = configType != null
+				? FillFromConfigInstance(configType, paramNames)
+				: FillFromAttributes(actionType, paramNames);
+		}
+
+		/// <summary>
+		/// If the action type implements IConfigure&lt;TConfig&gt;, returns TConfig. Otherwise null.
+		/// </summary>
+		private static Type? GetConfigureType(Type actionType)
+		{
+			foreach (var iface in actionType.GetInterfaces())
+			{
+				if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(PLang.Runtime2.modules.IConfigure<>))
+					return iface.GetGenericArguments()[0];
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Configure actions: instantiate Config class, read C# default values.
+		/// </summary>
+		private static List<PLang.Runtime2.Engine.Memory.Data> FillFromConfigInstance(
+			Type configType, HashSet<string> paramNames)
+		{
+			var defaults = new List<PLang.Runtime2.Engine.Memory.Data>();
+			var instance = Activator.CreateInstance(configType);
+			if (instance == null) return defaults;
+
+			foreach (var prop in configType.GetProperties())
+			{
+				if (paramNames.Contains(prop.Name)) continue;
+				var value = prop.GetValue(instance);
+				if (value == null) continue;
+				defaults.Add(new PLang.Runtime2.Engine.Memory.Data(prop.Name.ToLowerInvariant(), value));
+			}
+			return defaults;
+		}
+
+		/// <summary>
+		/// Regular actions: read [Default] attribute values.
+		/// </summary>
+		private static List<PLang.Runtime2.Engine.Memory.Data> FillFromAttributes(
+			Type actionType, HashSet<string> paramNames)
+		{
+			var defaults = new List<PLang.Runtime2.Engine.Memory.Data>();
+			foreach (var prop in actionType.GetProperties())
+			{
+				if (paramNames.Contains(prop.Name)) continue;
+				var defaultAttr = prop.GetCustomAttributes(typeof(PLang.Runtime2.modules.DefaultAttribute), false);
+				if (defaultAttr.Length == 0) continue;
+				var attr = (PLang.Runtime2.modules.DefaultAttribute)defaultAttr[0];
+				defaults.Add(new PLang.Runtime2.Engine.Memory.Data(prop.Name.ToLowerInvariant(), attr.Value));
+			}
+			return defaults;
 		}
 
 		private void ResolveGoalCallPaths(Actions actions)

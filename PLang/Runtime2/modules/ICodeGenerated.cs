@@ -11,5 +11,6 @@ namespace PLang.Runtime2.modules;
 public interface ICodeGenerated
 {
     Task<Data> CodeGeneratedExecuteAsync(
-        List<Data> parameters, EngineType engine, PLangContext context);
+        List<Data> parameters, EngineType engine, PLangContext context,
+        List<Data>? defaults = null);
 }

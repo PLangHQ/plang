@@ -22,6 +22,9 @@ public sealed partial class @this
     [Store, LlmBuilder, Debug, Default]
     public List<Data>? Return { get; init; }
 
+    [Store, Debug, Default]
+    public List<Data>? Defaults { get; set; }
+
     [Store, LlmBuilder, Debug, Default]
     public List<Info> Errors { get; init; } = new();
 

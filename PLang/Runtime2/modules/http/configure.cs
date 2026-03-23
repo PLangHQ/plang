@@ -4,7 +4,7 @@ using PLang.Runtime2.modules.http.providers;
 namespace PLang.Runtime2.modules.http;
 
 [Action("configure", Cacheable = false)]
-public partial class configure : IContext
+public partial class configure : IContext, IConfigure<Config>
 {
     public partial int? TimeoutInSec { get; init; }
     public partial string? BaseUrl { get; init; }

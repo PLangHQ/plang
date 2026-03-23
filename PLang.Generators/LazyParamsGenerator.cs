@@ -155,6 +155,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // Resolution state
         sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __parameters;");
+        sb.AppendLine("    private List<PLang.Runtime2.Engine.Memory.Data>? __defaults;");
         sb.AppendLine("    private PLang.Runtime2.Engine.Memory.MemoryStack? __memoryStack;");
         sb.AppendLine("    private PLang.Runtime2.Engine.@this? __engine;");
         sb.AppendLine("    private PLang.Runtime2.Engine.Memory.Data? __resolutionError;");
@@ -230,9 +231,11 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // CodeGeneratedExecuteAsync
         sb.AppendLine("    public async System.Threading.Tasks.Task<PLang.Runtime2.Engine.Memory.Data> CodeGeneratedExecuteAsync(");
-        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context)");
+        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data> parameters, PLang.Runtime2.Engine.@this engine, PLang.Runtime2.Engine.Context.PLangContext context,");
+        sb.AppendLine("        List<PLang.Runtime2.Engine.Memory.Data>? defaults = null)");
         sb.AppendLine("    {");
         sb.AppendLine("        __parameters = parameters;");
+        sb.AppendLine("        __defaults = defaults;");
         sb.AppendLine("        __memoryStack = context.MemoryStack;");
         sb.AppendLine("        __engine = engine;");
         sb.AppendLine("        __resolutionError = null;");
@@ -285,6 +288,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        if (data?.Value is string str && str.Contains('%'))");
         sb.AppendLine("        {");
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
@@ -319,7 +324,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("    private bool __HasParam(string name)");
         sb.AppendLine("    {");
-        sb.AppendLine("        return __parameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false;");
+        sb.AppendLine("        return (__parameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false)");
+        sb.AppendLine("            || (__defaults?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false);");
         sb.AppendLine("    }");
         sb.AppendLine();
         sb.AppendLine("    private static string __FormatValue(object? value)");
@@ -334,6 +340,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    private string? __StripPercent(string name)");
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        if (data?.Value is string str)");
         sb.AppendLine("            return str.Trim('%');");
