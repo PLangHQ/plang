@@ -8,3 +8,6 @@ FAIL (revised). Coverage 5.7% → 88.3% is a big improvement, but 3 false greens
 
 ## v4 — Final check after coder v3 fix
 PASS. All findings resolved. 95.9% line coverage, 59 HTTP tests. Coder added 25 tests covering exception mapping, streaming (Lines/SSE/Bytes/Plang), signing integration, form upload with @file, header merging, per-step timeout override. 3 non-blocking minors remain. See [v4/summary.md](v4/summary.md).
+
+## v5 — Post-security/auditor check
+FAIL. Security fixes well-implemented (size limits, thread-safe signing) with strong tests. DLL fixture issue resolved (0 failures). But SSE buffer overflow protection (MaxSSEBufferSize) — a security finding — has no test. 1 major: add SSE buffer overflow test. See [v5/summary.md](v5/summary.md).
