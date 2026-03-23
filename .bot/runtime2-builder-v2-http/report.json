@@ -195,6 +195,101 @@
         "health": "1875 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
         "notes": "Finding #3 (signing record construction) deferred for discussion. All HTTP tests pass."
       }
+    },
+    {
+      "id": "coder-003",
+      "bot": "coder",
+      "timestamp_start": "2026-03-22T21:00:00Z",
+      "timestamp_end": "2026-03-22T22:30:00Z",
+      "intent": "Post-OBP polish: Transport [In], Settings.Apply, ISettings→IConfig rename",
+      "before": {
+        "assumptions": "OBP refactor done. Several improvements identified: application/plang parsing needed [In] for Signature, Configure had manual if-chain, ISettings naming inconsistent.",
+        "risk": "ISettings→IConfig is a cross-cutting rename touching archive, signing, and http modules."
+      },
+      "plan": "4 improvements: (1) Transport [In] attribute + TransportPropertyFilter for application/plang deserialization, (2) Clean up DefaultHttpProvider, (3) Settings.Apply reflection-based, (4) Rename ISettings→IConfig globally.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs",
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "create/modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "TransportPropertyFilter handles [In] attribute for inbound deserialization. Data.Signature now populated from wire via [In]. application/plang response parsed as Data object directly."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Settings.Apply uses reflection to write action properties to scope chain — replaces manual if-chain in configure handlers."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/ISettings.cs",
+            "PLang/Runtime2/Engine/Settings/IConfig.cs",
+            "PLang/Runtime2/modules/archive/Settings.cs",
+            "PLang/Runtime2/modules/archive/Config.cs",
+            "PLang/Runtime2/modules/signing/Settings.cs",
+            "PLang/Runtime2/modules/signing/Config.cs",
+            "PLang/Runtime2/modules/http/Config.cs"
+          ],
+          "type": "rename/modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Renamed ISettings→IConfig, module Settings→Config across archive, signing, http."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/ModuleViewTests.cs",
+            "PLang.Tests/Runtime2/Memory/DataTests.cs",
+            "PLang.Tests/Runtime2/Modules/signing/Ed25519ProviderTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated tests for IConfig rename and Data.Signature changes"
+        }
+      ],
+      "after": {
+        "status": "Complete — Transport [In], Settings.Apply, IConfig rename all applied",
+        "health": "1876 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
+        "notes": "Architect v2 plan (build-time defaults pinning) added but not implemented — scope for next piece."
+      }
+    },
+    {
+      "id": "architect-002",
+      "bot": "architect",
+      "timestamp_start": "2026-03-22T23:00:00Z",
+      "timestamp_end": "2026-03-22T23:30:00Z",
+      "intent": "Design build-time defaults pinning for .pr files",
+      "before": {
+        "assumptions": "HTTP module complete. Defaults currently come from [Default] attributes which can change across runtime versions.",
+        "risk": "Design only — no implementation risk."
+      },
+      "plan": "Add Action.Defaults populated at build time. Source generator resolves: Parameters → Defaults → [Default] attribute. IConfigure<TConfig> for configure actions.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-http/architect/v2/plan.md"],
+          "type": "create",
+          "category": "plan",
+          "confidence": "high",
+          "context": "Detailed design for build-time defaults: Action.Defaults, 3-tier resolution, IConfigure<T>, builder FillDefaults"
+        },
+        {
+          "paths": ["Documentation/Runtime2/proposals/configure-defaults-split.md"],
+          "type": "create",
+          "category": "docs",
+          "confidence": "high",
+          "context": "Proposal documenting configure defaults split rationale and deferred decisions"
+        }
+      ],
+      "after": {
+        "status": "Complete — design approved, ready for implementation",
+        "health": "No code changes — design only",
+        "notes": "Implementation deferred. Not blocking HTTP module completion."
+      }
     }
   ]
 }
