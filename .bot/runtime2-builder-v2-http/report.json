@@ -426,6 +426,39 @@
         "health": "Ready for tester. Carry-forward: streaming methods need C# test coverage.",
         "notes": "All findings resolved. New disposal lifecycle and path resolution are well-designed."
       }
+    },
+    {
+      "id": "tester-001",
+      "bot": "tester",
+      "timestamp_start": "2026-03-23T15:00:00Z",
+      "timestamp_end": "2026-03-23T15:45:00Z",
+      "intent": "Test quality analysis for HTTP module (coder v2)",
+      "before": {
+        "assumptions": "54 C# tests pass, 10 PLang goals exist. Coder reports all tests green.",
+        "risk": "Mock-heavy test suites often hide real behavior gaps. 984-line provider is the primary risk."
+      },
+      "plan": "Run tests, collect coverage, analyze test quality with false-green hunting, write test-report.json",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs", "PLang.Tests/Runtime2/Modules/http/DownloadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs", "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs", "PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "All 54 HTTP tests use MockHttpProvider replacing real provider. Tests verify action delegation, not provider logic. 5 specific false greens identified."
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-http/test-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "13 findings: 1 critical, 7 major, 5 minor. Verdict: needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "Complete — verdict FAIL",
+        "health": "DefaultHttpProvider at 5.7% coverage. Send back to coder.",
+        "notes": "Root cause: tests mock at IHttpProvider level instead of HttpMessageHandler level. Fix: TestableHttpProvider subclass with injected mock handler."
+      }
     }
   ]
 }

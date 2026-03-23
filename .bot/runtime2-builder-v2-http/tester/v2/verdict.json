@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "DefaultHttpProvider (984 lines, all HTTP logic) has 5.7% coverage — tests mock at wrong level, replacing provider instead of HTTP transport" }

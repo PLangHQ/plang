@@ -1,0 +1,162 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-v2-http",
+  "timestamp": "2026-03-23T15:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1914, "passed": 1904, "failed": 2, "skipped": 8 },
+    "plang": { "total": 10, "passed": 0, "failed": 0, "skipped": 10, "note": "Cannot build without LLM — goals exist but no .pr files" }
+  },
+  "coverage": {
+    "changed_files_covered": 6,
+    "changed_files_total": 10,
+    "uncovered_files": [
+      "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs (5.7% line — effectively 0%)",
+      "PLang/Runtime2/modules/http/Config.cs (0% — no direct tests)",
+      "PLang/Runtime2/modules/http/types.cs (0% — TransferProgress untested)",
+      "PLang/Runtime2/Engine/this.cs RunAction<TAction> non-generic (0%)"
+    ],
+    "well_covered_files": [
+      "PLang/Runtime2/modules/http/request.cs (100%)",
+      "PLang/Runtime2/modules/http/download.cs (100%)",
+      "PLang/Runtime2/modules/http/upload.cs (100%)",
+      "PLang/Runtime2/modules/http/configure.cs (100%)",
+      "PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs (100%)",
+      "PLang/Runtime2/Engine/Config/this.cs (100%)"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/DefaultHttpProviderTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "DefaultHttpProvider has 5.7% line coverage. All 54 HTTP action tests use MockHttpProvider, which replaces the real provider entirely. The mock returns canned Data — no real URL resolution, signing, response parsing, streaming, error handling, or progress reporting is exercised.",
+      "impact": "984 lines of production code are untested. Bugs in ResolveUrl, SignRequestAsync, ParseResponseAsync, ParsePlangResponseAsync, HandleStreamingAsync, StreamLinesAsync, StreamSSEAsync, StreamPlangAsync, ExecuteHttpAsync, ResolveUploadContentAsync, CreateFormContentAsync, MergeHeaders, ApplyHeaders, BuildProperties, StreamWithProgressAsync — all would be undetected.",
+      "suggestion": "Create a TestableHttpProvider subclass that intercepts at the HttpClient level (inject a mock HttpMessageHandler) but runs all real provider logic. This preserves the provider's URL resolution, signing, response parsing, and error handling while controlling HTTP responses. The 4 DefaultHttpProviderTests should test real provider methods, not just Configure/Dispose."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "Get_NoProtocol_AutoPrefixesHttps (line 169) — test sets Url='api.example.com/users' but the mock returns canned success without checking URL. Test passes even if the https:// prefix logic is completely broken or deleted.",
+      "impact": "URL resolution bug (missing protocol, wrong protocol, double-protocol) would be undetected.",
+      "suggestion": "Test must use real DefaultHttpProvider (or TestableHttpProvider) and verify the resolved URL starts with 'https://'."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "Get_RelativeUrlNoBaseUrl_ReturnsError (line 277) — test hardcodes mock to return Data.FromError with NoBaseUrl error, then asserts that error. The assertion verifies mock behavior, not provider behavior. Test passes even if the real provider accepts relative URLs without BaseUrl.",
+      "impact": "If DefaultHttpProvider.ResolveUrl stopped checking for relative URLs, this test would still pass.",
+      "suggestion": "Use real provider with no BaseUrl configured, pass relative URL, verify error."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "Get_ApplicationPlangJsonVariant_DetectedByProvider (line 301) — mock checks action.Unsigned to decide error, but this tests the mock's if-statement, not the real provider's plang detection logic.",
+      "impact": "Provider's application/plang content-type detection and unsigned+plang rejection could be broken without detection.",
+      "suggestion": "Use TestableHttpProvider with response Content-Type 'application/plang' and Unsigned=true, verify real rejection."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/ConfigureActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/configure.cs",
+      "issue": "Configure_PerStepOverridesConfig (line 85) — test name says 'per-step overrides config' but never verifies this. Creates request with TimeoutInSec=10 then asserts configure captured TimeoutInSec=60. The per-step override is never checked. Test passes regardless of whether per-step values override config.",
+      "impact": "Per-step parameter override behavior is claimed tested but actually untested.",
+      "suggestion": "Test should verify the provider receives the per-step timeout (10) rather than the configured timeout (60). This requires real provider to resolve config."
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "Get_ApplicationPlangResponse_ProviderHandlesVerification (line 384) — mock manually sets !ServiceIdentity in memory stack, then test asserts it's there. This tests that mock can write to memory, not that the real provider sets !ServiceIdentity after signature verification.",
+      "impact": "If ParsePlangResponseAsync fails to set !ServiceIdentity or fails signature verification, this test would still pass.",
+      "suggestion": "Use TestableHttpProvider returning signed application/plang response with valid signature."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "ExecuteHttpAsync error handling wrapper (lines 243-262) has 0% coverage. This wrapper catches TaskCanceledException, HttpRequestException, IOException, UnauthorizedAccessException, FormatException and maps them to Data errors. None of these exception-to-error paths are tested.",
+      "impact": "Exception mapping could return wrong error keys, wrong status codes, or throw instead of returning Data (violating the 'behavior methods never throw' contract).",
+      "suggestion": "Create tests with TestableHttpProvider where the mock HttpMessageHandler throws each exception type. Verify error Key and StatusCode for each."
+    },
+    {
+      "id": 8,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "All 5 streaming methods (StreamLinesAsync, StreamSSEAsync, StreamBytesAsync, StreamPlangAsync, HandleStreamingAsync) have 0% coverage. Streaming is a complex feature with format detection, per-line signature verification, callback invocation, and error handling.",
+      "impact": "Streaming bugs (wrong format detection, broken SSE parsing, failed plang signature verification, callback errors) would be completely undetected.",
+      "suggestion": "Create integration tests that inject a mock HttpMessageHandler returning multi-line response streams. Verify callback invocation count and data content for each format."
+    },
+    {
+      "id": 9,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "ResolveUploadContentAsync and CreateFormContentAsync have 0% coverage. Auto-detection (dict→form, string→file, else→JSON) and form-data file upload (@file references) are untested.",
+      "impact": "Upload content type detection, multipart form construction, and file reference handling bugs would be undetected.",
+      "suggestion": "Test auto-detection with dict input (should be form), string that exists as file (should be file content), and string that doesn't (should be text)."
+    },
+    {
+      "id": 10,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "MergeHeaders (lines 329-349) and ApplyHeaders (lines 351-360) have 0% coverage. Header merging logic (default + step headers, content vs request headers splitting) is untested.",
+      "impact": "Content-Type, Content-Length applied to wrong header collection, or default headers overriding step headers, would go undetected.",
+      "suggestion": "Test with overlapping default and step headers, verify content headers go to Content.Headers and others go to Request.Headers."
+    },
+    {
+      "id": 11,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "BuildProperties (lines 589-623) has 0% coverage. Response metadata population (URL, Method, StatusCode, ResponseHeaders, Charset, etc.) is never verified with real provider data.",
+      "impact": "Properties could be populated with wrong keys, missing values, or null metadata without detection.",
+      "suggestion": "Verify Properties dict after a real provider call — check StatusCode, IsSuccess, Url, Method, ContentType keys exist with correct values."
+    },
+    {
+      "id": 12,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "code_file": "PLang/Runtime2/modules/http/request.cs",
+      "issue": "Get_ApplicationPlangInvalidSignature_ReturnsError (line 408) — only checks result.Success is false. Does not verify Error.Key='SignatureInvalid' or StatusCode=400. Compare with Get_UnsignedReceivesApplicationPlang_ReturnsError which correctly checks Error.Key.",
+      "impact": "Test would pass for any error, not just invalid signature errors. Wrong error type would be undetected.",
+      "suggestion": "Add: await Assert.That(result.Error!.Key).IsEqualTo(\"SignatureInvalid\"); await Assert.That(result.Error!.StatusCode).IsEqualTo(400);"
+    },
+    {
+      "id": 13,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "N/A",
+      "code_file": "PLang/Runtime2/Engine/this.cs",
+      "issue": "The non-generic RunAction<TAction>() overload (added for HTTP signing integration) has 0% coverage. This method is used by DefaultHttpProvider.SignRequestAsync to run signing actions.",
+      "impact": "If RunAction<TAction>() returns wrong Data or fails to execute the action, signing integration would break silently.",
+      "suggestion": "Add a test that calls engine.RunAction<TAction>() directly and verifies Data result."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "The HTTP module has 54 C# tests that all pass, but they are structurally false greens. Every test replaces DefaultHttpProvider with a MockHttpProvider that returns canned responses, resulting in 5.7% line coverage on the 984-line provider that contains ALL the actual HTTP logic (URL resolution, signing, response parsing, streaming, error handling, progress reporting). The action Run() methods are thin 3-line delegators with 100% coverage, but the provider they delegate to is untested. Critical finding: 0% coverage on ExecuteHttpAsync (error mapping), ParseResponseAsync (content-type dispatch), SignRequestAsync (signing integration), all 5 streaming methods, ResolveUrl, MergeHeaders, BuildProperties, ResolveUploadContentAsync, and CreateFormContentAsync. The test-designer's tests were good stubs but the coder implemented them by mocking at the wrong level — replacing the provider instead of the HTTP transport."
+}

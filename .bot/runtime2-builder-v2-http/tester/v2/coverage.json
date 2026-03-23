@@ -1,0 +1,52 @@
+{
+  "summary": {
+    "total_tests": 1914,
+    "passed": 1904,
+    "failed": 2,
+    "skipped": 8,
+    "failed_tests_preexisting": true
+  },
+  "http_module_coverage": {
+    "request.cs": { "line_rate": 1.0, "note": "100% — thin delegator" },
+    "download.cs": { "line_rate": 1.0, "note": "100% — thin delegator" },
+    "upload.cs": { "line_rate": 1.0, "note": "100% — thin delegator" },
+    "configure.cs": { "line_rate": 1.0, "note": "100% — thin delegator" },
+    "DefaultHttpProvider.cs": { "line_rate": 0.057, "note": "5.7% — only Configure() and Dispose() covered" },
+    "Config.cs": { "line_rate": 0.0, "note": "0% — only used through scope chain" },
+    "types.cs": { "line_rate": 0.0, "note": "TransferProgress record never constructed in tests" },
+    "IHttpProvider.cs": { "line_rate": null, "note": "Interface — no coverable lines" }
+  },
+  "provider_method_coverage": {
+    "SendAsync": "0%",
+    "DownloadAsync": "0%",
+    "UploadAsync": "0%",
+    "Configure": "covered via DefaultHttpProviderTests",
+    "ExecuteHttpAsync": "0%",
+    "SignRequestAsync": "0%",
+    "ParseResponseAsync": "0%",
+    "ParsePlangResponseAsync": "0%",
+    "HandleStreamingAsync": "0%",
+    "StreamLinesAsync": "0%",
+    "StreamSSEAsync": "0%",
+    "StreamBytesAsync": "0%",
+    "StreamPlangAsync": "0%",
+    "StreamWithProgressAsync": "0%",
+    "ResolveUrl": "0%",
+    "MergeHeaders": "0%",
+    "ApplyHeaders": "0%",
+    "BuildProperties": "0%",
+    "ResolveUploadContentAsync": "0%",
+    "CreateFormContentAsync": "0%",
+    "CreateFileContentAsync": "0%",
+    "TryExtractSignedErrorIdentity": "0%",
+    "RunCallbackAsync": "0%",
+    "ReadErrorResponseAsync": "0%",
+    "ResolveCallbackVarName": "0%"
+  },
+  "other_changed_files": {
+    "TransportPropertyFilter.cs": { "line_rate": 1.0, "note": "100% — well tested" },
+    "Engine/Config/this.cs": { "line_rate": 1.0, "note": "100%" },
+    "Engine/this.cs": { "line_rate": 0.815, "note": "81.5% — RunAction<TAction> non-generic at 0%" },
+    "Engine/CallStack/CallFrame.cs": { "line_rate": 0.936, "note": "93.6% — DisposeAsync at 50%" }
+  }
+}
