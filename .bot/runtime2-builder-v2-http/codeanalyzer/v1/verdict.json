@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 must-fix: provider disposal leak (HttpClient), catch-all masks programming errors, LoadAllAsync swallows errors enabling silent key rotation" }

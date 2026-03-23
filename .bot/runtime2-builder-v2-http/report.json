@@ -59,7 +59,7 @@
         }
       ],
       "after": {
-        "status": "Complete — 62 test stubs written (52 C# + 10 PLang)",
+        "status": "Complete \u2014 62 test stubs written (52 C# + 10 PLang)",
         "health": "Ready for coder bot",
         "notes": "Initial 51 tests from architect spec, then 11 gap-coverage tests added independently (timeout, progress callbacks, signed errors, scope, edge cases). All stubs use Assert.Fail or throw placeholders."
       }
@@ -104,7 +104,9 @@
           "context": "Register DefaultHttpProvider, add 'http' to ResolveType, add non-generic RunAction<TAction>()"
         },
         {
-          "paths": ["PLang.Generators/LazyParamsGenerator.cs"],
+          "paths": [
+            "PLang.Generators/LazyParamsGenerator.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
@@ -144,7 +146,7 @@
         }
       ],
       "after": {
-        "status": "Complete — 9 module files, 2 engine mods, 1 generator fix, 54 C# tests pass, 10 PLang goals written",
+        "status": "Complete \u2014 9 module files, 2 engine mods, 1 generator fix, 54 C# tests pass, 10 PLang goals written",
         "health": "All 1889 tests pass (0 failures, 8 skipped)",
         "notes": "OBP fix: signing result relayed as Data object (navigate .Signature), not decomposed. Added non-generic RunAction<TAction>() to Engine."
       }
@@ -156,34 +158,42 @@
       "timestamp_end": "2026-03-22T20:45:00Z",
       "intent": "OBP refactor: eliminate HttpHelper, provider owns all behavior",
       "before": {
-        "assumptions": "HttpHelper static class violates OBP — behavior belongs to provider, not a static utility. Action records and IHttpProvider are clean.",
+        "assumptions": "HttpHelper static class violates OBP \u2014 behavior belongs to provider, not a static utility. Action records and IHttpProvider are clean.",
         "risk": "Large refactor of DefaultHttpProvider. Tests mock at IHttpProvider level so should be unaffected."
       },
       "plan": "Delete HttpHelper.cs. Move all methods into DefaultHttpProvider as private instance/static methods. Deduplicate error handling via ExecuteHttpAsync. Fix hardcoded progress var name. Eliminate duplicate redirect state. Add using on HttpResponseMessage. Finding #3 (signing record construction) deferred.",
       "actions": [
         {
-          "paths": ["PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"],
+          "paths": [
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "Absorbed all HttpHelper methods. ExecuteHttpAsync deduplicates error handling. CreateClient reads from config scope chain (no duplicate state). Progress var name resolved from GoalCall params. Response disposed via using."
         },
         {
-          "paths": ["PLang/Runtime2/modules/http/HttpHelper.cs"],
+          "paths": [
+            "PLang/Runtime2/modules/http/HttpHelper.cs"
+          ],
           "type": "delete",
           "category": "code",
           "confidence": "high",
-          "context": "Static utility class eliminated — all behavior now owned by provider"
+          "context": "Static utility class eliminated \u2014 all behavior now owned by provider"
         },
         {
-          "paths": ["PLang/Runtime2/modules/http/providers/IHttpProvider.cs"],
+          "paths": [
+            "PLang/Runtime2/modules/http/providers/IHttpProvider.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "Removed stale HttpHelper reference from doc comment"
         },
         {
-          "paths": ["PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -191,7 +201,7 @@
         }
       ],
       "after": {
-        "status": "Complete — HttpHelper eliminated, all behavior in DefaultHttpProvider",
+        "status": "Complete \u2014 HttpHelper eliminated, all behavior in DefaultHttpProvider",
         "health": "1875 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
         "notes": "Finding #3 (signing record construction) deferred for discussion. All HTTP tests pass."
       }
@@ -201,12 +211,12 @@
       "bot": "coder",
       "timestamp_start": "2026-03-22T21:00:00Z",
       "timestamp_end": "2026-03-22T22:30:00Z",
-      "intent": "Post-OBP polish: Transport [In], Settings.Apply, ISettings→IConfig rename",
+      "intent": "Post-OBP polish: Transport [In], Settings.Apply, ISettings\u2192IConfig rename",
       "before": {
         "assumptions": "OBP refactor done. Several improvements identified: application/plang parsing needed [In] for Signature, Configure had manual if-chain, ISettings naming inconsistent.",
-        "risk": "ISettings→IConfig is a cross-cutting rename touching archive, signing, and http modules."
+        "risk": "ISettings\u2192IConfig is a cross-cutting rename touching archive, signing, and http modules."
       },
-      "plan": "4 improvements: (1) Transport [In] attribute + TransportPropertyFilter for application/plang deserialization, (2) Clean up DefaultHttpProvider, (3) Settings.Apply reflection-based, (4) Rename ISettings→IConfig globally.",
+      "plan": "4 improvements: (1) Transport [In] attribute + TransportPropertyFilter for application/plang deserialization, (2) Clean up DefaultHttpProvider, (3) Settings.Apply reflection-based, (4) Rename ISettings\u2192IConfig globally.",
       "actions": [
         {
           "paths": [
@@ -219,11 +229,13 @@
           "context": "TransportPropertyFilter handles [In] attribute for inbound deserialization. Data.Signature now populated from wire via [In]. application/plang response parsed as Data object directly."
         },
         {
-          "paths": ["PLang/Runtime2/Engine/Settings/this.cs"],
+          "paths": [
+            "PLang/Runtime2/Engine/Settings/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Settings.Apply uses reflection to write action properties to scope chain — replaces manual if-chain in configure handlers."
+          "context": "Settings.Apply uses reflection to write action properties to scope chain \u2014 replaces manual if-chain in configure handlers."
         },
         {
           "paths": [
@@ -238,7 +250,7 @@
           "type": "rename/modify",
           "category": "code",
           "confidence": "high",
-          "context": "Renamed ISettings→IConfig, module Settings→Config across archive, signing, http."
+          "context": "Renamed ISettings\u2192IConfig, module Settings\u2192Config across archive, signing, http."
         },
         {
           "paths": [
@@ -253,9 +265,9 @@
         }
       ],
       "after": {
-        "status": "Complete — Transport [In], Settings.Apply, IConfig rename all applied",
+        "status": "Complete \u2014 Transport [In], Settings.Apply, IConfig rename all applied",
         "health": "1876 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
-        "notes": "Architect v2 plan (build-time defaults pinning) added but not implemented — scope for next piece."
+        "notes": "Architect v2 plan (build-time defaults pinning) added but not implemented \u2014 scope for next piece."
       }
     },
     {
@@ -266,19 +278,23 @@
       "intent": "Design build-time defaults pinning for .pr files",
       "before": {
         "assumptions": "HTTP module complete. Defaults currently come from [Default] attributes which can change across runtime versions.",
-        "risk": "Design only — no implementation risk."
+        "risk": "Design only \u2014 no implementation risk."
       },
-      "plan": "Add Action.Defaults populated at build time. Source generator resolves: Parameters → Defaults → [Default] attribute. IConfigure<TConfig> for configure actions.",
+      "plan": "Add Action.Defaults populated at build time. Source generator resolves: Parameters \u2192 Defaults \u2192 [Default] attribute. IConfigure<TConfig> for configure actions.",
       "actions": [
         {
-          "paths": [".bot/runtime2-builder-v2-http/architect/v2/plan.md"],
+          "paths": [
+            ".bot/runtime2-builder-v2-http/architect/v2/plan.md"
+          ],
           "type": "create",
           "category": "plan",
           "confidence": "high",
           "context": "Detailed design for build-time defaults: Action.Defaults, 3-tier resolution, IConfigure<T>, builder FillDefaults"
         },
         {
-          "paths": ["Documentation/Runtime2/proposals/configure-defaults-split.md"],
+          "paths": [
+            "Documentation/Runtime2/proposals/configure-defaults-split.md"
+          ],
           "type": "create",
           "category": "docs",
           "confidence": "high",
@@ -286,8 +302,8 @@
         }
       ],
       "after": {
-        "status": "Complete — design approved, ready for implementation",
-        "health": "No code changes — design only",
+        "status": "Complete \u2014 design approved, ready for implementation",
+        "health": "No code changes \u2014 design only",
         "notes": "Implementation deferred. Not blocking HTTP module completion."
       }
     },
@@ -296,29 +312,35 @@
       "bot": "test-designer",
       "timestamp_start": "2026-03-23T10:00:00Z",
       "timestamp_end": "2026-03-23T10:30:00Z",
-      "intent": "Add tests for TransportPropertyFilter and Settings.Apply — caught bug in filter",
+      "intent": "Add tests for TransportPropertyFilter and Settings.Apply \u2014 caught bug in filter",
       "before": {
         "assumptions": "TransportPropertyFilter and Settings.Apply had zero test coverage. Both are new components from coder-003.",
-        "risk": "TransportPropertyFilter is security-critical — Data.Signature must round-trip for application/plang. Settings.Apply uses reflection to write scope chain."
+        "risk": "TransportPropertyFilter is security-critical \u2014 Data.Signature must round-trip for application/plang. Settings.Apply uses reflection to write scope chain."
       },
       "plan": "7 TransportPropertyFilter tests + 8 Settings.Apply tests.",
       "actions": [
         {
-          "paths": ["PLang.Tests/Runtime2/Serializers/TransportPropertyFilterTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Serializers/TransportPropertyFilterTests.cs"
+          ],
           "type": "create",
           "category": "test",
           "confidence": "high",
           "context": "7 tests: inbound deserialization, outbound serialization, roundtrip, null signature, default JSON exclusion, no-op on plain types"
         },
         {
-          "paths": ["PLang.Tests/Runtime2/Engine/Settings/SettingsApplyTests.cs"],
+          "paths": [
+            "PLang.Tests/Runtime2/Engine/Settings/SettingsApplyTests.cs"
+          ],
           "type": "create",
           "category": "test",
           "confidence": "high",
           "context": "8 tests: non-null writes, null skipping, config-only properties, isDefault scope, nullable value types, dictionaries, multi-call merge"
         },
         {
-          "paths": ["PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs"],
+          "paths": [
+            "PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs"
+          ],
           "type": "modify",
           "category": "bugfix",
           "confidence": "high",
@@ -326,9 +348,44 @@
         }
       ],
       "after": {
-        "status": "Complete — 15 tests added, 1 bug fixed",
+        "status": "Complete \u2014 15 tests added, 1 bug fixed",
         "health": "1891 pass, 8 skipped, 3 failures (pre-existing TestFixture DLL env issue)",
-        "notes": "TransportPropertyFilter was broken since creation — Data.Signature never deserialized from wire. All application/plang response handling (ParsePlangResponseAsync, StreamPlangAsync) was silently getting null Signature. Fixed and verified via roundtrip test."
+        "notes": "TransportPropertyFilter was broken since creation \u2014 Data.Signature never deserialized from wire. All application/plang response handling (ParsePlangResponseAsync, StreamPlangAsync) was silently getting null Signature. Fixed and verified via roundtrip test."
+      }
+    },
+    {
+      "id": "codeanalyzer-001",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-23T10:00:00Z",
+      "timestamp_end": "2026-03-23T11:00:00Z",
+      "intent": "Full 5-pass code analysis of HTTP, identity, signing, crypto, provider, config modules",
+      "before": {
+        "assumptions": "Coder completed HTTP module implementation across 3 sessions. Identity, signing, crypto, provider modules are new. Config was renamed from Settings.",
+        "risk": "Large surface area \u2014 30+ new files. HTTP provider is ~984 lines. Cross-module interactions (HTTP\u2192signing\u2192identity\u2192crypto) create behavioral risks."
+      },
+      "plan": "Full 5-pass analysis: OBP, Simplification, Readability, Behavioral Reasoning, Deletion Test across ~35 new/modified source files.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/Runtime2/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/Config/this.cs",
+            "PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass analysis of all new/modified source files. Found 3 must-fix (provider disposal, catch-all, error swallowing), 2 should-fix, 2 minor, and untested streaming code."
+        }
+      ],
+      "after": {
+        "status": "Complete \u2014 verdict NEEDS WORK",
+        "health": "3 must-fix issues for coder, streaming coverage for tester",
+        "notes": "Architecture is sound (OBP clean). Issues are in error handling and lifecycle management."
       }
     }
   ]
