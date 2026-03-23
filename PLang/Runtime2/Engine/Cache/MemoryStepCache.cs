@@ -1,19 +1,20 @@
 using System.Runtime.Caching;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine.Cache;
 
 /// <summary>
 /// Default in-memory ICache implementation using System.Runtime.Caching.MemoryCache.
-/// Stores object references directly — no serialization overhead.
+/// Stores Data references directly — no serialization overhead.
 /// </summary>
 public sealed class MemoryStepCache : ICache
 {
     private readonly MemoryCache _cache = new MemoryCache("StepCache_" + Guid.NewGuid().ToString("N")[..8]);
 
-    public Task<object?> GetAsync(string key, CancellationToken ct = default)
-        => Task.FromResult(_cache.Get(key));
+    public Task<Data?> GetAsync(string key, CancellationToken ct = default)
+        => Task.FromResult(_cache.Get(key) as Data);
 
-    public Task SetAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+    public Task SetAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)
@@ -31,7 +32,7 @@ public sealed class MemoryStepCache : ICache
         return Task.CompletedTask;
     }
 
-    public Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+    public Task<bool> TryAddAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
     {
         var policy = new CacheItemPolicy();
         if (settings.Sliding)

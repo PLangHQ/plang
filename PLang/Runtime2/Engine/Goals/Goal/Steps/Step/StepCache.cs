@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Cache;
 using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
@@ -29,9 +28,9 @@ public sealed class StepCache
         var key = BuildCacheKey(context.MemoryStack);
         var cached = await engine.Cache.GetAsync(key, ct);
 
-        if (cached is StepCacheEntry entry)
+        if (cached != null)
         {
-            RestoreVariables(entry, context.MemoryStack);
+            RestoreVariables(cached, context.MemoryStack);
             await Hit.Run(context);
             return Data.Ok();
         }
@@ -61,9 +60,9 @@ public sealed class StepCache
         return $"step:{goalPath}:{_step.Index}";
     }
 
-    private StepCacheEntry CollectReturnVariables(MemoryStack memoryStack)
+    private Data CollectReturnVariables(MemoryStack memoryStack)
     {
-        var entry = new StepCacheEntry();
+        var entry = Data.Ok();
         foreach (var action in _step.Actions)
         {
             if (action.Return == null) continue;
@@ -72,23 +71,18 @@ public sealed class StepCache
                 var data = memoryStack.Get(returnVar.Name);
                 if (data != null)
                 {
-                    entry.Variables[returnVar.Name] = new CachedVariable
-                    {
-                        Value = data.Value,
-                        TypeName = data.Type?.Value
-                    };
+                    entry.Properties[returnVar.Name] = data;
                 }
             }
         }
         return entry;
     }
 
-    private static void RestoreVariables(StepCacheEntry entry, MemoryStack memoryStack)
+    private static void RestoreVariables(Data cached, MemoryStack memoryStack)
     {
-        foreach (var (name, cached) in entry.Variables)
+        foreach (var data in cached.Properties)
         {
-            var type = cached.TypeName != null ? new Memory.Type(cached.TypeName) : null;
-            memoryStack.Set(name, cached.Value, type);
+            memoryStack.Set(data.Name, data.Value, data.Type);
         }
     }
 }

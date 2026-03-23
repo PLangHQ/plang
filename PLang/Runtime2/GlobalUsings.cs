@@ -46,7 +46,6 @@ global using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
 // Standalone concepts
 global using ICache = PLang.Runtime2.Engine.Cache.ICache;
 global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
-global using StepCacheEntry = PLang.Runtime2.Engine.Cache.StepCacheEntry;
 global using CallFrame = PLang.Runtime2.Engine.CallStack.CallFrame;
 global using Debugging = PLang.Runtime2.Engine.Debug.@this;
 global using Testing = PLang.Runtime2.Engine.Test.@this;

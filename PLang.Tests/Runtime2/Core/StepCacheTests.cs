@@ -262,29 +262,20 @@ public class StepCacheTests
     public async Task MemoryStepCache_SetAndGet_RoundTrips()
     {
         var cache = new MemoryStepCache();
-        var entry = new StepCacheEntry
-        {
-            Variables = new Dictionary<string, CachedVariable>
-            {
-                ["x"] = new CachedVariable { Value = "hello", TypeName = "string" }
-            }
-        };
+        var entry = Data.Ok("hello");
 
         await cache.SetAsync("key1", entry, new CacheSettings { DurationMs = 300_000 });
         var result = await cache.GetAsync("key1");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result).IsTypeOf<StepCacheEntry>();
-        var cached = (StepCacheEntry)result!;
-        await Assert.That(cached.Variables.ContainsKey("x")).IsTrue();
-        await Assert.That(cached.Variables["x"].Value).IsEqualTo("hello");
+        await Assert.That(result!.Value).IsEqualTo("hello");
     }
 
     [Test]
     public async Task MemoryStepCache_RemoveAsync_DeletesEntry()
     {
         var cache = new MemoryStepCache();
-        await cache.SetAsync("key1", "value", new CacheSettings { DurationMs = 300_000 });
+        await cache.SetAsync("key1", Data.Ok("value"), new CacheSettings { DurationMs = 300_000 });
 
         await cache.RemoveAsync("key1");
         var result = await cache.GetAsync("key1");
@@ -339,24 +330,15 @@ public class StepCacheTests
 
     #endregion
 
-    #region StepCacheEntry
+    #region Data Cache Entry
 
     [Test]
-    public async Task StepCacheEntry_DefaultsToEmptyDictionary()
+    public async Task DataCacheEntry_StoresValueAndType()
     {
-        var entry = new StepCacheEntry();
+        var data = new Data("pi", 3.14, new PLang.Runtime2.Engine.Memory.Type("double"));
 
-        await Assert.That(entry.Variables).IsNotNull();
-        await Assert.That(entry.Variables.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task CachedVariable_StoresValueAndTypeName()
-    {
-        var cv = new CachedVariable { Value = 3.14, TypeName = "double" };
-
-        await Assert.That(cv.Value).IsEqualTo(3.14);
-        await Assert.That(cv.TypeName).IsEqualTo("double");
+        await Assert.That(data.Value).IsEqualTo(3.14);
+        await Assert.That(data.Type!.Value).IsEqualTo("double");
     }
 
     #endregion
@@ -501,10 +483,11 @@ public class StepCacheTests
         var cache = new MemoryStepCache();
         var settings = new CacheSettings { DurationMs = 60_000, Sliding = true };
 
-        await cache.SetAsync("sliding-key", "value", settings);
+        await cache.SetAsync("sliding-key", Data.Ok("value"), settings);
         var result = await cache.GetAsync("sliding-key");
 
-        await Assert.That(result).IsEqualTo("value");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo("value");
     }
 
     [Test]
@@ -513,10 +496,11 @@ public class StepCacheTests
         var cache = new MemoryStepCache();
         var settings = new CacheSettings { DurationMs = 60_000, Sliding = false };
 
-        await cache.SetAsync("absolute-key", "value", settings);
+        await cache.SetAsync("absolute-key", Data.Ok("value"), settings);
         var result = await cache.GetAsync("absolute-key");
 
-        await Assert.That(result).IsEqualTo("value");
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Value).IsEqualTo("value");
     }
 
     #endregion
@@ -602,20 +586,20 @@ public class StepCacheTests
     /// </summary>
     private class FakeCache : ICache
     {
-        private readonly Dictionary<string, object> _store = new();
+        private readonly Dictionary<string, Data> _store = new();
 
         public int GetCalls { get; private set; }
         public int SetCalls { get; private set; }
         public int RemoveCalls { get; private set; }
 
-        public Task<object?> GetAsync(string key, CancellationToken ct = default)
+        public Task<Data?> GetAsync(string key, CancellationToken ct = default)
         {
             GetCalls++;
             _store.TryGetValue(key, out var value);
             return Task.FromResult(value);
         }
 
-        public Task SetAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+        public Task SetAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
         {
             SetCalls++;
             _store[key] = value;
@@ -629,7 +613,7 @@ public class StepCacheTests
             return Task.CompletedTask;
         }
 
-        public Task<bool> TryAddAsync(string key, object value, CacheSettings settings, CancellationToken ct = default)
+        public Task<bool> TryAddAsync(string key, Data value, CacheSettings settings, CancellationToken ct = default)
         {
             if (_store.ContainsKey(key))
                 return Task.FromResult(false);

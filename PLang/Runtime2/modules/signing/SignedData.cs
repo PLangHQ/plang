@@ -145,7 +145,7 @@ public class SignedData
         // 5. Nonce replay check
         var nonceCacheKey = $"nonce:{Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, true, cacheSettings);
+        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, Data.Ok(true), cacheSettings);
         if (!nonceAdded)
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 

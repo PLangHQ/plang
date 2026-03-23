@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Cache;
 using PLang.Runtime2.Engine.Goals.Goal.Steps.Step;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Tests.Runtime2.Core;
 
@@ -17,7 +18,7 @@ public class CacheTryAddTests
     {
         var cache = new MemoryStepCache();
 
-        var result = await cache.TryAddAsync("nonce-1", "value", MakeSettings());
+        var result = await cache.TryAddAsync("nonce-1", Data.Ok("value"), MakeSettings());
 
         await Assert.That(result).IsTrue();
     }
@@ -28,8 +29,8 @@ public class CacheTryAddTests
         var cache = new MemoryStepCache();
         var settings = MakeSettings();
 
-        var first = await cache.TryAddAsync("nonce-1", "value1", settings);
-        var second = await cache.TryAddAsync("nonce-1", "value2", settings);
+        var first = await cache.TryAddAsync("nonce-1", Data.Ok("value1"), settings);
+        var second = await cache.TryAddAsync("nonce-1", Data.Ok("value2"), settings);
 
         await Assert.That(first).IsTrue();
         await Assert.That(second).IsFalse();
@@ -41,8 +42,8 @@ public class CacheTryAddTests
         var cache = new MemoryStepCache();
         var settings = MakeSettings();
 
-        var result1 = await cache.TryAddAsync("nonce-1", "value1", settings);
-        var result2 = await cache.TryAddAsync("nonce-2", "value2", settings);
+        var result1 = await cache.TryAddAsync("nonce-1", Data.Ok("value1"), settings);
+        var result2 = await cache.TryAddAsync("nonce-2", Data.Ok("value2"), settings);
 
         await Assert.That(result1).IsTrue();
         await Assert.That(result2).IsTrue();
@@ -54,12 +55,12 @@ public class CacheTryAddTests
         var cache = new MemoryStepCache();
         var settings = MakeSettings(durationMs: 1000);
 
-        var first = await cache.TryAddAsync("nonce-1", "value", settings);
+        var first = await cache.TryAddAsync("nonce-1", Data.Ok("value"), settings);
         await Assert.That(first).IsTrue();
 
         await Task.Delay(1500);
 
-        var second = await cache.TryAddAsync("nonce-1", "value", settings);
+        var second = await cache.TryAddAsync("nonce-1", Data.Ok("value"), settings);
         await Assert.That(second).IsTrue();
     }
 
@@ -70,7 +71,7 @@ public class CacheTryAddTests
         var settings = MakeSettings();
 
         var tasks = Enumerable.Range(0, 10)
-            .Select(_ => cache.TryAddAsync("same-key", "value", settings))
+            .Select(_ => cache.TryAddAsync("same-key", Data.Ok("value"), settings))
             .ToArray();
 
         var results = await Task.WhenAll(tasks);
