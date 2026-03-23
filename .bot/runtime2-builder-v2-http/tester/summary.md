@@ -11,3 +11,6 @@ PASS. All findings resolved. 95.9% line coverage, 59 HTTP tests. Coder added 25 
 
 ## v5 — Post-security/auditor check
 FAIL. Security fixes well-implemented (size limits, thread-safe signing) with strong tests. DLL fixture issue resolved (0 failures). But SSE buffer overflow protection (MaxSSEBufferSize) — a security finding — has no test. 1 major: add SSE buffer overflow test. See [v5/summary.md](v5/summary.md).
+
+## v6 — SSE buffer test verification
+PASS. SSE buffer overflow test added and verified. All security fixes now tested. 1925 passed, 0 failed. See [v6/summary.md](v6/summary.md).

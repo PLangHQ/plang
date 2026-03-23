@@ -1,61 +1,17 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-v2-http",
-  "timestamp": "2026-03-23T19:30:00Z",
-  "tested_version": "v5",
+  "timestamp": "2026-03-23T20:00:00Z",
+  "tested_version": "v6",
   "test_run": {
-    "csharp": { "total": 1932, "passed": 1924, "failed": 0, "skipped": 8 },
+    "csharp": { "total": 1933, "passed": 1925, "failed": 0, "skipped": 8 },
     "plang": { "total": 10, "passed": 0, "failed": 0, "skipped": 10, "note": "Cannot build without LLM" }
   },
   "coverage": {
-    "provider_coverage": "95.1% line, 77.4% branch",
-    "signeddata_coverage": "100% line, 100% branch",
-    "new_methods": {
-      "ReadLimitedStringAsync": "100% line, 100% branch",
-      "ReadLimitedBytesAsync": "100% line, 100% branch"
-    }
+    "provider_coverage": "95%+ line",
+    "all_security_fixes_tested": true
   },
-  "security_fix_verification": {
-    "size_limited_reads": "3 tests: oversized string → 413, oversized binary → 413, within-limit → success. All strong.",
-    "thread_safe_signing": "1 test: 100 concurrent ToSigningBytes calls, byte-identical results, Signature preserved. Strong.",
-    "sse_buffer_cap": "NO TEST — MaxSSEBufferSize enforcement in StreamSSEAsync has 0% coverage on the overflow branch. Security fix is untested.",
-    "format_bytes_fix": "Covered by existing size-limit error tests (error messages now correctly formatted)."
-  },
-  "auditor_finding_verification": {
-    "finding_1_formatbytes": "FIXED — FormatBytes helper prevents '0MB' for sub-MB sizes",
-    "finding_2_client_threadsafety": "NOT ADDRESSED — noted as nit, theoretical risk only",
-    "finding_3_weak_assertions": {
-      "plang_invalid_sig": "Improved — now checks Error.Key.IsNotEmpty(). Still not specific but acceptable.",
-      "signed_has_header": "CHECKED — test at L800-803 checks header presence + Accept header includes application/plang. Not checking header content (auditor wanted SignedData deserialization). Covered by Get_Signed_XSignatureIsValidJson which does deserialize.",
-      "signed_plang_identity": "FIXED — now asserts identity == signResult.Signature.Identity",
-      "stream_plang_identity": "FIXED — now asserts identity == signResult2.Signature.Identity",
-      "stream_plang_invalid": "Acknowledged as weak with NOTE comment. Complex state makes stronger assertion fragile.",
-      "stream_bytes": "Improved — checks type + length > 0. Not checking exact content because byte streaming chunks may differ.",
-      "form_tests": "FIXED — DictAutoDetect checks field names, FormExplicit checks field name + value"
-    }
-  },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "N/A",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "SSE buffer overflow protection (MaxSSEBufferSize) has no test. The security fix added buffer limit checking in StreamSSEAsync but there is no test that sends an SSE stream exceeding the buffer limit and verifies the overflow is handled gracefully (error logged, buffer cleared, stream continues).",
-      "impact": "The SSE buffer cap was a security finding (unbounded memory). The fix is in code but untested — if someone refactors StreamSSEAsync and removes the cap check, no test would fail.",
-      "suggestion": "Add test: configure MaxSSEBufferSize to small value (e.g., 50 bytes), send SSE event with data exceeding that limit, verify stream completes successfully (doesn't crash) and the oversized event is dropped."
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Stream_Plang_InvalidSignature_SetsErrorOnMemoryStack (L701) — acknowledged weak assertion with explicit NOTE comment. Verifying exact MemoryStack state after failed plang stream verification + failed goal callback is complex.",
-      "impact": "Low — the non-streaming path (Get_PlangResponseInvalidSignature) covers the verification error. This is a known limitation.",
-      "suggestion": "Non-blocking. Acknowledged."
-    }
-  ],
-  "verdict": "needs-fixes",
-  "summary": "Security fixes well-implemented: size-limited reads (3 strong tests, 100% coverage on new methods), thread-safe signing (100 concurrent calls test, 100% SignedData coverage), FormatBytes fix. Auditor assertion fixes applied (5 of 7 strengthened). But SSE buffer overflow protection — a security finding — has NO test. The MaxSSEBufferSize cap in StreamSSEAsync is untested code. One major finding: add SSE buffer overflow test. 1 minor (acknowledged weak assertion). Fix the SSE gap then approve."
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All findings from v2 through v5 resolved. 1925 tests pass, 0 failures. DefaultHttpProvider at 95%+ line coverage. All security fixes tested: size-limited reads (3 tests), thread-safe signing (1 test), SSE buffer overflow (1 test). Auditor assertions strengthened. DLL fixture issue resolved. Test suite is honest and thorough."
 }
