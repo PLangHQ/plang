@@ -38,27 +38,19 @@ public static class TransportPropertyFilter
     {
         if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
 
-        // Check the actual CLR type for properties with our transport attribute
-        // that are missing from typeInfo.Properties (because [JsonIgnore] excluded them)
         var clrType = typeInfo.Type;
         foreach (var prop in clrType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (!prop.IsDefined(attributeType, false)) continue;
 
-            // Check if this property is already in the type info (not ignored)
-            var alreadyPresent = false;
-            foreach (var existing in typeInfo.Properties)
+            // Remove any existing entry — [JsonIgnore] may have left a hidden exclusion
+            for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
             {
-                if (existing.Name.Equals(prop.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    alreadyPresent = true;
-                    break;
-                }
+                if (typeInfo.Properties[i].Name.Equals(prop.Name, StringComparison.OrdinalIgnoreCase))
+                    typeInfo.Properties.RemoveAt(i);
             }
 
-            if (alreadyPresent) continue;
-
-            // Re-add the ignored property
+            // Create a fresh property entry that bypasses [JsonIgnore]
             var jsonProp = typeInfo.CreateJsonPropertyInfo(prop.PropertyType, prop.Name.ToLowerInvariant());
             jsonProp.Get = prop.CanRead ? prop.GetValue : null;
             jsonProp.Set = prop.CanWrite ? prop.SetValue : null;
