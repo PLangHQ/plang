@@ -173,6 +173,86 @@ public class PrPipelineTests
     }
 
     [Test]
+    public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+        {
+            Name = "ParentTraversal",
+            Path = "/sub/ParentTraversal.goal",
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
+                {
+                    Index = 0,
+                    Text = "read ../testdata.txt, write to %fromParent%",
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new List<Data> { new Data("path", "../testdata.txt") },
+                            Return = new List<Data> { new Data("fromParent") }
+                        }
+                    }
+                }
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.MemoryStack.GetValue("fromParent")!.ToString()).IsEqualTo("Hello from test file");
+    }
+
+    [Test]
+    public async Task FilePaths_ParentTraversal_BackAndDown()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+        {
+            Name = "ParentAndDown",
+            Path = "/sub/ParentAndDown.goal",
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
+                {
+                    Index = 0,
+                    Text = "read ../sub/subdata.txt, write to %backAndDown%",
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new List<Data> { new Data("path", "../sub/subdata.txt") },
+                            Return = new List<Data> { new Data("backAndDown") }
+                        }
+                    }
+                }
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.MemoryStack.GetValue("backAndDown")!.ToString()).IsEqualTo("Hello from subfolder");
+    }
+
+    [Test]
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
