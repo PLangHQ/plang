@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "total_tests": 1928, "passed": 1918, "failed": 2, "skipped": 8,
+    "http_tests": 59
+  },
+  "coverage_progression": {
+    "v2": "5.7% line",
+    "v3": "88.3% line",
+    "v4": "95.9% line, 78.7% branch"
+  },
+  "provider_method_coverage": {
+    "DefaultHttpProvider overall": "95.9% line, 78.7% branch",
+    "SendAsync": "covered", "DownloadAsync": "covered", "UploadAsync": "covered",
+    "Configure": "covered", "ExecuteHttpAsync": "93.8%",
+    "ParseResponseAsync": "92.3%", "ParsePlangResponseAsync": "60.6%",
+    "HandleStreamingAsync": "100%", "StreamLinesAsync": "100%",
+    "StreamSSEAsync": "85.7%", "StreamBytesAsync": "100%", "StreamPlangAsync": "84.4%",
+    "StreamWithProgressAsync": "44.4%", "SignRequestAsync": "100%",
+    "ResolveUrl": "covered", "MergeHeaders": "covered", "ApplyHeaders": "covered",
+    "BuildProperties": "covered", "ResolveUploadContentAsync": "96.4%",
+    "CreateFormContentAsync": "75.9%", "CreateFileContentAsync": "100%",
+    "RunCallbackAsync": "100%", "ReadErrorResponseAsync": "90%",
+    "TryExtractSignedErrorIdentity": "0%"
+  }
+}

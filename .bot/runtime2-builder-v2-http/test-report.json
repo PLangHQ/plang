@@ -1,93 +1,62 @@
 {
   "tester": "tester",
   "branch": "runtime2-builder-v2-http",
-  "timestamp": "2026-03-23T17:00:00Z",
-  "tested_version": "v3-revised",
+  "timestamp": "2026-03-23T18:00:00Z",
+  "tested_version": "v4",
   "test_run": {
-    "csharp": { "total": 1905, "passed": 1895, "failed": 2, "skipped": 8 },
+    "csharp": { "total": 1928, "passed": 1918, "failed": 2, "skipped": 8, "note": "2 failures are pre-existing DLL fixture issue" },
     "plang": { "total": 10, "passed": 0, "failed": 0, "skipped": 10, "note": "Cannot build without LLM" }
   },
   "coverage": {
-    "changed_files_covered": 8,
+    "changed_files_covered": 9,
     "changed_files_total": 10,
-    "provider_coverage": "88.3% line, 58.4% branch",
+    "provider_coverage": "95.9% line, 78.7% branch",
+    "progression": "v2: 5.7% → v3: 88.3% → v4: 95.9%",
     "uncovered_files": [
-      "PLang/Runtime2/modules/http/Config.cs (0%)",
-      "PLang/Runtime2/modules/http/types.cs (0%)"
+      "PLang/Runtime2/modules/http/types.cs (0% — TransferProgress record, no direct test needed)"
     ]
+  },
+  "v3_revised_findings_status": {
+    "finding_1_autodetect_false_green": "FIXED — now verifies body == 'auto content' (file data, not filename)",
+    "finding_2_json_parsing_false_green": "FIXED — now verifies serialized value contains 'Alice'",
+    "finding_3_upload_response_false_green": "FIXED — now verifies Value not null + JSON contains '42'",
+    "finding_4_form_upload_0_percent": "FIXED — 4 tests: dict auto-detect, explicit form, @file reference with content verification, object→JSON",
+    "finding_5_500_error_key": "FIXED — now checks Error.Key == 'HttpError'",
+    "finding_6_binary_bytes": "FIXED — now checks bytes match input",
+    "finding_7_streaming_gaps": "FIXED — SSE 85.7%, Bytes 100%, Plang 84.4%, Lines 100%"
   },
   "findings": [
     {
       "id": 1,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "N/A",
       "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Upload_AutoDetectFile_WhenFileExists (L131) — only checks result.Success. If the entire auto-detection logic in ResolveUploadContentAsync were deleted, this test would still pass. The test claims to verify 'auto-detect file when file exists' but never verifies the file's content was uploaded vs the filename string 'auto.txt' being sent as text.",
-      "impact": "Auto-detection choosing wrong ContentAs (text instead of file) would go undetected. The deletion test proves this: delete ResolveUploadContentAsync's file-exists branch → test still green.",
-      "suggestion": "Read the request body and verify it equals 'auto content' (the file data), not 'auto.txt' (the filename). Optionally check Content-Type is ByteArrayContent, not StringContent."
+      "issue": "StreamWithProgressAsync at 44.4% coverage — progress callback reporting during download/upload is only partially tested. The throttled reporting (500ms interval) and TransferProgress record construction have gaps.",
+      "impact": "Low — progress is a UX feature, not a correctness feature. Partial coverage is acceptable.",
+      "suggestion": "Non-blocking. Could add a download test with Content-Length header to exercise percentage calculation."
     },
     {
       "id": 2,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "N/A",
       "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Get_JsonResponse_ParsedCorrectly (L81) — test name says 'ParsedCorrectly' but only asserts result.Value is not null. If JSON parsing were replaced with `return Data.Ok(\"unparsed\")`, this test would still pass. The mock returns {\"name\":\"Alice\"} but the test never verifies Alice was parsed.",
-      "impact": "JSON deserialization could silently break (return raw string, wrong type, empty object) and this test would still be green.",
-      "suggestion": "Verify the parsed value: result.Value should be a JsonElement or object with a 'name' property equal to 'Alice'. Example: await Assert.That(result.Value!.ToString()).Contains(\"Alice\");"
+      "issue": "TryExtractSignedErrorIdentity at 0% — best-effort extraction of signed identity from error responses. Only called on error path when response might contain a signed body.",
+      "impact": "Low — this is a best-effort error enrichment path. If it fails, the error is still returned correctly.",
+      "suggestion": "Non-blocking. Would need a signed error response body to test, which requires full signing setup."
     },
     {
       "id": 3,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Upload_ResponseParsed_AsJson (L187) — checks Properties['StatusCode']==200 but never verifies the JSON response was actually parsed. If response parsing returned Data.Ok() with no value, StatusCode property would still be 200.",
-      "impact": "Upload response parsing could silently drop the response body and this test would still pass.",
-      "suggestion": "Verify result.Value is not null and contains the parsed JSON data (e.g., the 'id' field equals 42)."
-    },
-    {
-      "id": 4,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "N/A",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "CreateFormContentAsync (0% coverage) — multipart form upload with @file references is a real user-facing feature with zero test coverage. Dict-to-form conversion, @file detection, and MultipartFormDataContent construction are all untested.",
-      "impact": "Form uploads could be completely broken. The @file reference pattern (dict key starting with '@' = file upload) is a convention that's easy to break.",
-      "suggestion": "Add test: upload with Content = new Dictionary<string, object> { [\"field\"] = \"value\", [\"@attachment\"] = \"path/to/file.txt\" }. Verify MultipartFormDataContent is sent with both string field and file content."
-    },
-    {
-      "id": 5,
       "severity": "minor",
       "type": "weak-assertion",
       "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
       "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Get_500Response_ReturnsHttpError (L237) — checks StatusCode==500 but not Error.Key. Inconsistent with Get_404Response which checks both Key and StatusCode.",
-      "impact": "Low — 404 test covers the key check pattern.",
-      "suggestion": "Add: await Assert.That(result.Error!.Key).IsEqualTo(\"HttpError\");"
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "Get_BinaryResponse_ReturnsByteArray (L407) — checks type is byte[] but not that bytes match the input PNG header. Easy to strengthen.",
-      "impact": "Low — byte corruption unlikely but trivial to catch.",
-      "suggestion": "Add: await Assert.That((byte[])result.Value!).IsEquivalentTo(bytes);"
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "N/A",
-      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-      "issue": "StreamSSEAsync (0%), StreamBytesAsync (0%), StreamPlangAsync (0%) — SSE is extremely common (OpenAI, every LLM streaming API). These are real features with zero coverage. Acknowledged as hard to test without a real GoalCall target.",
-      "impact": "SSE parsing bugs (wrong boundary detection, data: prefix stripping) would go undetected.",
-      "suggestion": "Deferred — requires callback mechanism. Note for future: consider a test-mode callback that collects items into a list instead of invoking a goal."
+      "issue": "Get_PlangResponseInvalidSignature_ReturnsError (L866) — only checks result.Success is false, no Error.Key check. Acceptable because error type depends on Ed25519 verification behavior which may vary.",
+      "impact": "Very low — the test correctly verifies that invalid signatures cause failure.",
+      "suggestion": "Non-blocking."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "Coverage is good (88.3%) but 3 false greens remain: Upload_AutoDetectFile passes even if auto-detection is deleted, Get_JsonResponse_ParsedCorrectly passes even if parsing is broken, Upload_ResponseParsed_AsJson passes even if response body is dropped. Plus CreateFormContentAsync (multipart form with @file) has 0% coverage on a user-facing feature. Fix the 3 false greens (strengthen assertions) and add 1 form upload test. The 3 minor findings are non-blocking."
+  "verdict": "approved",
+  "summary": "All previous findings resolved. DefaultHttpProvider at 95.9% line coverage (up from 5.7% in v2). 59 HTTP tests covering: response parsing (JSON/XML/text/binary/plang), URL resolution (relative/absolute/protocol prefix), error handling (404/500/timeout/NoBaseUrl/ConfigLocked/UnsignedPlang), exception mapping (HttpRequestException/IOException/FormatException), streaming (Lines/SSE/SSE-multiline/Bytes/Plang-signed/Plang-invalid/error/custom-var/unsigned-rejection), signing integration (X-Signature header/JSON format/plang response verification/invalid signature), header merging (default+step/content routing), upload (text/file/base64/form/@file/auto-detect-file/auto-detect-string/auto-detect-object), download (save/exists-error/exists-skip/exists-overwrite/parent-dirs/404), and config scope chain (timeout/baseUrl/default-true/default-false/redirect-lock/null-skip/per-step-override). 3 minor findings remain, all non-blocking. Test suite is honest and thorough."
 }
