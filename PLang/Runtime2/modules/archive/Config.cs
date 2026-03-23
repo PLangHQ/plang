@@ -4,7 +4,7 @@ using PLang.Runtime2.Engine.Settings;
 namespace PLang.Runtime2.modules.archive;
 
 /// <summary>
-/// Archive module settings. First use case for ISettings.
+/// Archive module settings. First use case for IConfig.
 ///
 /// The source generator will rewrite these properties to resolve from the
 /// settings scope chain. Until then, they return their class defaults.
@@ -12,7 +12,7 @@ namespace PLang.Runtime2.modules.archive;
 /// Generated read side (what the source generator will produce):
 ///   public long Max => _context?.Engine.Settings.Resolve&lt;long&gt;("archive.max", _context, 100 * 1024 * 1024);
 /// </summary>
-public partial class Settings : ISettings
+public partial class Config : IConfig
 {
     /// <summary>
     /// Maximum decompressed size in bytes. Default: 100MB.

@@ -9,10 +9,10 @@ namespace PLang.Runtime2.Engine.Settings;
 /// via Engine.Settings.Resolve.
 ///
 /// Usage:
-///   var view = engine.Settings.For&lt;archive.Settings&gt;(context);
+///   var view = engine.Settings.For&lt;archive.Config&gt;(context);
 ///   long max = view.Resolve&lt;long&gt;("max", defaultValue);
 /// </summary>
-public sealed class ModuleView<T> where T : ISettings, new()
+public sealed class ModuleView<T> where T : IConfig, new()
 {
     private readonly @this _settings;
     private readonly PLangContext _context;

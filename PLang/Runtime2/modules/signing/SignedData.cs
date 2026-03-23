@@ -74,7 +74,7 @@ public class SignedData
         var engine = action.Context.Engine;
 
         // Resolve signing provider: action param → settings → registry
-        var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
+        var signingSettings = engine.Settings.For<SigningConfig>(action.Context);
         var providerName = action.Provider ?? signingSettings.Resolve("Provider", "ed25519");
 
         var providerResult = engine.Providers.Get<ISigningProvider>(providerName);
@@ -121,7 +121,7 @@ public class SignedData
     {
         var engine = action.Context.Engine;
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
-        var signingSettings = engine.Settings.For<SigningSettings>(action.Context);
+        var signingSettings = engine.Settings.For<SigningConfig>(action.Context);
         var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
 
         // 1. Type check

@@ -187,19 +187,19 @@ public class Ed25519ProviderTests
 
     #endregion
 
-    #region SigningSettings Defaults
+    #region SigningConfig Defaults
 
     [Test]
-    public async Task SigningSettings_DefaultProvider_IsEd25519()
+    public async Task SigningConfig_DefaultProvider_IsEd25519()
     {
-        var settings = new SigningSettings();
+        var settings = new SigningConfig();
         await Assert.That(settings.Provider).IsEqualTo("ed25519");
     }
 
     [Test]
-    public async Task SigningSettings_DefaultTimeoutMs_Is300000()
+    public async Task SigningConfig_DefaultTimeoutMs_Is300000()
     {
-        var settings = new SigningSettings();
+        var settings = new SigningConfig();
         await Assert.That(settings.TimeoutMs).IsEqualTo(300_000L);
     }
 

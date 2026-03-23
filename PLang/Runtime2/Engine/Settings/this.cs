@@ -4,11 +4,11 @@ namespace PLang.Runtime2.Engine.Settings;
 
 /// <summary>
 /// Engine-level settings registry. Owns:
-/// - Module type registration (which ISettings types exist)
+/// - Module type registration (which IConfig types exist)
 /// - Engine-level default scope (persistent across goals)
 /// - Resolution logic: context scope → parent scope → engine defaults → class defaults
 ///
-/// Navigation: engine.Settings.For&lt;archive.Settings&gt;(context).Max
+/// Navigation: engine.Settings.For&lt;archive.Config&gt;(context).Max
 /// </summary>
 public sealed class @this
 {
@@ -61,10 +61,10 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Returns a context-bound view for a specific ISettings type.
+    /// Returns a context-bound view for a specific IConfig type.
     /// The view resolves property values through the scope chain for the given context.
     /// </summary>
-    public ModuleView<T> For<T>(PLangContext context) where T : ISettings, new()
+    public ModuleView<T> For<T>(PLangContext context) where T : IConfig, new()
     {
         // Module prefix is the namespace's last segment (e.g., "PLang.Runtime2.modules.archive" → "archive")
         var fullName = typeof(T).Namespace ?? "";
@@ -80,7 +80,7 @@ public sealed class @this
     /// Replaces manual if-null-set chains in provider Configure methods.
     /// </summary>
     public void Apply<TConfig>(object source, PLangContext context, bool isDefault = false)
-        where TConfig : ISettings, new()
+        where TConfig : IConfig, new()
     {
         var prefix = ResolvePrefix<TConfig>();
         var configProps = typeof(TConfig).GetProperties()

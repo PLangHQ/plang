@@ -2,7 +2,7 @@ using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Settings;
-using ArchiveSettings = PLang.Runtime2.modules.archive.Settings;
+using ArchiveConfig = PLang.Runtime2.modules.archive.Config;
 using EngineType = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
@@ -21,7 +21,7 @@ public class ModuleViewTests
     {
         var (engine, context) = CreateEngine();
 
-        var view = engine.Settings.For<ArchiveSettings>(context);
+        var view = engine.Settings.For<ArchiveConfig>(context);
 
         await Assert.That(view).IsNotNull();
     }
@@ -33,7 +33,7 @@ public class ModuleViewTests
         var (engine, context) = CreateEngine();
         long classDefault = 100 * 1024 * 1024;
 
-        var view = engine.Settings.For<ArchiveSettings>(context);
+        var view = engine.Settings.For<ArchiveConfig>(context);
         var result = view.Resolve<long>("max", classDefault);
 
         await Assert.That(result).IsEqualTo(classDefault);
@@ -49,7 +49,7 @@ public class ModuleViewTests
 
         engine.Settings.Set("archive.max", goalValue, context);
 
-        var view = engine.Settings.For<ArchiveSettings>(context);
+        var view = engine.Settings.For<ArchiveConfig>(context);
         var result = view.Resolve<long>("max", classDefault);
 
         await Assert.That(result).IsEqualTo(goalValue);
@@ -66,8 +66,8 @@ public class ModuleViewTests
         engine.Settings.Set("archive.max", 20L * 1024 * 1024, context1);
         engine.Settings.Set("archive.max", 50L * 1024 * 1024, context2);
 
-        var view1 = engine.Settings.For<ArchiveSettings>(context1);
-        var view2 = engine.Settings.For<ArchiveSettings>(context2);
+        var view1 = engine.Settings.For<ArchiveConfig>(context1);
+        var view2 = engine.Settings.For<ArchiveConfig>(context2);
 
         var result1 = view1.Resolve<long>("max", classDefault);
         var result2 = view2.Resolve<long>("max", classDefault);

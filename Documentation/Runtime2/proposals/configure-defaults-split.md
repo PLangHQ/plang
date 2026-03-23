@@ -49,8 +49,8 @@ The LLM maps developer intent. C# owns defaults. They look similar but serve dif
 
 There's an open question about determinism: if a .pr file is built against a runtime where `TimeoutInSec` defaults to 30, and a later runtime changes it to 60, should the old .pr still use 30?
 
-One approach discussed: store build-time defaults in the .pr file as a separate `"defaults"` section. The LLM outputs only developer-set values in `"parameters"`, the builder C# code fills everything else into `"defaults"` via reflection on the `ISettings` class.
+One approach discussed: store build-time defaults in the .pr file as a separate `"defaults"` section. The LLM outputs only developer-set values in `"parameters"`, the builder C# code fills everything else into `"defaults"` via reflection on the `IConfig` class.
 
 **Decision: deferred.** Runtime default changes in PLang are intentional — if you update the runtime, apps pick up new behavior. Pinning build-time defaults creates shadow versioning. The complexity (new Action property, 3-tier source generator resolution, builder changes) isn't justified until there's a concrete problem.
 
-If this ever becomes needed, the design is documented here. The key constraint: it requires builder C# code that reflects on Runtime2 `ISettings` classes, so it's blocked until the builder migrates to Runtime2 anyway.
+If this ever becomes needed, the design is documented here. The key constraint: it requires builder C# code that reflects on Runtime2 `IConfig` classes, so it's blocked until the builder migrates to Runtime2 anyway.
