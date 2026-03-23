@@ -145,6 +145,9 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
+        // Verify file content was uploaded, not the filename string
+        var body = await _handler.LastRequest!.Content!.ReadAsByteArrayAsync();
+        await Assert.That(Encoding.UTF8.GetString(body)).IsEqualTo("auto content");
     }
 
     [Test]
@@ -204,6 +207,9 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNotNull();
+        var json = System.Text.Json.JsonSerializer.Serialize(result.Value);
+        await Assert.That(json).Contains("42");
         await Assert.That(result.Properties["StatusCode"]!.Value).IsEqualTo(200);
     }
 

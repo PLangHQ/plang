@@ -92,6 +92,9 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNotNull();
+        // JSON deserializes as JsonElement — serialize back to verify content
+        var json = JsonSerializer.Serialize(result.Value);
+        await Assert.That(json).Contains("Alice");
     }
 
     [Test]
@@ -247,6 +250,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
 
@@ -422,6 +426,7 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsTypeOf<byte[]>();
+        await Assert.That((byte[])result.Value!).IsEquivalentTo(bytes);
     }
 
     #endregion
