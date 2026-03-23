@@ -488,9 +488,9 @@
         }
       ],
       "after": {
-        "status": "Complete — verdict PASS",
-        "health": "Tests honest, 88.3% provider coverage. Ready for security.",
-        "notes": "Minor gaps: form upload, SSE/Bytes/Plang streaming, signing integration at 0%. Acceptable for current scope."
+        "status": "Complete — verdict FAIL (revised from initial PASS)",
+        "health": "3 false greens remain + form upload at 0%. Send back to coder.",
+        "notes": "Initially approved but revised after self-challenge. 3 tests pass even if code is broken (auto-detect, JSON parsing, upload response). CreateFormContentAsync at 0% is a real user feature. Coverage improvement is real but assertions need strengthening."
       }
     }
   ]
