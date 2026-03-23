@@ -900,4 +900,64 @@ public class RequestActionTests
     }
 
     #endregion
+
+    #region Size Limits (Security)
+
+    [Test]
+    public async Task Get_OversizedResponse_ReturnsResponseTooLarge()
+    {
+        // Configure a tiny max response size
+        _engine.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
+
+        // Return a response larger than 50 bytes
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(new string('x', 100), Encoding.UTF8, "application/json")
+        });
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/big", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ResponseTooLarge");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(413);
+    }
+
+    [Test]
+    public async Task Get_OversizedBinaryResponse_ReturnsResponseTooLarge()
+    {
+        _engine.Config.Set("http.MaxResponseSize", 50L, Ctx, isDefault: true);
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(new byte[100])
+            {
+                Headers = { ContentType = new MediaTypeHeaderValue("image/png") }
+            }
+        });
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/big-binary", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ResponseTooLarge");
+    }
+
+    [Test]
+    public async Task Get_WithinSizeLimit_Succeeds()
+    {
+        _engine.Config.Set("http.MaxResponseSize", 1000L, Ctx, isDefault: true);
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"ok\":true}", Encoding.UTF8, "application/json")
+        });
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/small", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    #endregion
 }

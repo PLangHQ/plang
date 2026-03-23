@@ -13,13 +13,15 @@ namespace PLang.Tests.Runtime2.Modules.signing;
 public class SigningSerializationTests
 {
     [Test]
-    public async Task SignedData_NullSignature_SerializedAsNull()
+    public async Task SignedData_SigningBytes_ExcludesSignature()
     {
         var sd = CreateTestSignedData();
-        sd.Signature = null;
+        sd.Signature = "some-signature-value";
 
+        // SigningOptions excludes the Signature property for thread-safe signing bytes
         var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
-        await Assert.That(json).Contains("\"signature\":null");
+        await Assert.That(json).DoesNotContain("some-signature-value");
+        await Assert.That(json).DoesNotContain("\"signature\":\"");
     }
 
     [Test]
@@ -62,8 +64,14 @@ public class SigningSerializationTests
         var original = CreateTestSignedData();
         original.Signature = Convert.ToBase64String(new byte[64]);
 
-        var json = JsonSerializer.Serialize(original, SignedData.SigningOptions);
-        var deserialized = JsonSerializer.Deserialize<SignedData>(json, SignedData.SigningOptions)!;
+        // Use standard options for general roundtrip (SigningOptions excludes Signature)
+        var generalOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
+        };
+        var json = JsonSerializer.Serialize(original, generalOptions);
+        var deserialized = JsonSerializer.Deserialize<SignedData>(json, generalOptions)!;
 
         await Assert.That(deserialized.Type).IsEqualTo(original.Type);
         await Assert.That(deserialized.Algorithm).IsEqualTo(original.Algorithm);
@@ -151,6 +159,26 @@ public class SigningSerializationTests
             if (System.IO.Directory.Exists(tempDir))
                 System.IO.Directory.Delete(tempDir, true);
         }
+    }
+
+    [Test]
+    public async Task SignedData_ToSigningBytes_ThreadSafe()
+    {
+        var sd = CreateTestSignedData();
+        sd.Signature = Convert.ToBase64String(new byte[64]);
+
+        // Call ToSigningBytes concurrently — should produce identical results
+        // without corrupting Signature (the old bug: mutated Signature to null during serialization)
+        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(() => sd.ToSigningBytes())).ToArray();
+        var results = await Task.WhenAll(tasks);
+
+        // All results should be identical
+        var first = results[0];
+        foreach (var result in results)
+            await Assert.That(result.AsSpan().SequenceEqual(first)).IsTrue();
+
+        // Signature should still be intact after all concurrent calls
+        await Assert.That(sd.Signature).IsEqualTo(Convert.ToBase64String(new byte[64]));
     }
 
     private static SignedData CreateTestSignedData()

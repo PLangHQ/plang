@@ -117,14 +117,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (action.OnStream != null)
         {
+            var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
                 response, requestMessage, action.OnStream, action.StreamAs,
-                unsigned, engine, action.Context, cts.Token);
+                unsigned, engine, action.Context, maxSSEBuffer, cts.Token);
         }
+
+        var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
 
         using (response)
         {
-            return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context);
+            return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context, maxResponseSize);
         }
     });
 
@@ -175,7 +178,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         if (!response.IsSuccessStatusCode)
         {
-            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, cts.Token);
+            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, ct: cts.Token);
             return err;
         }
 
@@ -232,7 +235,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
 
-        return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context);
+        var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
+        return await ParseResponseAsync(response, requestMessage, unsigned, engine, action.Context, maxResponseSize);
     });
 
     public Data Configure(configure action)
@@ -256,10 +260,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return await operation();
         }
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
-            or IOException or UnauthorizedAccessException or FormatException)
+            or IOException or UnauthorizedAccessException or FormatException
+            or InvalidOperationException)
         {
             var (key, statusCode) = ex switch
             {
+                InvalidOperationException => ("ResponseTooLarge", 413),
                 TaskCanceledException => ("Timeout", 408),
                 HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
                 IOException or UnauthorizedAccessException => ("IOError", 500),
@@ -268,6 +274,62 @@ public sealed class DefaultHttpProvider : IHttpProvider
             };
             return Data.FromError(new ServiceError(ex.Message, key, statusCode));
         }
+    }
+
+    // --- Size-limited reads (security: untrusted external data) ---
+
+    private const long DefaultMaxResponseSize = 100 * 1024 * 1024; // 100MB
+    private const long MaxErrorBodySize = 4 * 1024; // 4KB for error messages
+
+    /// <summary>
+    /// Reads HTTP content as string with a byte size limit.
+    /// Protects against OOM from unbounded response bodies.
+    /// </summary>
+    private static async Task<string> ReadLimitedStringAsync(
+        HttpContent content, long maxBytes, CancellationToken ct = default)
+    {
+        using var stream = await content.ReadAsStreamAsync(ct);
+        using var limited = new MemoryStream();
+        var buffer = new byte[8192];
+        long totalRead = 0;
+        int bytesRead;
+
+        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > maxBytes)
+                throw new InvalidOperationException(
+                    $"Response body exceeds maximum size of {maxBytes / (1024 * 1024)}MB");
+            limited.Write(buffer, 0, bytesRead);
+        }
+
+        limited.Position = 0;
+        using var reader = new StreamReader(limited, Encoding.UTF8);
+        return await reader.ReadToEndAsync(ct);
+    }
+
+    /// <summary>
+    /// Reads HTTP content as byte array with a size limit.
+    /// </summary>
+    private static async Task<byte[]> ReadLimitedBytesAsync(
+        HttpContent content, long maxBytes, CancellationToken ct = default)
+    {
+        using var stream = await content.ReadAsStreamAsync(ct);
+        using var limited = new MemoryStream();
+        var buffer = new byte[8192];
+        long totalRead = 0;
+        int bytesRead;
+
+        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > maxBytes)
+                throw new InvalidOperationException(
+                    $"Response body exceeds maximum size of {maxBytes / (1024 * 1024)}MB");
+            limited.Write(buffer, 0, bytesRead);
+        }
+
+        return limited.ToArray();
     }
 
     // --- Internal HTTP transport ---
@@ -330,7 +392,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static void ApplySignature(HttpRequestMessage request, Data signResult)
     {
-        var signatureJson = JsonSerializer.Serialize(signResult.Signature, SignedData.SigningOptions);
+        var signatureJson = JsonSerializer.Serialize(signResult.Signature, _jsonOptions);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
     }
@@ -408,7 +470,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpRequestMessage request,
         bool unsigned,
         EngineType engine,
-        PLangContext context)
+        PLangContext context,
+        long maxResponseSize = DefaultMaxResponseSize)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
         var statusCode = (int)response.StatusCode;
@@ -438,13 +501,13 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 return err;
             }
 
-            return await ParsePlangResponseAsync(response, request, engine, context);
+            return await ParsePlangResponseAsync(response, request, engine, context, maxResponseSize);
         }
 
         // JSON response
         if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
         {
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await ReadLimitedStringAsync(response.Content, maxResponseSize);
             object? parsed;
             try
             {
@@ -462,7 +525,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         // XML response
         if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
         {
-            var xml = await response.Content.ReadAsStringAsync();
+            var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
             var result = Data.Ok(xml, Engine.Memory.Type.FromMime("application/xml"));
             BuildProperties(result, request, response);
             return result;
@@ -471,14 +534,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
         // Text response
         if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
         {
-            var text = await response.Content.ReadAsStringAsync();
+            var text = await ReadLimitedStringAsync(response.Content, maxResponseSize);
             var result = Data.Ok(text);
             BuildProperties(result, request, response);
             return result;
         }
 
         // Binary response
-        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
         var binaryResult = Data.Ok(bytes);
         BuildProperties(binaryResult, request, response);
         return binaryResult;
@@ -492,9 +555,10 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpResponseMessage response,
         HttpRequestMessage request,
         EngineType engine,
-        PLangContext context)
+        PLangContext context,
+        long maxResponseSize = DefaultMaxResponseSize)
     {
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
 
         Data? data;
         try
@@ -586,8 +650,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
     {
         var errorBody = "";
-        try { errorBody = await response.Content.ReadAsStringAsync(ct); }
-        catch { /* best effort */ }
+        try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
+        catch { /* best effort — body too large or read failed, proceed with empty */ }
         var err = Data.FromError(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
@@ -643,6 +707,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         bool unsigned,
         EngineType engine,
         PLangContext context,
+        long maxSSEBufferSize,
         CancellationToken ct)
     {
         if (!response.IsSuccessStatusCode)
@@ -683,7 +748,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                     break;
 
                 case StreamFormat.SSE:
-                    await StreamSSEAsync(stream, dataVarName, onStream, engine, context, ct);
+                    await StreamSSEAsync(stream, dataVarName, onStream, engine, context, maxSSEBufferSize, ct);
                     break;
 
                 default:
@@ -753,7 +818,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     private static async Task StreamSSEAsync(
         Stream stream, string varName, GoalCall onStream,
-        EngineType engine, PLangContext context, CancellationToken ct)
+        EngineType engine, PLangContext context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
@@ -774,6 +839,18 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line.StartsWith("data:", StringComparison.Ordinal))
             {
                 var data = line.Length > 5 ? line[5..].TrimStart() : "";
+
+                // Guard against unbounded SSE messages (no blank-line boundary)
+                if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
+                {
+                    await engine.Channels.WriteAsync(EngineChannels.StdErr,
+                        Data.FromError(new ServiceError(
+                            $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
+                            "SSEBufferOverflow", 413)));
+                    dataBuffer.Clear();
+                    continue;
+                }
+
                 if (dataBuffer.Length > 0) dataBuffer.Append('\n');
                 dataBuffer.Append(data);
             }

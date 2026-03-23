@@ -17,4 +17,10 @@ public partial class Config : IConfig
     public bool Unsigned { get; set; } = false;
     public bool FollowRedirects { get; set; } = true;
     public int MaxRedirects { get; set; } = 10;
+
+    /// <summary>Max response body size in bytes. Default 100MB. Protects against OOM from untrusted servers.</summary>
+    public long MaxResponseSize { get; set; } = 100 * 1024 * 1024;
+
+    /// <summary>Max SSE message buffer size in bytes. Default 10MB. Protects against unbounded data: lines without blank boundaries.</summary>
+    public long MaxSSEBufferSize { get; set; } = 10 * 1024 * 1024;
 }

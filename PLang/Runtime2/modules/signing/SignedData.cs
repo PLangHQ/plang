@@ -227,28 +227,36 @@ public class SignedData
 
     /// <summary>
     /// Deterministic serialization options for signing.
+    /// Excludes Signature property so ToSigningBytes is thread-safe (no mutation needed).
     /// </summary>
     internal static readonly JsonSerializerOptions SigningOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        DefaultIgnoreCondition = JsonIgnoreCondition.Never
+        DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+        {
+            Modifiers =
+            {
+                static typeInfo =>
+                {
+                    if (typeInfo.Type != typeof(SignedData)) return;
+                    foreach (var prop in typeInfo.Properties)
+                    {
+                        if (prop.Name.Equals("signature", StringComparison.OrdinalIgnoreCase))
+                            prop.ShouldSerialize = static (_, _) => false;
+                    }
+                }
+            }
+        }
     };
 
     /// <summary>
     /// Serializes this SignedData to deterministic JSON bytes for signing/verification.
+    /// Thread-safe: Signature is excluded via JsonSerializerOptions, not by mutation.
     /// </summary>
     internal byte[] ToSigningBytes()
     {
-        var savedSig = Signature;
-        Signature = null;
-        try
-        {
-            return JsonSerializer.SerializeToUtf8Bytes(this, SigningOptions);
-        }
-        finally
-        {
-            Signature = savedSig;
-        }
+        return JsonSerializer.SerializeToUtf8Bytes(this, SigningOptions);
     }
 }
