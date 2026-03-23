@@ -645,6 +645,93 @@ public class RequestActionTests
         await Assert.That(result.Error!.Key).IsEqualTo("UnsignedPlang");
     }
 
+    [Test]
+    public async Task Stream_Plang_VerifiesSignatureAndSetsIdentity()
+    {
+        // Sign two payloads to build valid NDJSON lines
+        var transportOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { TransportPropertyFilter.ForOutbound }
+            }
+        };
+
+        var sign1 = new sign { Context = Ctx, Data = "chunk-1" };
+        var signResult1 = await sign1.Run();
+        await Assert.That(signResult1.Success).IsTrue();
+        var line1Data = new Data("chunk-1") { Signature = signResult1.Signature };
+
+        var sign2 = new sign { Context = Ctx, Data = "chunk-2" };
+        var signResult2 = await sign2.Run();
+        await Assert.That(signResult2.Success).IsTrue();
+        var line2Data = new Data("chunk-2") { Signature = signResult2.Signature };
+
+        var ndjson = JsonSerializer.Serialize(line1Data, transportOptions) + "\n"
+                   + JsonSerializer.Serialize(line2Data, transportOptions) + "\n";
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(ndjson, Encoding.UTF8, "application/plang")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/plang-stream",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            Unsigned = false
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Verify !ServiceIdentity was set from the signed stream
+        var identity = Ctx.MemoryStack.Get("!ServiceIdentity");
+        await Assert.That(identity).IsNotNull();
+        await Assert.That(identity!.ToString()).IsNotEmpty();
+    }
+
+    [Test]
+    public async Task Stream_Plang_InvalidSignature_SetsErrorOnMemoryStack()
+    {
+        // Build NDJSON line with bogus signature
+        var transportOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { TransportPropertyFilter.ForOutbound }
+            }
+        };
+
+        var badData = new Data("payload");
+        badData.Signature = new SignedData { Identity = "fake", Signature = "AAAA_bogus" };
+        var ndjson = JsonSerializer.Serialize(badData, transportOptions) + "\n";
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(ndjson, Encoding.UTF8, "application/plang")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/plang-bad-stream",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            Unsigned = false
+        };
+        var result = await action.Run();
+
+        // Stream completes (errors are per-line, not fatal)
+        await Assert.That(result.Success).IsTrue();
+        // The last value set on MemoryStack should be the verification error
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue).IsNotNull();
+    }
+
     #endregion
 
     #region Header Merging
