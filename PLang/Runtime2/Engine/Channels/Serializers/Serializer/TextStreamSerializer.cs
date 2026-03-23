@@ -23,16 +23,14 @@ public sealed class TextStreamSerializer : ISerializer
 
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
     {
-        if (IsSimpleType(value))
-        {
-            var text = value?.ToString() ?? "";
-            var bytes = _encoding.GetBytes(text + Environment.NewLine);
-            await stream.WriteAsync(bytes, cancellationToken);
-        }
-        else
+        if (!IsSimpleType(value))
         {
             await _jsonFallback.SerializeAsync(stream, value, type, cancellationToken);
+            return;
         }
+
+        var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
+        await stream.WriteAsync(bytes, cancellationToken);
     }
 
     public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)

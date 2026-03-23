@@ -62,8 +62,7 @@ public sealed class JsonStreamSerializer : ISerializer
             return;
         }
 
-        type ??= value.GetType();
-        await JsonSerializer.SerializeAsync(stream, value, type, _options, cancellationToken);
+        await JsonSerializer.SerializeAsync(stream, value, type ?? value.GetType(), _options, cancellationToken);
         await stream.WriteAsync(Encoding.UTF8.GetBytes(Environment.NewLine), cancellationToken);
     }
 

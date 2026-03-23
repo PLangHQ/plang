@@ -47,8 +47,9 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<T?> ReadAsync<T>(string filePath, CancellationToken cancellationToken = default)
     {
-        var content = await _engine.FileSystem.File.ReadAllTextAsync(filePath, cancellationToken);
-        var ext = System.IO.Path.GetExtension(filePath);
+        var fs = _engine.FileSystem;
+        var content = await fs.File.ReadAllTextAsync(filePath, cancellationToken);
+        var ext = fs.Path.GetExtension(filePath);
         return Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
     }
 
@@ -99,12 +100,10 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public async Task<bool> RemoveAsync(string name)
     {
-        if (_channels.TryRemove(name, out var channel))
-        {
-            await channel.DisposeAsync();
-            return true;
-        }
-        return false;
+        if (!_channels.TryRemove(name, out var channel)) return false;
+
+        await channel.DisposeAsync();
+        return true;
     }
 
     /// <summary>

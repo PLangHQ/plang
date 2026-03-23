@@ -130,14 +130,10 @@ public sealed class @this : IAsyncDisposable, IDisposable
     /// </summary>
     public void Close()
     {
-        if (!IsOpen)
-            return;
+        if (!IsOpen) return;
 
         IsOpen = false;
-        if (_ownsStream)
-        {
-            Stream.Dispose();
-        }
+        if (_ownsStream) Stream.Dispose();
     }
 
     public void Dispose()
@@ -147,13 +143,9 @@ public sealed class @this : IAsyncDisposable, IDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (!IsOpen)
-            return;
+        if (!IsOpen) return;
 
         IsOpen = false;
-        if (_ownsStream)
-        {
-            await Stream.DisposeAsync();
-        }
+        if (_ownsStream) await Stream.DisposeAsync();
     }
 }
