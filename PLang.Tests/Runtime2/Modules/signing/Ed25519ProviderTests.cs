@@ -188,20 +188,20 @@ public class Ed25519ProviderTests
 
     #endregion
 
-    #region SigningConfig Defaults
+    #region Config Defaults
 
     [Test]
-    public async Task SigningConfig_DefaultProvider_IsEd25519()
+    public async Task Config_DefaultProvider_IsEd25519()
     {
-        var settings = new SigningConfig();
-        await Assert.That(settings.Provider).IsEqualTo("ed25519");
+        var config = new PLang.Runtime2.modules.signing.Config();
+        await Assert.That(config.Provider).IsEqualTo("ed25519");
     }
 
     [Test]
-    public async Task SigningConfig_DefaultTimeoutMs_Is300000()
+    public async Task Config_DefaultTimeoutMs_Is300000()
     {
-        var settings = new SigningConfig();
-        await Assert.That(settings.TimeoutMs).IsEqualTo(300_000L);
+        var config = new PLang.Runtime2.modules.signing.Config();
+        await Assert.That(config.TimeoutMs).IsEqualTo(300_000L);
     }
 
     #endregion

@@ -12,7 +12,7 @@ namespace PLang.Runtime2.modules.identity.providers;
 /// Default identity provider backed by System DataSource (SQLite).
 /// All methods take the action and navigate to engine/context/datasource.
 /// </summary>
-public class DefaultIdentityProvider : IIdentityProvider
+public sealed class DefaultIdentityProvider : IIdentityProvider
 {
     private const string Table = "identity";
 
@@ -38,7 +38,9 @@ public class DefaultIdentityProvider : IIdentityProvider
         if (string.IsNullOrWhiteSpace(action.Name))
             return Data.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
-        var all = await LoadAllAsync(action);
+        var allResult = await LoadAllAsync(action);
+        if (!allResult.Success) return allResult;
+        var all = allResult.Value!;
         if (all.Exists(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase)))
             return Data.FromError(new ActionError($"Identity '{action.Name}' already exists", "DuplicateName", 409));
 
@@ -105,7 +107,9 @@ public class DefaultIdentityProvider : IIdentityProvider
     public async Task<Data> SetDefaultAsync(SetDefault action)
     {
         var engine = action.Context.Engine;
-        var all = await LoadAllAsync(action);
+        var allResult = await LoadAllAsync(action);
+        if (!allResult.Success) return allResult;
+        var all = allResult.Value!;
 
         var target = all.Find(i => string.Equals(i.Name, action.Name, StringComparison.OrdinalIgnoreCase));
         if (target == null)
@@ -143,7 +147,9 @@ public class DefaultIdentityProvider : IIdentityProvider
         if (identity == null)
             return Data.FromError(new ActionError($"Identity '{action.Name}' not found", "NotFound", 404));
 
-        var all = await LoadAllAsync(action);
+        var allResult = await LoadAllAsync(action);
+        if (!allResult.Success) return allResult;
+        var all = allResult.Value!;
         if (all.Exists(i => string.Equals(i.Name, action.NewName, StringComparison.OrdinalIgnoreCase)))
             return Data.FromError(new ActionError($"Identity '{action.NewName}' already exists", "DuplicateName", 409));
 
@@ -166,7 +172,9 @@ public class DefaultIdentityProvider : IIdentityProvider
 
     public async Task<Data> ListAsync(list action)
     {
-        var all = await LoadAllAsync(action);
+        var allResult = await LoadAllAsync(action);
+        if (!allResult.Success) return allResult;
+        var all = allResult.Value!;
         var active = all.Where(i => !i.IsArchived).ToList();
         return Data.Ok(active);
     }
@@ -212,13 +220,16 @@ public class DefaultIdentityProvider : IIdentityProvider
     }
 
     /// <summary>Loads all identities (including archived) from the System DataSource.</summary>
-    internal async Task<List<IdentityVariable>> LoadAllAsync(IContext action)
+    internal async Task<Data<List<IdentityVariable>>> LoadAllAsync(IContext action)
     {
         var dataSource = action.Context.Engine.System.DataSource;
         var result = await dataSource.GetAll(Table);
 
-        if (!result.Success || result.Value is not List<Data> items)
-            return new List<IdentityVariable>();
+        if (!result.Success)
+            return Data<List<IdentityVariable>>.FromError(result.Error!);
+
+        if (result.Value is not List<Data> items)
+            return Data<List<IdentityVariable>>.Ok(new List<IdentityVariable>());
 
         var identities = new List<IdentityVariable>();
         foreach (var item in items)
@@ -227,7 +238,7 @@ public class DefaultIdentityProvider : IIdentityProvider
             if (identity != null)
                 identities.Add(identity);
         }
-        return identities;
+        return Data<List<IdentityVariable>>.Ok(identities);
     }
 
     /// <summary>
@@ -236,7 +247,9 @@ public class DefaultIdentityProvider : IIdentityProvider
     public async Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action)
     {
         var engine = action.Context.Engine;
-        var all = await LoadAllAsync(action);
+        var allResult = await LoadAllAsync(action);
+        if (!allResult.Success) return Data<IdentityVariable>.FromError(allResult.Error!);
+        var all = allResult.Value!;
         var def = all.Find(i => i.IsDefault && !i.IsArchived);
         if (def != null) return Data<IdentityVariable>.Ok(def);
 

@@ -76,7 +76,8 @@ public class Ed25519Provider : ISigningProvider
 
             return Data.Ok(true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is FormatException or ArgumentException
+            or System.Security.Cryptography.CryptographicException or InvalidOperationException)
         {
             return Data.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
         }

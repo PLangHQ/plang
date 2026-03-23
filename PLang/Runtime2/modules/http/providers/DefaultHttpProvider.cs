@@ -246,7 +246,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             return await operation();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
+            or IOException or UnauthorizedAccessException or FormatException)
         {
             var (key, statusCode) = ex switch
             {
@@ -713,7 +714,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         var result = await engine.RunGoalAsync(goalCall, context, ct);
         if (!result.Success)
-            await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+            await engine.Channels.WriteAsync(EngineChannels.StdErr, result);
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -803,7 +804,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (string.IsNullOrEmpty(line)) continue;
 
             // Each NDJSON line is a Data object with Signature populated via [In]
-            var data = JsonSerializer.Deserialize<Data>(line, _transportInOptions);
+            Data? data;
+            try
+            {
+                data = JsonSerializer.Deserialize<Data>(line, _transportInOptions);
+            }
+            catch (JsonException)
+            {
+                await engine.Channels.WriteAsync(EngineChannels.StdErr,
+                    Data.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                continue;
+            }
             if (data == null) continue;
 
             // Verify signature — pass Data straight to verify

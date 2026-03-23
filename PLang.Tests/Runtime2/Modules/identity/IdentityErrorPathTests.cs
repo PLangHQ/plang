@@ -283,16 +283,14 @@ public class IdentityErrorPathTests
     // --- LoadAllAsync when DataSource.GetAll fails (via GetAll action) ---
 
     [Test]
-    public async Task GetAll_DataSourceFails_ReturnsEmptyList()
+    public async Task GetAll_DataSourceFails_ReturnsError()
     {
         SwapDataSource(_engine.System, new FailingGetAllDataSource());
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
-        var list = result.Value as List<IdentityVariable>;
-        await Assert.That(list).IsNotNull();
-        await Assert.That(list!.Count).IsEqualTo(0);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
     }
 
     // --- Deserialize with unrecognized value type (via Get action) ---
