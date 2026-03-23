@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "total_tests": 1905,
+    "passed": 1895,
+    "failed": 2,
+    "skipped": 8,
+    "failed_tests_preexisting": true
+  },
+  "http_module_coverage": {
+    "request.cs": { "line_rate": 1.0 },
+    "download.cs": { "line_rate": 1.0 },
+    "upload.cs": { "line_rate": 1.0 },
+    "configure.cs": { "line_rate": 1.0 },
+    "DefaultHttpProvider.cs": { "line_rate": 0.883, "branch_rate": 0.584 },
+    "Config.cs": { "line_rate": 0.0, "note": "accessed via scope chain" },
+    "types.cs": { "line_rate": 0.0, "note": "TransferProgress not constructed in tests" }
+  },
+  "provider_method_coverage": {
+    "SendAsync": "covered",
+    "DownloadAsync": "covered",
+    "UploadAsync": "covered",
+    "Configure": "covered",
+    "ExecuteHttpAsync": "75% (timeout path covered, others not)",
+    "ParseResponseAsync": "90.4%",
+    "ParsePlangResponseAsync": "0% (requires signing setup)",
+    "HandleStreamingAsync": "50%",
+    "StreamLinesAsync": "100%",
+    "StreamSSEAsync": "0%",
+    "StreamBytesAsync": "0%",
+    "StreamPlangAsync": "0%",
+    "StreamWithProgressAsync": "44.4%",
+    "SignRequestAsync": "17.6%",
+    "ResolveUrl": "covered",
+    "MergeHeaders": "covered",
+    "ApplyHeaders": "covered",
+    "BuildProperties": "covered",
+    "ResolveUploadContentAsync": "71.4%",
+    "CreateFileContentAsync": "100%",
+    "CreateFormContentAsync": "0%",
+    "TryExtractSignedErrorIdentity": "0%",
+    "RunCallbackAsync": "100%",
+    "ReadErrorResponseAsync": "90%"
+  },
+  "improvement": {
+    "before": "5.7% line coverage",
+    "after": "88.3% line coverage",
+    "delta": "+82.6 percentage points"
+  }
+}

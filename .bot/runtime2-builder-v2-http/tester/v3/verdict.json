@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "DefaultHttpProvider 88.3% coverage, all v2 critical/major findings fixed, 7 minor remaining (weak assertions, SSE/form streaming gaps)" }
