@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -126,15 +127,53 @@ public class ConfigureActionTests
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }
 
+    [Test]
+    public async Task Configure_PerStepTimeout_OverridesConfiguredTimeout()
+    {
+        // Configure module-level timeout = 60
+        var configAction = new configure { Context = Ctx, TimeoutInSec = 60 };
+        await configAction.Run();
+
+        // Verify config has 60
+        var view = _engine.Config.For<Config>(Ctx);
+        await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(60);
+
+        // Make a request with per-step TimeoutInSec = 1
+        // If timeout is respected, a slow handler will trigger Timeout error
+        var handler = new MockHttpMessageHandler();
+        handler.SlowDelay = 3000; // 3 seconds
+        var provider = new DefaultHttpProvider(handler) { Name = "timeout-test" };
+        _engine.Providers.Register<IHttpProvider>(provider);
+        _engine.Providers.SetDefault<IHttpProvider>("timeout-test");
+
+        var requestAction = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/slow",
+            TimeoutInSec = 1, // per-step override: 1 second
+            Unsigned = true
+        };
+        var result = await requestAction.Run();
+
+        // Should timeout at 1s (per-step), not wait 60s (configured)
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
+    }
+
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {
-        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(
+        public int SlowDelay { get; set; }
+
+        protected override async Task<System.Net.Http.HttpResponseMessage> SendAsync(
             System.Net.Http.HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+            if (SlowDelay > 0)
+                await Task.Delay(SlowDelay, cancellationToken);
+
+            return new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new System.Net.Http.StringContent("{}", Encoding.UTF8, "application/json")
-            });
+            };
         }
     }
 }

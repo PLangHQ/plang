@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
@@ -205,4 +206,99 @@ public class UploadActionTests
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Properties["StatusCode"]!.Value).IsEqualTo(200);
     }
+
+    #region Form Upload & @file
+
+    [Test]
+    public async Task Upload_DictAutoDetect_SendsMultipartForm()
+    {
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" },
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+    }
+
+    [Test]
+    public async Task Upload_FormExplicit_SendsMultipartForm()
+    {
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = new Dictionary<string, object> { ["field1"] = "value1" },
+            As = ContentAs.Form,
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+    }
+
+    [Test]
+    public async Task Upload_FormWithAtFile_ReadsFileContent()
+    {
+        var filePath = System.IO.Path.Combine(_tempDir, "document.pdf");
+        await System.IO.File.WriteAllTextAsync(filePath, "fake pdf content");
+
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" },
+            As = ContentAs.Form,
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Verify multipart form was sent
+        await Assert.That(_handler.LastRequest!.Content).IsTypeOf<MultipartFormDataContent>();
+
+        // Read multipart content and verify file part exists
+        var multipart = (MultipartFormDataContent)_handler.LastRequest!.Content!;
+        var parts = multipart.ToList();
+        await Assert.That(parts.Count).IsEqualTo(2); // title + file
+
+        // Find the file part (has filename in Content-Disposition)
+        var filePart = parts.FirstOrDefault(p =>
+            p.Headers.ContentDisposition?.FileName != null);
+        await Assert.That(filePart).IsNotNull();
+        await Assert.That(filePart!.Headers.ContentDisposition!.FileName).IsEqualTo("document.pdf");
+
+        var fileContent = await filePart.ReadAsStringAsync();
+        await Assert.That(fileContent).IsEqualTo("fake pdf content");
+    }
+
+    [Test]
+    public async Task Upload_AutoDetectObject_SendsJson()
+    {
+        // Non-dict, non-string object → serialized as JSON
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = new List<string> { "a", "b", "c" },
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var body = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(body).Contains("[");
+        await Assert.That(body).Contains("\"a\"");
+    }
+
+    #endregion
 }

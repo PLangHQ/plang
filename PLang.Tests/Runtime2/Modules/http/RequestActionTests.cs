@@ -3,11 +3,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
+using PLang.Runtime2.modules.signing;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 using HttpMethod = PLang.Runtime2.modules.http.HttpMethod;
 
@@ -420,6 +422,389 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsTypeOf<byte[]>();
+    }
+
+    #endregion
+
+    #region Exception Mapping (ExecuteHttpAsync)
+
+    [Test]
+    public async Task Get_HttpRequestException_ReturnsHttpError()
+    {
+        _handler.Handler = _ => throw new HttpRequestException("Service Unavailable", null, HttpStatusCode.ServiceUnavailable);
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/down", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(503);
+    }
+
+    [Test]
+    public async Task Get_IOException_ReturnsIOError()
+    {
+        _handler.Handler = _ => throw new IOException("Connection reset");
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/reset", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Get_FormatException_ReturnsInvalidContent()
+    {
+        _handler.Handler = _ => throw new FormatException("Bad encoding");
+
+        var action = new request { Context = Ctx, Url = "https://api.example.com/bad", Unsigned = true };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("InvalidContent");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+    }
+
+    #endregion
+
+    #region Streaming (Lines, SSE, Bytes, Error)
+
+    [Test]
+    public async Task Stream_Lines_SetsMemoryStackPerLine()
+    {
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("line1\nline2\nline3\n", Encoding.UTF8, "text/plain")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/stream",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleLine" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
+        await Assert.That(result.Success).IsTrue();
+        // Last line set on MemoryStack
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue).IsNotNull();
+        await Assert.That(lastValue!.ToString()).IsEqualTo("line3");
+    }
+
+    [Test]
+    public async Task Stream_SSE_ParsesDataFields()
+    {
+        var sseContent = "data: hello\n\ndata: world\n\n";
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(sseContent, Encoding.UTF8, "text/event-stream")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/sse",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue).IsNotNull();
+        await Assert.That(lastValue!.ToString()).IsEqualTo("world");
+    }
+
+    [Test]
+    public async Task Stream_SSE_MultiLineData_ConcatenatesWithNewline()
+    {
+        var sseContent = "data: part1\ndata: part2\n\n";
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(sseContent, Encoding.UTF8, "text/event-stream")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/sse-multi",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue!.ToString()).IsEqualTo("part1\npart2");
+    }
+
+    [Test]
+    public async Task Stream_Bytes_SetsMemoryStackWithByteArray()
+    {
+        var bytes = new byte[] { 1, 2, 3, 4, 5 };
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(bytes)
+            {
+                Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
+            }
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/bytes",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleBytes" },
+            StreamAs = StreamFormat.Bytes,
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue).IsNotNull();
+    }
+
+    [Test]
+    public async Task Stream_ErrorResponse_ReturnsErrorNotStream()
+    {
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent("Server Error", Encoding.UTF8, "text/plain")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/stream-err",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleLine" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
+        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Stream_CustomVarName_UsesParameterVariable()
+    {
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("chunk1\n", Encoding.UTF8, "text/plain")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/stream",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall
+            {
+                Name = "HandleChunk",
+                Parameters = new Dictionary<string, object?> { ["chunk"] = "%myChunk%" }
+            },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var lastValue = Ctx.MemoryStack.Get("myChunk");
+        await Assert.That(lastValue).IsNotNull();
+        await Assert.That(lastValue!.ToString()).IsEqualTo("chunk1");
+    }
+
+    [Test]
+    public async Task Stream_UnsignedPlangResponse_ReturnsError()
+    {
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/plang")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/plang-stream",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnsignedPlang");
+    }
+
+    #endregion
+
+    #region Header Merging
+
+    [Test]
+    public async Task Get_DefaultAndStepHeaders_BothApplied()
+    {
+        var defaults = new Dictionary<string, object> { ["X-Api-Key"] = "default-key", ["X-Shared"] = "default" };
+        _engine.Config.Set("http.DefaultHeaders", defaults, Ctx, isDefault: true);
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/merged",
+            Headers = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Default header present
+        await Assert.That(_handler.LastRequest!.Headers.GetValues("X-Api-Key").First()).IsEqualTo("default-key");
+        // Step header present
+        await Assert.That(_handler.LastRequest!.Headers.GetValues("X-Custom").First()).IsEqualTo("step-value");
+        // Step overrides default
+        await Assert.That(_handler.LastRequest!.Headers.GetValues("X-Shared").First()).IsEqualTo("overridden");
+    }
+
+    [Test]
+    public async Task Post_ContentHeaders_RoutedToContentHeaders()
+    {
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/content",
+            Method = HttpMethod.POST,
+            Body = "test body",
+            Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Content-Encoding goes to Content.Headers
+        await Assert.That(_handler.LastRequest!.Content!.Headers.Contains("Content-Encoding")).IsTrue();
+        // X-Custom goes to Request.Headers
+        await Assert.That(_handler.LastRequest!.Headers.Contains("X-Custom")).IsTrue();
+    }
+
+    #endregion
+
+    #region Signed Requests
+
+    [Test]
+    public async Task Get_Signed_HasXSignatureHeader()
+    {
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/signed",
+            Unsigned = false
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.LastRequest!.Headers.Contains("X-Signature")).IsTrue();
+        // Accept header includes application/plang
+        var acceptValues = _handler.LastRequest!.Headers.Accept.Select(a => a.MediaType).ToList();
+        await Assert.That(acceptValues).Contains("application/plang");
+    }
+
+    [Test]
+    public async Task Get_Signed_XSignatureIsValidJson()
+    {
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/signed",
+            Unsigned = false
+        };
+        await action.Run();
+
+        var sigHeader = _handler.LastRequest!.Headers.GetValues("X-Signature").First();
+        var signedData = JsonSerializer.Deserialize<SignedData>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        await Assert.That(signedData).IsNotNull();
+        await Assert.That(signedData!.Identity).IsNotEmpty();
+        await Assert.That(signedData.Signature).IsNotNull();
+    }
+
+    [Test]
+    public async Task Get_SignedPlangResponse_SetsServiceIdentity()
+    {
+        // First, sign some data to get a valid signed response
+        var signAction = new sign { Context = Ctx, Data = "response-payload" };
+        var signResult = await signAction.Run();
+        await Assert.That(signResult.Success).IsTrue();
+
+        // Build a Data object with the signature, serialize with transport options
+        var responseData = new Data("response-payload");
+        responseData.Signature = signResult.Signature;
+        var transportOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { TransportPropertyFilter.ForOutbound }
+            }
+        };
+        var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(responseBody, Encoding.UTF8, "application/plang")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/plang-signed",
+            Unsigned = false
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var identity = Ctx.MemoryStack.Get("!ServiceIdentity");
+        await Assert.That(identity).IsNotNull();
+        await Assert.That(identity!.ToString()).IsNotEmpty();
+    }
+
+    [Test]
+    public async Task Get_PlangResponseInvalidSignature_ReturnsError()
+    {
+        // Build a Data with a bogus signature
+        var responseData = new Data("payload");
+        responseData.Signature = new SignedData
+        {
+            Identity = "fake-identity",
+            Signature = "AAAA_invalid_base64_sig"
+        };
+        var transportOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { TransportPropertyFilter.ForOutbound }
+            }
+        };
+        var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
+
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(responseBody, Encoding.UTF8, "application/plang")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/plang-bad-sig",
+            Unsigned = false
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
     }
 
     #endregion
