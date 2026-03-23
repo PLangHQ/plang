@@ -729,5 +729,83 @@
         "notes": "Clean fixes. Minor observation: InvalidOperationException catch is slightly broader now but not blocking."
       }
     }
+    ,
+    {
+      "id": "auditor-001",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-23T18:20:00Z",
+      "timestamp_end": null,
+      "intent": "Cross-cutting audit of HTTP module — verify cross-file contracts, architectural fit, and review quality",
+      "before": {
+        "assumptions": "All three prior reviewers passed (codeanalyzer v2, tester v4, security v2). HTTP module is feature-complete with 95.9% coverage. 1924 tests pass, 0 failures.",
+        "risk": "Cross-file contract gaps between HTTP and signing modules, thread safety of lazy HttpClient init, transport filter correctness for Data.Signature round-trip"
+      },
+      "plan": "1. Trace signing integration cross-file contract. 2. Verify provider registry + disposal. 3. Check config scope chain alignment. 4. Verify transport filter round-trip. 5. Assess OBP compliance. 6. Challenge prior review verdicts. 7. Write findings and verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/Runtime2/modules/signing/sign.cs",
+            "PLang/Runtime2/modules/signing/verify.cs",
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/TransportPropertyFilter.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced signing cross-file contract: sign→header→deserialize→verify across 6+ files. All contract points verified."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/CallStack/CallFrame.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified disposal lifecycle: Engine → Providers.All() → IDisposable.Dispose. Complete chain."
+        },
+        {
+          "paths": [
+            "PLang/Runtime2/modules/http/Config.cs",
+            "PLang/Runtime2/Engine/Config/this.cs",
+            "PLang/Runtime2/Engine/Config/ModuleView.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified config scope chain: all 15 Resolve calls match 10 Config properties."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/http/UploadActionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Spot-checked test assertions: found 7 weak assertions tester missed (signing identity, streaming bytes, form structure)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-http/auditor-report.json",
+            ".bot/runtime2-builder-v2-http/auditor/v1/verdict.json",
+            ".bot/runtime2-builder-v2-http/auditor/v1/summary.md",
+            ".bot/runtime2-builder-v2-http/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote audit deliverables: report, verdict, summaries."
+        }
+      ],
+      "after": {
+        "status": "Complete — PASS verdict",
+        "health": "0 critical, 0 major. 2 minor code issues, 7 weak test assertions, 1 nit.",
+        "notes": "Signing cross-file contract is solid. Config scope chain verified. Disposal lifecycle complete. Prior reviewers did good work — tester missed some weak assertions."
+      }
+    }
   ]
 }

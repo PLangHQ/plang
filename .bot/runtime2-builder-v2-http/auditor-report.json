@@ -1,0 +1,58 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-http",
+  "timestamp": "2026-03-23T19:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Cross-cutting audit of the HTTP module. All three prior reviewers (codeanalyzer v2, tester v4, security v2) passed. Signing cross-file contract is tight — the sign→serialize→header→deserialize→verify round-trip works correctly across 6+ files. Config scope chain verified: all 10 properties match, all defaults align. Disposal lifecycle is complete. Found 2 minor code issues and 7 weak test assertions the tester missed. No critical or major findings.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — thorough file-level OBP analysis, correctly identified and verified all 7 findings",
+    "tester": "partial — good coverage progression (5.7% → 95.9%), caught 3 false greens, but missed 7 additional weak assertions in signing/streaming/form tests",
+    "security": "agree — correct severity ratings, all 4 blocking findings fixed with good tests, 5 low risks appropriately accepted"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "foundation",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 302,
+      "issue": "ReadLimitedStringAsync/ReadLimitedBytesAsync error message uses integer division: maxBytes / (1024 * 1024). When called with MaxErrorBodySize (4KB), this produces '0MB'. Same bug on line 328.",
+      "missed_by": "codeanalyzer",
+      "impact": "Confusing error message when error body exceeds 4KB limit — user sees 'exceeds maximum size of 0MB'",
+      "suggestion": "Use floating point or format as KB when < 1MB: maxBytes < 1024*1024 ? $\"{maxBytes/1024}KB\" : $\"{maxBytes/(1024*1024)}MB\""
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 341,
+      "issue": "_client ??= CreateClient(config) is not thread-safe. While Engine's threading model (sequential async) prevents real concurrency in normal operation, Dispose() also lacks synchronization — if Engine.DisposeAsync runs during an active streaming response, _client could be nulled mid-use.",
+      "missed_by": "security",
+      "impact": "Theoretical: resource leak from double-create, or NullReferenceException during shutdown race. Not exploitable in current architecture because streaming callbacks are sequential via await.",
+      "suggestion": "Defensive fix: use Lazy<HttpClient> or Interlocked.CompareExchange for initialization. For Dispose(), set _client to null only after awaiting active operations."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+      "line": 866,
+      "issue": "Get_PlangResponseInvalidSignature_ReturnsError only asserts Success==false — no Error.Key or status code check. Tester v4 noted this as 'weak' but approved it. Additionally, 6 more weak assertions went unnoted: (1) Get_Signed_HasXSignatureHeader checks presence not content, (2) Get_SignedPlangResponse_SetsServiceIdentity doesn't verify actual identity value, (3) Stream_Plang_VerifiesSignatureAndSetsIdentity same, (4) Stream_Plang_InvalidSignature doesn't verify error content, (5) Stream_Bytes doesn't verify byte content, (6-7) Two form upload tests check type only, not structure.",
+      "missed_by": "tester",
+      "impact": "False green risk — these tests pass even if the code has subtle bugs in signature handling, identity extraction, byte streaming, or form structure. Not blocking because other tests in the same area provide coverage, but weakens the safety net.",
+      "suggestion": "Strengthen: (1) PlangResponseInvalidSignature: assert Error.Key contains 'Signature' or 'Verify', (2) Identity tests: assert identity equals the Ed25519 public key from the test setup, (3) Stream_Bytes: assert byte content matches sent chunk, (4) Form tests: assert field names and values in multipart content."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "line": 460,
+      "issue": "ResolveUrl silently prepends 'https://' when URL has no scheme. This is a reasonable security default but undocumented — no comment explains the design choice, and the user has no way to force http:// for local development.",
+      "missed_by": "none",
+      "impact": "Local development friction — 'http://localhost:8080' works, but 'localhost:8080' silently becomes 'https://localhost:8080'. The user can work around it by including the scheme.",
+      "suggestion": "Add a comment explaining the https-by-default design choice. Consider: if URL starts with 'localhost' or '127.0.0.1', default to http instead."
+    }
+  ]
+}
