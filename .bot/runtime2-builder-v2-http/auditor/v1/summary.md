@@ -24,41 +24,31 @@ Cross-cutting audit of the HTTP module (piece 4) on `runtime2-builder-v2-http`. 
 | Bot | Verdict | My Assessment |
 |-----|---------|---------------|
 | Codeanalyzer v2 | PASS | **Agree** — thorough file-level analysis |
-| Tester v4 | PASS | **Partial** — missed 7 weak assertions |
+| Tester v4 | PASS | **Disagree** — approved with 7 false-green assertions |
 | Security v2 | PASS | **Agree** — correct severity ratings |
 
 ### Findings
 
-1. **Error message integer division** (minor) — `maxBytes / (1024*1024)` gives "0MB" for 4KB MaxErrorBodySize
+1. **Error message integer division** (major) — `maxBytes / (1024*1024)` gives "0MB" for 4KB MaxErrorBodySize. This is a bug — user sees nonsensical output.
 2. **`_client ??=` not thread-safe** (minor) — Not exploitable in current architecture, but lacks defensive protection
-3. **7 weak test assertions** (minor) — Signing identity, streaming bytes, form structure tests check presence, not content
+3. **7 false-green test assertions** (major) — Signing identity, streaming bytes, form structure tests check presence, not content. These pass even if code is broken.
 4. **ResolveUrl https assumption** (nit) — Undocumented, could frustrate local development
 
-## Verdict: PASS
+## Verdict: FAIL
 
-No critical or major findings. The HTTP module is well-architected, the cross-file contracts are tight, and the prior reviewers did solid work. The minor findings are quality improvements, not blockers.
+Two major findings: a bug producing wrong error messages (#1), and 7 false-green tests that undermine the safety net (#2). Send #1 to **coder** for the error message fix, #3 to **coder** for strengthening test assertions.
 
 ## Code Example
 
-The signing cross-file contract — the key pattern this audit verified:
+The error message bug:
 
 ```csharp
-// DefaultHttpProvider.cs — creates signing action record
-var httpSign = new signing.sign {
-    Context = context,
-    Data = bodyContent ?? "",
-    Headers = new Dictionary<string, object> { ["url"] = url, ["method"] = method },
-};
-return await context.Engine.RunAction<signing.sign>(httpSign, context);
-// ↑ Result has .Signature = SignedData (set by SignedData.CreateAsync)
-
-// Later, verifying inbound:
-Data? data = JsonSerializer.Deserialize<Data>(body, _transportInOptions);
-// ↑ _transportInOptions uses TransportPropertyFilter.ForInbound → re-includes [In] props → Signature populated
-var verifyAction = new signing.verify { Context = context, Data = data };
-var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
-// ↑ verify.Run() → Data.Signature.VerifyAsync(this) → navigates action for contracts/headers/timeout
+// DefaultHttpProvider.cs:302 — called with MaxErrorBodySize = 4 * 1024
+throw new InvalidOperationException(
+    $"Response body exceeds maximum size of {maxBytes / (1024 * 1024)}MB");
+//                                          ^^^^^^^^^^^^^^^^^^^^^^^^
+// 4096 / 1048576 = 0 (integer division) → "exceeds maximum size of 0MB"
 ```
 
 ## Next Step
-Suggest running the **docs** bot next.
+Send back to **coder** to fix finding #1 (error message) and finding #3 (strengthen 7 test assertions).
