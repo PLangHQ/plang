@@ -3,7 +3,10 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.modules.identity;
 
-namespace PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.signing.providers;
+
+namespace PLang.Runtime2.modules.identity.providers;
 
 /// <summary>
 /// Default identity provider backed by System DataSource (SQLite).

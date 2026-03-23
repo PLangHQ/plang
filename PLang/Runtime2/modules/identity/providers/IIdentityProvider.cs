@@ -2,7 +2,9 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 using PLang.Runtime2.modules.identity;
 
-namespace PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.Engine.Providers;
+
+namespace PLang.Runtime2.modules.identity.providers;
 
 /// <summary>
 /// Provider interface for identity management.

@@ -1,6 +1,8 @@
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.Engine.Providers;
+
+namespace PLang.Runtime2.modules.signing.providers;
 
 /// <summary>
 /// Provider that can sign and verify data. Extends IKeyProvider for key generation.

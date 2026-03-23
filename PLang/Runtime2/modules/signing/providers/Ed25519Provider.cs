@@ -2,7 +2,9 @@ using NSec.Cryptography;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.Engine.Providers;
+
+namespace PLang.Runtime2.modules.signing.providers;
 
 /// <summary>
 /// Ed25519 signing provider using NSec. Handles key generation, signing, and verification.

@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.crypto.providers;
+using PLang.Runtime2.modules.identity.providers;
+using PLang.Runtime2.modules.signing.providers;
 
 namespace PLang.Runtime2.Engine.Providers;
 

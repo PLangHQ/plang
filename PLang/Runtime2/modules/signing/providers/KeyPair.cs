@@ -1,4 +1,4 @@
-namespace PLang.Runtime2.Engine.Providers;
+namespace PLang.Runtime2.modules.signing.providers;
 
 /// <summary>
 /// A public/private key pair returned by IKeyProvider.
