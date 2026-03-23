@@ -49,6 +49,38 @@ public class PrPipelineTests
         await Assert.That(greetingData?.Type?.Value).IsEqualTo("string");
     }
 
+    [Test]
+    public async Task ReadFile_ReturnMapsResultToVariable()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+
+        // Capture output
+        var capture = new CapturingWriteHandler();
+        engine.Libraries.Register("output", "write", capture);
+
+        // Point engine filesystem at fixtures dir (contains testdata.txt and ReadFile.pr)
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // Load and execute
+        var loadResult = await engine.LoadGoalFromFileAsync("ReadFile.pr");
+        await Assert.That(loadResult.Success).IsTrue();
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync("ReadFile", context);
+        await Assert.That(result.Success).IsTrue();
+
+        // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
+        var content = context.MemoryStack.GetValue("content");
+        await Assert.That(content).IsNotNull();
+
+        // The mapped value is a file object — its ToString() returns the file content
+        await Assert.That(content!.ToString()).IsEqualTo("Hello from test file");
+
+        // Output.write resolved %content% and wrote it
+        await Assert.That(capture.Lines.Count).IsGreaterThanOrEqualTo(1);
+    }
+
     private static string FindFixturesDir()
     {
         var dir = AppContext.BaseDirectory;
