@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-builder-v2-cleanup",
+  "sessions": [
+    {
+      "id": "cleanup-init",
+      "bot": "architect",
+      "timestamp_start": "2026-03-23T00:00:00Z",
+      "timestamp_end": "2026-03-23T00:00:00Z",
+      "intent": "Piece 5: Ingi-led code review and cleanup of pieces 1-4",
+      "before": {
+        "assumptions": "Pieces 1-4 (identity, crypto, signing, http) are complete and audited. Code was largely written by bots in the pipeline.",
+        "risk": "Low — cleanup and polish, no new functionality."
+      },
+      "plan": "Ingi reviews the code personally and directs cleanup via coder. Architect role is minimal — branch setup and reporting only.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Branch and report setup for piece 5"
+        }
+      ],
+      "after": {
+        "status": "in-progress",
+        "health": "Branch created. Ingi driving review, coder executing changes.",
+        "notes": "Scope: pieces 1-4 (identity, crypto, signing, http) plus any engine/infra changes that came with them (Settings→Config, Path→FileSystem, provider relocations)."
+      }
+    }
+  ]
+}
