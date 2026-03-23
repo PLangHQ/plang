@@ -387,6 +387,45 @@
         "health": "3 must-fix issues for coder, streaming coverage for tester",
         "notes": "Architecture is sound (OBP clean). Issues are in error handling and lifecycle management."
       }
+    },
+    {
+      "id": "codeanalyzer-002",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-23T12:00:00Z",
+      "timestamp_end": "2026-03-23T12:30:00Z",
+      "intent": "Re-review coder fixes for v1 findings + analyze new disposal lifecycle and path resolution code",
+      "before": {
+        "assumptions": "Coder addressed all 7 v1 findings. Also added disposal lifecycle and path refactor.",
+        "risk": "Fix-introduced code is the riskiest. New disposal lifecycle adds complexity to CallFrame and Engine."
+      },
+      "plan": "Verify all 7 v1 findings resolved. Full 5-pass on fix-introduced code: CallFrame disposal, Engine KeepAlive, Providers.All(), Path resolution, narrowed catches.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/CallStack/CallFrame.cs",
+            "PLang/Runtime2/Engine/CallStack/this.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/Step/Actions/Action/Methods.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/FileSystem/Path.cs",
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/Runtime2/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/Runtime2/modules/signing/Config.cs",
+            "PLang/Runtime2/modules/signing/SignedData.cs",
+            "PLang/Runtime2/Engine/Config/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 7 v1 findings verified resolved. New code (disposal, path) is clean. One cosmetic issue (duplicate XML doc). No blocking issues."
+        }
+      ],
+      "after": {
+        "status": "Complete \u2014 verdict PASS",
+        "health": "Ready for tester. Carry-forward: streaming methods need C# test coverage.",
+        "notes": "All findings resolved. New disposal lifecycle and path resolution are well-designed."
+      }
     }
   ]
 }
