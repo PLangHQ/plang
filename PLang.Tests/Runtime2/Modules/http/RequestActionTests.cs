@@ -972,5 +972,35 @@ public class RequestActionTests
         await Assert.That(result.Success).IsTrue();
     }
 
+    [Test]
+    public async Task Stream_SSE_OversizedBuffer_StreamContinues()
+    {
+        // Configure a tiny SSE buffer (50 bytes)
+        _engine.Config.Set("http.MaxSSEBufferSize", 50L, Ctx, isDefault: true);
+
+        // SSE with one message that exceeds the buffer, followed by a normal-sized message
+        var sseContent = "data: " + new string('x', 100) + "\n\ndata: ok\n\n";
+        _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(sseContent, Encoding.UTF8, "text/event-stream")
+        });
+
+        var action = new request
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/sse-overflow",
+            OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            Unsigned = true
+        };
+        var result = await action.Run();
+
+        // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)
+        await Assert.That(result.Success).IsTrue();
+        // The second (small) message should still be delivered
+        var lastValue = Ctx.MemoryStack.Get("!data");
+        await Assert.That(lastValue).IsNotNull();
+        await Assert.That(lastValue!.Value!.ToString()).IsEqualTo("ok");
+    }
+
     #endregion
 }
