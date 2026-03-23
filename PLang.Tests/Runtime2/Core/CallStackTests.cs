@@ -103,7 +103,7 @@ public class CallStackTests
         var stack = new CallStack();
         stack.Push("TestGoal");
 
-        var frame = stack.Pop();
+        var frame = await stack.PopAsync();
 
         await Assert.That(stack.Depth).IsEqualTo(0);
         await Assert.That(stack.Current).IsNull();
@@ -115,7 +115,7 @@ public class CallStackTests
         var stack = new CallStack();
         var pushed = stack.Push("TestGoal");
 
-        var popped = stack.Pop();
+        var popped = await stack.PopAsync();
 
         await Assert.That(popped).IsEqualTo(pushed);
     }
@@ -126,7 +126,7 @@ public class CallStackTests
         var stack = new CallStack();
         stack.Push("TestGoal");
 
-        var frame = stack.Pop();
+        var frame = await stack.PopAsync();
 
         await Assert.That(frame!.CompletedAt).IsNotNull();
     }
@@ -137,7 +137,7 @@ public class CallStackTests
         var stack = new CallStack { IsEnabled = false };
         stack.Push("TestGoal");
 
-        var frame = stack.Pop();
+        var frame = await stack.PopAsync();
 
         await Assert.That(frame).IsNull();
     }
@@ -147,7 +147,7 @@ public class CallStackTests
     {
         var stack = new CallStack();
 
-        var frame = stack.Pop();
+        var frame = await stack.PopAsync();
 
         await Assert.That(frame).IsNull();
     }

@@ -155,10 +155,10 @@ public class CallStackIntegrationTests
         callStack.Push("Goal1");
         callStack.Push("Goal2");
 
-        callStack.Pop();
+        await callStack.PopAsync();
         await Assert.That(callStack.Depth).IsEqualTo(1);
 
-        callStack.Pop();
+        await callStack.PopAsync();
         await Assert.That(callStack.Depth).IsEqualTo(0);
     }
 

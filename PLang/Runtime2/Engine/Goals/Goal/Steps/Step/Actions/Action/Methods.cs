@@ -34,7 +34,17 @@ public sealed partial class @this
         if (result.Value != null && this.Return != null)
         {
             foreach (var returnVar in this.Return)
+            {
                 context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+
+                // Transfer disposable ownership to parent frame
+                if (result.Value is IDisposable or IAsyncDisposable)
+                {
+                    var currentFrame = context.CallStack?.Current;
+                    if (currentFrame?.Parent != null)
+                        currentFrame.TransferDisposable(result.Value, currentFrame.Parent);
+                }
+            }
         }
 
         var afterResult = await lifecycle.After.Run(context);

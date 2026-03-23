@@ -20,10 +20,11 @@ public enum ExecutionPhase
 /// Represents a single frame in the call stack.
 /// Tracks the execution of a goal and its steps.
 /// </summary>
-public sealed class CallFrame
+public sealed class CallFrame : IAsyncDisposable
 {
     private readonly Stopwatch _stopwatch;
     private readonly List<ExecutedStep> _executedSteps = new();
+    private readonly List<object> _disposables = new();
 
     /// <summary>
     /// Unique identifier for this frame.
@@ -184,6 +185,33 @@ public sealed class CallFrame
             trace += $" in {GoalPath}";
         trace += $" [{Duration.TotalMilliseconds:F1}ms]";
         return trace;
+    }
+
+    /// <summary>
+    /// Registers a disposable object to be cleaned up when this frame exits.
+    /// </summary>
+    public void AddDisposable(object disposable) => _disposables.Add(disposable);
+
+    /// <summary>
+    /// Transfers a disposable to another frame (e.g., when a goal returns a disposable to its parent).
+    /// </summary>
+    public void TransferDisposable(object disposable, CallFrame target)
+    {
+        _disposables.Remove(disposable);
+        target.AddDisposable(disposable);
+    }
+
+    /// <summary>
+    /// Disposes all tracked objects. Called when the frame is popped from the call stack.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var d in _disposables)
+        {
+            if (d is IAsyncDisposable ad) await ad.DisposeAsync();
+            else if (d is IDisposable sync) sync.Dispose();
+        }
+        _disposables.Clear();
     }
 
     public override string ToString() => $"[{Id}] {GoalName} - {Phase}";

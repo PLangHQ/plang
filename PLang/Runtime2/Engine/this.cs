@@ -22,6 +22,7 @@ public sealed class @this : IAsyncDisposable
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly EngineLibraries _libraries;
     private readonly EngineGoals _goals;
+    private readonly List<object> _keepAlive = new();
     private bool _disposed;
 
     private Actor? _system;
@@ -195,6 +196,22 @@ public sealed class @this : IAsyncDisposable
     public void RequestShutdown()
     {
         _shutdownCts.Cancel();
+    }
+
+    /// <summary>
+    /// Promotes an object to engine-level lifetime. Disposed on Engine.DisposeAsync.
+    /// Use for objects that must outlive their creating goal (e.g., background listeners).
+    /// </summary>
+    public void KeepAlive(object instance) => _keepAlive.Add(instance);
+
+    /// <summary>
+    /// Removes and disposes a KeepAlive object.
+    /// </summary>
+    public void RemoveKeepAlive(object instance)
+    {
+        if (!_keepAlive.Remove(instance)) return;
+        if (instance is IAsyncDisposable ad) ad.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        else if (instance is IDisposable d) d.Dispose();
     }
 
     public @this(Interfaces.IPLangFileSystem fileSystem)
@@ -408,6 +425,23 @@ public sealed class @this : IAsyncDisposable
             else if (handler is IDisposable disposable)
                 disposable.Dispose();
         }
+
+        // Dispose providers (HttpClient, etc.)
+        foreach (var provider in Providers.All())
+        {
+            if (provider is IAsyncDisposable asyncProv)
+                await asyncProv.DisposeAsync();
+            else if (provider is IDisposable disposableProv)
+                disposableProv.Dispose();
+        }
+
+        // Dispose KeepAlive objects
+        foreach (var d in _keepAlive)
+        {
+            if (d is IAsyncDisposable asyncKeep) await asyncKeep.DisposeAsync();
+            else if (d is IDisposable disposableKeep) disposableKeep.Dispose();
+        }
+        _keepAlive.Clear();
 
         // Dispose any disposable items in the key-value store
         Property.DisposeAll();

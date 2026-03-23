@@ -73,7 +73,7 @@ public sealed partial class @this
         }
         finally
         {
-            context.CallStack?.Pop();
+            if (context.CallStack != null) await context.CallStack.PopAsync();
             context.ConfigScope = savedConfigScope;
             context.Goal = savedGoal;
             context.Step = savedStep;

@@ -52,9 +52,9 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Pops the current frame from the call stack.
+    /// Pops the current frame from the call stack and disposes its tracked objects.
     /// </summary>
-    public CallFrame? Pop()
+    public async Task<CallFrame?> PopAsync()
     {
         if (!IsEnabled)
             return null;
@@ -62,6 +62,7 @@ public sealed class @this
         if (_frames.TryPop(out var frame))
         {
             frame.Complete();
+            await frame.DisposeAsync();
             return frame;
         }
         return null;

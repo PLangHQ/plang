@@ -95,6 +95,13 @@ public sealed class @this
     /// <summary>
     /// Checks if any provider is registered for the given type.
     /// </summary>
+    /// <summary>
+    /// Iterates all provider instances across all types.
+    /// Used for disposal and inspection.
+    /// </summary>
+    public IEnumerable<IProvider> All() => _providers.Values
+        .SelectMany(dict => dict.Values);
+
     public bool Has<T>() where T : class, IProvider
     {
         return _providers.TryGetValue(typeof(T), out var typeDict) && !typeDict.IsEmpty;
