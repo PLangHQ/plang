@@ -235,9 +235,110 @@ public class StartGoalTests
 
     #endregion
 
+    #region Build-Time Defaults
+
+    [Test]
+    public async Task Defaults_ResolvedWhenParameterMissing()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+
+        // "type" is NOT in parameters — developer didn't set it
+        // "type" IS in defaults — builder captured it at build time
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = "/Test.goal",
+            Steps = new GoalSteps
+            {
+                MakeStepWithDefaults("variable", "set",
+                    parameters: new Dictionary<string, object?> { { "name", "greeting" }, { "value", "hello" } },
+                    defaults: new Dictionary<string, object?> { { "type", "string" } },
+                    index: 0, text: "set greeting = hello")
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(context.MemoryStack.GetValue("greeting")).IsEqualTo("hello");
+
+        // Type should be "string" — resolved from defaults, not null
+        var data = context.MemoryStack.Get("greeting");
+        await Assert.That(data?.Type?.Value).IsEqualTo("string");
+    }
+
+    [Test]
+    public async Task Defaults_ParameterOverridesDefault()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+
+        // "type" is in BOTH parameters and defaults — parameter wins
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = "/Test.goal",
+            Steps = new GoalSteps
+            {
+                MakeStepWithDefaults("variable", "set",
+                    parameters: new Dictionary<string, object?> { { "name", "count" }, { "value", 42 }, { "type", "long" } },
+                    defaults: new Dictionary<string, object?> { { "type", "string" } },
+                    index: 0, text: "set count = 42")
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        await Assert.That(result.Success).IsTrue();
+        // "long" from parameters, not "string" from defaults
+        var data = context.MemoryStack.Get("count");
+        await Assert.That(data?.Type?.Value).IsEqualTo("long");
+    }
+
+    [Test]
+    public async Task Defaults_NullDefaultsStillWorksWithAttributeFallback()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+
+        // No defaults at all — falls through to [Default] attribute on the action
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = "/Test.goal",
+            Steps = new GoalSteps
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "x" }, { "value", "y" } },
+                    index: 0, text: "set x = y")
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        await Assert.That(result.Success).IsTrue();
+        // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
+        // This proves the fallback chain works: no defaults → no attribute → auto-derive
+        var data = context.MemoryStack.Get("x");
+        await Assert.That(data?.Value).IsEqualTo("y");
+    }
+
+    #endregion
+
     #region Helpers
 
     private static Step MakeStep(string actionClass, string method, IDictionary<string, object?> parameters, int index = 0, string text = "")
+    {
+        return MakeStepWithDefaults(actionClass, method, parameters, null, index, text);
+    }
+
+    private static Step MakeStepWithDefaults(string actionClass, string method,
+        IDictionary<string, object?> parameters, IDictionary<string, object?>? defaults,
+        int index = 0, string text = "")
     {
         return new Step
         {
@@ -250,6 +351,7 @@ public class StartGoalTests
                     Module = actionClass,
                     ActionName = method,
                     Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
+                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
                     Return = null
                 }
             }
