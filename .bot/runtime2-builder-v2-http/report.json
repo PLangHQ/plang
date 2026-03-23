@@ -676,6 +676,58 @@
         "health": "1 high, 3 medium, 4 low. Systematic gap: no size limits on untrusted external data.",
         "notes": "Initially rated PASS with medium severities. Corrected after recognizing the response size issues are the HTTP module core responsibility, not hardening opportunities. Slow-drip attacks bypass timeouts."
       }
+    },
+    {
+      "id": "sec-002",
+      "bot": "security",
+      "timestamp_start": "2026-03-23T22:00:00Z",
+      "timestamp_end": "2026-03-23T22:30:00Z",
+      "intent": "Re-audit after coder fixed all 4 blocking security findings",
+      "before": {
+        "assumptions": "Coder committed fixes for response size limits, SSE buffer cap, error body truncation, ToSigningBytes thread safety.",
+        "risk": "Fixes may be incomplete or introduce new issues."
+      },
+      "plan": "Verify each of the 4 fixes: read the changed code, trace all call sites, check tests.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/Runtime2/modules/http/Config.cs",
+            "PLang/Runtime2/modules/signing/SignedData.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified all 4 security fixes: size-limited reads, SSE buffer, error truncation, thread-safe signing"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/Runtime2/Modules/signing/SigningSerializationTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified tests cover oversized response, oversized binary, within-limit, concurrent ToSigningBytes"
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-http/security-report.json",
+            ".bot/runtime2-builder-v2-http/security/v2/verdict.json",
+            ".bot/runtime2-builder-v2-http/security/v2/summary.md",
+            ".bot/runtime2-builder-v2-http/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated security report to PASS, wrote v2 deliverables"
+        }
+      ],
+      "after": {
+        "status": "Complete \u2014 PASS verdict",
+        "health": "0 critical, 0 high, 0 medium open. All blocking findings fixed.",
+        "notes": "Clean fixes. Minor observation: InvalidOperationException catch is slightly broader now but not blocking."
+      }
     }
   ]
 }
