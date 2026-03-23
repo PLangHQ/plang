@@ -672,9 +672,9 @@
         }
       ],
       "after": {
-        "status": "Complete \u2014 PASS verdict",
-        "health": "0 critical, 0 high, 2 medium, 5 low. Trust boundary holds.",
-        "notes": "Medium findings: (1) no response body size limit, (2) ToSigningBytes thread safety. Both are hardening opportunities, not exploitable in normal flow."
+        "status": "Complete \u2014 FAIL verdict",
+        "health": "1 high, 3 medium, 4 low. Systematic gap: no size limits on untrusted external data.",
+        "notes": "Initially rated PASS with medium severities. Corrected after recognizing the response size issues are the HTTP module core responsibility, not hardening opportunities. Slow-drip attacks bypass timeouts."
       }
     }
   ]

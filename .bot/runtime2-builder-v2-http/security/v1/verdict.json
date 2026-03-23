@@ -1,4 +1,4 @@
 {
-  "status": "pass",
-  "summary": "0 critical, 0 high, 2 medium, 5 low findings. Trust boundary (Ed25519 signatures) holds. Medium findings are hardening opportunities (response size limit, ToSigningBytes thread safety), not exploitable in normal flow."
+  "status": "fail",
+  "summary": "1 high, 3 medium open findings. HTTP module has no size limits on untrusted external data — response bodies, SSE buffers, error bodies are all unbounded. ToSigningBytes is not thread-safe. Send to coder for fixes."
 }

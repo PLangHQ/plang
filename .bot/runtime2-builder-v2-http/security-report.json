@@ -1,7 +1,7 @@
 {
   "analyst": "security",
   "branch": "runtime2-builder-v2-http",
-  "timestamp": "2026-03-23T20:30:00Z",
+  "timestamp": "2026-03-23T21:00:00Z",
   "phase": "both",
   "attack_surface": [
     {
@@ -90,16 +90,16 @@
   "findings": [
     {
       "id": 1,
-      "severity": "medium",
+      "severity": "high",
       "category": "resource-exhaustion",
-      "vector": "A malicious HTTP server responds with an unbounded body (e.g., Content-Length: 10GB or chunked transfer with no end). DefaultHttpProvider.ParseResponseAsync calls ReadAsStringAsync() or ReadAsByteArrayAsync() which load the entire response into memory.",
+      "vector": "A malicious HTTP server responds with an unbounded body (e.g., Content-Length: 10GB or chunked transfer with no end). DefaultHttpProvider.ParseResponseAsync calls ReadAsStringAsync() or ReadAsByteArrayAsync() which load the entire response into memory. Slow-drip attacks (1 byte/sec) bypass timeout protection.",
       "preconditions": "PLang app makes an HTTP request to a server controlled by the attacker (or a compromised server)",
-      "impact": "OutOfMemoryException crashes the PLang runtime. Denial of service.",
+      "impact": "OutOfMemoryException crashes the PLang runtime. Denial of service. The HTTP module's core job is safe external data handling — this is a gap in its primary responsibility.",
       "affected_files": [
         "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
       ],
-      "exploit_sketch": "1. PLang step: 'get https://evil.example.com/api/data'\n2. Server responds with 200 OK, Content-Type: application/json, and streams 10GB of JSON\n3. ReadAsStringAsync at L447 allocates a 10GB string → OOM",
-      "proposed_fix": "Add a configurable MaxResponseSize (default 100MB) to Config. Before ReadAsStringAsync, check Content-Length header; during streaming, enforce a byte counter. For ReadAsByteArrayAsync, same pattern. This is a defense-in-depth measure — the real protection is the timeout, but slow-drip attacks can bypass timeouts.",
+      "exploit_sketch": "1. PLang step: 'get https://evil.example.com/api/data'\n2. Server responds with 200 OK, Content-Type: application/json, and slow-drips data at 1 byte/sec\n3. Timeout doesn't fire (connection is active). ReadAsStringAsync at L447 grows unboundedly → OOM",
+      "proposed_fix": "Add MaxResponseSize to Config (default 100MB). Create a size-limited ReadAsStringAsync wrapper that counts bytes and throws if exceeded. Apply to all ReadAsStringAsync/ReadAsByteArrayAsync call sites: L447 (JSON), L465 (XML), L474 (text), L481 (binary), L497 (plang), L589 (error body). The wrapper should use HttpCompletionOption.ResponseHeadersRead + stream copying with a byte counter.",
       "status": "open"
     },
     {
@@ -118,30 +118,30 @@
     },
     {
       "id": 3,
-      "severity": "low",
+      "severity": "medium",
       "category": "resource-exhaustion",
-      "vector": "SSE streaming in StreamSSEAsync uses a StringBuilder (L759) that accumulates data: lines until a blank line boundary. A malicious server could send a continuous stream of 'data:' lines without ever sending a blank line, growing the StringBuilder unboundedly.",
+      "vector": "SSE streaming in StreamSSEAsync uses a StringBuilder (L759) that accumulates data: lines until a blank line boundary. A malicious server could send a continuous stream of 'data:' lines without ever sending a blank line, growing the StringBuilder unboundedly. Same class of issue as #1 — no size limits on untrusted external data.",
       "preconditions": "PLang app streams SSE from an attacker-controlled server",
       "impact": "Memory exhaustion. Mitigated by timeout (CancellationToken), but slow-drip can evade timeout.",
       "affected_files": [
         "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
       ],
       "exploit_sketch": "Server sends: data: chunk1\\ndata: chunk2\\ndata: chunk3\\n... (never sends blank line). StringBuilder grows until OOM.",
-      "proposed_fix": "Add a max SSE message size check (e.g., 10MB). If exceeded, emit error to callback and break.",
+      "proposed_fix": "Add a MaxSSEMessageSize constant or config value (e.g., 10MB). In StreamSSEAsync, check dataBuffer.Length before appending. If exceeded, emit error Data to callback via StdErr and break the stream.",
       "status": "open"
     },
     {
       "id": 4,
-      "severity": "low",
-      "category": "info-disclosure",
-      "vector": "ReadErrorResponseAsync at L592 concatenates the raw error response body into the error message: '$\"{statusCode} {reasonPhrase}: {errorBody}\"'. If the error body is very large (megabytes), this creates an oversized error string that flows through Data.Error into channels and potentially logs.",
-      "preconditions": "Server returns a large error body (4xx/5xx with large HTML page or JSON)",
-      "impact": "Large error messages in logs/output. Minor memory pressure. Potentially exposes server internals in error output.",
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "ReadErrorResponseAsync at L589 calls ReadAsStringAsync on error responses with no size limit, then at L592 concatenates the raw error body into the error message. Same class of issue as #1 — the error path is also unbounded. A malicious server returning a 500 with a 10GB body will OOM on ReadAsStringAsync before truncation even matters.",
+      "preconditions": "Server returns a large error body (4xx/5xx with large response)",
+      "impact": "OutOfMemoryException on error path. The error body read is unbounded even though it's only used for an error message.",
       "affected_files": [
         "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
       ],
-      "exploit_sketch": "Server responds 500 with 50MB HTML error page. Error message contains entire page.",
-      "proposed_fix": "Truncate errorBody to a reasonable limit (e.g., 4KB) before embedding in error message.",
+      "exploit_sketch": "Server responds 500 with chunked transfer, slow-drips 10GB. ReadAsStringAsync at L589 grows unboundedly → OOM.",
+      "proposed_fix": "Use the same size-limited read wrapper from finding #1 on error responses too. Additionally, truncate the error body to 4KB before embedding in the error message string.",
       "status": "open"
     },
     {
@@ -216,5 +216,5 @@
       "status": "accepted-risk"
     }
   ],
-  "summary": "Security posture: GOOD. The HTTP module correctly enforces the PLang trust boundary — application/plang responses require Ed25519 signature verification, unsigned requests are blocked from accepting signed responses, and streaming plang lines are individually verified. The signing pipeline's 9-step VerifyAsync is thorough (type, provider, timeout, expiry, nonce, contracts, headers, hash, signature). Two medium findings: (1) no response body size limit allowing OOM from malicious servers, and (2) ToSigningBytes is not thread-safe. Five low findings cover SSE buffer limits, large error messages, internal setters, nonce scope, and provider race. No critical or high findings. The code is production-ready with the medium findings as hardening opportunities."
+  "summary": "Security posture: FAIL — requires fixes before production. The signing pipeline and trust boundary are solid (application/plang verification, unsigned rejection, streaming verification all correct). However, the HTTP module has a systematic gap: zero size limits on data from untrusted external sources. This is the module's core responsibility — safe external data handling — and it's missing across all read paths (response body, SSE buffers, error bodies). One high finding (#1 response body size), three medium findings (#2 ToSigningBytes thread safety, #3 SSE buffer, #4 error body size), four low findings. The high and medium findings must be fixed."
 }
