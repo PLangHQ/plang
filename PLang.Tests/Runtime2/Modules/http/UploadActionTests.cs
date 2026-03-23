@@ -1,17 +1,22 @@
+using System.Net;
+using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
+using HttpMethod = PLang.Runtime2.modules.http.HttpMethod;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
+/// <summary>
+/// Tests upload action with real DefaultHttpProvider + mock HTTP transport.
+/// </summary>
 public class UploadActionTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
-    private MockHttpProvider _mock = null!;
+    private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
     public void Setup()
@@ -21,9 +26,10 @@ public class UploadActionTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
 
-        _mock = new MockHttpProvider();
-        _engine.Providers.Register<IHttpProvider>(_mock);
-        _engine.Providers.SetDefault<IHttpProvider>("mock");
+        _handler = new MockHttpMessageHandler();
+        var provider = new DefaultHttpProvider(_handler) { Name = "test" };
+        _engine.Providers.Register<IHttpProvider>(provider);
+        _engine.Providers.SetDefault<IHttpProvider>("test");
     }
 
     [After(Test)]
@@ -40,89 +46,54 @@ public class UploadActionTests
 
     private PLangContext Ctx => _engine.System.Context;
 
-    private class MockHttpProvider : IHttpProvider
+    private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {
-        public string Name => "mock";
-        public bool IsDefault { get; set; }
-        public upload? CapturedUpload { get; private set; }
-        public Func<upload, Task<Data>>? OnUpload { get; set; }
+        public Func<System.Net.Http.HttpRequestMessage, Task<System.Net.Http.HttpResponseMessage>>? Handler { get; set; }
+        public System.Net.Http.HttpRequestMessage? LastRequest { get; private set; }
 
-        public async Task<Data> SendAsync(request action) => Data.Ok();
-        public async Task<Data> DownloadAsync(download action) => Data.Ok();
-        public async Task<Data> UploadAsync(upload action)
+        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(
+            System.Net.Http.HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            CapturedUpload = action;
-            if (OnUpload != null) return await OnUpload(action);
-            return Data.Ok(new { ok = true });
+            LastRequest = request;
+            if (Handler != null) return Handler(request);
+            return Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new System.Net.Http.StringContent("{\"ok\":true}", Encoding.UTF8, "application/json")
+            });
         }
-        public Data Configure(configure action) => Data.Ok();
-        public void Dispose() { }
     }
 
     [Test]
-    public async Task Upload_FilePath_PassedToProvider()
+    public async Task Upload_TextContent_SendsStringContent()
     {
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "upload-test.bin",
+            Content = "Hello upload",
+            As = ContentAs.Text,
             Unsigned = true
         };
 
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedUpload!.Content).IsEqualTo("upload-test.bin");
+        await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Post);
+        var body = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(body).IsEqualTo("Hello upload");
     }
 
     [Test]
-    public async Task Upload_DictionaryContent_PassedToProvider()
+    public async Task Upload_FileContent_SendsBytes()
     {
-        var dict = new Dictionary<string, object> { ["field1"] = "value1", ["field2"] = "value2" };
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = "https://api.example.com/submit",
-            Content = dict,
-            Unsigned = true
-        };
+        var filePath = System.IO.Path.Combine(_tempDir, "upload.txt");
+        await System.IO.File.WriteAllTextAsync(filePath, "file data");
 
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedUpload!.Content).IsTypeOf<Dictionary<string, object>>();
-    }
-
-    [Test]
-    public async Task Upload_AsBase64_PassedToProvider()
-    {
-        var original = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
-        var base64 = Convert.ToBase64String(original);
-
-        var action = new upload
-        {
-            Context = Ctx,
-            Url = "https://api.example.com/binary",
-            Content = base64,
-            As = ContentAs.Base64,
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.Base64);
-    }
-
-    [Test]
-    public async Task Upload_AsFile_PassedToProvider()
-    {
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "data.json",
+            Content = "upload.txt",
             As = ContentAs.File,
             Unsigned = true
         };
@@ -130,17 +101,78 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.File);
+        var body = await _handler.LastRequest!.Content!.ReadAsByteArrayAsync();
+        await Assert.That(Encoding.UTF8.GetString(body)).IsEqualTo("file data");
     }
 
     [Test]
-    public async Task Upload_AsText_PassedToProvider()
+    public async Task Upload_Base64Content_DecodesAndSends()
+    {
+        var original = "hello base64";
+        var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(original));
+
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = b64,
+            As = ContentAs.Base64,
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var body = await _handler.LastRequest!.Content!.ReadAsByteArrayAsync();
+        await Assert.That(Encoding.UTF8.GetString(body)).IsEqualTo(original);
+    }
+
+    [Test]
+    public async Task Upload_AutoDetectFile_WhenFileExists()
+    {
+        var filePath = System.IO.Path.Combine(_tempDir, "auto.txt");
+        await System.IO.File.WriteAllTextAsync(filePath, "auto content");
+
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = "auto.txt",
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task Upload_AutoDetectString_WhenNoFile()
     {
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "raw text content",
+            Content = "just a string, not a file path",
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var body = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(body).IsEqualTo("just a string, not a file path");
+    }
+
+    [Test]
+    public async Task Upload_CustomMethod_UsedCorrectly()
+    {
+        var action = new upload
+        {
+            Context = Ctx,
+            Url = "https://api.example.com/upload",
+            Content = "data",
+            Method = HttpMethod.PUT,
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -148,47 +180,29 @@ public class UploadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedUpload!.As).IsEqualTo(ContentAs.Text);
+        await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Put);
     }
 
     [Test]
-    public async Task Upload_OnProgress_PassedToProvider()
+    public async Task Upload_ResponseParsed_AsJson()
     {
-        var action = new upload
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
         {
-            Context = Ctx,
-            Url = "https://api.example.com/upload",
-            Content = "test data",
-            As = ContentAs.Text,
-            OnProgress = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "ShowProgress" },
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(_mock.CapturedUpload!.OnProgress).IsNotNull();
-    }
-
-    [Test]
-    public async Task Upload_ErrorStatusCode_ProviderReturnsError()
-    {
-        _mock.OnUpload = async action =>
-            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
-                "Server Error", "HttpError", 500));
+            Content = new System.Net.Http.StringContent("{\"id\":42}", Encoding.UTF8, "application/json")
+        });
 
         var action = new upload
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = "test data",
+            Content = "data",
             As = ContentAs.Text,
             Unsigned = true
         };
 
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Properties["StatusCode"]!.Value).IsEqualTo(200);
     }
 }

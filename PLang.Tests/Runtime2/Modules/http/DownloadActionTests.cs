@@ -1,18 +1,21 @@
 using System.Net;
+using System.Text;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.http;
 using PLang.Runtime2.modules.http.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.http;
 
+/// <summary>
+/// Tests download action with real DefaultHttpProvider + mock HTTP transport.
+/// </summary>
 public class DownloadActionTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
-    private MockHttpProvider _mock = null!;
+    private MockHttpMessageHandler _handler = null!;
 
     [Before(Test)]
     public void Setup()
@@ -22,9 +25,10 @@ public class DownloadActionTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _engine = new PLangEngine(_tempDir);
 
-        _mock = new MockHttpProvider();
-        _engine.Providers.Register<IHttpProvider>(_mock);
-        _engine.Providers.SetDefault<IHttpProvider>("mock");
+        _handler = new MockHttpMessageHandler();
+        var provider = new DefaultHttpProvider(_handler) { Name = "test" };
+        _engine.Providers.Register<IHttpProvider>(provider);
+        _engine.Providers.SetDefault<IHttpProvider>("test");
     }
 
     [After(Test)]
@@ -41,51 +45,51 @@ public class DownloadActionTests
 
     private PLangContext Ctx => _engine.System.Context;
 
-    private class MockHttpProvider : IHttpProvider
+    private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {
-        public string Name => "mock";
-        public bool IsDefault { get; set; }
-        public download? CapturedDownload { get; private set; }
-        public bool DownloadCalled { get; private set; }
-        public Func<download, Task<Data>>? OnDownload { get; set; }
+        public Func<System.Net.Http.HttpRequestMessage, Task<System.Net.Http.HttpResponseMessage>>? Handler { get; set; }
 
-        public async Task<Data> SendAsync(request action) => Data.Ok();
-        public async Task<Data> DownloadAsync(download action)
+        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(
+            System.Net.Http.HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            CapturedDownload = action;
-            DownloadCalled = true;
-            if (OnDownload != null) return await OnDownload(action);
-            return Data.Ok(action.SaveTo);
+            if (Handler != null) return Handler(request);
+            return Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new System.Net.Http.StringContent("file content", Encoding.UTF8, "text/plain")
+            });
         }
-        public async Task<Data> UploadAsync(upload action) => Data.Ok();
-        public Data Configure(configure action) => Data.Ok();
-        public void Dispose() { }
     }
 
     [Test]
-    public async Task Download_HappyPath_ProviderReceivesAction()
+    public async Task Download_HappyPath_SavesFile()
     {
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new System.Net.Http.StringContent("downloaded data", Encoding.UTF8, "text/plain")
+        });
+
         var action = new download
         {
             Context = Ctx,
             Url = "https://example.com/file.txt",
-            SaveTo = "downloads/file.txt",
+            SaveTo = "file.txt",
             Unsigned = true
         };
 
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("downloads/file.txt");
-        await Assert.That(_mock.CapturedDownload!.Url).IsEqualTo("https://example.com/file.txt");
+        var savedPath = System.IO.Path.Combine(_tempDir, "file.txt");
+        await Assert.That(System.IO.File.Exists(savedPath)).IsTrue();
+        var content = await System.IO.File.ReadAllTextAsync(savedPath);
+        await Assert.That(content).IsEqualTo("downloaded data");
     }
 
     [Test]
-    public async Task Download_FileExistsError_ProviderReturnsError()
+    public async Task Download_FileExistsError_ReturnsError()
     {
-        _mock.OnDownload = async action =>
-            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
-                "File already exists", "FileExists", 409));
+        var existingPath = System.IO.Path.Combine(_tempDir, "existing.txt");
+        await System.IO.File.WriteAllTextAsync(existingPath, "old content");
 
         var action = new download
         {
@@ -103,26 +107,11 @@ public class DownloadActionTests
     }
 
     [Test]
-    public async Task Download_FileExistsOverwrite_PassedToProvider()
+    public async Task Download_FileExistsSkip_ReturnsSavePath()
     {
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/file.txt",
-            SaveTo = "overwrite.txt",
-            IfExists = FileExists.Overwrite,
-            Unsigned = true
-        };
+        var existingPath = System.IO.Path.Combine(_tempDir, "skip.txt");
+        await System.IO.File.WriteAllTextAsync(existingPath, "keep this");
 
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedDownload!.IfExists).IsEqualTo(FileExists.Overwrite);
-    }
-
-    [Test]
-    public async Task Download_FileExistsSkip_PassedToProvider()
-    {
         var action = new download
         {
             Context = Ctx,
@@ -135,37 +124,68 @@ public class DownloadActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_mock.CapturedDownload!.IfExists).IsEqualTo(FileExists.Skip);
+        var content = await System.IO.File.ReadAllTextAsync(existingPath);
+        await Assert.That(content).IsEqualTo("keep this");
     }
 
     [Test]
-    public async Task Download_CreatesParentDirectories_ProviderHandles()
+    public async Task Download_FileExistsOverwrite_ReplacesFile()
     {
+        var existingPath = System.IO.Path.Combine(_tempDir, "overwrite.txt");
+        await System.IO.File.WriteAllTextAsync(existingPath, "old");
+
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new System.Net.Http.StringContent("new", Encoding.UTF8, "text/plain")
+        });
+
         var action = new download
         {
             Context = Ctx,
             Url = "https://example.com/file.txt",
-            SaveTo = "deep/nested/dir/file.txt",
+            SaveTo = "overwrite.txt",
+            IfExists = FileExists.Overwrite,
             Unsigned = true
         };
 
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
+        var content = await System.IO.File.ReadAllTextAsync(existingPath);
+        await Assert.That(content).IsEqualTo("new");
     }
 
     [Test]
-    public async Task Download_ErrorStatusCode_ProviderReturnsError()
+    public async Task Download_CreatesParentDirectories()
     {
-        _mock.OnDownload = async action =>
-            Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(
-                "404 Not Found", "HttpError", 404));
+        var action = new download
+        {
+            Context = Ctx,
+            Url = "https://example.com/file.txt",
+            SaveTo = "deep/nested/file.txt",
+            Unsigned = true
+        };
+
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var savedPath = System.IO.Path.Combine(_tempDir, "deep", "nested", "file.txt");
+        await Assert.That(System.IO.File.Exists(savedPath)).IsTrue();
+    }
+
+    [Test]
+    public async Task Download_404_ReturnsHttpError()
+    {
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.NotFound)
+        {
+            Content = new System.Net.Http.StringContent("Not Found")
+        });
 
         var action = new download
         {
             Context = Ctx,
             Url = "https://example.com/missing.txt",
-            SaveTo = "should-not-exist.txt",
+            SaveTo = "nope.txt",
             Unsigned = true
         };
 
@@ -174,40 +194,5 @@ public class DownloadActionTests
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
-    }
-
-    [Test]
-    public async Task Download_OnProgress_PassedToProvider()
-    {
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/large.bin",
-            SaveTo = "progress.bin",
-            OnProgress = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "ShowProgress" },
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(_mock.CapturedDownload!.OnProgress).IsNotNull();
-        await Assert.That(_mock.CapturedDownload!.OnProgress!.Name).IsEqualTo("ShowProgress");
-    }
-
-    [Test]
-    public async Task Download_OnProgress_NullTotalBytes_ProviderHandles()
-    {
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/unknown-size.bin",
-            SaveTo = "nosize.bin",
-            OnProgress = new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = "ShowProgress" },
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
     }
 }

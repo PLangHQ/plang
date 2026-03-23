@@ -22,10 +22,19 @@ namespace PLang.Runtime2.modules.http.providers;
 /// </summary>
 public sealed class DefaultHttpProvider : IHttpProvider
 {
-    public string Name => "default";
+    public string Name { get; init; } = "default";
     public bool IsDefault { get; set; }
 
+    private readonly HttpMessageHandler? _handler;
     private HttpClient? _client;
+
+    public DefaultHttpProvider() { }
+
+    /// <summary>
+    /// Test constructor: injects a custom HttpMessageHandler.
+    /// All real provider logic runs — only the HTTP transport is swapped.
+    /// </summary>
+    public DefaultHttpProvider(HttpMessageHandler handler) => _handler = handler;
 
     /// <summary>
     /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
@@ -277,12 +286,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
         _client = null;
     }
 
-    private static HttpClient CreateClient(ModuleView<Config> config) => new(new SocketsHttpHandler
-    {
-        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-        AllowAutoRedirect = config.Resolve("FollowRedirects", true),
-        MaxAutomaticRedirections = config.Resolve("MaxRedirects", 10)
-    });
+    private HttpClient CreateClient(ModuleView<Config> config) => _handler != null
+        ? new HttpClient(_handler, disposeHandler: false)
+        : new HttpClient(new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            AllowAutoRedirect = config.Resolve("FollowRedirects", true),
+            MaxAutomaticRedirections = config.Resolve("MaxRedirects", 10)
+        });
 
     // --- Signing ---
 
