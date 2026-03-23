@@ -31,6 +31,11 @@ public sealed class DefaultHttpProvider : IHttpProvider
     /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
     /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
     /// </summary>
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private static readonly JsonSerializerOptions _transportInOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -196,15 +201,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
         var headers = MergeHeaders(action.Headers, config);
 
-        HttpContent httpContent;
-        try
-        {
-            httpContent = await ResolveUploadContentAsync(action, fs, encoding);
-        }
-        catch (FormatException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "InvalidContent", 400));
-        }
+        var httpContent = await ResolveUploadContentAsync(action, fs, encoding);
 
         var httpMethod = ToSystemMethod(action.Method);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
@@ -234,6 +231,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var engine = action.Context.Engine;
         var isDefault = action.Default;
 
+        // Redirect config can't change after first request (SocketsHttpHandler is immutable)
+        if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
+            return Data.FromError(new ServiceError(
+                "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
+                "ConfigLocked", 409));
+
         if (action.TimeoutInSec.HasValue)
             engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
         if (action.BaseUrl != null)
@@ -251,12 +254,6 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (action.MaxRedirects.HasValue)
             engine.Settings.Set("http.MaxRedirects", action.MaxRedirects.Value, action.Context, isDefault);
 
-        // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects.HasValue || action.MaxRedirects.HasValue))
-            return Data.FromError(new ServiceError(
-                "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
-                "ConfigLocked", 409));
-
         return Data.Ok();
     }
 
@@ -268,17 +265,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
         {
             return await operation();
         }
-        catch (TaskCanceledException)
+        catch (Exception ex)
         {
-            return Data.FromError(new ServiceError("Request timed out", "Timeout", 408));
-        }
-        catch (HttpRequestException ex)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "HttpError", (int)(ex.StatusCode ?? 0)));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return Data.FromError(new ServiceError(ex.Message, "IOError", 500));
+            var (key, statusCode) = ex switch
+            {
+                TaskCanceledException => ("Timeout", 408),
+                HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
+                IOException or UnauthorizedAccessException => ("IOError", 500),
+                FormatException => ("InvalidContent", 400),
+                _ => ("HttpError", 500)
+            };
+            return Data.FromError(new ServiceError(ex.Message, key, statusCode));
         }
     }
 
@@ -458,10 +455,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             object? parsed;
             try
             {
-                parsed = JsonSerializer.Deserialize<object>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                parsed = JsonSerializer.Deserialize<object>(json, _jsonOptions);
             }
             catch (JsonException)
             {
@@ -730,6 +724,17 @@ public sealed class DefaultHttpProvider : IHttpProvider
         return fallback;
     }
 
+    /// <summary>
+    /// Runs a goal callback and reports errors to stderr.
+    /// </summary>
+    private static async Task RunCallbackAsync(
+        GoalCall goalCall, EngineType engine, PLangContext context, CancellationToken ct)
+    {
+        var result = await engine.RunGoalAsync(goalCall, context, ct);
+        if (!result.Success)
+            await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+    }
+
     private static StreamFormat DetectStreamFormat(string contentType)
     {
         if (contentType.Equals("text/event-stream", StringComparison.OrdinalIgnoreCase))
@@ -749,9 +754,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (string.IsNullOrEmpty(line)) continue;
 
             context.MemoryStack.Set(varName, line);
-            var result = await engine.RunGoalAsync(onStream, context, ct);
-            if (!result.Success)
-                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+            await RunCallbackAsync(onStream, engine, context, ct);
         }
     }
 
@@ -770,9 +773,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 if (dataBuffer.Length > 0)
                 {
                     context.MemoryStack.Set(varName, dataBuffer.ToString());
-                    var result = await engine.RunGoalAsync(onStream, context, ct);
-                    if (!result.Success)
-                        await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+                    await RunCallbackAsync(onStream, engine, context, ct);
                 }
                 break;
             }
@@ -786,9 +787,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
                 context.MemoryStack.Set(varName, dataBuffer.ToString());
-                var result = await engine.RunGoalAsync(onStream, context, ct);
-                if (!result.Success)
-                    await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+                await RunCallbackAsync(onStream, engine, context, ct);
                 dataBuffer.Clear();
             }
         }
@@ -806,9 +805,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
 
             context.MemoryStack.Set(varName, chunk);
-            var result = await engine.RunGoalAsync(onStream, context, ct);
-            if (!result.Success)
-                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+            await RunCallbackAsync(onStream, engine, context, ct);
         }
     }
 
@@ -839,18 +836,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (!verifyResult.Success)
             {
                 context.MemoryStack.Set(varName, verifyResult);
-                var goalResult = await engine.RunGoalAsync(onStream, context, ct);
-                if (!goalResult.Success)
-                    await engine.Channels.WriteAsync(EngineChannels.StdErr, goalResult.Error);
+                await RunCallbackAsync(onStream, engine, context, ct);
                 continue;
             }
 
             context.MemoryStack.Set("!ServiceIdentity", data.Signature?.Identity);
             context.MemoryStack.Set(varName, data);
 
-            var result = await engine.RunGoalAsync(onStream, context, ct);
-            if (!result.Success)
-                await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+            await RunCallbackAsync(onStream, engine, context, ct);
         }
     }
 
@@ -889,9 +882,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                         Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
                     };
                     context.MemoryStack.Set(progressVarName, progress);
-                    var result = await engine.RunGoalAsync(onProgress, context, ct);
-                    if (!result.Success)
-                        await engine.Channels.WriteAsync(EngineChannels.StdErr, result.Error);
+                    await RunCallbackAsync(onProgress, engine, context, ct);
                 }
             }
         }
