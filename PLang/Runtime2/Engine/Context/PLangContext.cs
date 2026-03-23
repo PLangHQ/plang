@@ -98,9 +98,9 @@ public sealed class PLangContext : IDisposable
     /// <summary>
     /// Goal-scoped settings storage. Lazy-initialized when a settings handler writes
     /// to this context. Keys are "module.property" format (e.g., "archive.max").
-    /// Resolution walks: this.SettingsScope → Parent.SettingsScope → Engine.Settings.Defaults → class default.
+    /// Resolution walks: this.ConfigScope → Parent.ConfigScope → Engine.Config.Defaults → class default.
     /// </summary>
-    public Settings.Scope? SettingsScope { get; set; }
+    public Config.Scope? ConfigScope { get; set; }
 
     public PLangContext(Engine.@this engine, MemoryStack? memoryStack = null, PLangContext? parent = null)
     {
@@ -203,7 +203,7 @@ public sealed class PLangContext : IDisposable
         {
             IsAsync = IsAsync,
             Setup = Setup,
-            SettingsScope = SettingsScope?.Clone()
+            ConfigScope = ConfigScope?.Clone()
         };
 
         foreach (var kvp in _data)

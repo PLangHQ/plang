@@ -9,7 +9,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Settings;
+using PLang.Runtime2.Engine.Config;
 using PLang.Runtime2.modules.signing;
 using EngineType = PLang.Runtime2.Engine.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
@@ -52,7 +52,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Task<Data> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
-        var config = engine.Settings.For<Config>(action.Context);
+        var config = engine.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec > 0 ? action.TimeoutInSec : config.Resolve("TimeoutInSec", 30);
@@ -122,7 +122,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Task<Data> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
-        var config = engine.Settings.For<Config>(action.Context);
+        var config = engine.Config.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
@@ -188,7 +188,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     public Task<Data> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
         var engine = action.Context.Engine;
-        var config = engine.Settings.For<Config>(action.Context);
+        var config = engine.Config.For<Config>(action.Context);
         var fs = engine.FileSystem;
 
         var unsigned = action.Unsigned || config.Resolve("Unsigned", false);
@@ -234,7 +234,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.Engine.Settings.Apply<Config>(action, action.Context, action.Default);
+        action.Context.Engine.Config.Apply<Config>(action, action.Context, action.Default);
         return Data.Ok();
     }
 

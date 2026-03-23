@@ -26,10 +26,10 @@ public sealed partial class @this
     {
         var savedGoal = context.Goal;
         var savedStep = context.Step;
-        var savedSettingsScope = context.SettingsScope;
+        var savedConfigScope = context.ConfigScope;
 
         context.Goal = this;
-        context.SettingsScope = null; // new goal starts with no local settings; inherits via Parent chain
+        context.ConfigScope = null; // new goal starts with no local settings; inherits via Parent chain
 
         if (cancellationToken.IsCancellationRequested)
             return Data.FromError(GoalError.Cancelled(context));
@@ -74,7 +74,7 @@ public sealed partial class @this
         finally
         {
             context.CallStack?.Pop();
-            context.SettingsScope = savedSettingsScope;
+            context.ConfigScope = savedConfigScope;
             context.Goal = savedGoal;
             context.Step = savedStep;
         }

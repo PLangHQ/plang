@@ -1,4 +1,4 @@
-using PLang.Runtime2.Engine.Settings;
+using PLang.Runtime2.Engine.Config;
 
 namespace PLang.Tests.Runtime2.Engine.Settings;
 

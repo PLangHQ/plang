@@ -58,11 +58,11 @@ public class ConfigureActionTests
             var engine = action.Context.Engine;
             var isDefault = action.Default;
             if (action.TimeoutInSec.HasValue)
-                engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
+                engine.Config.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, isDefault);
             if (action.BaseUrl != null)
-                engine.Settings.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
+                engine.Config.Set("http.BaseUrl", action.BaseUrl, action.Context, isDefault);
             if (action.DefaultHeaders != null)
-                engine.Settings.Set("http.DefaultHeaders", action.DefaultHeaders, action.Context, isDefault);
+                engine.Config.Set("http.DefaultHeaders", action.DefaultHeaders, action.Context, isDefault);
             return Data.Ok();
         }
         public void Dispose() { }
@@ -76,7 +76,7 @@ public class ConfigureActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Settings.For<Config>(Ctx);
+        var view = _engine.Config.For<Config>(Ctx);
         var timeout = view.Resolve("TimeoutInSec", 30);
         await Assert.That(timeout).IsEqualTo(60);
     }
@@ -115,7 +115,7 @@ public class ConfigureActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var view = _engine.Settings.For<Config>(Ctx);
+        var view = _engine.Config.For<Config>(Ctx);
         var baseUrl = view.Resolve<string?>("BaseUrl", null);
         await Assert.That(baseUrl).IsEqualTo("https://api.example.com/v2");
     }
@@ -159,7 +159,7 @@ public class ConfigureActionTests
         await Assert.That(result.Success).IsTrue();
 
         var newContext = _engine.CreateContext();
-        var view = _engine.Settings.For<Config>(newContext);
+        var view = _engine.Config.For<Config>(newContext);
         var timeout = view.Resolve("TimeoutInSec", 30);
         await Assert.That(timeout).IsEqualTo(120);
     }
@@ -171,7 +171,7 @@ public class ConfigureActionTests
         {
             var engine = action.Context.Engine;
             if (action.TimeoutInSec.HasValue)
-                engine.Settings.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, action.Default);
+                engine.Config.Set("http.TimeoutInSec", action.TimeoutInSec.Value, action.Context, action.Default);
             return Data.Ok();
         };
 
@@ -180,11 +180,11 @@ public class ConfigureActionTests
 
         await Assert.That(result.Success).IsTrue();
 
-        var view = _engine.Settings.For<Config>(Ctx);
+        var view = _engine.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
         var newContext = _engine.CreateContext();
-        var newView = _engine.Settings.For<Config>(newContext);
+        var newView = _engine.Config.For<Config>(newContext);
         await Assert.That(newView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }
 }

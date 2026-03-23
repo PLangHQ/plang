@@ -117,10 +117,10 @@ public sealed class @this : IAsyncDisposable
     public Property Property { get; }
 
     /// <summary>
-    /// Strongly typed, goal-scoped module settings.
-    /// Navigation: engine.Settings.For&lt;archive.Config&gt;(context).Max
+    /// Strongly typed, goal-scoped module config.
+    /// Navigation: engine.Config.For&lt;archive.Config&gt;(context).Max
     /// </summary>
-    public Settings.@this Settings { get; }
+    public Config.@this Config { get; }
 
     /// <summary>
     /// Shared SettingsData instance registered on every actor's MemoryStack.
@@ -217,7 +217,7 @@ public sealed class @this : IAsyncDisposable
         Building = new Build.@this(this);
         Types = new Types.@this();
         Property = new Property(this);
-        Settings = new Settings.@this();
+        Config = new Config.@this();
         SettingsVariable = new SettingsData(this);
         _libraries = libraries ?? new EngineLibraries();
         _goals = new EngineGoals { Engine = this };

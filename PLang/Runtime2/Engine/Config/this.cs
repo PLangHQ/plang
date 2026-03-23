@@ -1,6 +1,6 @@
 using PLang.Runtime2.Engine.Context;
 
-namespace PLang.Runtime2.Engine.Settings;
+namespace PLang.Runtime2.Engine.Config;
 
 /// <summary>
 /// Engine-level settings registry. Owns:
@@ -8,7 +8,7 @@ namespace PLang.Runtime2.Engine.Settings;
 /// - Engine-level default scope (persistent across goals)
 /// - Resolution logic: context scope → parent scope → engine defaults → class defaults
 ///
-/// Navigation: engine.Settings.For&lt;archive.Config&gt;(context).Max
+/// Navigation: engine.Config.For&lt;archive.Config&gt;(context).Max
 /// </summary>
 public sealed class @this
 {
@@ -20,17 +20,17 @@ public sealed class @this
 
     /// <summary>
     /// Resolves a setting value by walking the scope chain:
-    /// context.SettingsScope → context.Parent.SettingsScope → ... → Defaults → classDefault.
+    /// context.ConfigScope → context.Parent.ConfigScope → ... → Defaults → classDefault.
     /// </summary>
     public T Resolve<T>(string key, PLangContext context, T classDefault)
     {
-        // Walk: context.SettingsScope → parent.SettingsScope → ... → Defaults → classDefault
+        // Walk: context.ConfigScope → parent.ConfigScope → ... → Defaults → classDefault
         var current = context;
         while (current != null)
         {
-            if (current.SettingsScope != null)
+            if (current.ConfigScope != null)
             {
-                var value = current.SettingsScope.Get(key);
+                var value = current.ConfigScope.Get(key);
                 if (value != null) return Cast<T>(value, classDefault);
             }
             current = current.Parent;
@@ -118,8 +118,8 @@ public sealed class @this
         }
         else
         {
-            context.SettingsScope ??= new Scope();
-            context.SettingsScope.Set(key, value);
+            context.ConfigScope ??= new Scope();
+            context.ConfigScope.Set(key, value);
         }
     }
 }
