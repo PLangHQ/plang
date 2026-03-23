@@ -39,12 +39,12 @@ public class ProviderModuleTests
 
     private PLangContext Ctx => _engine.System.Context;
 
-    // Fixture DLL paths — built by companion projects under TestFixtures/
+    // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/Runtime2/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(
-        System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "TestFixtures"));
+        System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Runtime2", "Fixtures", "dlls"));
 
     private static string FixtureDll(string project) =>
-        System.IO.Path.Combine(FixtureBase, project, "bin", "Debug", "net10.0", $"{project}.dll");
+        System.IO.Path.Combine(FixtureBase, $"{project}.dll");
 
     #region Load
 
