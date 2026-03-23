@@ -319,3 +319,65 @@ Accessing `%data.Signature.Verified%` should trigger verification lazily — the
 This means `SignedData.Verified` needs a lazy resolution pattern (similar to `IdentityData`): first access triggers the full verification flow, caches the result, and returns it. Both the lazy path and the explicit `verify` action should run the same underlying verification logic.
 
 **Implication for coder:** The verify handler's core logic should be extracted into a shared method that both the `verify` action and the lazy `.Verified` getter can call. The lazy path uses default contracts (e.g., `["C0"]`) and no expected headers. The explicit `verify` action passes the developer-specified contracts and headers.
+
+---
+
+## IHttpProvider — HTTP Provider in Engine.Providers
+
+`IHttpProvider` follows the same provider pattern as `ISigningProvider`, `ICryptoProvider`, etc. Registered on `Engine.Providers` during engine construction. `DefaultHttpProvider` is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
+
+Add `IHttpProvider` to the provider interfaces list:
+- `IProvider` — base: `Name`, `IsDefault`
+- `IKeyProvider : IProvider`
+- `ISigningProvider : IKeyProvider`
+- `ICryptoProvider : IProvider`
+- `IIdentityProvider : IProvider`
+- `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
+
+PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`.
+
+---
+
+## TransportPropertyFilter — [In] / [Out] Attributes
+
+`[In]` and `[Out]` are serialization view attributes (defined in `Engine/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
+
+- **Default JSON**: `[JsonIgnore]` properties are hidden (e.g., `Data.Signature`)
+- **Inbound transport** (`[In]`): `TransportPropertyFilter.ForInbound` re-includes `[In]` properties during deserialization. Used when parsing `application/plang` responses — `Data.Signature` arrives on the wire and must be deserialized.
+- **Outbound transport** (`[Out]`): `TransportPropertyFilter.ForOutbound` re-includes `[Out]` properties during serialization.
+
+**Why this exists:** `Data.Signature` is `[JsonIgnore]` so it doesn't leak into normal JSON output. But for `application/plang` wire protocol, the signature must round-trip. The `[In]` attribute marks it for inbound deserialization; the filter overrides `[JsonIgnore]` selectively.
+
+**Implementation note:** The filter removes any existing hidden entries before re-adding with fresh Get/Set delegates. Simply calling `CreateJsonPropertyInfo` + `Properties.Add` does NOT override `[JsonIgnore]` in System.Text.Json — the hidden entry must be removed first.
+
+---
+
+## ISettings → IConfig Rename
+
+`ISettings` was renamed to `IConfig` across all modules. The rationale: "config" better describes what these classes are — configuration with defaults, not mutable settings. Files:
+
+- `Engine/Settings/ISettings.cs` → `Engine/Config/IConfig.cs`
+- `Engine/Settings/ModuleView.cs` → `Engine/Config/ModuleView.cs`
+- `Engine/Settings/this.cs` → `Engine/Config/this.cs`
+- Module `Settings.cs` files → `Config.cs` (archive, signing, http)
+
+`engine.Settings` → `engine.Config`. `Settings.Apply` writes action properties to the scope chain via reflection.
+
+---
+
+## IConfigure\<T\> — Build-Time Defaults Pattern
+
+`IConfigure<TConfig>` (in `PLang.Runtime2.modules`) marks a configure action and links it to its `IConfig` class. The builder uses this to reflect on `TConfig` for filling defaults instead of reflecting on the action record itself.
+
+```csharp
+[Action("configure", Cacheable = false)]
+public partial class configure : IContext, IConfigure<Config> { ... }
+```
+
+This separates the configure action's nullable properties (only non-null values are written to the scope chain) from the Config class's non-nullable defaults.
+
+---
+
+## Path Moved to Engine/FileSystem/
+
+`Path` was moved from `Engine/Memory/` to `Engine/FileSystem/` — it's a file system concept, not a memory concept. The class resolves raw path strings into absolute paths with navigable properties (`Extension`, `FileName`, `Directory`, etc.). Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.

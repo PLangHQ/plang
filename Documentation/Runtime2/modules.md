@@ -250,6 +250,7 @@ public static class TypeMapping
 | `crypto` | `hash`, `verify` | Cryptographic hashing and verification |
 | `signing` | `sign`, `verify` | Data signing and signature verification |
 | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
+| `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
 | `library` | `load` | Load external DLL libraries |
 
 ### condition module — Details
@@ -381,6 +382,76 @@ The provider module manages the `Engine.Providers` registry — a type-keyed `Co
 **Error keys**: `ValidationError`, `LoadError`, `NoProviders`, `ProviderConstructor`, `ProviderExists`, `ProviderNotFound`, `CannotRemoveDefault`, `UnknownType`.
 
 All actions are `Cacheable = false`. All return `Data` — never throw.
+
+### http module — Details
+
+The HTTP module sends requests, downloads/uploads files, and streams responses. All behavior lives in `DefaultHttpProvider` — action records delegate via `engine.Providers.Get<IHttpProvider>()`.
+
+**Provider pattern**: `IHttpProvider` extends `IProvider` + `IDisposable`. `DefaultHttpProvider` owns `HttpClient` (lazy-created), config resolution, header merging, signing, response parsing, and streaming. Swappable via `engine.Providers` like any other provider.
+
+**Config scope chain**: `Config : IConfig` provides defaults via scope-chain resolution. Per-step parameters override scope-chain values, which override class defaults. The `configure` action writes to the scope chain via `Settings.Apply`.
+
+```
+Resolution order: step parameter → scope chain (per-goal/per-app) → Config class default
+```
+
+**Signing integration**: By default, all requests are signed (unless `Unsigned = true` or `Config.Unsigned = true`). Signed requests get an `X-Signature` header containing a JSON `SignedData` envelope. Responses with `application/plang` content type are verified automatically — the response `Data.Signature` is populated via the `[In]` transport attribute.
+
+**URL resolution**: Three forms — absolute URL (used as-is), relative URL (prepended with `Config.BaseUrl`), bare domain (gets `https://` prefix). Missing `BaseUrl` with a relative URL returns an error.
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `request` | `Url`, `Method` (GET), `Body`, `Headers`, `ContentType` (application/json), `Encoding` (utf-8), `TimeoutInSec` (30), `Unsigned` (false), `SignOptions`, `OnStream`, `StreamAs` | Sends HTTP request. Returns parsed response as Data. Supports streaming via callback goal. |
+| `download` | `Url`, `SaveTo`, `IfExists` (Error), `Headers`, `TimeoutInSec` (30), `Unsigned` (false), `SignOptions`, `OnProgress` | Downloads file to local path. Returns saved path. Progress via callback goal. |
+| `upload` | `Url`, `Content`, `Method` (POST), `Headers`, `Encoding` (utf-8), `TimeoutInSec` (30), `Unsigned` (false), `SignOptions`, `As`, `OnProgress` | Uploads content. Auto-detects format: string path = file, Dictionary = form, object = JSON. Explicit `As` overrides. |
+| `configure` | `TimeoutInSec`, `BaseUrl`, `DefaultHeaders`, `ContentType`, `Encoding`, `Unsigned`, `FollowRedirects`, `MaxRedirects`, `Default` (false) | Writes non-null values to config scope chain. `Default=true` writes to app-wide scope. |
+
+**Streaming formats** (`StreamAs` on `request`):
+
+| Format | Behavior |
+|--------|----------|
+| `Line` | Newline-delimited lines (NDJSON, OpenAI-style). Each line delivered to `OnStream` goal. |
+| `SSE` | Server-Sent Events. Parses `data:` fields, delivers on `\n\n` boundaries. Buffer capped at `MaxSSEBufferSize`. |
+| `Bytes` | Raw byte chunks as they arrive from transport. |
+| *(auto)* | `application/plang` responses stream as NDJSON with per-message signature verification. |
+
+**Upload content detection** (`As` on `upload`, or auto-detected):
+
+| ContentAs | Trigger | Behavior |
+|-----------|---------|----------|
+| `File` | String starting with `@` or file path | Reads file, sends as `multipart/form-data` |
+| `Base64` | Explicit | Decodes base64 string, sends as binary |
+| `Form` | Dictionary content | Sends as `multipart/form-data` with key/value pairs |
+| `Text` | Default for strings | Sends as `StringContent` |
+
+**Security limits** (in `Config`):
+- `MaxResponseSize` — 100MB default. Responses exceeding this are truncated. Prevents OOM from untrusted servers.
+- `MaxSSEBufferSize` — 10MB default. SSE messages exceeding this are cleared and the stream continues. Prevents unbounded buffer growth from malformed SSE.
+
+**Error keys:**
+
+| Key | Cause |
+|-----|-------|
+| `HttpError` | Network failure, DNS resolution, connection refused |
+| `TimeoutError` | Request exceeded `TimeoutInSec` |
+| `UrlError` | Invalid URL or relative URL without BaseUrl |
+| `FileExistsError` | Download target exists and `IfExists = Error` |
+| `ContentError` | Upload content is null or unrecognized format |
+| `ResponseSizeExceeded` | Response body exceeds `MaxResponseSize` |
+| `SSEBufferOverflow` | SSE message exceeds `MaxSSEBufferSize` (non-fatal, stream continues) |
+| `SigningError` | Request signing failed |
+| `VerificationFailed` | application/plang response signature verification failed |
+
+**Header merging**: `Config.DefaultHeaders` are merged with step-level `Headers`. Step-level headers win on key conflict. `Content-Type` and `Accept` are routed to `HttpContent.Headers` / `HttpRequestMessage.Headers` respectively (not default headers).
+
+**Types** (`PLang.Runtime2.modules.http`):
+- `HttpMethod` enum: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, QUERY
+- `StreamFormat` enum: Line, SSE, Bytes
+- `ContentAs` enum: File, Base64, Form, Text
+- `FileExists` enum: Error, Overwrite, Skip
+- `TransferProgress` record: `BytesTransferred`, `TotalBytes?`, `Percentage?`
 
 ## Relationships
 
