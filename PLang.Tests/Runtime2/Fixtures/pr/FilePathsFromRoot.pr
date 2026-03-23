@@ -1,0 +1,74 @@
+{
+  "name": "FilePathsFromRoot",
+  "path": "/FilePathsFromRoot.goal",
+  "steps": [
+    {
+      "index": 0,
+      "text": "read testdata.txt, write to %relative%",
+      "lineNumber": 2,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "testdata.txt" }
+          ],
+          "return": [
+            { "name": "relative" }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "read /testdata.txt, write to %absolute%",
+      "lineNumber": 3,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "/testdata.txt" }
+          ],
+          "return": [
+            { "name": "absolute" }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "read sub/subdata.txt, write to %subfolder%",
+      "lineNumber": 4,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "sub/subdata.txt" }
+          ],
+          "return": [
+            { "name": "subfolder" }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "read ./testdata.txt, write to %dotslash%",
+      "lineNumber": 5,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            { "name": "path", "value": "./testdata.txt" }
+          ],
+          "return": [
+            { "name": "dotslash" }
+          ]
+        }
+      ]
+    }
+  ]
+}

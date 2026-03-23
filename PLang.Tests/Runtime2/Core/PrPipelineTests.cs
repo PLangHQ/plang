@@ -81,6 +81,181 @@ public class PrPipelineTests
         await Assert.That(capture.Lines.Count).IsGreaterThanOrEqualTo(1);
     }
 
+    #region File Path Resolution
+
+    [Test]
+    public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        var loadResult = await engine.LoadGoalFromFileAsync("FilePathsFromRoot.pr");
+        await Assert.That(loadResult.Success).IsTrue();
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync("FilePathsFromRoot", context);
+        await Assert.That(result.Success).IsTrue();
+
+        // #1: testdata.txt — relative, same folder
+        await Assert.That(context.MemoryStack.GetValue("relative")!.ToString()).IsEqualTo("Hello from test file");
+
+        // #2: /testdata.txt — absolute from root
+        await Assert.That(context.MemoryStack.GetValue("absolute")!.ToString()).IsEqualTo("Hello from test file");
+
+        // #4: sub/subdata.txt — subfolder relative
+        await Assert.That(context.MemoryStack.GetValue("subfolder")!.ToString()).IsEqualTo("Hello from subfolder");
+
+        // #7: ./testdata.txt — explicit current dir
+        await Assert.That(context.MemoryStack.GetValue("dotslash")!.ToString()).IsEqualTo("Hello from test file");
+    }
+
+    [Test]
+    public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        var loadResult = await engine.LoadGoalFromFileAsync(Path.Combine("sub", "FilePathsFromSub.pr"));
+        await Assert.That(loadResult.Success).IsTrue();
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync("FilePathsFromSub", context);
+
+        // Step 0 (/testdata.txt) succeeds — absolute paths work from any goal location
+        // Step 1 (subdata.txt) fails — relative paths resolve against engine root, not goal folder
+        //   so "subdata.txt" → {root}/subdata.txt (not found), NOT {root}/sub/subdata.txt
+        // The goal fails on step 1, but step 0 already set %rootAbsolute%
+        await Assert.That(context.MemoryStack.GetValue("rootAbsolute")!.ToString()).IsEqualTo("Hello from test file");
+    }
+
+    [Test]
+    public async Task FilePaths_RelativeResolvesAgainstRoot_NotGoalFolder()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // A goal in /sub/ tries to read "subdata.txt" (relative)
+        // This resolves to {root}/subdata.txt, NOT {root}/sub/subdata.txt
+        // The goal must use "sub/subdata.txt" or "/sub/subdata.txt" instead
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+        {
+            Name = "SubRelative",
+            Path = "/sub/SubRelative.goal",
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
+                {
+                    Index = 0,
+                    Text = "read subdata.txt, write to %content%",
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new List<Data> { new Data("path", "subdata.txt") },
+                            Return = new List<Data> { new Data("content") }
+                        }
+                    }
+                }
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        // File not found — relative resolves to {root}/subdata.txt, not {root}/sub/subdata.txt
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+    }
+
+    [Test]
+    public async Task FilePaths_NonexistentFile_ReturnsError()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // Hand-build a goal that reads a nonexistent file
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+        {
+            Name = "ReadMissing",
+            Path = "/ReadMissing.goal",
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
+                {
+                    Index = 0,
+                    Text = "read nonexistent.txt, write to %content%",
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new List<Data> { new Data("path", "nonexistent.txt") },
+                            Return = new List<Data> { new Data("content") }
+                        }
+                    }
+                }
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        // file/read returns Data.FromError for missing files
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+    }
+
+    [Test]
+    public async Task FilePaths_EscapeAttempt_Blocked()
+    {
+        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+
+        // Try to read ../../ — should be blocked by PLangFileSystem
+        var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
+        {
+            Name = "ReadEscape",
+            Path = "/ReadEscape.goal",
+            Steps = new PLang.Runtime2.Engine.Goals.Goal.Steps.@this
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.@this
+                {
+                    Index = 0,
+                    Text = "read ../../etc/passwd, write to %content%",
+                    Actions = new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.@this
+                    {
+                        new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new List<Data> { new Data("path", "../../etc/passwd") },
+                            Return = new List<Data> { new Data("content") }
+                        }
+                    }
+                }
+            }
+        };
+        engine.Goals.Add(goal);
+
+        using var context = engine.CreateContext();
+        var result = await engine.RunGoalAsync(goal, context);
+
+        // PLangFileSystem should block path escape — either throws FileAccessException or returns error
+        await Assert.That(result.Success).IsFalse();
+    }
+
+    #endregion
+
     private static string FindFixturesDir()
     {
         var dir = AppContext.BaseDirectory;
