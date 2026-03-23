@@ -8,7 +8,7 @@ Crypto module added as piece 2 (signing needs it for hashing). Everything after 
 Piece 1: identity          ← DONE
 Piece 2: crypto            ← DONE — hashing (Keccak256, SHA256)
 Piece 3: signing           ← DONE — Ed25519, nonce replay, contracts
-Piece 4: http              ← IN PROGRESS, depends on signing
+Piece 4: http              ← DONE (branch: runtime2-builder-v2-http)
 Piece 5: cleanup           ← review and clean up pieces 1-4
 Piece 6: template          ← standalone
 Piece 7: llm               ← depends on http
