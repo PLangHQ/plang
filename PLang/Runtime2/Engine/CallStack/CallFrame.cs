@@ -109,12 +109,11 @@ public sealed class CallFrame : IAsyncDisposable
     /// </summary>
     public void CompleteCurrentStep(TimeSpan? duration = null)
     {
-        if (_executedSteps.Count > 0)
-        {
-            var last = _executedSteps[^1];
-            last.CompletedAt = DateTime.UtcNow;
-            last.Duration = duration ?? (last.CompletedAt.Value - last.StartedAt);
-        }
+        if (_executedSteps.Count == 0) return;
+
+        var last = _executedSteps[^1];
+        last.CompletedAt = DateTime.UtcNow;
+        last.Duration = duration ?? (last.CompletedAt.Value - last.StartedAt);
     }
 
     /// <summary>

@@ -57,16 +57,12 @@ public sealed class @this
     /// </summary>
     public async Task<CallFrame?> PopAsync()
     {
-        if (!IsEnabled)
+        if (!IsEnabled || !_frames.TryPop(out var frame))
             return null;
 
-        if (_frames.TryPop(out var frame))
-        {
-            frame.Complete();
-            await frame.DisposeAsync();
-            return frame;
-        }
-        return null;
+        frame.Complete();
+        await frame.DisposeAsync();
+        return frame;
     }
 
     /// <summary>
@@ -79,15 +75,13 @@ public sealed class @this
     /// </summary>
     public void RecordStep(Step step)
     {
-        if (!IsEnabled)
-            return;
+        if (!IsEnabled) return;
 
         var frame = Current;
-        if (frame != null)
-        {
-            frame.Step = step;
-            frame.RecordStep(step);
-        }
+        if (frame == null) return;
+
+        frame.Step = step;
+        frame.RecordStep(step);
     }
 
     /// <summary>
@@ -95,15 +89,11 @@ public sealed class @this
     /// </summary>
     public void AddError(IError error)
     {
-        lock (_errorLock)
-        {
-            _errors.Add(error);
-        }
+        lock (_errorLock) { _errors.Add(error); }
 
-        if (IsEnabled)
-        {
-            Current?.AddError(error);
-        }
+        if (!IsEnabled) return;
+
+        Current?.AddError(error);
     }
 
     /// <summary>
