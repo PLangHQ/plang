@@ -43,7 +43,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
     /// Creates an in-memory SqliteSettingsStore with a sentinel connection that keeps
     /// the database alive for the lifetime of this instance.
     /// </summary>
-    private SqliteSettingsStore(string name, bool inMemory)
+    private SqliteSettingsStore(string name)
     {
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -61,7 +61,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
     /// Different names produce isolated databases.
     /// </summary>
     public static SqliteSettingsStore InMemory(string name)
-        => new SqliteSettingsStore(name, inMemory: true);
+        => new SqliteSettingsStore(name);
 
     private void EnableWalMode()
     {
@@ -97,12 +97,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
             var data = _serializer.Deserialize<Data>(result.ToString()!);
             return Task.FromResult(data ?? Data.Ok(null));
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table, key)));
@@ -132,12 +127,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
             }
             return Task.FromResult(Data.Ok((object)items));
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table)));
@@ -161,12 +151,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             return Task.FromResult(Data.Ok());
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table, key)));
@@ -187,12 +172,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             return Task.FromResult(Data.Ok());
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table, key)));
@@ -213,12 +193,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
             var count = Convert.ToInt64(cmd.ExecuteScalar());
             return Task.FromResult(Data.Ok((object)(count > 0)));
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table, key)));
@@ -241,12 +216,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
 
             return Task.FromResult(Data.Ok((object)tables));
         }
-        catch (SqliteException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex)));
-        }
-        catch (IOException ex)
+        catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex)));
