@@ -250,8 +250,8 @@ public sealed class @this : IAsyncDisposable
         Providers.Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
 
         // Register domain types for settings store rehydration
+        // Types.Register delegates to TypeMapping — single registration point
         Types.Register("identityvariable", typeof(modules.identity.IdentityVariable));
-        Utility.TypeMapping.Register("identityvariable", typeof(modules.identity.IdentityVariable));
     }
 
     /// <summary>

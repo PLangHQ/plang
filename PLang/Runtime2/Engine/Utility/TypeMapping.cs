@@ -86,33 +86,43 @@ public static class TypeMapping
         TypeToName[clrType] = plangName.ToLowerInvariant();
     }
 
+    private const int MaxGenericDepth = 20;
+
     /// <summary>
     /// Gets the .NET Type for a PLang type name.
+    /// Handles generics (list&lt;string&gt;), dictionaries (dict&lt;K,V&gt;), nullable (int?), and MIME types.
+    /// Depth-guarded against unbounded generic nesting.
     /// </summary>
-    public static Type? GetType(string typeName)
+    public static Type? GetType(string typeName) => GetType(typeName, 0);
+
+    private static Type? GetType(string typeName, int depth)
     {
         if (string.IsNullOrWhiteSpace(typeName))
+            return null;
+
+        if (depth > MaxGenericDepth)
             return null;
 
         // Handle generic list syntax: list<string>
         if (typeName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && typeName.EndsWith(">"))
         {
             var innerTypeName = typeName[5..^1];
-            var innerType = GetType(innerTypeName) ?? typeof(object);
-            return typeof(List<>).MakeGenericType(innerType);
+            var innerType = GetType(innerTypeName, depth + 1);
+            return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
         }
 
         // Handle generic dictionary syntax: dict<string,int>
         if ((typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
              typeName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && typeName.EndsWith(">"))
         {
-            var prefix = typeName.StartsWith("dict<") ? 5 : 11;
+            var prefix = typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
             var inner = typeName[prefix..^1];
             var parts = inner.Split(',');
             if (parts.Length == 2)
             {
-                var keyType = GetType(parts[0].Trim()) ?? typeof(string);
-                var valueType = GetType(parts[1].Trim()) ?? typeof(object);
+                var keyType = GetType(parts[0].Trim(), depth + 1);
+                var valueType = GetType(parts[1].Trim(), depth + 1);
+                if (keyType == null || valueType == null) return null;
                 return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
             }
         }

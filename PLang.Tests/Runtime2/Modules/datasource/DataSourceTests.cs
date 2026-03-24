@@ -232,43 +232,43 @@ public class DataSourceTests
     // --- ClassifyException tests ---
 
     [Test]
-    public async Task DataSourceError_ClassifiesLockedDatabase()
+    public async Task SettingsError_ClassifiesLockedDatabase()
     {
         var ex = new Exception("database is locked");
-        var error = DataSourceError.FromException(ex, "settings", "key");
+        var error = SettingsError.FromException(ex, "settings", "key");
         await Assert.That(error.Key).IsEqualTo("DatabaseLocked");
     }
 
     [Test]
-    public async Task DataSourceError_ClassifiesDiskError()
+    public async Task SettingsError_ClassifiesDiskError()
     {
         var ex = new Exception("disk I/O error");
-        var error = DataSourceError.FromException(ex, "settings");
+        var error = SettingsError.FromException(ex, "settings");
         await Assert.That(error.Key).IsEqualTo("DiskError");
     }
 
     [Test]
-    public async Task DataSourceError_ClassifiesCorrupt()
+    public async Task SettingsError_ClassifiesCorrupt()
     {
         var ex = new Exception("database disk image is corrupt");
-        var error = DataSourceError.FromException(ex);
+        var error = SettingsError.FromException(ex);
         await Assert.That(error.Key).IsEqualTo("DatabaseCorrupt");
     }
 
     [Test]
-    public async Task DataSourceError_ClassifiesPermissionDenied()
+    public async Task SettingsError_ClassifiesPermissionDenied()
     {
         var ex = new Exception("permission denied");
-        var error = DataSourceError.FromException(ex);
+        var error = SettingsError.FromException(ex);
         await Assert.That(error.Key).IsEqualTo("PermissionDenied");
     }
 
     [Test]
-    public async Task DataSourceError_ClassifiesUnknownAsDefault()
+    public async Task SettingsError_ClassifiesUnknownAsDefault()
     {
         var ex = new Exception("something unexpected");
-        var error = DataSourceError.FromException(ex);
-        await Assert.That(error.Key).IsEqualTo("DataSourceError");
+        var error = SettingsError.FromException(ex);
+        await Assert.That(error.Key).IsEqualTo("SettingsError");
         await Assert.That(error.StatusCode).IsEqualTo(500);
     }
 

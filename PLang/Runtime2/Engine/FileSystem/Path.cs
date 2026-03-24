@@ -2,7 +2,6 @@ using PLang.Interfaces;
 using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Utility;
 using PLangContext = PLang.Runtime2.Engine.Context.PLangContext;
 
 namespace PLang.Runtime2.Engine.FileSystem;
@@ -112,7 +111,7 @@ public sealed class Path
     public string Directory => _directory ??= _fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
 
     /// <summary>MIME type derived from file extension</summary>
-    public string MimeType => TypeMapping.GetMimeType(Extension);
+    public string MimeType => _engine.Types.Mime(Extension);
 
     /// <summary>Structural: has a file extension (no I/O)</summary>
     public bool IsFile => !string.IsNullOrEmpty(Extension);

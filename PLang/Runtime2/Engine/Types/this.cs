@@ -1,82 +1,15 @@
 using System.Collections.Concurrent;
-using System.Reflection;
-using System.Text.Json.Serialization;
 
 namespace PLang.Runtime2.Engine.Types;
 
 /// <summary>
 /// Owns all type knowledge in PLang Runtime2.
-/// Consolidates PLang names ↔ CLR types, file extension → Kind, extension → MIME,
-/// and Kind → compressibility into a single live instance on Engine.
+/// Delegates PLang name ↔ CLR type resolution to TypeMapping (static, shared with source generator and v1 code).
+/// Owns file extension → Kind, extension → MIME, Kind → compressibility (unique to Types).
+/// Lives as Engine.Types — callers navigate through the engine object graph.
 /// </summary>
 public sealed class @this
 {
-    // Read-only after construction — never modified by Add/Remove. Order-preserving for BuilderNames.
-    private readonly Dictionary<string, System.Type> _nameToClr = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Primitives
-        ["string"] = typeof(string),
-        ["text"] = typeof(string),
-        ["int"] = typeof(int),
-        ["integer"] = typeof(int),
-        ["long"] = typeof(long),
-        ["float"] = typeof(float),
-        ["double"] = typeof(double),
-        ["decimal"] = typeof(decimal),
-        ["bool"] = typeof(bool),
-        ["boolean"] = typeof(bool),
-        ["datetime"] = typeof(DateTime),
-        ["date"] = typeof(DateTime),
-        ["time"] = typeof(TimeSpan),
-        ["timespan"] = typeof(TimeSpan),
-        ["guid"] = typeof(Guid),
-        ["byte"] = typeof(byte),
-        ["bytes"] = typeof(byte[]),
-
-        // Collections
-        ["list"] = typeof(List<object>),
-        ["array"] = typeof(object[]),
-        ["dictionary"] = typeof(Dictionary<string, object>),
-        ["dict"] = typeof(Dictionary<string, object>),
-        ["map"] = typeof(Dictionary<string, object>),
-        ["object"] = typeof(object),
-        ["dynamic"] = typeof(object),
-        ["json"] = typeof(System.Text.Json.Nodes.JsonNode),
-        ["json[]"] = typeof(System.Text.Json.Nodes.JsonArray),
-        ["actor"] = typeof(Context.Actor),
-        ["goal.call"] = typeof(Goals.Goal.GoalCall),
-        ["tstring"] = typeof(Memory.TString),
-        ["translatable"] = typeof(Memory.TString),
-
-        // Nullable types
-        ["int?"] = typeof(int?),
-        ["long?"] = typeof(long?),
-        ["double?"] = typeof(double?),
-        ["bool?"] = typeof(bool?),
-        ["datetime?"] = typeof(DateTime?),
-        ["guid?"] = typeof(Guid?),
-    };
-
-    // Read-only after construction — never modified by Add/Remove.
-    private readonly Dictionary<System.Type, string> _clrToName = new()
-    {
-        [typeof(string)] = "string",
-        [typeof(int)] = "int",
-        [typeof(long)] = "long",
-        [typeof(float)] = "float",
-        [typeof(double)] = "double",
-        [typeof(decimal)] = "decimal",
-        [typeof(bool)] = "bool",
-        [typeof(DateTime)] = "datetime",
-        [typeof(TimeSpan)] = "timespan",
-        [typeof(Guid)] = "guid",
-        [typeof(byte)] = "byte",
-        [typeof(byte[])] = "bytes",
-        [typeof(object)] = "object",
-        [typeof(Goals.Goal.GoalCall)] = "goal.call",
-        [typeof(Memory.TString)] = "tstring",
-    };
-
     private readonly ConcurrentDictionary<string, string> _extensionToKind = new(StringComparer.OrdinalIgnoreCase)
     {
         // plang
@@ -400,121 +333,39 @@ public sealed class @this
         }
     }
 
-    private const int MaxGenericDepth = 20;
+    // --- Name ↔ CLR type (delegates to TypeMapping — single source of truth) ---
 
     /// <summary>
-    /// PLang type name → CLR type.
-    /// Handles generics (list&lt;string&gt;), dictionaries (dict&lt;K,V&gt;), nullable (int?), and MIME types.
+    /// PLang type name → CLR type. Delegates to TypeMapping.GetType().
     /// </summary>
-    public System.Type? Clr(string plangName) => Clr(plangName, 0);
-
-    private System.Type? Clr(string plangName, int depth)
-    {
-        if (string.IsNullOrWhiteSpace(plangName))
-            return null;
-
-        if (depth > MaxGenericDepth)
-            return null;
-
-        // Handle generic list syntax: list<string>
-        if (plangName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && plangName.EndsWith(">"))
-        {
-            var innerTypeName = plangName[5..^1];
-            var innerType = Clr(innerTypeName, depth + 1);
-            // If inner resolution failed (depth exceeded or unknown), propagate null for generics
-            return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
-        }
-
-        // Handle generic dictionary syntax: dict<string,int>
-        if ((plangName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
-             plangName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && plangName.EndsWith(">"))
-        {
-            var prefix = plangName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
-            var inner = plangName[prefix..^1];
-            var parts = inner.Split(',');
-            if (parts.Length == 2)
-            {
-                var keyType = Clr(parts[0].Trim(), depth + 1);
-                var valueType = Clr(parts[1].Trim(), depth + 1);
-                if (keyType == null || valueType == null) return null;
-                return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
-            }
-        }
-
-        if (_nameToClr.TryGetValue(plangName, out var type))
-            return type;
-
-        // MIME type resolution
-        if (plangName.Contains('/'))
-        {
-            if (plangName.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-                return typeof(string);
-            if (plangName.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ||
-                plangName.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ||
-                plangName.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-                return typeof(byte[]);
-            if (plangName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
-                return typeof(object);
-            if (plangName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
-                return typeof(byte[]);
-        }
-
-        return null;
-    }
+    public System.Type? Clr(string plangName) => Utility.TypeMapping.GetType(plangName);
 
     /// <summary>
-    /// CLR type → PLang type name.
-    /// Handles nullable, generics, arrays, and ValidValues convention types.
+    /// CLR type → PLang type name. Delegates to TypeMapping.GetTypeName().
     /// </summary>
-    public string Name(System.Type clrType)
-    {
-        if (clrType == null)
-            return "object";
+    public string Name(System.Type clrType) => Utility.TypeMapping.GetTypeName(clrType);
 
-        // Handle nullable types
-        var underlying = Nullable.GetUnderlyingType(clrType);
-        if (underlying != null)
-            return Name(underlying) + "?";
+    /// <summary>
+    /// Registers a domain type. Delegates to TypeMapping.Register().
+    /// </summary>
+    public void Register(string plangName, System.Type clrType) => Utility.TypeMapping.Register(plangName, clrType);
 
-        // Handle generic types
-        if (clrType.IsGenericType)
-        {
-            var generic = clrType.GetGenericTypeDefinition();
-            if (generic == typeof(List<>) || generic == typeof(IList<>))
-                return $"list<{Name(clrType.GetGenericArguments()[0])}>";
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
-            {
-                var args = clrType.GetGenericArguments();
-                return $"dict<{Name(args[0])},{Name(args[1])}>";
-            }
-        }
+    /// <summary>
+    /// Returns canonical builder type names. Delegates to TypeMapping.GetBuilderTypeNames().
+    /// </summary>
+    public List<string> BuilderNames() => Utility.TypeMapping.GetBuilderTypeNames();
 
-        // Handle arrays
-        if (clrType.IsArray)
-        {
-            var elementType = clrType.GetElementType()!;
-            if (elementType == typeof(byte))
-                return "bytes";
-            return $"list<{Name(elementType)}>";
-        }
+    /// <summary>
+    /// Returns schemas for complex types. Delegates to TypeMapping.GetComplexTypeSchemas().
+    /// </summary>
+    public Dictionary<string, string> ComplexSchemas() => Utility.TypeMapping.GetComplexTypeSchemas();
 
-        if (_clrToName.TryGetValue(clrType, out var name))
-            return name;
+    /// <summary>
+    /// Gets valid values for a constrained type. Delegates to TypeMapping.GetValidValues().
+    /// </summary>
+    public static string[]? ValidValues(System.Type type) => Utility.TypeMapping.GetValidValues(type);
 
-        // Strip arity suffix from generic types (e.g. "HashSet`1" → "hashset")
-        var typeName = clrType.Name;
-        var backtickIndex = typeName.IndexOf('`');
-        if (backtickIndex >= 0)
-            typeName = typeName[..backtickIndex];
-
-        // Check for ValidValues static property (convention for constrained types)
-        var validValuesProp = clrType.GetProperty("ValidValues",
-            BindingFlags.Public | BindingFlags.Static);
-        if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
-            return typeName.ToLowerInvariant();
-
-        return typeName.ToLowerInvariant();
-    }
+    // --- Extension → Kind/MIME/Compressibility (unique to Types) ---
 
     /// <summary>
     /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
@@ -570,15 +421,6 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Registers a domain type so the store can rehydrate Data.Value to the correct CLR type.
-    /// </summary>
-    public void Register(string plangName, System.Type clrType)
-    {
-        _nameToClr[plangName.ToLowerInvariant()] = clrType;
-        _clrToName[clrType] = plangName.ToLowerInvariant();
-    }
-
-    /// <summary>
     /// Add a file extension mapping at runtime.
     /// Updates derived lookup structures (_allKinds, _mimeToKind) so KindOf() sees the new mapping.
     /// </summary>
@@ -607,68 +449,6 @@ public sealed class @this
         // Only remove from _allKinds if no other extension maps to this kind
         if (removedKind != null && !_extensionToKind.Values.Contains(removedKind, StringComparer.OrdinalIgnoreCase))
             lock (_derivedLock) { _allKinds.Remove(removedKind); }
-    }
-
-    /// <summary>
-    /// Returns canonical builder type names (excludes aliases like "text"→"string").
-    /// Keeps shortest name per CLR type, skips nullable variants.
-    /// </summary>
-    public List<string> BuilderNames()
-    {
-        var seen = new HashSet<System.Type>();
-        var names = new List<string>();
-        foreach (var kvp in _nameToClr)
-        {
-            if (kvp.Key.EndsWith("?")) continue;
-            if (seen.Contains(kvp.Value)) continue;
-            seen.Add(kvp.Value);
-
-            var validValues = ValidValues(kvp.Value);
-            if (validValues != null)
-                names.Add($"{kvp.Key}({string.Join("|", validValues)})");
-            else
-                names.Add(kvp.Key);
-        }
-        return names;
-    }
-
-    /// <summary>
-    /// Returns schemas for complex types (goal.call, etc.) based on [LlmBuilder] attributes.
-    /// </summary>
-    public Dictionary<string, string> ComplexSchemas()
-    {
-        var schemas = new Dictionary<string, string>();
-        foreach (var kvp in _nameToClr)
-        {
-            var name = kvp.Key;
-            var type = kvp.Value;
-            if (name.EndsWith("?") || Utility.TypeMapping.IsPrimitive(type) || type == typeof(object)) continue;
-            if (type.IsArray || type.IsGenericType) continue;
-            if (ValidValues(type) != null) continue;
-
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.Name != "EqualityContract")
-                .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
-                .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
-                .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {Name(p.PropertyType)}");
-
-            if (props.Any())
-                schemas[name] = $"{{ {string.Join(", ", props)} }}";
-        }
-        return schemas;
-    }
-
-    /// <summary>
-    /// Gets the valid values for a constrained type (e.g. Actor → ["user","service","system"]).
-    /// Returns null if the type has no ValidValues convention property.
-    /// </summary>
-    public static string[]? ValidValues(System.Type type)
-    {
-        var prop = type.GetProperty("ValidValues",
-            BindingFlags.Public | BindingFlags.Static);
-        if (prop != null && prop.PropertyType == typeof(string[]))
-            return (string[])prop.GetValue(null)!;
-        return null;
     }
 
     private static string NormalizeExtension(string extension)

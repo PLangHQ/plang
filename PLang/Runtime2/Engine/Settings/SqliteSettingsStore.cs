@@ -101,7 +101,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
+                SettingsError.FromException(ex, table, key)));
         }
     }
 
@@ -127,7 +127,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
+                SettingsError.FromException(ex, table, key)));
         }
     }
 
@@ -157,7 +157,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table)));
+                SettingsError.FromException(ex, table)));
         }
     }
 
@@ -191,7 +191,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table)));
+                SettingsError.FromException(ex, table)));
         }
     }
 
@@ -215,7 +215,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
+                SettingsError.FromException(ex, table, key)));
         }
     }
 
@@ -236,7 +236,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
+                SettingsError.FromException(ex, table, key)));
         }
     }
 
@@ -257,7 +257,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex, table, key)));
+                SettingsError.FromException(ex, table, key)));
         }
     }
 
@@ -280,7 +280,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         catch (Exception ex)
         {
             return Task.FromResult(Data.FromError(
-                DataSourceError.FromException(ex)));
+                SettingsError.FromException(ex)));
         }
     }
 

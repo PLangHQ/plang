@@ -272,7 +272,7 @@ public class SettingsDataTests
     // --- SettingsData DataSource error path (F4) ---
 
     [Test]
-    public async Task SettingsData_GetChild_CorruptDatabase_ReturnsDataSourceError()
+    public async Task SettingsData_GetChild_CorruptDatabase_ReturnsSettingsError()
     {
         // Trigger DataSource creation so the DB file exists
         _ = _engine.System.SettingsStore;
@@ -288,7 +288,7 @@ public class SettingsDataTests
 
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Success).IsFalse();
-        await Assert.That(child.Error is DataSourceError).IsTrue();
+        await Assert.That(child.Error is SettingsError).IsTrue();
     }
 
     // --- Shared SettingsData across actors ---

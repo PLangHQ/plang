@@ -26,6 +26,46 @@
         "health": "Branch created. Ingi driving review, coder executing changes.",
         "notes": "Scope: pieces 1-4 (identity, crypto, signing, http) plus any engine/infra changes that came with them (Settings→Config, Path→FileSystem, provider relocations)."
       }
+    },
+    {
+      "id": "coder-v1-cleanup",
+      "bot": "coder",
+      "timestamp_start": "2026-03-24T00:00:00Z",
+      "timestamp_end": "2026-03-24T00:30:00Z",
+      "intent": "Engine folder cleanup: Errors rename, TypeMapping/Types consolidation, dead code removal",
+      "before": {
+        "assumptions": "Reviewed Debug, Errors, Events, FileSystem, Goals, Memory, Providers, Types, Utility folders. Found 3 issues.",
+        "risk": "Low — rename, deduplication, dead code deletion. No behavioral changes."
+      },
+      "plan": "1. Rename DataSourceError→SettingsError. 2. Consolidate TypeMapping/Types duplicate dictionaries. 3. Delete unused Runtime2 PrParser.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/Engine/Errors/SettingsError.cs", "PLang/Runtime2/Engine/Settings/SqliteSettingsStore.cs", "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs", "PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs", "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs"],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "DataSourceError→SettingsError consistent with DataSource→Settings rename"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Types/this.cs", "PLang/Runtime2/Engine/Utility/TypeMapping.cs", "PLang/Runtime2/Engine/this.cs", "PLang/Runtime2/Engine/FileSystem/Path.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Types delegates to TypeMapping for name↔type, keeps unique extension/kind/mime. Depth guard added to TypeMapping.GetType(). Path uses engine.Types.Mime()."
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Utility/PrParser.cs"],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Zero references, dead code, used System.IO directly"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Both PLang and PLang.Tests build with 0 errors.",
+        "notes": "TypeMapping remains static (source generator needs it). Types is the OBP-correct instance API. Both use the same data."
+      }
     }
   ]
 }

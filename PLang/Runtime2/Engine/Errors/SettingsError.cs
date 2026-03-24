@@ -4,26 +4,26 @@ using PLang.Runtime2.Engine.Context;
 namespace PLang.Runtime2.Engine.Errors;
 
 /// <summary>
-/// Error that occurred during a DataSource operation (SQLite read/write/delete).
+/// Error that occurred during a Settings operation (SQLite read/write/delete).
 /// Captures table and key for diagnostics.
 /// </summary>
-public class DataSourceError : Error
+public class SettingsError : Error
 {
     public override ErrorCategory Category => ErrorCategory.Runtime;
 
     public string? TableName { get; init; }
     public string? KeyName { get; init; }
 
-    public DataSourceError(string message, string key = "DataSourceError", int statusCode = 500)
+    public SettingsError(string message, string key = "SettingsError", int statusCode = 500)
         : base(message, key, statusCode) { }
 
-    public DataSourceError(string message, PLangContext context, string key = "DataSourceError", int statusCode = 500)
+    public SettingsError(string message, PLangContext context, string key = "SettingsError", int statusCode = 500)
         : base(message, context, key, statusCode) { }
 
-    public static DataSourceError FromException(Exception ex, string? tableName = null, string? keyName = null)
+    public static SettingsError FromException(Exception ex, string? tableName = null, string? keyName = null)
     {
         var (suggestion, errorKey) = ClassifyException(ex);
-        return new DataSourceError(ex.Message, errorKey, 500)
+        return new SettingsError(ex.Message, errorKey, 500)
         {
             Exception = ex,
             TableName = tableName,
@@ -50,7 +50,7 @@ public class DataSourceError : Error
             msg.Contains("access", StringComparison.OrdinalIgnoreCase))
             return ("Check file system permissions on the .db directory.", "PermissionDenied");
 
-        return (null, "DataSourceError");
+        return (null, "SettingsError");
     }
 
     protected override void FormatExtra(StringBuilder sb, string indent)
