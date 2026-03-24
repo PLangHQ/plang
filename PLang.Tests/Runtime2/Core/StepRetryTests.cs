@@ -18,7 +18,7 @@ public class StepRetryTests
     {
         _engine = new PLang.Runtime2.Engine.@this("/app");
         _flaky = new FlakyHandler();
-        _engine.Libraries.Register("test", "flaky", _flaky);
+        _engine.Modules.Register("test", "flaky", _flaky);
     }
 
     // ================================================================

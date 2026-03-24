@@ -16,7 +16,7 @@ public class StartGoalTests
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -65,7 +65,7 @@ public class StartGoalTests
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         // Find the .pr.json file and set FileSystem root to repo root so it's accessible
         var prJsonPath = FindPrJsonPath();
@@ -127,7 +127,7 @@ public class StartGoalTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -158,7 +158,7 @@ public class StartGoalTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -186,7 +186,7 @@ public class StartGoalTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         var goal = new Goal
         {

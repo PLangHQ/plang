@@ -63,30 +63,17 @@ namespace PLang.Modules.PlangModule
 		[Description("Get all actions available from the registry")]
 		public async Task<(Actions?, IError?)> GetActions()
 		{
-			var libraries = new EngineLibraries();
+			var modules = new EngineModules();
 
 			var actions = new Actions(this.context);
 
-			foreach (var ns in libraries.Modules)
+			foreach (var ns in modules.Names)
 			{
-				foreach (var className in libraries.GetActions(ns))
+				foreach (var className in modules.GetActions(ns))
 				{
 					var parameters = new List<Runtime2.Engine.Memory.Data>();
-					System.Type? parameterType = null;
-
-					// Try IAction-based handler first
-					var handler = libraries.Get(ns, className);
-					if (handler != null)
-					{
-						parameterType = handler.ParameterType;
-					}
-					else
-					{
-						// Fall back to [Action]-attributed type
-						var actionType = libraries.GetActionType(ns, className);
-						if (actionType == null) continue;
-						parameterType = actionType;
-					}
+					var parameterType = modules.GetActionType(ns, className);
+					if (parameterType == null) continue;
 
 					if (parameterType != null)
 					{
@@ -127,7 +114,7 @@ namespace PLang.Modules.PlangModule
 
 					// Extract Cacheable from ActionAttribute
 				bool cacheable = true;
-				var actionType2 = libraries.GetActionType(ns, className);
+				var actionType2 = modules.GetActionType(ns, className);
 				if (actionType2 != null)
 				{
 					var actionAttr = actionType2.GetCustomAttribute<Runtime2.modules.ActionAttribute>();
@@ -216,12 +203,12 @@ namespace PLang.Modules.PlangModule
 				return (false, new ProgramError("No actions provided", goalStep, function,
 					Key: "NoActionsProvided"));
 
-			var libraries = new EngineLibraries();
+			var modules = new EngineModules();
 
 			var notFound = new List<string>();
 			foreach (var action in actions)
 			{
-				if (!libraries.Contains(action.Module, action.ActionName))
+				if (!modules.Contains(action.Module, action.ActionName))
 					notFound.Add($"{action.Module}.{action.ActionName}");
 			}
 
@@ -235,14 +222,14 @@ namespace PLang.Modules.PlangModule
 
 			// Fill build-time defaults for determinism
 			foreach (var action in actions)
-				FillDefaults(action, libraries);
+				FillDefaults(action, modules);
 
 			return (true, null);
 		}
 
-		private static void FillDefaults(R2Action action, EngineLibraries libraries)
+		private static void FillDefaults(R2Action action, EngineModules modules)
 		{
-			var actionType = libraries.GetActionType(action.Module, action.ActionName);
+			var actionType = modules.GetActionType(action.Module, action.ActionName);
 			if (actionType == null) return;
 
 			var paramNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -563,15 +550,15 @@ namespace PLang.Modules.PlangModule
 		[Description("Get available Runtime2 modules")]
 		public async Task<(object?, IError?)> GetActions(string? format = null)
 		{
-			var libraries = new EngineLibraries();
+			var modules = new EngineModules();
 			var result = new List<object>();
 
-			foreach (var ns in libraries.Modules)
+			foreach (var ns in modules.Names)
 			{
 				result.Add(new
 				{
 					Name = ns,
-					Methods = libraries.GetActions(ns).ToList()
+					Methods = modules.GetActions(ns).ToList()
 				});
 			}
 

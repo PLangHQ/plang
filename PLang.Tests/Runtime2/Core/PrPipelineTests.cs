@@ -21,7 +21,7 @@ public class PrPipelineTests
 
         // Capture output.write calls
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         // Point engine filesystem at the fixtures directory
         var fixturesDir = FindFixturesDir();
@@ -56,7 +56,7 @@ public class PrPipelineTests
 
         // Capture output
         var capture = new CapturingWriteHandler();
-        engine.Libraries.Register("output", "write", capture);
+        engine.Modules.Register("output", "write", capture);
 
         // Point engine filesystem at fixtures dir (contains testdata.txt and ReadFile.pr)
         var fixturesDir = FindFixturesDir();

@@ -18,9 +18,8 @@ global using Bindings = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.@this;
 // EventType: v1 PLang.Events conflict — use: using PLang.Runtime2.Engine.Events; or per-file alias
 // EventBinding: v1 PLang.Events conflict — use: using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
-// Libraries subsystem
-global using EngineLibraries = PLang.Runtime2.Engine.Libraries.@this;
-global using Library = PLang.Runtime2.Engine.Libraries.Library.@this;
+// Modules subsystem (action registry)
+global using EngineModules = PLang.Runtime2.Engine.Modules.@this;
 
 // Channels subsystem
 global using EngineChannels = PLang.Runtime2.Engine.Channels.@this;

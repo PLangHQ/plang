@@ -22,7 +22,7 @@ public sealed partial class @this
         }
         else
         {
-            var (action, error) = engine.Libraries.GetCodeGenerated(Module, ActionName, context);
+            var (action, error) = engine.Modules.GetCodeGenerated(Module, ActionName, context);
             if (error != null)
                 return Data.FromError(error);
 

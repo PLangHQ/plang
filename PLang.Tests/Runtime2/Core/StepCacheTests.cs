@@ -36,7 +36,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("first-result");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "url", "https://example.com" } },
@@ -65,7 +65,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "url", "https://example.com" } },
@@ -90,7 +90,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("cached-value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?> { { "id", "123" } },
@@ -119,7 +119,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler(42L); // long value
-        engine.Libraries.Register("test", "compute", handler);
+        engine.Modules.Register("test", "compute", handler);
 
         var step = MakeStepWithReturn("test", "compute",
             new Dictionary<string, object?>(),
@@ -155,7 +155,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new FailOnFirstCallHandler();
-        engine.Libraries.Register("test", "flaky", handler);
+        engine.Modules.Register("test", "flaky", handler);
 
         var step = MakeStepWithReturn("test", "flaky",
             new Dictionary<string, object?>(),
@@ -186,7 +186,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new SequenceHandler("a", "b");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step0 = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -219,7 +219,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("result");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -312,7 +312,7 @@ public class StepCacheTests
         engine.Cache = fakeCache;
 
         var handler = new CountingHandler("value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(),
@@ -388,7 +388,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
@@ -417,7 +417,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",
@@ -446,7 +446,7 @@ public class StepCacheTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var handler = new CountingHandler("value");
-        engine.Libraries.Register("test", "fetch", handler);
+        engine.Modules.Register("test", "fetch", handler);
 
         var step = MakeStepWithReturn("test", "fetch",
             new Dictionary<string, object?>(), "result",

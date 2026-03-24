@@ -20,7 +20,7 @@ namespace PLang.Runtime2.Engine;
 public sealed class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly EngineLibraries _libraries;
+    private readonly EngineModules _modules;
     private readonly EngineGoals _goals;
     private readonly List<object> _keepAlive = new();
     private bool _disposed;
@@ -81,10 +81,10 @@ public sealed class @this : IAsyncDisposable
     public EngineEvents Events { get; }
 
     /// <summary>
-    /// The library registry — uniform handler resolution system.
-    /// Built-in handlers are Libraries[0], external DLLs can be added as additional libraries.
+    /// Flat action registry. Discovers, registers, and resolves actions by module.action.
+    /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public EngineLibraries Libraries => _libraries;
+    public EngineModules Modules => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -219,7 +219,7 @@ public sealed class @this : IAsyncDisposable
     {
     }
 
-    public @this(string absolutePath, EngineLibraries? libraries = null,
+    public @this(string absolutePath, EngineModules? modules = null,
         Interfaces.IPLangFileSystem? fileSystem = null,
         string? environment = null)
     {
@@ -236,7 +236,7 @@ public sealed class @this : IAsyncDisposable
         Property = new Property(this);
         Config = new Config.@this();
         SettingsVariable = new SettingsData(this);
-        _libraries = libraries ?? new EngineLibraries();
+        _modules = modules ?? new EngineModules();
         _goals = new EngineGoals { Engine = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new EngineChannels(this);
@@ -422,7 +422,7 @@ public sealed class @this : IAsyncDisposable
             await _user.DisposeAsync();
 
         // Dispose any disposable handlers
-        foreach (var handler in _libraries.All)
+        foreach (var handler in _modules.All)
         {
             if (handler is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync();

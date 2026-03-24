@@ -86,7 +86,7 @@ public class ActionsTests
         await Assert.That(action.ParameterSchema).IsNull();
     }
 
-    // --- GetActions integration tests (uses real EngineLibraries + assembly discovery) ---
+    // --- GetActions integration tests (uses real EngineModules + assembly discovery) ---
 
     [Test]
     public async Task GetActions_ReturnsNonEmptyActions()
@@ -166,7 +166,7 @@ public class ActionsTests
         await Assert.That(noParams.Count).IsGreaterThanOrEqualTo(0);
     }
 
-    // --- ValidateActions tests (uses real EngineLibraries + assembly discovery) ---
+    // --- ValidateActions tests (uses real EngineModules + assembly discovery) ---
 
     [Test]
     public async Task ValidateActions_NullActions_ReturnsError()
@@ -379,12 +379,12 @@ public class ActionsTests
         if (actions == null || actions.Count == 0)
             return (false, new PLang.Runtime2.Engine.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var libraries = new EngineLibraries();
+        var modules = new EngineModules();
 
         var notFound = new List<string>();
         foreach (var action in actions)
         {
-            if (!libraries.Contains(action.Module, action.ActionName))
+            if (!modules.Contains(action.Module, action.ActionName))
                 notFound.Add($"{action.Module}.{action.ActionName}");
         }
 
@@ -396,42 +396,25 @@ public class ActionsTests
     }
 
     /// <summary>
-    /// Mimics what GetActions() in PlangModule does — uses EngineLibraries to discover handlers.
+    /// Mimics what GetActions() in PlangModule does — uses EngineModules to discover handlers.
     /// </summary>
     private static StepActions DiscoverActions()
     {
-        var libraries = new EngineLibraries();
+        var modules = new EngineModules();
 
         var actions = new StepActions();
 
-        foreach (var ns in libraries.Modules)
+        foreach (var ns in modules.Names)
         {
-            foreach (var actionName in libraries.GetActions(ns))
+            foreach (var actionName in modules.GetActions(ns))
             {
-                // Check IAction-based handlers first
-                var handler = libraries.Get(ns, actionName);
-                if (handler != null)
+                var actionType = modules.GetActionType(ns, actionName);
+                actions.Add(new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
-                    actions.Add(new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
-                    {
-                        Module = ns,
-                        ActionName = actionName,
-                        ParameterSchema = handler.ParameterType
-                    });
-                    continue;
-                }
-
-                // Check [Action]-based types
-                var actionType = libraries.GetActionType(ns, actionName);
-                if (actionType != null)
-                {
-                    actions.Add(new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
-                    {
-                        Module = ns,
-                        ActionName = actionName,
-                        ParameterSchema = actionType
-                    });
-                }
+                    Module = ns,
+                    ActionName = actionName,
+                    ParameterSchema = actionType
+                });
             }
         }
 

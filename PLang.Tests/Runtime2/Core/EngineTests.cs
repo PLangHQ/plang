@@ -149,7 +149,7 @@ public class EngineTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
-        await Assert.That(engine.Libraries).IsNotNull();
+        await Assert.That(engine.Modules).IsNotNull();
         await Assert.That(engine.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
@@ -193,12 +193,12 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Constructor_AcceptsCustomLibraries()
+    public async Task Constructor_AcceptsCustomModules()
     {
-        var libraries = new EngineLibraries();
-        await using var engine = new PLang.Runtime2.Engine.@this("/app", libraries);
+        var modules = new EngineModules();
+        await using var engine = new PLang.Runtime2.Engine.@this("/app", modules);
 
-        await Assert.That(engine.Libraries).IsEqualTo(libraries);
+        await Assert.That(engine.Modules).IsEqualTo(modules);
     }
 
     [Test]
@@ -211,20 +211,20 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Libraries_HasVariableActions()
+    public async Task Modules_HasVariableActions()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
-        await Assert.That(engine.Libraries.Contains("variable", "set")).IsTrue();
-        await Assert.That(engine.Libraries.Contains("variable", "get")).IsTrue();
+        await Assert.That(engine.Modules.Contains("variable", "set")).IsTrue();
+        await Assert.That(engine.Modules.Contains("variable", "get")).IsTrue();
     }
 
     [Test]
-    public async Task Libraries_HasOutputActions()
+    public async Task Modules_HasOutputActions()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
-        await Assert.That(engine.Libraries.Contains("output", "write")).IsTrue();
+        await Assert.That(engine.Modules.Contains("output", "write")).IsTrue();
     }
 
     [Test]
@@ -455,7 +455,7 @@ public class EngineTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var throwingHandler = new ThrowingHandler();
-        engine.Libraries.Register("throwing", "fail", throwingHandler);
+        engine.Modules.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
         using var context = engine.CreateContext();
@@ -472,7 +472,7 @@ public class EngineTests
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
         var nonGeneratedHandler = new NonGeneratedHandler();
-        engine.Libraries.Register("legacy", "do", nonGeneratedHandler);
+        engine.Modules.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
         using var context = engine.CreateContext();
@@ -488,7 +488,7 @@ public class EngineTests
     {
         var engine = new PLang.Runtime2.Engine.@this("/app");
         var disposableHandler = new DisposableHandler();
-        engine.Libraries.Register("disposable", "do", disposableHandler);
+        engine.Modules.Register("disposable", "do", disposableHandler);
 
         await engine.DisposeAsync();
 
@@ -500,7 +500,7 @@ public class EngineTests
     {
         var engine = new PLang.Runtime2.Engine.@this("/app");
         var asyncDisposableHandler = new AsyncDisposableHandler();
-        engine.Libraries.Register("asyncdisposable", "do", asyncDisposableHandler);
+        engine.Modules.Register("asyncdisposable", "do", asyncDisposableHandler);
 
         await engine.DisposeAsync();
 

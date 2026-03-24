@@ -20,11 +20,9 @@ public partial class Load : IContext
                 new PLang.Runtime2.Engine.Errors.ServiceError($"Library not found: {Path}")));
 
         var assembly = System.Reflection.Assembly.LoadFrom(absPath);
-        var lib = new Library(fs.Path.GetFileNameWithoutExtension(absPath), assembly);
-        lib.Discover(Namespace);
-        engine.Libraries.Add(lib);
+        var count = engine.Modules.Discover(assembly, Namespace);
 
         return Task.FromResult(Data.Ok(
-            new types.library { name = lib.Name, actions = lib.Count }));
+            new types.library { name = fs.Path.GetFileNameWithoutExtension(absPath), actions = count }));
     }
 }
