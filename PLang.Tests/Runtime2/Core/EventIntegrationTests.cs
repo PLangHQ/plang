@@ -22,14 +22,14 @@ public class EventIntegrationTests
 
         var goal = new Goal { Name = "TestGoal" };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
                 fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -43,14 +43,14 @@ public class EventIntegrationTests
 
         var goal = new Goal { Name = "TestGoal" };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterGoal,
             ctx =>
             {
                 fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -70,7 +70,7 @@ public class EventIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             ctx =>
             {
@@ -78,7 +78,7 @@ public class EventIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            stepPattern: "test step");
+            stepPattern: "test step"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -98,7 +98,7 @@ public class EventIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterStep,
             ctx =>
             {
@@ -106,7 +106,7 @@ public class EventIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            stepPattern: "test step");
+            stepPattern: "test step"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -126,19 +126,19 @@ public class EventIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             ctx =>
             {
                 stepExecuted = true;
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx => Task.FromResult(Data.FromError(new Error("blocked"))),
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         var result = await _engine.RunGoalAsync(goal);
 
@@ -153,23 +153,23 @@ public class EventIntegrationTests
 
         var goal = new Goal { Name = "TestGoal" };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
                 ctx.MemoryStack.Set("eventVar", "from-event");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterGoal,
             ctx =>
             {
                 capturedValue = ctx.MemoryStack.Get<string>("eventVar");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -183,7 +183,7 @@ public class EventIntegrationTests
 
         var goal = new Goal { Name = "TestGoal" };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
@@ -191,9 +191,9 @@ public class EventIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            priority: 1);
+            priority: 1));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
@@ -201,9 +201,9 @@ public class EventIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            priority: 10);
+            priority: 10));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
@@ -211,7 +211,7 @@ public class EventIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            priority: 5);
+            priority: 5));
 
         await _engine.RunGoalAsync(goal);
 
@@ -234,41 +234,41 @@ public class EventIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             ctx =>
             {
                 order.Add("BeforeStep");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterStep,
             ctx =>
             {
                 order.Add("AfterStep");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
                 order.Add("BeforeGoal");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterGoal,
             ctx =>
             {
                 order.Add("AfterGoal");
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -285,11 +285,11 @@ public class EventIntegrationTests
         var events = new EngineEvents();
         bool fired = false;
 
-        events.Register(EventType.BeforeGoal, ctx =>
+        events.Register(new EventBinding(EventType.BeforeGoal, ctx =>
         {
             fired = true;
             return Task.FromResult(Data.Ok());
-        });
+        }));
 
         var context = _engine.Context;
         var result = await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -304,17 +304,17 @@ public class EventIntegrationTests
         var events = new EngineEvents();
         var results = new List<string>();
 
-        events.Register(EventType.BeforeGoal, ctx =>
+        events.Register(new EventBinding(EventType.BeforeGoal, ctx =>
         {
             results.Add("all");
             return Task.FromResult(Data.Ok());
-        }, goalNamePattern: "*");
+        }, goalNamePattern: "*"));
 
-        events.Register(EventType.BeforeGoal, ctx =>
+        events.Register(new EventBinding(EventType.BeforeGoal, ctx =>
         {
             results.Add("specific");
             return Task.FromResult(Data.Ok());
-        }, goalNamePattern: "MyGoal");
+        }, goalNamePattern: "MyGoal"));
 
         var context = _engine.Context;
 
@@ -336,11 +336,11 @@ public class EventIntegrationTests
         var events = new EngineEvents();
         bool fired = false;
 
-        var id = events.Register(EventType.BeforeGoal, ctx =>
+        var id = events.Register(new EventBinding(EventType.BeforeGoal, ctx =>
         {
             fired = true;
             return Task.FromResult(Data.Ok());
-        });
+        }));
 
         events.Unregister(id);
 
@@ -355,14 +355,14 @@ public class EventIntegrationTests
     {
         bool fired = false;
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeAction,
             ctx =>
             {
                 fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            actionPattern: "variable.set");
+            actionPattern: "variable.set"));
 
         var step = new Step
         {
@@ -399,14 +399,14 @@ public class EventIntegrationTests
     {
         bool fired = false;
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterAction,
             ctx =>
             {
                 fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            actionPattern: "variable.set");
+            actionPattern: "variable.set"));
 
         var step = new Step
         {
@@ -443,14 +443,14 @@ public class EventIntegrationTests
     {
         int fireCount = 0;
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeAction,
             ctx =>
             {
                 fireCount++;
                 return Task.FromResult(Data.Ok());
             },
-            actionPattern: "variable.*");
+            actionPattern: "variable.*"));
 
         var step = new Step
         {
@@ -490,26 +490,26 @@ public class EventIntegrationTests
         // Context 1 has an event
         var context1 = _engine.CreateContext();
         bool context1Fired = false;
-        context1.User.Events.Register(
+        context1.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
                 context1Fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "SharedGoal");
+            goalNamePattern: "SharedGoal"));
 
         // Context 2 has no events
         var context2 = _engine.CreateContext();
         bool context2Fired = false;
-        context2.User.Events.Register(
+        context2.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             ctx =>
             {
                 context2Fired = true;
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "OtherGoal"); // won't match
+            goalNamePattern: "OtherGoal")); // won't match
 
         await _engine.RunGoalAsync(goal, context1);
         await _engine.RunGoalAsync(goal, context2);

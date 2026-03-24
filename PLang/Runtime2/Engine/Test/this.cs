@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
+using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
 namespace PLang.Runtime2.Engine.Test;
 
@@ -126,13 +127,12 @@ public sealed class @this
 
         // Register assertion failure tracking
         var events = testEngine.Context.User.Events;
-        events.Register(
+        events.Register(new EventBinding(
             EventType.AfterStep,
             context => TrackAssertionFailures(context, result),
             goalNamePattern: "*",
             priority: int.MaxValue - 1,
-            stopOnError: false
-        );
+            stopOnError: false));
 
         return await testEngine.RunGoalAsync(goal, cancellationToken: cancellationToken);
     }

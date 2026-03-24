@@ -33,22 +33,6 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Registers an event handler.
-    /// </summary>
-    public string Register(
-        EventType type,
-        Func<PLangContext, Task<Data>> handler,
-        string? goalNamePattern = null,
-        string? stepPattern = null,
-        string? actionPattern = null,
-        int priority = 0,
-        bool stopOnError = true,
-        bool isRegex = false)
-    {
-        return Register(new EventBinding(type, handler, goalNamePattern, stepPattern, actionPattern, priority, stopOnError, isRegex));
-    }
-
-    /// <summary>
     /// Unregisters an event binding by ID.
     /// </summary>
     public bool Unregister(string id)

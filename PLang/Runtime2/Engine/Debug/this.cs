@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Events;
+using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
 namespace PLang.Runtime2.Engine.Debug;
 
@@ -38,29 +39,26 @@ public sealed class @this
 
         var events = _engine.Context.User.Events;
 
-        events.Register(
+        events.Register(new EventBinding(
             EventType.BeforeStep,
             context => BeforeStepHandler(context, stepFilter),
             goalNamePattern: goalFilter ?? "*",
             priority: int.MaxValue,
-            stopOnError: false
-        );
+            stopOnError: false));
 
-        events.Register(
+        events.Register(new EventBinding(
             EventType.AfterStep,
             context => AfterStepHandler(context, stepFilter),
             goalNamePattern: goalFilter ?? "*",
             priority: int.MaxValue,
-            stopOnError: false
-        );
+            stopOnError: false));
 
-        events.Register(
+        events.Register(new EventBinding(
             EventType.AfterGoal,
             AfterGoalHandler,
             goalNamePattern: goalFilter ?? "*",
             priority: int.MaxValue,
-            stopOnError: false
-        );
+            stopOnError: false));
     }
 
     private static void ParseFilter(string spec, out string? goalFilter, out int? stepFilter)

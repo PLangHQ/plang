@@ -26,7 +26,7 @@ public class CallStackIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             ctx =>
             {
@@ -34,7 +34,7 @@ public class CallStackIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "TestGoal",
-            stepPattern: "probe step");
+            stepPattern: "probe step"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -59,14 +59,14 @@ public class CallStackIntegrationTests
             Steps = new GoalSteps { step1, step2 }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.AfterStep,
             ctx =>
             {
                 executedSteps.Add(ctx.CallStack!.Current!.Step!.Text);
                 return Task.FromResult(Data.Ok());
             },
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         await _engine.RunGoalAsync(goal);
 
@@ -117,7 +117,7 @@ public class CallStackIntegrationTests
             Steps = new GoalSteps { step }
         };
 
-        _engine.Context.User.Events.Register(
+        _engine.Context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             ctx =>
             {
@@ -127,7 +127,7 @@ public class CallStackIntegrationTests
                 return Task.FromResult(Data.Ok());
             },
             goalNamePattern: "DepthGoal",
-            stepPattern: "probe step");
+            stepPattern: "probe step"));
 
         await _engine.RunGoalAsync(goal);
 

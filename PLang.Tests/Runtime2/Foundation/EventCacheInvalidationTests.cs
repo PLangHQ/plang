@@ -20,20 +20,20 @@ public class EventCacheInvalidationTests
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         // Resolve events — this gets cached
         var events1 = context.LifecycleFor(goal);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register second event at runtime
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
 
         // Resolve again — should see 2 events, not stale cached 1
         var events2 = context.LifecycleFor(goal);
@@ -50,22 +50,22 @@ public class EventCacheInvalidationTests
         step.Goal = goal;
 
         // Register first step event
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal",
-            stepPattern: "do something");
+            stepPattern: "do something"));
 
         // Resolve — cached
         var events1 = context.LifecycleFor(step);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another step event at runtime
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeStep,
             async ctx => Data.Ok(),
             goalNamePattern: "TestGoal",
-            stepPattern: "do something");
+            stepPattern: "do something"));
 
         // Should see 2, not stale 1
         var events2 = context.LifecycleFor(step);
@@ -84,20 +84,20 @@ public class EventCacheInvalidationTests
         };
 
         // Register first action event
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeAction,
             async ctx => Data.Ok(),
-            actionPattern: "variable.set");
+            actionPattern: "variable.set"));
 
         // Resolve — cached
         var events1 = context.LifecycleFor(action);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register another action event at runtime
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeAction,
             async ctx => Data.Ok(),
-            actionPattern: "variable.set");
+            actionPattern: "variable.set"));
 
         // Should see 2, not stale 1
         var events2 = context.LifecycleFor(action);
@@ -112,18 +112,18 @@ public class EventCacheInvalidationTests
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
         var events1 = context.LifecycleFor(goal);
         await Assert.That(events1.Before.Count).IsEqualTo(1);
 
         // Register new event + manually invalidate cache
-        context.User.Events.Register(
+        context.User.Events.Register(new EventBinding(
             EventType.BeforeGoal,
             async ctx => Data.Ok(),
-            goalNamePattern: "TestGoal");
+            goalNamePattern: "TestGoal"));
         context.InvalidateEventCache();
 
         // Now should pick up the new event

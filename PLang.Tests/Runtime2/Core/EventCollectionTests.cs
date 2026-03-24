@@ -48,7 +48,7 @@ public class EventsTests
     {
         var events = new EngineEvents();
 
-        var id = events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
+        var id = events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
 
         await Assert.That(id).IsNotNull();
         await Assert.That(id.Length).IsEqualTo(8);
@@ -58,7 +58,7 @@ public class EventsTests
     public async Task Unregister_ById_RemovesBinding()
     {
         var events = new EngineEvents();
-        var id = events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
+        var id = events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
 
         var removed = events.Unregister(id);
 
@@ -80,8 +80,8 @@ public class EventsTests
     public async Task Clear_RemovesAllBindings()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
-        events.Register(EventType.AfterGoal, _ => Task.FromResult(Data.Ok()));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(EventType.AfterGoal, _ => Task.FromResult(Data.Ok())));
 
         events.Clear();
 
@@ -92,9 +92,9 @@ public class EventsTests
     public async Task GetBindings_ReturnsBindingsOfType()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
-        events.Register(EventType.AfterGoal, _ => Task.FromResult(Data.Ok()));
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(EventType.AfterGoal, _ => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
 
         var bindings = events.GetBindings(EventType.BeforeGoal);
 
@@ -105,7 +105,7 @@ public class EventsTests
     public async Task GetBindings_NoMatchingType_ReturnsEmpty()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
 
         var bindings = events.GetBindings(EventType.OnError);
 
@@ -116,8 +116,8 @@ public class EventsTests
     public async Task GetMatchingBindings_MatchesGoalPattern()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "Start");
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "Other");
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "Start"));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "Other"));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "Start");
 
@@ -128,7 +128,7 @@ public class EventsTests
     public async Task GetMatchingBindings_WildcardPattern_MatchesAll()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "*");
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "*"));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
 
@@ -139,7 +139,7 @@ public class EventsTests
     public async Task GetMatchingBindings_PrefixPattern_MatchesPrefix()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "User*");
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()), goalNamePattern: "User*"));
 
         var matchUser = events.GetMatchingBindings(EventType.BeforeGoal, "UserLogin");
         var matchOther = events.GetMatchingBindings(EventType.BeforeGoal, "AdminLogin");
@@ -152,7 +152,7 @@ public class EventsTests
     public async Task GetMatchingBindings_NullGoalPattern_MatchesAll()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok()));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.Ok())));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
 
@@ -163,7 +163,7 @@ public class EventsTests
     public async Task GetMatchingBindings_StepPattern_MatchesContaining()
     {
         var events = new EngineEvents();
-        events.Register(EventType.BeforeStep, _ => Task.FromResult(Data.Ok()), stepPattern: "http");
+        events.Register(new EventBinding(EventType.BeforeStep, _ => Task.FromResult(Data.Ok()), stepPattern: "http"));
 
         var matchHttp = events.GetMatchingBindings(EventType.BeforeStep, stepText: "call http endpoint");
         var matchOther = events.GetMatchingBindings(EventType.BeforeStep, stepText: "set variable");
@@ -177,11 +177,11 @@ public class EventsTests
     {
         var events = new EngineEvents();
         var called = false;
-        events.Register(EventType.BeforeGoal, _ =>
+        events.Register(new EventBinding(EventType.BeforeGoal, _ =>
         {
             called = true;
             return Task.FromResult(Data.Ok());
-        });
+        }));
 
         using var context = CreateContext();
         await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -194,9 +194,9 @@ public class EventsTests
     {
         var events = new EngineEvents();
         var order = new List<int>();
-        events.Register(EventType.BeforeGoal, _ => { order.Add(1); return Task.FromResult(Data.Ok()); }, priority: 1);
-        events.Register(EventType.BeforeGoal, _ => { order.Add(3); return Task.FromResult(Data.Ok()); }, priority: 3);
-        events.Register(EventType.BeforeGoal, _ => { order.Add(2); return Task.FromResult(Data.Ok()); }, priority: 2);
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => { order.Add(1); return Task.FromResult(Data.Ok()); }, priority: 1));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => { order.Add(3); return Task.FromResult(Data.Ok()); }, priority: 3));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => { order.Add(2); return Task.FromResult(Data.Ok()); }, priority: 2));
 
         using var context = CreateContext();
         await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -211,8 +211,8 @@ public class EventsTests
     {
         var events = new EngineEvents();
         var secondCalled = false;
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: true);
-        events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1);
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: true));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1));
 
         using var context = CreateContext();
         var result = await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -226,8 +226,8 @@ public class EventsTests
     {
         var events = new EngineEvents();
         var secondCalled = false;
-        events.Register(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: false);
-        events.Register(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1);
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => Task.FromResult(Data.FromError(new Error("Error"))), priority: 2, stopOnError: false));
+        events.Register(new EventBinding(EventType.BeforeGoal, _ => { secondCalled = true; return Task.FromResult(Data.Ok()); }, priority: 1));
 
         using var context = CreateContext();
         await events.DispatchAsync(context, EventType.BeforeGoal);
@@ -251,7 +251,7 @@ public class EventsTests
     {
         var events = new EngineEvents();
         PLangContext? capturedContext = null;
-        events.Register(EventType.BeforeGoal, ctx => { capturedContext = ctx; return Task.FromResult(Data.Ok()); });
+        events.Register(new EventBinding(EventType.BeforeGoal, ctx => { capturedContext = ctx; return Task.FromResult(Data.Ok()); }));
 
         using var context = CreateContext();
         context.Goal = new Goal { Name = "TestGoal" };
