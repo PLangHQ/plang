@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Force.DeepCloner;
 using PLang.Attributes;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Channels.Serializers;
@@ -201,6 +202,26 @@ public partial class Data
         (_value is string s && string.IsNullOrEmpty(s));
 
     public static Data Null(string name = "") => new(name, null);
+
+    /// <summary>
+    /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
+    /// Subclasses (SettingsData, IdentityData, DynamicData) should not be cloned —
+    /// they are stateless/factory-based and should be shared by reference.
+    /// </summary>
+    public Data Clone()
+    {
+        var clonedValue = _value.DeepClone();
+        var clone = new Data(Name, clonedValue, _type)
+        {
+            Error = Error,
+            Handled = Handled,
+            Warnings = Warnings != null ? new List<Info>(Warnings) : null,
+            Signature = Signature,
+            Properties = Properties
+        };
+        clone.Context = _context;
+        return clone;
+    }
 
     public override string ToString() =>
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";

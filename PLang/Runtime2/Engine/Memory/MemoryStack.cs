@@ -185,17 +185,16 @@ public class MemoryStack
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            // Preserve specialized Data subclasses by reference — they are
-            // stateless (SettingsData loads from DB each time).
-            // Deep-cloning would lose the virtual GetChild override.
+            // Specialized Data subclasses (SettingsData, IdentityData) — share by reference.
+            // They're stateless (load from DB each time) and deep-cloning would lose
+            // the virtual GetChild override.
             if (kvp.Value.GetType() != typeof(Data))
             {
                 clone._variables[kvp.Key] = kvp.Value;
             }
             else
             {
-                var clonedValue = kvp.Value.Value.DeepClone();
-                clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
+                clone._variables[kvp.Key] = kvp.Value.Clone();
             }
         }
         clone.Context = Context;
