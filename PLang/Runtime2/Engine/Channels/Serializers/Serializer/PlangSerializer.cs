@@ -26,7 +26,7 @@ public sealed class PlangSerializer : ISerializer
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new PLang.Runtime2.Engine.Memory.TypeJsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new TypeJsonConverter() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { TransportPropertyFilter.ForOutbound }
@@ -38,7 +38,7 @@ public sealed class PlangSerializer : ISerializer
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new PLang.Runtime2.Engine.Memory.TypeJsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new TypeJsonConverter() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { TransportPropertyFilter.ForInbound }

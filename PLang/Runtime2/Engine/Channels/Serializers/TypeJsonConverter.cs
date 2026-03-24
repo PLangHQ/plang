@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Type = PLang.Runtime2.Engine.Memory.Type;
 
-namespace PLang.Runtime2.Engine.Memory;
+namespace PLang.Runtime2.Engine.Channels.Serializers;
 
 /// <summary>
 /// Serializes <see cref="Type"/> as a plain JSON string (e.g. "string", "int").
