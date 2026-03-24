@@ -15,9 +15,11 @@ public sealed class @this
     {
         var json = new JsonStreamSerializer();
         var text = new TextStreamSerializer(jsonFallback: json);
+        var plang = new PlangSerializer();
 
         Register(json);
         Register(text);
+        Register(plang);
 
         // Register alternative content types
         _byContentType["text/json"] = json;
