@@ -600,7 +600,52 @@ await Lifecycle.Before.Run(context);   // context passed as parameter
 
 These are set after deserialization (e.g., `step.Goal = goal` during goal loading) and excluded from serialization to avoid circular references.
 
-## 10. Summary
+## 10. Data Flows — Relay, Don't Repackage
+
+Data objects are created at the boundary where the value originates. Once created, they flow through every layer unchanged. Intermediate layers relay the object — they may inspect it (`.Success`, `.Error`), stamp context on it, or add to its Properties, but they never decompose it and rebuild it.
+
+**Anti-patterns:**
+```csharp
+// Extracting Value to create a new Data — repackaging
+var child = new Data(key, result.Value);
+
+// Unwrapping and rewrapping — loses Type, Properties, Signature
+return Data.Ok(result.Value);
+
+// Cracking open Data to re-serialize its internals
+var json = JsonSerializer.Serialize(result.Value);
+var typed = JsonSerializer.Deserialize<MyType>(json);
+
+// Stripping the Data envelope before storage
+store.Set(table, key, data.Value);  // stores raw object, not Data
+```
+
+**Correct pattern:**
+```csharp
+// Relay the Data as-is
+return result;
+
+// Store the full Data envelope — value, type, signature preserved
+store.Set(table, key, data);
+
+// Get typed Data back — Value already deserialized to correct CLR type
+var result = await store.Get<SettingsData>(table, key);
+
+// Stamp context, don't rebuild
+result.Context = context;
+```
+
+**Why:** Every repackaging step loses information — Type, Properties, Signature, parent reference. It also creates coupling: the intermediate layer must know what's inside Data to reconstruct it. Relaying keeps coupling one-directional — only the creator and final consumer know the structure.
+
+**The lifecycle:** Created at origin → flows through handlers/store/transport → arrives at consumer. One creation, one consumption, zero repackaging in between.
+
+**Typed Data subclasses:** Modules define Data subclasses for their domain (e.g., `SettingsData`, `IdentityData`). Each has two constructors:
+- **Runtime** — for lazy-loading proxies on MemoryStack (takes engine/context)
+- **Storage** (`[JsonConstructor]`) — for store round-trips (takes name, value, type)
+
+The store serializes and deserializes these subclasses directly via `Get<T>` / `Set`. No manual deserialization in the module — the store handles it.
+
+## 11. Summary
 
 1. **Engine is the root** — everything hangs off it: Goals, Actions, Serializers, FileSystem, Channels, Events, Actors, config, key-value store
 2. **Names describe what the object is** — `Goals`, `Channels`, `Lifecycle`, `Bindings` — not vague verbs like `IO` or suffixes like `Manager`
@@ -618,8 +663,9 @@ These are set after deserialization (e.g., `step.Goal = goal` during goal loadin
 14. **Data owns merge** — `Data.Merge()` combines `List<Data>` by name
 15. **Don't create wrapper objects** — if the data is on `PLangContext`, pass `PLangContext`
 16. **Pass the caller, not its fields** — `path.Delete(actionRecord)`, not `path.Delete(recursive, ignoreIfNotFound)`. The callee navigates what it needs.
+17. **Data flows — relay, don't repackage** — Data is created at origin, flows through layers unchanged. Never extract `.Value` to rewrap in `Data.Ok()`. Never strip the envelope before storage. Relay the object; stamp context if needed.
 
-## Common OBP Violation Pattern
+## 12. Common OBP Violation Pattern
 
 If you're extracting fields from an object to pass as parameters, you're probably violating "navigate, don't pass." The typical progression when fixing OBP violations:
 
