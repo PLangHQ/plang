@@ -1,13 +1,13 @@
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.DataSource;
+namespace PLang.Runtime2.Engine.Settings;
 
 /// <summary>
-/// Interface for persistent key-value storage.
-/// Each actor owns a DataSource. Modules own their tables (encryption → "encryption", settings → "settings").
-/// All methods return Data, never throw.
+/// Interface for persistent key-value storage of PLang settings.
+/// Each actor owns a store. Modules own their tables (encryption → "encryption", settings → "settings").
+/// All methods accept and return Data, never throw.
 /// </summary>
-public interface IDataSource : IDisposable
+public interface ISettingsStore : IDisposable
 {
     /// <summary>
     /// Gets a single value by table and key.
@@ -22,9 +22,10 @@ public interface IDataSource : IDisposable
     Task<Data> GetAll(string table);
 
     /// <summary>
-    /// Sets a value by table and key. Creates the table if it doesn't exist.
+    /// Sets a Data value by table and key. Creates the table if it doesn't exist.
+    /// The full Data envelope (value, type, signature) is persisted.
     /// </summary>
-    Task<Data> Set(string table, string key, object? value);
+    Task<Data> Set(string table, string key, Data data);
 
     /// <summary>
     /// Removes a value by table and key.
@@ -39,7 +40,7 @@ public interface IDataSource : IDisposable
     Task<Data> Exists(string table, string key);
 
     /// <summary>
-    /// Lists all tables in this DataSource.
+    /// Lists all tables in this store.
     /// Returns Data with List&lt;string&gt; value.
     /// </summary>
     Task<Data> Tables();

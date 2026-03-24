@@ -1,5 +1,5 @@
 using PLang.Runtime2.Engine;
-using PLang.Runtime2.Engine.DataSource;
+using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.identity;
 
@@ -10,7 +10,7 @@ namespace PLang.Runtime2.Engine.Context;
 /// </summary>
 public sealed class Actor : IAsyncDisposable
 {
-    private readonly Lazy<IDataSource> _dataSource;
+    private readonly Lazy<ISettingsStore> _dataSource;
     private IdentityData? _identity;
 
     /// <summary>
@@ -37,11 +37,11 @@ public sealed class Actor : IAsyncDisposable
     /// Persistent key-value storage for this actor.
     /// Created lazily on first access. Database stored at .db/{actorname}.sqlite.
     /// </summary>
-    public IDataSource DataSource => _dataSource.Value;
+    public ISettingsStore SettingsStore => _dataSource.Value;
 
     /// <summary>
     /// Identity data for this actor. Lazy — created on first access.
-    /// For System actor: auto-loads/creates default identity from DataSource.
+    /// For System actor: auto-loads/creates default identity from SettingsStore.
     /// For User/Service: starts empty, set externally by HTTP/signing layer.
     /// </summary>
     public IdentityData Identity => _identity ??= new IdentityData(Engine);
@@ -62,7 +62,7 @@ public sealed class Actor : IAsyncDisposable
     {
         Name = name;
         Engine = engine;
-        _dataSource = new Lazy<IDataSource>(CreateDataSource);
+        _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
         Context = new PLangContext(engine)
         {
             CallStack = new CallStack.@this()
@@ -79,14 +79,14 @@ public sealed class Actor : IAsyncDisposable
         Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
     }
 
-    private IDataSource CreateDataSource()
+    private ISettingsStore CreateSettingsStore()
     {
         if (Engine.Testing.IsEnabled || Engine.Building.IsEnabled)
-            return SqliteDataSource.InMemory(Name.ToLowerInvariant());
+            return SqliteSettingsStore.InMemory(Name.ToLowerInvariant());
 
         var dbDir = Engine.FileSystem.Path.Combine(Engine.AbsolutePath, ".db");
         var dbPath = Engine.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
-        return new SqliteDataSource(dbPath, Engine.FileSystem);
+        return new SqliteSettingsStore(dbPath, Engine.FileSystem);
     }
 
     public async ValueTask DisposeAsync()

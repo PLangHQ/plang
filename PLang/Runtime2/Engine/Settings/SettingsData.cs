@@ -1,7 +1,7 @@
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.DataSource;
+namespace PLang.Runtime2.Engine.Settings;
 
 /// <summary>
 /// Specialized Data that lazily loads settings from the System actor's DataSource.
@@ -48,8 +48,8 @@ public class SettingsData : Data
         // Load the value from the System actor's DataSource
         // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
         // is synchronous under the hood — SQLite has no async I/O.
-        var dataSource = _engine.System.DataSource;
-        var result = dataSource.Get(SettingsTable, key).GetAwaiter().GetResult();
+        var store = _engine.System.SettingsStore;
+        var result = store.Get(SettingsTable, key).GetAwaiter().GetResult();
 
         if (!result.Success)
             return result;

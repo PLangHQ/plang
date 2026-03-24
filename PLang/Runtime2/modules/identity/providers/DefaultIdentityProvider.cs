@@ -210,8 +210,8 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads a single identity by name from the System DataSource. Returns null if not found.</summary>
     internal async Task<IdentityVariable?> LoadAsync(IContext action, string name)
     {
-        var dataSource = action.Context.Engine.System.DataSource;
-        var result = await dataSource.Get(Table, name);
+        var store = action.Context.Engine.System.SettingsStore;
+        var result = await store.Get(Table, name);
 
         if (!result.Success || result.Value == null)
             return null;
@@ -222,8 +222,8 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads all identities (including archived) from the System DataSource.</summary>
     internal async Task<Data<List<IdentityVariable>>> LoadAllAsync(IContext action)
     {
-        var dataSource = action.Context.Engine.System.DataSource;
-        var result = await dataSource.GetAll(Table);
+        var store = action.Context.Engine.System.SettingsStore;
+        var result = await store.GetAll(Table);
 
         if (!result.Success)
             return Data<List<IdentityVariable>>.FromError(result.Error!);
@@ -278,15 +278,15 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Persists an identity to the System DataSource using its Name as key.</summary>
     private async Task<Data> SaveAsync(IContext action, IdentityVariable identity)
     {
-        var dataSource = action.Context.Engine.System.DataSource;
-        return await dataSource.Set(Table, identity.Name, identity);
+        var store = action.Context.Engine.System.SettingsStore;
+        return await store.Set(Table, identity.Name, new Data(identity.Name, identity));
     }
 
-    /// <summary>Removes an identity from the System DataSource by name.</summary>
+    /// <summary>Removes an identity from the System settings store by name.</summary>
     private async Task<Data> RemoveAsync(IContext action, IdentityVariable identity)
     {
-        var dataSource = action.Context.Engine.System.DataSource;
-        return await dataSource.Remove(Table, identity.Name);
+        var store = action.Context.Engine.System.SettingsStore;
+        return await store.Remove(Table, identity.Name);
     }
 
     /// <summary>
@@ -315,7 +315,12 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         });
     }
 
-    /// <summary>Deserializes a DataSource value to IdentityVariable. Returns null on failure.</summary>
+    private static readonly System.Text.Json.JsonSerializerOptions _deserializeOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    /// <summary>Deserializes a settings store value to IdentityVariable. Returns null on failure.</summary>
     private static IdentityVariable? Deserialize(object? value)
     {
         if (value is IdentityVariable iv)
@@ -326,7 +331,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
             try
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
-                return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json);
+                return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json, _deserializeOptions);
             }
             catch (System.Text.Json.JsonException)
             {

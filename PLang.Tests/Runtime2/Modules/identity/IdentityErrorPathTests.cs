@@ -1,6 +1,6 @@
 using System.Reflection;
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.DataSource;
+using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.identity;
@@ -50,7 +50,7 @@ public class IdentityErrorPathTests
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
@@ -67,7 +67,7 @@ public class IdentityErrorPathTests
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var result = await new Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
@@ -81,7 +81,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Get { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -96,7 +96,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
@@ -111,7 +111,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save before IdentityData resolves
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         // Create a fresh IdentityData that hasn't resolved yet
         var identityData = new IdentityData(_engine);
@@ -140,7 +140,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = "new", SetAsDefault = true };
         var result = await handler.Run();
@@ -155,7 +155,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — saving the new identity fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Create { Context = Ctx, Name = "newid", SetAsDefault = false };
         var result = await handler.Run();
@@ -176,7 +176,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = "new" };
         var result = await handler.Run();
@@ -195,7 +195,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving the new default fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new SetDefault { Context = Ctx, Name = "target" };
         var result = await handler.Run();
@@ -213,7 +213,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving with new name fails
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
@@ -231,7 +231,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing remove — save succeeds but remove fails
         SwapDataSource(_engine.System, new FailingRemoveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
@@ -249,7 +249,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Archive { Context = Ctx, Name = "toarchive" };
         var result = await handler.Run();
@@ -270,7 +270,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_engine.System, new FailingSaveDataSource(
-            _engine.System.DataSource));
+            _engine.System.SettingsStore));
 
         var handler = new Unarchive { Context = Ctx, Name = "tounarchive" };
         var result = await handler.Run();
@@ -299,8 +299,8 @@ public class IdentityErrorPathTests
     public async Task Get_UnrecognizedValueType_ReturnsNotFound()
     {
         // Store a raw integer in the identity table — Deserialize won't recognize it
-        var ds = _engine.System.DataSource;
-        await ds.Set("identity", "weird", 42);
+        var ds = _engine.System.SettingsStore;
+        await ds.Set("identity", "weird", new Data("weird", 42));
 
         var result = await new Get { Context = Ctx, Name = "weird" }.Run();
         // Provider's LoadAsync returns null for unrecognized types → Get returns NotFound
@@ -311,14 +311,14 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_MixedValues_SkipsUnrecognized()
     {
-        var ds = _engine.System.DataSource;
+        var ds = _engine.System.SettingsStore;
 
         // Store a valid identity via Create action
         var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = true };
         await create.Run();
 
         // Store an unrecognizable value directly in DataSource
-        await ds.Set("identity", "garbage", "just a string");
+        await ds.Set("identity", "garbage", new Data("garbage", "just a string"));
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
@@ -334,26 +334,26 @@ public class IdentityErrorPathTests
 
     /// <summary>
     /// Swaps the DataSource on an Actor via reflection.
-    /// Required because Actor._dataSource is private readonly Lazy&lt;IDataSource&gt;.
+    /// Required because Actor._dataSource is private readonly Lazy&lt;ISettingsStore&gt;.
     /// </summary>
-    private static void SwapDataSource(Actor actor, IDataSource newDataSource)
+    private static void SwapDataSource(Actor actor, ISettingsStore newDataSource)
     {
         var field = typeof(Actor).GetField("_dataSource",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(actor, new Lazy<IDataSource>(() => newDataSource));
+        field!.SetValue(actor, new Lazy<ISettingsStore>(() => newDataSource));
     }
 
     /// <summary>
     /// DataSource wrapper that delegates all operations except Set, which always fails.
     /// </summary>
-    private class FailingSaveDataSource : IDataSource
+    private class FailingSaveDataSource : ISettingsStore
     {
-        private readonly IDataSource _inner;
-        public FailingSaveDataSource(IDataSource inner) => _inner = inner;
+        private readonly ISettingsStore _inner;
+        public FailingSaveDataSource(ISettingsStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<Data> Set(string table, string key, object? value)
+        public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new DataSourceError("Simulated save failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
@@ -366,14 +366,14 @@ public class IdentityErrorPathTests
     /// <summary>
     /// DataSource wrapper that delegates all operations except Remove, which always fails.
     /// </summary>
-    private class FailingRemoveDataSource : IDataSource
+    private class FailingRemoveDataSource : ISettingsStore
     {
-        private readonly IDataSource _inner;
-        public FailingRemoveDataSource(IDataSource inner) => _inner = inner;
+        private readonly ISettingsStore _inner;
+        public FailingRemoveDataSource(ISettingsStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<Data> Set(string table, string key, object? value) => _inner.Set(table, key, value);
+        public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
                 new DataSourceError("Simulated remove failure", "IOError", 500)
@@ -386,13 +386,13 @@ public class IdentityErrorPathTests
     /// <summary>
     /// DataSource where GetAll always returns an error.
     /// </summary>
-    private class FailingGetAllDataSource : IDataSource
+    private class FailingGetAllDataSource : ISettingsStore
     {
         public Task<Data> Get(string table, string key)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated failure")));
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated GetAll failure")));
-        public Task<Data> Set(string table, string key, object? value)
+        public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated failure")));
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated failure")));

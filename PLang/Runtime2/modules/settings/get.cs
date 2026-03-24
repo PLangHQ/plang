@@ -14,8 +14,8 @@ public partial class Get : IContext
 
     public async Task<Data> Run()
     {
-        var dataSource = Context.Engine.System.DataSource;
-        var result = await dataSource.Get("settings", Key);
+        var store = Context.Engine.System.SettingsStore;
+        var result = await store.Get("settings", Key);
 
         if (!result.Success)
             return result;

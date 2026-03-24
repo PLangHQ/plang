@@ -1,5 +1,5 @@
 using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.DataSource;
+using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -35,7 +35,7 @@ public class SettingsDataTests
     public async Task SettingsData_GetChild_ReturnsStoredValue()
     {
         // Store a setting via the System actor's DataSource
-        await _engine.System.DataSource.Set("settings", "ApiKey", "sk-test-123");
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "sk-test-123"));
 
         // SettingsData is registered on User actor MemoryStack (same as PLang code uses)
         var settingsData = _engine.Context.MemoryStack.Get("Settings");
@@ -67,7 +67,7 @@ public class SettingsDataTests
     public async Task SettingsData_ViaMemoryStack_DotNotation()
     {
         // Store via DataSource
-        await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
+        await _engine.System.SettingsStore.Set("settings", "TestKey", new Data("TestKey", "TestValue"));
 
         // Resolve via User MemoryStack dot notation (simulates %Settings.TestKey% in PLang code)
         var result = _engine.Context.MemoryStack.Get("Settings.TestKey");
@@ -91,11 +91,11 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
     {
-        await _engine.System.DataSource.Set("settings", "ApiKey", "old-value");
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "old-value"));
         var first = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
 
-        await _engine.System.DataSource.Set("settings", "ApiKey", "new-value");
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "new-value"));
         var second = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
     }
@@ -124,7 +124,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
     {
-        await _engine.System.DataSource.Set("settings", "TestKey", "TestValue");
+        await _engine.System.SettingsStore.Set("settings", "TestKey", new Data("TestKey", "TestValue"));
 
         var handler = new PLang.Runtime2.modules.settings.Get
         {
@@ -154,7 +154,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Remove_DeletesKey()
     {
-        await _engine.System.DataSource.Set("settings", "ToRemove", "value");
+        await _engine.System.SettingsStore.Set("settings", "ToRemove", new Data("ToRemove", "value"));
 
         var handler = new PLang.Runtime2.modules.settings.Remove
         {
@@ -166,7 +166,7 @@ public class SettingsDataTests
         await Assert.That(result.Success).IsTrue();
 
         // Verify removed
-        var getResult = await _engine.System.DataSource.Get("settings", "ToRemove");
+        var getResult = await _engine.System.SettingsStore.Get("settings", "ToRemove");
         await Assert.That(getResult.Value).IsNull();
     }
 
@@ -174,7 +174,7 @@ public class SettingsDataTests
     public async Task ActorDataSource_IsCreatedLazily()
     {
         // Accessing DataSource should create the .db directory
-        var ds = _engine.System.DataSource;
+        var ds = _engine.System.SettingsStore;
         await Assert.That(ds).IsNotNull();
 
         var dbDir = _engine.FileSystem.Path.Combine(_tempDir, ".db");
@@ -188,7 +188,7 @@ public class SettingsDataTests
     {
         // Store a JSON object as a setting
         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
-        await _engine.System.DataSource.Set("settings", "Config", config);
+        await _engine.System.SettingsStore.Set("settings", "Config", new Data("Config", config));
 
         // Resolve %Settings.Config.SubKey% via User MemoryStack
         var result = _engine.Context.MemoryStack.Get("Settings.Config.SubKey");
@@ -203,7 +203,7 @@ public class SettingsDataTests
     public async Task MemoryStack_Clone_PreservesSettingsData()
     {
         // Store a setting
-        await _engine.System.DataSource.Set("settings", "CloneKey", "clone-value");
+        await _engine.System.SettingsStore.Set("settings", "CloneKey", new Data("CloneKey", "clone-value"));
 
         // Clone the User MemoryStack
         var cloned = _engine.Context.MemoryStack.Clone();
@@ -257,7 +257,7 @@ public class SettingsDataTests
     [Test]
     public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
     {
-        await _engine.System.DataSource.Set("settings", "ApiKey", "sk-real-key");
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "sk-real-key"));
         var memoryStack = _engine.Context.MemoryStack;
 
         // Same call path as generated code
@@ -275,7 +275,7 @@ public class SettingsDataTests
     public async Task SettingsData_GetChild_CorruptDatabase_ReturnsDataSourceError()
     {
         // Trigger DataSource creation so the DB file exists
-        _ = _engine.System.DataSource;
+        _ = _engine.System.SettingsStore;
 
         // Corrupt the database file — overwrite with garbage
         var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
@@ -314,7 +314,7 @@ public class SettingsDataTests
     public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
     {
         // Store via System DataSource (the backing store)
-        await _engine.System.DataSource.Set("settings", "SharedKey", "shared-value");
+        await _engine.System.SettingsStore.Set("settings", "SharedKey", new Data("SharedKey", "shared-value"));
 
         // Read from User context (what PLang code actually uses)
         var result = _engine.Context.MemoryStack.Get("Settings.SharedKey");

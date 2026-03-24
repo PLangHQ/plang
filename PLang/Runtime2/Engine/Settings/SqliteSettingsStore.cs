@@ -1,28 +1,29 @@
-using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using PLang.Interfaces;
+using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.Engine.DataSource;
+namespace PLang.Runtime2.Engine.Settings;
 
 /// <summary>
-/// SQLite-backed persistent key-value storage.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (JSON-serialized value).
+/// SQLite-backed persistent settings store.
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via PlangSerializer).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
-public sealed class SqliteDataSource : IDataSource
+public sealed class SqliteSettingsStore : ISettingsStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
+    private readonly PlangSerializer _serializer = new();
     private bool _disposed;
 
     /// <summary>
-    /// Creates a SqliteDataSource at the specified database path.
+    /// Creates a SqliteSettingsStore at the specified database path.
     /// Ensures the parent directory exists using the file system abstraction.
     /// </summary>
-    public SqliteDataSource(string dbPath, IPLangFileSystem fileSystem)
+    public SqliteSettingsStore(string dbPath, IPLangFileSystem fileSystem)
     {
         var dir = fileSystem.Path.GetDirectoryName(dbPath);
         if (!string.IsNullOrEmpty(dir) && !fileSystem.Directory.Exists(dir))
@@ -35,15 +36,14 @@ public sealed class SqliteDataSource : IDataSource
             Cache = SqliteCacheMode.Shared
         }.ToString();
 
-        // Enable WAL mode on first connection
         EnableWalMode();
     }
 
     /// <summary>
-    /// Creates an in-memory SqliteDataSource with a sentinel connection that keeps
+    /// Creates an in-memory SqliteSettingsStore with a sentinel connection that keeps
     /// the database alive for the lifetime of this instance.
     /// </summary>
-    private SqliteDataSource(string name, bool inMemory)
+    private SqliteSettingsStore(string name, bool inMemory)
     {
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -52,17 +52,16 @@ public sealed class SqliteDataSource : IDataSource
             Cache = SqliteCacheMode.Shared
         }.ToString();
 
-        // Sentinel keeps the in-memory DB alive across connection-per-operation usage
         _sentinel = new SqliteConnection(_connectionString);
         _sentinel.Open();
     }
 
     /// <summary>
-    /// Creates an in-memory SQLite datasource. The database lives as long as this instance.
+    /// Creates an in-memory SQLite settings store. The database lives as long as this instance.
     /// Different names produce isolated databases.
     /// </summary>
-    public static SqliteDataSource InMemory(string name)
-        => new SqliteDataSource(name, inMemory: true);
+    public static SqliteSettingsStore InMemory(string name)
+        => new SqliteSettingsStore(name, inMemory: true);
 
     private void EnableWalMode()
     {
@@ -95,8 +94,8 @@ public sealed class SqliteDataSource : IDataSource
             if (result == null || result == DBNull.Value)
                 return Task.FromResult(Data.Ok(null));
 
-            var value = DeserializeValue(result.ToString()!);
-            return Task.FromResult(Data.Ok(value));
+            var data = _serializer.Deserialize<Data>(result.ToString()!);
+            return Task.FromResult(data ?? Data.Ok(null));
         }
         catch (SqliteException ex)
         {
@@ -124,10 +123,12 @@ public sealed class SqliteDataSource : IDataSource
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                var k = reader.GetString(0);
                 var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
-                var value = raw != null ? DeserializeValue(raw) : null;
-                items.Add(new Data(k, value));
+                if (raw != null)
+                {
+                    var data = _serializer.Deserialize<Data>(raw);
+                    if (data != null) items.Add(data);
+                }
             }
             return Task.FromResult(Data.Ok((object)items));
         }
@@ -143,7 +144,7 @@ public sealed class SqliteDataSource : IDataSource
         }
     }
 
-    public Task<Data> Set(string table, string key, object? value)
+    public Task<Data> Set(string table, string key, Data data)
     {
         try
         {
@@ -155,7 +156,7 @@ public sealed class SqliteDataSource : IDataSource
             cmd.CommandText = $@"INSERT INTO [{sanitized}] (key, data) VALUES (@key, @data)
                                  ON CONFLICT(key) DO UPDATE SET data = @data;";
             cmd.Parameters.AddWithValue("@key", key);
-            cmd.Parameters.AddWithValue("@data", SerializeValue(value));
+            cmd.Parameters.AddWithValue("@data", _serializer.Serialize(data));
             cmd.ExecuteNonQuery();
 
             return Task.FromResult(Data.Ok());
@@ -169,16 +170,6 @@ public sealed class SqliteDataSource : IDataSource
         {
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex, table, key)));
-        }
-        catch (JsonException ex)
-        {
-            return Task.FromResult(Data.FromError(
-                new DataSourceError(ex.Message, "SerializationError", 500)
-                {
-                    Exception = ex,
-                    TableName = table,
-                    KeyName = key
-                }));
         }
     }
 
@@ -272,30 +263,6 @@ public sealed class SqliteDataSource : IDataSource
         cmd.ExecuteNonQuery();
     }
 
-    private static string SerializeValue(object? value)
-    {
-        if (value == null) return "null";
-        if (value is string s) return JsonSerializer.Serialize(s);
-        return JsonSerializer.Serialize(value);
-    }
-
-    private static object? DeserializeValue(string json)
-    {
-        if (string.IsNullOrEmpty(json) || json == "null")
-            return null;
-
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return Data.UnwrapJsonElement(doc.RootElement);
-        }
-        catch (JsonException)
-        {
-            // If it's not valid JSON, return as raw string
-            return json;
-        }
-    }
-
     /// <summary>
     /// Sanitizes a table name for SQLite.
     /// Allows only alphanumeric and underscores — prevents SQL injection in table names.
@@ -311,14 +278,12 @@ public sealed class SqliteDataSource : IDataSource
         if (_disposed) return;
         _disposed = true;
 
-        // Close sentinel first — releases the in-memory DB so it can be garbage collected
         if (_sentinel != null)
         {
             _sentinel.Close();
             _sentinel.Dispose();
         }
 
-        // Clear the connection pool for this data source
         SqliteConnection.ClearPool(new SqliteConnection(_connectionString));
     }
 }
