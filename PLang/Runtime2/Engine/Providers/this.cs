@@ -198,4 +198,18 @@ public sealed class @this
             _ => null
         };
     }
+
+    /// <summary>
+    /// Registers built-in default providers. Called by Engine constructor.
+    /// Each module owns its default provider — this method is the single registration point.
+    /// </summary>
+    public void RegisterDefaults()
+    {
+        var ed25519 = new Ed25519Provider();
+        Register<ISigningProvider>(ed25519);
+        Register<IKeyProvider>(ed25519);
+        Register<IIdentityProvider>(new DefaultIdentityProvider());
+        Register<ICryptoProvider>(new DefaultCryptoProvider());
+        Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
+    }
 }

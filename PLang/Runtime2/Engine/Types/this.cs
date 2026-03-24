@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using PLang.Runtime2.modules;
 
 namespace PLang.Runtime2.Engine.Types;
 
@@ -349,6 +350,15 @@ public sealed class @this
     /// Registers a domain type. Delegates to TypeMapping.Register().
     /// </summary>
     public void Register(string plangName, System.Type clrType) => Utility.TypeMapping.Register(plangName, clrType);
+
+    /// <summary>
+    /// Registers domain types needed for settings store rehydration.
+    /// Called by Engine constructor. Each module's types are registered here.
+    /// </summary>
+    public void RegisterDomainTypes()
+    {
+        Register("identityvariable", typeof(modules.identity.IdentityVariable));
+    }
 
     /// <summary>
     /// Returns canonical builder type names. Delegates to TypeMapping.GetBuilderTypeNames().

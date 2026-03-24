@@ -2,10 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules;
-using PLang.Runtime2.modules.identity.providers;
-using PLang.Runtime2.modules.signing.providers;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -235,17 +232,8 @@ public sealed class @this : IAsyncDisposable
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new EngineChannels(this);
 
-        // Register built-in providers
-        var ed25519 = new Ed25519Provider();
-        Providers.Register<ISigningProvider>(ed25519);
-        Providers.Register<IKeyProvider>(ed25519);
-        Providers.Register<IIdentityProvider>(new DefaultIdentityProvider());
-        Providers.Register<modules.crypto.providers.ICryptoProvider>(new modules.crypto.providers.DefaultCryptoProvider());
-        Providers.Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
-
-        // Register domain types for settings store rehydration
-        // Types.Register delegates to TypeMapping — single registration point
-        Types.Register("identityvariable", typeof(modules.identity.IdentityVariable));
+        Providers.RegisterDefaults();
+        Types.RegisterDomainTypes();
     }
 
     /// <summary>
