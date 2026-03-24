@@ -178,30 +178,6 @@ public class IOTests
     }
 
     [Test]
-    public async Task CreateFileChannel_CreatesAndRegistersChannel()
-    {
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            // Use a block scope to ensure IO is disposed before file delete
-            {
-                // Engine must be rooted at temp dir so filesystem allows access
-                await using var engine = new PLang.Runtime2.Engine.@this(Path.GetTempPath());
-                await using var io = new EngineChannels(engine);
-                var channel = io.CreateFileChannel("test", tempFile);
-
-                await Assert.That(channel).IsNotNull();
-                await Assert.That(io.Contains("test")).IsTrue();
-            }
-        }
-        finally
-        {
-            if (System.IO.File.Exists(tempFile))
-                System.IO.File.Delete(tempFile);
-        }
-    }
-
-    [Test]
     public async Task WriteAsync_WritesToChannel()
     {
         await using var io = CreateIO();

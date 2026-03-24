@@ -24,6 +24,7 @@ public sealed class @this
         // Register alternative content types
         _byContentType["text/json"] = json;
         _byContentType["application/json; charset=utf-8"] = json;
+        _byContentType["application/plang+json"] = plang;
 
         _default = json;
     }

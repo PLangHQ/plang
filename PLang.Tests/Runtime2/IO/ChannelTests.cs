@@ -5,8 +5,6 @@ namespace PLang.Tests.Runtime2.IO;
 
 public class ChannelTests
 {
-    private static PLangFileSystem CreateFileSystem() => new(Path.GetTempPath(), "");
-
     [Test]
     public async Task Constructor_SetsProperties()
     {
@@ -306,58 +304,6 @@ public class ChannelTests
 
         await Assert.That(channel.Metadata["key"]).IsEqualTo("value");
         await Assert.That(channel.Metadata["KEY"]).IsEqualTo("value");
-    }
-
-    [Test]
-    public async Task File_WithOpenMode_CreatesInputChannel()
-    {
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            await System.IO.File.WriteAllTextAsync(tempFile, "test content");
-
-            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.Open);
-
-            await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Input);
-            await Assert.That(channel.CanRead).IsTrue();
-        }
-        finally
-        {
-            System.IO.File.Delete(tempFile);
-        }
-    }
-
-    [Test]
-    public async Task File_WithCreateMode_CreatesOutputChannel()
-    {
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.Create);
-
-            await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Output);
-            await Assert.That(channel.CanWrite).IsTrue();
-        }
-        finally
-        {
-            System.IO.File.Delete(tempFile);
-        }
-    }
-
-    [Test]
-    public async Task File_WithOpenOrCreateMode_CreatesBidirectionalChannel()
-    {
-        var tempFile = Path.GetTempFileName();
-        try
-        {
-            using var channel = Channel.File("test", tempFile, CreateFileSystem(), FileMode.OpenOrCreate);
-
-            await Assert.That(channel.Direction).IsEqualTo(ChannelDirection.Bidirectional);
-        }
-        finally
-        {
-            System.IO.File.Delete(tempFile);
-        }
     }
 
     [Test]

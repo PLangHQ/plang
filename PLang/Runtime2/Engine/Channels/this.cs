@@ -213,16 +213,6 @@ public sealed class @this : IAsyncDisposable
         return channel;
     }
 
-    /// <summary>
-    /// Creates a file channel.
-    /// </summary>
-    public Channel.@this CreateFileChannel(string name, string path, FileMode mode = FileMode.OpenOrCreate)
-    {
-        var channel = Channel.@this.File(name, path, _engine.FileSystem, mode);
-        Register(channel);
-        return channel;
-    }
-
     public async ValueTask DisposeAsync()
     {
         foreach (var channel in _channels.Values)

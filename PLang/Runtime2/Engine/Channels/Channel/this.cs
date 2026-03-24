@@ -53,21 +53,6 @@ public sealed class @this : IAsyncDisposable, IDisposable
         => new(name, new MemoryStream(), direction);
 
     /// <summary>
-    /// Creates a channel from a file using the PLang file system abstraction.
-    /// </summary>
-    public static @this File(string name, string path, Interfaces.IPLangFileSystem fileSystem, FileMode mode = FileMode.OpenOrCreate)
-    {
-        var direction = mode == FileMode.Open ? ChannelDirection.Input :
-                       mode == FileMode.Create || mode == FileMode.CreateNew ? ChannelDirection.Output :
-                       ChannelDirection.Bidirectional;
-        var access = direction == ChannelDirection.Input ? FileAccess.Read :
-            direction == ChannelDirection.Output ? FileAccess.Write : FileAccess.ReadWrite;
-        var absPath = fileSystem.Path.GetFullPath(path);
-        var stream = fileSystem.FileStream.New(absPath, mode, access);
-        return new @this(name, stream, direction);
-    }
-
-    /// <summary>
     /// Checks if reading is supported.
     /// </summary>
     public bool CanRead => IsOpen && Direction != ChannelDirection.Output && Stream.CanRead;
