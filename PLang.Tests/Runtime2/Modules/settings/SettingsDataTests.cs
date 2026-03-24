@@ -35,7 +35,7 @@ public class SettingsDataTests
     public async Task SettingsData_GetChild_ReturnsStoredValue()
     {
         // Store a setting via the System actor's DataSource
-        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "sk-test-123"));
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new SettingsData("ApiKey", "sk-test-123"));
 
         // SettingsData is registered on User actor MemoryStack (same as PLang code uses)
         var settingsData = _engine.Context.MemoryStack.Get("Settings");
@@ -67,7 +67,7 @@ public class SettingsDataTests
     public async Task SettingsData_ViaMemoryStack_DotNotation()
     {
         // Store via DataSource
-        await _engine.System.SettingsStore.Set("settings", "TestKey", new Data("TestKey", "TestValue"));
+        await _engine.System.SettingsStore.Set("settings", "TestKey", new SettingsData("TestKey", "TestValue"));
 
         // Resolve via User MemoryStack dot notation (simulates %Settings.TestKey% in PLang code)
         var result = _engine.Context.MemoryStack.Get("Settings.TestKey");
@@ -91,11 +91,11 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
     {
-        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "old-value"));
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new SettingsData("ApiKey", "old-value"));
         var first = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
 
-        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "new-value"));
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new SettingsData("ApiKey", "new-value"));
         var second = _engine.Context.MemoryStack.Get("Settings.ApiKey");
         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
     }
@@ -124,7 +124,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
     {
-        await _engine.System.SettingsStore.Set("settings", "TestKey", new Data("TestKey", "TestValue"));
+        await _engine.System.SettingsStore.Set("settings", "TestKey", new SettingsData("TestKey", "TestValue"));
 
         var handler = new PLang.Runtime2.modules.settings.Get
         {
@@ -154,7 +154,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Remove_DeletesKey()
     {
-        await _engine.System.SettingsStore.Set("settings", "ToRemove", new Data("ToRemove", "value"));
+        await _engine.System.SettingsStore.Set("settings", "ToRemove", new SettingsData("ToRemove", "value"));
 
         var handler = new PLang.Runtime2.modules.settings.Remove
         {
@@ -188,7 +188,7 @@ public class SettingsDataTests
     {
         // Store a JSON object as a setting
         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
-        await _engine.System.SettingsStore.Set("settings", "Config", new Data("Config", config));
+        await _engine.System.SettingsStore.Set("settings", "Config", new SettingsData("Config", config));
 
         // Resolve %Settings.Config.SubKey% via User MemoryStack
         var result = _engine.Context.MemoryStack.Get("Settings.Config.SubKey");
@@ -203,7 +203,7 @@ public class SettingsDataTests
     public async Task MemoryStack_Clone_PreservesSettingsData()
     {
         // Store a setting
-        await _engine.System.SettingsStore.Set("settings", "CloneKey", new Data("CloneKey", "clone-value"));
+        await _engine.System.SettingsStore.Set("settings", "CloneKey", new SettingsData("CloneKey", "clone-value"));
 
         // Clone the User MemoryStack
         var cloned = _engine.Context.MemoryStack.Clone();
@@ -257,7 +257,7 @@ public class SettingsDataTests
     [Test]
     public async Task ErrorPropagation_MemoryStackGet_SettingsExists_ReturnsSuccess()
     {
-        await _engine.System.SettingsStore.Set("settings", "ApiKey", new Data("ApiKey", "sk-real-key"));
+        await _engine.System.SettingsStore.Set("settings", "ApiKey", new SettingsData("ApiKey", "sk-real-key"));
         var memoryStack = _engine.Context.MemoryStack;
 
         // Same call path as generated code
@@ -314,7 +314,7 @@ public class SettingsDataTests
     public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
     {
         // Store via System DataSource (the backing store)
-        await _engine.System.SettingsStore.Set("settings", "SharedKey", new Data("SharedKey", "shared-value"));
+        await _engine.System.SettingsStore.Set("settings", "SharedKey", new SettingsData("SharedKey", "shared-value"));
 
         // Read from User context (what PLang code actually uses)
         var result = _engine.Context.MemoryStack.Get("Settings.SharedKey");

@@ -1,32 +1,47 @@
-using PLang.Runtime2.Engine.Context;
+using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.Engine.Settings;
 
 /// <summary>
-/// Specialized Data that lazily loads settings from the System actor's DataSource.
-/// Registered on MemoryStack as "Settings" so that %Settings.ApiKey% resolves to a per-key database read.
-/// Overrides GetChild to intercept navigation and load from DataSource instead of navigating Value.
+/// Data subclass for settings values.
+///
+/// Two construction modes:
+/// - Runtime (context constructor): registered on MemoryStack as "Settings",
+///   intercepts %Settings.ApiKey% via GetChild and loads from the settings store.
+/// - Storage (JsonConstructor): value already loaded, used for store round-trips.
 /// </summary>
 public class SettingsData : Data
 {
     private const string SettingsTable = "settings";
-    private readonly Engine.@this _engine;
+    private readonly Engine.@this? _engine;
 
+    /// <summary>Runtime constructor — intercepts navigation and loads from settings store.</summary>
     public SettingsData(Engine.@this engine)
         : base("Settings", null)
     {
         _engine = engine;
     }
 
+    /// <summary>Storage constructor — value already set, no lazy resolution needed.</summary>
+    [JsonConstructor]
+    public SettingsData(string name, object? value = null, Memory.Type? type = null)
+        : base(name, value, type)
+    {
+    }
+
     /// <summary>
     /// Intercepts dot-notation navigation. When PLang resolves %Settings.ApiKey%,
     /// MemoryStack.Get("Settings") returns this object, then calls GetChild("ApiKey").
-    /// We load the value from DataSource instead of navigating an in-memory Value.
+    /// We load the value from the settings store instead of navigating an in-memory Value.
+    /// Only active for the runtime proxy (context constructor). Storage instances navigate normally.
     /// </summary>
     public override Data? GetChild(string path, int depth = 0)
     {
+        if (_engine == null)
+            return base.GetChild(path, depth);
+
         if (string.IsNullOrEmpty(path))
             return this;
 
@@ -46,30 +61,24 @@ public class SettingsData : Data
             remaining = null;
         }
 
-        // Load the value from the System actor's DataSource
         // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
         // is synchronous under the hood — SQLite has no async I/O.
         var store = _engine.System.SettingsStore;
-        var result = store.Get(SettingsTable, key).GetAwaiter().GetResult();
+        var result = store.Get<SettingsData>(SettingsTable, key).GetAwaiter().GetResult();
 
         if (!result.Success)
             return result;
 
         if (result.Value == null)
-        {
-            // Key not found — return AskError so runtime can prompt the user
             return FromError(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 SettingsTable, key));
-        }
 
-        var child = new Data(key, result.Value, parent: this);
-        child.Context = Context;
+        result.Context = Context;
 
         if (string.IsNullOrEmpty(remaining))
-            return child;
+            return result;
 
-        // Navigate further into the loaded value (e.g., Settings.Config.SubKey)
-        return child.GetChild(remaining, depth + 1);
+        return result.GetChild(remaining, depth + 1);
     }
 }
