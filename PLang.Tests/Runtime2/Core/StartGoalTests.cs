@@ -76,7 +76,7 @@ public class StartGoalTests
         await Assert.That(loadResult.Success).IsTrue();
 
         using var context = engine.CreateContext();
-        var result = await engine.RunGoalAsync("Start", context);
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "Start" }, context);
 
         await Assert.That(result.Success).IsTrue();
 

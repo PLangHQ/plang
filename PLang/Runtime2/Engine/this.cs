@@ -317,30 +317,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Runs a goal by name using the User actor by default.
-    /// </summary>
-    public Task<Data> RunGoalAsync(string goalName, PLangContext? context = null, CancellationToken cancellationToken = default)
-    {
-        return _goals.Run(goalName, context, cancellationToken);
-    }
-
-    /// <summary>
-    /// Runs a goal by name using the specified actor.
-    /// </summary>
-    public Task<Data> RunGoalAsync(string goalName, Actor actor, CancellationToken cancellationToken = default)
-    {
-        return RunGoalAsync(goalName, actor.Context, cancellationToken);
-    }
-
-    /// <summary>
-    /// Runs a goal using the specified actor.
-    /// </summary>
-    public Task<Data> RunGoalAsync(Goal goal, Actor actor, CancellationToken cancellationToken = default)
-    {
-        return RunGoalAsync(goal, actor.Context, cancellationToken);
-    }
-
-    /// <summary>
     /// Runs a goal using the User actor's context by default.
     /// </summary>
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)

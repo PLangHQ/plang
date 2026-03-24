@@ -371,7 +371,7 @@ namespace PLang
 			if (goalName.Equals("setup", StringComparison.OrdinalIgnoreCase) && engine.Goals.Setup.Goals.Any())
 				return setupResult;
 
-			return await engine.Goals.Run(goalName, cancellationToken: cancellationToken);
+			return await engine.RunGoalAsync(new Runtime2.Engine.Goals.Goal.GoalCall { Name = goalName }, cancellationToken: cancellationToken);
 		}
 
 		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)

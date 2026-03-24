@@ -256,7 +256,7 @@ public class EngineTests
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
 
-        var result = await engine.RunGoalAsync("NonexistentGoal");
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" });
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -269,7 +269,7 @@ public class EngineTests
         var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
         engine.Goals.Add(goal);
 
-        var result = await engine.RunGoalAsync("EmptyGoal");
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" });
 
         await Assert.That(result.Success).IsTrue();
     }
@@ -283,7 +283,7 @@ public class EngineTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await engine.RunGoalAsync("TestGoal", cancellationToken: cts.Token);
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, cancellationToken: cts.Token);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -360,7 +360,7 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        var result = await engine.RunGoalAsync("TestGoal");
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
 
         await Assert.That(result.Success).IsFalse();
     }
@@ -569,7 +569,7 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        var result = await engine.RunGoalAsync(goal, engine.System);
+        var result = await engine.RunGoalAsync(goal, engine.System.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(engine.System.Context.MemoryStack.GetValue("test")).IsEqualTo("hello");
@@ -595,7 +595,7 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        var result = await engine.RunGoalAsync("TestGoal", engine.System);
+        var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(engine.System.Context.MemoryStack.GetValue("test")).IsEqualTo("system-value");
