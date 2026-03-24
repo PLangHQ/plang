@@ -159,14 +159,11 @@ public class MemoryStack
     /// </summary>
     public void Clear()
     {
-        var systemVars = _variables.Where(kvp => kvp.Key.StartsWith("!") ||
-            kvp.Key.Equals("Now", StringComparison.OrdinalIgnoreCase) ||
-            kvp.Key.Equals("NowUtc", StringComparison.OrdinalIgnoreCase) ||
-            kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase))
+        var toRemove = _variables
+            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not DynamicData)
             .Select(kvp => kvp.Key)
             .ToList();
 
-        var toRemove = _variables.Keys.Except(systemVars).ToList();
         foreach (var key in toRemove)
         {
             _variables.TryRemove(key, out _);
@@ -182,24 +179,23 @@ public class MemoryStack
         var clone = new MemoryStack();
         foreach (var kvp in _variables)
         {
-            // Skip system variables (dynamic vars and ! prefix context vars)
-            if (!kvp.Key.Equals("Now", StringComparison.OrdinalIgnoreCase) &&
-                !kvp.Key.Equals("NowUtc", StringComparison.OrdinalIgnoreCase) &&
-                !kvp.Key.Equals("GUID", StringComparison.OrdinalIgnoreCase) &&
-                !kvp.Key.StartsWith("!"))
+            // DynamicData (Now, GUID, etc.) — already in clone from constructor
+            if (kvp.Value is DynamicData) continue;
+
+            // System context vars (! prefix) — skip, they're per-execution
+            if (kvp.Key.StartsWith("!")) continue;
+
+            // Preserve specialized Data subclasses by reference — they are
+            // stateless (SettingsData loads from DB each time).
+            // Deep-cloning would lose the virtual GetChild override.
+            if (kvp.Value.GetType() != typeof(Data))
             {
-                // Preserve specialized Data subclasses by reference — they are
-                // stateless (SettingsData loads from DB each time) or factory-based
-                // (DynamicData). Deep-cloning would lose the virtual GetChild override.
-                if (kvp.Value is DynamicData || kvp.Value.GetType() != typeof(Data))
-                {
-                    clone._variables[kvp.Key] = kvp.Value;
-                }
-                else
-                {
-                    var clonedValue = kvp.Value.Value.DeepClone();
-                    clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
-                }
+                clone._variables[kvp.Key] = kvp.Value;
+            }
+            else
+            {
+                var clonedValue = kvp.Value.Value.DeepClone();
+                clone._variables[kvp.Key] = new Data(kvp.Value.Name, clonedValue, kvp.Value.Type);
             }
         }
         clone.Context = Context;
