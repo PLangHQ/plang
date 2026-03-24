@@ -446,3 +446,21 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 **Fix:** Add a `List<string> _mockBindingIds` to the mock module (or a shared mock state object). `mock.action` adds the ID, `mock.reset` iterates its own list. Then delete `Targets` from `Binding/@this`.
 
 **Blocked by:** Need PLang `.goal` tests for mock/reset to validate the change doesn't break anything.
+
+---
+
+## Async variable resolution in source-generated property getters
+**Date:** 2026-03-24
+**Context:** Source generator creates lazy property getters that resolve `%var%` via MemoryStack. Property getters can't be async in C#. Currently `SettingsData` and `IdentityData` use sync-over-async (`GetAwaiter().GetResult()`) which works in PLang's sequential model but is tech debt.
+
+**Problem:** Any `Data.GetChild()` that crosses an async boundary (database, HTTP, vault) forces sync-over-async. Today it's Settings and Identity. Tomorrow it could be any Data subclass with an async backing store.
+
+**Idea: AsyncData marker + runtime helper**
+- The source generator doesn't know the runtime type of a variable — it only sees the target property type (`string`, `int`) and the raw `%var%` pattern.
+- But the **runtime resolution code** the generator emits does have the actual `Data` instance after `memoryStack.Get()`.
+- Introduce `IAsyncData` (or `AsyncData` base class) as a marker on Data subclasses that need async resolution.
+- Generator emits calls to a runtime helper method instead of inline resolution. The helper checks: is this `IAsyncData`? If yes, await an async `GetChildAsync()`. If no, sync `GetChild()` as today.
+- `CodeGeneratedExecuteAsync` is already async, so it can await the helper.
+- No name-pattern matching (`%Settings.*%`), no fragile detection — the type self-declares its async nature.
+
+**See also:** `Documentation/Runtime2/good_to_know.md` §IdentityData sync-over-async, `plan/phase1/1.9-variable-resolution-v1.md` §async implications.
