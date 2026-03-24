@@ -1,6 +1,3 @@
-using PLang.Runtime2.Engine.Context;
-using PLang.Runtime2.Engine.Memory;
-
 using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@this;
 
 namespace PLang.Runtime2.Engine.Events;
@@ -97,32 +94,6 @@ public sealed class @this
                 .Where(b => module == null || actionName == null || b.MatchesAction(module, actionName))
                 .ToList();
         }
-    }
-
-    /// <summary>
-    /// Dispatches an event to all matching handlers.
-    /// </summary>
-    public async Task<Data> DispatchAsync(
-        PLangContext context,
-        EventType type,
-        string? goalName = null,
-        string? stepText = null,
-        string? module = null,
-        string? actionName = null)
-    {
-        var bindings = GetMatchingBindings(type, goalName, stepText, module, actionName);
-
-        foreach (var binding in bindings)
-        {
-            var result = await binding.Handler(context);
-
-            if (!result.Success && binding.StopOnError)
-            {
-                return result;
-            }
-        }
-
-        return Data.Ok();
     }
 
     /// <summary>
