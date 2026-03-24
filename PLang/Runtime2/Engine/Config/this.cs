@@ -107,14 +107,9 @@ public sealed class @this
     /// </summary>
     public void Set(string key, object value, PLangContext context, bool isDefault = false)
     {
-        if (isDefault)
-        {
-            Defaults.Set(key, value);
-        }
-        else
-        {
-            context.ConfigScope ??= new Scope();
-            context.ConfigScope.Set(key, value);
-        }
+        if (isDefault) { Defaults.Set(key, value); return; }
+
+        context.ConfigScope ??= new Scope();
+        context.ConfigScope.Set(key, value);
     }
 }
