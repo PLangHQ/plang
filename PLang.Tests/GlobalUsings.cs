@@ -51,4 +51,3 @@ global using ExecutionPhase = PLang.Runtime2.Engine.CallStack.ExecutionPhase;
 global using SerializableCallFrame = PLang.Runtime2.Engine.CallStack.SerializableCallFrame;
 global using Debugging = PLang.Runtime2.Engine.Debug.@this;
 global using Testing = PLang.Runtime2.Engine.Test.@this;
-global using Property = PLang.Runtime2.Engine.Properties.@this;

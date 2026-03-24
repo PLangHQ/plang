@@ -113,11 +113,6 @@ public sealed class @this : IAsyncDisposable
     public ICache Cache { get; set; } = new MemoryStepCache();
 
     /// <summary>
-    /// Engine's key-value store with GoalCall resolution.
-    /// </summary>
-    public Property Property { get; }
-
-    /// <summary>
     /// Strongly typed, goal-scoped module config.
     /// Navigation: engine.Config.For&lt;archive.Config&gt;(context).Max
     /// </summary>
@@ -233,7 +228,6 @@ public sealed class @this : IAsyncDisposable
         Testing = new Testing(this);
         Building = new Build.@this(this);
         Types = new Types.@this();
-        Property = new Property(this);
         Config = new Config.@this();
         SettingsVariable = new SettingsData(this);
         _modules = modules ?? new EngineModules();
@@ -447,7 +441,5 @@ public sealed class @this : IAsyncDisposable
         }
         _keepAlive.Clear();
 
-        // Dispose any disposable items in the key-value store
-        Property.DisposeAll();
     }
 }

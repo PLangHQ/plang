@@ -48,7 +48,6 @@ global using MemoryStepCache = PLang.Runtime2.Engine.Cache.MemoryStepCache;
 global using CallFrame = PLang.Runtime2.Engine.CallStack.CallFrame;
 global using Debugging = PLang.Runtime2.Engine.Debug.@this;
 global using Testing = PLang.Runtime2.Engine.Test.@this;
-global using Property = PLang.Runtime2.Engine.Properties.@this;
 
 // Building: can't be global alias — v1 PLang.Building namespace conflict
 // Inside Engine.*: use Build.@this (child namespace resolves naturally)
