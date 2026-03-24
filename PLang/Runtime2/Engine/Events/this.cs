@@ -23,7 +23,6 @@ public sealed class @this
         lock (_lock)
         {
             _bindings.Add(binding);
-            _bindings.Sort((a, b) => b.Priority.CompareTo(a.Priority));
         }
         OnChanged?.Invoke();
         return binding.Id;
