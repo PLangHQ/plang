@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Memory;
 
@@ -47,14 +46,7 @@ public sealed class StepCache
     private string BuildCacheKey(MemoryStack memoryStack)
     {
         if (!string.IsNullOrEmpty(Settings.Key))
-        {
-            return Regex.Replace(Settings.Key, @"%([^%]+)%", match =>
-            {
-                var varName = match.Groups[1].Value;
-                var value = memoryStack.GetValue(varName);
-                return value?.ToString() ?? match.Value;
-            });
-        }
+            return memoryStack.Resolve(Settings.Key);
 
         var goalPath = _step.Goal?.Path ?? "unknown";
         return $"step:{goalPath}:{_step.Index}";

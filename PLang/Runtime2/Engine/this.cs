@@ -5,7 +5,6 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
 using Goal = PLang.Runtime2.Engine.Goals.Goal.@this;
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace PLang.Runtime2.Engine;
 
@@ -267,7 +266,7 @@ public sealed class @this : IAsyncDisposable
         context ??= User.Context;
 
         // Resolve %var% references in the goal name
-        var resolvedName = ResolveVariables(goalCall.Name, context.MemoryStack);
+        var resolvedName = context.MemoryStack.Resolve(goalCall.Name);
 
         // Inject GoalCall parameters into the context's MemoryStack
         if (goalCall.Parameters != null)
@@ -289,22 +288,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Resolves %variable% patterns in a string using the memory stack.
-    /// </summary>
-    private static string ResolveVariables(string input, MemoryStack memoryStack)
-    {
-        if (string.IsNullOrEmpty(input) || !input.Contains('%'))
-            return input;
-
-        return Regex.Replace(input, @"%([^%]+)%", match =>
-        {
-            var varName = match.Groups[1].Value;
-            var value = memoryStack.GetValue(varName);
-            return value?.ToString() ?? match.Value;
-        });
-    }
-
-    /// <summary>
     /// Runs a goal using the User actor's context by default.
     /// </summary>
     public async Task<Data> RunGoalAsync(Goal goal, PLangContext? context = null, CancellationToken cancellationToken = default)
@@ -315,22 +298,6 @@ public sealed class @this : IAsyncDisposable
         if (!loadResult.Success) return loadResult;
 
         return await goal.RunAsync(this, context, cancellationToken);
-    }
-
-    /// <summary>
-    /// Loads a goal from a .pr file. Delegates to Goals.LoadFromFileAsync.
-    /// </summary>
-    public Task<Data> LoadGoalFromFileAsync(string prFilePath, CancellationToken cancellationToken = default)
-    {
-        return _goals.LoadFromFileAsync(this, prFilePath, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Loads all goals from a directory. Delegates to Goals.LoadFromDirectoryAsync.
-    /// </summary>
-    public Task<Data> LoadGoalsFromDirectoryAsync(string directory, string pattern = "*.pr", CancellationToken cancellationToken = default)
-    {
-        return _goals.LoadFromDirectoryAsync(this, directory, pattern, cancellationToken: cancellationToken);
     }
 
     /// <summary>

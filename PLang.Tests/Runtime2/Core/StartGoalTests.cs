@@ -72,7 +72,7 @@ public class StartGoalTests
         var repoRoot = Path.GetDirectoryName(Path.GetDirectoryName(prJsonPath))!; // parent of Tests/Builder
         engine.FileSystem = new PLang.SafeFileSystem.PLangFileSystem(repoRoot, "");
 
-        var loadResult = await engine.LoadGoalFromFileAsync(prJsonPath);
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,prJsonPath);
         await Assert.That(loadResult.Success).IsTrue();
 
         using var context = engine.CreateContext();

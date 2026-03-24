@@ -28,7 +28,7 @@ public class PrPipelineTests
         engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
-        var loadResult = await engine.LoadGoalFromFileAsync("FullPipeline.pr");
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FullPipeline.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         // Execute
@@ -63,7 +63,7 @@ public class PrPipelineTests
         engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
         // Load and execute
-        var loadResult = await engine.LoadGoalFromFileAsync("ReadFile.pr");
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"ReadFile.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         using var context = engine.CreateContext();
@@ -90,7 +90,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
-        var loadResult = await engine.LoadGoalFromFileAsync("FilePathsFromRoot.pr");
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         using var context = engine.CreateContext();
@@ -117,7 +117,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
-        var loadResult = await engine.LoadGoalFromFileAsync(Path.Combine("sub", "FilePathsFromSub.pr"));
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
 
         using var context = engine.CreateContext();
@@ -380,12 +380,10 @@ public class PrPipelineTests
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {
-                var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");
-                if (fullMatch.Success)
-                    content = context.MemoryStack.GetValue(fullMatch.Groups[1].Value);
-                else
-                    content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
-                        m => context.MemoryStack.GetValue(m.Groups[1].Value)?.ToString() ?? "");
+                var resolved = context.MemoryStack.Resolve(str);
+                // If the entire string was a single %var%, return the raw value (not ToString)
+                if (resolved != str)
+                    content = resolved;
             }
             if (content != null)
                 Lines.Add(content.ToString()!);

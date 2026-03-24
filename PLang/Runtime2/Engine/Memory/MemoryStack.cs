@@ -137,6 +137,22 @@ public class MemoryStack
     }
 
     /// <summary>
+    /// Resolves %variable% references in a string using this memory stack.
+    /// Returns the input unchanged if no %var% patterns are found.
+    /// </summary>
+    public string Resolve(string input)
+    {
+        if (string.IsNullOrEmpty(input) || !input.Contains('%'))
+            return input;
+
+        return Regex.Replace(input, @"%([^%]+)%", match =>
+        {
+            var varName = match.Groups[1].Value;
+            return Get(varName)?.Value?.ToString() ?? match.Value;
+        });
+    }
+
+    /// <summary>
     /// Gets all variable names.
     /// </summary>
     public IEnumerable<string> GetNames()

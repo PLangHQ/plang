@@ -120,16 +120,8 @@ public partial class MockAction : IContext
     private static object? ResolveParamValue(Data param, MemoryStack memoryStack)
     {
         if (param.Value is string s && s.Contains('%'))
-        {
-            // Resolve %var% references
-            var resolved = Regex.Replace(s, @"%([^%]+)%", match =>
-            {
-                var varName = match.Groups[1].Value;
-                var value = memoryStack.GetValue(varName);
-                return value?.ToString() ?? match.Value;
-            });
-            return resolved;
-        }
+            return memoryStack.Resolve(s);
+
         return param.Value;
     }
 
