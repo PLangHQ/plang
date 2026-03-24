@@ -11,7 +11,7 @@ public partial class Get : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
+        var existing = Context.MemoryStack.Get(ListName)?.Value;
         if (existing is not System.Collections.IList list)
             return Task.FromResult(Data.FromError(
                 new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));

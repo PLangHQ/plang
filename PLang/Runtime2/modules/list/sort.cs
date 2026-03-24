@@ -12,8 +12,8 @@ public partial class Sort : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
-        if (existing is not List<object?> list)
+        var data = Context.MemoryStack.Get(ListName);
+        if (data?.Value is not List<object?> list)
             return Task.FromResult(Data.FromError(
                 new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));
 
@@ -22,7 +22,6 @@ public partial class Sort : IContext
         else
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));
 
-        Context.MemoryStack.Set(ListName, list);
         return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

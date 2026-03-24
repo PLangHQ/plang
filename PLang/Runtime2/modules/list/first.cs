@@ -10,7 +10,7 @@ public partial class First : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
+        var existing = Context.MemoryStack.Get(ListName)?.Value;
         if (existing is System.Collections.IList list && list.Count > 0)
             return Task.FromResult(Data.Ok(list[0]));
 

@@ -10,7 +10,7 @@ public partial class Unique : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
+        var existing = Context.MemoryStack.Get(ListName)?.Value;
         if (existing is not List<object?> list)
             return Task.FromResult(Data.FromError(
                 new PLang.Runtime2.Engine.Errors.ValidationError($"Variable '{ListName}' is not a list")));

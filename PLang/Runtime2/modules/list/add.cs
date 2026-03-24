@@ -13,21 +13,27 @@ public partial class Add : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
-        var list = existing as List<object?> ?? new List<object?>();
+        var data = Context.MemoryStack.Get(ListName);
+        var existing = data?.Value;
+        var list = existing as List<object?>;
 
-        if (existing != null && existing is not List<object?>)
+        if (list == null)
         {
-            // Wrap non-list existing value into a list
+            // Convert non-list value or create new list
             if (existing is System.Collections.IList rawList)
             {
                 list = new List<object?>();
                 foreach (var item in rawList) list.Add(item);
             }
-            else
+            else if (existing != null)
             {
                 list = new List<object?> { existing };
             }
+            else
+            {
+                list = new List<object?>();
+            }
+            Context.MemoryStack.Set(ListName, list);
         }
 
         if (AtIndex >= 0 && AtIndex <= list.Count)
@@ -35,7 +41,6 @@ public partial class Add : IContext
         else
             list.Add(Value);
 
-        Context.MemoryStack.Set(ListName, list);
         return Task.FromResult(Data.Ok(new types.list { count = list.Count, value = list }, PLang.Runtime2.Engine.Memory.Type.FromName("list")));
     }
 }

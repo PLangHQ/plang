@@ -11,7 +11,7 @@ public partial class Contains : IContext
 
     public Task<Data> Run()
     {
-        var existing = Context.MemoryStack.GetValue(ListName);
+        var existing = Context.MemoryStack.Get(ListName)?.Value;
         if (existing is System.Collections.IList list)
             return Task.FromResult(Data.Ok(list.Contains(Value)));
         if (existing is System.Collections.IDictionary dict && Value is string key)
