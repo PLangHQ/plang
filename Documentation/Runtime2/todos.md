@@ -434,3 +434,15 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 3. **LLM-as-judge** (Phase 4) — second LLM validates that values weren't rewritten
 
 **Not for this round.** Needs golden eval infrastructure or a reliable literal extraction heuristic.
+
+---
+
+## Remove `Targets` from EventBinding — move mock tracking into mock module
+**Date:** 2026-03-24
+**Context:** Events folder cleanup. `Binding.Targets` is `List<object>` — only used by `mock.action` to tag bindings with `MockHandle`, and `mock.reset` to find/remove them.
+
+**Problem:** Weak typing (`List<object>`) on a core Engine class, only to support one module. The mock module already stores `EventBindingId` on the handle — it could track its own binding IDs internally instead of tagging the core Binding.
+
+**Fix:** Add a `List<string> _mockBindingIds` to the mock module (or a shared mock state object). `mock.action` adds the ID, `mock.reset` iterates its own list. Then delete `Targets` from `Binding/@this`.
+
+**Blocked by:** Need PLang `.goal` tests for mock/reset to validate the change doesn't break anything.

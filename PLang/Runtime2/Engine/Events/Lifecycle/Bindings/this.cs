@@ -18,23 +18,14 @@ public sealed class @this
 
     public IReadOnlyList<EventBinding> ToList() => _bindings.ToList();
 
-    public async Task<Data> Run(PLangContext context)
-    {
-        if (_bindings.Count == 0) return Data.Ok();
-        foreach (var binding in _bindings.OrderByDescending(b => b.Priority))
-        {
-            var result = await binding.Run(context);
-            if (!result.Success) return result;
-            if (result.Handled) return result;
-        }
-        return Data.Ok();
-    }
+    public Task<Data> Run(PLangContext context) => RunBindings(_bindings, context);
 
-    public async Task<Data> Run(PLangContext context, EventType type)
+    public Task<Data> Run(PLangContext context, EventType type)
+        => RunBindings(_bindings.Where(b => b.Type == type), context);
+
+    private static async Task<Data> RunBindings(IEnumerable<EventBinding> bindings, PLangContext context)
     {
-        var matching = _bindings.Where(b => b.Type == type).ToList();
-        if (matching.Count == 0) return Data.Ok();
-        foreach (var binding in matching.OrderByDescending(b => b.Priority))
+        foreach (var binding in bindings.OrderByDescending(b => b.Priority))
         {
             var result = await binding.Run(context);
             if (!result.Success) return result;
