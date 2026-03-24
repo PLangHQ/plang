@@ -207,23 +207,23 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     // --- Persistence helpers ---
 
-    /// <summary>Loads a single identity by name from the System DataSource. Returns null if not found.</summary>
+    /// <summary>Loads a single identity by name from the settings store.</summary>
     internal async Task<IdentityVariable?> LoadAsync(IContext action, string name)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        var result = await store.Get(Table, name);
+        var result = await store.Get<IdentityData>(Table, name);
 
         if (!result.Success || result.Value == null)
             return null;
 
-        return Deserialize(result.Value);
+        return result.Value as IdentityVariable;
     }
 
-    /// <summary>Loads all identities (including archived) from the System DataSource.</summary>
+    /// <summary>Loads all identities (including archived) from the settings store.</summary>
     internal async Task<Data<List<IdentityVariable>>> LoadAllAsync(IContext action)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        var result = await store.GetAll(Table);
+        var result = await store.GetAll<IdentityData>(Table);
 
         if (!result.Success)
             return Data<List<IdentityVariable>>.FromError(result.Error!);
@@ -234,8 +234,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         var identities = new List<IdentityVariable>();
         foreach (var item in items)
         {
-            var identity = Deserialize(item.Value);
-            if (identity != null)
+            if (item.Value is IdentityVariable identity)
                 identities.Add(identity);
         }
         return Data<List<IdentityVariable>>.Ok(identities);
@@ -275,11 +274,11 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return Data<IdentityVariable>.Ok(def);
     }
 
-    /// <summary>Persists an identity to the System DataSource using its Name as key.</summary>
+    /// <summary>Persists an identity to the settings store using its Name as key.</summary>
     private async Task<Data> SaveAsync(IContext action, IdentityVariable identity)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        return await store.Set(Table, identity.Name, new Data(identity.Name, identity));
+        return await store.Set(Table, identity.Name, new IdentityData(identity.Name, identity));
     }
 
     /// <summary>Removes an identity from the System settings store by name.</summary>
@@ -315,30 +314,4 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         });
     }
 
-    private static readonly System.Text.Json.JsonSerializerOptions _deserializeOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
-    /// <summary>Deserializes a settings store value to IdentityVariable. Returns null on failure.</summary>
-    private static IdentityVariable? Deserialize(object? value)
-    {
-        if (value is IdentityVariable iv)
-            return iv;
-
-        if (value is Dictionary<string, object?> or System.Text.Json.JsonElement)
-        {
-            try
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(value);
-                return System.Text.Json.JsonSerializer.Deserialize<IdentityVariable>(json, _deserializeOptions);
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                return null;
-            }
-        }
-
-        return null;
-    }
 }

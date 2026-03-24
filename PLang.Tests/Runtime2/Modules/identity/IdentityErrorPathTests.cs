@@ -352,7 +352,9 @@ public class IdentityErrorPathTests
         public FailingSaveDataSource(ISettingsStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
+        public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
+        public Task<Data> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new DataSourceError("Simulated save failure", "IOError", 500)
@@ -364,7 +366,7 @@ public class IdentityErrorPathTests
     }
 
     /// <summary>
-    /// DataSource wrapper that delegates all operations except Remove, which always fails.
+    /// Settings store wrapper that delegates all operations except Remove, which always fails.
     /// </summary>
     private class FailingRemoveDataSource : ISettingsStore
     {
@@ -372,7 +374,9 @@ public class IdentityErrorPathTests
         public FailingRemoveDataSource(ISettingsStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
+        public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
+        public Task<Data> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
@@ -384,14 +388,16 @@ public class IdentityErrorPathTests
     }
 
     /// <summary>
-    /// DataSource where GetAll always returns an error.
+    /// Settings store where GetAll always returns an error.
     /// </summary>
     private class FailingGetAllDataSource : ISettingsStore
     {
         public Task<Data> Get(string table, string key)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated failure")));
+        public Task<Data> Get<T>(string table, string key) where T : Data => Get(table, key);
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated GetAll failure")));
+        public Task<Data> GetAll<T>(string table) where T : Data => GetAll(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new DataSourceError("Simulated failure")));
         public Task<Data> Remove(string table, string key)

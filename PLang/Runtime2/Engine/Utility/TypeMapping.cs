@@ -78,6 +78,15 @@ public static class TypeMapping
     };
 
     /// <summary>
+    /// Registers a domain type for deserialization and type resolution.
+    /// </summary>
+    public static void Register(string plangName, Type clrType)
+    {
+        NameToType[plangName.ToLowerInvariant()] = clrType;
+        TypeToName[clrType] = plangName.ToLowerInvariant();
+    }
+
+    /// <summary>
     /// Gets the .NET Type for a PLang type name.
     /// </summary>
     public static Type? GetType(string typeName)
@@ -309,8 +318,24 @@ public static class TypeMapping
             }
         }
 
+        // Complex types: dict/JsonElement → serialize to JSON → deserialize to target type
+        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement)
+        {
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(value);
+                return System.Text.Json.JsonSerializer.Deserialize(json, targetType, _caseInsensitiveOptions);
+            }
+            catch { return null; }
+        }
+
         return value;
     }
+
+    private static readonly System.Text.Json.JsonSerializerOptions _caseInsensitiveOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     /// <summary>
     /// Returns canonical builder type names (excludes aliases like "text"→"string").

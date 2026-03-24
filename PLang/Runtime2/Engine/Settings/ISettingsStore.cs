@@ -16,10 +16,22 @@ public interface ISettingsStore : IDisposable
     Task<Data> Get(string table, string key);
 
     /// <summary>
+    /// Gets a single value by table and key, deserializing the value to T.
+    /// Returns Data with a typed Value, or Data with null value if not found.
+    /// </summary>
+    Task<Data> Get<T>(string table, string key) where T : Data;
+
+    /// <summary>
     /// Gets all key-value pairs in a table.
     /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=stored value).
     /// </summary>
     Task<Data> GetAll(string table);
+
+    /// <summary>
+    /// Gets all key-value pairs in a table, deserializing each value to T.
+    /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=typed T).
+    /// </summary>
+    Task<Data> GetAll<T>(string table) where T : Data;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.

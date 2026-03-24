@@ -3,6 +3,7 @@ using PLang.Interfaces;
 using PLang.Runtime2.Engine.Channels.Serializers.Serializer;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Runtime2.Engine.Settings;
 
@@ -104,6 +105,32 @@ public sealed class SqliteSettingsStore : ISettingsStore
         }
     }
 
+    public Task<Data> Get<T>(string table, string key) where T : Data
+    {
+        try
+        {
+            EnsureTable(table);
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT data FROM [{SanitizeTableName(table)}] WHERE key = @key;";
+            cmd.Parameters.AddWithValue("@key", key);
+
+            var result = cmd.ExecuteScalar();
+            if (result == null || result == DBNull.Value)
+                return Task.FromResult(Data.Ok(null));
+
+            var data = _serializer.Deserialize<T>(result.ToString()!);
+            if (data != null) RehydrateValue(data);
+            return Task.FromResult((Data?)data ?? Data.Ok(null));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(Data.FromError(
+                DataSourceError.FromException(ex, table, key)));
+        }
+    }
+
     public Task<Data> GetAll(string table)
     {
         try
@@ -123,6 +150,40 @@ public sealed class SqliteSettingsStore : ISettingsStore
                 {
                     var data = _serializer.Deserialize<Data>(raw);
                     if (data != null) items.Add(data);
+                }
+            }
+            return Task.FromResult(Data.Ok((object)items));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(Data.FromError(
+                DataSourceError.FromException(ex, table)));
+        }
+    }
+
+    public Task<Data> GetAll<T>(string table) where T : Data
+    {
+        try
+        {
+            EnsureTable(table);
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
+
+            var items = new List<Data>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
+                if (raw != null)
+                {
+                    var data = _serializer.Deserialize<T>(raw);
+                    if (data != null)
+                    {
+                        RehydrateValue(data);
+                        items.Add(data);
+                    }
                 }
             }
             return Task.FromResult(Data.Ok((object)items));
@@ -221,6 +282,22 @@ public sealed class SqliteSettingsStore : ISettingsStore
             return Task.FromResult(Data.FromError(
                 DataSourceError.FromException(ex)));
         }
+    }
+
+    /// <summary>
+    /// Rehydrates Data.Value from dict/JsonElement to the correct CLR type using Data.Type.
+    /// After JSON deserialization, complex objects come back as dictionaries — this converts
+    /// them to the registered CLR type so callers get typed values.
+    /// </summary>
+    private static void RehydrateValue(Data data)
+    {
+        if (data.Value == null || data.Type == null) return;
+
+        var clrType = TypeMapping.GetType(data.Type.Value);
+        if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
+
+        var converted = TypeMapping.ConvertTo(data.Value, clrType);
+        if (converted != null) data.Value = converted;
     }
 
     private void EnsureTable(string table)

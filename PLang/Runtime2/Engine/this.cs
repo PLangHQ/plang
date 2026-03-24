@@ -248,6 +248,10 @@ public sealed class @this : IAsyncDisposable
         Providers.Register<IIdentityProvider>(new DefaultIdentityProvider());
         Providers.Register<modules.crypto.providers.ICryptoProvider>(new modules.crypto.providers.DefaultCryptoProvider());
         Providers.Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
+
+        // Register domain types for settings store rehydration
+        Types.Register("identityvariable", typeof(modules.identity.IdentityVariable));
+        Utility.TypeMapping.Register("identityvariable", typeof(modules.identity.IdentityVariable));
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.identity.providers;
 
@@ -7,22 +8,35 @@ namespace PLang.Runtime2.modules.identity;
 /// Data subclass that lazily resolves the default identity via IIdentityProvider.
 /// Lives on Actor as a property. Handlers call Update() after changing the default.
 /// Auto-creates a "default" identity if none exist on first access.
+///
+/// Two construction modes:
+/// - Runtime (engine constructor): lazy-loads default identity on first Value access.
+/// - Storage (JsonConstructor): value already set from store, no lazy loading.
 /// </summary>
 public class IdentityData : Data
 {
-    private readonly Engine.@this _engine;
+    private readonly Engine.@this? _engine;
     private bool _resolved;
 
+    /// <summary>Runtime constructor — lazy-loads default identity on first access.</summary>
     public IdentityData(Engine.@this engine) : base("Identity", null)
     {
         _engine = engine;
+    }
+
+    /// <summary>Storage constructor — value already loaded, no lazy resolution needed.</summary>
+    [JsonConstructor]
+    public IdentityData(string name, object? value = null, Engine.Memory.Type? type = null)
+        : base(name, value, type)
+    {
+        _resolved = true;
     }
 
     public override object? Value
     {
         get
         {
-            if (!_resolved && base.Value == null)
+            if (_engine != null && !_resolved && base.Value == null)
             {
                 _resolved = true;
                 base.Value = ResolveDefault();

@@ -570,6 +570,15 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Registers a domain type so the store can rehydrate Data.Value to the correct CLR type.
+    /// </summary>
+    public void Register(string plangName, System.Type clrType)
+    {
+        _nameToClr[plangName.ToLowerInvariant()] = clrType;
+        _clrToName[clrType] = plangName.ToLowerInvariant();
+    }
+
+    /// <summary>
     /// Add a file extension mapping at runtime.
     /// Updates derived lookup structures (_allKinds, _mimeToKind) so KindOf() sees the new mapping.
     /// </summary>
