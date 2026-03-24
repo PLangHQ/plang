@@ -1,3 +1,5 @@
+using PLang.Runtime2.Engine.Providers;
+
 namespace PLang.Runtime2.modules.condition.providers;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace PLang.Runtime2.modules.condition.providers;
 /// The default implementation is <see cref="DefaultEvaluator"/>.
 /// Users can swap this via <c>use library 'custom.dll'</c> containing an <see cref="IEvaluator"/> implementation.
 /// </summary>
-public interface IEvaluator
+public interface IEvaluator : IProvider
 {
     /// <summary>
     /// Evaluates a binary expression: <paramref name="left"/> <paramref name="op"/> <paramref name="right"/>.

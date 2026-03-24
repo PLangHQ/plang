@@ -26,7 +26,9 @@ public partial class Compare : IContext
     /// </summary>
     public Task<Data> Run()
     {
-        var evaluator = new DefaultEvaluator();
+        var evaluatorResult = Context.Engine.Providers.Get<IEvaluator>();
+        if (!evaluatorResult.Success) return Task.FromResult<Data>(evaluatorResult);
+        var evaluator = evaluatorResult.Value!;
         try
         {
             bool result = evaluator.Evaluate(Left, Operator, Right);

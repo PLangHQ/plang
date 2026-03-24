@@ -33,7 +33,9 @@ public partial class If : IContext
     /// </summary>
     public async Task<Data> Run()
     {
-        var evaluator = new DefaultEvaluator();
+        var evaluatorResult = Context.Engine.Providers.Get<IEvaluator>();
+        if (!evaluatorResult.Success) return evaluatorResult;
+        var evaluator = evaluatorResult.Value!;
 
         bool result;
         try

@@ -12,6 +12,9 @@ namespace PLang.Runtime2.modules.condition.providers;
 /// </summary>
 public sealed class DefaultEvaluator : IEvaluator
 {
+    public string Name => "default";
+    public bool IsDefault { get; set; }
+
     /// <inheritdoc/>
     public bool Evaluate(object? left, string op, object? right)
     {
