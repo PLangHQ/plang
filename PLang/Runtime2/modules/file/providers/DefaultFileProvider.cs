@@ -12,13 +12,9 @@ public class DefaultFileProvider : IFileProvider
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    private static IPLangFileSystem Fs(IContext action) => action.Context.Engine.FileSystem;
-
-    public DefaultFileProvider() { }
-
     public Data Read(Read action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var path = action.Path;
         if (!fs.File.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
@@ -41,7 +37,7 @@ public class DefaultFileProvider : IFileProvider
 
     public async Task<Data> Save(Save action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var path = action.Path;
         try
         {
@@ -73,7 +69,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Delete(Delete action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var path = action.Path;
         try
         {
@@ -100,7 +96,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Copy(Copy action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
@@ -125,7 +121,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Move(Move action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
@@ -155,7 +151,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data List(List action)
     {
-        var fs = Fs(action);
+        var fs = action.Context.Engine.FileSystem;
         var path = action.Path;
         if (!fs.Directory.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
@@ -176,7 +172,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Exists(Exists action)
     {
-        return new PathData(action.Path.Absolute, Fs(action));
+        return new PathData(action.Path.Absolute, action.Context.Engine.FileSystem);
     }
 
     // --- Helpers ---
