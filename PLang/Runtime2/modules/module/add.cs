@@ -1,10 +1,10 @@
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 
-namespace PLang.Runtime2.modules.library;
+namespace PLang.Runtime2.modules.module;
 
-[Action("load", Cacheable = false)]
-public partial class Load : IContext
+[Action("add", Cacheable = false)]
+public partial class Add : IContext
 {
     public partial string Path { get; init; }
     public partial string? Namespace { get; init; }
@@ -17,12 +17,12 @@ public partial class Load : IContext
 
         if (!fs.File.Exists(absPath))
             return Task.FromResult(Data.FromError(
-                new PLang.Runtime2.Engine.Errors.ServiceError($"Library not found: {Path}")));
+                new PLang.Runtime2.Engine.Errors.ServiceError($"Module not found: {Path}")));
 
         var assembly = System.Reflection.Assembly.LoadFrom(absPath);
         var count = engine.Modules.Discover(assembly, Namespace);
 
         return Task.FromResult(Data.Ok(
-            new types.library { name = fs.Path.GetFileNameWithoutExtension(absPath), actions = count }));
+            new types.module { name = fs.Path.GetFileNameWithoutExtension(absPath), actions = count }));
     }
 }

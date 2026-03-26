@@ -22,7 +22,7 @@ public sealed class @this
 
     /// <summary>
     /// Discovers [Action]-attributed ICodeGenerated types in an assembly and registers them.
-    /// External DLLs call this via library.load.
+    /// External DLLs call this via module.add.
     /// </summary>
     public int Discover(Assembly assembly, string? baseNamespace = null)
     {

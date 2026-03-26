@@ -2,11 +2,11 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules;
-using PLang.Runtime2.modules.library;
+using PLang.Runtime2.modules.module;
 
-namespace PLang.Tests.Runtime2.Modules.library;
+namespace PLang.Tests.Runtime2.Modules.module;
 
-public class LibraryLoadTests
+public class ModuleAddTests
 {
     /// <summary>
     /// Creates an engine rooted at the directory containing the PLang assembly,
@@ -22,31 +22,31 @@ public class LibraryLoadTests
     }
 
     [Test]
-    public async Task Load_NonexistentPath_ReturnsError()
+    public async Task Add_NonexistentPath_ReturnsError()
     {
         await using var engine = new PLang.Runtime2.Engine.@this("/app");
         using var context = engine.CreateContext();
 
-        var load = new Load
+        var add = new Add
         {
             Context = context,
             Path = "nonexistent_mylib.dll",
             Namespace = null
         };
 
-        var result = await load.Run();
+        var result = await add.Run();
 
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Message).Contains("Library not found");
+        await Assert.That(result.Error!.Message).Contains("Module not found");
     }
 
     [Test]
-    public async Task Load_ValidAssembly_DiscoverActions()
+    public async Task Add_ValidAssembly_DiscoverActions()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
@@ -54,7 +54,7 @@ public class LibraryLoadTests
             };
 
             var countBefore = engine.Modules.Count;
-            var result = await load.Run();
+            var result = await add.Run();
 
             await Assert.That(result.Success).IsTrue();
             // Discover re-registers the same built-in types, count stays same
@@ -63,40 +63,40 @@ public class LibraryLoadTests
     }
 
     [Test]
-    public async Task Load_ValidAssembly_DiscoveredActionsAccessible()
+    public async Task Add_ValidAssembly_DiscoveredActionsAccessible()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
                 Namespace = "PLang.Runtime2.modules"
             };
 
-            var result = await load.Run();
+            var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
-            // After loading, actions should be discoverable via the flat registry
+            // After adding, actions should be discoverable via the flat registry
             await Assert.That(engine.Modules.Contains("variable", "set")).IsTrue();
         }
     }
 
     [Test]
-    public async Task Load_WithCustomNamespace_OnlyDiscoversMatchingTypes()
+    public async Task Add_WithCustomNamespace_OnlyDiscoversMatchingTypes()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
                 Namespace = "Some.Completely.Wrong.Namespace"
             };
 
-            var result = await load.Run();
+            var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
             // The result value should report 0 actions discovered
@@ -105,19 +105,19 @@ public class LibraryLoadTests
     }
 
     [Test]
-    public async Task Load_ReturnsLibraryInfo()
+    public async Task Add_ReturnsModuleInfo()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
                 Namespace = "PLang.Runtime2.modules"
             };
 
-            var result = await load.Run();
+            var result = await add.Run();
 
             await Assert.That(result.Success).IsTrue();
             await Assert.That(result.Value).IsNotNull();
@@ -125,19 +125,19 @@ public class LibraryLoadTests
     }
 
     [Test]
-    public async Task Load_NullNamespace_DefaultsToBuiltInNamespace()
+    public async Task Add_NullNamespace_DefaultsToBuiltInNamespace()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
                 Namespace = null
             };
 
-            var result = await load.Run();
+            var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
             // With null namespace, Discover defaults to PLang.Runtime2.modules
@@ -146,19 +146,19 @@ public class LibraryLoadTests
     }
 
     [Test]
-    public async Task Load_AddedActions_ResolvableViaGetCodeGenerated()
+    public async Task Add_AddedActions_ResolvableViaGetCodeGenerated()
     {
         var (context, engine, assemblyPath) = CreateContextWithAssembly();
         await using (engine)
         {
-            var load = new Load
+            var add = new Add
             {
                 Context = context,
                 Path = assemblyPath,
                 Namespace = "PLang.Runtime2.modules"
             };
 
-            var result = await load.Run();
+            var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
             // Actions registered via Discover should be resolvable

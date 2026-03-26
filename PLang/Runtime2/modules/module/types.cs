@@ -1,6 +1,6 @@
-namespace PLang.Runtime2.modules.library.types;
+namespace PLang.Runtime2.modules.module.types;
 
-public record library
+public record module
 {
     public string name { get; init; } = "";
     public int actions { get; init; }
