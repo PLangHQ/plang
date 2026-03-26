@@ -229,10 +229,16 @@ public static class TypeMapping
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
         {
-            return type.Name.ToLowerInvariant();
+            return StripGenericArity(type.Name).ToLowerInvariant();
         }
 
-        return type.Name.ToLowerInvariant();
+        return StripGenericArity(type.Name).ToLowerInvariant();
+    }
+
+    private static string StripGenericArity(string name)
+    {
+        var idx = name.IndexOf('`');
+        return idx >= 0 ? name[..idx] : name;
     }
 
     /// <summary>
