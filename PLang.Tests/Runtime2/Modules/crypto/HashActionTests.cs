@@ -90,12 +90,13 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        var action = new Hash { Context = Ctx, Data = null!, Algorithm = "keccak256" };
-        var result = await action.Run();
+        // [IsNotNull] validation runs in CodeGeneratedExecuteAsync
+        var action = new Hash { Data = new Data(""), Algorithm = "keccak256" };
+        var result = await action.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
     }
 
@@ -169,23 +170,24 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
-        var result = await verifyAction.Run();
+        var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
+        var result = await verifyAction.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("InvalidHash");
+        // String property hits MissingParameter before [IsNotNull] — both validate, first wins
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingParameter");
     }
 
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = null!, Hash = "abc123", Algorithm = "keccak256" };
-        var result = await verifyAction.Run();
+        var verifyAction = new Verify { Data = new Data(""), Hash = "abc123", Algorithm = "keccak256" };
+        var result = await verifyAction.CodeGeneratedExecuteAsync(new List<Data>(), _engine, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
     }
 

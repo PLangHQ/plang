@@ -14,7 +14,7 @@ public class DefaultCryptoProvider : ICryptoProvider
 
     public Data Hash(Hash action)
     {
-        var value = action.Data?.Value;
+        var value = action.Data.Value;
         var bytes = value is byte[] raw ? raw : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
         var algorithm = action.Algorithm.ToLowerInvariant();
         byte[]? hashBytes = algorithm switch

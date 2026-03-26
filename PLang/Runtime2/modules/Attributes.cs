@@ -23,3 +23,9 @@ public sealed class VariableNameAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class ProviderAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class IsInitiatedAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class IsNotNullAttribute : Attribute { }

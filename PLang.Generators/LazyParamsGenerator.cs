@@ -106,6 +106,12 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isProvider = prop.GetAttributes().Any(a =>
                     a.AttributeClass?.Name == "ProviderAttribute");
 
+                // Read validation attributes
+                var isInitiated = prop.GetAttributes().Any(a =>
+                    a.AttributeClass?.Name == "IsInitiatedAttribute");
+                var isNotNull = prop.GetAttributes().Any(a =>
+                    a.AttributeClass?.Name == "IsNotNullAttribute");
+
                 // Check if type has static Resolve(string, PLangContext) method
                 var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
                     && namedType.GetMembers("Resolve")
@@ -132,7 +138,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     isVariableName,
                     isEngineResolvable,
                     isProvider,
-                    isDataType));
+                    isDataType,
+                    isInitiated,
+                    isNotNull));
             }
         }
 
@@ -313,6 +321,37 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
         }
 
+        // Validate [IsInitiated] and [IsNotNull] attributes
+        foreach (var prop in info.Properties)
+        {
+            if (prop.IsInitiated || prop.IsNotNull)
+            {
+                if (prop.IsDataType)
+                {
+                    if (prop.IsNotNull)
+                    {
+                        // IsNotNull implies IsInitiated — check both
+                        sb.AppendLine($"        if (!{prop.Name}.IsInitialized || {prop.Name}.Value == null)");
+                        sb.AppendLine($"            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
+                        sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
+                    }
+                    else
+                    {
+                        // IsInitiated only
+                        sb.AppendLine($"        if (!{prop.Name}.IsInitialized)");
+                        sb.AppendLine($"            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
+                        sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must be provided\", __step, __callFrames, \"ParameterRequired\", 400));");
+                    }
+                }
+                else if (prop.IsNotNull && !prop.IsValueType)
+                {
+                    sb.AppendLine($"        if ({prop.Name} == null)");
+                    sb.AppendLine($"            return PLang.Runtime2.Engine.Memory.Data.FromError(new PLang.Runtime2.Engine.Errors.ServiceError(");
+                    sb.AppendLine($"                \"'{prop.Name.ToLowerInvariant()}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
+                }
+            }
+        }
+
         sb.AppendLine("        if (__resolutionError != null) return __resolutionError;");
         sb.AppendLine();
         sb.AppendLine("        try");
@@ -451,10 +490,13 @@ internal class ActionPropertyInfo
     public bool IsEngineResolvable { get; }
     public bool IsProvider { get; }
     public bool IsDataType { get; }
+    public bool IsInitiated { get; }
+    public bool IsNotNull { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
-        bool isEngineResolvable = false, bool isProvider = false, bool isDataType = false)
+        bool isEngineResolvable = false, bool isProvider = false, bool isDataType = false,
+        bool isInitiated = false, bool isNotNull = false)
     {
         Name = name;
         TypeName = typeName;
@@ -465,5 +507,7 @@ internal class ActionPropertyInfo
         IsEngineResolvable = isEngineResolvable;
         IsProvider = isProvider;
         IsDataType = isDataType;
+        IsInitiated = isInitiated;
+        IsNotNull = isNotNull;
     }
 }
