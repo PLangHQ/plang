@@ -95,9 +95,9 @@ public class SigningSerializationTests
     public async Task Hash_IsBase64_NotHex()
     {
         // Hash some data using the crypto provider directly
-        var data = System.Text.Encoding.UTF8.GetBytes("test data");
         var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider();
-        var hashResult = cryptoProvider.Hash(data, "sha256");
+        var hashResult = cryptoProvider.Hash(new PLang.Runtime2.modules.crypto.Hash
+            { Data = System.Text.Encoding.UTF8.GetBytes("test data"), Algorithm = "sha256" });
         var hashBytes = (byte[])hashResult.Value!;
         var base64Hash = Convert.ToBase64String(hashBytes);
 

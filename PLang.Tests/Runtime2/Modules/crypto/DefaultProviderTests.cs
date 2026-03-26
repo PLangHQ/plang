@@ -1,3 +1,5 @@
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.crypto;
 using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Tests.Runtime2.Modules.crypto;
@@ -6,13 +8,18 @@ public class DefaultCryptoProviderTests
 {
     private readonly DefaultCryptoProvider _provider = new();
 
+    private static Hash HashAction(object data, string algorithm = "keccak256")
+        => new() { Data = data, Algorithm = algorithm };
+
+    private static Verify VerifyAction(object data, string hash, string algorithm = "keccak256")
+        => new() { Data = data, Hash = hash, Algorithm = algorithm };
+
     // --- Hash: Keccak256 ---
 
     [Test]
     public async Task Hash_Keccak256_ProducesCorrectHash()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("test");
-        var result = _provider.Hash(input, "keccak256");
+        var result = _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 })); // "test" as raw bytes
         var hex = Convert.ToHexString((byte[])result.Value!).ToLowerInvariant();
 
         await Assert.That(result.Success).IsTrue();
@@ -22,8 +29,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_SHA256_ProducesCorrectHash()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("test");
-        var result = _provider.Hash(input, "sha256");
+        var result = _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 }, "sha256")); // "test" as raw bytes
         var hex = Convert.ToHexString((byte[])result.Value!).ToLowerInvariant();
 
         await Assert.That(result.Success).IsTrue();
@@ -33,8 +39,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_UnknownAlgorithm_ReturnsError()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("test");
-        var result = _provider.Hash(input, "md5");
+        var result = _provider.Hash(HashAction("test", "md5"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
@@ -43,8 +48,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_EmptyInput_DoesNotFail()
     {
-        var input = Array.Empty<byte>();
-        var result = _provider.Hash(input, "keccak256");
+        var result = _provider.Hash(HashAction(Array.Empty<byte>()));
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(((byte[])result.Value!).Length).IsGreaterThan(0);
@@ -53,8 +57,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_Keccak256_OutputIs32Bytes()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("any data");
-        var result = _provider.Hash(input, "keccak256");
+        var result = _provider.Hash(HashAction("any data"));
 
         await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
     }
@@ -62,8 +65,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_SHA256_OutputIs32Bytes()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("any data");
-        var result = _provider.Hash(input, "sha256");
+        var result = _provider.Hash(HashAction("any data", "sha256"));
 
         await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
     }
@@ -73,9 +75,9 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_Keccak256_RoundTrip_ReturnsTrue()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
-        var hashResult = _provider.Hash(input, "keccak256");
-        var result = _provider.Verify(input, (byte[])hashResult.Value!, "keccak256");
+        var hashResult = _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 })); // "hello world"
+        var base64Hash = Convert.ToBase64String((byte[])hashResult.Value!);
+        var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }, base64Hash));
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
@@ -84,10 +86,9 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_Keccak256_WrongData_ReturnsFalse()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
-        var hashResult = _provider.Hash(input, "keccak256");
-        var wrongInput = System.Text.Encoding.UTF8.GetBytes("different data");
-        var result = _provider.Verify(wrongInput, (byte[])hashResult.Value!, "keccak256");
+        var hashResult = _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }));
+        var base64Hash = Convert.ToBase64String((byte[])hashResult.Value!);
+        var result = _provider.Verify(VerifyAction(new byte[] { 100, 105, 102, 102, 101, 114, 101, 110, 116 }, base64Hash)); // "different"
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsFalse();
@@ -96,9 +97,9 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_SHA256_RoundTrip_ReturnsTrue()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
-        var hashResult = _provider.Hash(input, "sha256");
-        var result = _provider.Verify(input, (byte[])hashResult.Value!, "sha256");
+        var hashResult = _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }, "sha256"));
+        var base64Hash = Convert.ToBase64String((byte[])hashResult.Value!);
+        var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }, base64Hash, "sha256"));
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
@@ -107,11 +108,11 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_SHA256_WrongHash_ReturnsFalse()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("hello world");
-        var hashResult = _provider.Hash(input, "sha256");
+        var hashResult = _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }, "sha256"));
         var hash = (byte[])hashResult.Value!;
         hash[0] = (byte)(hash[0] ^ 0xFF);
-        var result = _provider.Verify(input, hash, "sha256");
+        var base64Hash = Convert.ToBase64String(hash);
+        var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100 }, base64Hash, "sha256"));
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsFalse();
@@ -120,9 +121,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_UnknownAlgorithm_ReturnsError()
     {
-        var input = System.Text.Encoding.UTF8.GetBytes("test");
-        var fakeHash = new byte[32];
-        var result = _provider.Verify(input, fakeHash, "md5");
+        var result = _provider.Verify(VerifyAction("test", Convert.ToBase64String(new byte[32]), "md5"));
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");

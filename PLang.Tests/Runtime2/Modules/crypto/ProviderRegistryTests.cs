@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.crypto;
 using PLang.Runtime2.modules.crypto.providers;
 using EngineProviders = PLang.Runtime2.Engine.Providers.@this;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -107,7 +108,7 @@ public class ProviderRegistryTests
 
         public NamedCryptoProvider(string name) { Name = name; }
 
-        public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]);
-        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(true);
+        public Data Hash(Hash action) => Data.Ok(new byte[32]);
+        public Data Verify(Verify action) => Data.Ok(true);
     }
 }

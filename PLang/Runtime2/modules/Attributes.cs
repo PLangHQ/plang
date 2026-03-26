@@ -20,3 +20,6 @@ public sealed class DefaultAttribute : Attribute
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class VariableNameAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class ProviderAttribute : Attribute { }

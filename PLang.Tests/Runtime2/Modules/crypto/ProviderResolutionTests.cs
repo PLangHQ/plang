@@ -84,15 +84,15 @@ public class ProviderResolutionTests
     {
         public string Name => "mock";
         public bool IsDefault { get; set; }
-        public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]); // all zeros
-        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(false);
+        public Data Hash(Hash action) => Data.Ok(new byte[32]); // all zeros
+        public Data Verify(Verify action) => Data.Ok(false);
     }
 
     private class AlwaysTrueVerifier : ICryptoProvider
     {
         public string Name => "always-true";
         public bool IsDefault { get; set; }
-        public Data Hash(byte[] data, string algorithm) => Data.Ok(new byte[32]);
-        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.Ok(true);
+        public Data Hash(Hash action) => Data.Ok(new byte[32]);
+        public Data Verify(Verify action) => Data.Ok(true);
     }
 }

@@ -55,8 +55,7 @@ public class HashActionTests
     {
         // Known value: JsonSerializer.Serialize("hello") = "\"hello\""
         // keccak256 of UTF8 bytes of "\"hello\"" is a fixed value.
-        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize("hello"));
-        var refHash = new DefaultCryptoProvider().Hash(jsonBytes, "keccak256");
+        var refHash = new DefaultCryptoProvider().Hash(new Hash { Data = "hello", Algorithm = "keccak256" });
         var expectedBase64 = Convert.ToBase64String((byte[])refHash.Value!);
 
         var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
@@ -214,7 +213,7 @@ public class HashActionTests
     {
         public string Name => "failing";
         public bool IsDefault { get; set; }
-        public Data Hash(byte[] data, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
-        public Data Verify(byte[] data, byte[] expectedHash, string algorithm) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public Data Hash(Hash action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public Data Verify(Verify action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }
 }

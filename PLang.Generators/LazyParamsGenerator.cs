@@ -102,6 +102,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 var isVariableName = prop.GetAttributes().Any(a =>
                     a.AttributeClass?.Name == "VariableNameAttribute");
 
+                // Read [Provider] attribute if present
+                var isProvider = prop.GetAttributes().Any(a =>
+                    a.AttributeClass?.Name == "ProviderAttribute");
+
                 // Check if type has static Resolve(string, PLangContext) method
                 var isEngineResolvable = prop.Type is INamedTypeSymbol namedType
                     && namedType.GetMembers("Resolve")
@@ -119,7 +123,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     prop.Type.IsValueType,
                     defaultValue,
                     isVariableName,
-                    isEngineResolvable));
+                    isEngineResolvable,
+                    isProvider));
             }
         }
 
@@ -167,6 +172,20 @@ public class LazyParamsGenerator : IIncrementalGenerator
         {
             var backingField = $"__{prop.Name}_backing";
             var setFlag = $"__{prop.Name}_set";
+
+            // [Provider] properties — resolved lazily from engine.Providers
+            // Works both via CodeGeneratedExecuteAsync (__engine) and direct test usage (Context.Engine)
+            if (prop.IsProvider)
+            {
+                var engineExpr = info.ImplementsIContext ? "__engine ?? Context?.Engine" : "__engine";
+                sb.AppendLine($"    private {prop.TypeName}? {backingField};");
+                sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __e = {engineExpr}; if (__e != null) {{ var __r = __e.Providers.Get<{prop.TypeName}>(); if (__r.Success) {backingField} = __r.Value; }} }} return {backingField}!; }}");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+                continue;
+            }
 
             if (prop.IsValueType && !prop.IsNullable)
             {
@@ -249,10 +268,21 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         sb.AppendLine();
 
+        // Resolve [Provider] properties from engine.Providers
+        foreach (var prop in info.Properties)
+        {
+            if (!prop.IsProvider) continue;
+            var backingField = $"__{prop.Name}_backing";
+            sb.AppendLine($"        var __{prop.Name}_result = engine.Providers.Get<{prop.TypeName}>();");
+            sb.AppendLine($"        if (!__{prop.Name}_result.Success) return __{prop.Name}_result;");
+            sb.AppendLine($"        {backingField} = __{prop.Name}_result.Value!;");
+            sb.AppendLine();
+        }
+
         // Validate non-nullable, non-defaulted properties
         foreach (var prop in info.Properties)
         {
-            if (prop.IsNullable || prop.DefaultValue != null || prop.IsEngineResolvable)
+            if (prop.IsNullable || prop.DefaultValue != null || prop.IsEngineResolvable || prop.IsProvider)
                 continue;
 
             if (!prop.IsValueType)
@@ -383,10 +413,11 @@ internal class ActionPropertyInfo
     public string? DefaultValue { get; }
     public bool IsVariableName { get; }
     public bool IsEngineResolvable { get; }
+    public bool IsProvider { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
-        bool isEngineResolvable = false)
+        bool isEngineResolvable = false, bool isProvider = false)
     {
         Name = name;
         TypeName = typeName;
@@ -395,5 +426,6 @@ internal class ActionPropertyInfo
         DefaultValue = defaultValue;
         IsVariableName = isVariableName;
         IsEngineResolvable = isEngineResolvable;
+        IsProvider = isProvider;
     }
 }
