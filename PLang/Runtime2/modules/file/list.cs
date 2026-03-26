@@ -1,7 +1,10 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.file.providers;
 
 namespace PLang.Runtime2.modules.file;
 
+[Example("list files in docs/, write to %files%", "Path=docs/")]
+[Example("list files in %dir% matching *.txt, recursive, write to %files%", "Path=%dir%, Pattern=*.txt, Recursive=true")]
 [Action("list")]
 public partial class List : IContext
 {
@@ -13,5 +16,8 @@ public partial class List : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Path.List(this));
+    [Provider]
+    public partial IFileProvider Files { get; }
+
+    public Task<Data> Run() => Task.FromResult(Files.List(this));
 }

@@ -1,7 +1,10 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.file.providers;
 
 namespace PLang.Runtime2.modules.file;
 
+[Example("copy file.txt to backup/file.txt", "Source=file.txt, Destination=backup/file.txt")]
+[Example("copy %source% to %dest%, overwrite", "Source=%source%, Destination=%dest%, Overwrite=true")]
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
@@ -14,5 +17,8 @@ public partial class Copy : IContext
     [Default(true)]
     public partial bool IncludeSubfolders { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Source.Copy(this));
+    [Provider]
+    public partial IFileProvider Files { get; }
+
+    public Task<Data> Run() => Task.FromResult(Files.Copy(this));
 }

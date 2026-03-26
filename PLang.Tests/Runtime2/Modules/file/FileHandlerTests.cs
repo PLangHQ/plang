@@ -47,7 +47,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_ReturnsFileWithCorrectPaths()
     {
-        var action = new Save { Context = CreateContext(), Path = MakePath("test.txt"), Value = "hello" };
+        var action = new Save { Context = CreateContext(), Path = MakePath("test.txt"), Value = Data.Ok("hello") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -60,7 +60,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_FileExists_AfterSave()
     {
-        var action = new Save { Context = CreateContext(), Path = MakePath("exists.txt"), Value = "data" };
+        var action = new Save { Context = CreateContext(), Path = MakePath("exists.txt"), Value = Data.Ok("data") };
         await action.Run();
 
         await Assert.That(_fs.File.Exists(TempPath("exists.txt"))).IsTrue();

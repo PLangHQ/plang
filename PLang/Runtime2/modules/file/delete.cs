@@ -1,7 +1,11 @@
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.file.providers;
 
 namespace PLang.Runtime2.modules.file;
 
+[Example("delete file.txt", "Path=file.txt")]
+[Example("delete %path%, ignore if not found", "Path=%path%, IgnoreIfNotFound=true")]
+[Example("delete temp/, recursive", "Path=temp/, Recursive=true")]
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
@@ -13,5 +17,8 @@ public partial class Delete : IContext
     [Default(false)]
     public partial bool Recursive { get; init; }
 
-    public Task<Data> Run() => Task.FromResult(Path.Delete(this));
+    [Provider]
+    public partial IFileProvider Files { get; }
+
+    public Task<Data> Run() => Task.FromResult(Files.Delete(this));
 }

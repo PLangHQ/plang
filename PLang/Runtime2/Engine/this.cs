@@ -231,7 +231,7 @@ public sealed class @this : IAsyncDisposable
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new EngineChannels(this);
 
-        Providers.RegisterDefaults();
+        Providers.RegisterDefaults(FileSystem);
         Types.RegisterDomainTypes();
     }
 
