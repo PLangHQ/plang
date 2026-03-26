@@ -1,22 +1,17 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
 [Action("notEquals")]
 public partial class NotEquals : IContext
 {
-    public partial object? Expected { get; init; }
-    public partial object? Actual { get; init; }
+    public partial Data? Expected { get; init; }
+    public partial Data? Actual { get; init; }
     public partial string? Message { get; init; }
 
-    public Task<Data> Run()
-    {
-        if (!AssertHelper.AreEqual(Expected, Actual))
-            return Task.FromResult(Data.Ok(true));
+    [Provider]
+    public partial IAssertProvider Assert { get; }
 
-        return Task.FromResult(Data.FromError(
-            new AssertionError(Expected, Actual,
-                Message ?? "Values should not be equal")));
-    }
+    public Task<Data> Run() => Task.FromResult(Assert.NotEquals(this));
 }

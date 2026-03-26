@@ -1,20 +1,16 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
 [Action("isFalse")]
 public partial class IsFalse : IContext
 {
-    public partial object? Value { get; init; }
+    public partial Data? Value { get; init; }
     public partial string? Message { get; init; }
 
-    public Task<Data> Run()
-    {
-        if (!AssertHelper.IsTruthy(Value))
-            return Task.FromResult(Data.Ok(true));
+    [Provider]
+    public partial IAssertProvider Assert { get; }
 
-        return Task.FromResult(Data.FromError(
-            new AssertionError(false, Value, Message ?? "Expected falsy value")));
-    }
+    public Task<Data> Run() => Task.FromResult(Assert.IsFalse(this));
 }

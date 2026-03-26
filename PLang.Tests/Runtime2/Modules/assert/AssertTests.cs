@@ -24,13 +24,15 @@ public class AssertTests
         return (context, memory);
     }
 
+    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+
     // --- Equals ---
 
     [Test]
     public async Task Equals_SameInts_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = 42, Actual = 42 };
+        var action = new AssertEquals { Context = context, Expected = D(42), Actual = D(42) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -39,7 +41,7 @@ public class AssertTests
     public async Task Equals_DifferentValues_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = 42, Actual = 99 };
+        var action = new AssertEquals { Context = context, Expected = D(42), Actual = D(99) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -50,7 +52,7 @@ public class AssertTests
     public async Task Equals_IntAndDouble_CoercesAndPasses()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = 5, Actual = 5.0 };
+        var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5.0) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -59,7 +61,7 @@ public class AssertTests
     public async Task Equals_Strings_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = "hello", Actual = "hello" };
+        var action = new AssertEquals { Context = context, Expected = D("hello"), Actual = D("hello") };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -68,7 +70,7 @@ public class AssertTests
     public async Task Equals_NullBothSides_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = null, Actual = null };
+        var action = new AssertEquals { Context = context, Expected = D(null), Actual = D(null) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -77,7 +79,7 @@ public class AssertTests
     public async Task Equals_NullVsValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = null, Actual = 5 };
+        var action = new AssertEquals { Context = context, Expected = D(null), Actual = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -86,7 +88,7 @@ public class AssertTests
     public async Task Equals_CustomMessage_IncludedInError()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = 1, Actual = 2, Message = "Sum check" };
+        var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2), Message = "Sum check" };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
         var error = result.Error as AssertionError;
@@ -100,7 +102,7 @@ public class AssertTests
     public async Task NotEquals_DifferentValues_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertNotEquals { Context = context, Expected = 1, Actual = 2 };
+        var action = new AssertNotEquals { Context = context, Expected = D(1), Actual = D(2) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -109,7 +111,7 @@ public class AssertTests
     public async Task NotEquals_SameValues_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertNotEquals { Context = context, Expected = 5, Actual = 5 };
+        var action = new AssertNotEquals { Context = context, Expected = D(5), Actual = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -120,7 +122,7 @@ public class AssertTests
     public async Task IsTrue_TrueValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = true };
+        var action = new AssertIsTrue { Context = context, Value = D(true) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -129,7 +131,7 @@ public class AssertTests
     public async Task IsTrue_FalseValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = false };
+        var action = new AssertIsTrue { Context = context, Value = D(false) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -138,7 +140,7 @@ public class AssertTests
     public async Task IsTrue_NonZeroNumber_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = 42 };
+        var action = new AssertIsTrue { Context = context, Value = D(42) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -147,7 +149,7 @@ public class AssertTests
     public async Task IsTrue_Zero_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = 0 };
+        var action = new AssertIsTrue { Context = context, Value = D(0) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -156,7 +158,7 @@ public class AssertTests
     public async Task IsTrue_Null_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsTrue { Context = context, Value = null };
+        var action = new AssertIsTrue { Context = context, Value = D(null) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -167,7 +169,7 @@ public class AssertTests
     public async Task IsFalse_FalseValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = false };
+        var action = new AssertIsFalse { Context = context, Value = D(false) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -176,7 +178,7 @@ public class AssertTests
     public async Task IsFalse_TrueValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = true };
+        var action = new AssertIsFalse { Context = context, Value = D(true) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -185,7 +187,7 @@ public class AssertTests
     public async Task IsFalse_Null_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsFalse { Context = context, Value = null };
+        var action = new AssertIsFalse { Context = context, Value = D(null) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -196,7 +198,7 @@ public class AssertTests
     public async Task IsNull_NullValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNull { Context = context, Value = null };
+        var action = new AssertIsNull { Context = context, Value = D(null) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -205,7 +207,7 @@ public class AssertTests
     public async Task IsNull_NonNullValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNull { Context = context, Value = "hello" };
+        var action = new AssertIsNull { Context = context, Value = D("hello") };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -216,7 +218,7 @@ public class AssertTests
     public async Task IsNotNull_NonNullValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNotNull { Context = context, Value = "hello" };
+        var action = new AssertIsNotNull { Context = context, Value = D("hello") };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -225,7 +227,7 @@ public class AssertTests
     public async Task IsNotNull_NullValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertIsNotNull { Context = context, Value = null };
+        var action = new AssertIsNotNull { Context = context, Value = D(null) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -236,7 +238,7 @@ public class AssertTests
     public async Task Contains_StringContainsSubstring_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = "hello world", Container = "world" };
+        var action = new AssertContains { Context = context, Value = D("hello world"), Container = D("world") };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -245,7 +247,7 @@ public class AssertTests
     public async Task Contains_StringDoesNotContain_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = "hello world", Container = "xyz" };
+        var action = new AssertContains { Context = context, Value = D("hello world"), Container = D("xyz") };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -255,7 +257,7 @@ public class AssertTests
     {
         var (context, _) = CreateContext();
         var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Value = list, Container = 2 };
+        var action = new AssertContains { Context = context, Value = D(list), Container = D(2) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -265,7 +267,7 @@ public class AssertTests
     {
         var (context, _) = CreateContext();
         var list = new List<object> { 1, 2, 3 };
-        var action = new AssertContains { Context = context, Value = list, Container = 99 };
+        var action = new AssertContains { Context = context, Value = D(list), Container = D(99) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -274,7 +276,7 @@ public class AssertTests
     public async Task Contains_NullValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertContains { Context = context, Value = null, Container = "x" };
+        var action = new AssertContains { Context = context, Value = D(null), Container = D("x") };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -285,7 +287,7 @@ public class AssertTests
     public async Task GreaterThan_LargerValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = 10, B = 5 };
+        var action = new AssertGreaterThan { Context = context, A = D(10), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -294,7 +296,7 @@ public class AssertTests
     public async Task GreaterThan_EqualValues_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = 5, B = 5 };
+        var action = new AssertGreaterThan { Context = context, A = D(5), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -303,7 +305,7 @@ public class AssertTests
     public async Task GreaterThan_SmallerValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertGreaterThan { Context = context, A = 3, B = 5 };
+        var action = new AssertGreaterThan { Context = context, A = D(3), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -314,7 +316,7 @@ public class AssertTests
     public async Task LessThan_SmallerValue_Passes()
     {
         var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = 3, B = 5 };
+        var action = new AssertLessThan { Context = context, A = D(3), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
     }
@@ -323,7 +325,7 @@ public class AssertTests
     public async Task LessThan_EqualValues_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = 5, B = 5 };
+        var action = new AssertLessThan { Context = context, A = D(5), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }
@@ -332,7 +334,7 @@ public class AssertTests
     public async Task LessThan_LargerValue_Fails()
     {
         var (context, _) = CreateContext();
-        var action = new AssertLessThan { Context = context, A = 10, B = 5 };
+        var action = new AssertLessThan { Context = context, A = D(10), B = D(5) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
     }

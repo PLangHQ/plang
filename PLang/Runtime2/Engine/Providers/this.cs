@@ -195,6 +195,7 @@ public sealed class @this
             "crypto" or "icryptoprovider" => typeof(ICryptoProvider),
             "http" or "ihttpprovider" => typeof(modules.http.providers.IHttpProvider),
             "evaluator" or "ievaluator" => typeof(modules.condition.providers.IEvaluator),
+            "assert" or "iassertprovider" => typeof(modules.assert.providers.IAssertProvider),
             null or "" => typeof(ISigningProvider),
             _ => null
         };
@@ -213,5 +214,6 @@ public sealed class @this
         Register<ICryptoProvider>(new DefaultCryptoProvider());
         Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
         Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
+        Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
     }
 }

@@ -1,0 +1,17 @@
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Providers;
+
+namespace PLang.Runtime2.modules.assert.providers;
+
+public interface IAssertProvider : IProvider
+{
+    Data Equals(Equals action);
+    Data NotEquals(NotEquals action);
+    Data IsTrue(IsTrue action);
+    Data IsFalse(IsFalse action);
+    Data IsNull(IsNull action);
+    Data IsNotNull(IsNotNull action);
+    Data Contains(Contains action);
+    Data GreaterThan(GreaterThan action);
+    Data LessThan(LessThan action);
+}

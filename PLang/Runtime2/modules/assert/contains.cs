@@ -1,25 +1,17 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using System.Collections;
+using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
 [Action("contains")]
 public partial class Contains : IContext
 {
-    public partial object? Value { get; init; }
-    public partial object? Container { get; init; }
+    public partial Data? Value { get; init; }
+    public partial Data? Container { get; init; }
     public partial string? Message { get; init; }
 
-    public Task<Data> Run()
-    {
-        if (AssertHelper.Contains(Value, Container))
-            return Task.FromResult(Data.Ok(true));
+    [Provider]
+    public partial IAssertProvider Assert { get; }
 
-        return Task.FromResult(Data.FromError(
-            new AssertionError(
-                AssertHelper.FormatValue(Container),
-                Value,
-                Message ?? "Container does not contain value")));
-    }
+    public Task<Data> Run() => Task.FromResult(Assert.Contains(this));
 }
