@@ -70,7 +70,7 @@ public class SignActionTests
         await Assert.That(sd.Algorithm).IsNotEmpty();
         await Assert.That(sd.Nonce).IsNotEmpty();
         await Assert.That(sd.Identity).IsNotEmpty();
-        await Assert.That(sd.HashedData).IsNotNull();
+        await Assert.That(sd.Hash).IsNotNull();
         await Assert.That(sd.Signature).IsNotNull();
     }
 
@@ -167,7 +167,7 @@ public class SignActionTests
 
     #endregion
 
-    #region Headers & HashedData
+    #region Headers & Hash
 
     [Test]
     public async Task Sign_Headers_IncludedWhenProvided()
@@ -181,15 +181,15 @@ public class SignActionTests
     }
 
     [Test]
-    public async Task Sign_HashedData_Base64Encoding()
+    public async Task Sign_Hash_Base64Encoding()
     {
         var result = await SignData("test");
 
         await Assert.That(result.Success).IsTrue();
-        var hd = result.Signature!.HashedData;
-        await Assert.That(hd).IsNotNull();
+        var hash = result.Signature!.Hash;
+        await Assert.That(hash).IsNotNull();
         // Should be valid base64
-        var decoded = Convert.FromBase64String(hd.Hash);
+        var decoded = Convert.FromBase64String((string)hash.Value!);
         await Assert.That(decoded.Length).IsGreaterThan(0);
     }
 

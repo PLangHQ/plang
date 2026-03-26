@@ -40,8 +40,37 @@ public class SignedData
     [JsonPropertyOrder(8), JsonInclude]
     public Dictionary<string, object>? Headers { get; internal set; }
 
-    [JsonPropertyOrder(9), JsonInclude]
-    public HashedData HashedData { get; internal set; } = new();
+    [JsonPropertyOrder(9), JsonPropertyName("hash"), JsonInclude]
+    [JsonConverter(typeof(HashDataConverter))]
+    public Data Hash { get; internal set; } = Data.Ok("");
+
+    /// <summary>
+    /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing envelope.
+    /// </summary>
+    internal class HashDataConverter : JsonConverter<Data>
+    {
+        public override Data Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        {
+            string type = "", value = "";
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+            {
+                if (reader.TokenType != JsonTokenType.PropertyName) continue;
+                var prop = reader.GetString();
+                reader.Read();
+                if (prop == "type") type = reader.GetString() ?? "";
+                else if (prop == "value") value = reader.GetString() ?? "";
+            }
+            return Data.Ok(value, string.IsNullOrEmpty(type) ? null : Engine.Memory.Type.FromName(type));
+        }
+
+        public override void Write(Utf8JsonWriter writer, Data value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("type", value.Type?.Value ?? "");
+            writer.WriteString("value", value.Value?.ToString() ?? "");
+            writer.WriteEndObject();
+        }
+    }
 
     [JsonPropertyOrder(10), JsonInclude]
     public string? Signature { get; internal set; }
@@ -86,7 +115,7 @@ public class SignedData
         if (!identity.Success) return identity;
 
         // Hash the data
-        var hash = await engine.RunAction<Hash, HashedData>(new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256" }, action.Context);
+        var hash = await engine.RunAction<Hash>(new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
@@ -101,7 +130,7 @@ public class SignedData
             Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
             Contracts = action.Contracts,
             Headers = action.Headers,
-            HashedData = hash.Value!
+            Hash = hash
         };
 
         var signResult = signedData.Sign(providerResult.Value, identity.Value!);
@@ -168,15 +197,16 @@ public class SignedData
         }
 
         // 8. Data hash verification — re-hash original data if provided
-        if (string.IsNullOrEmpty(HashedData?.Hash))
+        var hashValue = Hash?.Value?.ToString();
+        if (string.IsNullOrEmpty(hashValue))
             return Data.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if (action.Data?.Value != null)
         {
-            var rehash = await engine.RunAction<Hash, HashedData>(
-                new Hash { Data = action.Data.Value, Algorithm = HashedData!.Algorithm }, action.Context);
+            var rehash = await engine.RunAction<Hash>(
+                new Hash { Data = action.Data.Value, Algorithm = Hash!.Type?.Value ?? "keccak256" }, action.Context);
             if (!rehash.Success) return rehash;
-            if (!string.Equals(rehash.Value!.Hash, HashedData.Hash, StringComparison.Ordinal))
+            if (!string.Equals(rehash.Value?.ToString(), hashValue, StringComparison.Ordinal))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 

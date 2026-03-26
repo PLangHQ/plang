@@ -45,10 +45,9 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var hashed = result.Value as HashedData;
-        await Assert.That(hashed).IsNotNull();
+        var hash = (string)result.Value!;
         // Mock returns all-zero bytes → base64 of 32 zero bytes
-        await Assert.That(hashed!.Hash).IsEqualTo(Convert.ToBase64String(new byte[32]));
+        await Assert.That(hash).IsEqualTo(Convert.ToBase64String(new byte[32]));
     }
 
     [Test]
@@ -59,12 +58,11 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var hashed = result.Value as HashedData;
-        await Assert.That(hashed).IsNotNull();
+        var hash = (string)result.Value!;
         // Should not be all zeros (DefaultCryptoProvider produces real keccak256)
-        await Assert.That(hashed!.Hash).IsNotEqualTo(Convert.ToBase64String(new byte[32]));
+        await Assert.That(hash).IsNotEqualTo(Convert.ToBase64String(new byte[32]));
         // Base64 of 32 bytes = 44 chars
-        await Assert.That(hashed.Hash.Length).IsEqualTo(44);
+        await Assert.That(hash.Length).IsEqualTo(44);
     }
 
     [Test]

@@ -169,7 +169,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.HashedData.Hash = Convert.ToBase64String(new byte[32]);
+        signed.Signature!.Hash = Data.Ok(Convert.ToBase64String(new byte[32]), PLang.Runtime2.Engine.Memory.Type.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();

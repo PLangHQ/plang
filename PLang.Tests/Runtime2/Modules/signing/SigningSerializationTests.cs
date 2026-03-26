@@ -2,7 +2,6 @@ using System.Text.Json;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
 using PLang.Runtime2.modules.signing.providers;
-using PLang.Runtime2.modules.crypto;
 using PLang.Runtime2.modules.signing;
 
 namespace PLang.Tests.Runtime2.Modules.signing;
@@ -48,10 +47,22 @@ public class SigningSerializationTests
     }
 
     [Test]
+    public async Task SignedData_Hash_SerializesAsTypeAndValue()
+    {
+        var sd = CreateTestSignedData();
+        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+
+        // Hash field should serialize as { "type": "sha256", "value": "..." }
+        await Assert.That(json).Contains("\"hash\":{");
+        await Assert.That(json).Contains("\"type\":\"sha256\"");
+        await Assert.That(json).Contains("\"value\":\"");
+    }
+
+    [Test]
     public async Task SignedData_UnsafeRelaxedEscaping()
     {
         var sd = CreateTestSignedData();
-        sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "héllo" };
+        sd.Hash = Data.Ok("héllo", PLang.Runtime2.Engine.Memory.Type.FromName("sha256"));
 
         var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
         // Non-ASCII should appear literally, not as \uXXXX
@@ -81,17 +92,14 @@ public class SigningSerializationTests
     }
 
     [Test]
-    public async Task HashedData_Hash_IsBase64_NotHex()
+    public async Task Hash_IsBase64_NotHex()
     {
-        var provider = new Ed25519Provider();
-        var keys = provider.GenerateKeyPair().Value!;
-
-        // Hash some data using the crypto module's FormatHash
+        // Hash some data using the crypto provider directly
         var data = System.Text.Encoding.UTF8.GetBytes("test data");
         var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider();
         var hashResult = cryptoProvider.Hash(data, "sha256");
         var hashBytes = (byte[])hashResult.Value!;
-        var base64Hash = PLang.Runtime2.modules.crypto.HashedData.FormatHash(hashBytes);
+        var base64Hash = Convert.ToBase64String(hashBytes);
 
         // Should be valid base64
         var decoded = Convert.FromBase64String(base64Hash);
@@ -126,12 +134,12 @@ public class SigningSerializationTests
     }
 
     [Test]
-    public async Task HashedData_InvalidBase64_VerifyRejects()
+    public async Task Hash_InvalidBase64_VerifyRejects()
     {
-        // Create a SignedData with invalid base64 in HashedData.Hash
+        // Create a SignedData with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
-        sd.HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = "not-valid-base64!!!" };
+        sd.Hash = Data.Ok("not-valid-base64!!!", PLang.Runtime2.Engine.Memory.Type.FromName("sha256"));
         sd.Signature = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
@@ -191,7 +199,7 @@ public class SigningSerializationTests
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
-            HashedData = new HashedData { Algorithm = "sha256", Format = "json", Hash = Convert.ToBase64String(new byte[32]) },
+            Hash = Data.Ok(Convert.ToBase64String(new byte[32]), PLang.Runtime2.Engine.Memory.Type.FromName("sha256")),
             Signature = null
         };
     }

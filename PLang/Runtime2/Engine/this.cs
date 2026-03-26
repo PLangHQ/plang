@@ -238,7 +238,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// Runs a module action through the same code-generated execution path as steps.
     /// Set properties via init, then call RunAction — engine wires context, memory, validation, error handling.
-    /// Usage: var hash = await engine.RunAction&lt;Hash, HashedData&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
+    /// Usage: var result = await engine.RunAction&lt;Hash, string&gt;(new Hash { Data = x, Algorithm = "keccak256" }, context);
     /// </summary>
     public async Task<Data<TResult>> RunAction<TAction, TResult>(TAction action, PLangContext context)
         where TAction : ICodeGenerated

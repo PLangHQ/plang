@@ -1,5 +1,15 @@
 # Runtime2 Todos
 
+## AllowedValues attribute for builder-time parameter constraints
+**Date:** 2026-03-26
+**Context:** Crypto module `Algorithm` param is a free-form string. Builder LLM guesses values. Want to list valid algorithms (from ICryptoProvider) at build time so the LLM picks correctly.
+
+**Approach:** Add `[AllowedValues("keccak256", "sha256")]` attribute on action parameters. Source generator or builder prompt reads it and injects `allowedValues` into the parameter schema the LLM sees. Static for now; when v2 builder arrives, could dynamically query providers instead.
+
+**Applies to:** Any action parameter with a known set of valid values (crypto algorithms, encoding names, etc.)
+
+---
+
 ## PLang Linter / Static Analyzer
 **Date:** 2026-02-13
 **Context:** During Engine refactoring (folding AppContext into Engine, renaming IO→Channels). Thinking about how to make dependencies discoverable at the goal/action level.
