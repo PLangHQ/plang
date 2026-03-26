@@ -185,7 +185,19 @@ public class DefaultCryptoProvider : ICryptoProvider
 
 ### Registration
 
-In `Engine/Providers/this.cs`, `RegisterDefaults()`:
+#### PLang user registration
+
+PLang developers replace providers by loading a DLL that implements the provider interface:
+
+```plang
+- load provider myprovider.dll
+```
+
+The DLL contains a class implementing `ICryptoProvider` (or whichever provider interface). The engine discovers it, registers it, and all actions using `[Provider]` automatically pick it up.
+
+#### Runtime developer registration
+
+Built-in default providers are registered in `Engine/Providers/this.cs`, `RegisterDefaults()`:
 
 ```csharp
 Register<ICryptoProvider>(new DefaultCryptoProvider());
