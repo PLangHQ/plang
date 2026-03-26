@@ -422,7 +422,7 @@ public class FileHandlerTests : IDisposable
 
         var fileData = context.MemoryStack.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData!.Value as PathData;
+        var fileObj = fileData as PathData;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 

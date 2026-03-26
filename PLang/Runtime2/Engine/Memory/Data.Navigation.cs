@@ -74,6 +74,12 @@ public partial class Data
 
     private object? GetChildValue(string key)
     {
+        // First check properties on the Data object itself (e.g., PathData.Exists)
+        var ownProp = GetType().GetProperty(key,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (ownProp != null && ownProp.DeclaringType != typeof(Data))
+            return ownProp.GetValue(this);
+
         var val = Value;
         if (val == null) return null;
         return ValueNavigators.Navigate(val, key);

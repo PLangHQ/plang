@@ -31,11 +31,12 @@ public sealed partial class @this
 
         result.Context = context;
 
-        if (result.Value != null && this.Return != null)
+        if (this.Return != null)
         {
             foreach (var returnVar in this.Return)
             {
-                context.MemoryStack.Set(returnVar.Name, result.Value, result.Type);
+                result.Name = returnVar.Name;
+                context.MemoryStack.Put(result);
 
                 // Transfer disposable ownership to parent frame
                 if (result.Value is IDisposable or IAsyncDisposable)

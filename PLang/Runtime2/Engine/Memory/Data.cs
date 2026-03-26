@@ -73,7 +73,7 @@ public partial class Data
     private PLangContext? _context;
 
     [JsonPropertyName("name")]
-    public string Name { get; }
+    public string Name { get; set; }
 
     [JsonIgnore]
     public PLangContext? Context
