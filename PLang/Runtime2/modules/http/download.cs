@@ -40,10 +40,8 @@ public partial class download : IContext
     [GoalCallback("progress")]
     public partial GoalCall? OnProgress { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IHttpProvider>();
-        if (!provider.Success) return provider;
-        return await provider.Value!.DownloadAsync(this);
-    }
+    [Provider]
+    public partial IHttpProvider Http { get; }
+
+    public async Task<Data> Run() => await Http.DownloadAsync(this);
 }

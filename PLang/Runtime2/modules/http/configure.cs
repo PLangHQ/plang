@@ -39,10 +39,8 @@ public partial class configure : IContext, IConfigure<Config>
     [Default(false)]
     public partial bool Default { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IHttpProvider>();
-        if (!provider.Success) return provider;
-        return provider.Value!.Configure(this);
-    }
+    [Provider]
+    public partial IHttpProvider Http { get; }
+
+    public async Task<Data> Run() => Http.Configure(this);
 }
