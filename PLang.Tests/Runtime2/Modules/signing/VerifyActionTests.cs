@@ -52,7 +52,7 @@ public class VerifyActionTests
             ExpiresInMs = expiresInMs,
             Headers = headers
         };
-        return await action.Run();
+        return await _engine.RunAction<sign>(action, Ctx);
     }
 
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
@@ -66,7 +66,7 @@ public class VerifyActionTests
             Headers = headers,
             TimeoutMs = timeoutMs
         };
-        return await action.Run();
+        return await _engine.RunAction<verify>(action, Ctx);
     }
 
     #region Happy Path
@@ -95,14 +95,15 @@ public class VerifyActionTests
     }
 
     [Test]
-    public async Task Verify_UnknownAlgorithm_Error()
+    public async Task Verify_TamperedAlgorithm_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         signed.Signature!.Algorithm = "unknown-algo";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
+        // Tampered algorithm changes the signing bytes, so signature verification fails
+        await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
     [Test]
@@ -483,5 +484,7 @@ public class VerifyActionTests
         public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
+        public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
+        public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }
 }

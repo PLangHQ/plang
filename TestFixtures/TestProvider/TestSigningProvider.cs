@@ -1,5 +1,6 @@
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.signing;
 using PLang.Runtime2.modules.signing.providers;
 
 namespace TestProvider;
@@ -21,4 +22,10 @@ public class TestSigningProvider : ISigningProvider
 
     public Data Verify(byte[] data, byte[] signature, string publicKey)
         => Data.Ok(true);
+
+    public Task<Data> SignAsync(sign action)
+        => Task.FromResult(Data.Ok());
+
+    public Task<Data> VerifyAsync(verify action)
+        => Task.FromResult(Data.Ok(true));
 }

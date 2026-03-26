@@ -5,18 +5,20 @@ using PLang.Runtime2.Engine.Providers;
 namespace PLang.Runtime2.modules.signing.providers;
 
 /// <summary>
-/// Provider that can sign and verify data. Extends IKeyProvider for key generation.
+/// Provider that owns the full signing/verification pipeline.
+/// Default: Ed25519Provider. Swappable for cloud KMS, hardware tokens, etc.
 /// </summary>
 public interface ISigningProvider : IKeyProvider
 {
-    /// <summary>Signs data with the given private key. Returns signature bytes on success.</summary>
-    /// <param name="data">The bytes to sign (typically deterministic JSON from SignedData.ToSigningBytes).</param>
-    /// <param name="privateKey">Base64-encoded private key.</param>
+    /// <summary>Full signing pipeline: get identity, hash, build envelope, sign.</summary>
+    Task<Data> SignAsync(sign action);
+
+    /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
+    Task<Data> VerifyAsync(verify action);
+
+    /// <summary>Low-level: signs bytes with the given private key. Returns signature bytes.</summary>
     Data Sign(byte[] data, string privateKey);
 
-    /// <summary>Verifies a signature against the original data and public key.</summary>
-    /// <param name="data">The original bytes that were signed.</param>
-    /// <param name="signature">The signature bytes to verify.</param>
-    /// <param name="publicKey">Base64-encoded public key of the signer.</param>
+    /// <summary>Low-level: verifies a signature against data and public key.</summary>
     Data Verify(byte[] data, byte[] signature, string publicKey);
 }

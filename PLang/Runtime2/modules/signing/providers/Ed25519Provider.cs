@@ -1,20 +1,131 @@
 using NSec.Cryptography;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-
+using PLang.Runtime2.Engine.Config;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.crypto;
+using PLang.Runtime2.modules.identity;
 
 namespace PLang.Runtime2.modules.signing.providers;
 
 /// <summary>
-/// Ed25519 signing provider using NSec. Handles key generation, signing, and verification.
+/// Ed25519 signing provider. Owns the full signing/verification pipeline.
+/// Low-level crypto via NSec. High-level pipeline builds SignedData envelopes.
 /// </summary>
 public class Ed25519Provider : ISigningProvider
 {
     public string Name => "ed25519";
     public bool IsDefault { get; set; }
 
-    /// <summary>Generates an Ed25519 key pair. Returns base64-encoded public and private keys.</summary>
+    // --- High-level pipeline ---
+
+    public virtual async Task<Data> SignAsync(sign action)
+    {
+        var engine = action.Context.Engine;
+
+        // Get identity
+        var identityResult = await engine.RunAction<identity.Get>(new identity.Get(), action.Context);
+        if (!identityResult.Success) return identityResult;
+        var identity = (IdentityData)identityResult;
+
+        // Hash the data
+        var hash = await engine.RunAction<Hash>(new Hash { Data = Data.Ok(action.Data ?? new object()), Algorithm = "keccak256" }, action.Context);
+        if (!hash.Success) return hash;
+
+        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
+        var nonce = action.Context.MemoryStack.GetValue("GUID")!.ToString()!;
+
+        var signedData = new SignedData
+        {
+            Type = "signature",
+            Algorithm = Name,
+            Nonce = nonce,
+            Created = now,
+            Expires = action.ExpiresInMs.HasValue ? now.AddMilliseconds(action.ExpiresInMs.Value) : null,
+            Contracts = action.Contracts,
+            Headers = action.Headers,
+            Hash = hash
+        };
+
+        var signResult = signedData.Sign(this, identity);
+        if (!signResult.Success) return signResult;
+
+        var result = Data.Ok(action.Data);
+        result.Signature = signedData;
+        return result;
+    }
+
+    public virtual async Task<Data> VerifyAsync(verify action)
+    {
+        if (action.Data?.Signature == null)
+            return Data.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+
+        var signedData = action.Data.Signature;
+        var engine = action.Context.Engine;
+        var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
+        var signingSettings = engine.Config.For<Config>(action.Context);
+        var effectiveTimeout = action.TimeoutMs ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+
+        // 1. Type check
+        if (signedData.Type != "signature")
+            return Data.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
+
+        // 2. Timeout check (Created too old)
+        var age = now - signedData.Created;
+        if (age.TotalMilliseconds > effectiveTimeout)
+            return Data.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+
+        // 3. Expiry check
+        if (signedData.Expires.HasValue && now > signedData.Expires.Value)
+            return Data.FromError(new ActionError("Signature has expired", "Expired", 400));
+
+        // 4. Nonce replay check
+        var nonceCacheKey = $"nonce:{signedData.Nonce}";
+        var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
+        var nonceAdded = await engine.Cache.TryAddAsync(nonceCacheKey, Data.Ok(true), cacheSettings);
+        if (!nonceAdded)
+            return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+
+        // 5. Contract matching
+        if (!signedData.ContractsMatch(action.Contracts))
+            return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+
+        // 6. Header matching
+        if (action.Headers != null)
+        {
+            if (signedData.Headers == null)
+                return Data.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
+
+            foreach (var kvp in action.Headers)
+            {
+                if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue) ||
+                    !string.Equals(signedValue?.ToString(), kvp.Value?.ToString(), StringComparison.Ordinal))
+                    return Data.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+            }
+        }
+
+        // 7. Data hash verification
+        if (signedData.Hash?.Value is not byte[] storedHash || storedHash.Length == 0)
+            return Data.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
+
+        if (action.Data?.Value != null)
+        {
+            var rehash = await engine.RunAction<Hash>(
+                new Hash { Data = action.Data, Algorithm = signedData.Hash!.Type?.Value ?? "keccak256" }, action.Context);
+            if (!rehash.Success) return rehash;
+            if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
+                return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+        }
+
+        // 8. Signature verification
+        var verifyResult = signedData.Verify(this);
+        if (!verifyResult.Success) return verifyResult;
+
+        return Data.Ok(true);
+    }
+
+    // --- Low-level crypto ---
+
     public Data<KeyPair> GenerateKeyPair()
     {
         try
@@ -40,7 +151,6 @@ public class Ed25519Provider : ISigningProvider
         }
     }
 
-    /// <summary>Signs data with an Ed25519 private key. Returns raw signature bytes.</summary>
     public Data Sign(byte[] data, string privateKeyBase64)
     {
         try
@@ -60,7 +170,6 @@ public class Ed25519Provider : ISigningProvider
         }
     }
 
-    /// <summary>Verifies an Ed25519 signature. Returns Data.Ok(true) on success, error on failure.</summary>
     public Data Verify(byte[] data, byte[] signature, string publicKeyBase64)
     {
         try

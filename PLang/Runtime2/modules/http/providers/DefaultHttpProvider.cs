@@ -383,8 +383,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 ["method"] = method
             },
             Contracts = signOptions?.Contracts,
-            ExpiresInMs = signOptions?.ExpiresInMs,
-            Provider = signOptions?.Provider
+            ExpiresInMs = signOptions?.ExpiresInMs
         };
 
         return await context.Engine.RunAction<signing.sign>(httpSign, context);

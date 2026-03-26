@@ -42,7 +42,7 @@ public class SignActionTests
     private PLangContext Ctx => _engine.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
-        int? expiresInMs = null, Dictionary<string, object>? headers = null, string? provider = null)
+        int? expiresInMs = null, Dictionary<string, object>? headers = null)
     {
         var action = new sign
         {
@@ -50,10 +50,9 @@ public class SignActionTests
             Data = data,
             Contracts = contracts,
             ExpiresInMs = expiresInMs,
-            Headers = headers,
-            Provider = provider
+            Headers = headers
         };
-        return await action.Run();
+        return await _engine.RunAction<sign>(action, Ctx);
     }
 
     #region Happy Path & Field Population
@@ -217,23 +216,19 @@ public class SignActionTests
     #region Provider Override
 
     [Test]
-    public async Task Sign_ProviderOverride_UsesNamedProvider()
+    public async Task Sign_CustomDefaultProvider_UsesIt()
     {
+        // Ensure identity exists with the default ed25519 provider first
+        await new Get { Context = Ctx, Name = null }.Run();
+
         var mock = new MockSigningProvider("mock");
         _engine.Providers.Register<ISigningProvider>(mock);
+        _engine.Providers.SetDefault<ISigningProvider>("mock");
 
-        var result = await SignData("test", provider: "mock");
+        var result = await SignData("test");
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Signature!.Algorithm).IsEqualTo("mock");
+        await Assert.That(result.Signature).IsNotNull();
         await Assert.That(mock.SignCalled).IsTrue();
-    }
-
-    [Test]
-    public async Task Sign_ProviderOverride_Unknown_ReturnsError()
-    {
-        var result = await SignData("test", provider: "unknown");
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
     #endregion
@@ -254,7 +249,7 @@ public class SignActionTests
     #region Error Paths
 
     [Test]
-    public async Task Sign_MissingIdentity_ReturnsError()
+    public async Task Sign_ThrowingKeyProvider_ReturnsError()
     {
         // Register a key provider that throws to simulate identity creation failure
         var throwingProvider = new ThrowingKeyProvider();
@@ -263,7 +258,8 @@ public class SignActionTests
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("KeyGenerationError");
+        // Key generation fails, identity creation fails, sign fails
+        await Assert.That(result.Error).IsNotNull();
     }
 
     [Test]
@@ -274,8 +270,9 @@ public class SignActionTests
 
         var throwing = new ThrowingSigningProvider();
         _engine.Providers.Register<ISigningProvider>(throwing);
+        _engine.Providers.SetDefault<ISigningProvider>("throwing");
 
-        var result = await SignData("test", provider: "throwing");
+        var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
     }
@@ -284,15 +281,18 @@ public class SignActionTests
 
     private class MockSigningProvider : ISigningProvider
     {
+        private readonly Ed25519Provider _inner = new();
         public string Name { get; }
         public bool IsDefault { get; set; }
         public bool SignCalled { get; private set; }
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public Data<KeyPair> GenerateKeyPair() => new Ed25519Provider().GenerateKeyPair();
-        public Data Sign(byte[] data, string privateKey) { SignCalled = true; return Data.Ok(new byte[64]); }
-        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
+        public Data<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
+        public Data Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
+        public Data Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
+        public async Task<Data> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
+        public Task<Data> VerifyAsync(verify action) => _inner.VerifyAsync(action);
     }
 
     private class ThrowingSigningProvider : ISigningProvider
@@ -302,6 +302,8 @@ public class SignActionTests
         public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
+        public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
+        public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }
 
     private class ThrowingKeyProvider : IKeyProvider

@@ -1,11 +1,10 @@
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.signing.providers;
 
 namespace PLang.Runtime2.modules.signing;
 
 /// <summary>
 /// Verifies a signed data envelope.
-/// Delegates to SignedData.VerifyAsync — SignedData owns its own verification.
 /// </summary>
 [Action("verify", Cacheable = false)]
 public partial class verify : IContext
@@ -22,11 +21,8 @@ public partial class verify : IContext
     /// <summary>Optional timeout override in milliseconds.</summary>
     public partial long? TimeoutMs { get; init; }
 
-    public async Task<Data> Run()
-    {
-        if (Data?.Signature == null)
-            return Data.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+    [Provider]
+    public partial ISigningProvider Signer { get; }
 
-        return await Data.Signature.VerifyAsync(this);
-    }
+    public async Task<Data> Run() => await Signer.VerifyAsync(this);
 }

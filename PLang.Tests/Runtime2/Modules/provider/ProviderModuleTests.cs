@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.Engine.Providers;
+using PLang.Runtime2.modules.signing;
 using PLang.Runtime2.modules.signing.providers;
 using PLang.Runtime2.modules.crypto.providers;
 using PLangEngine = PLang.Runtime2.Engine.@this;
@@ -375,5 +376,7 @@ public class ProviderModuleTests
         public Data<KeyPair> GenerateKeyPair() => Data<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
+        public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());
+        public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.Ok(true));
     }
 }

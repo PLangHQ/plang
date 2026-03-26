@@ -158,7 +158,7 @@ public class SigningSerializationTests
                 Data = signedData,
                 Contracts = new List<string> { "C0" }
             };
-            var result = await sd.VerifyAsync(action);
+            var result = await action.Run();
             await Assert.That(result.Success).IsFalse();
             await engine.DisposeAsync();
         }
