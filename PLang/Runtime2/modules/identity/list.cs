@@ -10,10 +10,8 @@ namespace PLang.Runtime2.modules.identity;
 [Action("list")]
 public partial class list : IContext
 {
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
-        if (!provider.Success) return provider;
-        return await provider.Value!.ListAsync(this);
-    }
+    [Provider]
+    public partial IIdentityProvider Identity { get; }
+
+    public async Task<Data> Run() => await Identity.ListAsync(this);
 }

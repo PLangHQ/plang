@@ -13,10 +13,8 @@ public partial class Export : IContext
 {
     public partial string? Name { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
-        if (!provider.Success) return provider;
-        return await provider.Value!.ExportAsync(this);
-    }
+    [Provider]
+    public partial IIdentityProvider Identity { get; }
+
+    public async Task<Data> Run() => await Identity.ExportAsync(this);
 }

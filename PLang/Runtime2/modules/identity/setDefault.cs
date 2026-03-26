@@ -12,10 +12,8 @@ public partial class SetDefault : IContext
 {
     public partial string Name { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
-        if (!provider.Success) return provider;
-        return await provider.Value!.SetDefaultAsync(this);
-    }
+    [Provider]
+    public partial IIdentityProvider Identity { get; }
+
+    public async Task<Data> Run() => await Identity.SetDefaultAsync(this);
 }

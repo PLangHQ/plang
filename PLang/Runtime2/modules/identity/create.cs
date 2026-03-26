@@ -19,10 +19,8 @@ public partial class Create : IContext
     /// <summary>Optional provider name override. Uses default IKeyProvider if not specified.</summary>
     public partial string? Provider { get; init; }
 
-    public async Task<Data> Run()
-    {
-        var provider = Context.Engine.Providers.Get<IIdentityProvider>();
-        if (!provider.Success) return provider;
-        return await provider.Value!.CreateAsync(this);
-    }
+    [Provider]
+    public partial IIdentityProvider Identity { get; }
+
+    public async Task<Data> Run() => await Identity.CreateAsync(this);
 }
