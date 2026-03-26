@@ -62,7 +62,7 @@ public class SigningSerializationTests
     public async Task SignedData_UnsafeRelaxedEscaping()
     {
         var sd = CreateTestSignedData();
-        sd.Hash = Data.Ok("héllo", PLang.Runtime2.Engine.Memory.Type.FromName("sha256"));
+        sd.Identity = "héllo";
 
         var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
         // Non-ASCII should appear literally, not as \uXXXX
@@ -139,7 +139,7 @@ public class SigningSerializationTests
         // Create a SignedData with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
-        sd.Hash = Data.Ok("not-valid-base64!!!", PLang.Runtime2.Engine.Memory.Type.FromName("sha256"));
+        sd.Hash = Data.Ok(new byte[] { 0xFF }, PLang.Runtime2.Engine.Memory.Type.FromName("sha256"));
         sd.Signature = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
@@ -199,7 +199,7 @@ public class SigningSerializationTests
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
-            Hash = Data.Ok(Convert.ToBase64String(new byte[32]), PLang.Runtime2.Engine.Memory.Type.FromName("sha256")),
+            Hash = Data.Ok(new byte[32], PLang.Runtime2.Engine.Memory.Type.FromName("sha256")),
             Signature = null
         };
     }

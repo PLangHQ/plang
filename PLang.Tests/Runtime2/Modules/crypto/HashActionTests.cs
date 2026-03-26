@@ -37,32 +37,27 @@ public class HashActionTests
     // --- Hash action ---
 
     [Test]
-    public async Task Hash_StringInput_ReturnsBase64WithType()
+    public async Task Hash_StringInput_ReturnsBytesWithType()
     {
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value is string).IsTrue();
+        await Assert.That(result.Value is byte[]).IsTrue();
         await Assert.That(result.Type!.Value).IsEqualTo("keccak256");
-        var hash = (string)result.Value!;
-        await Assert.That(hash).IsNotEmpty();
-        await Assert.That(hash.Length).IsEqualTo(44); // 32 bytes = 44 base64 chars
+        await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
     }
 
     [Test]
-    public async Task Hash_ObjectInput_SerializesToJsonBeforeHashing()
+    public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        // Known value: JsonSerializer.Serialize("hello") = "\"hello\""
-        // keccak256 of UTF8 bytes of "\"hello\"" is a fixed value.
         var refHash = new DefaultCryptoProvider().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
-        var expectedBase64 = Convert.ToBase64String((byte[])refHash.Value!);
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That((string)result.Value!).IsEqualTo(expectedBase64);
+        await Assert.That((byte[])result.Value!).IsEquivalentTo((byte[])refHash.Value!);
     }
 
     [Test]
@@ -72,7 +67,7 @@ public class HashActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value is string).IsTrue();
+        await Assert.That(result.Value is byte[]).IsTrue();
         await Assert.That(result.Type!.Value).IsEqualTo("keccak256");
     }
 
@@ -89,7 +84,7 @@ public class HashActionTests
         await Assert.That(sha256Result.Success).IsTrue();
         await Assert.That(sha256Result.Type!.Value).IsEqualTo("sha256");
         await Assert.That(keccakResult.Type!.Value).IsEqualTo("keccak256");
-        await Assert.That((string)sha256Result.Value!).IsNotEqualTo((string)keccakResult.Value!);
+        await Assert.That((byte[])sha256Result.Value!).IsNotEquivalentTo((byte[])keccakResult.Value!);
     }
 
     [Test]
@@ -136,7 +131,7 @@ public class HashActionTests
     {
         var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var hashResult = await hashAction.Run();
-        var hash = (string)hashResult.Value!;
+        var hash = Convert.ToBase64String((byte[])hashResult.Value!);
 
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = hash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
@@ -150,10 +145,9 @@ public class HashActionTests
     {
         var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var hashResult = await hashAction.Run();
-        var hash = (string)hashResult.Value!;
-
-        // Use a different hash (flip first char)
-        var wrongHash = (hash[0] == 'a' ? 'b' : 'a') + hash[1..];
+        var hashBytes = (byte[])hashResult.Value!;
+        hashBytes[0] ^= 0xFF; // flip first byte
+        var wrongHash = Convert.ToBase64String(hashBytes);
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = wrongHash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 

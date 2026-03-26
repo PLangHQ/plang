@@ -60,14 +60,18 @@ public class SignedData
                 if (prop == "type") type = reader.GetString() ?? "";
                 else if (prop == "value") value = reader.GetString() ?? "";
             }
-            return Data.Ok(value, string.IsNullOrEmpty(type) ? null : Engine.Memory.Type.FromName(type));
+            var typeObj = string.IsNullOrEmpty(type) ? null : Engine.Memory.Type.FromName(type);
+            byte[] bytes;
+            try { bytes = Convert.FromBase64String(value); } catch { bytes = Array.Empty<byte>(); }
+            return Data.Ok(bytes, typeObj);
         }
 
         public override void Write(Utf8JsonWriter writer, Data value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
             writer.WriteString("type", value.Type?.Value ?? "");
-            writer.WriteString("value", value.Value?.ToString() ?? "");
+            var base64 = value.Value is byte[] bytes ? Convert.ToBase64String(bytes) : value.Value?.ToString() ?? "";
+            writer.WriteString("value", base64);
             writer.WriteEndObject();
         }
     }
@@ -197,8 +201,7 @@ public class SignedData
         }
 
         // 8. Data hash verification — re-hash original data if provided
-        var hashValue = Hash?.Value?.ToString();
-        if (string.IsNullOrEmpty(hashValue))
+        if (Hash?.Value is not byte[] storedHash || storedHash.Length == 0)
             return Data.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if (action.Data?.Value != null)
@@ -206,7 +209,7 @@ public class SignedData
             var rehash = await engine.RunAction<Hash>(
                 new Hash { Data = action.Data, Algorithm = Hash!.Type?.Value ?? "keccak256" }, action.Context);
             if (!rehash.Success) return rehash;
-            if (!string.Equals(rehash.Value?.ToString(), hashValue, StringComparison.Ordinal))
+            if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 

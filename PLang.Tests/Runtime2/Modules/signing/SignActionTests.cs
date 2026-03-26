@@ -181,16 +181,15 @@ public class SignActionTests
     }
 
     [Test]
-    public async Task Sign_Hash_Base64Encoding()
+    public async Task Sign_Hash_IsBytes()
     {
         var result = await SignData("test");
 
         await Assert.That(result.Success).IsTrue();
         var hash = result.Signature!.Hash;
         await Assert.That(hash).IsNotNull();
-        // Should be valid base64
-        var decoded = Convert.FromBase64String((string)hash.Value!);
-        await Assert.That(decoded.Length).IsGreaterThan(0);
+        await Assert.That(hash.Value is byte[]).IsTrue();
+        await Assert.That(((byte[])hash.Value!).Length).IsGreaterThan(0);
     }
 
     #endregion
