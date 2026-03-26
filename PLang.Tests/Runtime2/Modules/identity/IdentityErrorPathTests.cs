@@ -315,7 +315,7 @@ public class IdentityErrorPathTests
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result.Value as List<IdentityData>;
+        var list = result as DataList<IdentityData>;
         // Both deserialize as IdentityData — no type filtering anymore
         await Assert.That(list!.Count).IsEqualTo(2);
     }

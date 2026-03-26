@@ -32,6 +32,12 @@ public partial class Data
     public static Data Ok() => new("");
     public static Data Ok(object? value, Type? type = null) => new("", value, type);
     public static Data FromError(IError error) => new("") { Error = error };
+    public static T FromError<T>(IError error) where T : Data, new() => new() { Error = error };
+
+    /// <summary>
+    /// Produces a typed error Data from this instance's error. The error object creates the conversion.
+    /// </summary>
+    public T ToError<T>() where T : Data, new() => new() { Error = Error };
 
     /// <summary>
     /// Merge: combines two Data results (logic from Return.Merge).
