@@ -70,17 +70,6 @@ public class CompareHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_DoesNotSetConditionSignal()
-    {
-        var context = _engine.CreateContext();
-        var action = new Compare { Context = context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
-        await action.Run();
-
-        var signal = context.MemoryStack.Get("__condition__");
-        await Assert.That(signal).IsNull();
-    }
-
-    [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
         var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };

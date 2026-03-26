@@ -58,13 +58,12 @@ public sealed class @this : List<Action.@this>
 
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken ct = default)
     {
-        Data merged = Data.Ok();
+        Data result = Data.Ok();
         foreach (var action in this)
         {
-            var result = await action.RunAsync(engine, context, ct);
+            result = await action.RunAsync(engine, context, ct);
             if (!result.Success) return result;
-            merged = merged.Merge(result);
         }
-        return merged;
+        return result;
     }
 }

@@ -22,8 +22,6 @@ public partial class If : IContext
         if (!evalResult.Success) return evalResult;
 
         var result = (bool)evalResult.Value!;
-        Context.MemoryStack.Set("__condition__", result);
-
         var goalToCall = result ? GoalIfTrue : GoalIfFalse;
         if (goalToCall != null)
         {

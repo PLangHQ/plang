@@ -178,27 +178,25 @@ public class IfHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Run_SetsConditionSignalInMemoryStack()
+    public async Task Run_TrueCondition_ReturnsBoolTrue()
     {
-        var context = CreateContext();
-        var action = new If { Context = context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
-        await action.Run();
+        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
+        var result = await action.Run();
 
-        var signal = context.MemoryStack.Get("__condition__");
-        await Assert.That(signal).IsNotNull();
-        await Assert.That(signal!.Value).IsEqualTo(true);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value is bool).IsTrue();
+        await Assert.That((bool)result.Value!).IsTrue();
     }
 
     [Test]
-    public async Task Run_FalseCondition_SetsConditionSignalFalse()
+    public async Task Run_FalseCondition_ReturnsBoolFalse()
     {
-        var context = CreateContext();
-        var action = new If { Context = context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
-        await action.Run();
+        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
+        var result = await action.Run();
 
-        var signal = context.MemoryStack.Get("__condition__");
-        await Assert.That(signal).IsNotNull();
-        await Assert.That(signal!.Value).IsEqualTo(false);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value is bool).IsTrue();
+        await Assert.That((bool)result.Value!).IsFalse();
     }
 
     [Test]

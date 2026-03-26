@@ -23,17 +23,15 @@ public sealed class @this : List<Step.@this>
 
     /// <summary>
     /// Runs all steps in order. Owns the iteration loop (OBP rule 5).
-    /// Sub-step logic: indented steps default to NOT executing — a condition
-    /// step proves its children by setting __condition__ = true in memory.
+    /// Sub-step logic: when a step returns a bool (condition step), its value
+    /// controls whether indented children execute. False skips them.
+    /// Non-bool results don't affect children — they always execute.
     /// When context.Setup is set, implements run-once semantics.
     /// All sub-step state is local — fully thread-safe.
     /// </summary>
     public async Task<Data> RunAsync(Engine.@this engine, PLangContext context, CancellationToken cancellationToken = default)
     {
         Data? lastResult = null;
-        // Sub-step tracking: indented steps don't execute unless proven true.
-        // When a step has indented children and its result is NOT bool true,
-        // skipBelowIndent is set to that step's indent, skipping deeper steps.
         int? skipBelowIndent = null;
 
         for (var i = 0; i < Count; i++)
@@ -45,7 +43,6 @@ public sealed class @this : List<Step.@this>
             {
                 if (step.Indent > skipBelowIndent)
                     continue;
-                // Back to parent level or shallower — stop skipping
                 skipBelowIndent = null;
             }
 
@@ -55,20 +52,10 @@ public sealed class @this : List<Step.@this>
 
             var stepResult = await step.RunAsync(engine, context, cancellationToken);
 
-            // Sub-step control: indented steps default to NOT executing.
-            // A condition step proves its children by setting __condition__ = true in memory.
-            // Only condition steps (those that set __condition__) can trigger sub-step skipping.
-            // Non-condition steps with indented children are ignored — children always execute.
-            if (HasIndentedChildren(i))
-            {
-                var conditionSignal = context.MemoryStack.Get("__condition__");
-                if (conditionSignal != null)
-                {
-                    context.MemoryStack.Remove("__condition__");
-                    if (conditionSignal.Value is not true)
-                        skipBelowIndent = step.Indent;
-                }
-            }
+            // Sub-step control: if a step returns a bool and has indented children,
+            // false skips the children. Non-bool results don't affect children.
+            if (HasIndentedChildren(i) && stepResult.Value is bool condition && !condition)
+                skipBelowIndent = step.Indent;
 
             // Determine if the step error is tolerated:
             // - Success (no error)
