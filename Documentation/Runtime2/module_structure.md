@@ -29,6 +29,8 @@ using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Runtime2.modules.crypto;
 
+[Example("hash %content%, write to %hash%", "Data=%content%, Algorithm=keccak256")]
+[Example("hash %data% with sha256, write to %hash%", "Data=%data%, Algorithm=sha256")]
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {
@@ -47,6 +49,7 @@ public partial class Hash : IContext
 
 ### Rules
 
+- **`[Example(plang, mapping)]`** on the class. Shows PLang syntax and how it maps to properties. Multiple allowed. Machine-readable — builder prompt and doc tools extract these.
 - **`[Action("name")]`** on the class. Name is the action name in .pr files (lowercase). `Cacheable = false` for non-deterministic actions.
 - **`: IContext`** — gives the handler a `Context` property (PLangContext) set by the generator.
 - **`partial class`** — required. The source generator creates the other half implementing `ICodeGenerated`.
@@ -64,6 +67,20 @@ For each `[Action]` partial class, the generator creates:
 3. **Validation** — non-nullable string/reference checks (`MissingParameter`), `[IsNotNull]`/`[IsInitiated]` checks
 4. **Provider resolution** — `[Provider]` properties resolved from `engine.Providers.Get<T>()`
 5. **Error wrapping** — exceptions in `Run()` caught and returned as `Data.FromError`
+
+## Class Attributes
+
+### `[Example(plang, mapping)]`
+Shows how PLang developers write steps that use this action, and how the natural language maps to properties. Multiple allowed per class. The builder prompt and documentation tools can extract these at build time.
+
+```csharp
+[Example("hash %content%, write to %hash%", "Data=%content%, Algorithm=keccak256")]
+[Example("hash %data% with sha256, write to %hash%", "Data=%data%, Algorithm=sha256")]
+[Action("hash", Cacheable = false)]
+public partial class Hash : IContext { ... }
+```
+
+Every action handler MUST have at least one `[Example]`. Show the most common usage first, then variations.
 
 ## Property Attributes
 
@@ -258,11 +275,12 @@ _engine.Providers.SetDefault<ICryptoProvider>("failing");
 
 1. Create `PLang/Runtime2/modules/{name}/` folder
 2. One `[Action]` partial class per action, implementing `IContext`
-3. Properties: `partial` with `{ get; init; }`, use attributes for validation/defaults
-4. If pluggable: create `providers/` with `I{Name}Provider : IProvider` and `Default{Name}Provider`
-5. Provider methods accept action records (`this`), return `Data`
-6. Register default provider in `Providers.RegisterDefaults()`
-7. Add type name mapping in `Providers.ResolveProviderType()`
-8. Handler's `Run()` should be minimal — delegate to provider, relay results
-9. C# tests in `PLang.Tests/Runtime2/Modules/{name}/`
-10. PLang integration tests in `Tests/Runtime2/{Name}/`
+3. Add `[Example]` attributes — at least one per action, showing PLang syntax and property mapping
+4. Properties: `partial` with `{ get; init; }`, use attributes for validation/defaults
+5. If pluggable: create `providers/` with `I{Name}Provider : IProvider` and `Default{Name}Provider`
+6. Provider methods accept action records (`this`), return `Data`
+7. Register default provider in `Providers.RegisterDefaults()`
+8. Add type name mapping in `Providers.ResolveProviderType()`
+9. Handler's `Run()` should be minimal — delegate to provider, relay results
+10. C# tests in `PLang.Tests/Runtime2/Modules/{name}/`
+11. PLang integration tests in `Tests/Runtime2/{Name}/`
