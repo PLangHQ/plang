@@ -3,8 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
-/// PLang: - assert %result% not equals 0
-/// PLang: - assert %status% not equals "error"
+[Example("assert %result% not equals 0", "Expected=0, Actual=%result%")]
+[Example("assert %status% not equals 'error'", "Expected=error, Actual=%status%")]
 [Action("notEquals")]
 public partial class NotEquals : IContext
 {

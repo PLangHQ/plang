@@ -3,8 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
-/// PLang: - assert %result% is null
-/// PLang: - assert %deletedUser% is null, "User should be deleted"
+[Example("assert %result% is null", "Value=%result%")]
+[Example("assert %deletedUser% is null, 'User should be deleted'", "Value=%deletedUser%, Message=User should be deleted")]
 [Action("isNull")]
 public partial class IsNull : IContext
 {

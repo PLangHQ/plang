@@ -29,3 +29,16 @@ public sealed class IsInitiatedAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class IsNotNullAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public sealed class ExampleAttribute : Attribute
+{
+    public string Plang { get; }
+    public string Mapping { get; }
+
+    public ExampleAttribute(string plang, string mapping)
+    {
+        Plang = plang;
+        Mapping = mapping;
+    }
+}

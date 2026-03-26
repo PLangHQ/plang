@@ -2,8 +2,8 @@ using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.@event;
 
-/// PLang: - skip action, value = %mockResponse%
-/// PLang: - skip action, value = {"status": 200}
+[Example("skip action, value = %mockResponse%", "Value=%mockResponse%")]
+[Example("skip action, value = {\"status\": 200}", "Value={\"status\": 200}")]
 [Action("skipAction", Cacheable = false)]
 public partial class SkipAction : IContext
 {

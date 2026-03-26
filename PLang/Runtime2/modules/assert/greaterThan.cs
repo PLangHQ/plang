@@ -3,8 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
-/// PLang: - assert %count% greater than 0
-/// PLang: - assert %score% greater than 50, "Score too low"
+[Example("assert %count% greater than 0", "A=%count%, B=0")]
+[Example("assert %score% greater than 50, 'Score too low'", "A=%score%, B=50, Message=Score too low")]
 [Action("greaterThan")]
 public partial class GreaterThan : IContext
 {

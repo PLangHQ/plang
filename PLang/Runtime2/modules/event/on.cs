@@ -5,10 +5,10 @@ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@th
 
 namespace PLang.Runtime2.modules.@event;
 
-/// PLang: - before step, call LogStep, on goal pattern 'Api/*'
-/// PLang: - after goal, call Cleanup
-/// PLang: - before action, call MockHttp, on action pattern 'http.*'
-/// PLang: - on before goal, call AuthCheck, on goal pattern '^Admin', is regex
+[Example("before step, call LogStep, on goal pattern 'Api/*'", "Type=BeforeStep, GoalToCall=LogStep, GoalPattern=Api/*")]
+[Example("after goal, call Cleanup", "Type=AfterGoal, GoalToCall=Cleanup")]
+[Example("before action, call MockHttp, on action pattern 'http.*'", "Type=BeforeAction, GoalToCall=MockHttp, ActionPattern=http.*")]
+[Example("on before goal, call AuthCheck, on goal pattern '^Admin', is regex", "Type=BeforeGoal, GoalToCall=AuthCheck, GoalPattern=^Admin, IsRegex=true")]
 [Action("on", Cacheable = false)]
 public partial class On : IContext
 {

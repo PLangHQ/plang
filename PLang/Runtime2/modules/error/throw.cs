@@ -3,8 +3,8 @@ using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.error;
 
-/// PLang: - throw "User not found"
-/// PLang: - throw "Access denied", status code 403, key "Forbidden"
+[Example("throw 'User not found'", "Message=User not found")]
+[Example("throw 'Access denied', status code 403, key 'Forbidden'", "Message=Access denied, StatusCode=403, Key=Forbidden")]
 [Action("throw", Cacheable = false)]
 public partial class Throw : IContext
 {

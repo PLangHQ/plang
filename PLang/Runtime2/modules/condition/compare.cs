@@ -3,8 +3,8 @@ using PLang.Runtime2.modules.condition.providers;
 
 namespace PLang.Runtime2.modules.condition;
 
-/// PLang: - compare %a% > %b%, write to %isGreater%
-/// PLang: - compare %status% == "active", write to %isActive%
+[Example("compare %a% > %b%, write to %isGreater%", "Left=%a%, Operator=>, Right=%b%")]
+[Example("compare %status% == 'active', write to %isActive%", "Left=%status%, Operator===, Right=active")]
 [Action("compare")]
 public partial class Compare : IContext
 {
