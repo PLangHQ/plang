@@ -6,6 +6,7 @@ namespace PLang.Runtime2.modules.error;
 [Action("throw", Cacheable = false)]
 public partial class Throw : IContext
 {
+    [IsNotNull]
     public partial string Message { get; init; }
     [Default(500)]
     public partial int StatusCode { get; init; }
@@ -13,10 +14,7 @@ public partial class Throw : IContext
 
     public Task<Data> Run()
     {
-        var code = StatusCode;
-        var key = Key ?? "UserError";
-
         return Task.FromResult(Data.FromError(
-            new ServiceError(Message, key, code)));
+            new ServiceError(Message, Key ?? "UserError", StatusCode)));
     }
 }
