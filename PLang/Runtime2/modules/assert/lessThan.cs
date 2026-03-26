@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
+/// PLang: - assert %elapsed% less than 1000
+/// PLang: - assert %retries% less than 5, "Too many retries"
 [Action("lessThan")]
 public partial class LessThan : IContext
 {

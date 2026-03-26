@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
+/// PLang: - assert %user% is not null
+/// PLang: - assert %response% is not null, "API should return data"
 [Action("isNotNull")]
 public partial class IsNotNull : IContext
 {

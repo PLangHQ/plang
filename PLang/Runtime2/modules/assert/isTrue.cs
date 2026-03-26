@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
+/// PLang: - assert %isActive% is true
+/// PLang: - assert %count% is true, "Should be truthy"
 [Action("isTrue")]
 public partial class IsTrue : IContext
 {

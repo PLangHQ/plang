@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
+/// PLang: - assert %isDeleted% is false
+/// PLang: - assert %error% is false
 [Action("isFalse")]
 public partial class IsFalse : IContext
 {

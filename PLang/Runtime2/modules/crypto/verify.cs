@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Runtime2.modules.crypto;
 
+/// PLang: - verify %content% against %hash%, write to %isValid%
+/// PLang: - verify %data% against %hash% with sha256, write to %isValid%
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {

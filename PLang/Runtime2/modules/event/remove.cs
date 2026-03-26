@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.@event;
 
+/// PLang: - remove event %eventId%
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {

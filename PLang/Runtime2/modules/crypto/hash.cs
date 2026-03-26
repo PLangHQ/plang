@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.crypto.providers;
 
 namespace PLang.Runtime2.modules.crypto;
 
+/// PLang: - hash %content%, write to %hash%
+/// PLang: - hash %data% with sha256, write to %hash%
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {

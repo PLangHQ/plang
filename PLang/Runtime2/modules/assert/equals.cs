@@ -3,6 +3,8 @@ using PLang.Runtime2.modules.assert.providers;
 
 namespace PLang.Runtime2.modules.assert;
 
+/// PLang: - assert %result% equals 42
+/// PLang: - assert %name% equals "Alice", "Name mismatch"
 [Action("equals")]
 public partial class Equals : IContext
 {
