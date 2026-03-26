@@ -357,7 +357,7 @@ public sealed class @this
     /// </summary>
     public void RegisterDomainTypes()
     {
-        Register("identityvariable", typeof(modules.identity.IdentityVariable));
+        Register("identitydata", typeof(modules.identity.IdentityData));
     }
 
     /// <summary>

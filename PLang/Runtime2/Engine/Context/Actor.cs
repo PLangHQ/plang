@@ -2,6 +2,7 @@ using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Settings;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.identity;
+using PLang.Runtime2.modules.identity.providers;
 
 namespace PLang.Runtime2.Engine.Context;
 
@@ -11,7 +12,6 @@ namespace PLang.Runtime2.Engine.Context;
 public sealed class Actor : IAsyncDisposable
 {
     private readonly Lazy<ISettingsStore> _dataSource;
-    private IdentityData? _identity;
 
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
@@ -40,11 +40,11 @@ public sealed class Actor : IAsyncDisposable
     public ISettingsStore SettingsStore => _dataSource.Value;
 
     /// <summary>
-    /// Identity data for this actor. Lazy — created on first access.
-    /// For System actor: auto-loads/creates default identity from SettingsStore.
-    /// For User/Service: starts empty, set externally by HTTP/signing layer.
+    /// Identity for this actor.
+    /// For System actor: resolved via DynamicData %MyIdentity% on first access.
+    /// For User/Service: set externally by HTTP/signing layer.
     /// </summary>
-    public IdentityData Identity => _identity ??= new IdentityData(Engine);
+    public IdentityData? Identity { get; set; }
 
     /// <summary>
     /// Resolves an actor by name using the engine.
@@ -76,7 +76,13 @@ public sealed class Actor : IAsyncDisposable
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
+        Context.MemoryStack.Put(new DynamicData("MyIdentity", () =>
+        {
+            var provider = engine.Providers.Get<IIdentityProvider>();
+            if (!provider.Success) return null;
+            var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = engine.Context }).GetAwaiter().GetResult();
+            return identity.Success ? identity : null;
+        }));
     }
 
     private ISettingsStore CreateSettingsStore()

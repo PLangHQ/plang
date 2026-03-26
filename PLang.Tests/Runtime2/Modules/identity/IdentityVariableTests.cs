@@ -5,7 +5,7 @@ using PLangEngine = PLang.Runtime2.Engine.@this;
 
 namespace PLang.Tests.Runtime2.Modules.identity;
 
-public class IdentityVariableTests
+public class IdentityDataTests
 {
     private string _tempDir = null!;
     private PLangEngine _engine = null!;
@@ -30,9 +30,8 @@ public class IdentityVariableTests
         catch { /* best effort cleanup */ }
     }
 
-    private IdentityVariable CreateTestIdentity() => new()
+    private IdentityData CreateTestIdentity() => new("test")
     {
-        Name = "test",
         PublicKey = "dGVzdHB1YmxpY2tleQ==",
         PrivateKey = "dGVzdHByaXZhdGVrZXk=",
         IsDefault = true,
@@ -48,41 +47,33 @@ public class IdentityVariableTests
     }
 
     [Test]
-    public async Task DotNavigation_Name_ReturnsName()
+    public async Task Name_ReturnsName()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("Name");
-        await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value?.ToString()).IsEqualTo("test");
+        await Assert.That(identity.Name).IsEqualTo("test");
     }
 
     [Test]
     public async Task DotNavigation_PublicKey_ReturnsPublicKey()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("PublicKey");
+        var child = identity.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
 
     [Test]
-    public async Task DotNavigation_Created_ReturnsCreated()
+    public async Task Created_ReturnsCreated()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("Created");
-        await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsTypeOf<DateTimeOffset>();
+        await Assert.That(identity.Created).IsTypeOf<DateTimeOffset>();
     }
 
     [Test]
     public async Task DotNavigation_IsArchived_ReturnsIsArchived()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("IsArchived");
+        var child = identity.GetChild("IsArchived");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value).IsEqualTo(false);
     }
@@ -91,8 +82,7 @@ public class IdentityVariableTests
     public async Task DotNavigation_IsDefault_ReturnsIsDefault()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("IsDefault");
+        var child = identity.GetChild("IsDefault");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value).IsEqualTo(true);
     }
@@ -102,8 +92,7 @@ public class IdentityVariableTests
     {
         // [Sensitive] is serialization only, not access control — dot navigation works
         var identity = CreateTestIdentity();
-        var data = new Data("identity", identity);
-        var child = data.GetChild("PrivateKey");
+        var child = identity.GetChild("PrivateKey");
         await Assert.That(child).IsNotNull();
         await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
     }

@@ -107,26 +107,16 @@ public class IdentityErrorPathTests
     }
 
     [Test]
-    public async Task IdentityData_ResolveDefault_SaveFails_Throws()
+    public async Task MyIdentity_ResolveDefault_SaveFails_ReturnsNull()
     {
-        // Swap to failing save before IdentityData resolves
+        // Swap to failing save before %MyIdentity% resolves
         SwapDataSource(_engine.System, new FailingSaveDataSource(
             _engine.System.SettingsStore));
 
-        // Create a fresh IdentityData that hasn't resolved yet
-        var identityData = new IdentityData(_engine);
-
-        // Access Value triggers ResolveDefault → GetOrCreateDefaultAsync fails → throws
-        try
-        {
-            _ = identityData.Value;
-            Assert.Fail("Expected InvalidOperationException");
-        }
-        catch (InvalidOperationException ex)
-        {
-            await Assert.That(ex.Message).Contains("Identity resolution failed");
-            await Assert.That(ex.Message).Contains("IOError");
-        }
+        // Access %MyIdentity% — DynamicData lambda calls provider, which fails, returns null
+        var data = _engine.Context.MemoryStack.Get("MyIdentity");
+        await Assert.That(data).IsNotNull();
+        await Assert.That(data!.Value).IsNull();
     }
 
     // --- Handler save/remove failure paths ---
@@ -296,20 +286,21 @@ public class IdentityErrorPathTests
     // --- Deserialize with unrecognized value type (via Get action) ---
 
     [Test]
-    public async Task Get_UnrecognizedValueType_ReturnsNotFound()
+    public async Task Get_UnrecognizedValueType_ReturnsEmptyIdentity()
     {
-        // Store a raw integer in the identity table — Deserialize won't recognize it
+        // Store a raw integer in the identity table — deserializes as IdentityData with empty fields
         var ds = _engine.System.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
         var result = await new Get { Context = Ctx, Name = "weird" }.Run();
-        // Provider's LoadAsync returns null for unrecognized types → Get returns NotFound
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
+        // IdentityData deserializes but has empty PublicKey — valid but useless
+        await Assert.That(result.Success).IsTrue();
+        var identity = result as IdentityData;
+        await Assert.That(identity!.PublicKey).IsEqualTo("");
     }
 
     [Test]
-    public async Task GetAll_MixedValues_SkipsUnrecognized()
+    public async Task GetAll_MixedValues_IncludesAll()
     {
         var ds = _engine.System.SettingsStore;
 
@@ -317,17 +308,16 @@ public class IdentityErrorPathTests
         var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = true };
         await create.Run();
 
-        // Store an unrecognizable value directly in DataSource
+        // Store a non-identity value directly — deserializes as IdentityData with empty fields
         await ds.Set("identity", "garbage", new Data("garbage", "just a string"));
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var list = result.Value as List<IdentityVariable>;
-        // Should contain the valid identity but skip the garbage
-        await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(list[0].Name).IsEqualTo("valid");
+        var list = result.Value as List<IdentityData>;
+        // Both deserialize as IdentityData — no type filtering anymore
+        await Assert.That(list!.Count).IsEqualTo(2);
     }
 
     // --- Helpers ---

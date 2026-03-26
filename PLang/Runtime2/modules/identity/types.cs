@@ -1,15 +1,17 @@
 using PLang.Runtime2.Engine;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.identity;
 
 /// <summary>
 /// Represents a PLang identity (key pair with metadata).
-/// Pure data class — persistence is owned by IIdentityProvider.
+/// Data subclass — lives on MemoryStack, navigable via %MyIdentity.PublicKey%.
+/// Persistence is owned by IIdentityProvider.
 /// </summary>
-public sealed class IdentityVariable
+public sealed class IdentityData : Data
 {
-    /// <summary>Display name for this identity (e.g., "default", "alice").</summary>
-    public string Name { get; set; } = "";
+    public IdentityData() : base("Identity") { }
+    public IdentityData(string name) : base(name) { }
 
     /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed envelopes.</summary>
     public string PublicKey { get; set; } = "";

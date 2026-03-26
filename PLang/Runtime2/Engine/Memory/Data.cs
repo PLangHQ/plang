@@ -205,7 +205,7 @@ public partial class Data
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
-    /// Subclasses (SettingsData, IdentityData, DynamicData) should not be cloned —
+    /// Subclasses (SettingsData, DynamicData) should not be cloned —
     /// they are stateless/factory-based and should be shared by reference.
     /// </summary>
     public Data Clone()

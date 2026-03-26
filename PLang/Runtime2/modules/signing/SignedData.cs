@@ -85,7 +85,7 @@ public class SignedData
     /// Signs this envelope using the given provider and identity.
     /// Navigates the identity for public key (→ Identity field) and private key (→ signing).
     /// </summary>
-    public Data Sign(ISigningProvider provider, IdentityVariable identity)
+    public Data Sign(ISigningProvider provider, IdentityData identity)
     {
         Identity = identity.PublicKey;
         var signingBytes = ToSigningBytes();
@@ -115,8 +115,9 @@ public class SignedData
         if (!providerResult.Success) return providerResult;
 
         // Get identity
-        var identity = await engine.RunAction<identity.Get, IdentityVariable>(new identity.Get(), action.Context);
-        if (!identity.Success) return identity;
+        var identityResult = await engine.RunAction<identity.Get>(new identity.Get(), action.Context);
+        if (!identityResult.Success) return identityResult;
+        var identity = (IdentityData)identityResult;
 
         // Hash the data
         var hash = await engine.RunAction<Hash>(new Hash { Data = Data.Ok(action.Data ?? new object()), Algorithm = "keccak256" }, action.Context);
@@ -137,7 +138,7 @@ public class SignedData
             Hash = hash
         };
 
-        var signResult = signedData.Sign(providerResult.Value, identity.Value!);
+        var signResult = signedData.Sign(providerResult.Value, identity);
         if (!signResult.Success) return signResult;
 
         var result = Data.Ok(action.Data);

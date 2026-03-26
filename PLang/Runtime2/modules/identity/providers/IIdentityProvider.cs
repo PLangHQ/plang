@@ -38,5 +38,5 @@ public interface IIdentityProvider : IProvider
     Task<Data> ExportAsync(Export action);
 
     /// <summary>Gets the default identity, promoting or auto-creating one if needed.</summary>
-    Task<Data<IdentityVariable>> GetOrCreateDefaultAsync(IContext action);
+    Task<IdentityData> GetOrCreateDefaultAsync(IContext action);
 }
