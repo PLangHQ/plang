@@ -31,28 +31,6 @@ public class DefaultCryptoProviderTests
     }
 
     [Test]
-    [Skip("Bcrypt deferred — not needed for signing module")]
-    public async Task Hash_Bcrypt_ProducesValidHash()
-    {
-        var input = System.Text.Encoding.UTF8.GetBytes("password123");
-        var result = _provider.Hash(input, "bcrypt");
-        var bcryptString = System.Text.Encoding.UTF8.GetString((byte[])result.Value!);
-
-        await Assert.That(bcryptString).StartsWith("$2");
-    }
-
-    [Test]
-    [Skip("Bcrypt deferred — not needed for signing module")]
-    public async Task Hash_Bcrypt_SameInput_DifferentHashes()
-    {
-        var input = System.Text.Encoding.UTF8.GetBytes("password123");
-        var result1 = _provider.Hash(input, "bcrypt");
-        var result2 = _provider.Hash(input, "bcrypt");
-
-        await Assert.That((byte[])result1.Value!).IsNotEquivalentTo((byte[])result2.Value!);
-    }
-
-    [Test]
     public async Task Hash_UnknownAlgorithm_ReturnsError()
     {
         var input = System.Text.Encoding.UTF8.GetBytes("test");
@@ -136,29 +114,6 @@ public class DefaultCryptoProviderTests
         var result = _provider.Verify(input, hash, "sha256");
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That((bool)result.Value!).IsFalse();
-    }
-
-    [Test]
-    [Skip("Bcrypt deferred — not needed for signing module")]
-    public async Task Verify_Bcrypt_CorrectPassword_ReturnsTrue()
-    {
-        var input = System.Text.Encoding.UTF8.GetBytes("mypassword");
-        var hashResult = _provider.Hash(input, "bcrypt");
-        var result = _provider.Verify(input, (byte[])hashResult.Value!, "bcrypt");
-
-        await Assert.That((bool)result.Value!).IsTrue();
-    }
-
-    [Test]
-    [Skip("Bcrypt deferred — not needed for signing module")]
-    public async Task Verify_Bcrypt_WrongPassword_ReturnsFalse()
-    {
-        var input = System.Text.Encoding.UTF8.GetBytes("mypassword");
-        var hashResult = _provider.Hash(input, "bcrypt");
-        var wrongInput = System.Text.Encoding.UTF8.GetBytes("wrongpassword");
-        var result = _provider.Verify(wrongInput, (byte[])hashResult.Value!, "bcrypt");
-
         await Assert.That((bool)result.Value!).IsFalse();
     }
 
