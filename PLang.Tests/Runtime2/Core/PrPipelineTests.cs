@@ -17,15 +17,11 @@ public class PrPipelineTests
     [Test]
     public async Task FullPipeline_LoadAndExecute_VariablesOutputDefaults()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
+        var fixturesDir = FindFixturesDir();
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
-        // Capture output.write calls
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
-
-        // Point engine filesystem at the fixtures directory
-        var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FullPipeline.pr");
@@ -86,9 +82,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
@@ -113,9 +108,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
@@ -133,9 +127,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
@@ -175,9 +168,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
@@ -215,9 +207,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_ParentTraversal_BackAndDown()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
@@ -255,9 +246,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Hand-build a goal that reads a nonexistent file
         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this
@@ -296,9 +286,8 @@ public class PrPipelineTests
     [Test]
     public async Task FilePaths_EscapeAttempt_Blocked()
     {
-        await using var engine = new PLang.Runtime2.Engine.@this("/app");
         var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
+        await using var engine = new PLang.Runtime2.Engine.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Try to read ../../ — should be blocked by PLangFileSystem
         var goal = new PLang.Runtime2.Engine.Goals.Goal.@this

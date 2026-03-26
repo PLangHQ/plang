@@ -12,17 +12,15 @@ public class DefaultFileProvider : IFileProvider
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    private readonly IPLangFileSystem _fs;
+    private static IPLangFileSystem Fs(IContext action) => action.Context.Engine.FileSystem;
 
-    public DefaultFileProvider(IPLangFileSystem fs)
-    {
-        _fs = fs;
-    }
+    public DefaultFileProvider() { }
 
     public Data Read(Read action)
     {
+        var fs = Fs(action);
         var path = action.Path;
-        if (!_fs.File.Exists(path.Absolute))
+        if (!fs.File.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
 
         try
@@ -30,10 +28,10 @@ public class DefaultFileProvider : IFileProvider
             var mime = TypeMapping.GetMimeType(path.Extension);
             var type = Engine.Memory.Type.FromMime(mime);
             object content = type.ClrType == typeof(byte[])
-                ? _fs.File.ReadAllBytes(path.Absolute)
-                : _fs.File.ReadAllText(path.Absolute);
+                ? fs.File.ReadAllBytes(path.Absolute)
+                : fs.File.ReadAllText(path.Absolute);
 
-            return new PathData(path.Absolute, _fs, content);
+            return new PathData(path.Absolute, fs, content);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -43,24 +41,25 @@ public class DefaultFileProvider : IFileProvider
 
     public async Task<Data> Save(Save action)
     {
+        var fs = Fs(action);
         var path = action.Path;
         try
         {
-            EnsureDirectory(_fs.Path.GetDirectoryName(path.Absolute));
+            EnsureDirectory(fs, fs.Path.GetDirectoryName(path.Absolute));
 
             var value = action.Value?.Value;
             if (value is byte[] bytes)
-                await _fs.File.WriteAllBytesAsync(path.Absolute, bytes);
+                await fs.File.WriteAllBytesAsync(path.Absolute, bytes);
             else if (value is string str)
-                await _fs.File.WriteAllTextAsync(path.Absolute, str);
+                await fs.File.WriteAllTextAsync(path.Absolute, str);
             else
             {
-                await using var stream = _fs.File.Create(path.Absolute);
+                await using var stream = fs.File.Create(path.Absolute);
                 await action.Context.Engine.Channels.Serializers.SerializeAsync(new SerializeOptions
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            return new PathData(path.Absolute, _fs);
+            return new PathData(path.Absolute, fs);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -74,23 +73,24 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Delete(Delete action)
     {
+        var fs = Fs(action);
         var path = action.Path;
         try
         {
-            if (_fs.File.Exists(path.Absolute))
-                _fs.File.Delete(path.Absolute);
-            else if (_fs.Directory.Exists(path.Absolute))
+            if (fs.File.Exists(path.Absolute))
+                fs.File.Delete(path.Absolute);
+            else if (fs.Directory.Exists(path.Absolute))
             {
-                if (!action.Recursive && _fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
+                if (!action.Recursive && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
                     return Data.FromError(new ServiceError(
                         $"Directory is not empty: {path.Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
-                _fs.Directory.Delete(path.Absolute, action.Recursive);
+                fs.Directory.Delete(path.Absolute, action.Recursive);
             }
             else if (!action.IgnoreIfNotFound)
                 return Data.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            return new PathData(path.Absolute, _fs);
+            return new PathData(path.Absolute, fs);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -100,21 +100,22 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Copy(Copy action)
     {
+        var fs = Fs(action);
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(source, action.Destination);
-            EnsureDirectory(_fs.Path.GetDirectoryName(destPath));
+            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
-            if (_fs.File.Exists(source.Absolute))
-                _fs.File.Copy(source.Absolute, destPath, action.Overwrite);
+            if (fs.File.Exists(source.Absolute))
+                fs.File.Copy(source.Absolute, destPath, action.Overwrite);
             else
-                CopyDirectory(source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
+                CopyDirectory(fs, source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
 
-            return new PathData(destPath, _fs, source: source.Absolute);
+            return new PathData(destPath, fs, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -124,26 +125,27 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Move(Move action)
     {
+        var fs = Fs(action);
         var source = action.Source;
         if (!source.Exists)
             return Data.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
-            var destPath = ResolveDestinationPath(source, action.Destination);
-            EnsureDirectory(_fs.Path.GetDirectoryName(destPath));
+            var destPath = ResolveDestinationPath(fs, source, action.Destination);
+            EnsureDirectory(fs, fs.Path.GetDirectoryName(destPath));
 
-            if (_fs.File.Exists(source.Absolute))
-                _fs.File.Move(source.Absolute, destPath, action.Overwrite);
+            if (fs.File.Exists(source.Absolute))
+                fs.File.Move(source.Absolute, destPath, action.Overwrite);
             else
             {
-                if (action.Overwrite && _fs.Directory.Exists(destPath))
-                    _fs.Directory.Delete(destPath, recursive: true);
+                if (action.Overwrite && fs.Directory.Exists(destPath))
+                    fs.Directory.Delete(destPath, recursive: true);
 
-                _fs.Directory.Move(source.Absolute, destPath);
+                fs.Directory.Move(source.Absolute, destPath);
             }
 
-            return new PathData(destPath, _fs, source: source.Absolute);
+            return new PathData(destPath, fs, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -153,15 +155,16 @@ public class DefaultFileProvider : IFileProvider
 
     public Data List(List action)
     {
+        var fs = Fs(action);
         var path = action.Path;
-        if (!_fs.Directory.Exists(path.Absolute))
+        if (!fs.Directory.Exists(path.Absolute))
             return Data.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
 
         try
         {
             var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var files = _fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
-                .Select(f => new PathData(f, _fs))
+            var files = fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
+                .Select(f => new PathData(f, fs))
                 .ToArray();
             return Data.Ok(files);
         }
@@ -173,40 +176,40 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Exists(Exists action)
     {
-        return new PathData(action.Path.Absolute, _fs);
+        return new PathData(action.Path.Absolute, Fs(action));
     }
 
     // --- Helpers ---
 
-    private string ResolveDestinationPath(PLangPath source, PLangPath destination)
+    private static string ResolveDestinationPath(IPLangFileSystem fs, PLangPath source, PLangPath destination)
     {
-        if (_fs.File.Exists(source.Absolute) && _fs.Directory.Exists(destination.Absolute))
-            return _fs.Path.Combine(destination.Absolute, source.FileName);
+        if (fs.File.Exists(source.Absolute) && fs.Directory.Exists(destination.Absolute))
+            return fs.Path.Combine(destination.Absolute, source.FileName);
         return destination.Absolute;
     }
 
-    private void EnsureDirectory(string? dir)
+    private static void EnsureDirectory(IPLangFileSystem fs, string? dir)
     {
-        if (!string.IsNullOrEmpty(dir) && !_fs.Directory.Exists(dir))
-            _fs.Directory.CreateDirectory(dir);
+        if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
+            fs.Directory.CreateDirectory(dir);
     }
 
-    private void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
+    private static void CopyDirectory(IPLangFileSystem fs, string src, string dest, bool overwrite, bool includeSubfolders)
     {
-        _fs.Directory.CreateDirectory(dest);
+        fs.Directory.CreateDirectory(dest);
 
-        foreach (var file in _fs.Directory.GetFiles(src))
+        foreach (var file in fs.Directory.GetFiles(src))
         {
-            var fileName = _fs.Path.GetFileName(file);
-            _fs.File.Copy(file, _fs.Path.Combine(dest, fileName), overwrite);
+            var fileName = fs.Path.GetFileName(file);
+            fs.File.Copy(file, fs.Path.Combine(dest, fileName), overwrite);
         }
 
         if (!includeSubfolders) return;
 
-        foreach (var subDir in _fs.Directory.GetDirectories(src))
+        foreach (var subDir in fs.Directory.GetDirectories(src))
         {
-            var dirName = _fs.Path.GetFileName(subDir);
-            CopyDirectory(subDir, _fs.Path.Combine(dest, dirName), overwrite, includeSubfolders);
+            var dirName = fs.Path.GetFileName(subDir);
+            CopyDirectory(fs, subDir, fs.Path.Combine(dest, dirName), overwrite, includeSubfolders);
         }
     }
 }

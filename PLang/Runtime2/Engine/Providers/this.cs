@@ -206,7 +206,7 @@ public sealed class @this
     /// Registers built-in default providers. Called by Engine constructor.
     /// Each module owns its default provider — this method is the single registration point.
     /// </summary>
-    public void RegisterDefaults(PLang.Interfaces.IPLangFileSystem? fileSystem = null)
+    public void RegisterDefaults()
     {
         var ed25519 = new Ed25519Provider();
         Register<ISigningProvider>(ed25519);
@@ -216,7 +216,6 @@ public sealed class @this
         Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
         Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
         Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
-        if (fileSystem != null)
-            Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider(fileSystem));
+        Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
     }
 }
