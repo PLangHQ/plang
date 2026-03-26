@@ -524,7 +524,7 @@ public class IdentityHandlerTests
     }
 
     [Test]
-    public async Task Export_ReturnsPrivateKeyString()
+    public async Task Export_ReturnsFullIdentity()
     {
         var create = new Create { Context = Ctx, Name = "exportme", SetAsDefault = true };
         var createResult = await create.Run();
@@ -533,11 +533,13 @@ public class IdentityHandlerTests
         var handler = new Export { Context = Ctx, Name = "exportme" };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value as string).IsEqualTo(expectedKey);
+        var identity = result as IdentityData;
+        await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
+        await Assert.That(identity.PublicKey).IsNotNull();
     }
 
     [Test]
-    public async Task Export_NullName_ReturnsDefaultPrivateKey()
+    public async Task Export_NullName_ReturnsDefaultIdentity()
     {
         var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
         var createResult = await create.Run();
@@ -546,7 +548,8 @@ public class IdentityHandlerTests
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value as string).IsEqualTo(expectedKey);
+        var identity = result as IdentityData;
+        await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
     }
 
     // --- get by-name does NOT overwrite %MyIdentity% ---
@@ -599,7 +602,7 @@ public class IdentityHandlerTests
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
-        // Should have auto-created and returned the private key
-        await Assert.That(result.Value as string).IsNotNull();
+        var identity = result as IdentityData;
+        await Assert.That(identity!.PrivateKey).IsNotNull();
     }
 }

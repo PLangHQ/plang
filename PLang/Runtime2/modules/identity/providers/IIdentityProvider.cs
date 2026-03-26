@@ -34,8 +34,8 @@ public interface IIdentityProvider : IProvider
     /// <summary>Lists all non-archived identities.</summary>
     Task<DataList<IdentityData>> ListAsync(list action);
 
-    /// <summary>Exports the raw private key string for an identity.</summary>
-    Task<Data> ExportAsync(Export action);
+    /// <summary>Exports the full identity including sensitive fields.</summary>
+    Task<IdentityData> ExportAsync(Export action);
 
     /// <summary>Gets the default identity, promoting or auto-creating one if needed.</summary>
     Task<IdentityData> GetOrCreateDefaultAsync(IContext action);

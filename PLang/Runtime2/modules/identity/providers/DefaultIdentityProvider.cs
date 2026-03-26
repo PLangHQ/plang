@@ -179,12 +179,9 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         return active;
     }
 
-    public async Task<Data> ExportAsync(Export action)
+    public async Task<IdentityData> ExportAsync(Export action)
     {
-        var result = await ResolveIdentityAsync(action, action.Name);
-        if (!result.Success) return result;
-
-        return Data.Ok(result.PrivateKey);
+        return await ResolveIdentityAsync(action, action.Name);
     }
 
     // --- Internal helpers ---

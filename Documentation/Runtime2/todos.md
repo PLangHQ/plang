@@ -487,6 +487,19 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 
 ---
 
+## Sensitive Data Permission System
+**Date:** 2026-03-26
+**Context:** During identity module cleanup. `identity.export` returns the full IdentityData including `[Sensitive]` PrivateKey. The `[Sensitive]` attribute already excludes it from output serialization, but there's no runtime permission prompt when PLang code accesses sensitive fields.
+
+**Design:**
+- When PLang code accesses a `[Sensitive]` property (e.g., `%identity.PrivateKey%`), the runtime should prompt the user for permission before returning the value.
+- Same prompt/sign/store/check pattern as the file access permission system — user responds y/n/always, response is signed with expiry.
+- Ties into the general `PermissionGrant` system designed for file access. Sensitive data access is a permission type alongside filesystem and network.
+
+**Separate workstream from identity module cleanup.**
+
+---
+
 ## Async variable resolution in source-generated property getters
 **Date:** 2026-03-24
 **Context:** Source generator creates lazy property getters that resolve `%var%` via MemoryStack. Property getters can't be async in C#. Currently `SettingsData` and `IdentityData` use sync-over-async (`GetAwaiter().GetResult()`) which works in PLang's sequential model but is tech debt.
