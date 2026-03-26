@@ -9,6 +9,7 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Goals.Goal;
 using PLang.Runtime2.Engine.Memory;
+using PlangType = PLang.Runtime2.Engine.Memory.Type;
 using PLang.Runtime2.Engine.Config;
 using PLang.Runtime2.modules.signing;
 using EngineType = PLang.Runtime2.Engine.@this;
@@ -190,9 +191,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
         using var fileStream = fs.File.Create(savePath);
 
-        var progressVarName = ResolveCallbackVarName(action.OnProgress, "!data");
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, action.OnProgress, progressVarName, engine, action.Context, cts.Token);
+            responseStream, fileStream, totalBytes, action.OnProgress, engine, action.Context, cts.Token);
 
         return Data.Ok(action.SaveTo);
     });
@@ -735,8 +735,6 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
         }
 
-        var dataVarName = ResolveCallbackVarName(onStream, "!data");
-
         using (response)
         {
             using var stream = await response.Content.ReadAsStreamAsync(ct);
@@ -744,18 +742,18 @@ public sealed class DefaultHttpProvider : IHttpProvider
             switch (format)
             {
                 case StreamFormat.Bytes:
-                    await StreamBytesAsync(stream, dataVarName, onStream, engine, context, ct);
+                    await StreamBytesAsync(stream, onStream, engine, context, ct);
                     break;
 
                 case StreamFormat.SSE:
-                    await StreamSSEAsync(stream, dataVarName, onStream, engine, context, maxSSEBufferSize, ct);
+                    await StreamSSEAsync(stream, onStream, engine, context, maxSSEBufferSize, ct);
                     break;
 
                 default:
                     if (isPlang)
-                        await StreamPlangAsync(stream, dataVarName, onStream, engine, context, ct);
+                        await StreamPlangAsync(stream, onStream, engine, context, ct);
                     else
-                        await StreamLinesAsync(stream, dataVarName, onStream, engine, context, ct);
+                        await StreamLinesAsync(stream, onStream, engine, context, ct);
                     break;
             }
 
@@ -766,21 +764,21 @@ public sealed class DefaultHttpProvider : IHttpProvider
     }
 
     /// <summary>
-    /// Gets the variable name from a callback GoalCall's first parameter.
-    /// </summary>
-    private static string ResolveCallbackVarName(GoalCall? goalCall, string fallback)
-    {
-        if (goalCall?.Parameters == null || goalCall.Parameters.Count == 0) return fallback;
-        return goalCall.Parameters[0].Name;
-    }
-
-    /// <summary>
-    /// Runs a goal callback and reports errors to stderr.
+    /// Creates a new GoalCall with the given value injected as the callback parameter, then runs it.
+    /// Parameter name comes from the template GoalCall's first parameter, or the defaultName.
     /// </summary>
     private static async Task RunCallbackAsync(
-        GoalCall goalCall, EngineType engine, PLangContext context, CancellationToken ct)
+        GoalCall template, object? value, PlangType? type, string defaultName,
+        EngineType engine, PLangContext context, CancellationToken ct)
     {
-        var result = await engine.RunGoalAsync(goalCall, context, ct);
+        var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
+        var call = new GoalCall
+        {
+            Name = template.Name,
+            PrPath = template.PrPath,
+            Parameters = new List<Data> { new Data(paramName, value, type) }
+        };
+        var result = await engine.RunGoalAsync(call, context, ct);
         if (!result.Success)
             await engine.Channels.WriteAsync(EngineChannels.StdErr, result);
     }
@@ -793,7 +791,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     }
 
     private static async Task StreamLinesAsync(
-        Stream stream, string varName, GoalCall onStream,
+        Stream stream, GoalCall onStream,
         EngineType engine, PLangContext context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -803,13 +801,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            context.MemoryStack.Set(varName, line);
-            await RunCallbackAsync(onStream, engine, context, ct);
+            await RunCallbackAsync(onStream, line, PlangType.String, "chunk", engine, context, ct);
         }
     }
 
     private static async Task StreamSSEAsync(
-        Stream stream, string varName, GoalCall onStream,
+        Stream stream, GoalCall onStream,
         EngineType engine, PLangContext context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -821,10 +818,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (line == null)
             {
                 if (dataBuffer.Length > 0)
-                {
-                    context.MemoryStack.Set(varName, dataBuffer.ToString());
-                    await RunCallbackAsync(onStream, engine, context, ct);
-                }
+                    await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", engine, context, ct);
                 break;
             }
 
@@ -848,15 +842,14 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             else if (line.Length == 0 && dataBuffer.Length > 0)
             {
-                context.MemoryStack.Set(varName, dataBuffer.ToString());
-                await RunCallbackAsync(onStream, engine, context, ct);
+                await RunCallbackAsync(onStream, dataBuffer.ToString(), PlangType.String, "chunk", engine, context, ct);
                 dataBuffer.Clear();
             }
         }
     }
 
     private static async Task StreamBytesAsync(
-        Stream stream, string varName, GoalCall onStream,
+        Stream stream, GoalCall onStream,
         EngineType engine, PLangContext context, CancellationToken ct)
     {
         var buffer = new byte[8192];
@@ -866,13 +859,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             var chunk = new byte[bytesRead];
             System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
 
-            context.MemoryStack.Set(varName, chunk);
-            await RunCallbackAsync(onStream, engine, context, ct);
+            await RunCallbackAsync(onStream, chunk, null, "chunk", engine, context, ct);
         }
     }
 
     private static async Task StreamPlangAsync(
-        Stream stream, string varName, GoalCall onStream,
+        Stream stream, GoalCall onStream,
         EngineType engine, PLangContext context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -907,15 +899,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
             var verifyResult = await engine.RunAction<signing.verify>(verifyAction, context);
             if (!verifyResult.Success)
             {
-                context.MemoryStack.Set(varName, verifyResult);
-                await RunCallbackAsync(onStream, engine, context, ct);
+                await RunCallbackAsync(onStream, verifyResult, null, "chunk", engine, context, ct);
                 continue;
             }
 
             context.MemoryStack.Set("!ServiceIdentity", data.Signature?.Identity);
-            context.MemoryStack.Set(varName, data);
-
-            await RunCallbackAsync(onStream, engine, context, ct);
+            await RunCallbackAsync(onStream, data, null, "chunk", engine, context, ct);
         }
     }
 
@@ -926,7 +915,6 @@ public sealed class DefaultHttpProvider : IHttpProvider
         Stream destination,
         long? totalBytes,
         GoalCall? onProgress,
-        string progressVarName,
         EngineType engine,
         PLangContext context,
         CancellationToken ct)
@@ -953,8 +941,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                         TotalBytes = totalBytes,
                         Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
                     };
-                    context.MemoryStack.Set(progressVarName, progress);
-                    await RunCallbackAsync(onProgress, engine, context, ct);
+                    await RunCallbackAsync(onProgress, progress, null, "progress", engine, context, ct);
                 }
             }
         }

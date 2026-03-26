@@ -44,6 +44,7 @@ public partial class upload : IContext
     public partial ContentAs? As { get; init; }
 
     /// <summary>Goal to call with TransferProgress updates during upload.</summary>
+    [GoalCallback("progress")]
     public partial GoalCall? OnProgress { get; init; }
 
     public async Task<Data> Run()

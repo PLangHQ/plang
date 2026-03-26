@@ -45,7 +45,8 @@ public partial class request : IContext
     /// <summary>Custom signing options. Overrides default signing behavior (contracts, headers, expiry).</summary>
     public partial sign? SignOptions { get; init; }
 
-    /// <summary>Goal to call for each streamed chunk. Receives chunk data via MemoryStack variable.</summary>
+    /// <summary>Goal to call for each streamed chunk.</summary>
+    [GoalCallback("chunk")]
     public partial GoalCall? OnStream { get; init; }
 
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>

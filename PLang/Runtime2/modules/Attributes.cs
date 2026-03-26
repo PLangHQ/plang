@@ -21,6 +21,18 @@ public sealed class DefaultAttribute : Attribute
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class VariableNameAttribute : Attribute { }
 
+/// <summary>
+/// Marks a GoalCall property as a callback that injects variables into the called goal.
+/// The Injects property names the variable the callback receives (e.g., "chunk" for streaming data).
+/// The user can rename it in PLang syntax (e.g., "on stream call HandleChunk myData=%chunk%").
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class GoalCallbackAttribute : Attribute
+{
+    public string Injects { get; }
+    public GoalCallbackAttribute(string injects) => Injects = injects;
+}
+
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class ProviderAttribute : Attribute { }
 

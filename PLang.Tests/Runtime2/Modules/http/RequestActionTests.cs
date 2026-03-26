@@ -496,7 +496,7 @@ public class RequestActionTests
         // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
         await Assert.That(result.Success).IsTrue();
         // Last line set on MemoryStack
-        var lastValue = Ctx.MemoryStack.Get("!data");
+        var lastValue = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("line3");
     }
@@ -520,7 +520,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.MemoryStack.Get("!data");
+        var lastValue = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("world");
     }
@@ -544,7 +544,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.MemoryStack.Get("!data");
+        var lastValue = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastValue!.ToString()).IsEqualTo("part1\npart2");
     }
 
@@ -571,7 +571,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastData = Ctx.MemoryStack.Get("!data");
+        var lastData = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
         await Assert.That(lastData!.Value).IsTypeOf<byte[]>();
@@ -734,7 +734,7 @@ public class RequestActionTests
         // NOTE: Weak assertion — verifying exact MemoryStack state after failed plang stream
         // verification + failed goal callback is complex. The non-streaming test
         // (Get_PlangResponseInvalidSignature_ReturnsError) covers the verification error path.
-        var lastValue = Ctx.MemoryStack.Get("!data");
+        var lastValue = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
     }
 
@@ -997,7 +997,7 @@ public class RequestActionTests
         // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)
         await Assert.That(result.Success).IsTrue();
         // The second (small) message should still be delivered
-        var lastValue = Ctx.MemoryStack.Get("!data");
+        var lastValue = Ctx.MemoryStack.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.Value!.ToString()).IsEqualTo("ok");
     }

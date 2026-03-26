@@ -37,6 +37,7 @@ public partial class download : IContext
     public partial sign? SignOptions { get; init; }
 
     /// <summary>Goal to call with TransferProgress updates during download.</summary>
+    [GoalCallback("progress")]
     public partial GoalCall? OnProgress { get; init; }
 
     public async Task<Data> Run()
