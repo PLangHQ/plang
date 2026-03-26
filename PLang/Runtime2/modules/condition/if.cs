@@ -21,14 +21,13 @@ public partial class If : IContext
         var evalResult = Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;
 
-        var result = (bool)evalResult.Value!;
-        var goalToCall = result ? GoalIfTrue : GoalIfFalse;
+        var goalToCall = evalResult.Value is true ? GoalIfTrue : GoalIfFalse;
         if (goalToCall != null)
         {
             var goalResult = await Context.Engine!.RunGoalAsync(goalToCall, Context, Context.CancellationToken);
             if (!goalResult.Success) return goalResult;
         }
 
-        return Data.Ok(result);
+        return evalResult;
     }
 }
