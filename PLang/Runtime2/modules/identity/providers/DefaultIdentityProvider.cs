@@ -251,33 +251,31 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
         if (candidate != null)
         {
             candidate.IsDefault = true;
-            var promoteResult = await SaveAsync(action, candidate);
-            if (!promoteResult.Success)
-                return new IdentityData { Error = promoteResult.Error };
-            return candidate;
+            return await SaveAsync(action, candidate);
         }
 
         // No identities at all — auto-create
         var identity = GenerateIdentity(action, "default", true);
         if (!identity.Success) return identity;
-        var saveResult = await SaveAsync(action, identity);
-        if (!saveResult.Success)
-            return new IdentityData { Error = saveResult.Error };
+        return await SaveAsync(action, identity);
+    }
+
+    /// <summary>Persists an identity to the settings store. Sets error on the identity if save fails.</summary>
+    private async Task<IdentityData> SaveAsync(IContext action, IdentityData identity)
+    {
+        var store = action.Context.Engine.System.SettingsStore;
+        var result = await store.Set(Table, identity.Name, identity);
+        if (!result.Success) identity.Error = result.Error;
         return identity;
     }
 
-    /// <summary>Persists an identity to the settings store using its Name as key.</summary>
-    private async Task<Data> SaveAsync(IContext action, IdentityData identity)
+    /// <summary>Removes an identity from store. Sets error on the identity if remove fails.</summary>
+    private async Task<IdentityData> RemoveAsync(IContext action, IdentityData identity)
     {
         var store = action.Context.Engine.System.SettingsStore;
-        return await store.Set(Table, identity.Name, identity);
-    }
-
-    /// <summary>Removes an identity from the System settings store by name.</summary>
-    private async Task<Data> RemoveAsync(IContext action, IdentityData identity)
-    {
-        var store = action.Context.Engine.System.SettingsStore;
-        return await store.Remove(Table, identity.Name);
+        var result = await store.Remove(Table, identity.Name);
+        if (!result.Success) identity.Error = result.Error;
+        return identity;
     }
 
     /// <summary>
