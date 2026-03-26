@@ -122,6 +122,12 @@ public sealed class @this
             .Where(e => e.Instance != null)
             .Select(e => e.Instance!);
 
+    /// <summary>
+    /// Removes all actions for a module. Returns true if the module existed.
+    /// </summary>
+    public bool Remove(string module)
+        => _modules.TryRemove(module, out _);
+
     public void Clear() => _modules.Clear();
 }
 
