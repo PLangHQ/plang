@@ -3,8 +3,6 @@ using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.condition;
 using PLang.SafeFileSystem;
-using FileResult = PLang.Runtime2.modules.file.types.file;
-
 namespace PLang.Tests.Runtime2.actions.condition;
 
 public class ConditionHandlerTests : IDisposable
@@ -266,7 +264,7 @@ public class ConditionHandlerTests : IDisposable
         // Assert: fileResult is in memory
         var fileData = context.MemoryStack.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData!.Value as FileResult;
+        var fileObj = fileData as PLang.Runtime2.Engine.FileSystem.PathData;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(fileObj!.Exists).IsTrue();
 

@@ -1,7 +1,9 @@
 using PLang.Interfaces;
 using PLang.Runtime2.Engine.Channels.Serializers;
 using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.FileSystem;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Utility;
 
 namespace PLang.Runtime2.modules.file.providers;
 
@@ -25,9 +27,13 @@ public class DefaultFileProvider : IFileProvider
 
         try
         {
-            var file = new types.@file(path.Absolute, _fs);
-            _ = file.Value; // Eager-read so step cache captures content
-            return Data.Ok(file);
+            var mime = TypeMapping.GetMimeType(path.Extension);
+            var type = Engine.Memory.Type.FromMime(mime);
+            object content = type.ClrType == typeof(byte[])
+                ? _fs.File.ReadAllBytes(path.Absolute)
+                : _fs.File.ReadAllText(path.Absolute);
+
+            return new PathData(path.Absolute, _fs, content);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -54,7 +60,7 @@ public class DefaultFileProvider : IFileProvider
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            return Data.Ok(new types.@file(path.Absolute, _fs));
+            return new PathData(path.Absolute, _fs);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -84,7 +90,7 @@ public class DefaultFileProvider : IFileProvider
             else if (!action.IgnoreIfNotFound)
                 return Data.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            return Data.Ok(new types.@file(path.Absolute, _fs));
+            return new PathData(path.Absolute, _fs);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -108,7 +114,7 @@ public class DefaultFileProvider : IFileProvider
             else
                 CopyDirectory(source.Absolute, destPath, action.Overwrite, action.IncludeSubfolders);
 
-            return Data.Ok(new types.@file(destPath, _fs, source: source.Absolute));
+            return new PathData(destPath, _fs, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -137,7 +143,7 @@ public class DefaultFileProvider : IFileProvider
                 _fs.Directory.Move(source.Absolute, destPath);
             }
 
-            return Data.Ok(new types.@file(destPath, _fs, source: source.Absolute));
+            return new PathData(destPath, _fs, source: source.Absolute);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -155,7 +161,7 @@ public class DefaultFileProvider : IFileProvider
         {
             var option = action.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var files = _fs.Directory.GetFiles(path.Absolute, action.Pattern, option)
-                .Select(f => new types.@file(f, _fs))
+                .Select(f => new PathData(f, _fs))
                 .ToArray();
             return Data.Ok(files);
         }
@@ -167,7 +173,7 @@ public class DefaultFileProvider : IFileProvider
 
     public Data Exists(Exists action)
     {
-        return Data.Ok(new types.@file(action.Path.Absolute, _fs));
+        return new PathData(action.Path.Absolute, _fs);
     }
 
     // --- Helpers ---

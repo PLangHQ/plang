@@ -1,4 +1,5 @@
 using PLang.SafeFileSystem;
+using PLang.Runtime2.Engine.FileSystem;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.file;
 using PLang.Runtime2.modules.file.providers;
@@ -300,9 +301,9 @@ public class PathTests : IDisposable
         var result = _provider.Read(new Read { Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
+        var f = result as PathData;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Value.Value).IsEqualTo("test content");
+        await Assert.That(f!.Value).IsEqualTo("test content");
     }
 
     [Test]
@@ -329,10 +330,10 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Path = p, Pattern = "*" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
+        var files = result.Value as PathData[];
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Length).IsEqualTo(2);
-        var names = files.Select(f => _fs.Path.GetFileName(f.AbsolutePath)).OrderBy(n => n).ToArray();
+        var names = files.Select(f => _fs.Path.GetFileName(f.Absolute)).OrderBy(n => n).ToArray();
         await Assert.That(names[0]).IsEqualTo("a.txt");
         await Assert.That(names[1]).IsEqualTo("b.txt");
     }
@@ -348,7 +349,7 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Path = p, Pattern = "*.txt" });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
+        var files = result.Value as PathData[];
         await Assert.That(files!.Length).IsEqualTo(1);
     }
 
@@ -365,7 +366,7 @@ public class PathTests : IDisposable
         var result = _provider.List(new List { Path = p, Pattern = "*", Recursive = true });
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as PLang.Runtime2.modules.file.types.@file[];
+        var files = result.Value as PathData[];
         await Assert.That(files!.Length).IsEqualTo(2);
     }
 
@@ -432,7 +433,7 @@ public class PathTests : IDisposable
         var result = _provider.Exists(new Exists { Path = p });
 
         await Assert.That(result.Success).IsTrue();
-        var f = result.Value as PLang.Runtime2.modules.file.types.@file;
+        var f = result as PathData;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Exists).IsTrue();
     }
