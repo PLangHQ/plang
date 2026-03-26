@@ -161,7 +161,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
         }
     }
 
-    public Task<Data> GetAll<T>(string table) where T : Data
+    public Task<DataList<T>> GetAll<T>(string table) where T : Data
     {
         try
         {
@@ -171,7 +171,7 @@ public sealed class SqliteSettingsStore : ISettingsStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
 
-            var items = new List<Data>();
+            var list = new DataList<T>(table);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -182,15 +182,15 @@ public sealed class SqliteSettingsStore : ISettingsStore
                     if (data != null)
                     {
                         RehydrateValue(data);
-                        items.Add(data);
+                        list.Add(data);
                     }
                 }
             }
-            return Task.FromResult(Data.Ok((object)items));
+            return Task.FromResult(list);
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Data.FromError(
+            return Task.FromResult(DataList<T>.FromError(
                 SettingsError.FromException(ex, table)));
         }
     }

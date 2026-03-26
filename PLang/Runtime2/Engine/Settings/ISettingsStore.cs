@@ -29,9 +29,9 @@ public interface ISettingsStore : IDisposable
 
     /// <summary>
     /// Gets all key-value pairs in a table, deserializing each value to T.
-    /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=typed T).
+    /// Returns DataList with items, or DataList with error on failure.
     /// </summary>
-    Task<Data> GetAll<T>(string table) where T : Data;
+    Task<DataList<T>> GetAll<T>(string table) where T : Data;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.

@@ -344,7 +344,7 @@ public class IdentityErrorPathTests
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<Data> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<DataList<T>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
@@ -366,7 +366,7 @@ public class IdentityErrorPathTests
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<Data> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<DataList<T>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
@@ -387,7 +387,8 @@ public class IdentityErrorPathTests
         public Task<Data> Get<T>(string table, string key) where T : Data => Get(table, key);
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<Data> GetAll<T>(string table) where T : Data => GetAll(table);
+        public Task<DataList<T>> GetAll<T>(string table) where T : Data
+            => Task.FromResult(DataList<T>.FromError(new SettingsError("Simulated GetAll failure")));
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Remove(string table, string key)
