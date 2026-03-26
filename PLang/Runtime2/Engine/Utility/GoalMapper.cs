@@ -130,7 +130,9 @@ public static class GoalMapper
         return new GoalCall
         {
             Name = oldInfo.Name,
-            Parameters = oldInfo.Parameters,
+            Parameters = oldInfo.Parameters?
+                .Select(p => new Memory.Data(p.Key, p.Value))
+                .ToList(),
             PrPath = oldInfo.Path
         };
     }

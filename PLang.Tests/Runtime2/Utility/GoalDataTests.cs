@@ -147,7 +147,7 @@ public class GoalSerializationTests
                     Text = "step",
                     OnError = new ErrorHandler
                     {
-                        Goal = new GoalCall { Name = "HandleError", Parameters = new Dictionary<string, object?> { { "msg", "oops" } } },
+                        Goal = new GoalCall { Name = "HandleError", Parameters = new List<Data> { new Data("msg", "oops") } },
                         RetryCount = 3,
                         RetryOverMs = 60000,
                         Order = ErrorOrder.RetryFirst,

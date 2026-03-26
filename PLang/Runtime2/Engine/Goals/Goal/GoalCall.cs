@@ -1,3 +1,5 @@
+using PLang.Runtime2.Engine.Memory;
+
 namespace PLang.Runtime2.Engine.Goals.Goal;
 
 /// <summary>
@@ -9,7 +11,7 @@ public sealed class GoalCall
     [Store, LlmBuilder]
     public string Name { get; init; } = "";
     [Store, LlmBuilder]
-    public Dictionary<string, object?>? Parameters { get; init; }
+    public List<Data>? Parameters { get; init; }
     [Store]
     public string? PrPath { get; set; }
 }

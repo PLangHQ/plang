@@ -459,6 +459,34 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 
 ---
 
+## File Access Permission System — Out-of-Root Path Security
+**Date:** 2026-03-26
+**Context:** During file module cleanup. Accessing paths outside the PLang app root (e.g., `read ../file.txt`) should require explicit user permission.
+
+**Design:**
+- When runtime resolves a path outside root, throw `FileAccessException` prompting the user
+- User responds: `y`/`n`/`a` (always), or natural language like "yes, for 30 min"
+- Response creates a signed `PermissionGrant` with expiry, stored persistently
+- On subsequent access, check grant store before prompting
+
+**Grant structure:**
+```
+{ type: "filesystem", path: "../file.txt", access: "read", expiry: "2026-03-26T15:00:00Z" | null, grantedAt: "...", signature: "..." }
+```
+
+**Key design points:**
+1. **Lives at IPLangFileSystem level** — not in the file module. All modules that touch paths go through the filesystem abstraction, so it's the natural choke point.
+2. **Read vs write distinction** — write outside root is more dangerous than read. Grants should specify access type.
+3. **Path granularity** — exact file, directory, or glob pattern? Start simple (exact path), expand later.
+4. **Signing** — app identity key signs the grant. Expiry embedded in signed payload prevents tampering. "Always" = `expiry: null`.
+5. **General permission system** — same prompt/sign/store/check cycle applies to network access, env vars, system commands. Design as a general `PermissionGrant` system, file access is the first type.
+6. **Natural language parsing** — "yes, for 30 min" needs LLM interpretation or constrained fixed options (y/n/a/30m/1h/1d).
+7. **Storage** — `.build/permissions.json` or similar, with signed entries.
+
+**Separate workstream from file module cleanup.**
+
+---
+
 ## Async variable resolution in source-generated property getters
 **Date:** 2026-03-24
 **Context:** Source generator creates lazy property getters that resolve `%var%` via MemoryStack. Property getters can't be async in C#. Currently `SettingsData` and `IdentityData` use sync-over-async (`GetAwaiter().GetResult()`) which works in PLang's sequential model but is tech debt.

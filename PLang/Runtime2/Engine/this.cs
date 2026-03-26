@@ -272,7 +272,7 @@ public sealed class @this : IAsyncDisposable
         if (goalCall.Parameters != null)
         {
             foreach (var param in goalCall.Parameters)
-                context.MemoryStack.Set(param.Key, param.Value);
+                context.MemoryStack.Put(param);
         }
 
         // Try PrPath first (when available)

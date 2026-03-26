@@ -616,7 +616,7 @@ public class RequestActionTests
             OnStream = new PLang.Runtime2.Engine.Goals.Goal.GoalCall
             {
                 Name = "HandleChunk",
-                Parameters = new Dictionary<string, object?> { ["chunk"] = "%myChunk%" }
+                Parameters = new List<Data> { new Data("myChunk") }
             },
             Unsigned = true
         };

@@ -314,9 +314,16 @@ public static class TypeMapping
             if (value is IDictionary<string, object?> dict)
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                var parameters = dict.TryGetValue("parameters", out var p) && p is IDictionary<string, object?> pDict
-                    ? new Dictionary<string, object?>(pDict)
-                    : null;
+                List<Memory.Data>? parameters = null;
+                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
+                {
+                    parameters = pList
+                        .OfType<IDictionary<string, object?>>()
+                        .Select(d => new Memory.Data(
+                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
+                            d.TryGetValue("value", out var dv) ? dv : null))
+                        .ToList();
+                }
                 return new PLang.Runtime2.Engine.Goals.Goal.GoalCall { Name = name, Parameters = parameters };
             }
         }

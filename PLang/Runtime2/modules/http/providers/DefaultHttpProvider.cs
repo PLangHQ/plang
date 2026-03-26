@@ -766,20 +766,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
     }
 
     /// <summary>
-    /// Resolves the variable name for a callback GoalCall from its parameters.
-    /// If a parameter maps to a %var%, use that name. Otherwise use the fallback.
+    /// Gets the variable name from a callback GoalCall's first parameter.
     /// </summary>
     private static string ResolveCallbackVarName(GoalCall? goalCall, string fallback)
     {
-        if (goalCall?.Parameters == null) return fallback;
-
-        foreach (var p in goalCall.Parameters)
-        {
-            if (p.Value is string s && s.StartsWith('%') && s.EndsWith('%'))
-                return s.Trim('%');
-        }
-
-        return fallback;
+        if (goalCall?.Parameters == null || goalCall.Parameters.Count == 0) return fallback;
+        return goalCall.Parameters[0].Name;
     }
 
     /// <summary>
