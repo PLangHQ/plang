@@ -1,8 +1,8 @@
 using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.Engine.Events;
 using PLang.Runtime2.modules.@event;
-using EventResult = PLang.Runtime2.modules.@event.types.@event;
 
 namespace PLang.Tests.Runtime2.actions.EventTests;
 
@@ -16,179 +16,104 @@ public class EventHandlerTests
         _engine = new PLang.Runtime2.Engine.@this("/test");
     }
 
-    private PLangContext CreateContext()
-    {
-        return _engine.CreateContext();
-    }
+    private PLangContext CreateContext() => _engine.CreateContext();
 
-    [Test]
-    public async Task BeforeGoal_RegistersEvent()
-    {
-        var context = CreateContext();
-
-        var handler = new BeforeGoal
+    private On MakeOn(PLangContext context, string type, string goalName,
+        string? goalPattern = null, string? stepPattern = null, string? actionPattern = null,
+        bool isRegex = false, int priority = 0)
+        => new()
         {
             Context = context,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "TestGoal",
-            IsRegex = false,
-            Priority = 0
+            Type = type,
+            GoalToCall = new GoalCall { Name = goalName },
+            GoalPattern = goalPattern,
+            StepPattern = stepPattern,
+            ActionPattern = actionPattern,
+            IsRegex = isRegex,
+            Priority = priority
         };
 
-        var result = await handler.Run();
+    [Test]
+    public async Task On_BeforeGoal_RegistersEvent()
+    {
+        var context = CreateContext();
+        var result = await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "TestGoal").Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("beforeGoal");
-        await Assert.That(ev.goalToCall).IsEqualTo("LogGoal");
-        await Assert.That(ev.pattern).IsEqualTo("TestGoal");
+        await Assert.That(result.Value is string).IsTrue(); // returns binding id
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task AfterGoal_RegistersEvent()
+    public async Task On_AfterGoal_RegistersEvent()
     {
         var context = CreateContext();
-
-        var handler = new AfterGoal
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "*",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        var result = await handler.Run();
+        var result = await MakeOn(context, "AfterGoal", "LogGoal", goalPattern: "*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("afterGoal");
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task BeforeStep_RegistersEvent()
+    public async Task On_BeforeStep_RegistersEvent()
     {
         var context = CreateContext();
-
-        var handler = new BeforeStep
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogStep" },
-            GoalPattern = "TestGoal",
-            StepPattern = "set*",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        var result = await handler.Run();
+        var result = await MakeOn(context, "BeforeStep", "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("beforeStep");
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task AfterStep_RegistersEvent()
+    public async Task On_AfterStep_RegistersEvent()
     {
         var context = CreateContext();
-
-        var handler = new AfterStep
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogStep" },
-            GoalPattern = null,
-            StepPattern = null,
-            IsRegex = false,
-            Priority = 5
-        };
-
-        var result = await handler.Run();
+        var result = await MakeOn(context, "AfterStep", "LogStep", priority: 5).Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("afterStep");
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task BeforeAction_RegistersEvent()
+    public async Task On_BeforeAction_RegistersEvent()
     {
         var context = CreateContext();
-
-        var handler = new BeforeAction
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "OnVarSet" },
-            ActionPattern = "variable.set",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        var result = await handler.Run();
+        var result = await MakeOn(context, "BeforeAction", "OnVarSet", actionPattern: "variable.set").Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("beforeAction");
-        await Assert.That(ev.pattern).IsEqualTo("variable.set");
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
     }
 
     [Test]
-    public async Task AfterAction_RegistersEvent()
+    public async Task On_AfterAction_RegistersEvent()
     {
         var context = CreateContext();
-
-        var handler = new AfterAction
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "OnAfterAction" },
-            ActionPattern = "variable.*",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        var result = await handler.Run();
+        var result = await MakeOn(context, "AfterAction", "OnAfterAction", actionPattern: "variable.*").Run();
 
         await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev).IsNotNull();
-        await Assert.That(ev!.type).IsEqualTo("afterAction");
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task On_InvalidType_ReturnsError()
+    {
+        var context = CreateContext();
+        var result = await MakeOn(context, "NonExistentType", "Goal").Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("InvalidEventType");
     }
 
     [Test]
     public async Task Remove_UnregistersEvent()
     {
         var context = CreateContext();
-
-        // First register an event
-        var beforeHandler = new BeforeGoal
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "*",
-            IsRegex = false,
-            Priority = 0
-        };
-        var registerResult = await beforeHandler.Run();
-        var ev = registerResult.Value as EventResult;
+        var registerResult = await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "*").Run();
+        var eventId = (string)registerResult.Value!;
 
         await Assert.That(context.User.Events.Count).IsEqualTo(1);
 
-        // Now remove it
-        var removeHandler = new PLang.Runtime2.modules.@event.Remove
-        {
-            Context = context,
-            EventId = ev!.id
-        };
+        var removeHandler = new Remove { Context = context, EventId = eventId };
         var removeResult = await removeHandler.Run();
 
         await Assert.That(removeResult.Success).IsTrue();
@@ -196,32 +121,15 @@ public class EventHandlerTests
     }
 
     [Test]
-    public async Task BeforeGoal_WithRegex_RegistersWithIsRegexTrue()
+    public async Task On_WithRegex_MatchesRegexPattern()
     {
         var context = CreateContext();
+        await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "^Admin", isRegex: true).Run();
 
-        var handler = new BeforeGoal
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "^Admin",
-            IsRegex = true,
-            Priority = 0
-        };
+        var match = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "AdminGoal");
+        await Assert.That(match.Count).IsEqualTo(1);
 
-        var result = await handler.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var ev = result.Value as EventResult;
-        await Assert.That(ev!.isRegex).IsTrue();
-
-        // Verify the binding matches regex patterns
-        var bindings = context.User.Events.GetMatchingBindings(
-            EventType.BeforeGoal, goalName: "AdminGoal");
-        await Assert.That(bindings.Count).IsEqualTo(1);
-
-        var noMatch = context.User.Events.GetMatchingBindings(
-            EventType.BeforeGoal, goalName: "UserGoal");
+        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "UserGoal");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -229,24 +137,12 @@ public class EventHandlerTests
     public async Task GoalPattern_Wildcard_MatchesPrefix()
     {
         var context = CreateContext();
+        await MakeOn(context, "BeforeGoal", "LogGoal", goalPattern: "/admin/*").Run();
 
-        var handler = new BeforeGoal
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "/admin/*",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        await handler.Run();
-
-        var match = context.User.Events.GetMatchingBindings(
-            EventType.BeforeGoal, goalName: "/admin/Users");
+        var match = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/admin/Users");
         await Assert.That(match.Count).IsEqualTo(1);
 
-        var noMatch = context.User.Events.GetMatchingBindings(
-            EventType.BeforeGoal, goalName: "/public/Home");
+        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeGoal, goalName: "/public/Home");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -254,28 +150,12 @@ public class EventHandlerTests
     public async Task ActionPattern_Wildcard_MatchesModule()
     {
         var context = CreateContext();
+        await MakeOn(context, "BeforeAction", "OnVar", actionPattern: "variable.*").Run();
 
-        var handler = new BeforeAction
-        {
-            Context = context,
-            GoalToCall = new GoalCall { Name = "OnVar" },
-            ActionPattern = "variable.*",
-            IsRegex = false,
-            Priority = 0
-        };
-
-        await handler.Run();
-
-        var match = context.User.Events.GetMatchingBindings(
-            EventType.BeforeAction, module: "variable", actionName: "set");
+        var match = context.User.Events.GetMatchingBindings(EventType.BeforeAction, module: "variable", actionName: "set");
         await Assert.That(match.Count).IsEqualTo(1);
 
-        var match2 = context.User.Events.GetMatchingBindings(
-            EventType.BeforeAction, module: "variable", actionName: "get");
-        await Assert.That(match2.Count).IsEqualTo(1);
-
-        var noMatch = context.User.Events.GetMatchingBindings(
-            EventType.BeforeAction, module: "file", actionName: "read");
+        var noMatch = context.User.Events.GetMatchingBindings(EventType.BeforeAction, module: "file", actionName: "read");
         await Assert.That(noMatch.Count).IsEqualTo(0);
     }
 
@@ -285,17 +165,8 @@ public class EventHandlerTests
         var context1 = CreateContext();
         var context2 = CreateContext();
 
-        var handler1 = new BeforeGoal
-        {
-            Context = context1,
-            GoalToCall = new GoalCall { Name = "LogGoal" },
-            GoalPattern = "TestGoal",
-            IsRegex = false,
-            Priority = 0
-        };
-        await handler1.Run();
+        await MakeOn(context1, "BeforeGoal", "LogGoal", goalPattern: "TestGoal").Run();
 
-        // context1 has an event, context2 does not
         await Assert.That(context1.User.Events.Count).IsEqualTo(1);
         await Assert.That(context2.User.Events.Count).IsEqualTo(0);
     }

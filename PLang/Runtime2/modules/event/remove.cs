@@ -5,15 +5,12 @@ namespace PLang.Runtime2.modules.@event;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
+    [IsNotNull]
     public partial string EventId { get; init; }
 
     public Task<Data> Run()
     {
         var removed = Context.User.Events.Unregister(EventId);
-        return Task.FromResult(Data.Ok(new types.@event
-        {
-            id = EventId,
-            type = "remove"
-        }));
+        return Task.FromResult(Data.Ok(removed));
     }
 }
