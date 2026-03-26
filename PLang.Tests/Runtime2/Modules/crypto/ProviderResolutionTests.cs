@@ -41,7 +41,7 @@ public class ProviderResolutionTests
         _engine.Providers.Register<ICryptoProvider>(mock);
         _engine.Providers.SetDefault<ICryptoProvider>("mock");
 
-        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -54,7 +54,7 @@ public class ProviderResolutionTests
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
         // Fresh engine, no crypto settings — should use DefaultCryptoProvider
-        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -73,7 +73,7 @@ public class ProviderResolutionTests
         _engine.Providers.SetDefault<ICryptoProvider>("always-true");
 
         // Even with garbage hash, mock returns true
-        var action = new Verify { Context = Ctx, Data = "hello", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
+        var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

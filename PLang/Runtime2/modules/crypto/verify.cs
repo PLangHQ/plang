@@ -7,7 +7,7 @@ namespace PLang.Runtime2.modules.crypto;
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {
-    public partial object? Data { get; init; }
+    public partial Data? Data { get; init; }
     public partial string Hash { get; init; }
 
     [Default("keccak256")]
@@ -16,9 +16,9 @@ public partial class Verify : IContext
     [Provider]
     public partial ICryptoProvider Crypto { get; }
 
-    public async Task<Data> Run()
+    public async Task<Engine.Memory.Data> Run()
     {
-        if (Data == null)
+        if (Data?.Value == null)
             return Engine.Memory.Data.FromError(new ActionError("Data cannot be null", "ValidationError", 400));
 
         if (string.IsNullOrEmpty(Hash))

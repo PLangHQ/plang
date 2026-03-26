@@ -116,6 +116,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
                             && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine"
                                 || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine.Context"));
 
+                // Check if property type is Data (pass through without unwrapping .Value)
+                var rawType = prop.Type;
+                if (rawType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullableType)
+                    rawType = nullableType.TypeArguments[0];
+                var isDataType = rawType.Name == "Data"
+                    && rawType.ContainingNamespace?.ToDisplayString() == "PLang.Runtime2.Engine.Memory";
+
                 properties.Add(new ActionPropertyInfo(
                     prop.Name,
                     prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -124,7 +131,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
                     defaultValue,
                     isVariableName,
                     isEngineResolvable,
-                    isProvider));
+                    isProvider,
+                    isDataType));
             }
         }
 
@@ -205,7 +213,12 @@ public class LazyParamsGenerator : IIncrementalGenerator
             // Build the get expression
             var paramName = prop.Name.ToLowerInvariant();
             string resolveExpr;
-            if (prop.IsEngineResolvable)
+            if (prop.IsDataType)
+            {
+                // Data-typed properties: pass the Data object through, don't unwrap .Value
+                resolveExpr = $"__ResolveData(\"{paramName}\")";
+            }
+            else if (prop.IsEngineResolvable)
             {
                 // Context-resolvable types: resolve raw string then call Type.Resolve(string, Context)
                 var rawStr = $"__Resolve<string>(\"{paramName}\")";
@@ -378,6 +391,29 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("            return str.Trim('%');");
         sb.AppendLine("        return data?.Value?.ToString();");
         sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    private PLang.Runtime2.Engine.Memory.Data? __ResolveData(string name)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        var data = __parameters?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        data ??= __defaults?.FirstOrDefault(");
+        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        if (data?.Value is string str && str.Contains('%'))");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
+        sb.AppendLine("            if (fullMatch.Success)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                var __resolved = __memoryStack!.Get(fullMatch.Groups[1].Value);");
+        sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
+        sb.AppendLine("                {");
+        sb.AppendLine("                    __resolutionError = __resolved;");
+        sb.AppendLine("                    return null;");
+        sb.AppendLine("                }");
+        sb.AppendLine("                return __resolved;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+        sb.AppendLine("        return data;");
+        sb.AppendLine("    }");
 
         sb.AppendLine("}");
 
@@ -414,10 +450,11 @@ internal class ActionPropertyInfo
     public bool IsVariableName { get; }
     public bool IsEngineResolvable { get; }
     public bool IsProvider { get; }
+    public bool IsDataType { get; }
 
     public ActionPropertyInfo(string name, string typeName, bool isNullable,
         bool isValueType, string? defaultValue, bool isVariableName = false,
-        bool isEngineResolvable = false, bool isProvider = false)
+        bool isEngineResolvable = false, bool isProvider = false, bool isDataType = false)
     {
         Name = name;
         TypeName = typeName;
@@ -427,5 +464,6 @@ internal class ActionPropertyInfo
         IsVariableName = isVariableName;
         IsEngineResolvable = isEngineResolvable;
         IsProvider = isProvider;
+        IsDataType = isDataType;
     }
 }

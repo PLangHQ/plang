@@ -9,10 +9,10 @@ public class DefaultCryptoProviderTests
     private readonly DefaultCryptoProvider _provider = new();
 
     private static Hash HashAction(object data, string algorithm = "keccak256")
-        => new() { Data = data, Algorithm = algorithm };
+        => new() { Data = Data.Ok(data), Algorithm = algorithm };
 
     private static Verify VerifyAction(object data, string hash, string algorithm = "keccak256")
-        => new() { Data = data, Hash = hash, Algorithm = algorithm };
+        => new() { Data = Data.Ok(data), Hash = hash, Algorithm = algorithm };
 
     // --- Hash: Keccak256 ---
 

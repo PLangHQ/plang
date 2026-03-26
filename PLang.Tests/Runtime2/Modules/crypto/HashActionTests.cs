@@ -39,7 +39,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_StringInput_ReturnsBase64WithType()
     {
-        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -55,10 +55,10 @@ public class HashActionTests
     {
         // Known value: JsonSerializer.Serialize("hello") = "\"hello\""
         // keccak256 of UTF8 bytes of "\"hello\"" is a fixed value.
-        var refHash = new DefaultCryptoProvider().Hash(new Hash { Data = "hello", Algorithm = "keccak256" });
+        var refHash = new DefaultCryptoProvider().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
         var expectedBase64 = Convert.ToBase64String((byte[])refHash.Value!);
 
-        var action = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -68,7 +68,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ByteArrayInput_HashesRawBytes()
     {
-        var action = new Hash { Context = Ctx, Data = new byte[] { 1, 2, 3 }, Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok(new byte[] { 1, 2, 3 }), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -79,8 +79,8 @@ public class HashActionTests
     [Test]
     public async Task Hash_ExplicitAlgorithm_OverridesDefault()
     {
-        var keccakAction = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
-        var sha256Action = new Hash { Context = Ctx, Data = "test", Algorithm = "sha256" };
+        var keccakAction = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
+        var sha256Action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "sha256" };
 
         var keccakResult = await keccakAction.Run();
         var sha256Result = await sha256Action.Run();
@@ -95,7 +95,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_NullInput_ReturnsError()
     {
-        var action = new Hash { Context = Ctx, Data = null, Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = null!, Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -107,7 +107,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_UnsupportedAlgorithm_ReturnsError()
     {
-        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "md5" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "md5" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -121,7 +121,7 @@ public class HashActionTests
         _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
         _engine.Providers.SetDefault<ICryptoProvider>("failing");
 
-        var action = new Hash { Context = Ctx, Data = "test", Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -134,11 +134,11 @@ public class HashActionTests
     [Test]
     public async Task Verify_RoundTrip_ReturnsTrue()
     {
-        var hashAction = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var hashResult = await hashAction.Run();
         var hash = (string)hashResult.Value!;
 
-        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = hash, Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = hash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -148,13 +148,13 @@ public class HashActionTests
     [Test]
     public async Task Verify_WrongHash_ReturnsFalse()
     {
-        var hashAction = new Hash { Context = Ctx, Data = "hello", Algorithm = "keccak256" };
+        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var hashResult = await hashAction.Run();
         var hash = (string)hashResult.Value!;
 
         // Use a different hash (flip first char)
         var wrongHash = (hash[0] == 'a' ? 'b' : 'a') + hash[1..];
-        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = wrongHash, Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = wrongHash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -164,7 +164,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = "not-a-valid-base64!!!", Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = "not-a-valid-base64!!!", Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -175,7 +175,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = "hello", Hash = null!, Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -186,7 +186,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullInput_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = null, Hash = "abc123", Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = null!, Hash = "abc123", Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -201,7 +201,7 @@ public class HashActionTests
         _engine.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
         _engine.Providers.SetDefault<ICryptoProvider>("failing");
 
-        var verifyAction = new Verify { Context = Ctx, Data = "test", Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
         await Assert.That(result.Success).IsFalse();

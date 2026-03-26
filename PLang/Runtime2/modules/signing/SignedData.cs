@@ -115,7 +115,7 @@ public class SignedData
         if (!identity.Success) return identity;
 
         // Hash the data
-        var hash = await engine.RunAction<Hash>(new Hash { Data = action.Data ?? new object(), Algorithm = "keccak256" }, action.Context);
+        var hash = await engine.RunAction<Hash>(new Hash { Data = Data.Ok(action.Data ?? new object()), Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
@@ -204,7 +204,7 @@ public class SignedData
         if (action.Data?.Value != null)
         {
             var rehash = await engine.RunAction<Hash>(
-                new Hash { Data = action.Data.Value, Algorithm = Hash!.Type?.Value ?? "keccak256" }, action.Context);
+                new Hash { Data = action.Data, Algorithm = Hash!.Type?.Value ?? "keccak256" }, action.Context);
             if (!rehash.Success) return rehash;
             if (!string.Equals(rehash.Value?.ToString(), hashValue, StringComparison.Ordinal))
                 return Data.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

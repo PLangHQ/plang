@@ -97,7 +97,7 @@ public class SigningSerializationTests
         // Hash some data using the crypto provider directly
         var cryptoProvider = new PLang.Runtime2.modules.crypto.providers.DefaultCryptoProvider();
         var hashResult = cryptoProvider.Hash(new PLang.Runtime2.modules.crypto.Hash
-            { Data = System.Text.Encoding.UTF8.GetBytes("test data"), Algorithm = "sha256" });
+            { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = "sha256" });
         var hashBytes = (byte[])hashResult.Value!;
         var base64Hash = Convert.ToBase64String(hashBytes);
 

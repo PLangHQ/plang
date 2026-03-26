@@ -14,7 +14,8 @@ public class DefaultCryptoProvider : ICryptoProvider
 
     public Data Hash(Hash action)
     {
-        var bytes = action.Data is byte[] raw ? raw : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(action.Data));
+        var value = action.Data?.Value;
+        var bytes = value is byte[] raw ? raw : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
         return action.Algorithm.ToLowerInvariant() switch
         {
             "keccak256" => Data.Ok(new Sha3Keccack().CalculateHash(bytes)),
@@ -35,7 +36,6 @@ public class DefaultCryptoProvider : ICryptoProvider
             return Data.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400));
         }
 
-        // Re-hash using the same serialization path
         var hashAction = new Hash { Context = action.Context, Data = action.Data, Algorithm = action.Algorithm };
         var hashResult = Hash(hashAction);
         if (!hashResult.Success) return hashResult;
