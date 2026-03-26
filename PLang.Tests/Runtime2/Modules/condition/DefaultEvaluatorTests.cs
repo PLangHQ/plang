@@ -1,3 +1,5 @@
+using PLang.Runtime2.Engine.Memory;
+using PLang.Runtime2.modules.condition;
 using PLang.Runtime2.modules.condition.providers;
 
 namespace PLang.Tests.Runtime2.Modules.condition;
@@ -6,362 +8,149 @@ public class DefaultEvaluatorTests
 {
     private readonly DefaultEvaluator _eval = new();
 
-    // --- Batch 1: Evaluate() — All Operators ---
+    private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
+
+    private Data Eval(object? left, string op, object? right)
+        => _eval.Evaluate(new Compare { Left = D(left), Operator = op, Right = D(right) });
+
+    private Data EvalIf(object? left, string? op = null, object? right = null)
+        => _eval.Evaluate(new If { Left = D(left), Operator = op, Right = D(right) });
+
+    private bool IsTrue(Data result) => result.Success && (bool)result.Value!;
+    private bool IsFalse(Data result) => result.Success && !(bool)result.Value!;
+
+    // --- Evaluate() — All Operators ---
+
+    [Test] public async Task Evaluate_Equals_SameInts() => await Assert.That(IsTrue(Eval(5, "==", 5))).IsTrue();
+    [Test] public async Task Evaluate_Equals_DifferentInts() => await Assert.That(IsFalse(Eval(5, "==", 10))).IsTrue();
+    [Test] public async Task Evaluate_NotEquals_Different() => await Assert.That(IsTrue(Eval(5, "!=", 10))).IsTrue();
+    [Test] public async Task Evaluate_NotEquals_Same() => await Assert.That(IsFalse(Eval(5, "!=", 5))).IsTrue();
+    [Test] public async Task Evaluate_GreaterThan_LeftBigger() => await Assert.That(IsTrue(Eval(10, ">", 5))).IsTrue();
+    [Test] public async Task Evaluate_GreaterThan_Equal() => await Assert.That(IsFalse(Eval(5, ">", 5))).IsTrue();
+    [Test] public async Task Evaluate_LessThan_LeftSmaller() => await Assert.That(IsTrue(Eval(3, "<", 5))).IsTrue();
+    [Test] public async Task Evaluate_LessThan_Equal() => await Assert.That(IsFalse(Eval(5, "<", 5))).IsTrue();
+    [Test] public async Task Evaluate_GreaterOrEqual_Equal() => await Assert.That(IsTrue(Eval(5, ">=", 5))).IsTrue();
+    [Test] public async Task Evaluate_GreaterOrEqual_Smaller() => await Assert.That(IsFalse(Eval(3, ">=", 5))).IsTrue();
+    [Test] public async Task Evaluate_LessOrEqual_Equal() => await Assert.That(IsTrue(Eval(5, "<=", 5))).IsTrue();
+
+    [Test] public async Task Evaluate_Contains_Present() => await Assert.That(IsTrue(Eval("hello world", "contains", "world"))).IsTrue();
+    [Test] public async Task Evaluate_Contains_Absent() => await Assert.That(IsFalse(Eval("hello world", "contains", "xyz"))).IsTrue();
+    [Test] public async Task Evaluate_Contains_CaseInsensitive() => await Assert.That(IsTrue(Eval("hello world", "contains", "WORLD"))).IsTrue();
 
     [Test]
-    public async Task Evaluate_Equals_SameInts_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(5, "==", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_Equals_DifferentInts_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(5, "==", 10)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_NotEquals_DifferentValues_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(5, "!=", 10)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_NotEquals_SameValues_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(5, "!=", 5)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_GreaterThan_LeftBigger_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(10, ">", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_GreaterThan_Equal_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(5, ">", 5)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_LessThan_LeftSmaller_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(3, "<", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_LessThan_Equal_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(5, "<", 5)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_GreaterOrEqual_EqualValues_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(5, ">=", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_GreaterOrEqual_LeftSmaller_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(3, ">=", 5)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_LessOrEqual_EqualValues_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(5, "<=", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_Contains_SubstringPresent_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "contains", "world")).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_Contains_SubstringAbsent_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "contains", "xyz")).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Contains_CaseInsensitive_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "contains", "WORLD")).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_Contains_CollectionContainsElement_ReturnsTrue()
+    public async Task Evaluate_Contains_CollectionElement()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(list, "contains", 2)).IsTrue();
+        await Assert.That(IsTrue(Eval(list, "contains", 2))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_Contains_CollectionMissingElement_ReturnsFalse()
+    public async Task Evaluate_Contains_CollectionMissing()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(list, "contains", 99)).IsFalse();
+        await Assert.That(IsFalse(Eval(list, "contains", 99))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_Contains_CollectionMixedNumeric_IntInLongList_ReturnsTrue()
+    public async Task Evaluate_Contains_MixedNumeric_IntInLongList()
     {
         var list = new List<object> { 5L, 10L, 15L };
-        await Assert.That(_eval.Evaluate(list, "contains", (int)5)).IsTrue();
+        await Assert.That(IsTrue(Eval(list, "contains", (int)5))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_Contains_CollectionMixedNumeric_LongInIntList_ReturnsTrue()
+    public async Task Evaluate_Contains_MixedNumeric_LongInIntList()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(list, "contains", 2L)).IsTrue();
+        await Assert.That(IsTrue(Eval(list, "contains", 2L))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_In_MixedNumeric_IntInLongList_ReturnsTrue()
+    public async Task Evaluate_In_MixedNumeric_IntInLongList()
     {
         var list = new List<object> { 5L, 10L, 15L };
-        await Assert.That(_eval.Evaluate((int)5, "in", list)).IsTrue();
+        await Assert.That(IsTrue(Eval((int)5, "in", list))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_In_MixedNumeric_LongInIntList_ReturnsTrue()
+    public async Task Evaluate_In_MixedNumeric_LongInIntList()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(2L, "in", list)).IsTrue();
+        await Assert.That(IsTrue(Eval(2L, "in", list))).IsTrue();
     }
 
-    [Test]
-    public async Task Evaluate_StartsWith_MatchingPrefix_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "startswith", "hello")).IsTrue();
-    }
+    [Test] public async Task Evaluate_StartsWith_Match() => await Assert.That(IsTrue(Eval("hello world", "startswith", "hello"))).IsTrue();
+    [Test] public async Task Evaluate_StartsWith_NoMatch() => await Assert.That(IsFalse(Eval("hello world", "startswith", "world"))).IsTrue();
+    [Test] public async Task Evaluate_EndsWith_Match() => await Assert.That(IsTrue(Eval("hello world", "endswith", "world"))).IsTrue();
 
     [Test]
-    public async Task Evaluate_StartsWith_NonMatchingPrefix_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "startswith", "world")).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_EndsWith_MatchingSuffix_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate("hello world", "endswith", "world")).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_In_ValueInList_ReturnsTrue()
+    public async Task Evaluate_In_Present()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(2, "in", list)).IsTrue();
+        await Assert.That(IsTrue(Eval(2, "in", list))).IsTrue();
     }
 
     [Test]
-    public async Task Evaluate_In_ValueNotInList_ReturnsFalse()
+    public async Task Evaluate_In_Absent()
     {
         var list = new List<object> { 1, 2, 3 };
-        await Assert.That(_eval.Evaluate(5, "in", list)).IsFalse();
+        await Assert.That(IsFalse(Eval(5, "in", list))).IsTrue();
+    }
+
+    [Test] public async Task Evaluate_IsEmpty_EmptyList() => await Assert.That(IsTrue(Eval(new List<object>(), "isempty", null))).IsTrue();
+    [Test] public async Task Evaluate_IsEmpty_NonEmpty() => await Assert.That(IsFalse(Eval(new List<object> { 1 }, "isempty", null))).IsTrue();
+    [Test] public async Task Evaluate_IsEmpty_Null() => await Assert.That(IsTrue(Eval(null, "isempty", null))).IsTrue();
+
+    // --- Logical & Unary ---
+
+    [Test] public async Task Evaluate_Not_Truthy() => await Assert.That(IsFalse(Eval(true, "not", null))).IsTrue();
+    [Test] public async Task Evaluate_Not_Falsy() => await Assert.That(IsTrue(Eval(null, "not", null))).IsTrue();
+    [Test] public async Task Evaluate_And_BothTrue() => await Assert.That(IsTrue(Eval(true, "and", true))).IsTrue();
+    [Test] public async Task Evaluate_And_OneFalse() => await Assert.That(IsFalse(Eval(true, "and", false))).IsTrue();
+    [Test] public async Task Evaluate_Or_BothFalse() => await Assert.That(IsFalse(Eval(false, "or", false))).IsTrue();
+    [Test] public async Task Evaluate_Or_OneTrue() => await Assert.That(IsTrue(Eval(true, "or", false))).IsTrue();
+
+    // --- Type normalization ---
+
+    [Test] public async Task Evaluate_IntVsLong() => await Assert.That(IsTrue(Eval((int)5, "==", (long)5))).IsTrue();
+    [Test] public async Task Evaluate_IntVsDouble() => await Assert.That(IsTrue(Eval((int)5, ">", (double)4.5))).IsTrue();
+    [Test] public async Task Evaluate_StringVsInt() => await Assert.That(IsTrue(Eval("5", "==", 5))).IsTrue();
+    [Test] public async Task Evaluate_NullEqualsNull() => await Assert.That(IsTrue(Eval(null, "==", null))).IsTrue();
+    [Test] public async Task Evaluate_NullNotEqualsValue() => await Assert.That(IsTrue(Eval(null, "!=", 5))).IsTrue();
+    [Test] public async Task Evaluate_NullGreaterThan() => await Assert.That(IsFalse(Eval(null, ">", 5))).IsTrue();
+    [Test] public async Task Evaluate_StringEquality_CaseInsensitive() => await Assert.That(IsTrue(Eval("Hello", "==", "hello"))).IsTrue();
+
+    [Test]
+    public async Task Evaluate_UnsupportedOperator_ReturnsError()
+    {
+        var result = Eval(1, "xor", 2);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
     }
 
     [Test]
-    public async Task Evaluate_IsEmpty_EmptyList_ReturnsTrue()
+    public async Task Evaluate_NonComparable_GreaterThan_ReturnsError()
     {
-        await Assert.That(_eval.Evaluate(new List<object>(), "isempty", null)).IsTrue();
+        var result = Eval(new object(), ">", 5);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
     }
 
-    [Test]
-    public async Task Evaluate_IsEmpty_NonEmptyList_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(new List<object> { 1 }, "isempty", null)).IsFalse();
-    }
+    [Test] public async Task Evaluate_UnknownNumericType() => await Assert.That(IsTrue(Eval((ushort)5, "==", (ushort)5))).IsTrue();
 
-    [Test]
-    public async Task Evaluate_IsEmpty_NullValue_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(null, "isempty", null)).IsTrue();
-    }
+    // --- IsTruthy via If (null operator) ---
 
-    // --- Batch 2: Logical, Unary, Edge Cases ---
-
-    [Test]
-    public async Task Evaluate_Not_TruthyValue_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(true, "not", null)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Not_FalsyValue_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(null, "not", null)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_And_BothTrue_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(true, "and", true)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_And_OneFalse_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(true, "and", false)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Or_BothFalse_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(false, "or", false)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_Or_OneTrueOneFalse_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(true, "or", false)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_IntVsLong_NormalizesAndCompares()
-    {
-        await Assert.That(_eval.Evaluate((int)5, "==", (long)5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_IntVsDouble_NormalizesAndCompares()
-    {
-        await Assert.That(_eval.Evaluate((int)5, ">", (double)4.5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_StringVsInt_ConvertsStringAndCompares()
-    {
-        await Assert.That(_eval.Evaluate("5", "==", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_NullEqualsNull_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(null, "==", null)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_NullNotEqualsValue_ReturnsTrue()
-    {
-        await Assert.That(_eval.Evaluate(null, "!=", 5)).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_NullGreaterThan_ReturnsFalse()
-    {
-        await Assert.That(_eval.Evaluate(null, ">", 5)).IsFalse();
-    }
-
-    [Test]
-    public async Task Evaluate_StringEquality_CaseInsensitive()
-    {
-        await Assert.That(_eval.Evaluate("Hello", "==", "hello")).IsTrue();
-    }
-
-    [Test]
-    public async Task Evaluate_UnsupportedOperator_ThrowsNotSupported()
-    {
-        await Assert.That(() => _eval.Evaluate(1, "xor", 2)).Throws<NotSupportedException>();
-    }
-
-    [Test]
-    public async Task Evaluate_NonComparableType_GreaterThan_ThrowsArgumentException()
-    {
-        await Assert.That(() => _eval.Evaluate(new object(), ">", 5)).Throws<ArgumentException>();
-    }
-
-    [Test]
-    public async Task Evaluate_UnknownNumericType_DoesNotThrow()
-    {
-        // ushort is not in IsNumeric — falls through to Equals/Compare without numeric normalization.
-        // Verifies no crash on types outside the standard numeric set.
-        await Assert.That(_eval.Evaluate((ushort)5, "==", (ushort)5)).IsTrue();
-        await Assert.That(_eval.Evaluate((ushort)5, "!=", (ushort)10)).IsTrue();
-    }
-
-    // --- Batch 3: IsTruthy() ---
-
-    [Test]
-    public async Task IsTruthy_Null_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(null)).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_BoolTrue_ReturnsTrue()
-    {
-        await Assert.That(_eval.IsTruthy(true)).IsTrue();
-    }
-
-    [Test]
-    public async Task IsTruthy_BoolFalse_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(false)).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_ZeroInt_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(0)).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_NonZeroInt_ReturnsTrue()
-    {
-        await Assert.That(_eval.IsTruthy(42)).IsTrue();
-    }
-
-    [Test]
-    public async Task IsTruthy_ZeroLong_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(0L)).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_ZeroDouble_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(0.0)).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_EmptyString_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy("")).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_WhitespaceString_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy("  ")).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_NonEmptyString_ReturnsTrue()
-    {
-        await Assert.That(_eval.IsTruthy("hello")).IsTrue();
-    }
-
-    [Test]
-    public async Task IsTruthy_EmptyCollection_ReturnsFalse()
-    {
-        await Assert.That(_eval.IsTruthy(new List<int>())).IsFalse();
-    }
-
-    [Test]
-    public async Task IsTruthy_NonEmptyCollection_ReturnsTrue()
-    {
-        await Assert.That(_eval.IsTruthy(new List<int> { 1 })).IsTrue();
-    }
-
-    [Test]
-    public async Task IsTruthy_ArbitraryObject_ReturnsTrue()
-    {
-        await Assert.That(_eval.IsTruthy(new object())).IsTrue();
-    }
+    [Test] public async Task IsTruthy_Null() => await Assert.That(IsFalse(EvalIf(null))).IsTrue();
+    [Test] public async Task IsTruthy_True() => await Assert.That(IsTrue(EvalIf(true))).IsTrue();
+    [Test] public async Task IsTruthy_False() => await Assert.That(IsFalse(EvalIf(false))).IsTrue();
+    [Test] public async Task IsTruthy_ZeroInt() => await Assert.That(IsFalse(EvalIf(0))).IsTrue();
+    [Test] public async Task IsTruthy_NonZeroInt() => await Assert.That(IsTrue(EvalIf(42))).IsTrue();
+    [Test] public async Task IsTruthy_ZeroLong() => await Assert.That(IsFalse(EvalIf(0L))).IsTrue();
+    [Test] public async Task IsTruthy_ZeroDouble() => await Assert.That(IsFalse(EvalIf(0.0))).IsTrue();
+    [Test] public async Task IsTruthy_EmptyString() => await Assert.That(IsFalse(EvalIf(""))).IsTrue();
+    [Test] public async Task IsTruthy_Whitespace() => await Assert.That(IsFalse(EvalIf("  "))).IsTrue();
+    [Test] public async Task IsTruthy_NonEmptyString() => await Assert.That(IsTrue(EvalIf("hello"))).IsTrue();
+    [Test] public async Task IsTruthy_EmptyCollection() => await Assert.That(IsFalse(EvalIf(new List<int>()))).IsTrue();
+    [Test] public async Task IsTruthy_NonEmptyCollection() => await Assert.That(IsTrue(EvalIf(new List<int> { 1 }))).IsTrue();
+    [Test] public async Task IsTruthy_Object() => await Assert.That(IsTrue(EvalIf(new object()))).IsTrue();
 }

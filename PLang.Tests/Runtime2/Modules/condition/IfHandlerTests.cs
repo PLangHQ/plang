@@ -32,7 +32,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_NoOperator_TruthyLeft_ReturnsTrue()
     {
-        var action = new If { Context = CreateContext(), Left = 42 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(42) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -42,7 +42,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_NoOperator_FalsyLeft_ReturnsFalse()
     {
-        var action = new If { Context = CreateContext(), Left = null };
+        var action = new If { Context = CreateContext(), Left = new Data("") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -52,7 +52,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_WithOperator_DelegatesToEvaluator()
     {
-        var action = new If { Context = CreateContext(), Left = 10, Operator = ">", Right = 5 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -95,7 +95,7 @@ public class IfHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Left = true,
+            Left = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "TrueBranch" }
         };
         var result = await action.Run();
@@ -144,7 +144,7 @@ public class IfHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Left = false,
+            Left = Data.Ok(false),
             GoalIfFalse = new GoalCall { Name = "FalseBranch" }
         };
         var result = await action.Run();
@@ -160,7 +160,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionTrue_NoGoalIfTrue_ReturnsTrueNoCall()
     {
-        var action = new If { Context = CreateContext(), Left = 10, Operator = ">", Right = 5 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -170,7 +170,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionFalse_NoGoals_ReturnsFalse()
     {
-        var action = new If { Context = CreateContext(), Left = 3, Operator = ">", Right = 5 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -181,7 +181,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_SetsConditionSignalInMemoryStack()
     {
         var context = CreateContext();
-        var action = new If { Context = context, Left = 10, Operator = ">", Right = 5 };
+        var action = new If { Context = context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         await action.Run();
 
         var signal = context.MemoryStack.Get("__condition__");
@@ -193,7 +193,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_FalseCondition_SetsConditionSignalFalse()
     {
         var context = CreateContext();
-        var action = new If { Context = context, Left = 3, Operator = ">", Right = 5 };
+        var action = new If { Context = context, Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
         await action.Run();
 
         var signal = context.MemoryStack.Get("__condition__");
@@ -207,7 +207,7 @@ public class IfHandlerTests : IDisposable
         var action = new If
         {
             Context = CreateContext(),
-            Left = true,
+            Left = Data.Ok(true),
             GoalIfTrue = new GoalCall { Name = "NonExistentGoal" }
         };
         var result = await action.Run();
@@ -219,7 +219,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
     {
-        var action = new If { Context = CreateContext(), Left = 1, Operator = "xor", Right = 2 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(1), Operator = "xor", Right = Data.Ok(2) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -231,7 +231,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_IncompatibleComparisonTypes_ReturnsEvaluationError()
     {
-        var action = new If { Context = CreateContext(), Left = new object(), Operator = ">", Right = 5 };
+        var action = new If { Context = CreateContext(), Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

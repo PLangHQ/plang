@@ -30,7 +30,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_ReturnsDataWithTrue()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = 10, Operator = ">", Right = 5 };
+        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -40,7 +40,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = 3, Operator = ">", Right = 5 };
+        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(3), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -50,7 +50,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_ResultValueIsBool()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = 5, Operator = "==", Right = 5 };
+        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(5), Operator = "==", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Value is bool).IsTrue();
@@ -60,7 +60,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_UnsupportedOperator_ReturnsEvaluationError()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = 1, Operator = "xor", Right = 2 };
+        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(1), Operator = "xor", Right = Data.Ok(2) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -73,7 +73,7 @@ public class CompareHandlerTests : IDisposable
     public async Task Run_DoesNotSetConditionSignal()
     {
         var context = _engine.CreateContext();
-        var action = new Compare { Context = context, Left = 10, Operator = ">", Right = 5 };
+        var action = new Compare { Context = context, Left = Data.Ok(10), Operator = ">", Right = Data.Ok(5) };
         await action.Run();
 
         var signal = context.MemoryStack.Get("__condition__");
@@ -83,7 +83,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
-        var action = new Compare { Context = _engine.CreateContext(), Left = new object(), Operator = ">", Right = 5 };
+        var action = new Compare { Context = _engine.CreateContext(), Left = Data.Ok(new object()), Operator = ">", Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

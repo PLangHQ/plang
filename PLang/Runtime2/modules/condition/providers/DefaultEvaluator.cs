@@ -1,22 +1,52 @@
 using System.Collections;
 using System.Globalization;
+using PLang.Runtime2.Engine.Errors;
+using PLang.Runtime2.Engine.Memory;
 
 namespace PLang.Runtime2.modules.condition.providers;
 
-/// <summary>
-/// Default condition evaluator shipped with PLang.
-/// Handles all comparison, string, collection, logical, and unary operators.
-/// Type normalization widens numeric operands to a common type before comparison
-/// (int/long/double/decimal widening, string-to-number conversion).
-/// String comparisons are case-insensitive by default.
-/// </summary>
 public sealed class DefaultEvaluator : IEvaluator
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
 
-    /// <inheritdoc/>
-    public bool Evaluate(object? left, string op, object? right)
+    public Data Evaluate(If action)
+    {
+        var left = action.Left?.Value;
+        var op = action.Operator;
+        var right = action.Right?.Value;
+
+        try
+        {
+            bool result = op == null ? IsTruthy(left) : EvaluateOp(left, op, right);
+            return Data.Ok(result);
+        }
+        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
+        {
+            return EvaluationError(left, op, right, ex);
+        }
+    }
+
+    public Data Evaluate(Compare action)
+    {
+        var left = action.Left?.Value;
+        var op = action.Operator;
+        var right = action.Right?.Value;
+
+        try
+        {
+            bool result = EvaluateOp(left, op, right);
+            return Data.Ok(result);
+        }
+        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
+        {
+            return EvaluationError(left, op, right, ex);
+        }
+    }
+
+    // --- Core evaluation ---
+
+    private bool EvaluateOp(object? left, string op, object? right)
     {
         (left, right) = NormalizeTypes(left, right);
 
@@ -40,8 +70,7 @@ public sealed class DefaultEvaluator : IEvaluator
         };
     }
 
-    /// <inheritdoc/>
-    public bool IsTruthy(object? value) => value switch
+    private static bool IsTruthy(object? value) => value switch
     {
         null => false,
         bool b => b,
@@ -84,9 +113,6 @@ public sealed class DefaultEvaluator : IEvaluator
         };
     }
 
-    /// <summary>
-    /// Checks if a collection contains an element using AreEqual (handles boxed numeric mismatches).
-    /// </summary>
     private static bool ContainsElement(IEnumerable coll, object? target)
     {
         foreach (var item in coll)
@@ -151,10 +177,10 @@ public sealed class DefaultEvaluator : IEvaluator
     private static bool IsNumeric(object? value) =>
         value is int or long or double or float or decimal or short or byte;
 
-    private static readonly Type[] NumericOrder =
+    private static readonly System.Type[] NumericOrder =
         { typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) };
 
-    private static Type WiderNumericType(Type a, Type b)
+    private static System.Type WiderNumericType(System.Type a, System.Type b)
     {
         var order = NumericOrder;
         var ai = Array.IndexOf(order, a);
@@ -169,5 +195,22 @@ public sealed class DefaultEvaluator : IEvaluator
         if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
             return d;
         return null;
+    }
+
+    private static Data EvaluationError(object? left, string? op, object? right, Exception ex)
+    {
+        var leftType = left?.GetType().Name ?? "null";
+        var rightType = right?.GetType().Name ?? "null";
+        var message = op != null
+            ? $"Condition evaluation failed: '{left}' ({leftType}) {op} '{right}' ({rightType}) — {ex.Message}"
+            : $"Condition evaluation failed: IsTruthy('{left}' ({leftType})) — {ex.Message}";
+
+        return Data.FromError(new ValidationError(message, "EvaluationError")
+        {
+            Exception = ex,
+            FixSuggestion = op != null
+                ? $"Check that operator '{op}' is supported and that both operands are compatible types."
+                : "Check that the left operand is a type that can be evaluated for truthiness."
+        });
     }
 }
