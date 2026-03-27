@@ -133,4 +133,10 @@ public class PathData : Data
     };
 
     public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
+
+    public override Data Clone() => new PathData(_absolutePath, _fs, Value, Source)
+    {
+        Name = Name,
+        Properties = Properties.Clone()
+    };
 }

@@ -33,4 +33,14 @@ public sealed class IdentityData : Data
     /// String context returns the public key — %MyIdentity% in a string gives the public key.
     /// </summary>
     public override string ToString() => PublicKey;
+
+    public override Data Clone() => new IdentityData(Name)
+    {
+        PublicKey = PublicKey,
+        PrivateKey = PrivateKey,
+        IsDefault = IsDefault,
+        IsArchived = IsArchived,
+        Created = Created,
+        Properties = Properties.Clone()
+    };
 }
