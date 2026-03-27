@@ -280,6 +280,80 @@
         "health": "PASS — Clone family complete, 1 nit (missing base Error/Warnings/Signature)",
         "notes": "All findings resolved. Recommend docs bot next."
       }
+    },
+    {
+      "id": "docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-03-27T15:30:00Z",
+      "timestamp_end": "2026-03-27T16:00:00Z",
+      "intent": "Full documentation pass for cleanup branch — XML docs, architecture docs, user-facing module docs",
+      "before": {
+        "assumptions": "All bots approved (auditor PASS, tester PASS, security PASS). 241 files changed with renames, new types, and new modules needing docs.",
+        "risk": "Low — documentation only, no code behavior changes."
+      },
+      "plan": "1. XML docs on new public types. 2. Update architecture docs (modules.md, good_to_know.md, README.md). 3. Write 6 new user-facing module docs. 4. Rewrite event.md. 5. Update index.md.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/module/remove.cs",
+            "PLang/Runtime2/modules/event/skipAction.cs",
+            "PLang/Runtime2/modules/event/on.cs",
+            "PLang/Runtime2/modules/Attributes.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "XML doc comments on new public types"
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/modules.md",
+            "Documentation/Runtime2/good_to_know.md",
+            "Documentation/Runtime2/README.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architecture docs: stale references (IdentityVariable, library, signing, Path, condition)"
+        },
+        {
+          "paths": [
+            "docs/modules/crypto.md",
+            "docs/modules/http.md",
+            "docs/modules/identity.md",
+            "docs/modules/signing.md",
+            "docs/modules/provider.md",
+            "docs/modules/module.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New user-facing module documentation"
+        },
+        {
+          "paths": [
+            "docs/modules/event.md",
+            "docs/modules/index.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote event.md for consolidated pattern, updated index"
+        },
+        {
+          "paths": ["docs/modules/library.md"],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaced by module.md"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all documentation gaps filled",
+        "notes": "18 gaps found and filled. Build succeeds. Ready to merge."
+      }
     }
   ]
 }

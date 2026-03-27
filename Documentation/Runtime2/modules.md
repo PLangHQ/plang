@@ -251,7 +251,7 @@ public static class TypeMapping
 | `signing` | `sign`, `verify` | Data signing and signature verification |
 | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
 | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
-| `library` | `load` | Load external DLL libraries |
+| `module` | `add`, `remove` | Load/unload external handler libraries |
 
 ### condition module — Details
 
@@ -271,9 +271,9 @@ When `Operator` is null, performs a truthy check on `Left`. When set, evaluates 
 
 The identity module manages Ed25519 key pairs stored in the System actor's DataSource (`identity` table). Each identity has a name, public/private key pair, default flag, and archive flag.
 
-**Core type — `IdentityVariable`**: OBP-compliant entity that owns its persistence (`LoadAsync`, `SaveAsync`, `RemoveAsync` navigate to `engine.System.DataSource`). The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
+**Core type — `IdentityData : Data`**: A `Data` subclass that extends `Data` directly. Properties include `PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, and `Created`. The `PrivateKey` property is marked `[Sensitive]` — excluded from output serialization but persisted in storage and accessible via `%MyIdentity.PrivateKey%` in PLang code. `ToString()` returns the public key, so `%MyIdentity%` in string context gives the public key.
 
-**Lazy resolution — `IdentityData`**: A `Data` subclass on `Actor.Identity` that lazily resolves the default identity on first access. Auto-creates a "default" identity if none exist. Uses sync-over-async (safe in PLang's sequential execution model with no SynchronizationContext). Handlers call `Update()` after changing the default.
+**`IdentityData`** is stored directly in `Actor.Identity` as a pure data record — no lazy resolution wrapper. Handlers set it directly. Auto-creates a "default" identity if none exist.
 
 **`%MyIdentity%`**: Registered on every actor's MemoryStack as `DynamicData` pointing to `engine.System.Identity.Value`. Re-evaluates on each access, so changes via `setDefault` or `rename` are reflected immediately.
 
@@ -288,7 +288,7 @@ The identity module manages Ed25519 key pairs stored in the System actor's DataS
 | `unarchive` | `Name` | Restores archived identity. Idempotent. |
 | `rename` | `Name`, `NewName` | Atomic rename: save-new-first, then remove-old (no data loss on failure). Updates `%MyIdentity%` if default. |
 | `setDefault` | `Name` | Switches default. Cannot set archived identity. Clears all existing defaults. Idempotent. |
-| `export` | `Name` (optional) | Returns raw private key string. By name or default (auto-creates if needed). |
+| `export` | `Name` (optional) | Returns full `IdentityData`. By name or default (auto-creates if needed). |
 
 All mutating actions are `Cacheable = false`. All return `Data` — errors use `ActionError` (validation) or `ServiceError` (save failures).
 
@@ -315,11 +315,11 @@ Both actions are `Cacheable = false`. Both return `Data` — errors use `ActionE
 
 ### signing module — Details
 
-The signing module creates and verifies signed data envelopes using Ed25519 (or any pluggable `ISigningProvider`). The core logic lives in `SignedData` — handlers are thin delegates.
+The signing module creates and verifies signed data envelopes using Ed25519 (or any pluggable `ISigningProvider`). Providers own the signing/verification pipeline — `SignedData` is pure data.
 
-**Core type — `SignedData`**: The signed envelope with deterministic JSON serialization (`JsonPropertyOrder` on every field). Contains: Type, Algorithm, Nonce, Created, Expires, Identity (signer's public key), Contracts, Headers, HashedData, and Signature (base64). Owns both `Sign()` and `VerifyAsync()`.
+**Core type — `SignedData`**: The signed envelope with deterministic JSON serialization (`JsonPropertyOrder` on every field). Contains: Type, Algorithm, Nonce, Created, Expires, Identity (signer's public key), Contracts, Headers, HashedData, and Signature (base64). Pure data record — no `Sign()` or `VerifyAsync()` methods. Provides `ToSigningBytes()` for deterministic serialization used by providers.
 
-**Signing pipeline** (`SignedData.CreateAsync`):
+**Signing pipeline** (`ISigningProvider` — e.g., `Ed25519Provider.SignAsync`):
 1. Resolve signing provider: action parameter → `SigningSettings.Provider` → registry default
 2. Get the signer's identity via `engine.RunAction<identity.Get>`
 3. Hash the data via `engine.RunAction<Hash>` (keccak256)
@@ -327,7 +327,7 @@ The signing module creates and verifies signed data envelopes using Ed25519 (or 
 5. Sign the envelope bytes via provider
 6. Attach `SignedData` to the result `Data.Signature`
 
-**Verification pipeline** (`SignedData.VerifyAsync`) — 9-step check:
+**Verification pipeline** (`ISigningProvider` — e.g., `Ed25519Provider.VerifyAsync`) — 9-step check:
 1. Type check ("signature")
 2. Provider resolution from Algorithm field
 3. Timeout check (age > configured timeout)

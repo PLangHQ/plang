@@ -270,10 +270,9 @@ PLang/Runtime2/
     │   └── providers/
     │       ├── IEvaluator.cs         Pluggable comparison engine interface
     │       └── DefaultEvaluator.cs   Default: all operators, type normalization, IsTruthy
-    ├── goal/   loop/   list/   math/   convert/
+    ├── goal/   loop/   list/   math/   module/
     ├── identity/
-    │   ├── types.cs       IdentityVariable — Ed25519 key pair entity
-    │   ├── IdentityData.cs Lazy-resolving Data subclass on Actor.Identity
+    │   ├── types.cs       IdentityData : Data — Ed25519 key pair entity
     │   ├── create.cs      identity.create — new identity with key pair
     │   ├── get.cs         identity.get — by name or default (auto-create)
     │   ├── list.cs        identity.list — list non-archived

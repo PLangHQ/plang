@@ -174,20 +174,17 @@ See `Step/Methods.cs:HandleErrorAsync()` for the implementation.
 
 ---
 
-## Sub-Step Execution — The `__condition__` Signal
+## Sub-Step Execution — Condition-Gated Skipping
 
 Indented steps (sub-steps) default to NOT executing. They must be "proven true" by a parent condition step. The mechanism:
 
-1. `condition.if` evaluates its condition and stores the result as `__condition__` in MemoryStack.
-2. `Steps.RunAsync` checks for `__condition__` after each step that has indented children.
-3. If `__condition__` exists and is not `true`, `skipBelowIndent` is set to the step's indent level — all deeper steps are skipped.
-4. The signal is consumed (removed) immediately after reading to prevent stale signals from affecting later steps.
-
-**Why MemoryStack instead of Data.Value?** `Actions.RunAsync` merges action results via `Data.Merge`, which casts Value to `List<Data>`. A bool Value gets lost in the merge. The MemoryStack signal bypasses this.
+1. `condition.if` evaluates its condition and returns `Data.Ok(bool)` as the step result.
+2. `Steps.RunAsync` checks each step that has indented children: if `IsConditionStep(step)` and `stepResult.Value is bool condition && !condition`, it sets `skipBelowIndent` to the step's indent level — all deeper steps are skipped.
+3. No MemoryStack signal is used. The result flows directly through the step's return value.
 
 **Thread safety:** `skipBelowIndent` is a local variable in `Steps.RunAsync` — each concurrent request gets its own copy. Step objects are never mutated.
 
-**Non-condition steps with indented children:** Only steps that set `__condition__` can trigger sub-step skipping. If a step has indented children but didn't set `__condition__`, the children always execute. This prevents non-condition steps from accidentally blocking their children.
+**Non-condition steps with indented children:** Only steps using the `condition` module (i.e., `condition.if`) can trigger sub-step skipping. A `variable.set` step returning Data with `Value=false` does NOT skip its children. The runner checks `IsConditionStep()` to enforce this — it verifies the step's first action has `Module == "condition"` (case-insensitive).
 
 **Nesting:** Works at arbitrary depth. When an inner `if` returns false, only its immediate indented children are skipped. The outer condition's children at the parent indent level continue executing normally.
 
@@ -195,7 +192,7 @@ Indented steps (sub-steps) default to NOT executing. They must be "proven true" 
 
 ## [Sensitive] Attribute — Two-Mode Serialization
 
-The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityVariable.PrivateKey`). It controls a two-mode serialization split:
+The `[Sensitive]` attribute (defined in `Engine/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
 
 - **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
 - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
@@ -205,17 +202,13 @@ The filter is always-on — it's wired into both `JsonStreamSerializer`'s defaul
 
 ---
 
-## IdentityData — Lazy Resolution with Sync-Over-Async
+## IdentityData — Data Subclass
 
-`IdentityData` (on `Actor.Identity`) lazily resolves the default identity on first property access. It uses sync-over-async (`GetAwaiter().GetResult()`) in the `Value` getter because:
+`IdentityData` extends `Data` directly — a pure data record with typed properties (`PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, `Created`). It lives on `Actor.Identity` as a property. No lazy resolution, no sync-over-async.
 
-1. C# properties can't be `async`
-2. PLang runs sequentially per context with no `SynchronizationContext`
-3. SQLite I/O (via DataSource) is synchronous underneath
+Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `engine.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
 
-The resolution chain: check for existing default → promote any non-archived identity → auto-create "default" with new Ed25519 keys. All through `IdentityVariable.GetOrCreateDefaultAsync()`, the single source of truth.
-
-Handlers call `Identity.Update(newDefault)` after changing the default to refresh the cached value. The `ResolveDefault()` method catches `InvalidOperationException` (save failure) and returns null — IdentityData handles null gracefully.
+See `PLang/Runtime2/modules/identity/types.cs` for the class definition.
 
 ---
 
@@ -224,14 +217,20 @@ Handlers call `Identity.Update(newDefault)` after changing the default to refres
 `%MyIdentity%` is registered on every actor's MemoryStack as a `DynamicData`:
 
 ```csharp
-Context.MemoryStack.Put(new DynamicData("MyIdentity", () => engine.System.Identity.Value));
+Context.MemoryStack.Put(new DynamicData("MyIdentity", () =>
+{
+    var provider = engine.Providers.Get<IIdentityProvider>();
+    if (!provider.Success) return null;
+    var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = engine.Context }).GetAwaiter().GetResult();
+    return identity.Success ? identity : null;
+}));
 ```
 
 This means:
 - It always points to the **System** actor's default identity (not the current actor's)
 - It re-evaluates on every access (DynamicData calls the lambda each time)
 - Changes via `setDefault`, `rename`, or auto-create are reflected immediately
-- `%MyIdentity%` in string context gives the public key (`IdentityVariable.ToString()`)
+- `%MyIdentity%` in string context gives the public key (`IdentityData.ToString()`)
 - `%MyIdentity.PrivateKey%` navigates via dot-notation to the private key
 - `%MyIdentity.Name%`, `%MyIdentity.IsDefault%`, etc. all work via standard MemoryStack navigation
 
@@ -376,6 +375,10 @@ This separates the configure action's nullable properties (only non-null values 
 
 ---
 
-## Path Moved to Engine/FileSystem/
+## PathData — Data Subclass in Engine/FileSystem/
 
-`Path` was moved from `Engine/Memory/` to `Engine/FileSystem/` — it's a file system concept, not a memory concept. The class resolves raw path strings into absolute paths with navigable properties (`Extension`, `FileName`, `Directory`, etc.). Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
+`PathData` extends `Data` — a path IS a Data. It was moved from `Engine/Memory/` to `Engine/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by a file provider (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
+
+The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the engine root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
+
+See `PLang/Runtime2/Engine/FileSystem/PathData.cs` for the class definition.

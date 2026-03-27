@@ -37,20 +37,28 @@ You don't need to know the module name — just write what you want and the LLM 
 |--------|-------------|---------|
 | [list](list.md) | Work with lists and collections | add, remove, get, set, count, first, last, sort, reverse, join, split, contains, indexof, flatten, unique, range |
 | [math](math.md) | Arithmetic and number operations | add, subtract, multiply, divide, modulo, power, sqrt, abs, round, floor, ceiling, min, max, random |
-| [convert](convert.md) | Type conversions | toJson, fromJson, toInt, toLong, toDouble, toBool, toDateTime, toString, toBase64, fromBase64 |
 
 ### I/O
 
 | Module | Description | Actions |
 |--------|-------------|---------|
 | [file](file.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
+| [http](http.md) | HTTP requests, downloads, uploads, streaming | request, download, upload, configure |
 | [settings](settings.md) | Persistent key-value settings | get, set, remove |
+
+### Security & Identity
+
+| Module | Description | Actions |
+|--------|-------------|---------|
+| [identity](identity.md) | Ed25519 key pair management | create, get, list, archive, unarchive, rename, setDefault, export |
+| [crypto](crypto.md) | Cryptographic hashing and verification | hash, verify |
+| [signing](signing.md) | Data signing and signature verification | sign, verify |
 
 ### Events & Testing
 
 | Module | Description | Actions |
 |--------|-------------|---------|
-| [event](event.md) | Hook into execution lifecycle | beforeGoal, afterGoal, beforeStep, afterStep, beforeAction, afterAction, remove, skipAction |
+| [event](event.md) | Hook into execution lifecycle | on, remove, skipAction |
 | [assert](assert.md) | Test assertions | equals, notEquals, contains, greaterThan, lessThan, isTrue, isFalse, isNull, isNotNull |
 | [mock](mock.md) | Mock actions in tests | intercept, verify, reset |
 
@@ -58,8 +66,8 @@ You don't need to know the module name — just write what you want and the LLM 
 
 | Module | Description | Actions |
 |--------|-------------|---------|
-| [archive](archive.md) | Compression settings | settings |
-| [library](library.md) | Load external handler libraries | load |
+| [module](module.md) | Load/unload external handler libraries | add, remove |
+| [provider](provider.md) | Manage pluggable providers | load, remove, list |
 
 ## PLang Syntax Basics
 

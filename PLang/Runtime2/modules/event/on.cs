@@ -5,6 +5,11 @@ using EventBinding = PLang.Runtime2.Engine.Events.Lifecycle.Bindings.Binding.@th
 
 namespace PLang.Runtime2.modules.@event;
 
+/// <summary>
+/// Registers an event binding on the execution lifecycle.
+/// Consolidates all event types (BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction)
+/// into a single action with a Type parameter. Returns the binding ID for later removal.
+/// </summary>
 [Example("before step, call LogStep, on goal pattern 'Api/*'", "Type=BeforeStep, GoalToCall=LogStep, GoalPattern=Api/*")]
 [Example("after goal, call Cleanup", "Type=AfterGoal, GoalToCall=Cleanup")]
 [Example("before action, call MockHttp, on action pattern 'http.*'", "Type=BeforeAction, GoalToCall=MockHttp, ActionPattern=http.*")]
@@ -12,14 +17,21 @@ namespace PLang.Runtime2.modules.@event;
 [Action("on", Cacheable = false)]
 public partial class On : IContext
 {
+    /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
     [IsNotNull]
     public partial string Type { get; init; }
+    /// <summary>Goal to execute when the event fires.</summary>
     public partial GoalCall GoalToCall { get; init; }
+    /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
     public partial string? GoalPattern { get; init; }
+    /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
     public partial string? StepPattern { get; init; }
+    /// <summary>Glob or regex pattern to match action names (e.g., "http.*"). Only for action-level events.</summary>
     public partial string? ActionPattern { get; init; }
+    /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
     [Default(false)]
     public partial bool IsRegex { get; init; }
+    /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
     public partial int Priority { get; init; }
 

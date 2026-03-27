@@ -8,10 +8,13 @@ namespace PLang.Runtime2.Engine.Goals.Goal;
 /// </summary>
 public sealed class GoalCall
 {
+    /// <summary>Goal name to call (e.g., "ProcessData", "/Setup/Init").</summary>
     [Store, LlmBuilder]
     public string Name { get; init; } = "";
+    /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
     [Store, LlmBuilder]
     public List<Data>? Parameters { get; init; }
+    /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store]
     public string? PrPath { get; set; }
 }

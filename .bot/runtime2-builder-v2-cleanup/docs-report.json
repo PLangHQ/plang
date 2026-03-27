@@ -1,0 +1,30 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-builder-v2-cleanup",
+  "timestamp": "2026-03-27T16:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "Comprehensive documentation pass after cleanup branch. XML doc comments added to 7 files with new public types. Architecture docs (modules.md, good_to_know.md, README.md) updated for IdentityVariable→IdentityData, library→module, signing pipeline→provider, condition-only skipping, Path→PathData. Five new user-facing module docs (crypto, http, identity, signing, provider). Event module docs rewritten for consolidated on/remove/skipAction pattern. Index updated, stale docs (archive, convert, library) removed.",
+  "stats": { "gaps_found": 18, "gaps_filled": 18, "docs_updated": 8, "docs_created": 6 },
+  "changes": [
+    { "id": 1, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/modules/module/remove.cs", "description": "Added class and property XML docs" },
+    { "id": 2, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/modules/event/skipAction.cs", "description": "Added class and property XML docs" },
+    { "id": 3, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/modules/event/on.cs", "description": "Added class and all 7 property XML docs" },
+    { "id": 4, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/modules/Attributes.cs", "description": "Added XML docs to all 8 attributes and their properties" },
+    { "id": 5, "type": "xml-doc", "action": "updated", "file": "PLang/Runtime2/Engine/Goals/Goal/GoalCall.cs", "description": "Added XML docs to Name, Parameters, PrPath properties" },
+    { "id": 6, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/modules.md", "description": "Updated library→module, IdentityVariable→IdentityData, signing pipeline→provider" },
+    { "id": 7, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/good_to_know.md", "description": "Updated IdentityData section, condition skipping, PathData, [Sensitive] reference" },
+    { "id": 8, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/README.md", "description": "Fixed stale IdentityVariable and convert/ references" },
+    { "id": 9, "type": "changelog", "action": "created", "file": "docs/modules/crypto.md", "description": "New user-facing crypto module docs" },
+    { "id": 10, "type": "changelog", "action": "created", "file": "docs/modules/http.md", "description": "New user-facing HTTP module docs" },
+    { "id": 11, "type": "changelog", "action": "created", "file": "docs/modules/identity.md", "description": "New user-facing identity module docs" },
+    { "id": 12, "type": "changelog", "action": "created", "file": "docs/modules/signing.md", "description": "New user-facing signing module docs" },
+    { "id": 13, "type": "changelog", "action": "created", "file": "docs/modules/provider.md", "description": "New user-facing provider module docs" },
+    { "id": 14, "type": "changelog", "action": "created", "file": "docs/modules/module.md", "description": "New module docs replacing library.md" },
+    { "id": 15, "type": "consistency", "action": "updated", "file": "docs/modules/event.md", "description": "Rewritten for consolidated on/remove/skipAction pattern" },
+    { "id": 16, "type": "consistency", "action": "updated", "file": "docs/modules/index.md", "description": "Added new modules, removed archive/convert/library" }
+  ],
+  "findings": [
+    { "id": 1, "severity": "minor", "category": "missing-doc", "file": "PLang/Runtime2/Engine/FileSystem/PathData.cs", "issue": "13 path properties (Raw, Absolute, Relative, etc.) lack individual XML docs", "resolution": "flagged-for-coder", "detail": "Properties are self-documenting by name. Added class-level docs. Individual property docs would be noise — skipped per quality rules." },
+    { "id": 2, "severity": "minor", "category": "missing-doc", "file": "PLang/Runtime2/Engine/Memory/Data.cs", "issue": "DataList<T> IList<T> members lack individual XML docs", "resolution": "flagged-for-coder", "detail": "Standard IList<T> implementations don't need docs. Class-level doc explains the pattern." }
+  ]
+}
