@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-builder-v2-llm",
+  "sessions": [
+    {
+      "id": "llm-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T00:00:00Z",
+      "intent": "Design LLM module: C# type definition + PLang goal implementation",
+      "before": {
+        "assumptions": "Pieces 1-6 done. Runtime1 LLM module is OpenAI-shaped, no tool support. Builder uses two-pass LLM approach. HTTP module available for PLang goals.",
+        "risk": "Low — design only."
+      },
+      "plan": "Thin C# action (query.cs, LlmMessage.cs) defines parameters for builder/source generator. Run() calls PLang goal. Provider = setting pointing to goal name (default: OpenAi). Tools are GoalCalls with Description. Tool execution loop in PLang. Future: migrate to pure PLang via define step.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-llm/architect/v1/plan.md", ".bot/runtime2-builder-v2-llm/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect plan for LLM module"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design approved by Ingi. Ready for implementation.",
+        "notes": "Key decisions: no ILlmProvider C# interface, provider is a goal setting, tools are GoalCalls, GoalCall gets Description. Future: define step enables pure PLang modules (separate workstream)."
+      }
+    }
+  ]
+}
