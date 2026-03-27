@@ -1,0 +1,137 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-v2-template",
+  "timestamp": "2026-03-27T18:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "template-rendering",
+      "exposure": "FluidProvider renders Liquid templates with access to MemoryStack variables and callGoal execution",
+      "trust_boundary": "Template content comes from .pr files (trusted) or file paths resolved via ValidatePath (sandboxed). Template is a string parameter — if a PLang developer passes user input as inline template content, SSTI becomes possible.",
+      "mitigations": [
+        "HTML encoding by default (HtmlEncoder.Default at line 101)",
+        "!-prefixed (scoped) variables excluded via GetAll() filter",
+        "[Sensitive] properties on IdentityData excluded from output serialization",
+        "File path resolution uses ValidatePath sandbox",
+        "callGoal bounded by CallStack depth (1000)"
+      ],
+      "gaps": [
+        "No template size limit on inline content",
+        "No render timeout — Fluid can run indefinitely on pathological templates",
+        "callGoal tag allows goal execution from within template — if template content is user-supplied, this is SSTI with code execution"
+      ]
+    },
+    {
+      "area": "template-includes",
+      "exposure": "PlangFileProvider resolves include/render paths relative to goal directory or engine root",
+      "trust_boundary": "ValidatePath called at TryResolvePath (line 250) — prevents sandbox escape",
+      "mitigations": [
+        "ValidatePath enforces PLang sandbox boundary",
+        "Path.Combine followed by ValidatePath — traversal via ../ caught",
+        "Only files within sandbox are readable"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "module-remove",
+      "exposure": "module.remove unregisters all actions for a module by name",
+      "trust_boundary": ".pr files (trusted) — only the user's own code can call module.remove",
+      "mitigations": [
+        "Returns 404 if module not found",
+        "Cacheable = false — result not cached"
+      ],
+      "gaps": [
+        "No protection against removing built-in modules — user could remove 'variable' or 'condition' modules. User-sovereign: intentional."
+      ]
+    },
+    {
+      "area": "event-binding",
+      "exposure": "event.on registers lifecycle event bindings that execute goals on pattern match",
+      "trust_boundary": ".pr files (trusted) — patterns and goal names come from user's own code",
+      "mitigations": [
+        "EventType validated via Enum.TryParse — rejects unknown types",
+        "Re-entry guard via context.TryEnterEvent/ExitEvent prevents infinite loops",
+        "Binding registered on User actor events (scoped)"
+      ],
+      "gaps": [
+        "IsRegex=true enables regex patterns — no ReDoS protection. Low risk: patterns come from .pr files (user-sovereign)."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "Server-Side Template Injection (SSTI) via callGoal tag. If a PLang developer builds a web app and passes user input as inline template content (Template=%userInput%), the attacker can inject {% callGoal 'DeleteEverything' %} to execute arbitrary goals.",
+      "preconditions": "PLang developer must pass untrusted user input as the Template parameter with IsFile=false or null. The target goal must exist in the app.",
+      "impact": "Goal execution with full PLang permissions — file operations, HTTP requests, database access, etc.",
+      "affected_files": ["PLang/Runtime2/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "1. PLang app has: render %userInput%, write to %html%\n2. Attacker submits: {% callGoal 'Setup' %} or {% callGoal 'SomeDestructiveGoal' %}\n3. FluidProvider parses and executes the callGoal tag\n4. Goal runs with the current context's full permissions",
+      "proposed_fix": "Document that Template should never contain raw user input. Consider adding a SafeRender mode (or separate action) that disables callGoal tag registration for untrusted content. Not blocking — this is a developer responsibility, same as SQL injection when using raw string concatenation.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "No size limit on inline template content and no render timeout. Pathological Liquid templates (deeply nested loops, recursive includes) could consume unbounded memory/CPU.",
+      "preconditions": "Template content must be controllable — either via SSTI (finding #1) or a very large .pr file parameter.",
+      "impact": "Denial of service — single-threaded PLang execution blocks until template completes or OOM kills the process.",
+      "affected_files": ["PLang/Runtime2/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "Template: {% for i in (1..999999999) %}{{ i }}{% endfor %} — Fluid will attempt to render ~1B iterations.",
+      "proposed_fix": "Consider Fluid's TemplateOptions.MaxSteps (limits statement execution count) and MaxRecursion. These are built into Fluid and easy to configure.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Error messages in FluidProvider include file paths and exception messages that could leak internal structure to end users if the PLang app exposes Data errors directly.",
+      "preconditions": "PLang app must surface error messages from Data.Error to untrusted consumers (e.g., HTTP response body).",
+      "impact": "Information disclosure — file paths, template parse errors, exception details.",
+      "affected_files": ["PLang/Runtime2/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "Render a template with a syntax error → error message contains 'Template syntax error in goals/api/template.html: ...' revealing internal directory structure.",
+      "proposed_fix": "Standard PLang behavior — all handlers return descriptive errors. The developer controls how errors are exposed. Informational only.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "RegisterTypeIfNeeded (line 116-141) registers arbitrary CLR types with Fluid's MemberAccessStrategy, making all public properties accessible in templates. If a Data value contains an object with sensitive public properties that aren't marked [Sensitive], they become template-accessible.",
+      "preconditions": "An object with sensitive public properties (not marked [Sensitive]) must be in MemoryStack, AND the template must be attacker-controlled (depends on finding #1).",
+      "impact": "Template can access any public property of any object in MemoryStack via dot notation.",
+      "affected_files": ["PLang/Runtime2/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "If MemoryStack has a Data('config', someConfigObject) where someConfigObject has public ApiKey property → {{ config.ApiKey }} in template.",
+      "proposed_fix": "This is by design — templates authored by the user should access their own data. The risk only materializes if combined with SSTI (finding #1). Informational.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Properties.Clone() at line 100-106 copies the list but shares Data item references (shallow clone). If many Properties are cloned and then mutated, the shared references could cause unexpected state propagation.",
+      "preconditions": "Clone followed by mutation of a Data item within Properties.",
+      "impact": "State corruption — not directly exploitable for security, but could cause unexpected behavior.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Properties.cs"],
+      "exploit_sketch": "Not an attack vector — this is a correctness issue. Consistent with existing Data.Clone() shallow Properties behavior.",
+      "proposed_fix": "Carry-forward from previous analysis. Low priority — unlikely to cause issues in practice.",
+      "status": "accepted-risk"
+    }
+  ],
+  "carry_forward_status": {
+    "resolved": [
+      "DefaultEvaluator InvalidCastException — FIXED: line 24 now catches InvalidCastException",
+      "Data.Envelope Decompress InvalidOperationException — FIXED: line 160 now catches InvalidOperationException",
+      "__condition__ stale signal — RESOLVED previously (removed entirely)"
+    ],
+    "still_open": [
+      "Data.Clone() shallow Properties — Low severity, accepted risk (finding #5)"
+    ],
+    "no_longer_applicable": [
+      "DeserializeValue InvalidOperationException in SqliteDataSource — SqliteDataSource no longer exists in the codebase, refactored away"
+    ]
+  },
+  "summary": "The UI module is well-implemented with proper security fundamentals: HTML encoding by default, file system sandbox via ValidatePath, scoped variable filtering, and bounded goal execution via CallStack. The primary concern is SSTI via callGoal when PLang developers pass untrusted user input as template content — this is a developer responsibility issue (like SQL injection), not a runtime bug. Two carry-forward findings resolved (DefaultEvaluator, Data.Envelope). No critical or high findings. Recommend configuring Fluid's MaxSteps as defense-in-depth."
+}

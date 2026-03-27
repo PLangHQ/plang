@@ -257,6 +257,54 @@
         "health": "PASS — all major findings resolved, 1890 tests pass, coverage improved significantly.",
         "notes": "Recommend security analyst next."
       }
+    },
+    {
+      "id": "template-security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-03-27T18:00:00Z",
+      "timestamp_end": "2026-03-27T18:30:00Z",
+      "intent": "Security analysis of UI module: SSTI, path traversal, resource exhaustion, carry-forward verification",
+      "before": {
+        "assumptions": "UI module implemented and tested (1890 tests pass, 91.8% coverage). FluidProvider renders Liquid templates with callGoal custom tag. ValidatePath sandbox in place.",
+        "risk": "Medium — new template rendering with goal execution from templates introduces SSTI surface."
+      },
+      "plan": "Blue team: map attack surface of FluidProvider, PlangFileProvider, module.remove, event.on. Red team: SSTI via callGoal, path traversal via includes, resource exhaustion. Verify carry-forward findings.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+            "PLang/Runtime2/modules/ui/render.cs",
+            "PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs",
+            "PLang/Runtime2/modules/module/remove.cs",
+            "PLang/Runtime2/modules/event/on.cs",
+            "PLang/Runtime2/modules/event/skipAction.cs",
+            "PLang/Runtime2/Engine/Memory/Properties.cs",
+            "PLang/Runtime2/modules/identity/types.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full security review of all changed production files. Verified carry-forward findings. Assessed SSTI, path traversal, resource exhaustion, info disclosure."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-template/security-report.json",
+            ".bot/runtime2-builder-v2-template/security/v1/verdict.json",
+            ".bot/runtime2-builder-v2-template/security/v1/summary.md",
+            ".bot/runtime2-builder-v2-template/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security report: 0 critical, 0 high, 1 medium (SSTI accepted-risk), 4 low. PASS."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — no critical or high findings. UI module well-secured.",
+        "notes": "SSTI via callGoal is developer responsibility (like SQL injection). Two carry-forward findings resolved. Recommend auditor next."
+      }
     }
   ]
 }
