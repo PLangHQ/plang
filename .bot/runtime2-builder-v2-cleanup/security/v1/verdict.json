@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "0 critical, 0 high, 3 medium (2 contract violations mitigated by safety nets, 1 accepted-risk), 2 low. Strong security posture across signing, HTTP, engine core."
+}

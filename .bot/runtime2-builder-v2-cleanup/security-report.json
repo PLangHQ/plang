@@ -1,0 +1,193 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-v2-cleanup",
+  "timestamp": "2026-03-27T12:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "signing-module",
+      "exposure": "SignedData deserialization, Ed25519 verification pipeline, thread-safe ToSigningBytes",
+      "trust_boundary": "External Data arriving via HTTP channels with attacker-controlled SignedData",
+      "mitigations": [
+        "9-step VerifyAsync pipeline (type, timeout, expiry, nonce, contracts, headers, hash, format, crypto)",
+        "Thread-safe ToSigningBytes via TypeInfoResolver (no mutation)",
+        "SignedData fields are internal set (immutable after construction)",
+        "NSec Ed25519 crypto (battle-tested)",
+        "Nonce replay via MemoryStepCache.TryAddAsync"
+      ],
+      "gaps": [
+        "Nonce replay is single-process only — distributed deployments need shared cache (ICache is pluggable)",
+        "HashDataConverter silently returns empty array on invalid base64 (fail-secure but imprecise error)"
+      ]
+    },
+    {
+      "area": "http-module",
+      "exposure": "HTTP request/response handling, streaming, SSE, file download/upload",
+      "trust_boundary": "Untrusted HTTP responses from external servers",
+      "mitigations": [
+        "ReadLimitedStringAsync/ReadLimitedBytesAsync on ALL response reads (100MB default)",
+        "SSE buffer overflow protection (10MB per message, clear and continue)",
+        "Unsigned requests reject application/plang (403)",
+        "Signed responses verified per-line in NDJSON streaming",
+        "HTTPS enforced on bare domains",
+        "Timeout (30s default) and redirect limits (10 max)",
+        "File paths validated via fs.ValidatePath()",
+        "Exception handling returns Data (never throws)"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "identity-module",
+      "exposure": "Key persistence in SQLite, identity export, [Sensitive] filtering",
+      "trust_boundary": "Serialization output paths",
+      "mitigations": [
+        "[Sensitive] attribute strips private keys from JsonStreamSerializer output",
+        "Keys stored under System actor scope",
+        "SQL injection prevented: SanitizeTableName + parameterized queries"
+      ],
+      "gaps": [
+        "[Sensitive] does not apply to raw JsonSerializer, dot navigation, or Data.Envelope serialization (by design)"
+      ]
+    },
+    {
+      "area": "module-provider-loaders",
+      "exposure": "Assembly.LoadFrom loads arbitrary DLLs without signature verification",
+      "trust_boundary": "DLL path comes from .pr file (trusted under PLang threat model)",
+      "mitigations": [
+        ".pr files are trusted (LLM builder output, user-controlled)",
+        "module.add validates file exists before loading",
+        "provider.load validates IProvider interface conformance"
+      ],
+      "gaps": [
+        "No assembly signature verification — accepted risk under user-sovereign model"
+      ]
+    },
+    {
+      "area": "engine-core",
+      "exposure": "Data deserialization, recursive navigation, MemoryStack variable resolution, channel serialization",
+      "trust_boundary": "Compressed/archived Data from external sources (channels, HTTP)",
+      "mitigations": [
+        "UnwrapJsonElement depth guard: MaxJsonDepth=128",
+        "RehydrateNestedData depth guard: MaxRehydrationDepth=128",
+        "GetChild navigation depth guard: MaxNavigationDepth=100",
+        "Decompression size limit: 100MB",
+        "CallStack depth limit: 1000",
+        "Variable circular reference detection via thread-static HashSet",
+        "__condition__ hack removed — result flows through Data naturally",
+        "SensitivePropertyFilter strips [Sensitive] from output serialization"
+      ],
+      "gaps": [
+        "Decompress() missing InvalidOperationException catch",
+        "Data.Clone() shares Properties reference (shallow copy)"
+      ]
+    },
+    {
+      "area": "condition-module",
+      "exposure": "DefaultEvaluator type normalization via Convert.ChangeType",
+      "trust_boundary": "Values from .pr parameters (typed by LLM builder)",
+      "mitigations": [
+        "Catches NotSupportedException, ArgumentException, OverflowException"
+      ],
+      "gaps": [
+        "Missing InvalidCastException from Convert.ChangeType in catch clause"
+      ]
+    },
+    {
+      "area": "event-module",
+      "exposure": "Event handler registration, skipAction override mechanism",
+      "trust_boundary": "Event bindings from .pr files (trusted)",
+      "mitigations": [
+        "Event types validated against enum",
+        "EventOverride scoped to action-level events only",
+        "Override consumed and cleared immediately",
+        "Re-entry guard via context.TryEnterEvent/ExitEvent"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "file-module",
+      "exposure": "File read/write/delete/copy/move operations",
+      "trust_boundary": "File paths from .pr parameters (user-sovereign)",
+      "mitigations": [
+        "All paths validated via IPLangFileSystem.ValidatePath()",
+        "Recursive delete requires explicit flag",
+        "IOException/UnauthorizedAccessException caught"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "variable-list-modules",
+      "exposure": "Variable storage, list element mutation",
+      "trust_boundary": "Values from .pr parameters and MemoryStack",
+      "mitigations": [
+        "[VariableName] validation at source generator level",
+        "List.set bounds checking (Index < 0 || Index >= list.Count)",
+        "Type.FromName is safe string-to-type mapping (no eval)"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "deserialization",
+      "vector": "Decompress() catches InvalidDataException and JsonException but not InvalidOperationException from RehydrateNestedData depth guard or Type parsing failure",
+      "preconditions": "Malformed compressed payload at transport boundary where inner Data has unparseable type field",
+      "impact": "Unhandled exception escapes Decompress, caught by step-level catch(Exception) safety net. Returns generic StepError instead of typed DecompressError. Violates 'behavior methods never throw' contract.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.Envelope.cs"],
+      "exploit_sketch": "Send compressed Data via HTTP where inner Data.Type contains a string that causes Type.FromName() to throw InvalidOperationException. Decompress() propagates the exception instead of returning Data.FromError.",
+      "proposed_fix": "Add catch (InvalidOperationException ex) alongside existing catches, return FromError(new ServiceError('Deserialization failed: ' + ex.Message, 'DecompressError', 500))",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "injection",
+      "vector": "DefaultEvaluator.NormalizeTypes calls Convert.ChangeType which can throw InvalidCastException, not caught by the exception filter",
+      "preconditions": "Builder produces a condition step with operands whose types trigger InvalidCastException during numeric coercion (e.g., non-standard numeric types, boxed values)",
+      "impact": "Unhandled exception escapes Evaluate(), caught by step-level catch(Exception). Returns generic StepError instead of typed EvaluationError. Violates 'behavior methods never throw' contract. Builder is non-deterministic — unsupported type combos are realistic.",
+      "affected_files": ["PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs"],
+      "exploit_sketch": "Write a condition step that compares two values where Convert.ChangeType fails. Since the builder is non-deterministic, it may produce unexpected type combinations across rebuilds.",
+      "proposed_fix": "Expand catch clause: catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "medium",
+      "category": "resource-exhaustion",
+      "vector": "Nonce replay protection is single-process only. Multi-process deployments have no shared nonce cache.",
+      "preconditions": "PLang deployed across multiple processes/instances without shared ICache implementation",
+      "impact": "Attacker replays a valid signed message to Instance B after Instance A has verified it. Instance B accepts the replay because its local cache has no record of the nonce.",
+      "affected_files": ["PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs"],
+      "exploit_sketch": "Intercept a valid signed HTTP response. Send identical signed data to a different PLang instance. The second instance verifies successfully because nonce cache is in-memory only.",
+      "proposed_fix": "Document the limitation. ICache is already pluggable — recommend shared cache (Redis, etc.) for distributed deployments. No code change needed, but documentation is required.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "HashDataConverter silently returns empty byte array on invalid base64 in SignedData.Hash field",
+      "preconditions": "Tampered signed JSON with modified hash value field to invalid base64",
+      "impact": "Invalid base64 becomes empty array. VerifyAsync step 7 catches storedHash.Length == 0 and returns DataHashMismatch. Fail-secure but error message is imprecise (says hash mismatch, not invalid format).",
+      "affected_files": ["PLang/Runtime2/modules/signing/SignedData.cs"],
+      "exploit_sketch": "Modify the 'value' field in the hash portion of SignedData JSON to 'not-base64!!!'. Deserialization succeeds with empty array. Verification fails at step 7.",
+      "proposed_fix": "Narrow catch to FormatException. Consider logging the actual parsing failure for debugging.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Data.Clone() shares Properties dictionary reference — mutations on original visible to clone",
+      "preconditions": "Handler clones Data, then original Properties are mutated before clone is consumed",
+      "impact": "Clone loses isolation. Properties on the clone reflect mutations from the original. Low risk because Properties are typically set at creation and not mutated during execution.",
+      "affected_files": ["PLang/Runtime2/Engine/Memory/Data.cs"],
+      "exploit_sketch": "Handler receives Data, clones it for error reporting, then mutates Properties on the original. Error report shows incorrect property values.",
+      "proposed_fix": "Deep-clone Properties: Properties = new Properties(Properties)",
+      "status": "open"
+    }
+  ],
+  "summary": "PASS — 0 critical, 0 high, 3 medium, 2 low findings. The branch shows strong security fundamentals: all recursive methods have depth guards, HTTP responses are size-limited, signing verification is a comprehensive 9-step pipeline with thread-safe serialization, __condition__ hack is removed cleanly, and sensitive data is filtered at output boundaries. The two medium-severity open findings are 'behavior methods never throw' contract violations (Decompress missing InvalidOperationException catch, DefaultEvaluator missing InvalidCastException catch) — both mitigated by step-level safety net but should be fixed. The third medium is an accepted-risk documentation item (nonce replay in distributed). Module/provider assembly loading without signatures is accepted risk under the user-sovereign threat model."
+}
