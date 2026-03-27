@@ -159,7 +159,7 @@ public sealed partial class @this
                 var result = await ExecuteActionsAsync(engine, context, cancellationToken);
                 if (result.Success) return result;
             }
-            catch
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 // Retry on exception
             }

@@ -59,7 +59,7 @@ public sealed class @this
 
                 _goals.Add(goal);
             }
-            catch
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 // Skip unparseable files — they'll fail when lazy-loaded later
             }

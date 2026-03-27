@@ -57,7 +57,7 @@ public class SignedData
             }
             var typeObj = string.IsNullOrEmpty(type) ? null : Engine.Memory.Type.FromName(type);
             byte[] bytes;
-            try { bytes = Convert.FromBase64String(value); } catch { bytes = Array.Empty<byte>(); }
+            try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
             return Data.Ok(bytes, typeObj);
         }
 

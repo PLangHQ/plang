@@ -319,7 +319,7 @@ public sealed class @this : IAsyncDisposable
             var fullPath = global::System.IO.Path.GetFullPath(rootPath);
             return new SafeFileSystem.PLangFileSystem(fullPath, "");
         }
-        catch
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
             // fall back to PLangFileSystem with current directory

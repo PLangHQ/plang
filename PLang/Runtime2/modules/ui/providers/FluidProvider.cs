@@ -246,11 +246,10 @@ public class FluidProvider : ITemplateProvider
             {
                 return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 // Path validation failed (sandbox violation, invalid path, etc.)
                 // Return null → GetFileInfo returns NotFoundFileInfo → Fluid reports "file not found"
-                // This is correct: the include path doesn't resolve to a valid file
                 System.Diagnostics.Debug.WriteLine($"Template include path validation failed for '{candidate}': {ex.Message}");
                 return null;
             }

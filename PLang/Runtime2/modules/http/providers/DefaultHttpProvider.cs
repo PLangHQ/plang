@@ -482,7 +482,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             if (!unsigned && !string.IsNullOrEmpty(errorBody))
             {
                 try { await TryExtractSignedErrorIdentity(errorBody, engine, context); }
-                catch { /* best effort — don't mask the original error */ }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — don't mask the original error */ }
             }
 
             return errorData;
@@ -612,7 +612,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         // Try deserializing as Data with transport options (may have Signature via [In])
         Data? data = null;
         try { data = JsonSerializer.Deserialize<Data>(errorBody, _transportInOptions); }
-        catch { /* not valid Data JSON — try legacy format below */ }
+        catch (JsonException) { /* not valid Data JSON — try legacy format below */ }
 
         if (data?.Signature != null)
         {
@@ -650,7 +650,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         var errorBody = "";
         try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
-        catch { /* best effort — body too large or read failed, proceed with empty */ }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — body too large or read failed, proceed with empty */ }
         var err = Data.FromError(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));

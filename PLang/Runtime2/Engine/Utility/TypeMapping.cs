@@ -309,7 +309,7 @@ public static class TypeMapping
                         je.GetRawText(),
                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
-                catch { return null; }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
             }
             if (value is IDictionary<string, object?> dict)
             {
@@ -335,7 +335,7 @@ public static class TypeMapping
             {
                 return Convert.ChangeType(value, targetType);
             }
-            catch
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
                 return null;
             }
@@ -349,7 +349,7 @@ public static class TypeMapping
                 var json = System.Text.Json.JsonSerializer.Serialize(value);
                 return System.Text.Json.JsonSerializer.Deserialize(json, targetType, _caseInsensitiveOptions);
             }
-            catch { return null; }
+            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { return null; }
         }
 
         return value;
