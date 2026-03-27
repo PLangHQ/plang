@@ -8,10 +8,10 @@
       "timestamp_end": "2026-03-23T00:00:00Z",
       "intent": "Piece 5: Ingi-led code review and cleanup of pieces 1-4",
       "before": {
-        "assumptions": "Pieces 1-4 (identity, crypto, signing, http) are complete and audited. Code was largely written by bots in the pipeline.",
+        "assumptions": "Pieces 1-4 (identity, crypto, signing, http) are complete and audited.",
         "risk": "Low — cleanup and polish, no new functionality."
       },
-      "plan": "Ingi reviews the code personally and directs cleanup via coder. Architect role is minimal — branch setup and reporting only.",
+      "plan": "Ingi reviews the code personally and directs cleanup via coder.",
       "actions": [
         {
           "paths": [".bot/runtime2-builder-v2-cleanup/"],
@@ -24,7 +24,7 @@
       "after": {
         "status": "in-progress",
         "health": "Branch created. Ingi driving review, coder executing changes.",
-        "notes": "Scope: pieces 1-4 (identity, crypto, signing, http) plus any engine/infra changes that came with them (Settings→Config, Path→FileSystem, provider relocations)."
+        "notes": "Scope: pieces 1-4 plus engine/infra changes."
       }
     },
     {
@@ -34,37 +34,74 @@
       "timestamp_end": "2026-03-24T00:30:00Z",
       "intent": "Engine folder cleanup: Errors rename, TypeMapping/Types consolidation, dead code removal",
       "before": {
-        "assumptions": "Reviewed Debug, Errors, Events, FileSystem, Goals, Memory, Providers, Types, Utility folders. Found 3 issues.",
-        "risk": "Low — rename, deduplication, dead code deletion. No behavioral changes."
+        "assumptions": "Reviewed Engine folders. Found 3 issues.",
+        "risk": "Low — rename, deduplication, dead code deletion."
       },
-      "plan": "1. Rename DataSourceError→SettingsError. 2. Consolidate TypeMapping/Types duplicate dictionaries. 3. Delete unused Runtime2 PrParser.",
+      "plan": "1. Rename DataSourceError→SettingsError. 2. Consolidate TypeMapping/Types. 3. Delete unused PrParser.",
       "actions": [
         {
-          "paths": ["PLang/Runtime2/Engine/Errors/SettingsError.cs", "PLang/Runtime2/Engine/Settings/SqliteSettingsStore.cs", "PLang.Tests/Runtime2/Modules/settings/SettingsDataTests.cs", "PLang.Tests/Runtime2/Modules/identity/IdentityErrorPathTests.cs", "PLang.Tests/Runtime2/Modules/datasource/DataSourceTests.cs"],
+          "paths": ["PLang/Runtime2/Engine/Errors/SettingsError.cs", "PLang/Runtime2/Engine/Settings/SqliteSettingsStore.cs"],
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "DataSourceError→SettingsError consistent with DataSource→Settings rename"
+          "context": "DataSourceError→SettingsError"
         },
         {
-          "paths": ["PLang/Runtime2/Engine/Types/this.cs", "PLang/Runtime2/Engine/Utility/TypeMapping.cs", "PLang/Runtime2/Engine/this.cs", "PLang/Runtime2/Engine/FileSystem/Path.cs"],
+          "paths": ["PLang/Runtime2/Engine/Types/this.cs", "PLang/Runtime2/Engine/Utility/TypeMapping.cs"],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Types delegates to TypeMapping for name↔type, keeps unique extension/kind/mime. Depth guard added to TypeMapping.GetType(). Path uses engine.Types.Mime()."
+          "context": "Types delegates to TypeMapping"
         },
         {
           "paths": ["PLang/Runtime2/Engine/Utility/PrParser.cs"],
           "type": "delete",
           "category": "code",
           "confidence": "high",
-          "context": "Zero references, dead code, used System.IO directly"
+          "context": "Zero references, dead code"
         }
       ],
       "after": {
         "status": "complete",
-        "health": "Both PLang and PLang.Tests build with 0 errors.",
-        "notes": "TypeMapping remains static (source generator needs it). Types is the OBP-correct instance API. Both use the same data."
+        "health": "Both projects build with 0 errors.",
+        "notes": "TypeMapping remains static for source generator. Types is the OBP instance API."
+      }
+    },
+    {
+      "id": "codeanalyzer-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T01:00:00Z",
+      "intent": "Full 5-pass code analysis of cleanup branch changes",
+      "before": {
+        "assumptions": "~244 files changed. Major patterns: [Provider] attribute, Data-typed params, event consolidation, convert deletion, dead code removal.",
+        "risk": "Medium — large surface area, behavioral changes in identity/signing/http."
+      },
+      "plan": "5-pass analysis: OBP compliance, simplification, readability, behavioral reasoning, deletion test.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/this.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/CallStack/CallFrame.cs",
+            "PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs",
+            "PLang/Runtime2/modules/assert/providers/DefaultAssertProvider.cs",
+            "PLang/Runtime2/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/Runtime2/Engine/Channels/Serializers/Serializer/PlangSerializer.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Full 5-pass analysis of all changed engine and module files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — 3 actionable findings, no OBP violations",
+        "notes": "Channels disposal gap, Data.Name setter, 464 lines of untested code (PlangSerializer, DefaultAssertProvider, DefaultFileProvider)"
       }
     }
   ]
