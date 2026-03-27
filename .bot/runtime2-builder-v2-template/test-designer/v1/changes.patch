@@ -15840,10 +15840,10 @@ index 00000000..3224916e
 +}
 diff --git a/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
 new file mode 100644
-index 00000000..19fa3430
+index 00000000..07cab604
 --- /dev/null
 +++ b/PLang.Tests/Runtime2/Modules/ui/RenderTests.cs
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,249 @@
 +using PLang.Runtime2.Engine;
 +using PLang.Runtime2.Engine.Context;
 +using PLang.Runtime2.Engine.Memory;
@@ -15998,6 +15998,98 @@ index 00000000..19fa3430
 +    public async Task Render_FilePathAbsolute_ResolvesFromRoot()
 +    {
 +        // Leading / on template path resolves from engine root, not goal directory
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 5: Complex Data Types in Templates ---
++
++    [Test]
++    public async Task Render_DotNavigation_AccessesObjectProperties()
++    {
++        // {{ user.name }} where user is an object in memory stack resolves to the property value
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_ListIteration_WorksInForLoop()
++    {
++        // {% for item in items %}{{ item }}{% endfor %} iterates a List from memory stack
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_NullVariable_RendersEmpty()
++    {
++        // {{ name }} where name is null in memory stack renders empty string, not "null" or crash
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_UndefinedVariable_RendersEmpty()
++    {
++        // {{ missing }} where variable doesn't exist renders empty string (Liquid default)
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_DataObject_ExposesValueNotWrapper()
++    {
++        // When a Data object is in memory stack, template accesses the inner value, not the Data wrapper
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_NullDotNavigation_NoException()
++    {
++        // {{ user.name }} where user is null does not throw — renders empty
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 6: callGoal Edge Cases ---
++
++    [Test]
++    public async Task Render_CallGoal_NonStringReturn_ConvertedToString()
++    {
++        // callGoal returns a number or bool — inserted as its string representation
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_GoalNotFound_ReturnsError()
++    {
++        // callGoal references a goal that doesn't exist — returns error with goal name
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_CallGoal_WithArguments_PassesParameters()
++    {
++        // {% callGoal 'Process' item %} passes item from template context as a parameter
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 7: Include Edge Cases ---
++
++    [Test]
++    public async Task Render_Include_MissingPartial_ReturnsError()
++    {
++        // {% include 'nonexistent.html' %} returns error, not crash
++        Assert.Fail("Not implemented");
++    }
++
++    [Test]
++    public async Task Render_Include_NestedPathResolvesRelativeToPartial()
++    {
++        // Partial at sub/a.html including ../b.html resolves relative to sub/, not root template
++        Assert.Fail("Not implemented");
++    }
++
++    // --- Batch 8: Security & Encoding ---
++
++    [Test]
++    public async Task Render_HtmlInVariable_IsEscapedByDefault()
++    {
++        // {{ name }} where name = "<script>alert(1)</script>" is HTML-escaped in output
 +        Assert.Fail("Not implemented");
 +    }
 +}
