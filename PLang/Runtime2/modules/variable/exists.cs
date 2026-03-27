@@ -10,7 +10,6 @@ public partial class Exists : IContext
 
     public Task<Data> Run()
     {
-        return Task.FromResult(Data.Ok(
-            new types.variable { name = Name, exists = Context.MemoryStack.Contains(Name) }));
+        return Task.FromResult(Data.Ok(Context.MemoryStack.Contains(Name)));
     }
 }

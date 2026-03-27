@@ -2,7 +2,6 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.variable;
-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
@@ -27,9 +26,7 @@ public class ExistsTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.exists).IsTrue();
+        await Assert.That((bool)result.Value!).IsTrue();
     }
 
     [Test]
@@ -41,8 +38,6 @@ public class ExistsTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.exists).IsFalse();
+        await Assert.That((bool)result.Value!).IsFalse();
     }
 }

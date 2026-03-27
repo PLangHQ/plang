@@ -2,7 +2,6 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.variable;
-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 
 namespace PLang.Tests.Runtime2.actions.variable;
 
@@ -27,14 +26,11 @@ public class RemoveTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.exists).IsTrue();
         await Assert.That(memory.Contains("testVar")).IsFalse();
     }
 
     [Test]
-    public async Task Remove_NonexistentVariable_ReturnsFalse()
+    public async Task Remove_NonexistentVariable_Succeeds()
     {
         var (context, _) = CreateContext();
 
@@ -42,8 +38,5 @@ public class RemoveTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.exists).IsFalse();
     }
 }

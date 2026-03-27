@@ -10,8 +10,7 @@ public partial class Remove : IContext
 
     public Task<Data> Run()
     {
-        var removed = Context.MemoryStack.Remove(Name);
-        return Task.FromResult(Data.Ok(
-            new types.variable { name = Name, exists = removed }));
+        Context.MemoryStack.Remove(Name);
+        return Task.FromResult(Data.Ok());
     }
 }

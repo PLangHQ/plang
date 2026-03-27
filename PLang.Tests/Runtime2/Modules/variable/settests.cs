@@ -2,7 +2,6 @@ using PLang.Runtime2.Engine.Context;
 using PLang.Runtime2.Engine;
 using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.variable;
-using VariableResult = PLang.Runtime2.modules.variable.types.variable;
 using Type = PLang.Runtime2.Engine.Memory.Type;
 
 namespace PLang.Tests.Runtime2.actions.variable;
@@ -42,7 +41,7 @@ public class SetTests
     }
 
     [Test]
-    public async Task Set_ReturnsTypedVariable()
+    public async Task Set_ReturnsDataFromStack()
     {
         var (context, _) = CreateContext();
 
@@ -50,22 +49,18 @@ public class SetTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.name).IsEqualTo("testVar");
-        await Assert.That(v.value).IsEqualTo("testValue");
+        await Assert.That(result.Name).IsEqualTo("testVar");
+        await Assert.That(result.Value).IsEqualTo("testValue");
     }
 
     [Test]
-    public async Task Set_WithType_ReturnsTypeInResult()
+    public async Task Set_WithType_ReturnsTypeOnData()
     {
         var (context, _) = CreateContext();
 
         var action = new Set { Context = context, Name = "count", Value = 42, Type = "int" };
         var result = await action.Run();
 
-        var v = result.Value as VariableResult;
-        await Assert.That(v).IsNotNull();
-        await Assert.That(v!.type).IsEqualTo("int");
+        await Assert.That(result.Type!.Value).IsEqualTo("int");
     }
 }

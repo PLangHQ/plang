@@ -14,7 +14,6 @@ public partial class Set : IContext
     {
         Context.MemoryStack.Set(Name, Value,
             Type != null ? PLang.Runtime2.Engine.Memory.Type.FromName(Type) : null);
-        return Task.FromResult(Data.Ok(
-            new types.variable { name = Name, value = Value, type = Type }));
+        return Task.FromResult(Context.MemoryStack.Get(Name) ?? Data.Ok());
     }
 }
