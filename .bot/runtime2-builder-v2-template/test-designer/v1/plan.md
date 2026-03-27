@@ -55,23 +55,57 @@ Tests for provider swapping and path resolution behavior.
 | 16 | `Render_FilePathRelativeToGoalDir` | Template path resolves relative to calling goal's directory |
 | 17 | `Render_FilePathAbsolute_ResolvesFromRoot` | Leading `/` resolves from engine root |
 
-### Batch 5: PLang Integration Tests (5 tests)
+### Batch 5: Complex Data Types (C# — 6 tests)
+
+Tests for how complex PLang data flows into Liquid templates.
+
+| # | Test Name | Intent |
+|---|-----------|--------|
+| 18 | `Render_DotNavigation_AccessesObjectProperties` | `{{ user.name }}` resolves object property from memory stack |
+| 19 | `Render_ListIteration_WorksInForLoop` | `{% for item in items %}` iterates a List from memory stack |
+| 20 | `Render_NullVariable_RendersEmpty` | `{{ name }}` where name is null renders empty, not "null" |
+| 21 | `Render_UndefinedVariable_RendersEmpty` | `{{ missing }}` for nonexistent variable renders empty (Liquid default) |
+| 22 | `Render_DataObject_ExposesValueNotWrapper` | Data object in memory stack — template accesses inner value, not Data wrapper |
+| 23 | `Render_NullDotNavigation_NoException` | `{{ user.name }}` where user is null does not throw |
+
+### Batch 6: callGoal Edge Cases (C# — 3 tests)
+
+| # | Test Name | Intent |
+|---|-----------|--------|
+| 24 | `Render_CallGoal_NonStringReturn_ConvertedToString` | callGoal returns number/bool — inserted as string representation |
+| 25 | `Render_CallGoal_GoalNotFound_ReturnsError` | callGoal for nonexistent goal returns error with goal name |
+| 26 | `Render_CallGoal_WithArguments_PassesParameters` | `{% callGoal 'Process' item %}` passes item as goal parameter |
+
+### Batch 7: Include Edge Cases (C# — 2 tests)
+
+| # | Test Name | Intent |
+|---|-----------|--------|
+| 27 | `Render_Include_MissingPartial_ReturnsError` | `{% include 'nonexistent.html' %}` returns error, not crash |
+| 28 | `Render_Include_NestedPathResolvesRelativeToPartial` | Partial's own includes resolve relative to partial's directory |
+
+### Batch 8: Security & Encoding (C# — 1 test)
+
+| # | Test Name | Intent |
+|---|-----------|--------|
+| 29 | `Render_HtmlInVariable_IsEscapedByDefault` | `<script>` in variable value is HTML-escaped in output |
+
+### Batch 9: PLang Integration Tests (5 tests)
 
 Full pipeline tests: `.goal` → builder → `.pr` → GoalMapper → runtime.
 
 | # | Test Name | Intent |
 |---|-----------|--------|
-| 18 | `RenderFile.test.goal` | `render 'template.html', write to %result%` — file template with variables |
-| 19 | `RenderInline.test.goal` | `render %templateContent%, write to %result%` — inline content rendering |
-| 20 | `RenderWithParams.test.goal` | `render 'page.html' with title=%pageTitle%, write to %html%` — explicit params |
-| 21 | `RenderCallGoal.test.goal` | Template with `{% callGoal 'Helper' %}` — goal invocation from template |
-| 22 | `RenderInclude.test.goal` | Template with `{% include 'partial.html' %}` — nested include |
+| 30 | `RenderFile.test.goal` | `render 'template.html', write to %result%` — file template with variables |
+| 31 | `RenderInline.test.goal` | `render %templateContent%, write to %result%` — inline content rendering |
+| 32 | `RenderWithParams.test.goal` | `render 'page.html' with title=%pageTitle%, write to %html%` — explicit params |
+| 33 | `RenderCallGoal.test.goal` | Template with `{% callGoal 'Helper' %}` — goal invocation from template |
+| 34 | `RenderInclude.test.goal` | Template with `{% include 'partial.html' %}` — nested include |
 
 ## Totals
 
-- **C# unit tests**: 17
+- **C# unit tests**: 29
 - **PLang integration tests**: 5
-- **Total**: 22
+- **Total**: 34
 
 ## File Locations
 
