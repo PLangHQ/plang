@@ -34,13 +34,22 @@ public sealed class IdentityData : Data
     /// </summary>
     public override string ToString() => PublicKey;
 
-    public override Data Clone() => new IdentityData(Name)
+    public override Data Clone()
     {
-        PublicKey = PublicKey,
-        PrivateKey = PrivateKey,
-        IsDefault = IsDefault,
-        IsArchived = IsArchived,
-        Created = Created,
-        Properties = Properties.Clone()
-    };
+        var clone = new IdentityData(Name)
+        {
+            PublicKey = PublicKey,
+            PrivateKey = PrivateKey,
+            IsDefault = IsDefault,
+            IsArchived = IsArchived,
+            Created = Created,
+            Properties = Properties.Clone()
+        };
+        clone.Error = Error;
+        clone.Handled = Handled;
+        clone.Warnings = Warnings != null ? new List<Engine.Info>(Warnings) : null;
+        clone.Signature = Signature;
+        clone.Context = Context;
+        return clone;
+    }
 }

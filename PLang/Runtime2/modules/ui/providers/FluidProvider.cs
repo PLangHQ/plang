@@ -101,7 +101,7 @@ public class FluidProvider : ITemplateProvider
             await fluidTemplate.RenderAsync(writer, System.Text.Encodings.Web.HtmlEncoder.Default, fluidContext);
             return Data.Ok(writer.ToString());
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             return Data.FromError(new ServiceError(
@@ -213,7 +213,7 @@ public class FluidProvider : ITemplateProvider
                 await writer.WriteAsync($"[Error: {errorMessage}]");
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             await writer.WriteAsync($"[Error: {ex.Message}]");
         }
@@ -241,30 +241,16 @@ public class FluidProvider : ITemplateProvider
             foreach (var candidate in candidates)
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
-                try
-                {
-                    // Use ValidatePath for proper resolution (handles PLang-rooted paths)
-                    var fullPath = _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
-                    if (_fs.File.Exists(fullPath))
-                        return new PlangFileInfo(_fs, fullPath, candidate);
-                }
-                catch
-                {
-                    // ValidatePath may throw for uninitialized filesystems —
-                    // fall back to raw path combine
-                    try
-                    {
-                        var rawPath = _fs.Path.Combine(_basePath, candidate);
-                        if (_fs.File.Exists(rawPath))
-                            return new PlangFileInfo(_fs, rawPath, candidate);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                }
+                var fullPath = TryResolvePath(candidate);
+                if (fullPath != null && _fs.File.Exists(fullPath))
+                    return new PlangFileInfo(_fs, fullPath, candidate);
             }
             return new NotFoundFileInfo(subpath);
+        }
+
+        private string? TryResolvePath(string candidate)
+        {
+            return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
         }
 
         private static string StripLiquidExtension(string path)

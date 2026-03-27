@@ -405,6 +405,11 @@ public class DataList<T> : Data, IList<T>
         foreach (var item in _items)
             clone._items.Add(item);
         clone.Error = Error;
+        clone.Handled = Handled;
+        clone.Warnings = Warnings != null ? new List<Info>(Warnings) : null;
+        clone.Signature = Signature;
+        clone.Properties = Properties.Clone();
+        clone.Context = Context;
         return clone;
     }
 }
