@@ -515,3 +515,27 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 - No name-pattern matching (`%Settings.*%`), no fragile detection — the type self-declares its async nature.
 
 **See also:** `Documentation/Runtime2/good_to_know.md` §IdentityData sync-over-async, `plan/phase1/1.9-variable-resolution-v1.md` §async implications.
+
+---
+
+## Per-Module Build-Time Validation Hooks
+**Date:** 2026-03-27
+**Context:** During LLM module design. Current `ValidateActions` only checks action existence, resolves GoalCall paths, and fills defaults. No per-module validation — e.g., file.read can't warn if file doesn't exist, db.select can't validate SQL.
+
+**Design:**
+- Two validation layers: C# interface (`IBuildValidate`) + optional PLang .goal files (`system/modules/{module}/validate/`)
+- C# runs before and after PLang validation (pre-validate, post-validate?)
+- Validation returns warnings (non-blocking) or errors (triggers LLM retry)
+- `BuildContext` provides build-time resources (file system, settings store) without full engine
+- Actions opt in — most actions don't need build-time validation
+
+**Examples:**
+- `file.read` → warn if file path doesn't exist
+- `db.select` → validate SQL against schema
+- `goal.call` → warn if goal not found (already done)
+- `http.request` → warn if URL malformed
+- `crypto.hash` → warn if algorithm not in known list
+
+**Note:** Ingi recalls having designed before/after C# validation + PLang validation in the middle. May have been discussed in a prior conversation. Check for prior design work.
+
+**Separate workstream from LLM module.**
