@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-builder-v2-template",
+  "sessions": [
+    {
+      "id": "template-architect-v1",
+      "bot": "architect",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T00:00:00Z",
+      "intent": "Design UI module piece 6: Liquid template rendering via Fluid",
+      "before": {
+        "assumptions": "Pieces 1-4 done (identity, crypto, signing, http). Piece 5 (cleanup) merged. Runtime1 has TemplateEngineModule (Scriban) and UiModule (DOM/layout). Ingi wants single module, Liquid syntax, Fluid library.",
+        "risk": "Low — design only, no code changes."
+      },
+      "plan": "Single ui module with render action. Fluid (Liquid) as default provider. Memory stack accessible by default. Custom callGoal tag. No DOM/layout in scope.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-template/architect/v1/plan.md", ".bot/runtime2-builder-v2-template/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect plan for UI module template rendering"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Design approved by Ingi. Ready for scaffolding.",
+        "notes": "Key decisions: no separate template module, Fluid not Scriban, {{ }} syntax stays, callGoal needed for builder."
+      }
+    }
+  ]
+}
