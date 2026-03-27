@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "PASS — All v1 findings resolved, v2 type-slicing regression fixed. Clone family is now complete across all Data subclasses. Minor note: PathData/IdentityData Clone() don't copy base fields (Error, Warnings, Signature) but these are practically never set on MemoryStack-stored instances."
+}
