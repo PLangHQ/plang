@@ -532,6 +532,7 @@ public class RenderTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         var output = result.Value?.ToString() ?? "";
         await Assert.That(output).DoesNotContain("[Error:");
+        await Assert.That(output).Contains("42");
     }
 
     // --- Batch 7: Include Edge Cases ---
