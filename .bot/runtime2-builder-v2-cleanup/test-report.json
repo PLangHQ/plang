@@ -1,0 +1,106 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-v2-cleanup",
+  "timestamp": "2026-03-27T10:10:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 1843, "passed": 1839, "failed": 0, "skipped": 4 },
+    "plang": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 145,
+    "changed_files_total": 160,
+    "uncovered_files": [
+      "PLang/Runtime2/modules/module/remove.cs",
+      "PLang/Runtime2/modules/list/set.cs",
+      "PLang/Runtime2/modules/event/skipAction.cs",
+      "PLang/Runtime2/modules/http/Config.cs",
+      "PLang/Runtime2/modules/http/types.cs",
+      "PLang/Runtime2/Engine/Utility/GoalMapper.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/modules/module/remove.cs",
+      "issue": "module.remove is a new action (16 lines) with 0% coverage and zero tests. Includes error path (module not found) and success path (unregisters module).",
+      "impact": "Could silently fail or not remove the module — no test would catch it",
+      "suggestion": "Add tests: remove existing module succeeds, remove nonexistent returns NotFound error with key check"
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/modules/list/set.cs",
+      "issue": "list.set action has 0% coverage (22 lines). Sets element at index in a list — completely untested.",
+      "impact": "Off-by-one errors, null list handling, out-of-bounds behavior all unverified",
+      "suggestion": "Add tests for: set valid index, set out-of-bounds, set on null/empty list"
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/modules/event/skipAction.cs",
+      "issue": "event.skipAction handler has 0% coverage (8 lines). Part of the event module consolidation (6 handlers → On + Remove + SkipAction).",
+      "impact": "SkipAction could be completely broken — no test exercises it",
+      "suggestion": "Add test that registers a SkipAction event and verifies the action is actually skipped during execution"
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/Engine/Channels/Serializers/Serializer/PlangSerializer.cs",
+      "issue": "PlangSerializer main class is 90% line coverage, but SerializeAsync (14 lines), DeserializeAsync (8 lines), and generic DeserializeAsync<T> (8 lines) are all at 0%. These async methods are the actual I/O paths.",
+      "impact": "Serialization bugs in the PLang channel format would go undetected",
+      "suggestion": "Add tests that serialize and deserialize Data objects through the PlangSerializer async methods"
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "TryExtractSignedErrorIdentity (48 lines) has 0% coverage. StreamWithProgressAsync (52 lines) has 46% line / 16% branch coverage.",
+      "impact": "Signed error identity extraction from HTTP responses completely untested. Progress streaming has minimal branch coverage.",
+      "suggestion": "Add tests for signed error responses. Add progress callback tests with known content-length."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Memory/DataTests.cs",
+      "code_file": "PLang/Runtime2/Engine/Memory/Data.cs",
+      "issue": "DataList<T> (new type, 39 lines) has only 47.4% coverage. Only exercised indirectly through identity module GetAll tests.",
+      "impact": "DataList error-state propagation (FromError, Success when list has error) could have bugs",
+      "suggestion": "Add direct DataList<T> tests: construct with items, construct from error, enumerate, check Success/Error"
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/assert/AssertTests.cs",
+      "code_file": "PLang/Runtime2/modules/assert/providers/DefaultAssertProvider.cs",
+      "issue": "8 error-path assertions use bare .Success.IsFalse() without checking Error.Key or error type (lines 84, 116, 136, 154, 163, 281, 310, 339). DefaultAssertProvider has 60.7% branch coverage.",
+      "impact": "Wrong error type could be returned and tests would still pass. Branch gaps in numeric coercion logic.",
+      "suggestion": "Upgrade weak assertions to check Error is AssertionError. Add tests for numeric coercion paths (int vs double comparison)."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": null,
+      "code_file": "PLang/Runtime2/modules/module/remove.cs",
+      "issue": "No PLang .goal test for module.remove. Identity PLang tests exist but most are stubs (throw 'not implemented'). No signing PLang tests exist.",
+      "impact": "Full pipeline (LLM builder → .pr → runtime) not validated for new module.remove action",
+      "suggestion": "Create Tests/Runtime2/Module/Remove/ with a .goal test that loads and removes a module"
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "All 1839 C# tests pass. Coverage is generally strong (95%+ on most providers). However, 3 new actions (module.remove, list.set, event.skipAction) have zero tests — these are new code paths that could be completely broken. PlangSerializer async methods and HTTP signed-error extraction are also untested. The signing and identity modules have excellent test quality with strong Error.Key assertions. The step runner condition fix is correctly tested. Recommend sending back to coder to add tests for the 3 zero-coverage actions before merging."
+}
