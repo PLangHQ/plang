@@ -137,7 +137,7 @@ public sealed class Libraries
 - Explicit instances (`Register`) take priority over type-registered handlers (`RegisterCodeGenerated`)
 - Type-registered handlers create a new instance per call (thread-safe)
 - Lookup is case-insensitive
-- External libraries can be added at runtime via `Libraries.Add(library)` or the `library.load` handler
+- External modules can be added/removed at runtime via `module.add` and `module.remove` actions
 
 ## Creating an Action Handler
 

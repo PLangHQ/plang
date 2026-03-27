@@ -157,6 +157,10 @@ public partial class Data
         {
             return FromError(new ServiceError("Deserialization failed after decompression: " + ex.Message, "DecompressError", 500));
         }
+        catch (InvalidOperationException ex)
+        {
+            return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
+        }
     }
 
     /// <summary>

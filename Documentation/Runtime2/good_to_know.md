@@ -137,15 +137,13 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 
 ## Libraries Replaces ActionRegistry
 
-`ActionRegistry` was replaced by `Library` + `Libraries`. The key changes:
+`ActionRegistry` was replaced by `engine.Modules` (flat action registry). The key changes:
 
-- **`engine.Libraries`** replaces `engine.Actions` — uniform handler resolution
-- **`Library`** represents a single assembly's handlers (name + assembly + discovered actions)
-- **`Libraries`** is a smart collection: built-in handlers are `Libraries[0]`, external DLLs can be added as additional libraries
-- **Resolution**: `Libraries.GetCodeGenerated(module, action, context)` walks all libraries — first match wins
-- **External DLL loading**: `library.load` handler lets PLang code load external DLLs at runtime (`use library 'mylib.dll'`)
-- **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterCodeGenerated(type)` for per-call instantiation (thread-safe)
-- Handler discovery via `Library.Discover(namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
+- **`engine.Modules`** — flat registry of all action handlers (module → action → type)
+- **Resolution**: `Modules.GetCodeGenerated(module, action, context)` — case-insensitive lookup
+- **External DLL loading**: `module.add` action lets PLang code load external DLLs at runtime (`add module mymodule.dll`). `module.remove` unregisters a module.
+- **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterType(type)` for per-call instantiation (thread-safe)
+- Handler discovery via `Modules.Discover(assembly, namespace)` scans for `[Action]`-attributed types (source generator adds `ICodeGenerated` — handlers don't implement it directly)
 
 ---
 

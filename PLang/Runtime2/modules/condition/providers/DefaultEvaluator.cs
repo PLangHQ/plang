@@ -21,7 +21,7 @@ public sealed class DefaultEvaluator : IEvaluator
             bool result = op == null ? IsTruthy(left) : EvaluateOp(left, op, right);
             return Data.Ok(result);
         }
-        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
+        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)
         {
             return EvaluationError(left, op, right, ex);
         }
@@ -38,7 +38,7 @@ public sealed class DefaultEvaluator : IEvaluator
             bool result = EvaluateOp(left, op, right);
             return Data.Ok(result);
         }
-        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException)
+        catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)
         {
             return EvaluationError(left, op, right, ex);
         }
