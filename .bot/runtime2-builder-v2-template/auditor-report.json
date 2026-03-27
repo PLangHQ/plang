@@ -1,26 +1,26 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-builder-v2-template",
-  "timestamp": "2026-03-27T21:00:00Z",
-  "reviewed_version": "v1-recheck",
-  "summary": "FAIL — Coder fixed FluidProvider bare catch and TryResolvePath, but 3 issues remain: (1) 6 bare catch{} blocks elsewhere in Runtime2 not addressed, (2) TryResolvePath new catch has no fatal exception filter, (3) callGoal test assertion still only checks static text not dynamic value.",
+  "timestamp": "2026-03-27T21:30:00Z",
+  "reviewed_version": "v1-recheck-2",
+  "summary": "FAIL — Bare catch{} sweep is excellent (9 fixed, 0 remaining). TryResolvePath filter added. But callGoal test assertion regressed: coder removed the assertion instead of fixing it to check the dynamic value '42'. One minor finding remains.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "partial — missed the bare catch{} pattern across the codebase, not just FluidProvider.",
-    "tester": "agree — but callGoal assertion fix is still weak.",
-    "security": "agree — MaxSteps/MaxRecursion addition is good defense-in-depth."
+    "codeanalyzer": "partial — original bare catch{} miss now fully addressed by coder sweep.",
+    "tester": "agree",
+    "security": "agree"
   },
   "findings": [
     {
       "id": 1,
       "severity": "major",
       "category": "review-gap",
-      "status": "OPEN",
-      "file": "PLang/Runtime2 (multiple files)",
+      "status": "RESOLVED",
+      "file": "PLang/Runtime2 (9 locations)",
       "line": null,
-      "issue": "6 bare catch{} blocks remain in Runtime2. Coder only fixed FluidProvider but did not scan the codebase as requested. Locations: TypeMapping.cs:312, TypeMapping.cs:352, SignedData.cs:60, DefaultHttpProvider.cs:485, DefaultHttpProvider.cs:615, DefaultHttpProvider.cs:653. All silently swallow exceptions including fatal ones.",
+      "issue": "All bare catch{} blocks eliminated. Coder found 9 total (3 more than auditor flagged). Two narrowed to specific exceptions (FormatException, JsonException).",
       "missed_by": "codeanalyzer",
-      "impact": "Same pattern Ingi escalated — silent error swallowing masks bugs. Each needs at minimum a fatal exception filter.",
-      "suggestion": "Add catch filters to all 6: catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)). For the ones that return a fallback value, that's fine — just don't catch fatal exceptions."
+      "impact": "Fixed.",
+      "suggestion": "N/A"
     },
     {
       "id": 2,
@@ -28,46 +28,22 @@
       "category": "review-gap",
       "status": "OPEN",
       "file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
-      "line": 536,
-      "issue": "callGoal success test assertion Contains('Number:') only checks static template text, not the dynamic goal result. Template is 'Number: {% callGoal GetNumber %}' — 'Number:' is always present regardless of what callGoal produces. Should assert Contains('42') to verify the goal's value appears.",
+      "line": 534,
+      "issue": "callGoal success test REGRESSED — coder removed the assertion instead of fixing it. Test now only has DoesNotContain('[Error:') with no positive value check. Should assert Contains('42') to verify the goal's set value appears in template output.",
       "missed_by": "none",
-      "impact": "A bug in callGoal value serialization (e.g., ToString() returning type name instead of value) would still pass this test.",
-      "suggestion": "Change to: await Assert.That(output).Contains(\"42\");"
+      "impact": "A bug in callGoal value serialization would pass this test. Low blast radius since callGoal error path IS tested, but the success path has no positive assertion.",
+      "suggestion": "Add: await Assert.That(output).Contains(\"42\");"
     },
     {
       "id": 3,
       "severity": "minor",
       "category": "cross-file",
-      "status": "OPEN",
+      "status": "RESOLVED",
       "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
       "line": 249,
-      "issue": "New TryResolvePath catch (Exception ex) has no filter — catches OOM, NRE, SOE. Inconsistent with the fatal exception filters at lines 48 and 104 in the same file.",
+      "issue": "TryResolvePath catch now has fatal exception filter.",
       "missed_by": "none",
-      "impact": "Low — TryResolvePath returns null which is a safe fallback, but fatal exceptions should never be caught.",
-      "suggestion": "Add filter: catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))"
-    },
-    {
-      "id": 4,
-      "severity": "resolved",
-      "category": "review-gap",
-      "status": "RESOLVED",
-      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 135,
-      "issue": "Former bare catch{} in RegisterTypeIfNeeded — removed entirely. Exceptions now propagate to outer catch filter.",
-      "missed_by": "codeanalyzer",
       "impact": "Fixed.",
-      "suggestion": "N/A"
-    },
-    {
-      "id": 5,
-      "severity": "resolved",
-      "category": "cross-file",
-      "status": "RESOLVED",
-      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 243,
-      "issue": "TryResolvePath now catches ValidatePath exceptions and returns null — user sees 'file not found' instead of generic render error.",
-      "missed_by": "security",
-      "impact": "Fixed (pending filter addition per finding #3).",
       "suggestion": "N/A"
     }
   ]

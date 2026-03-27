@@ -1,1 +1,1 @@
-{ "status": "fail", "summary": "Coder fixed FluidProvider but 3 issues remain: 6 bare catch{} elsewhere in Runtime2 not addressed, TryResolvePath catch needs fatal filter, callGoal test asserts static text not dynamic value. Send back to coder." }
+{ "status": "fail", "summary": "Bare catch sweep excellent (9 fixed, 0 remaining). One minor open: callGoal test assertion regressed — coder removed it instead of fixing to Contains('42'). Send back to coder for one-line fix." }
