@@ -205,10 +205,10 @@ public partial class Data
 
     /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
-    /// Subclasses (SettingsData, DynamicData) should not be cloned —
-    /// they are stateless/factory-based and should be shared by reference.
+    /// Virtual so subclasses (DataList) can override with proper cloning.
+    /// SettingsData and DynamicData should not be cloned — they are stateless/factory-based.
     /// </summary>
-    public Data Clone()
+    public virtual Data Clone()
     {
         var clonedValue = _value.DeepClone();
         var clone = new Data(Name, clonedValue, _type)
@@ -217,7 +217,7 @@ public partial class Data
             Handled = Handled,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Signature = Signature,
-            Properties = Properties
+            Properties = Properties.Clone()
         };
         clone.Context = _context;
         return clone;
@@ -395,4 +395,16 @@ public class DataList<T> : Data, IList<T>
     public T? Find(Predicate<T> match) => _items.Find(match);
     public bool Exists(Predicate<T> match) => _items.Exists(match);
     public List<T> Where(Func<T, bool> predicate) => _items.Where(predicate).ToList();
+
+    /// <summary>
+    /// Creates an independent copy with its own item list.
+    /// </summary>
+    public override Data Clone()
+    {
+        var clone = new DataList<T>(Name);
+        foreach (var item in _items)
+            clone._items.Add(item);
+        clone.Error = Error;
+        return clone;
+    }
 }

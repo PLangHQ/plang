@@ -201,10 +201,8 @@ public class MemoryStack
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            // Specialized Data subclasses (SettingsData, DynamicData) — share by reference.
-            // They're stateless (load from DB each time) and deep-cloning would lose
-            // the virtual GetChild override.
-            if (kvp.Value.GetType() != typeof(Data))
+            // SettingsData — share by reference (stateless, loads from DB each time)
+            if (kvp.Value is PLang.Runtime2.Engine.Settings.SettingsData)
             {
                 clone._variables[kvp.Key] = kvp.Value;
             }

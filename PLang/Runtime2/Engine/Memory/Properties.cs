@@ -95,6 +95,17 @@ public class Properties : IList<Data>
     }
 
     /// <summary>
+    /// Creates a copy of this Properties collection with independent item list.
+    /// </summary>
+    public Properties Clone()
+    {
+        var clone = new Properties();
+        foreach (var item in _items)
+            clone._items.Add(item);
+        return clone;
+    }
+
+    /// <summary>
     /// Converts to a dictionary representation.
     /// </summary>
     public Dictionary<string, object?> ToDictionary()
