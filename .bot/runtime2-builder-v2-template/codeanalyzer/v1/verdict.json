@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Clone overrides drop Data metadata (Error, Signature, etc.); catch-all in FluidProvider masks programming errors" }

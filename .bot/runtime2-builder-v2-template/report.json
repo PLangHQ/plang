@@ -132,6 +132,32 @@
         "health": "All 29 C# tests pass (1886 total, 0 failures). PLang tests written but not built (require LLM builder).",
         "notes": "Key issues: Fluid 2.11.1 had .NET 10 include parsing bug — upgraded to 2.31.0. callGoal uses RegisterExpressionTag for quoted string support. PlangFileProvider strips .liquid extension for Fluid compatibility."
       }
+    },
+    {
+      "id": "template-codeanalyzer-v1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-27T14:00:00Z",
+      "timestamp_end": "2026-03-27T14:30:00Z",
+      "intent": "Code analysis of UI module: OBP compliance, simplification, readability, behavioral reasoning, deletion test",
+      "before": {
+        "assumptions": "UI module implemented with FluidProvider, render action, ITemplateProvider. 29 tests pass. Also includes clone family fixes (PathData, IdentityData, DataList, Properties) and DefaultEvaluator catch broadening.",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "5-pass analysis on new/changed files: render.cs, FluidProvider.cs, ITemplateProvider.cs, plus clone fixes in Data.cs, PathData.cs, IdentityData, MemoryStack.cs, Properties.cs.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-template/codeanalyzer/v1/result.md", ".bot/runtime2-builder-v2-template/codeanalyzer/v1/verdict.json"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "5-pass code analysis: 1 major (clone metadata), 1 medium (catch-all), 1 minor (nested try/catch), 2 deletion-test gaps"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "NEEDS WORK — clone overrides drop base Data metadata, catch-all in FluidProvider masks programming errors",
+        "notes": "UI module (render.cs, ITemplateProvider) is clean OBP. FluidProvider has 2 catch-all issues. Clone family fixes introduced 3 incomplete overrides. Recommend sending to coder."
+      }
     }
   ]
 }
