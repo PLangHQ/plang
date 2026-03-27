@@ -1,1 +1,1 @@
-{ "status": "pass", "summary": "No critical or major findings. 3 minor (bare catch missed by codeanalyzer, weak callGoal assertions, TryResolvePath error message), 2 nits. Architecture is clean OBP, cross-file contracts hold." }
+{ "status": "fail", "summary": "2 major findings escalated by Ingi: bare catch{} silently swallowing errors (find and fix ALL), TryResolvePath hiding real error messages. Send back to coder." }
