@@ -364,6 +364,9 @@ public sealed class @this : IAsyncDisposable
                 disposableProv.Dispose();
         }
 
+        // Dispose engine-level channels
+        await Channels.DisposeAsync();
+
         // Dispose KeepAlive objects
         foreach (var d in _keepAlive)
         {
