@@ -52,9 +52,9 @@ public sealed class @this : List<Step.@this>
 
             var stepResult = await step.RunAsync(engine, context, cancellationToken);
 
-            // Sub-step control: if a step returns a bool and has indented children,
-            // false skips the children. Non-bool results don't affect children.
-            if (HasIndentedChildren(i) && stepResult.Value is bool condition && !condition)
+            // Sub-step control: only condition module steps can skip indented children.
+            // A false result from a condition skips children. Non-condition steps never skip.
+            if (HasIndentedChildren(i) && IsConditionStep(step) && stepResult.Value is bool condition && !condition)
                 skipBelowIndent = step.Indent;
 
             // Determine if the step error is tolerated:
@@ -93,5 +93,15 @@ public sealed class @this : List<Step.@this>
     internal bool HasIndentedChildren(int index)
     {
         return index + 1 < Count && this[index + 1].Indent > this[index].Indent;
+    }
+
+    /// <summary>
+    /// Returns true if the step's first action is from the condition module.
+    /// Only condition steps can skip indented children based on their result.
+    /// </summary>
+    private static bool IsConditionStep(Step.@this step)
+    {
+        return step.Actions.Count > 0 &&
+            string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase);
     }
 }
