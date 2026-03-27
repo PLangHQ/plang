@@ -1,0 +1,3 @@
+Start
+/ Test: render template that uses callGoal to invoke a PLang goal
+- throw "not implemented"

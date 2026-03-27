@@ -26,6 +26,52 @@
         "health": "Design approved by Ingi. Ready for scaffolding.",
         "notes": "Key decisions: no separate template module, Fluid not Scriban, {{ }} syntax stays, callGoal needed for builder."
       }
+    },
+    {
+      "id": "template-test-designer-v1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-27T00:00:00Z",
+      "timestamp_end": "2026-03-27T00:00:00Z",
+      "intent": "Design test suite for UI module: template rendering via Fluid",
+      "before": {
+        "assumptions": "Architect plan approved. Single render action with ITemplateProvider (FluidProvider default). Memory stack accessible in templates. Custom callGoal tag. Partials via Fluid built-in include.",
+        "risk": "Low — test stubs only, no production code."
+      },
+      "plan": "22 test stubs: 17 C# (core render, variable resolution, callGoal/include, provider/path) + 5 PLang integration tests. Parameters changed to List<Data> per Ingi's direction.",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/ui/RenderTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "17 C# test stubs covering render behavior, variable resolution, custom tags, provider swap, path resolution"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal",
+            "Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal",
+            "Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal",
+            "Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal",
+            "Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "5 PLang integration test goals for full pipeline validation"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-template/architect/v1/plan.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Changed Render.Parameters from Dictionary<string, object?> to List<Data> per Ingi's direction"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All test stubs written. Ready for coder.",
+        "notes": "22 tests total. Key change: Parameters is List<Data> not Dictionary."
+      }
     }
   ]
 }

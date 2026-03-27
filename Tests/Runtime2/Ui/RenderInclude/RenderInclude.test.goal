@@ -1,0 +1,3 @@
+Start
+/ Test: render template that includes a partial via include tag
+- throw "not implemented"
