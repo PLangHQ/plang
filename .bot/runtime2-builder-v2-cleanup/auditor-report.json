@@ -1,0 +1,69 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-cleanup",
+  "timestamp": "2026-03-27T13:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Branch has strong fundamentals — clean rename completions, consistent provider pattern, excellent test coverage (1857 pass). However, two cross-file contract gaps and two open security findings remain unaddressed. The DataList<T> clone contract gap is new (missed by all three bots) and affects foundation-level execution context isolation. The two security findings (DefaultEvaluator missing InvalidCastException, Decompress missing InvalidOperationException catch) are confirmed valid but mitigated by the step-level safety net. Overall: solid work, needs 4 targeted fixes before merge.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — correct that no OBP violations exist. Missed DataList<T> clone gap (requires cross-file reasoning across MemoryStack + Data + DataList). Channels disposal fix was a good catch.",
+    "tester": "agree — test quality is strong, coverage is honest. No test for DataList<T> clone isolation or Properties shallow copy, but those are new auditor findings.",
+    "security": "agree — all 5 findings are valid. Finding #1 (Decompress) confirmed: UnwrapJsonElement depth guard can throw InvalidOperationException through JsonSerializer.Deserialize. Finding #2 (DefaultEvaluator) confirmed: Convert.ChangeType can throw InvalidCastException. Both still open."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+      "line": 207,
+      "issue": "DataList<T> is a stateful Data subclass (has internal _items list) but MemoryStack.Clone() shares it by reference. Line 207 checks `kvp.Value.GetType() != typeof(Data)` — DataList<T> matches this branch and is shared, not cloned. The comment says 'stateless/factory-based' but DataList<T> violates that assumption.",
+      "missed_by": "codeanalyzer",
+      "impact": "When PLangContext.CreateChild/Clone creates a child context, both parent and child MemoryStack share the same DataList reference. Mutations (Add, Remove, Clear) in one context are visible in the other, breaking execution context isolation. Affects any handler that returns DataList (e.g., identity.list) and is followed by a sub-goal call.",
+      "suggestion": "DataList<T> needs to override Clone() to deep-copy _items. MemoryStack.Clone() should call Clone() on DataList<T> instances. Options: (a) DataList<T> overrides a virtual Clone on Data, (b) MemoryStack detects DataList specifically, (c) add ICloneable pattern. Option (a) is cleanest — make Data.Clone() virtual and override in DataList<T>."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/Engine/Memory/Data.cs",
+      "line": 220,
+      "issue": "Data.Clone() does `Properties = Properties` (shallow reference copy). Properties is a mutable IList<Data> — mutations on original are visible in clone. Properties has no copy constructor.",
+      "missed_by": "none",
+      "impact": "Low practical risk — Properties are typically set once at creation. But the contract says Clone() produces an independent copy, and this violates it. Security bot identified this (finding #5).",
+      "suggestion": "Deep-clone Properties: create a new Properties instance and copy items. Add a copy constructor to Properties class: `public Properties(Properties source) { foreach (var item in source) _items.Add(item.Clone()); }`"
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+      "line": 24,
+      "issue": "Catch filter `ex is NotSupportedException or ArgumentException or OverflowException` misses InvalidCastException. Convert.ChangeType at line 157 can throw InvalidCastException when types are incompatible (e.g., string→Guid, non-numeric casts).",
+      "missed_by": "none",
+      "impact": "Unhandled InvalidCastException escapes Evaluate(), caught by step-level safety net. Returns generic StepError instead of typed EvaluationError with diagnostic info (operand types, fix suggestion). Security bot identified this (finding #2).",
+      "suggestion": "Add InvalidCastException to the filter: `catch (Exception ex) when (ex is NotSupportedException or ArgumentException or OverflowException or InvalidCastException)`"
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+      "line": 140,
+      "issue": "Decompress() catch blocks handle InvalidDataException and JsonException but not InvalidOperationException. Path: JsonSerializer.Deserialize<Data> → Data constructor → UnwrapJsonElement → depth guard throws InvalidOperationException. Requires 128+ deep JSON nesting — extremely unlikely but the contract says behavior methods never throw.",
+      "missed_by": "none",
+      "impact": "Theoretical: malformed compressed payload with deeply nested JSON triggers unhandled InvalidOperationException. Step-level safety net catches it. Security bot identified this (finding #1).",
+      "suggestion": "Add `catch (InvalidOperationException ex)` with appropriate DecompressError return."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "Documentation/Runtime2/modules.md",
+      "line": 140,
+      "issue": "Documentation still references old terminology: 'Libraries.Add(library)' and 'library.load' handler. Lines 71-131 document deleted Library/Libraries classes. Also good_to_know.md line 146 references 'library.load'.",
+      "missed_by": "codeanalyzer",
+      "impact": "Documentation misleads developers looking for library module — no runtime impact.",
+      "suggestion": "Update modules.md and good_to_know.md to reference module.add/module.remove and EngineModules."
+    }
+  ]
+}

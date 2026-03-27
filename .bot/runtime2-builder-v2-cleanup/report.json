@@ -148,19 +148,12 @@
           "category": "test",
           "confidence": "high",
           "context": "Full test quality report with 8 findings"
-        },
-        {
-          "paths": [".bot/runtime2-builder-v2-cleanup/tester/v2/"],
-          "type": "create",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Tester session output: plan, summary, verdict"
         }
       ],
       "after": {
         "status": "complete",
         "health": "FAIL — 3 new actions (module.remove, list.set, event.skipAction) have zero tests",
-        "notes": "1839 C# tests pass. Signing/identity tests excellent. DefaultFileProvider 100% (codeanalyzer concern resolved). Recommend coder adds tests for 3 zero-coverage actions."
+        "notes": "1839 C# tests pass. Signing/identity tests excellent. DefaultFileProvider 100% (codeanalyzer concern resolved)."
       }
     },
     {
@@ -170,40 +163,62 @@
       "timestamp_end": "2026-03-27T12:30:00Z",
       "intent": "Full blue+red team security audit of cleanup branch",
       "before": {
-        "assumptions": "642 files changed across signing, HTTP, identity, engine core, events, conditions, file, variable, list modules. Previous bots (codeanalyzer, tester) completed.",
+        "assumptions": "642 files changed across signing, HTTP, identity, engine core, events, conditions, file, variable, list modules.",
         "risk": "Medium — large surface area, crypto changes, new module patterns."
       },
-      "plan": "Phase 1 (Blue): Map attack surface across 9 areas. Phase 2 (Red): Exploit sketches. Phase 3: Write reports.",
+      "plan": "Phase 1 (Blue): Map attack surface. Phase 2 (Red): Exploit sketches. Phase 3: Reports.",
       "actions": [
         {
-          "paths": [
-            "PLang/Runtime2/modules/signing/SignedData.cs",
-            "PLang/Runtime2/modules/signing/providers/Ed25519Provider.cs",
-            "PLang/Runtime2/modules/http/providers/DefaultHttpProvider.cs",
-            "PLang/Runtime2/modules/http/Config.cs",
-            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
-            "PLang/Runtime2/Engine/Memory/Data.cs",
-            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
-            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
-            "PLang/Runtime2/modules/module/add.cs",
-            "PLang/Runtime2/modules/provider/load.cs",
-            "PLang/Runtime2/modules/identity/providers/DefaultIdentityProvider.cs",
-            "PLang/Runtime2/modules/event/on.cs",
-            "PLang/Runtime2/modules/event/skipAction.cs",
-            "PLang/Runtime2/modules/file/providers/DefaultFileProvider.cs",
-            "PLang/Runtime2/modules/variable/set.cs",
-            "PLang/Runtime2/modules/list/set.cs"
-          ],
-          "type": "review",
+          "paths": [".bot/runtime2-builder-v2-cleanup/security-report.json"],
+          "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Full security audit of all changed security-relevant files"
+          "context": "Full security audit"
         }
       ],
       "after": {
         "status": "complete",
         "health": "PASS — 0 critical, 0 high, 3 medium, 2 low",
-        "notes": "Two medium findings are contract violations (Decompress + DefaultEvaluator catch clauses). Third medium is accepted-risk nonce replay. Strong security posture overall. Suggest auditor next."
+        "notes": "Two medium findings are contract violations. Third medium is accepted-risk nonce replay."
+      }
+    },
+    {
+      "id": "auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T13:00:00Z",
+      "timestamp_end": null,
+      "intent": "Cross-cutting integrity audit of cleanup branch",
+      "before": {
+        "assumptions": "Codeanalyzer (PASS), tester (PASS after fix), security (PASS) all completed. Large branch with ~30K lines changed across engine core, modules, and tests.",
+        "risk": "Medium — cross-file contracts in a large cleanup could have hidden gaps."
+      },
+      "plan": "Read all bot reports. Audit 4 cross-file areas (Settings→Config, Data hierarchy+clone, Library→Module, Provider pattern). Verify open security findings. Run tests. Write verdict.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.Envelope.cs",
+            "PLang/Runtime2/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/Runtime2/Engine/Memory/Properties.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file clone family audit, security finding verification"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-cleanup/auditor-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor report with 5 findings"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — 1 major (DataList clone gap), 3 minor (security items), 1 nit (docs)",
+        "notes": "New cross-file finding: DataList<T> shared by reference in MemoryStack.Clone(). Recommend coder fixes before merge."
       }
     }
   ]
