@@ -305,6 +305,51 @@
         "health": "PASS — no critical or high findings. UI module well-secured.",
         "notes": "SSTI via callGoal is developer responsibility (like SQL injection). Two carry-forward findings resolved. Recommend auditor next."
       }
+    },
+    {
+      "id": "template-auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T20:00:00Z",
+      "timestamp_end": "2026-03-27T20:30:00Z",
+      "intent": "Cross-cutting audit of UI module after codeanalyzer, tester, and security all approved",
+      "before": {
+        "assumptions": "All three prior reviewers passed. 1890 tests, 91.8% line coverage. No critical/high security findings.",
+        "risk": "Low — audit only, no code changes."
+      },
+      "plan": "Review cross-file contracts (PathData, MemoryStack.GetAll, RunGoalAsync), verify catch filter consistency, assess test adequacy for callGoal, check architectural fit.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+            "PLang/Runtime2/modules/ui/render.cs",
+            "PLang/Runtime2/Engine/Providers/this.cs",
+            "PLang/Runtime2/Engine/FileSystem/PathData.cs",
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file audit: 3 minor findings (bare catch missed by codeanalyzer, weak callGoal assertions, TryResolvePath error granularity), 2 nits. No cross-file contract violations."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-builder-v2-template/auditor-report.json",
+            ".bot/runtime2-builder-v2-template/auditor/v1/verdict.json",
+            ".bot/runtime2-builder-v2-template/auditor/v1/summary.md",
+            ".bot/runtime2-builder-v2-template/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor report and verdict: PASS with 3 minor, 2 nits."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — no critical or major findings. Clean OBP, cross-file contracts hold.",
+        "notes": "One review gap: codeanalyzer missed bare catch{} at FluidProvider.cs:137. Recommend docs bot next."
+      }
     }
   ]
 }

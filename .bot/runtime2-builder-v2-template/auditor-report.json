@@ -1,0 +1,69 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-v2-template",
+  "timestamp": "2026-03-27T20:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "UI module is well-built. All three prior reviewers did solid work. One catch block was missed by the codeanalyzer's catch-filter fix pass — a bare catch{} in RegisterTypeIfNeeded that swallows all exceptions including fatal ones. Two minor test gaps remain (weak callGoal value assertions, TryResolvePath error granularity). No cross-file contract violations found. Architecture is clean OBP. Overall: PASS with 3 minor findings and 2 nits.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "partial — said 'catch filters correct' in v2 but missed the bare catch{} at FluidProvider.cs:137. All other findings were thorough.",
+    "tester": "agree — correctly identified false-green callGoal tests in v1, verified fixes in v2. Minor findings are correctly classified.",
+    "security": "agree — SSTI as accepted-risk is the right call. ValidatePath sandbox is effective. Resource exhaustion findings are appropriately low severity."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "line": 137,
+      "issue": "Bare catch{} in RegisterTypeIfNeeded swallows all exceptions including fatal ones (OOM, NRE, SOE). Codeanalyzer v1 flagged catch-all issues and v2 said 'catch filters correct', but this catch block has no filter at all.",
+      "missed_by": "codeanalyzer",
+      "impact": "Low blast radius — worst case is a custom type's properties aren't accessible in templates. But the pattern is inconsistent with the catch filters at lines 48 and 104, and masks bugs during development (e.g., if MemberAccessStrategy.Register throws NRE due to a Fluid bug, you'd never know).",
+      "suggestion": "Add a catch filter: catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { }. Or narrow to the specific exceptions Register can throw (ArgumentException, InvalidOperationException)."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "line": 534,
+      "issue": "callGoal success tests (lines 231, 479, 502, 534) only assert DoesNotContain('[Error:') — they never verify the actual output value. The GetNumber test sets value=42 but never checks '42' appears in output.",
+      "missed_by": "none",
+      "impact": "A bug in callGoal value serialization (e.g., result.Value?.ToString() returning 'PLang.Runtime2.Engine.Memory.Data' instead of '42') would pass all tests. Tester flagged this as minor in v2 — I agree with severity but want it tracked.",
+      "suggestion": "Add await Assert.That(output).Contains('42') to Render_CallGoal_SuccessWritesValueToOutput. Same pattern for the Greeter test."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "line": 248,
+      "issue": "TryResolvePath calls _fs.ValidatePath() which throws Exception for null/empty paths. If Fluid passes an empty subpath to GetFileInfo, TryResolvePath throws, which propagates through Fluid's include handler, caught by the outer catch at line 104 with a generic 'Template render error' message instead of a precise path error.",
+      "missed_by": "security",
+      "impact": "User sees 'Template render error: path cannot be empty' instead of 'Include path validation failed'. Functional but confusing error message.",
+      "suggestion": "Wrap TryResolvePath body in try/catch returning null on ValidatePath failure: try { return _fs.ValidatePath(...); } catch { return null; }"
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "line": 1,
+      "issue": "using System.IO — technically against 'NEVER use System.IO' rule but only used for StringWriter, MemoryStream, and IOException (in-memory types + exception class), not filesystem operations. All actual filesystem access goes through IPLangFileSystem correctly.",
+      "missed_by": "none",
+      "impact": "None — false positive on the rule. The intent of the rule (no direct filesystem access) is respected.",
+      "suggestion": "No action needed. Could add a comment explaining why System.IO is used if desired."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "line": 284,
+      "issue": "PlangFileInfo.LastModified always returns DateTimeOffset.UtcNow. If Fluid ever introduces template caching keyed on LastModified, every template would be considered 'changed' on every request.",
+      "missed_by": "none",
+      "impact": "No current impact — Fluid doesn't cache parsed templates via IFileProvider. Future-proofing concern only.",
+      "suggestion": "Could use _fs.FileInfo.New(_fullPath).LastWriteTimeUtc but not worth the filesystem call unless caching is added."
+    }
+  ]
+}
