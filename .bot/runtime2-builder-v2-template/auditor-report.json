@@ -1,69 +1,74 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-builder-v2-template",
-  "timestamp": "2026-03-27T20:30:00Z",
-  "reviewed_version": "v1",
-  "summary": "FAIL — Two findings escalated by Ingi: (1) bare catch{} must never silently swallow errors, developer must be notified; (2) hiding the real error message from users in TryResolvePath is unacceptable. Both need coder fixes before merge.",
+  "timestamp": "2026-03-27T21:00:00Z",
+  "reviewed_version": "v1-recheck",
+  "summary": "FAIL — Coder fixed FluidProvider bare catch and TryResolvePath, but 3 issues remain: (1) 6 bare catch{} blocks elsewhere in Runtime2 not addressed, (2) TryResolvePath new catch has no fatal exception filter, (3) callGoal test assertion still only checks static text not dynamic value.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "partial — said 'catch filters correct' in v2 but missed the bare catch{} at FluidProvider.cs:137. All other findings were thorough.",
-    "tester": "agree — correctly identified false-green callGoal tests in v1, verified fixes in v2. Minor findings are correctly classified.",
-    "security": "agree — SSTI as accepted-risk is the right call. ValidatePath sandbox is effective. Resource exhaustion findings are appropriately low severity."
+    "codeanalyzer": "partial — missed the bare catch{} pattern across the codebase, not just FluidProvider.",
+    "tester": "agree — but callGoal assertion fix is still weak.",
+    "security": "agree — MaxSteps/MaxRecursion addition is good defense-in-depth."
   },
   "findings": [
     {
       "id": 1,
       "severity": "major",
       "category": "review-gap",
-      "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 137,
-      "issue": "Bare catch{} in RegisterTypeIfNeeded silently swallows ALL exceptions. Ingi: bare catch{} is never allowed — developer must be notified when something goes wrong. Find and fix ALL bare catch{} blocks in the codebase, not just this one.",
+      "status": "OPEN",
+      "file": "PLang/Runtime2 (multiple files)",
+      "line": null,
+      "issue": "6 bare catch{} blocks remain in Runtime2. Coder only fixed FluidProvider but did not scan the codebase as requested. Locations: TypeMapping.cs:312, TypeMapping.cs:352, SignedData.cs:60, DefaultHttpProvider.cs:485, DefaultHttpProvider.cs:615, DefaultHttpProvider.cs:653. All silently swallow exceptions including fatal ones.",
       "missed_by": "codeanalyzer",
-      "impact": "Masks bugs during development. If MemberAccessStrategy.Register throws due to a Fluid bug, no one knows. Silent error swallowing is always critical.",
-      "suggestion": "At minimum: log/surface the error. Add a catch filter to let fatal exceptions propagate. Scan the entire codebase for bare catch{} and fix them all."
+      "impact": "Same pattern Ingi escalated — silent error swallowing masks bugs. Each needs at minimum a fatal exception filter.",
+      "suggestion": "Add catch filters to all 6: catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)). For the ones that return a fallback value, that's fine — just don't catch fatal exceptions."
     },
     {
       "id": 2,
       "severity": "minor",
       "category": "review-gap",
+      "status": "OPEN",
       "file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
-      "line": 534,
-      "issue": "callGoal success tests (lines 231, 479, 502, 534) only assert DoesNotContain('[Error:') — they never verify the actual output value. The GetNumber test sets value=42 but never checks '42' appears in output.",
+      "line": 536,
+      "issue": "callGoal success test assertion Contains('Number:') only checks static template text, not the dynamic goal result. Template is 'Number: {% callGoal GetNumber %}' — 'Number:' is always present regardless of what callGoal produces. Should assert Contains('42') to verify the goal's value appears.",
       "missed_by": "none",
-      "impact": "A bug in callGoal value serialization would pass all tests.",
-      "suggestion": "Add await Assert.That(output).Contains('42') to Render_CallGoal_SuccessWritesValueToOutput."
+      "impact": "A bug in callGoal value serialization (e.g., ToString() returning type name instead of value) would still pass this test.",
+      "suggestion": "Change to: await Assert.That(output).Contains(\"42\");"
     },
     {
       "id": 3,
-      "severity": "major",
+      "severity": "minor",
       "category": "cross-file",
+      "status": "OPEN",
       "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 248,
-      "issue": "TryResolvePath hides the real error from ValidatePath. When it throws, the exception propagates through Fluid and gets caught with a generic 'Template render error' message. The user never sees what actually went wrong. Ingi: hiding the real error message is really bad.",
-      "missed_by": "security",
-      "impact": "User gets an unhelpful generic error instead of the actual path validation failure. Makes debugging template includes much harder.",
-      "suggestion": "TryResolvePath should catch ValidatePath exceptions and return null (so GetFileInfo falls through to NotFoundFileInfo). The real error is 'file not found at this path', not 'template render error'."
+      "line": 249,
+      "issue": "New TryResolvePath catch (Exception ex) has no filter — catches OOM, NRE, SOE. Inconsistent with the fatal exception filters at lines 48 and 104 in the same file.",
+      "missed_by": "none",
+      "impact": "Low — TryResolvePath returns null which is a safe fallback, but fatal exceptions should never be caught.",
+      "suggestion": "Add filter: catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))"
     },
     {
       "id": 4,
-      "severity": "nit",
-      "category": "architectural",
+      "severity": "resolved",
+      "category": "review-gap",
+      "status": "RESOLVED",
       "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 1,
-      "issue": "using System.IO — technically against 'NEVER use System.IO' rule but only used for StringWriter, MemoryStream, and IOException (in-memory types), not filesystem operations.",
-      "missed_by": "none",
-      "impact": "None — false positive on the rule.",
-      "suggestion": "No action needed."
+      "line": 135,
+      "issue": "Former bare catch{} in RegisterTypeIfNeeded — removed entirely. Exceptions now propagate to outer catch filter.",
+      "missed_by": "codeanalyzer",
+      "impact": "Fixed.",
+      "suggestion": "N/A"
     },
     {
       "id": 5,
-      "severity": "nit",
-      "category": "architectural",
+      "severity": "resolved",
+      "category": "cross-file",
+      "status": "RESOLVED",
       "file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
-      "line": 284,
-      "issue": "PlangFileInfo.LastModified always returns DateTimeOffset.UtcNow.",
-      "missed_by": "none",
-      "impact": "No current impact.",
-      "suggestion": "No action needed unless Fluid adds caching."
+      "line": 243,
+      "issue": "TryResolvePath now catches ValidatePath exceptions and returns null — user sees 'file not found' instead of generic render error.",
+      "missed_by": "security",
+      "impact": "Fixed (pending filter addition per finding #3).",
+      "suggestion": "N/A"
     }
   ]
 }
