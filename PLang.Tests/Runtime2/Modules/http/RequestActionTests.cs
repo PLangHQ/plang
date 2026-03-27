@@ -663,12 +663,12 @@ public class RequestActionTests
             }
         };
 
-        var sign1 = new sign { Context = Ctx, Data = "chunk-1" };
+        var sign1 = new sign { Context = Ctx, Data = new Data("", "chunk-1") };
         var signResult1 = await sign1.Run();
         await Assert.That(signResult1.Success).IsTrue();
         var line1Data = new Data("chunk-1") { Signature = signResult1.Signature };
 
-        var sign2 = new sign { Context = Ctx, Data = "chunk-2" };
+        var sign2 = new sign { Context = Ctx, Data = new Data("", "chunk-2") };
         var signResult2 = await sign2.Run();
         await Assert.That(signResult2.Success).IsTrue();
         var line2Data = new Data("chunk-2") { Signature = signResult2.Signature };
@@ -836,7 +836,7 @@ public class RequestActionTests
     public async Task Get_SignedPlangResponse_SetsServiceIdentity()
     {
         // First, sign some data to get a valid signed response
-        var signAction = new sign { Context = Ctx, Data = "response-payload" };
+        var signAction = new sign { Context = Ctx, Data = new Data("", "response-payload") };
         var signResult = await signAction.Run();
         await Assert.That(signResult.Success).IsTrue();
 

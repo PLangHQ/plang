@@ -376,7 +376,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         var httpSign = new signing.sign
         {
             Context = context,
-            Data = bodyContent ?? "",
+            Data = new Data("", bodyContent ?? ""),
             Headers = new Dictionary<string, object>
             {
                 ["url"] = url,

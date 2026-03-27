@@ -47,7 +47,7 @@ public class SignActionTests
         var action = new sign
         {
             Context = Ctx,
-            Data = data,
+            Data = new Data("", data),
             Contracts = contracts,
             ExpiresInMs = expiresInMs,
             Headers = headers

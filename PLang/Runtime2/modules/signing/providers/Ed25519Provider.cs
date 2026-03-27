@@ -29,7 +29,7 @@ public class Ed25519Provider : ISigningProvider
         var identity = (IdentityData)identityResult;
 
         // Hash the data
-        var hash = await engine.RunAction<Hash>(new Hash { Data = Data.Ok(action.Data ?? new object()), Algorithm = "keccak256" }, action.Context);
+        var hash = await engine.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = "keccak256" }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.MemoryStack.GetValue("NowUtc")!;
@@ -53,9 +53,8 @@ public class Ed25519Provider : ISigningProvider
         if (!signResult.Success) return signResult;
         signedData.Signature = Convert.ToBase64String((byte[])signResult.Value!);
 
-        var result = Data.Ok(action.Data);
-        result.Signature = signedData;
-        return result;
+        action.Data!.Signature = signedData;
+        return action.Data;
     }
 
     public virtual async Task<Data> VerifyAsync(verify action)

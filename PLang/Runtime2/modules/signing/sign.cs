@@ -10,7 +10,8 @@ namespace PLang.Runtime2.modules.signing;
 public partial class sign : IContext
 {
     /// <summary>The data to sign.</summary>
-    public partial object? Data { get; init; }
+    [IsInitiated]
+    public partial Data? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
     public partial List<string>? Contracts { get; init; }
