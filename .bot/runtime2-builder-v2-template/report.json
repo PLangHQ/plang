@@ -158,6 +158,32 @@
         "health": "NEEDS WORK — clone overrides drop base Data metadata, catch-all in FluidProvider masks programming errors",
         "notes": "UI module (render.cs, ITemplateProvider) is clean OBP. FluidProvider has 2 catch-all issues. Clone family fixes introduced 3 incomplete overrides. Recommend sending to coder."
       }
+    },
+    {
+      "id": "template-codeanalyzer-v2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-03-27T15:00:00Z",
+      "timestamp_end": "2026-03-27T15:15:00Z",
+      "intent": "Re-review coder fixes for v1 findings: clone metadata, catch filters, path resolution",
+      "before": {
+        "assumptions": "Coder addressed all 3 findings in commit 3dcd2359.",
+        "risk": "Low — re-review only."
+      },
+      "plan": "Field-by-field clone verification, catch filter review, TryResolvePath behavioral check.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-template/codeanalyzer/v2/result.md", ".bot/runtime2-builder-v2-template/codeanalyzer/v2/verdict.json"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All 3 findings resolved. One naming nit (TryResolvePath). Two deletion-test gaps remain for tester."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all findings resolved, recommend tester next",
+        "notes": "Clone overrides verified field-for-field. Catch filters correct. TryResolvePath naming nit is cosmetic."
+      }
     }
   ]
 }
