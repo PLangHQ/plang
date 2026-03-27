@@ -62,7 +62,7 @@ public partial class Render : IContext
     [IsNotNull]
     public partial string Template { get; init; }
 
-    public partial Dictionary<string, object?>? Parameters { get; init; }
+    public partial List<Data>? Parameters { get; init; }
 
     [Provider]
     public partial ITemplateProvider Provider { get; }
