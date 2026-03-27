@@ -62,6 +62,8 @@ public class FluidProvider : ITemplateProvider
 
         // Build context
         var options = new TemplateOptions();
+        options.MaxSteps = 100_000; // Defense-in-depth: prevent pathological templates from running indefinitely
+        options.MaxRecursion = 100; // Prevent deeply recursive includes
         options.MemberAccessStrategy.IgnoreCasing = true;
         options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
 
@@ -130,14 +132,7 @@ public class FluidProvider : ITemplateProvider
                 || genDef == typeof(HashSet<>))
                 return;
         }
-        try
-        {
-            options.MemberAccessStrategy.Register(type);
-        }
-        catch
-        {
-            // Some types may not be registerable — skip silently
-        }
+        options.MemberAccessStrategy.Register(type);
     }
 
     /// <summary>
@@ -247,7 +242,18 @@ public class FluidProvider : ITemplateProvider
 
         private string? TryResolvePath(string candidate)
         {
-            return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
+            try
+            {
+                return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
+            }
+            catch (Exception ex)
+            {
+                // Path validation failed (sandbox violation, invalid path, etc.)
+                // Return null → GetFileInfo returns NotFoundFileInfo → Fluid reports "file not found"
+                // This is correct: the include path doesn't resolve to a valid file
+                System.Diagnostics.Debug.WriteLine($"Template include path validation failed for '{candidate}': {ex.Message}");
+                return null;
+            }
         }
 
         private static string StripLiquidExtension(string path)

@@ -532,6 +532,8 @@ public class RenderTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         var output = result.Value?.ToString() ?? "";
         await Assert.That(output).DoesNotContain("[Error:");
+        // Verify the goal's last step result appears in output
+        await Assert.That(output).Contains("Number:");
     }
 
     // --- Batch 7: Include Edge Cases ---
