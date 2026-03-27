@@ -169,10 +169,7 @@ public class FluidProvider : ITemplateProvider
             var fs = engine.FileSystem;
             var goalDir = fs.Path.GetDirectoryName(goalPath);
             if (!string.IsNullOrEmpty(goalDir))
-            {
-                var pathData = new PathData(goalDir, action.Context);
-                return pathData.Absolute;
-            }
+                return fs.ValidatePath(goalDir);
         }
         return engine.AbsolutePath;
     }

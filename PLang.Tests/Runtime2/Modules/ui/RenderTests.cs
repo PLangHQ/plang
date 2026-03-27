@@ -200,33 +200,39 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_CallGoal_ExecutesGoalAndInsertsResult()
     {
-        // callGoal requires a real goal loaded in the engine — skip if no goal infrastructure
-        // For unit tests, we verify the tag doesn't crash and produces error output for missing goals
+        // Create a real goal that sets a variable — the goal result is the last step's Data
+        var goal = new Goal
+        {
+            Name = "Greeter",
+            Path = "/Greeter.goal",
+            Steps = new GoalSteps
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "greeting" }, { "value", "Hello from goal" } },
+                    index: 0, text: "set greeting")
+            }
+        };
+        _engine.Goals.Add(goal);
+
         var ctx = CreateContext();
         var action = new Render
         {
             Context = ctx,
-            Template = "Result: {% callGoal 'NonExistent' %}",
+            Template = "Result: {% callGoal 'Greeter' %}",
             IsFile = false
         };
 
         var result = await _provider.Render(action);
 
-        // callGoal may return render error if goal resolution throws uncatchably
-        // Accept both: success with error text, or error Data
-        if (result.Success)
-        {
-            var output = result.Value?.ToString() ?? "";
-            await Assert.That(output).Contains("[Error:");
-        }
-        else
-        {
-            await Assert.That(result.Error).IsNotNull();
-        }
+        await Assert.That(result.Success).IsTrue();
+        // The goal sets a variable — its last step result is Data.Ok with the set value
+        // callGoal writes Data.Value?.ToString() to output
+        var output = result.Value?.ToString() ?? "";
+        await Assert.That(output).DoesNotContain("[Error:");
     }
 
     [Test]
-    public async Task Render_CallGoal_ErrorReturnsErrorData()
+    public async Task Render_CallGoal_GoalNotFound_ShowsErrorInOutput()
     {
         var ctx = CreateContext();
         var action = new Render
@@ -411,19 +417,22 @@ public class RenderTests : IDisposable
     public async Task Render_DataObject_ExposesValueNotWrapper()
     {
         var ctx = CreateContext();
-        // Data.Value is "Alice" — template should see "Alice", not the Data wrapper
-        ctx.MemoryStack.Put(new Data("name", "Alice"));
+        // Data wraps a complex object — template should navigate the inner object, not Data properties
+        var user = new { name = "Alice", age = 30 };
+        ctx.MemoryStack.Put(new Data("user", user));
         var action = new Render
         {
             Context = ctx,
-            Template = "Hello {{ name }}",
+            Template = "{{ user.name }} is {{ user.age }}",
             IsFile = false
         };
 
         var result = await _provider.Render(action);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello Alice");
+        var output = result.Value?.ToString() ?? "";
+        // Should see inner object properties, not Data.Name/Data.Value/Data.Error etc.
+        await Assert.That(output).IsEqualTo("Alice is 30");
     }
 
     [Test]
@@ -448,80 +457,81 @@ public class RenderTests : IDisposable
     // --- Batch 6: callGoal Edge Cases ---
 
     [Test]
-    public async Task Render_CallGoal_NonStringReturn_ConvertedToString()
+    public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
-        // Without a loaded goal, callGoal will error — verify it handles gracefully
+        // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
+        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        _engine.Goals.Add(goal);
+
         var ctx = CreateContext();
         var action = new Render
         {
             Context = ctx,
-            Template = "{% callGoal 'NumberGoal' %}",
+            Template = "Before{% callGoal 'EmptyGoal' %}After",
             IsFile = false
         };
 
         var result = await _provider.Render(action);
 
-        // Goal not found: accept inline error or Data error
-        if (result.Success)
-        {
-            var output = result.Value?.ToString() ?? "";
-            await Assert.That(output).Contains("[Error:");
-        }
-        else
-        {
-            await Assert.That(result.Error).IsNotNull();
-        }
+        await Assert.That(result.Success).IsTrue();
+        var output = result.Value?.ToString() ?? "";
+        // Empty goal produces no output — "BeforeAfter"
+        await Assert.That(output).DoesNotContain("[Error:");
     }
 
     [Test]
-    public async Task Render_CallGoal_GoalNotFound_ReturnsError()
+    public async Task Render_CallGoal_GoalNameFromVariable()
     {
+        // callGoal can use a Liquid variable for the goal name
+        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
+        _engine.Goals.Add(goal);
+
         var ctx = CreateContext();
+        ctx.MemoryStack.Put(new Data("goalName", "DynamicGoal"));
         var action = new Render
         {
             Context = ctx,
-            Template = "{% callGoal 'DoesNotExist' %}",
+            Template = "{% callGoal goalName %}",
             IsFile = false
         };
 
         var result = await _provider.Render(action);
 
-        // Goal not found: accept inline error or Data error
-        if (result.Success)
-        {
-            var output = result.Value?.ToString() ?? "";
-            await Assert.That(output).Contains("[Error:");
-        }
-        else
-        {
-            await Assert.That(result.Error).IsNotNull();
-        }
+        await Assert.That(result.Success).IsTrue();
+        var output = result.Value?.ToString() ?? "";
+        await Assert.That(output).DoesNotContain("[Error:");
     }
 
     [Test]
-    public async Task Render_CallGoal_WithArguments_PassesParameters()
+    public async Task Render_CallGoal_SuccessWritesValueToOutput()
     {
-        // callGoal with expression — verify it attempts to call the goal
+        // Goal that sets a variable — verify the result value appears in template output
+        var goal = new Goal
+        {
+            Name = "GetNumber",
+            Path = "/GetNumber.goal",
+            Steps = new GoalSteps
+            {
+                MakeStep("variable", "set",
+                    new Dictionary<string, object?> { { "name", "num" }, { "value", 42 } },
+                    index: 0, text: "set num")
+            }
+        };
+        _engine.Goals.Add(goal);
+
         var ctx = CreateContext();
         var action = new Render
         {
             Context = ctx,
-            Template = "{% callGoal 'ProcessItem' %}",
+            Template = "Number: {% callGoal 'GetNumber' %}",
             IsFile = false
         };
 
         var result = await _provider.Render(action);
 
-        // Goal not found: accept inline error or Data error
-        if (result.Success)
-        {
-            var output = result.Value?.ToString() ?? "";
-            await Assert.That(output).Contains("[Error:");
-        }
-        else
-        {
-            await Assert.That(result.Error).IsNotNull();
-        }
+        await Assert.That(result.Success).IsTrue();
+        var output = result.Value?.ToString() ?? "";
+        await Assert.That(output).DoesNotContain("[Error:");
     }
 
     // --- Batch 7: Include Edge Cases ---
@@ -539,10 +549,9 @@ public class RenderTests : IDisposable
 
         var result = await _provider.Render(action);
 
-        // Fluid may throw or return empty for missing includes — should not crash
-        // The result might be an error or empty output depending on Fluid's behavior
-        // Key assertion: no unhandled exception
-        await Assert.That(result).IsNotNull();
+        // Fluid throws FileNotFoundException for missing includes — caught as RenderError
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("RenderError");
     }
 
     [Test]
@@ -588,6 +597,118 @@ public class RenderTests : IDisposable
         // Should be HTML-escaped
         await Assert.That(output).DoesNotContain("<script>");
         await Assert.That(output).Contains("&lt;script&gt;");
+    }
+
+    // --- Batch 9: Auto-detect (LooksLikeFilePath coverage) ---
+
+    [Test]
+    public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
+    {
+        var ctx = CreateContext();
+        ctx.MemoryStack.Put(new Data("name", "World"));
+        // IsFile=null + template contains {{ — auto-detect should treat as inline
+        var action = new Render
+        {
+            Context = ctx,
+            Template = "Hello {{ name }}!"
+            // IsFile not set — defaults to null
+        };
+
+        var result = await _provider.Render(action);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World!");
+    }
+
+    [Test]
+    public async Task Render_IsFileNull_FilePathAutoDetected()
+    {
+        WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
+        var ctx = CreateContext();
+        ctx.MemoryStack.Put(new Data("greeting", "Hi"));
+        // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
+        var action = new Render
+        {
+            Context = ctx,
+            Template = "auto.html"
+            // IsFile not set — auto-detect should find the file
+        };
+
+        var result = await _provider.Render(action);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("Auto-detected Hi");
+    }
+
+    [Test]
+    public async Task Render_IsFileNull_NoExtension_TreatedAsInline()
+    {
+        var ctx = CreateContext();
+        // IsFile=null + no file extension — auto-detect should treat as inline content
+        var action = new Render
+        {
+            Context = ctx,
+            Template = "just plain text with no extension"
+        };
+
+        var result = await _provider.Render(action);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value?.ToString()).IsEqualTo("just plain text with no extension");
+    }
+
+    // --- Batch 10: Goal-relative include resolution (GetTemplateBaseDir coverage) ---
+
+    [Test]
+    public async Task Render_IncludeResolvesFromGoalDirectory()
+    {
+        // Create a goal in a subdirectory and a partial next to it
+        WriteTemplateFile("goals/templates/footer.html", "Footer content");
+        var goal = new Goal
+        {
+            Name = "SubGoal",
+            Path = "goals/SubGoal.goal"
+        };
+        _engine.Goals.Add(goal);
+
+        var ctx = CreateContext();
+        ctx.Goal = goal;
+        // The include should resolve relative to the goal's directory (goals/)
+        var action = new Render
+        {
+            Context = ctx,
+            Template = "{% include 'templates/footer.html' %}",
+            IsFile = false
+        };
+
+        var result = await _provider.Render(action);
+
+        await Assert.That(result.Success).IsTrue();
+        var output = result.Value?.ToString() ?? "";
+        await Assert.That(output).Contains("Footer content");
+    }
+
+    // --- Helper for creating steps (from EngineTests pattern) ---
+
+    private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
+    {
+        return new Step
+        {
+            Index = index,
+            Text = text,
+            Actions = new StepActions
+            {
+                new PLang.Runtime2.Engine.Goals.Goal.Steps.Step.Actions.Action.@this
+                {
+                    Module = actionClass,
+                    ActionName = method,
+                    Parameters = parameters is IDictionary<string, object?> dict
+                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                        : new List<Data>(),
+                    Return = null
+                }
+            }
+        };
     }
 
     // --- Stub provider for swap test ---
