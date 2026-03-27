@@ -9,5 +9,6 @@ namespace PLang.Runtime2.modules.ui.providers;
 /// </summary>
 public interface ITemplateProvider : IProvider
 {
+    /// <summary>Renders the template described by the action and returns the output string as Data.</summary>
     Task<Data> Render(Render action);
 }

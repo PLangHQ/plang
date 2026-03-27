@@ -350,6 +350,46 @@
         "health": "PASS — no critical or major findings. Clean OBP, cross-file contracts hold.",
         "notes": "One review gap: codeanalyzer missed bare catch{} at FluidProvider.cs:137. Recommend docs bot next."
       }
+    },
+    {
+      "id": "template-docs-v1",
+      "bot": "docs",
+      "timestamp_start": "2026-03-27T23:00:00Z",
+      "timestamp_end": "2026-03-27T23:30:00Z",
+      "intent": "Write documentation for UI module: user-facing docs, architecture updates, XML docs",
+      "before": {
+        "assumptions": "All reviewers passed (codeanalyzer, tester, security, auditor). No docs exist for UI module. Module index and architecture docs need updating.",
+        "risk": "Low — documentation only, no code logic changes."
+      },
+      "plan": "5 gaps: create docs/modules/ui.md, update index.md, update modules.md, update good_to_know.md, verify XML docs.",
+      "actions": [
+        {
+          "paths": ["docs/modules/ui.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "User-facing UI module docs: render action, Liquid syntax, includes, callGoal, security warning (SSTI), examples"
+        },
+        {
+          "paths": ["docs/modules/index.md", "Documentation/Runtime2/modules.md", "Documentation/Runtime2/good_to_know.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added UI module to module index, built-in handlers table, and provider interfaces list"
+        },
+        {
+          "paths": ["PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added XML doc on ITemplateProvider.Render method"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 5 gaps filled. Ready to merge.",
+        "notes": "SSTI security warning documented per security report finding #1. Pre-existing build errors (Fluid Completion type) unrelated to docs changes."
+      }
     }
   ]
 }

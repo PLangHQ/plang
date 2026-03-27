@@ -330,8 +330,9 @@ Add `IHttpProvider` to the provider interfaces list:
 - `ICryptoProvider : IProvider`
 - `IIdentityProvider : IProvider`
 - `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
+- `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
 
-PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`.
+PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`.
 
 ---
 

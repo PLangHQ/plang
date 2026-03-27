@@ -44,6 +44,7 @@ You don't need to know the module name — just write what you want and the LLM 
 |--------|-------------|---------|
 | [file](file.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
 | [http](http.md) | HTTP requests, downloads, uploads, streaming | request, download, upload, configure |
+| [ui](ui.md) | Render Liquid templates with variables, includes, goal calls | render |
 | [settings](settings.md) | Persistent key-value settings | get, set, remove |
 
 ### Security & Identity

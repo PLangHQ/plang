@@ -251,6 +251,7 @@ public static class TypeMapping
 | `signing` | `sign`, `verify` | Data signing and signature verification |
 | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
 | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
+| `ui` | `render` | Liquid template rendering (inline/file, includes, callGoal) |
 | `module` | `add`, `remove` | Load/unload external handler libraries |
 
 ### condition module — Details
