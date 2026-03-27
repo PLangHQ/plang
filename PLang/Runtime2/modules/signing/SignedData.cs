@@ -1,12 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PLang.Runtime2.Engine.Errors;
 using PLang.Runtime2.Engine.Memory;
-using PLang.Runtime2.Engine.Providers;
-using PLang.Runtime2.modules.crypto;
-using PLang.Runtime2.modules.signing.providers;
-using PLang.Runtime2.modules.identity;
 
 namespace PLang.Runtime2.modules.signing;
 
@@ -78,59 +73,6 @@ public class SignedData
 
     [JsonPropertyOrder(10), JsonInclude]
     public string? Signature { get; internal set; }
-
-    // --- Signing (behavior owned by SignedData) ---
-
-    /// <summary>
-    /// Signs this envelope using the given provider and identity.
-    /// Navigates the identity for public key (→ Identity field) and private key (→ signing).
-    /// </summary>
-    public Data Sign(ISigningProvider provider, IdentityData identity)
-    {
-        Identity = identity.PublicKey;
-        var signingBytes = ToSigningBytes();
-        var signResult = provider.Sign(signingBytes, identity.PrivateKey);
-        if (!signResult.Success) return signResult;
-
-        Signature = Convert.ToBase64String((byte[])signResult.Value!);
-        return Data.Ok(this);
-    }
-
-    /// <summary>
-    /// Verifies the cryptographic signature on this envelope.
-    /// Mirrors Sign() — SignedData owns both sides.
-    /// </summary>
-    public Data Verify(ISigningProvider provider)
-    {
-        if (string.IsNullOrEmpty(Signature))
-            return Data.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
-
-        byte[] signatureBytes;
-        try { signatureBytes = Convert.FromBase64String(Signature); }
-        catch (FormatException) { return Data.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
-
-        var signingBytes = ToSigningBytes();
-        return provider.Verify(signingBytes, signatureBytes, Identity);
-    }
-
-    // --- Contract matching ---
-
-    /// <summary>
-    /// Checks whether this envelope's contracts match the required contracts.
-    /// Both null/empty is a match. Both present must be set-equal (case-insensitive).
-    /// </summary>
-    public bool ContractsMatch(List<string>? requiredContracts)
-    {
-        var hasRequired = requiredContracts != null && requiredContracts.Count > 0;
-        var hasSigned = Contracts != null && Contracts.Count > 0;
-
-        if (hasRequired != hasSigned) return false;
-        if (!hasRequired) return true;
-
-        var requiredSet = new HashSet<string>(requiredContracts!, StringComparer.OrdinalIgnoreCase);
-        var signedSet = new HashSet<string>(Contracts!, StringComparer.OrdinalIgnoreCase);
-        return requiredSet.SetEquals(signedSet);
-    }
 
     // --- Serialization ---
 

@@ -47,8 +47,11 @@ public class Ed25519Provider : ISigningProvider
             Hash = hash
         };
 
-        var signResult = signedData.Sign(this, identity);
+        signedData.Identity = identity.PublicKey;
+        var signingBytes = signedData.ToSigningBytes();
+        var signResult = Sign(signingBytes, identity.PrivateKey);
         if (!signResult.Success) return signResult;
+        signedData.Signature = Convert.ToBase64String((byte[])signResult.Value!);
 
         var result = Data.Ok(action.Data);
         result.Signature = signedData;
@@ -87,7 +90,7 @@ public class Ed25519Provider : ISigningProvider
             return Data.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 5. Contract matching
-        if (!signedData.ContractsMatch(action.Contracts))
+        if (!ContractsMatch(signedData.Contracts, action.Contracts))
             return Data.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
@@ -118,10 +121,28 @@ public class Ed25519Provider : ISigningProvider
         }
 
         // 8. Signature verification
-        var verifyResult = signedData.Verify(this);
+        if (string.IsNullOrEmpty(signedData.Signature))
+            return Data.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
+
+        byte[] signatureBytes;
+        try { signatureBytes = Convert.FromBase64String(signedData.Signature); }
+        catch (FormatException) { return Data.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
+
+        var signingBytes = signedData.ToSigningBytes();
+        var verifyResult = Verify(signingBytes, signatureBytes, signedData.Identity);
         if (!verifyResult.Success) return verifyResult;
 
         return Data.Ok(true);
+    }
+
+    private static bool ContractsMatch(List<string>? signed, List<string>? required)
+    {
+        var hasRequired = required != null && required.Count > 0;
+        var hasSigned = signed != null && signed.Count > 0;
+        if (hasRequired != hasSigned) return false;
+        if (!hasRequired) return true;
+        return new HashSet<string>(required!, StringComparer.OrdinalIgnoreCase)
+            .SetEquals(new HashSet<string>(signed!, StringComparer.OrdinalIgnoreCase));
     }
 
     // --- Low-level crypto ---
