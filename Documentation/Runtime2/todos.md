@@ -539,3 +539,48 @@ In `PLang.Tests/Runtime2/Core/NamedProviderRegistryTests.cs`.
 **Note:** Ingi recalls having designed before/after C# validation + PLang validation in the middle. May have been discussed in a prior conversation. Check for prior design work.
 
 **Separate workstream from LLM module.**
+
+---
+
+## PLang-Defined Modules — `define` Step + Convention-Based Discovery
+**Date:** 2026-03-27
+**Context:** During LLM module design. Realized the C# action handler for `llm.query` is just a type definition that calls a PLang goal. Pushed further: if the action is just metadata + a goal, why have C# at all?
+
+**Core idea:** Modules can be written entirely in PLang. No C# class, no source generator, no JSON config. Convention-based:
+- **Module name** = folder name under `system/modules/` (e.g., `system/modules/llm/` → module `llm`)
+- **Action name** = goal file name (e.g., `query.goal` → action `query`)
+- **Type/parameter definitions** = a `define` step in the goal file
+
+**The `define` step:**
+```plang
+Query
+- define %action% = { Messages: list(Role: string, Text: string?, Image: string?), Tools: list(GoalCall)?, Schema: string?, Model: string?, Temperature: double = 0.0, MaxTokens: int = 4000, MaxToolCalls: int = 10, Cache: bool = true }
+- read settings 'llm.provider', default='OpenAi', write to %provider%
+- call goal /system/modules/llm/providers/%provider%
+```
+
+- The builder LLM parses the `define` step text into structured JSON in the .pr file
+- Inline type definitions: `list(Role: string, Text: string?)` defines a type shape right in the definition
+- Defaults are part of the definition (e.g., `Temperature: double = 0.0`)
+- Required vs optional: nullable types (`string?`) are optional, non-nullable are required
+
+**Builder integration:**
+- At build time, builder scans `system/modules/*/` for goals with `define` steps
+- Collects all action definitions into the action summary (same as C# modules today)
+- When a PLang developer writes `system: analyze... user: %text%`, the builder matches it to `llm.query` using the definition
+- Examples could be comments or a separate convention in the goal file
+
+**What this enables:**
+- PLang modules written in PLang — no C# knowledge needed
+- External developers create modules by writing .goal files
+- The LLM module is the first candidate (pure orchestration: HTTP + goal calls)
+- C# modules (crypto, file, etc.) keep current pattern — they need compiled providers
+- Both patterns coexist: engine discovers C# modules from assemblies AND PLang modules from `system/modules/`
+
+**Dependencies:**
+- `define` as a new action/step type the builder understands
+- Builder discovery of PLang-defined modules
+- Engine registration of PLang-defined actions alongside C# actions
+- Parameter resolution at runtime without source generator (the goal receives raw action data)
+
+**The LLM module is the first module to use this pattern.** Ship LLM with thin C# wrapper if this isn't ready, then migrate when `define` lands.
