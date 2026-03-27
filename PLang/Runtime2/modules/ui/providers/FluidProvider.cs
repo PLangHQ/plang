@@ -29,6 +29,7 @@ public class FluidProvider : ITemplateProvider
     {
         var templateContent = action.Template;
         var isFile = action.IsFile;
+        string? sourceFile = null;
 
         // Resolve template content: file or inline
         if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
@@ -38,6 +39,7 @@ public class FluidProvider : ITemplateProvider
                 return Data.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
+            sourceFile = pathData.Relative;
             try
             {
                 var fs = action.Context.Engine.FileSystem;
@@ -52,8 +54,11 @@ public class FluidProvider : ITemplateProvider
         // Parse
         var parser = CreateParser();
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
+        {
+            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             return Data.FromError(new ServiceError(
-                $"Template syntax error: {parseError}", "TemplateError", 400));
+                $"Template syntax error{location}: {parseError}", "TemplateError", 400));
+        }
 
         // Build context
         var options = new TemplateOptions();
@@ -98,8 +103,9 @@ public class FluidProvider : ITemplateProvider
         }
         catch (Exception ex)
         {
+            var location = sourceFile != null ? $" in '{sourceFile}'" : "";
             return Data.FromError(new ServiceError(
-                $"Template render error: {ex.Message}", "RenderError", 500));
+                $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }
 
