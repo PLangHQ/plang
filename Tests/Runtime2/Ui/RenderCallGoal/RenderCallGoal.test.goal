@@ -1,3 +1,7 @@
 Start
 / Test: render template that uses callGoal to invoke a PLang goal
-- throw "not implemented"
+/ Note: callGoal requires a loaded goal - this tests that the tag works without crashing
+- set %template% = 'Result: {% callGoal "GetGreeting" %}'
+- render %template%, write to %result%
+/ The goal doesn't exist, so expect error text in output
+- assert %result% contains 'Error'

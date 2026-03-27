@@ -1,3 +1,5 @@
 Start
 / Test: render a file template with variables from memory stack
-- throw "not implemented"
+- set %name% = 'PLang'
+- render file 'template.html', write to %result%
+- assert %result% equals 'Hello PLang!'

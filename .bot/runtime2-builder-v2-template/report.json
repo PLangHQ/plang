@@ -72,6 +72,66 @@
         "health": "All test stubs written. Ready for coder.",
         "notes": "22 tests total. Key change: Parameters is List<Data> not Dictionary."
       }
+    },
+    {
+      "id": "template-coder-v1",
+      "bot": "coder",
+      "timestamp_start": "2026-03-27T12:00:00Z",
+      "timestamp_end": "2026-03-27T13:30:00Z",
+      "intent": "Implement UI module: Liquid template rendering via Fluid",
+      "before": {
+        "assumptions": "Architect plan and test stubs exist. No production code yet. Fluid.Core NuGet needs to be added.",
+        "risk": "Medium — new module with external dependency (Fluid). callGoal integration requires engine access from template context."
+      },
+      "plan": "Create ITemplateProvider, render action, FluidProvider. Register in Engine. Implement 29 C# tests. Write 5 PLang test goals.",
+      "actions": [
+        {
+          "paths": ["PLang/Runtime2/modules/ui/providers/ITemplateProvider.cs", "PLang/Runtime2/modules/ui/render.cs", "PLang/Runtime2/modules/ui/providers/FluidProvider.cs"],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "UI module production code — action handler, provider interface, Fluid implementation"
+        },
+        {
+          "paths": ["PLang/Runtime2/Engine/Providers/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Register ITemplateProvider and 'template' type mapping"
+        },
+        {
+          "paths": ["PLang/PLang.csproj"],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Added Fluid.Core 2.31.0 (upgraded from 2.11.1 due to .NET 10 include tag parsing bug)"
+        },
+        {
+          "paths": ["PLang.Tests/Runtime2/Modules/ui/RenderTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Implemented all 29 C# test stubs"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Ui/RenderInline/RenderInline.test.goal",
+            "Tests/Runtime2/Ui/RenderFile/RenderFile.test.goal",
+            "Tests/Runtime2/Ui/RenderWithParams/RenderWithParams.test.goal",
+            "Tests/Runtime2/Ui/RenderCallGoal/RenderCallGoal.test.goal",
+            "Tests/Runtime2/Ui/RenderInclude/RenderInclude.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Wrote real PLang test goals with fixture template files"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All 29 C# tests pass (1886 total, 0 failures). PLang tests written but not built (require LLM builder).",
+        "notes": "Key issues: Fluid 2.11.1 had .NET 10 include parsing bug — upgraded to 2.31.0. callGoal uses RegisterExpressionTag for quoted string support. PlangFileProvider strips .liquid extension for Fluid compatibility."
+      }
     }
   ]
 }

@@ -4,6 +4,7 @@ using PLang.Runtime2.Engine.Memory;
 using PLang.Runtime2.modules.crypto.providers;
 using PLang.Runtime2.modules.identity.providers;
 using PLang.Runtime2.modules.signing.providers;
+using PLang.Runtime2.modules.ui.providers;
 
 namespace PLang.Runtime2.Engine.Providers;
 
@@ -197,6 +198,7 @@ public sealed class @this
             "evaluator" or "ievaluator" => typeof(modules.condition.providers.IEvaluator),
             "assert" or "iassertprovider" => typeof(modules.assert.providers.IAssertProvider),
             "file" or "ifileprovider" => typeof(modules.file.providers.IFileProvider),
+            "template" or "itemplateprovider" => typeof(ITemplateProvider),
             null or "" => typeof(ISigningProvider),
             _ => null
         };
@@ -217,5 +219,6 @@ public sealed class @this
         Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
         Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
         Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
+        Register<ITemplateProvider>(new FluidProvider());
     }
 }
