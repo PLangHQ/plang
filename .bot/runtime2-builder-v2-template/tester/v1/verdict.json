@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "3 major findings: callGoal tests are false greens (5 tests testing same path, 37.5% branch), LooksLikeFilePath 0% coverage, GetTemplateBaseDir goal-relative path uncovered. 5 minor findings." }

@@ -1,0 +1,107 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-builder-v2-template",
+  "timestamp": "2026-03-27T16:00:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 1886, "passed": 1882, "failed": 0, "skipped": 4 },
+    "plang": { "total": 5, "passed": 0, "failed": 0, "skipped": 5 }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 3,
+    "uncovered_files": [],
+    "details": {
+      "FluidProvider.cs (Render)": "94.8% line, 85% branch",
+      "FluidProvider.cs (CallGoalTagAsync)": "60.7% line, 37.5% branch",
+      "FluidProvider.cs (PlangFileProvider)": "92.3% line, 70% branch",
+      "FluidProvider.cs (PlangFileInfo)": "81.2% line, 100% branch",
+      "render.cs (Run)": "0% line — tests bypass action handler",
+      "ITemplateProvider.cs": "interface only, no coverage needed"
+    }
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "5 callGoal tests (lines 201-524) are structurally identical — all test 'goal not found' path. Tests named 'NonStringReturn_ConvertedToString', 'WithArguments_PassesParameters', 'ExecutesGoalAndInsertsResult' never verify the behaviors their names claim. The success path (lines 205-208), empty-name path (lines 196-198), and exception catch (lines 216-218) are all uncovered.",
+      "impact": "If callGoal succeeds but writes wrong output, or if empty goal name crashes instead of showing error, no test catches it. CallGoalTagAsync has 37.5% branch coverage.",
+      "suggestion": "Create a real in-memory goal via engine.Goals, load it, then test callGoal with that goal. Test empty goal name separately. At minimum, the 3 duplicate 'goal not found' tests should be collapsed into 1 and replaced with tests for success, empty name, and exception paths."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "LooksLikeFilePath (lines 147-157) has 0% coverage. No test sets IsFile=null to exercise auto-detect. Every test explicitly sets IsFile=true or IsFile=false.",
+      "impact": "If auto-detect breaks (e.g., returns true for inline templates with dots), users who don't set IsFile get wrong behavior. This is the default user experience path.",
+      "suggestion": "Add tests for IsFile=null with: (1) a template string containing '{{' — should be treated as inline, (2) a string like 'template.html' — should auto-detect as file, (3) 'no-extension' — should be treated as inline."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "GetTemplateBaseDir (lines 163-178) is mostly uncovered. No test sets a Goal on the context, so the goal-relative path resolution branch is dead. All include resolution falls back to engine.AbsolutePath.",
+      "impact": "If goal-relative include resolution breaks, includes from goal subdirectories silently fall back to root. Templates in subdirectories may resolve wrong partials.",
+      "suggestion": "Add a test that sets context.Goal with a non-root Path, creates a partial in that goal's directory, and verifies {% include %} finds it via goal-relative resolution."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "Render_Include_MissingPartial_ReturnsError (line 545) only asserts 'result != null'. This passes for literally any non-null return, including a successful empty render.",
+      "impact": "If Fluid silently ignores missing includes (which it may do), this test claims success for both correct and incorrect behavior.",
+      "suggestion": "Assert that either result.Success is false with appropriate error key, or that the output is empty/contains error indicator — make the test distinguish correct from incorrect behavior."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/render.cs",
+      "issue": "Render.Run() has 0% coverage. All 29 tests call _provider.Render(action) directly, bypassing the action handler's Run() method. The [Provider] resolution path is never tested.",
+      "impact": "Low for a one-liner delegation, but if the source-generated Provider property fails to resolve FluidProvider, no C# test catches it.",
+      "suggestion": "Add one test that calls action.Run() (after engine provider registration) to verify the full delegation path."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "Render_DataObject_ExposesValueNotWrapper (line 411) tests with a plain string in Data, which always works because MemoryStack.GetAll() returns Data and the provider does data.Value. To truly test wrapper unwrapping, the test needs a Data whose Value is a complex object, then verify the template accesses the inner object's properties — not Data's properties.",
+      "impact": "Low — the current implementation correctly uses data.Value, so this is more about test accuracy than missed bugs.",
+      "suggestion": "Put an anonymous object or named class in Data.Value and verify template dot-navigation accesses the inner object's properties."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Runtime2/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/Runtime2/modules/ui/providers/FluidProvider.cs",
+      "issue": "IOException catch path (lines 48-50) in file read is never triggered. No test creates a permission-denied or locked file scenario.",
+      "impact": "If IOException handling breaks, file read errors would bubble up as unhandled exceptions instead of returning Data error with IOError key.",
+      "suggestion": "On Linux: use System.IO.File.SetUnixFileMode() to create unreadable file, test that IsFile=true returns IOError. Use try/finally for cleanup."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Runtime2/Ui/",
+      "code_file": "PLang/Runtime2/modules/ui/render.cs",
+      "issue": "5 PLang test goals exist but none have been built (no .pr files). The PLang tests cannot run until built with 'plang p build --llmservice=openai'. This is expected per coder notes but means the full pipeline (LLM -> .pr -> GoalMapper -> runtime) is unvalidated.",
+      "impact": "Builder may produce wrong module/action mapping for the 'render' step. Cannot verify until built.",
+      "suggestion": "Build PLang tests when LLM service is available. After build, read .pr files to verify action mapping."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "All 1886 C# tests pass (0 failures). FluidProvider.Render has good coverage (94.8% line). However, 3 major findings: (1) 5 callGoal tests are false greens — all test the same 'goal not found' path, leaving success/empty-name/exception paths at 37.5% branch coverage; (2) LooksLikeFilePath auto-detect has 0% coverage — the default user experience path is untested; (3) GetTemplateBaseDir goal-relative resolution is uncovered. Plus 5 minor findings including weak assertion on missing include, Render.Run() bypass, and missing IOException error path test."
+}

@@ -184,6 +184,46 @@
         "health": "PASS — all findings resolved, recommend tester next",
         "notes": "Clone overrides verified field-for-field. Catch filters correct. TryResolvePath naming nit is cosmetic."
       }
+    },
+    {
+      "id": "template-tester-v1",
+      "bot": "tester",
+      "timestamp_start": "2026-03-27T16:00:00Z",
+      "timestamp_end": "2026-03-27T16:30:00Z",
+      "intent": "Test quality analysis of UI module: coverage, false-green hunting, test honesty",
+      "before": {
+        "assumptions": "29 C# tests all pass. Coder claims full coverage. Codeanalyzer flagged 2 deletion-test gaps for tester.",
+        "risk": "Medium — callGoal tests looked suspicious from coverage data (37.5% branch). Auto-detect path appeared untested."
+      },
+      "plan": "Run full test suite, collect Cobertura coverage, analyze per-method coverage on UI module files, apply deletion test and false-green hunting to all 29 tests.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-builder-v2-template/test-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test report with 8 findings (3 major, 5 minor). Major: callGoal false greens, LooksLikeFilePath 0%, GetTemplateBaseDir 0%."
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-template/tester/v1/coverage.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Per-method Cobertura coverage for UI module files"
+        },
+        {
+          "paths": [".bot/runtime2-builder-v2-template/tester/v1/verdict.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict: FAIL — 3 major findings need coder fixes"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 3 major findings, 5 minor. Tests pass but coverage gaps and false greens detected.",
+        "notes": "Recommend sending back to coder for: (1) real callGoal tests with loaded goal, (2) IsFile=null auto-detect tests, (3) goal-relative include resolution test."
+      }
     }
   ]
 }

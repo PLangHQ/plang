@@ -1,0 +1,20 @@
+{
+  "files": {
+    "PLang/Runtime2/modules/ui/providers/FluidProvider.cs": {
+      "Render": { "line_rate": 0.948, "branch_rate": 0.85 },
+      "CallGoalTagAsync": { "line_rate": 0.607, "branch_rate": 0.375 },
+      "PlangFileProvider": { "line_rate": 0.923, "branch_rate": 0.70 },
+      "PlangFileInfo": { "line_rate": 0.812, "branch_rate": 1.0 },
+      "LooksLikeFilePath": { "line_rate": 0.0, "branch_rate": 0.0 },
+      "GetTemplateBaseDir": { "line_rate": 0.0, "branch_rate": 0.0 },
+      "RegisterTypeIfNeeded": { "line_rate": 0.85, "branch_rate": 0.70 }
+    },
+    "PLang/Runtime2/modules/ui/render.cs": {
+      "Run": { "line_rate": 0.0, "branch_rate": 1.0 }
+    }
+  },
+  "uncovered_lines": {
+    "FluidProvider.cs": [19, 48, 49, 50, 137, 138, 140, 148, 149, 151, 153, 154, 155, 156, 157, 168, 169, 170, 171, 172, 173, 174, 176, 196, 197, 198, 205, 206, 207, 208, 216, 217, 218, 219],
+    "render.cs": [31]
+  }
+}
