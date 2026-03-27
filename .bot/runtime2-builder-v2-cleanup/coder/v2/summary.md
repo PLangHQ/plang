@@ -55,8 +55,9 @@ Comprehensive cleanup of PLang Runtime2 modules, enforcing consistent patterns: 
 - `Exists` returns `Data.Ok(bool)`
 - Deleted `types.variable` wrapper record
 
-## Known issue
-- `RunAsync_NonConditionStep_FalseValue_DoesNotSkip` test fails — `variable.set` with `Value=false` now returns Data with `.Value=false`, which the step runner interprets as "skip children". Step runner needs to distinguish condition vs non-condition results. Not a variable module bug.
+### Step Runner: Condition-Only Child Skipping
+- Fixed `RunAsync_NonConditionStep_FalseValue_DoesNotSkip` — `variable.set` returning `Data` with `.Value=false` was triggering child-skipping. Added `IsConditionStep()` check so only `condition` module steps can skip indented children on false result.
+- **File**: `PLang/Runtime2/Engine/Goals/Goal/Steps/this.cs`
 
 ## Code example — before/after pattern
 
