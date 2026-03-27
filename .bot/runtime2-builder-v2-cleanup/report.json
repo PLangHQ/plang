@@ -220,6 +220,37 @@
         "health": "PASS — 1 major (DataList clone gap), 3 minor (security items), 1 nit (docs)",
         "notes": "New cross-file finding: DataList<T> shared by reference in MemoryStack.Clone(). Recommend coder fixes before merge."
       }
+    },
+    {
+      "id": "auditor-v2",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-27T14:00:00Z",
+      "timestamp_end": "2026-03-27T14:15:00Z",
+      "intent": "Re-review coder fixes for 5 auditor findings",
+      "before": {
+        "assumptions": "Coder fixed all 5 findings in 2 commits. Need to verify fixes don't introduce regressions.",
+        "risk": "Medium — clone family changes have high cross-file blast radius."
+      },
+      "plan": "Review each fix as fresh code. Check MemoryStack.Clone() change against all Data subclasses.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/Engine/Memory/MemoryStack.cs",
+            "PLang/Runtime2/Engine/Memory/Data.cs",
+            "PLang/Runtime2/Engine/FileSystem/PathData.cs",
+            "PLang/Runtime2/modules/identity/types.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clone family regression check — PathData and IdentityData don't override Clone()"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — MemoryStack.Clone() fix introduces type-slicing regression for PathData and IdentityData",
+        "notes": "Fix: add Clone() overrides to PathData and IdentityData. Send back to coder."
+      }
     }
   ]
 }
