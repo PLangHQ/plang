@@ -1,4 +1,7 @@
 # Tester Summary — runtime2-builder-v2-template
 
 ## v1 — UI Module Test Quality Analysis
-All 1886 C# tests pass. Coverage analysis found 3 major issues: (1) 5 callGoal tests are false greens testing identical "goal not found" path at 37.5% branch coverage, (2) LooksLikeFilePath auto-detect at 0% coverage, (3) GetTemplateBaseDir goal-relative resolution at 0%. Plus 5 minor findings. Verdict: **FAIL** — send back to coder. See [v1/summary.md](v1/summary.md).
+All 1886 C# tests pass. Found 3 major issues: (1) 5 callGoal tests are false greens at 37.5% branch, (2) LooksLikeFilePath at 0%, (3) GetTemplateBaseDir at 0%. Verdict: **FAIL**. See [v1/summary.md](v1/summary.md).
+
+## v2 — Re-test After Coder Fixes
+All 3 major findings resolved. 1890 tests pass (+4 new). FluidProvider coverage improved to 91.8% line / 89.1% branch. CallGoalTagAsync 37.5% → 68.8% branch. 3 minor non-blocking findings remain. Verdict: **PASS**. See [v2/summary.md](v2/summary.md).
