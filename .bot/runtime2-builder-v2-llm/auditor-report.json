@@ -1,80 +1,13 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-builder-v2-llm",
-  "timestamp": "2026-03-29T23:30:00Z",
-  "reviewed_version": "v1",
-  "summary": "LLM module is well-structured with clean cross-file contracts. GoalCall additions (Description, Parallel) are properly integrated — no clone/copy family to update, GoalMapper doesn't need changes, and serialization is tested. The tool execution loop has two behavioral issues: (1) all tools in a batch execute even when MaxToolCalls would be exceeded, and (2) when the loop exits via MaxToolCalls, the result is empty Data with no content. Numeric boxing is inconsistent between RestoreFromCache (int32) and ParseToolArguments (int64). The MaxToolCalls test has weak assertions that obscure the actual behavior. Overall: solid module, minor issues only.",
+  "timestamp": "2026-03-30T00:30:00Z",
+  "reviewed_version": "v2",
+  "summary": "All 6 findings from v1 resolved by coder v4. MaxToolCalls now slices before execution, loop exit returns content+metadata+Truncated=true, numeric boxing consistent (TryGetInt64), tests have exact assertions, parse errors surfaced. No new issues introduced. 1962 tests pass.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "agree — thorough 5-pass analysis, correctly identified and tracked all bare catches and sync-over-async. Nothing missed.",
-    "tester": "partial — good coverage analysis and false-green hunting, but missed the MaxToolCalls behavioral issue (tools execute past limit) and the numeric boxing inconsistency in RestoreFromCache.",
-    "security": "agree — correct threat model assessment. Tool whitelist is the critical vector and it's properly guarded. Medium findings (image OOM, conversation growth) are appropriate."
+    "codeanalyzer": "agree — original analysis was thorough, v2 fixes remain clean",
+    "tester": "agree — v3 coverage adequate, coder v4 test changes strengthen the weak spots",
+    "security": "agree — no security impact from these fixes"
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "category": "cross-file",
-      "file": "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
-      "line": 206,
-      "issue": "MaxToolCalls enforcement has a batch-overshoot bug. When the LLM returns N tool calls in one response, ALL N tools are executed (lines 206-219) before the limit check at line 224 kicks in. If MaxToolCalls=3 and the LLM returns 5 tools in a single response, all 5 goals execute — only the message appending stops at 3. The side-effects (goal execution, OnToolCall callbacks) happen for all 5.",
-      "missed_by": "tester",
-      "impact": "Tool execution exceeds the user-declared limit. Side-effects from extra tool calls cannot be undone. The user sets MaxToolCalls expecting a hard limit on executions, but the actual limit only controls how many results are sent back to the LLM.",
-      "suggestion": "Move the limit check into the execution loop. Before each tool execution, check `toolCallCount >= action.MaxToolCalls` and skip remaining calls. Alternatively, slice toolCalls to the remaining budget before executing: `toolCalls = toolCalls.Take(action.MaxToolCalls - toolCallCount).ToList()`."
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "category": "architectural",
-      "file": "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
-      "line": 345,
-      "issue": "When MaxToolCalls is exhausted, the loop breaks and returns `Data.Ok()` — empty data with no content, no error, no metadata. The last LLM response that contained both content and tool calls has its content discarded. The user gets a successful empty result with no indication of what happened.",
-      "missed_by": "codeanalyzer",
-      "impact": "Silent data loss. A PLang developer querying an LLM with tools gets back an empty result when the tool loop limit is hit. No error, no partial content, no properties. They have no way to know what happened or that their query partially succeeded.",
-      "suggestion": "Return the last content response with a property indicating truncation, OR return Data.FromError with a descriptive message. At minimum: `Data.Ok()` should carry properties (ToolCallCount, Model, etc.) so the caller knows the loop ran."
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "category": "foundation",
-      "file": "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
-      "line": 795,
-      "issue": "Numeric boxing inconsistency: RestoreFromCache (line 795) uses `TryGetInt32` while ParseToolArguments (line 436) uses `TryGetInt64`. Cache stores token counts as int (via SetProp at line 332-337). On restore, TryGetInt32 works. But if a cached value stored via the Dictionary path was a long, it would silently truncate to double. This is the known JSON Numeric Boxing pattern.",
-      "missed_by": "tester",
-      "impact": "Low in practice — token counts fit in int32. But it creates an inconsistency that could bite if cache values grow beyond int32 range in the future.",
-      "suggestion": "Use TryGetInt64 consistently in both places, or better yet, extract a shared JsonElement-to-CLR helper method."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "category": "review-gap",
-      "file": "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
-      "line": 298,
-      "issue": "MaxToolCalls test assertion is too loose: `IsGreaterThanOrEqualTo(2) && IsLessThanOrEqualTo(4)`. This allows CallCount of 2, 3, or 4 — a 3x range. With MaxToolCalls=3 and 1 tool per round, the exact expected behavior is: round 1 (call, execute, count=1, continue), round 2 (call, execute, count=2, continue), round 3 (call, execute, count=3, continue), round 4 (call, count>=3, break). So CallCount should be exactly 4. The loose range hides the actual behavior.",
-      "missed_by": "tester",
-      "impact": "Test doesn't distinguish between correct and incorrect loop termination. If MaxToolCalls enforcement changed behavior, this test would still pass.",
-      "suggestion": "Tighten to `IsEqualTo(4)` and add a comment explaining the exact round-by-round behavior. Also assert that `result.Value` is null/empty to document the silent-exit behavior."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "category": "contract",
-      "file": "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
-      "line": 148,
-      "issue": "Redundant null ternary: `action.OnStream != null ? action.OnStream : null` is equivalent to `action.OnStream`. The codeanalyzer v2 noted this as 'not worth a round-trip' but it's a code smell that suggests the author wasn't sure what OnStream's type was.",
-      "missed_by": "none",
-      "impact": "Readability only. No behavioral impact.",
-      "suggestion": "Replace with `OnStream = action.OnStream`."
-    },
-    {
-      "id": 6,
-      "severity": "nit",
-      "category": "cross-file",
-      "file": "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
-      "line": 445,
-      "issue": "ParseToolArguments silently returns empty list on JsonException (line 445-448). The tool goal then executes with no parameters. If the LLM sent malformed JSON arguments, the user's tool goal gets called with missing required parameters and fails in a confusing way — the real error (bad JSON from LLM) is hidden.",
-      "missed_by": "none",
-      "impact": "Debugging difficulty. The tester noted this at 0% coverage. Security accepted it. The failure cascades: LLM sends bad JSON → args silently empty → goal fails → 'Error: missing parameter' sent back to LLM → LLM retries. Not dangerous but confusing.",
-      "suggestion": "Log or return the parse failure as the tool result string so the LLM (and any OnToolCall callback) can see what went wrong."
-    }
-  ]
+  "findings": []
 }

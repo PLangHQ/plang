@@ -438,6 +438,36 @@
         "health": "All 1962 tests pass (0 failures). All 6 auditor findings resolved.",
         "notes": "MaxToolCalls now enforces hard limit on tool executions, not just message appending."
       }
+    },
+    {
+      "id": "llm-auditor-v2",
+      "bot": "auditor",
+      "timestamp_start": "2026-03-30T00:15:00Z",
+      "timestamp_end": "2026-03-30T00:45:00Z",
+      "intent": "Recheck coder v4 fixes for all 6 auditor v1 findings",
+      "before": {
+        "assumptions": "Coder v4 claims all 6 findings resolved. 1962 tests pass.",
+        "risk": "Low — recheck only."
+      },
+      "plan": "Verify each fix with fresh-code skepticism. Check conversation consistency after slice, lastContent behavior, error propagation path.",
+      "actions": [
+        {
+          "paths": [
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "All 6 fixes verified correct. Conversation consistency maintained after slice. No new issues."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS — all 6 findings resolved, no new issues.",
+        "notes": "Recommend docs bot next."
+      }
     }
   ]
 }
