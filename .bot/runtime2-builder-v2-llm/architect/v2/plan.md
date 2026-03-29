@@ -11,9 +11,9 @@
 - **OnToolCall callback.** Query has an OnToolCall GoalCall that the provider invokes around each tool execution, so the UI can show progress (which tool is running, results).
 - **OnValidateResponse callback.** Query has an OnValidateResponse GoalCall that the provider invokes after getting the final response (after all tool calls are done). If validation fails, the error is fed back to the LLM for retry, up to MaxValidationRetries (default 3).
 - **OnStream callback.** Query has an OnStream GoalCall for streaming responses. Provider sets `stream: true` on the API request and calls OnStream with each chunk. Uses the http module's streaming support.
-- **ContinuePreviousConversation.** Follows Runtime1 pattern — stores full message list (including assistant response) in context after each call. When true, prepends stored history to the current messages. Also reuses previous schema if not specified.
+- **ContinuePreviousConversation.** Follows Runtime1 pattern — stores full message list (including assistant response) in context after each call. When true, prepends stored history to the current messages. Also reuses previous schema if not specified. Conversation state (`__llm_conversation__`, `__llm_schema__`) is goal-scoped — visible to the current goal and its sub-goals, same scoping as other context state.
 - **LlmMessage carries tool metadata.** Role + Text + Images + ToolCallId + ToolCalls. Needed for multi-turn tool conversations — the provider builds these internally during the tool loop.
-- **Images is a list.** `List<string>?` — supports sending multiple images in a single message. Each provider formats these according to its API (e.g., OpenAI uses content array with `type: image_url`).
+- **Images is a list.** `List<string>?` — supports sending multiple images in a single message. PLang developers can use file paths, URLs, or base64 strings. The provider is responsible for detecting the type (path exists on disk → read + base64-encode, starts with `http` → URL, otherwise → assume base64) and formatting for its API (e.g., OpenAI uses content array with `type: image_url`).
 - **Tool execution loop is C#.** The provider calls engine.RunGoal for each tool call, appends results, re-queries. Clean typed code, no PLang string manipulation.
 - **Tool errors go back to the LLM.** When engine.RunGoal fails for a tool call, the error message is sent back as the tool result. The LLM decides how to proceed.
 - **Schema via system prompt, not response_format.** Follows Runtime1 approach — schema is appended to the system message as a text instruction (e.g., "You MUST respond in JSON, schema: {…}"). This is provider-agnostic and works with any LLM API.
@@ -23,10 +23,11 @@
 - **Cache defaults to false for tool calls.** Cache=true is only safe for deterministic queries (no tools). When Tools is non-null, caching is skipped regardless of the Cache flag.
 - **MaxToolCalls is total individual calls**, not rounds. Matches Runtime1 behavior — prevents runaway regardless of how many calls per round.
 - **HTTP via the http module.** The provider uses the runtime's http module for API calls, not raw HttpClient.
-- **Format instruction must not compound.** When storing messages for conversation continuity, the format instruction has already been appended to the system message. On the next call with ContinuePreviousConversation, the coder must ensure the instruction isn't appended again. Solve this cleanly — e.g., strip before storing, or store originals and re-apply fresh.
+- **Format instruction must not compound.** Store the *original* messages (before format mutation) for conversation continuity. The provider clones messages, mutates the clone for the API call, but stores the pre-mutation originals. On the next call with ContinuePreviousConversation, format instructions are re-applied fresh to clean history. See pseudocode for the `originalMessages` pattern.
 - **Multiple system messages on continuation are provider-handled.** If a continuation call has a different system prompt than the original, the provider decides how to merge or order the system messages. This is provider-specific — different APIs handle multiple system messages differently.
 - **Tool parameter schemas come from `List<Data>`.** Data is `{Name, Type, Value}`. When tools are defined, the GoalCall.Parameters carry the parameter names and types. The provider uses Name and Type to build the API-specific tool parameter schema (e.g., OpenAI JSON schema). The LLM fills in the values.
 - **Streaming errors return Data.FromError.** If the HTTP stream fails mid-way, the provider returns `Data.FromError(...)`. The PLang developer handles the error like any other step error.
+- **Streaming + tool calls interaction needs design review.** When streaming is enabled and the LLM responds with tool calls, the `OnStream` callback fires `isDone: true` before tools execute. This may confuse PLang developers who interpret `isDone` as "the query is finished." The coder should walk Ingi through the streaming+tools flow before implementing, so the right UX can be decided.
 
 ## Architecture
 
@@ -111,7 +112,7 @@ public class LlmMessage
 
 `ToolCallId` and `ToolCalls` are internal — the builder never sets them. They exist so the provider can build multi-turn tool conversations without provider-specific message types leaking out.
 
-`Images` is a list — supports sending multiple images in one message. Each provider formats these for its API (e.g., OpenAI uses a content array with `type: image_url` entries).
+`Images` is a list — supports sending multiple images in one message. PLang developers can use file paths, URLs, or base64 strings. The provider detects the type (path exists on disk → read + base64-encode, starts with `http` → URL, otherwise → assume base64) and formats for its API (e.g., OpenAI uses a content array with `type: image_url` entries).
 
 #### ToolCall
 
@@ -225,7 +226,10 @@ OpenAiProvider.Query(action):
         context.Remove("__llm_conversation__")
         context.Remove("__llm_schema__")
 
-    // Append format/schema instruction to system message
+    // Snapshot originals BEFORE format mutation (for conversation continuity)
+    originalMessages = clone(messages)
+
+    // Append format/schema instruction to system message (mutates the clone for API call)
     formatInstruction = BuildFormatInstruction(action.Format, schema)
     if formatInstruction != null:
         systemMsg = messages.Find(m => m.Role == "system")
@@ -256,7 +260,7 @@ OpenAiProvider.Query(action):
     validationRetries = 0
     totalPromptTokens = 0
     totalCompletionTokens = 0
-    totalCost = 0.0
+    totalCost = null  // double? — only populated if provider has pricing data
 
     loop:
         // --- HTTP request (via http module) ---
@@ -320,7 +324,9 @@ OpenAiProvider.Query(action):
         if responseUsage != null:
             totalPromptTokens += responseUsage.prompt_tokens
             totalCompletionTokens += responseUsage.completion_tokens
-            totalCost += CalculateCost(model, responseUsage)
+            cost = CalculateCost(model, responseUsage)  // returns null if no pricing data
+            if cost != null:
+                totalCost = (totalCost ?? 0) + cost
 
         // --- Tool calls? ---
         if choice.tool_calls != null and choice.tool_calls.Count > 0:
@@ -392,9 +398,9 @@ OpenAiProvider.Query(action):
                          + "\nPlease fix and try again." })
                 continue loop  // re-query
 
-        // --- Store conversation for continuity ---
-        messages.Add({ Role="assistant", Text=rawResponse })
-        context.Set("__llm_conversation__", messages)
+        // --- Store conversation for continuity (using pre-mutation originals) ---
+        originalMessages.Add({ Role="assistant", Text=rawResponse })
+        context.Set("__llm_conversation__", originalMessages)
         context.Set("__llm_schema__", schema)
 
         // --- Cache store (persistent) ---
@@ -462,16 +468,20 @@ ExecuteTool(engine, action, toolCall):
 BuildParamSchema(parameters):
     // List<Data> → JSON schema for OpenAI tool parameters
     // Each Data has { Name: string, Type: string, Value: object }
-    // Example: [{Name="city", Type="string"}, {Name="units", Type="string"}]
+    // Value serves as the default — params with a non-null Value are optional
+    // Example: [{Name="city", Type="string"}, {Name="units", Type="string", Value="metric"}]
     // Produces: { type: "object", properties: { city: {type: "string"}, units: {type: "string"} },
-    //            required: [all parameter names] }
+    //            required: ["city"] }  // "units" has a default so it's optional
     if parameters == null or parameters.Count == 0:
         return { type: "object", properties: {} }
 
     props = {}
+    required = []
     for each param in parameters:
         props[param.Name] = { type: MapPlangTypeToJsonSchema(param.Type) }
-    return { type: "object", properties: props, required: parameters.Select(p => p.Name) }
+        if param.Value == null:
+            required.Add(param.Name)
+    return { type: "object", properties: props, required: required }
 
 
 BuildFormatInstruction(format, schema):
@@ -558,7 +568,7 @@ The returned Data carries metadata as properties, accessible via `%!` syntax in 
 | `PromptTokens` | int | Total prompt tokens across all API calls |
 | `CompletionTokens` | int | Total completion tokens across all API calls |
 | `TotalTokens` | int | PromptTokens + CompletionTokens |
-| `Cost` | double | Estimated cost across all API calls |
+| `Cost` | double? | Estimated cost — populated only if the provider has pricing data for the model, null otherwise |
 | `ToolCallCount` | int | Total tool calls executed |
 | `ValidationRetries` | int | Number of validation retries that occurred |
 | `Format` | string? | Effective format used |
@@ -648,6 +658,83 @@ PLang/Runtime2/modules/llm/
 │   ├── ILlmProvider.cs          — provider interface
 │   └── OpenAiProvider.cs        — OpenAI-compatible implementation
 ```
+
+## Test Expectations
+
+### C# unit tests (~38)
+
+**Basic query (7):**
+- Simple system+user message returns content as Data.Value
+- Model parameter overrides settings default
+- Temperature and MaxTokens are sent to API
+- Missing API key returns Data.FromError
+- API error response (4xx, 5xx) returns Data.FromError
+- Response properties populated (RawResponse, Model, PromptTokens, CompletionTokens, TotalTokens, Cached)
+- Cost is null when provider has no pricing data for model
+
+**Format and schema (8):**
+- Schema set, no format → format defaults to "json", instruction appended to system message
+- Schema set → JSON response parsed, value accessible on Data
+- Invalid JSON response returns Data.FromError
+- Invalid JSON with code block fallback → extracts and parses successfully
+- Format="python" → response extracted from ```python code block
+- Format="md" → response extracted from ```md code block
+- No code block found → returns raw content (no error)
+- No schema, no format → no format instruction appended
+
+**Caching (5):**
+- Cache=true, same messages → second call returns cached result with Cached=true property
+- Cache=true, different messages → cache miss, fresh API call
+- Cache=false → always calls API, Cached=false
+- Cache=true but Tools is non-null → cache skipped
+- Cache hash includes model, temperature, schema, format
+
+**Tool execution (8):**
+- Single tool call → executes GoalCall, sends result back, re-queries, returns final content
+- Multiple tool calls in one response → all executed sequentially (default Parallel=false)
+- Multiple tool calls, all Parallel=true → executed concurrently (Task.WhenAll)
+- Mixed Parallel flags → all sequential (one false forces sequential for the batch)
+- Tool error → error message sent back as tool result, LLM continues
+- Unknown tool name → error result sent back to LLM
+- MaxToolCalls reached → stops loop, returns what we have
+- Tool parameters with defaults (Value != null) → not marked as required in schema
+
+**OnToolCall callback (2):**
+- OnToolCall fires with status="starting" before execution and status="completed" after
+- OnToolCall receives tool name, arguments, and result
+
+**OnValidateResponse (4):**
+- Validation passes → returns result normally
+- Validation fails → error fed back to LLM, retries
+- Validation fails MaxValidationRetries times → returns Data.FromError
+- Validation only runs on content responses (not tool call responses)
+
+**Conversation continuity (4):**
+- ContinuePreviousConversation=true → previous messages prepended
+- ContinuePreviousConversation=false → stored conversation cleared
+- Format instructions don't compound across turns (originals stored, format re-applied fresh)
+- Schema reused from previous conversation when not specified on continuation call
+
+**Images (3):**
+- URL image → passed as URL to API
+- File path image → read + base64-encoded
+- Multiple images in single message → all sent
+
+### PLang tests (~8)
+
+- Simple query with system+user messages, verify response
+- Query with schema, verify JSON parsed and accessible via dot navigation
+- Query with format=md, verify extracted content
+- ContinuePreviousConversation across two steps
+- Response properties accessible via %result!TotalTokens%, %result!Model%
+- Tool call with a goal, verify tool executed and result returned
+- OnValidateResponse rejects bad response, verify retry
+- Cache hit returns same result without API call
+
+### Test count
+- **C# tests:** ~38
+- **PLang tests:** ~8
+- **Total: ~46**
 
 ## Files to Create
 
