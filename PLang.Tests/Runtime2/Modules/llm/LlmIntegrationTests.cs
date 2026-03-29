@@ -11,9 +11,11 @@ using PLangEngine = PLang.Runtime2.Engine.@this;
 namespace PLang.Tests.Runtime2.Modules.llm;
 
 /// <summary>
-/// Integration test that hits the real OpenAI API (or replays a saved snapshot).
+/// Integration test that runs the full LLM module pipeline.
+/// First run: real OpenAI API → saves raw response as snapshot.
+/// Subsequent runs: replays snapshot via mock HTTP handler — LLM module
+/// still runs its full code path (message building, format handling, etc.).
 /// Snapshot invalidates when input messages or class structure changes.
-/// Requires OPENAI_API_KEY environment variable for first run.
 /// </summary>
 public class LlmIntegrationTests
 {
@@ -57,7 +59,10 @@ public class LlmIntegrationTests
 
         if (snapshot != null)
         {
-            // Replay: inject snapshot as mock HTTP response
+            // Replay: inject snapshot as the HTTP response.
+            // The LLM module still runs its full pipeline — message building,
+            // format handling, response parsing, property population.
+            // Only the HTTP transport is mocked.
             var handler = new SnapshotReplayHandler(snapshot);
             var httpProvider = new DefaultHttpProvider(handler) { Name = "snapshot" };
             _engine.Providers.Register<IHttpProvider>(httpProvider);
@@ -65,63 +70,87 @@ public class LlmIntegrationTests
         }
         else
         {
-            // Real call: wrap the real HTTP handler to capture the response
+            // No snapshot — need real API key
             var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             if (string.IsNullOrEmpty(apiKey))
             {
-                // No API key and no snapshot — skip gracefully
-                await Assert.That(true).IsTrue(); // pass without testing
+                await Assert.That(true).IsTrue(); // skip gracefully
                 return;
             }
-
-            var captureHandler = new SnapshotCaptureHandler();
-            var httpProvider = new DefaultHttpProvider(captureHandler) { Name = "capture" };
-            _engine.Providers.Register<IHttpProvider>(httpProvider);
-            _engine.Providers.SetDefault<IHttpProvider>("capture");
-
-            var action = new query
-            {
-                Context = Ctx,
-                Messages = messages,
-                Temperature = 0.0,
-                MaxTokens = 50
-            };
-            var result = await action.Run();
-
-            await Assert.That(result.Success).IsTrue();
-            var value = result.Value?.ToString() ?? "";
-            await Assert.That(value).Contains("42");
-
-            // Save snapshot for next run
-            if (captureHandler.CapturedResponse != null)
-                LlmSnapshotHelper.SaveSnapshot(testName, messages, captureHandler.CapturedResponse);
-
-            // Verify properties
-            await Assert.That(result.Properties["Model"]?.Value).IsNotNull();
-            await Assert.That(result.Properties["TotalTokens"]?.Value).IsNotNull();
-            await Assert.That(result.Properties["Cached"]?.Value).IsEqualTo(false);
-            return;
+            // Use default providers — real HTTP call through the http module
         }
 
-        // Replay path
-        var replayAction = new query
+        // Both paths: run through the full LLM module
+        var action = new query
         {
             Context = Ctx,
             Messages = messages,
             Temperature = 0.0,
-            MaxTokens = 50
+            MaxTokens = 50,
+            Cache = false // don't let the LLM cache interfere with snapshot testing
         };
-        var replayResult = await replayAction.Run();
+        var result = await action.Run();
 
-        await Assert.That(replayResult.Success).IsTrue();
-        var replayValue = replayResult.Value?.ToString() ?? "";
-        await Assert.That(replayValue).Contains("42");
-        await Assert.That(replayResult.Properties["Model"]?.Value).IsNotNull();
-        await Assert.That(replayResult.Properties["TotalTokens"]?.Value).IsNotNull();
+        await Assert.That(result.Success).IsTrue();
+        var value = result.Value?.ToString() ?? "";
+        await Assert.That(value).Contains("42");
+
+        // Verify properties are populated
+        await Assert.That(result.Properties["Model"]?.Value).IsNotNull();
+        await Assert.That(result.Properties["TotalTokens"]?.Value).IsNotNull();
+        await Assert.That(result.Properties["RawResponse"]?.Value).IsNotNull();
+
+        // Save snapshot if this was a live call (no snapshot existed)
+        if (snapshot == null)
+        {
+            // Reconstruct the API response JSON from the result properties
+            var snapshotJson = BuildSnapshotFromResult(result);
+            if (snapshotJson != null)
+                LlmSnapshotHelper.SaveSnapshot(testName, messages, snapshotJson);
+        }
+    }
+
+    /// <summary>
+    /// Reconstructs an OpenAI-shaped API response from the LLM module result.
+    /// This is what gets saved as the snapshot for replay.
+    /// </summary>
+    private static string? BuildSnapshotFromResult(Data result)
+    {
+        var rawResponse = result.Properties["RawResponse"]?.Value?.ToString();
+        if (rawResponse == null) return null;
+
+        var model = result.Properties["Model"]?.Value?.ToString() ?? "gpt-4.1-mini";
+        var promptTokens = result.Properties["PromptTokens"]?.Value is int pt ? pt : 0;
+        var completionTokens = result.Properties["CompletionTokens"]?.Value is int ct ? ct : 0;
+
+        var response = new
+        {
+            id = "snapshot-replay",
+            @object = "chat.completion",
+            model,
+            choices = new[]
+            {
+                new
+                {
+                    index = 0,
+                    message = new { role = "assistant", content = rawResponse },
+                    finish_reason = "stop"
+                }
+            },
+            usage = new
+            {
+                prompt_tokens = promptTokens,
+                completion_tokens = completionTokens,
+                total_tokens = promptTokens + completionTokens
+            }
+        };
+
+        return JsonSerializer.Serialize(response);
     }
 
     /// <summary>
     /// Replays a saved snapshot as the HTTP response.
+    /// Only the HTTP transport is mocked — the LLM module runs its full pipeline.
     /// </summary>
     private class SnapshotReplayHandler : HttpMessageHandler
     {
@@ -136,34 +165,6 @@ public class LlmIntegrationTests
             {
                 Content = new StringContent(_responseJson, Encoding.UTF8, "application/json")
             });
-        }
-    }
-
-    /// <summary>
-    /// Makes real HTTP calls but captures the response body for snapshotting.
-    /// Uses DelegatingHandler wrapping HttpClientHandler to get access to SendAsync.
-    /// </summary>
-    private class SnapshotCaptureHandler : DelegatingHandler
-    {
-        public string? CapturedResponse { get; private set; }
-
-        public SnapshotCaptureHandler() : base(new HttpClientHandler()) { }
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var response = await base.SendAsync(request, cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                CapturedResponse = body;
-
-                // Rebuild the response content since we consumed it
-                response.Content = new StringContent(body, Encoding.UTF8, new System.Net.Http.Headers.MediaTypeHeaderValue("application/json"));
-            }
-
-            return response;
         }
     }
 }
