@@ -36,10 +36,58 @@ public class BuildingGuardTests
     }
 
     [Test]
-    public async Task BuilderActions_BuildingDisabled_ReturnsError()
+    public async Task GetGoals_BuildingDisabled_ReturnsError()
     {
-        // When engine.Building.IsEnabled is false, all builder actions
-        // should return Data.FromError(...) instead of executing
+        // builder.getGoals with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task GetActions_BuildingDisabled_ReturnsError()
+    {
+        // builder.getActions with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task ValidateActions_BuildingDisabled_ReturnsError()
+    {
+        // builder.validateActions with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task SaveGoals_BuildingDisabled_ReturnsError()
+    {
+        // builder.saveGoals with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task GetApp_BuildingDisabled_ReturnsError()
+    {
+        // builder.getApp with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task SaveApp_BuildingDisabled_ReturnsError()
+    {
+        // builder.saveApp with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task MergeStep_BuildingDisabled_ReturnsError()
+    {
+        // builder.mergeStep with engine.Building.IsEnabled=false → Data.FromError
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task GetTypeInfo_BuildingDisabled_ReturnsError()
+    {
+        // builder.getTypeInfo with engine.Building.IsEnabled=false → Data.FromError
         Assert.Fail("Not implemented");
     }
 }

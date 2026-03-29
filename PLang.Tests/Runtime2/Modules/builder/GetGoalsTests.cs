@@ -63,4 +63,12 @@ public class GetGoalsTests
         // No .goal files in folder → empty list, no error
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task GetGoals_CorruptPrFile_IgnoresAndReparses()
+    {
+        // When the existing .pr file contains invalid JSON, getGoals should not crash —
+        // treat it as if no .pr exists and let the LLM rebuild from scratch
+        Assert.Fail("Not implemented");
+    }
 }

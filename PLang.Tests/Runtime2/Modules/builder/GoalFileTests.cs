@@ -96,4 +96,19 @@ public class GoalFileTests
         // Blank lines between goals don't create phantom goals or corrupt step attribution
         Assert.Fail("Not implemented");
     }
+
+    [Test]
+    public async Task Parse_StepLineNumbers_MatchSourceLines()
+    {
+        // Each Step.LineNumber corresponds to the 1-based line in the .goal text where the dash appears
+        Assert.Fail("Not implemented");
+    }
+
+    [Test]
+    public async Task Parse_PrPath_DerivedFromPath()
+    {
+        // /folder/MyGoal.goal → PrPath auto-derives to /folder/.build/mygoal.pr
+        // PrPath is never set directly — it's a read-only derived property on Goal
+        Assert.Fail("Not implemented");
+    }
 }

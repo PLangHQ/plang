@@ -51,6 +51,50 @@
         "health": "green",
         "notes": "49 test stubs written. Ready for coder bot to implement builder module and make tests pass."
       }
+    },
+    {
+      "id": "td-v2-20260329",
+      "bot": "test-designer",
+      "timestamp_start": "2026-03-29T21:30:00Z",
+      "timestamp_end": "2026-03-29T22:00:00Z",
+      "intent": "Address gaps found in fresh-eyes review of v1 test stubs",
+      "before": {
+        "assumptions": "v1 has 49 stubs but missing line number tests, PrPath derivation, corrupt .pr resilience, per-action building guards, and PLang stubs are too thin for coder to work from.",
+        "risk": "Low — additive changes only, no existing tests modified."
+      },
+      "plan": "Add 10 C# test stubs (2 GoalFile, 1 GetGoals, 7 net BuildingGuard) and flesh out 4 PLang tests with concrete step shapes. Total 49 → 59.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/builder/GoalFileTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/GetGoalsTests.cs",
+            "PLang.Tests/Runtime2/Modules/builder/BuildingGuardTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 10 C# test stubs: line numbers, PrPath derivation, corrupt .pr resilience, 8 per-action building guards"
+        },
+        {
+          "paths": [
+            "Tests/Runtime2/Builder/GetActions/BuilderGetActions.test.goal",
+            "Tests/Runtime2/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+            "Tests/Runtime2/Builder/ParseGoal/BuilderParseGoal.test.goal",
+            "Tests/Runtime2/Builder/MergeStep/BuilderMergeStep.test.goal",
+            "Tests/Runtime2/Builder/ValidateValid/BuilderValidateValid.test.goal",
+            "Tests/Runtime2/Builder/ValidateInvalid/BuilderValidateInvalid.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Fleshed out 4 PLang tests with concrete steps, marked 2 as deferred to C#"
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "59 total test stubs (53 C# + 6 PLang). All gaps addressed except engine.RunAction I/O pattern (implementation detail for coder)."
+      }
     }
   ]
 }

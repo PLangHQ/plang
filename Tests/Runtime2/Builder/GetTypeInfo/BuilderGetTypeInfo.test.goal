@@ -1,3 +1,4 @@
 Start
 / Test that builder.getTypeInfo returns PLang type names and complex type schemas
-- throw "not implemented"
+- get type info, write to %typeInfo%
+- assert %typeInfo% is not empty, "getTypeInfo should return type mapping data"

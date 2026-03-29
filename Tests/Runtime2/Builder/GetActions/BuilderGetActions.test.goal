@@ -1,3 +1,4 @@
 Start
 / Test that builder.getActions returns a list of all registered module actions
-- throw "not implemented"
+- get all actions, write to %actions%
+- assert %actions% is not empty, "getActions should return registered module actions"
