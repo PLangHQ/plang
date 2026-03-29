@@ -252,6 +252,7 @@ public static class TypeMapping
 | `provider` | `load`, `remove`, `setDefault`, `list` | Pluggable provider management |
 | `http` | `request`, `download`, `upload`, `configure` | HTTP requests, file transfer, streaming, signing |
 | `ui` | `render` | Liquid template rendering (inline/file, includes, callGoal) |
+| `llm` | `query` | LLM queries with tools, streaming, validation, caching, structured output |
 | `module` | `add`, `remove` | Load/unload external handler libraries |
 
 ### condition module — Details
@@ -355,6 +356,41 @@ The signing module creates and verifies signed data envelopes using Ed25519 (or 
 **Error keys**: `NoSignature`, `InvalidType`, `ProviderNotFound`, `TimedOut`, `Expired`, `NonceReplay`, `ContractMismatch`, `HeaderMismatch`, `DataHashMismatch`, `SignatureInvalid`.
 
 Both actions are `Cacheable = false`. All return `Data` — never throw.
+
+### llm module — Details
+
+The LLM module sends queries to large language models via a pluggable provider. The action record (`llm.query`) delegates entirely to `ILlmProvider.Query()`. The default `OpenAiProvider` handles everything: config, HTTP (via the http module), tool loop, caching, streaming, validation, and conversation continuity.
+
+**Provider pattern**: `ILlmProvider` extends `IProvider`. `OpenAiProvider` is the default — works with any OpenAI-compatible API endpoint. Swappable via `engine.Providers` like any other provider.
+
+**Tool execution**: Tools are `List<GoalCall>`. The provider translates `GoalCall.Description` and `GoalCall.Parameters` into API tool schemas. When the LLM responds with tool calls, the provider executes the matching goals via `engine.RunGoalAsync`, sends results back, and re-queries. `MaxToolCalls` is a hard budget — the provider slices tool calls to the remaining budget before execution.
+
+**Parallel tools**: When all tools in a batch have `GoalCall.Parallel = true`, they execute concurrently via `Task.WhenAll`. If any tool is not parallel, the entire batch runs sequentially.
+
+**Callbacks**:
+- `OnToolCall` — fires before (status=starting) and after (status=completed) each tool execution. Receives name, arguments, status, result.
+- `OnValidateResponse` — fires on the final content response. If validation fails (goal returns error), the error is sent back to the LLM for retry, up to `MaxValidationRetries`.
+- `OnStream` — fires for each streaming chunk. Receives content, fullContent, isDone.
+
+**Conversation continuity**: `ContinuePreviousConversation` stores/restores message history in `PLangContext` (goal-scoped). Original messages (before format mutation) are stored so format instructions don't compound. Schema is reused from previous conversation when not specified.
+
+**Caching**: Persistent via `SettingsStore` (SQLite table `LlmCache`). Hash of messages + model + temperature + schema + format. Skipped when `Cache=false` or `Tools != null`. Cached results carry `Cached=true` property. Because `Data.Properties` is `[JsonIgnore]`, the cache stores metadata as a dictionary value.
+
+**Format/schema handling**: Schema is appended to the system message as a text instruction (provider-agnostic). Format defaults to `json` when schema is set. Non-json formats instruct the LLM to wrap in a code block; the provider extracts from it. JSON responses are validated via parse; invalid JSON falls back to code block extraction.
+
+**Images**: `LlmMessage.Images` is `List<string>?`. The provider detects the type: URL (http/https) → passed as-is, file path → read + base64-encode, otherwise → assume base64.
+
+**Response properties**: The returned `Data` carries metadata as `Properties` (accessible via `%result!PropertyName%` in PLang): RawResponse, Model, Messages, Temperature, MaxTokens, Cached, PromptTokens, CompletionTokens, TotalTokens, Cost, ToolCallCount, ValidationRetries, Format, Schema.
+
+**Actions:**
+
+| Action | Parameters | Behavior |
+|--------|-----------|----------|
+| `query` | `Messages` (required), `Tools`, `OnToolCall`, `OnValidateResponse`, `OnStream`, `Schema`, `Format`, `Model`, `ContinuePreviousConversation` (false), `Temperature` (0.0), `MaxTokens` (4000), `MaxToolCalls` (10), `MaxValidationRetries` (3), `Cache` (true) | Sends query to LLM provider. Returns parsed response as Data with metadata properties. |
+
+**Types** (`PLang.Runtime2.modules.llm`):
+- `LlmMessage` — Role, Text, Images, ToolCallId (internal), ToolCalls (internal)
+- `ToolCall` — Id, Name, Arguments (carrier for LLM tool responses)
 
 ### provider module — Details
 

@@ -319,6 +319,26 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
+## ILlmProvider — LLM Provider in Engine.Providers
+
+`ILlmProvider` follows the same provider pattern as other module providers. Single method: `Task<Data> Query(query action)`. The provider owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
+
+**Default provider:** `OpenAiProvider` — works with any OpenAI-compatible API (configurable endpoint). Registered on `Engine.Providers` during construction. Switchable via `provider.set`.
+
+**PLang type name mapping:** `"llm"` / `"illmprovider"` → `ILlmProvider`.
+
+**Config resolution:** `llm.endpoint` / `llm.apiKey` / `llm.model` read from SettingsStore → environment variables (`OPENAI_API_KEY`, `OPENAI_API_ENDPOINT`) → hard defaults (`gpt-4.1-mini`).
+
+**Tool execution loop:** The provider calls `engine.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
+
+**Conversation continuity:** Stores/restores message history in `PLangContext` (`__llm_conversation__`, `__llm_schema__`). Original messages (before format mutation) are stored so format instructions don't compound across turns.
+
+**Cache:** Persistent via `SettingsStore` (SQLite). Hash of messages + model + temperature + schema + format. Skipped when tools are present. Cached results carry `Cached=true` property.
+
+**GoalCall extensions for LLM tools:** `GoalCall.Description` tells the LLM what the goal does. `GoalCall.Parallel` (default false) marks the tool safe for concurrent execution. When all tools in a batch have `Parallel=true`, the provider runs them with `Task.WhenAll`.
+
+---
+
 ## IHttpProvider — HTTP Provider in Engine.Providers
 
 `IHttpProvider` follows the same provider pattern as `ISigningProvider`, `ICryptoProvider`, etc. Registered on `Engine.Providers` during engine construction. `DefaultHttpProvider` is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
@@ -331,8 +351,9 @@ Add `IHttpProvider` to the provider interfaces list:
 - `IIdentityProvider : IProvider`
 - `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
 - `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
+- `ILlmProvider : IProvider` — LLM queries (default: `OpenAiProvider`)
 
-PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`.
+PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`, `"llm"` / `"illmprovider"` → `ILlmProvider`.
 
 ---
 
