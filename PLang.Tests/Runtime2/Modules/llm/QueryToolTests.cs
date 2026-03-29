@@ -294,9 +294,16 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        // Should have stopped after MaxToolCalls without crashing
-        await Assert.That(_handler.CallCount).IsGreaterThanOrEqualTo(2);
-        await Assert.That(_handler.CallCount).IsLessThanOrEqualTo(4); // bounded
+        // MaxToolCalls=3, 1 tool/round:
+        // Round 1: execute 1 tool (count=1), continue
+        // Round 2: execute 1 tool (count=2), continue
+        // Round 3: execute 1 tool (count=3), continue
+        // Round 4: toolCallCount >= 3 → break
+        await Assert.That(_handler.CallCount).IsEqualTo(4);
+        await Assert.That(result.Success).IsTrue();
+        // Loop exited via MaxToolCalls — result carries Truncated property
+        await Assert.That(result.Properties["Truncated"]?.Value).IsEqualTo(true);
+        await Assert.That(result.Properties["ToolCallCount"]?.Value).IsNotNull();
     }
 
     #endregion

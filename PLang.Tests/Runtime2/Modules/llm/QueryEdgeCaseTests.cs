@@ -91,13 +91,15 @@ public class QueryEdgeCaseTests
         };
         var result = await action.Run();
 
-        // MaxToolCalls=5, 3 tools/round:
-        // Round 1 (HTTP #1): 3 tools execute, toolCallCount=3, continue
-        // Round 2 (HTTP #2): 3 tools execute, but only 2 results appended (count hits 5), continue
+        // MaxToolCalls=5, 3 tools/round (with batch-slice fix):
+        // Round 1 (HTTP #1): remaining=5, all 3 tools execute, toolCallCount=3, continue
+        // Round 2 (HTTP #2): remaining=2, sliced to 2 tools, toolCallCount=5, continue
         // Round 3 (HTTP #3): toolCallCount >= MaxToolCalls → break
         await Assert.That(result).IsNotNull();
         await Assert.That(_handler.CallCount).IsEqualTo(3);
         await Assert.That(callIndex).IsEqualTo(3);
+        // Loop exited via MaxToolCalls — result carries metadata
+        await Assert.That(result.Properties["Truncated"]?.Value).IsEqualTo(true);
     }
 
     [Test]

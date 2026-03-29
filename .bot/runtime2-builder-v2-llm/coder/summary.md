@@ -8,3 +8,6 @@ Fixed all 8 code analyzer findings in OpenAiProvider.cs: 2 bare catches scoped, 
 
 ## v3
 Fixed all 8 tester findings: renamed false-green tests, strengthened weak assertions (MaxToolCalls bound, API error keys, callback verification), added 4 new tests (mixed JSON types, parallel results, jpg mime, base64 passthrough). 1962/1962 tests green. See [v3/summary.md](v3/summary.md).
+
+## v4
+Fixed auditor findings: MaxToolCalls batch-overshoot bug (slice tools to remaining budget), empty loop exit (return last content + Truncated property), numeric boxing consistency (TryGetInt64), redundant ternary, ParseToolArguments error surfacing. 1962/1962 tests green. See [v4/summary.md](v4/summary.md).

@@ -109,6 +109,7 @@ public sealed class OpenAiProvider : ILlmProvider
         // --- Tracking ---
         int toolCallCount = 0;
         int validationRetries = 0;
+        string? lastContent = null;
         int totalPromptTokens = 0;
         int totalCompletionTokens = 0;
         double? totalCost = null;
@@ -145,7 +146,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 Headers = headers,
                 Unsigned = true,
                 TimeoutInSec = 120,
-                OnStream = action.OnStream != null ? action.OnStream : null,
+                OnStream = action.OnStream,
                 StreamAs = action.OnStream != null ? StreamFormat.SSE : default
             };
 
@@ -188,7 +189,13 @@ public sealed class OpenAiProvider : ILlmProvider
                 if (toolCallCount >= action.MaxToolCalls)
                     break; // hit limit
 
+                lastContent = content;
                 var toolCalls = ParseToolCalls(toolCallsProp);
+
+                // Slice to remaining budget — never execute more tools than the limit allows
+                int remaining = action.MaxToolCalls - toolCallCount;
+                if (toolCalls.Count > remaining)
+                    toolCalls = toolCalls.Take(remaining).ToList();
 
                 // Append assistant message with tool_calls to conversation
                 messages.Add(new LlmMessage
@@ -221,9 +228,6 @@ public sealed class OpenAiProvider : ILlmProvider
                 // Append tool results
                 for (int i = 0; i < toolCalls.Count; i++)
                 {
-                    if (toolCallCount >= action.MaxToolCalls)
-                        break;
-
                     messages.Add(new LlmMessage
                     {
                         Role = "tool",
@@ -342,7 +346,14 @@ public sealed class OpenAiProvider : ILlmProvider
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
-        return Data.Ok();
+        var exitResult = Data.Ok(lastContent);
+        SetProp(exitResult, "Model", model);
+        SetProp(exitResult, "ToolCallCount", toolCallCount);
+        SetProp(exitResult, "PromptTokens", totalPromptTokens);
+        SetProp(exitResult, "CompletionTokens", totalCompletionTokens);
+        SetProp(exitResult, "TotalTokens", totalPromptTokens + totalCompletionTokens);
+        SetProp(exitResult, "Truncated", true);
+        return exitResult;
     }
 
     // --- Tool execution ---
@@ -442,9 +453,10 @@ public sealed class OpenAiProvider : ILlmProvider
                 result.Add(new Data(prop.Name, value));
             }
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // If arguments can't be parsed, return empty
+            // Surface the parse failure so it flows back to the LLM as a tool error
+            result.Add(new Data("__parse_error__", $"Failed to parse tool arguments: {ex.Message}"));
         }
 
         // Fill in defaults for parameters not provided by the LLM
@@ -792,7 +804,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 props[prop.Name] = prop.Value.ValueKind switch
                 {
                     JsonValueKind.String => prop.Value.GetString(),
-                    JsonValueKind.Number => prop.Value.TryGetInt32(out var i) ? (object)i : prop.Value.GetDouble(),
+                    JsonValueKind.Number => prop.Value.TryGetInt64(out var l) ? (object)l : prop.Value.GetDouble(),
                     JsonValueKind.True => true,
                     JsonValueKind.False => false,
                     JsonValueKind.Null => null,
