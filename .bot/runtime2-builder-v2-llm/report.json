@@ -234,6 +234,43 @@
         "health": "PASS — all 8 findings resolved, no new issues",
         "notes": "One trivial simplification noted (redundant null ternary at line 148) — not worth a round-trip. Recommend tester next."
       }
+    },
+    {
+      "id": "llm-tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-03-29T19:00:00Z",
+      "timestamp_end": "2026-03-29T19:30:00Z",
+      "intent": "Test quality analysis of LLM module (coder v2)",
+      "before": {
+        "assumptions": "Coder v2 claims all 1958 tests pass. Code analyzer v2 approved. OpenAiProvider.cs is the main source file (~847 lines).",
+        "risk": "Low — analysis only, no code changes."
+      },
+      "plan": "Run full test suite, collect Cobertura coverage, read all 10 test files + 5 source files, apply false-green hunting techniques (deletion test, weak-assertion scan, mock-level check), write test-report.json.",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Runtime2/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryToolTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCallbackTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryEdgeCaseTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryFormatTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryCacheTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryConversationTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/QueryImageTests.cs",
+            "PLang.Tests/Runtime2/Modules/llm/LlmTypeTests.cs",
+            "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "False-green hunting across all LLM test files. Coverage analysis via Cobertura."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "FAIL — 4 major findings, 4 minor. Tests pass but have blind spots.",
+        "notes": "Major: (1) ProviderNotRegistered tests opposite of name, (2) MaxToolCalls unverified, (3) API error assertions weak, (4) OnToolCall callback unverified. Coverage: OpenAiProvider 82.8% line, 61.5% branch. RestoreFromCache and ResolveImage file paths at 0%."
+      }
     }
   ]
 }

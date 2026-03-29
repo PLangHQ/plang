@@ -1,0 +1,25 @@
+{
+  "tool": "cobertura via TUnit --coverage",
+  "timestamp": "2026-03-29T19:00:00Z",
+  "files": {
+    "PLang/Runtime2/modules/llm/providers/OpenAiProvider.cs": {
+      "line_rate": 82.8,
+      "branch_rate": 61.5,
+      "async_state_machines": {
+        "Query": { "line": 98.7, "branch": 90.5 },
+        "ExecuteToolAsync": { "line": 98.1, "branch": 62.5 },
+        "ResolveConfigAsync": { "line": 71.4, "branch": 43.8 }
+      },
+      "uncovered_lines": [23, 437, 438, 439, 440, 445, 446, 448, 556, 558, 559, 560, 571, 572, 573, 575, 578, 579, 580, 581, 582, 583, 584, 585, 600, 619, 683, 743, 751, 752, 753, 785, 786, 787, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 813, 814, 815],
+      "partial_branches": {
+        "433": "33% (2/6) — ParseToolArguments switch",
+        "554": "30% (3/10) — MIME type switch",
+        "680": "44% (27/62) — ComputeCacheKey",
+        "784-803": "0% — RestoreFromCache both branches"
+      }
+    },
+    "PLang/Runtime2/modules/llm/query.cs": { "line_rate": 100, "branch_rate": 100 },
+    "PLang/Runtime2/modules/llm/LlmMessage.cs": { "line_rate": 100, "branch_rate": 100 },
+    "PLang/Runtime2/modules/llm/ToolCall.cs": { "line_rate": 100, "branch_rate": 100 }
+  }
+}
