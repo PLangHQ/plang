@@ -5,21 +5,22 @@
 ## Decision Log
 
 - **No Runtime1 dependencies.** No `IGoalParser`, no `PrParser`, no `GoalMapper`, no `Building.Model`. The builder module parses `.goal` files directly into Runtime2 Goal/Step types and reads `.pr` files as Runtime2 JSON.
-- **Native `.goal` parser.** A `GoalFileParser` instance in the builder module parses `.goal` text into Runtime2 `Goal` and `Step` objects. Line-by-line parser — no Sprache dependency, no v1 model intermediary.
+- **Native `.goal` parser.** A `GoalFile` instance in the builder module parses `.goal` text into Runtime2 `Goal` and `Step` objects. Line-by-line parser — no Sprache dependency, no v1 model intermediary.
 - **`.pr` files are multi-goal Runtime2 JSON.** One `.goal` file → one `.pr` file containing `List<Goal>`. Reading is `Deserialize<List<Goal>>(json)`. All goals from one `.goal` file share the same `Path` → same derived `PrPath` → one `.pr` file.
 - **No provider pattern.** The builder module has no swappable behavior.
 - **File I/O goes through `engine.RunAction`.** Same pattern as the LLM module using `http.request`.
 - **Navigate `engine.Modules`, don't construct.** The engine already owns the module registry. Actions navigate `Context.Engine.Modules` — never `new EngineModules()`.
 - **Step owns its merge.** Add `Step.Merge(Step from)` — Step knows its own mutable fields. The `mergeStep` action delegates to it.
+- **Goal owns its merge.** Add `Goal.MergeFrom(Goal existing)` — Goal matches steps by Text and delegates to `Step.Merge`. The `getGoals` action calls it, doesn't contain matching logic itself.
 - **Engine.Building guard.** `engine.Building` is always non-null. Guard on `engine.Building.IsEnabled` — if false, return `Data.FromError(...)`.
 - **GoalCall path resolution uses the file system directly.** Scans `.build/` for `.pr` files, or source tree for `.goal` files, to find matching goals. No PrParser.
 - **v0.2 `.pr` format.** Single `.pr` file per `.goal` file, `List<Goal>`, camelCase, nulls omitted. PrPath is derived from `Goal.Path` — never set directly.
 
-## GoalFileParser
+## GoalFile
 
-New class: `PLang/Runtime2/modules/builder/GoalFileParser.cs` — **instance, not static**.
+New class: `PLang/Runtime2/modules/builder/GoalFile.cs` — **instance, not static**.
 
-Parses `.goal` text into Runtime2 `Goal` and `Step` objects directly.
+A GoalFile IS the `.goal` file format. It parses `.goal` text into Runtime2 `Goal` and `Step` objects directly.
 
 ### .goal file format
 
@@ -51,7 +52,7 @@ SecondGoal
 
 ### Path computation
 
-Parser only sets `Path` on each Goal. `PrPath` is derived automatically by the Goal type — never set directly.
+`GoalFile.Parse()` only sets `Path` on each Goal. `PrPath` is derived automatically by the Goal type — never set directly.
 
 For `{rootPath}/folder/MyGoal.goal`:
 - All goals get `Path = "/folder/MyGoal.goal"`
@@ -76,6 +77,20 @@ public void Merge(Step from) { ... }
 ```
 
 Step owns knowledge of which fields are LLM-derived (Actions, Cache, OnError) vs structural (Text, Index, Indent). The merge copies LLM-derived mutable fields and replaces Errors/Warnings list contents when the source has any.
+
+## Goal.MergeFrom
+
+Add to `Goal` (partial class or directly on `this.cs`):
+
+```csharp
+/// <summary>
+/// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
+/// Matches steps by Text, delegates to Step.Merge for each match.
+/// </summary>
+public void MergeFrom(Goal existing) { ... }
+```
+
+Goal owns the knowledge of how to match its steps to an existing goal's steps. Match by `Step.Text` — when a step's text hasn't changed, its LLM-derived Actions are still valid. For each match, delegate to `Step.Merge(existingStep)`. Unmatched steps keep their empty Actions (LLM will fill them).
 
 ## Actions
 
@@ -129,15 +144,16 @@ public partial class getGoals : IContext
     public async Task<Data> Run()
     {
         // Find .goal files under Path (via engine.RunAction with file module)
-        // Parse each via GoalFileParser
+        // Parse each via GoalFile
         // Filter out system goals (path starts with /system/)
-        // Merge existing .pr data: match by goal Name, then step Text — preserve Actions
+        // Merge existing .pr data: load List<Goal> from PrPath, match by Name,
+        //   delegate to goal.MergeFrom(existingGoal)
         // Return List<Goal>
     }
 }
 ```
 
-**Merge from .pr**: If a `.pr` file exists at PrPath, deserialize as `List<Goal>`. Match goals by Name, steps by Text. Copy existing Actions onto matching parsed steps — preserves LLM work across rebuilds.
+**Merge from .pr**: If a `.pr` file exists at PrPath, deserialize as `List<Goal>`. Match goals by Name. For each match, call `goal.MergeFrom(existingGoal)` — Goal owns the step-matching and merge logic. Preserves LLM work across rebuilds.
 
 ### builder.validateActions
 
@@ -266,10 +282,10 @@ After this module lands, `[plang]` tags become regular `builder.*` calls.
 
 ```
 PLang/Runtime2/modules/builder/
-├── GoalFileParser.cs      — .goal text parser (instance, not static)
+├── GoalFile.cs            — .goal file format (instance, not static)
 ├── getActions.cs          — action registry metadata for LLM
 ├── getTypeInfo.cs         — type names + schemas for LLM
-├── getGoals.cs            — find + parse .goal files, merge .pr data
+├── getGoals.cs            — find + parse .goal files, delegate merge to Goal
 ├── validateActions.cs     — validate + resolve + fill defaults
 ├── mergeStep.cs           — delegates to Step.Merge()
 ├── getApp.cs              — load/create app.pr
@@ -281,6 +297,7 @@ PLang/Runtime2/modules/builder/
 
 | File | Change |
 |------|--------|
+| `PLang/Runtime2/Engine/Goals/Goal/this.cs` | Add `MergeFrom(Goal existing)` method |
 | `PLang/Runtime2/Engine/Goals/Goal/Steps/Step/this.cs` | Add `Merge(Step from)` method |
 | `system/builder/Build.goal` | Replace `[plang]` calls with `builder.*` |
 | `system/builder/BuildGoal.goal` | Replace `[plang]` calls with `builder.*` |
@@ -289,7 +306,7 @@ PLang/Runtime2/modules/builder/
 
 ## Test Expectations
 
-### GoalFileParser (~8)
+### GoalFile (~8)
 - Single goal with steps
 - Multiple goals (first public, rest private)
 - Indentation (4 spaces = 1 level)
@@ -336,23 +353,29 @@ PLang/Runtime2/modules/builder/
 - Serializes to PrPath, camelCase, nulls omitted
 - Multiple goals in single .pr file
 
+### Goal.MergeFrom (~3)
+- Steps matched by Text, LLM fields merged via Step.Merge
+- Unmatched steps keep empty Actions
+- No existing goal → no-op
+
 ### Step.Merge (~3)
 - LLM fields copied, structural fields untouched
 - Empty source leaves target unchanged
 - Errors/warnings replaced only when source has entries
 
 ### Test count
-- **C# tests:** ~34
+- **C# tests:** ~37
 - **PLang tests:** ~6
-- **Total: ~40**
+- **Total: ~43**
 
 ## Definition of Done
 
 - All 8 builder actions work as standard Runtime2 module actions
 - **Zero Runtime1 dependencies**
 - Actions navigate `engine.Modules` — never construct fresh registries
-- `GoalFileParser` is an instance, not static
-- `Step.Merge()` owns merge behavior — `mergeStep` action just delegates
+- `GoalFile` is an instance, not static — it IS the file format, not a "parser"
+- `Goal.MergeFrom()` owns step-matching and merge delegation
+- `Step.Merge()` owns field-level merge — `mergeStep` action just delegates
 - `engine.Building.IsEnabled` guard on entry
 - `.pr` files read/written as `List<Goal>` — one per `.goal` file
 - File I/O through `engine.RunAction`
